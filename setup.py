@@ -17,4 +17,11 @@ setup(
     author_email='wuerzner@bbaw.de',
     license=license,
     packages=find_packages(exclude=('tests', 'docs')),
+    install_requires=[
+    ],
+    entry_points={
+          'console_scripts': [
+              'run-ocrd=ocrd.scripts.run:cli',
+          ]
+    },
 )
