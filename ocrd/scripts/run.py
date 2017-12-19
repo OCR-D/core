@@ -5,7 +5,7 @@ import click
 from ocrd import init
 
 @click.command()
-@click.option('-w', '--working-dir', default='/tmp', help='Path to store intermediate and result files', type=click.Path(exists=True))
+@click.option('-w', '--working-dir', default='/tmp', help='Path to store intermediate and result files (default: "/tmp")', type=click.Path(exists=True))
 @click.argument('METS_XML', type=click.File('rb'))
 def cli(working_dir, mets_xml):
     """

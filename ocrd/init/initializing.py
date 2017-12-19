@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import xml.etree.ElementTree as ET
+import urllib.request
+
+ns = { 'mets'  : "http://www.loc.gov/METS/",
+       'mods'  : "http://www.loc.gov/mods/v3",
+       'xlink' : "http://www.w3.org/1999/xlink",
+     }
 
 class Initializer:
 
@@ -52,4 +58,11 @@ class Initializer:
         """
         Loads and creates missing PAGE XML from internal METS tree.
         """
-        pass
+        page_fileGrps = self.tree.getroot().findall(".//mets:fileGrp[@USE='FULLTEXT']", ns)
+        # case load page
+        if page_fileGrps:
+            for page_file in page_fileGrps[0].findall("mets:file", ns):
+                print(page_file)
+        # case create page TODO
+        else:
+            pass
