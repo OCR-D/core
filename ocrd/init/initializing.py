@@ -27,7 +27,8 @@ class Initializer:
         self.set_working_dir("./")
         self.img_src = {}
         self.img_files = {}
-        self.fulltext = {}
+        self.page_src = {}
+        self.page_files = {}
 
     def set_working_dir(self,path):
         """
@@ -66,8 +67,21 @@ class Initializer:
         page_fileGrps = self.tree.getroot().findall(".//mets:fileGrp[@USE='FULLTEXT']", ns)
         # case load page
         if page_fileGrps:
-            for page_file in page_fileGrps[0].findall("mets:file", ns):
-                print(page_file)
+            for page_fileGrp in page_fileGrps:
+                page_files = page_fileGrp.findall("./mets:file", ns)
+                for page_file in page_files:
+                    # extract information from elem
+                    page_ID = page_file.get("ID")
+                    ID = page_ID.rstrip("_FULLTEXT")
+                    page_url = page_file.find("mets:FLocat", ns).get("{%s}href" % ns["xlink"])
+
+                    # make a local copy
+                    page_data = requests.get(page_url)
+                    if page_data.status_code == 200:
+                        self.page_src[ID] = page_url
+                        self.page_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(page_url))
+                        with open(self.page_files[ID], 'wb') as f:  
+                            f.write(page_data.content)
         # case create page TODO
         else:
             pass
@@ -92,4 +106,3 @@ class Initializer:
                     self.img_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(img_url))
                     with open(self.img_files[ID], 'wb') as f:  
                         f.write(img_data.content)
-                
