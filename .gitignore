@@ -86,6 +86,8 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+env3/
+env2/
 
 # Spyder project settings
 .spyderproject
@@ -99,3 +101,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# vim swp
+*.swp
