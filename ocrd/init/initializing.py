@@ -9,7 +9,10 @@ ns = { 'mets'  : "http://www.loc.gov/METS/",
        'xlink' : "http://www.w3.org/1999/xlink",
      }
 
-class Initializer:
+class Handle:
+"""
+Internal data structure.
+"""
 
     def __init__(self):
         """
@@ -24,11 +27,30 @@ class Initializer:
         """
 
         self.tree = ET.ElementTree()
-        self.set_working_dir("./")
         self.img_src = {}
         self.img_files = {}
         self.page_src = {}
         self.page_files = {}
+
+class Initializer:
+"""
+Initializes an OCR process given a METS XML file.
+"""
+
+    def __init__(self):
+        """
+        The constructor.
+        """
+
+        self.clear()
+
+    def clear(self):
+        """
+        Resets the Initializer.
+        """
+
+        self.set_working_dir("./")
+        self.handle = Handle()
 
     def set_working_dir(self,path):
         """
@@ -46,7 +68,7 @@ class Initializer:
         """
         Loads METS XML from a file (i.e. file name).
         """
-        self.tree.parse(mets_xml_file)
+        self.handle.tree.parse(mets_xml_file)
 
     def initialize(self):
         """
@@ -64,7 +86,7 @@ class Initializer:
         """
         Loads or creates missing PAGE XML from internal METS tree.
         """
-        page_fileGrps = self.tree.getroot().findall(".//mets:fileGrp[@USE='FULLTEXT']", ns)
+        page_fileGrps = self.handle.tree.getroot().findall(".//mets:fileGrp[@USE='FULLTEXT']", ns)
         # case load page
         if page_fileGrps:
             for page_fileGrp in page_fileGrps:
@@ -78,9 +100,9 @@ class Initializer:
                     # make a local copy
                     page_data = requests.get(page_url)
                     if page_data.status_code == 200:
-                        self.page_src[ID] = page_url
-                        self.page_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(page_url))
-                        with open(self.page_files[ID], 'wb') as f:  
+                        self.handle.page_src[ID] = page_url
+                        self.handle.page_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(page_url))
+                        with open(self.handle.page_files[ID], 'wb') as f:  
                             f.write(page_data.content)
         # case create page TODO
         else:
@@ -90,7 +112,7 @@ class Initializer:
         """
         Retrieves images referenced in the METS and copies them to the WD.
         """
-        img_fileGrps = self.tree.getroot().findall(".//mets:fileGrp[@USE='IMAGE']", ns)
+        img_fileGrps = self.handle.tree.getroot().findall(".//mets:fileGrp[@USE='IMAGE']", ns)
         for img_fileGrp in img_fileGrps:
             img_files = img_fileGrp.findall("./mets:file", ns)
             for img_file in img_files:
@@ -102,7 +124,7 @@ class Initializer:
                 # make a local copy
                 img_data = requests.get(img_url)
                 if img_data.status_code == 200:
-                    self.img_src[ID] = img_url
-                    self.img_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(img_url))
-                    with open(self.img_files[ID], 'wb') as f:  
+                    self.handle.img_src[ID] = img_url
+                    self.handle.img_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(img_url))
+                    with open(self.handle.img_files[ID], 'wb') as f:  
                         f.write(img_data.content)
