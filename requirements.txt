@@ -1,3 +1,5 @@
 -e .
 click
 requests
+pyexiftool
+-e git://github.com/smarnach/pyexiftool.git#egg=exiftool

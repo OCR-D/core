@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import click
 
-from ocrd import init
+from ocrd import init, characterize
 
 @click.command()
 @click.option('-w', '--working-dir', default='/tmp', help='Path to store intermediate and result files (default: "/tmp")', type=click.Path(exists=True))
@@ -21,3 +21,8 @@ def cli(working_dir, mets_xml):
 
     # initialize
     initializer.initialize()
+
+    # image characterization
+    characterizer = characterize.Characterizer()
+    characterizer.set_handle(initializer.get_handle())
+    characterizer.characterize()
