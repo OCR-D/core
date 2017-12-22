@@ -31,6 +31,7 @@ class Handle:
         self.img_files = {}
         self.page_src = {}
         self.page_files = {}
+        self.page_trees = {}
 
 class Initializer:
     """
@@ -104,6 +105,9 @@ class Initializer:
                         self.handle.page_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(page_url))
                         with open(self.handle.page_files[ID], 'wb') as f:  
                             f.write(page_data.content)
+                        # parse the page xml (and store the tree to avoid repeated parsing)
+                        self.handle.page_trees[ID] = ET.ElementTree()
+                        self.handle.page_trees[ID].parse(self.handle.page_files[ID])
         # case create page TODO
         else:
             pass

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import xml.etree.ElementTree as ET
 
-import exiftool, json
+import exiftool
 
 from ocrd import init
 
@@ -42,6 +42,16 @@ class Characterizer:
         Performs the image characterization.
         """
         with exiftool.ExifTool() as et:
-            for img in self.handle.img_files:
-                metadata = et.get_metadata(self.handle.img_files[img])
-                print(json.dumps(metadata, sort_keys=True, indent=4))
+            for ID in self.handle.img_files:
+                # get XML for ID
+                if ID in self.handle.page_trees:
+                    PcGts = self.handle.page_trees[ID].getroot()
+                    page = PcGts.find("Page")
+                    if not page:
+                        PcGts.append(ET.Element("Page"))
+                        page = list(PcGts)[-1]
+                    metadata = et.get_metadata(self.handle.img_files[ID])
+                    page.set("imageWidth", "%d" % metadata["EXIF:ImageWidth"])
+                    page.set("imageHeight", "%d" % metadata["EXIF:ImageHeight"])
+                    page.set("imageXResolution", "%d" % metadata["EXIF:XResolution"])
+                    page.set("imageYResolution", "%d" % metadata["EXIF:YResolution"])
