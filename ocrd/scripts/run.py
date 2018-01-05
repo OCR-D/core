@@ -2,6 +2,10 @@ from __future__ import absolute_import
 
 import click
 
+import xml.etree.ElementTree as ET
+
+import xml.dom.minidom as md
+
 from ocrd import init, characterize
 
 @click.command()
@@ -26,3 +30,7 @@ def cli(working_dir, mets_xml):
     characterizer = characterize.Characterizer()
     characterizer.set_handle(initializer.get_handle())
     characterizer.characterize()
+
+    # output
+    for ID in initializer.get_handle().page_trees:
+        print(md.parseString(ET.tostring(initializer.get_handle().page_trees[ID].getroot(), encoding='utf8', method='xml')).toprettyxml(indent="\t"))
