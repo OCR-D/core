@@ -2,9 +2,9 @@ from __future__ import absolute_import
 
 import click
 
-import xml.etree.ElementTree as ET
-
 import xml.dom.minidom as md
+
+from lxml import etree as ET
 
 from ocrd import init, characterize
 
