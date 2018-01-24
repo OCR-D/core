@@ -10,9 +10,9 @@ ns = { 'mets'  : "http://www.loc.gov/METS/",
      }
 
 class Handle:
-"""
-Internal data structure.
-"""
+    """
+    Internal data structure.
+    """
 
     def __init__(self):
         """
@@ -31,11 +31,12 @@ Internal data structure.
         self.img_files = {}
         self.page_src = {}
         self.page_files = {}
+        self.page_trees = {}
 
 class Initializer:
-"""
-Initializes an OCR process given a METS XML file.
-"""
+    """
+    Initializes an OCR process given a METS XML file.
+    """
 
     def __init__(self):
         """
@@ -104,6 +105,9 @@ Initializes an OCR process given a METS XML file.
                         self.handle.page_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(page_url))
                         with open(self.handle.page_files[ID], 'wb') as f:  
                             f.write(page_data.content)
+                        # parse the page xml (and store the tree to avoid repeated parsing)
+                        self.handle.page_trees[ID] = ET.ElementTree()
+                        self.handle.page_trees[ID].parse(self.handle.page_files[ID])
         # case create page TODO
         else:
             pass
@@ -128,3 +132,9 @@ Initializes an OCR process given a METS XML file.
                     self.handle.img_files[ID] = "%s/%s" % (self.working_dir, os.path.basename(img_url))
                     with open(self.handle.img_files[ID], 'wb') as f:  
                         f.write(img_data.content)
+
+    def get_handle(self):
+        """
+        Returns the internal handle.
+        """
+        return self.handle
