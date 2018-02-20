@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
-import xml.etree.ElementTree as ET
 import requests
+
+from lxml import etree as ET
 
 ns = { 'mets'  : "http://www.loc.gov/METS/",
        'mods'  : "http://www.loc.gov/mods/v3",
