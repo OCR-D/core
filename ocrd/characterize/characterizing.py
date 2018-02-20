@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import xml.etree.ElementTree as ET
-
 import exiftool
+
+from lxml import etree as ET
 
 from ocrd import init
 
