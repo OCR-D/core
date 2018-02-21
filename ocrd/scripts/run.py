@@ -36,6 +36,12 @@ def cli(working_dir, mets_xml):
     page_segmenter.set_handle(initializer.get_handle())
     page_segmenter.segment()
 
+    # region segmentation
+    region_segmenter = segment.RegionSegmenter()
+    region_segmenter.set_handle(initializer.get_handle())
+    region_segmenter.segment()
+
     # output
     for ID in initializer.get_handle().page_trees:
         print(md.parseString(ET.tostring(initializer.get_handle().page_trees[ID].getroot(), encoding='utf8', method='xml')).toprettyxml(indent="\t"))
+        pass
