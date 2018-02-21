@@ -1,1 +1,1 @@
-from .segmenting import Segmenter
+from .segmenting import PageSegmenter

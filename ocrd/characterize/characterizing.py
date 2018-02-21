@@ -10,6 +10,7 @@ from ocrd import init
 ns = { 'mets'  : "http://www.loc.gov/METS/",
        'mods'  : "http://www.loc.gov/mods/v3",
        'xlink' : "http://www.w3.org/1999/xlink",
+       'page'  : "http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15",
      }
 
 exif_compression_methods = {
@@ -112,10 +113,11 @@ class Characterizer:
                 # get XML for ID
                 if ID in self.handle.page_trees:
                     PcGts = self.handle.page_trees[ID].getroot()
-                    page = PcGts.find("Page")
-                    if not page:
-                        PcGts.append(ET.Element("Page"))
-                        page = list(PcGts)[-1]
+                    pages = PcGts.xpath("page:Page", namespaces=ns)
+                    if len(pages) > 0:
+                        page = pages[0]
+                    else:
+                        page = ET.SubElement(PcGts,"Page")
                     metadata = et.get_metadata(self.handle.img_files[ID])
                     page.set("imageWidth", "%d" % metadata.get("EXIF:ImageWidth",""))
                     page.set("imageHeight", "%d" % metadata.get("EXIF:ImageHeight",""))

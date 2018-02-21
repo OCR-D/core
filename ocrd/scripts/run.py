@@ -6,7 +6,7 @@ import xml.dom.minidom as md
 
 from lxml import etree as ET
 
-from ocrd import init, characterize
+from ocrd import init, characterize, segment
 
 @click.command()
 @click.option('-w', '--working-dir', default='/tmp', help='Path to store intermediate and result files (default: "/tmp")', type=click.Path(exists=True))
@@ -30,6 +30,11 @@ def cli(working_dir, mets_xml):
     characterizer = characterize.Characterizer()
     characterizer.set_handle(initializer.get_handle())
     characterizer.characterize()
+
+    # page segmentation
+    page_segmenter = segment.PageSegmenter()
+    page_segmenter.set_handle(initializer.get_handle())
+    page_segmenter.segment()
 
     # output
     for ID in initializer.get_handle().page_trees:
