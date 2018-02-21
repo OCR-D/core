@@ -80,7 +80,7 @@ exif_resolutionunit_values = {
 
 class Characterizer:
     """
-    Initializes an OCR process given a METS XML file.
+    Extracts image meta data.
     """
 
     def __init__(self):
