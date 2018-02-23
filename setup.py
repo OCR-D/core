@@ -22,6 +22,7 @@ setup(
     entry_points={
           'console_scripts': [
               'run-ocrd=ocrd.scripts.run:cli',
+              'run-ocrd-server=ocrd.scripts.run_server:cli',
           ]
     },
 )
