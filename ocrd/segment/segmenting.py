@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import tesserocr
+import tesserocr,numpy,cv2
 from PIL import Image
 
 from lxml import etree as ET
@@ -16,7 +16,7 @@ ns = { 'mets'  : "http://www.loc.gov/METS/",
 
 class PageSegmenter:
     """
-    Segments a page.
+    Segments a page into regions.
     """
 
     def __init__(self):
@@ -39,7 +39,7 @@ class PageSegmenter:
         """
         self.handle = handle
 
-    def _coords_from_box(self,box):
+    def _points_from_box(self,box):
         """
         Constructs a polygon representation from a (rectangle) box
         """
@@ -77,4 +77,71 @@ class PageSegmenter:
                         region = ET.SubElement(page, "TextRegion")
                         region.set("id", region_ref)
                         coords = ET.SubElement(region, "Coords")
-                        coords.set("points",self._coords_from_box(box))
+                        coords.set("points",self._points_from_box(box))
+
+class RegionSegmenter:
+    """
+    Segments a region into lines.
+    """
+
+    def __init__(self):
+        """
+        The constructor.
+        """
+
+        self.clear()
+
+    def clear(self):
+        """
+        Resets the Segmenter.
+        """
+
+        self.handle = init.Handle()
+
+    def set_handle(self, handle):
+        """
+        (Re)sets the internal handle.
+        """
+        self.handle = handle
+
+    def _polygon_from_points(self, points):
+        """
+        Constructs a numpy-compatible polygon from a page representation.
+        """
+        polygon = []
+        for pair in points.split(" "):
+            x_y = pair.split(",")
+            polygon.append([float(x_y[0]),float(x_y[1])])
+        return polygon
+
+    def _points_from_box(self,box):
+        """
+        Constructs a polygon representation from a (rectangle) box
+        """
+        # tesseract uses a different region representation format
+        return "%i,%i %i,%i %i,%i %i,%i" % (box['x'],box['y'],box['x']+box['w'],box['y']+box['w'],box['x']+box['w']+box['h'],box['y']+box['w']+box['h'],box['x']+box['h'],box['y']+box['h'])
+
+    def segment(self):
+        """
+        Performs the segmentation.
+        """
+        with tesserocr.PyTessBaseAPI() as api:
+            for ID in self.handle.img_files:
+                image = cv2.imread(self.handle.img_files[ID])
+                if ID in self.handle.page_trees:
+                    PcGts = self.handle.page_trees[ID].getroot()
+                    pages = PcGts.xpath("page:Page", namespaces=ns)
+                    for page in pages[0:1]:
+                        regions = page.xpath("TextRegion")
+                        for region in regions:
+                            points = region.xpath("Coords")[0].get("points")
+                            polygon = self._polygon_from_points(points)
+                            poly = numpy.array(polygon,numpy.int32)
+                            region_cut = image[numpy.min(poly[:,1]):numpy.max(poly[:,1]),numpy.min(poly[:,0]):numpy.max(poly[:,0])]
+                            region_img = Image.fromarray(region_cut)
+                            api.SetImage(region_img)
+                            lines = api.GetComponentImages(tesserocr.RIL.TEXTLINE, True)
+                            for i, (im, box, index, _) in enumerate(lines):
+                                line = ET.SubElement(region, "TextLine")
+                                coords = ET.SubElement(line, "Coords")
+                                coords.set("points",self._points_from_box(box))

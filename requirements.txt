@@ -6,3 +6,5 @@ pyexiftool
 tesserocr
 lxml
 Pillow
+numpy
+opencv-python
