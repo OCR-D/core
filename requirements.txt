@@ -8,3 +8,4 @@ lxml
 Pillow
 numpy
 opencv-python
+Flask
