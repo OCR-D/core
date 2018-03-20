@@ -6,11 +6,11 @@ pyOCR-D
 Installation
 ------------
 
-To bootstrap the tool, you'll need installed:
+To bootstrap the tool, you'll need installed (Ubuntu packages):
 
-* Python 3
-* pip
-
+* Python 3 (``python3``)
+* pip (``python3-pip``)
+* libleptonica (``libleptonica-dev``)
 
 To install system-wide:
 
