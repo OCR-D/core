@@ -14,7 +14,15 @@ help:
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt install python3 python3-pip libtesseract-dev libleptonica-dev libimage-exiftool-perl
+	apt install \
+		python3 \
+		python3-pip \
+		libtesseract-dev \
+		libleptonica-dev \
+		libimage-exiftool-perl \
+		tesseract-ocr-eng \
+		tesseract-ocr-deu \
+		tesseract-ocr-deu-frak
 
 # Install python deps via pip
 deps-pip:

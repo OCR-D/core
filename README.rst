@@ -10,7 +10,8 @@ To bootstrap the tool, you'll need installed (Ubuntu packages):
 
 * Python 3 (``python3``)
 * pip (``python3-pip``)
-* Tesseract headers (``libtesseract-dev``)
+* Tesseract 3.04 headers (``libtesseract-dev``)
+* Tesseract 3.04 languages (``tesseract-ocr-{eng,deu,deu-frak}``)
 * Leptonica headers (``libleptonica-dev``)
 * exiftool (``libimage-exiftool-perl``)
 
