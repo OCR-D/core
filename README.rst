@@ -37,6 +37,14 @@ If tesserocr fails to compile with an error:::
 
 This is due to some inconsistencies in the installed tesseract C headers. Replace ``string`` with ``std::string`` in ``$PREFIX/include/tesseract/unicharset.h:265:5:`` and ``$PREFIX/include/tesseract/unichar.h:164:10:`` ff.
 
+Usage
+-----
+
+::
+
+    run-ocrd <METS-FILE>
+
+This will run the image characterization, page segmentation and region segmentation.
 
 See Also
 --------
