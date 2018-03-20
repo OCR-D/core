@@ -12,6 +12,7 @@ To bootstrap the tool, you'll need installed (Ubuntu packages):
 * pip (``python3-pip``)
 * Tesseract headers (``libtesseract-dev``)
 * Leptonica headers (``libleptonica-dev``)
+* exiftool (``libimage-exiftool-perl``)
 
 To install system-wide:
 
