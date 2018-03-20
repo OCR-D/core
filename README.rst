@@ -38,6 +38,11 @@ If tesserocr fails to compile with an error:::
 
 This is due to some inconsistencies in the installed tesseract C headers. Replace ``string`` with ``std::string`` in ``$PREFIX/include/tesseract/unicharset.h:265:5:`` and ``$PREFIX/include/tesseract/unichar.h:164:10:`` ff.
 
+If tesserocr fails with an error about ``LSTM``/``CUBE``, you are using th 4.00
+headers. Downgrade to 3.04: ``apt install libtesseract-dev=3.04.01-6`` or
+whatever ``apt policy libtesseract-dev`` offers. Make sure there are no spurious pkg-config artifacts, e.g. in ``/usr/local/lib/pkgconfig/tesseract.pc``. The same goes for language models
+
+
 
 See Also
 --------
