@@ -10,7 +10,8 @@ To bootstrap the tool, you'll need installed (Ubuntu packages):
 
 * Python 3 (``python3``)
 * pip (``python3-pip``)
-* Tesseract headers (``libtesseract-dev``)
+* Tesseract (3.04) headers (``libtesseract-dev``)
+* Some tesseract (3.04) language models (``tesseract-ocr-{eng,deu,deu-frak,...}``)
 * Leptonica headers (``libleptonica-dev``)
 
 To install system-wide:
