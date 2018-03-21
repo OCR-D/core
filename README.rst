@@ -8,8 +8,8 @@ Installation
 
 To bootstrap the tool, you'll need installed (Ubuntu packages):
 
-* Python 3 (``python3``)
-* pip (``python3-pip``)
+* Python (``python``)
+* pip (``python-pip``)
 * Tesseract (3.04) headers (``libtesseract-dev``)
 * Some tesseract (3.04) language models (``tesseract-ocr-{eng,deu,deu-frak,...}``)
 * Leptonica headers (``libleptonica-dev``)
@@ -19,15 +19,16 @@ To install system-wide:
 
 ::
 
-    pip3 install -r requirements.txt
-    python3 setup.py install
+    pip install -r requirements.txt
+    pip install .
 
 To install to user HOME dir
 
 ::
 
-    pip3 install --user -r requirements.txt
-    python setup.py install --user
+    pip install --user -r requirements.txt
+    pip install .
+
 
 If tesserocr fails to compile with an error:::
 
