@@ -29,6 +29,15 @@ To install to user HOME dir
     pip install --user -r requirements.txt
     pip install .
 
+To develop, install to a virtulenv
+
+::
+
+    pip install virtualenv
+    virtualenv --no-site-packages venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    pip install .
 
 If tesserocr fails to compile with an error:::
 
