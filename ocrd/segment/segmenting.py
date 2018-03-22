@@ -44,7 +44,16 @@ class PageSegmenter:
         Constructs a polygon representation from a (rectangle) box
         """
         # tesseract uses a different region representation format
-        return "%i,%i %i,%i %i,%i %i,%i" % (box['x'],box['y'],box['x']+box['w'],box['y']+box['w'],box['x']+box['w']+box['h'],box['y']+box['w']+box['h'],box['x']+box['h'],box['y']+box['h'])
+        return "%i,%i %i,%i %i,%i %i,%i" % (
+            box['x'],
+            box['y'],
+            box['x']+box['w'],
+            box['y']+box['w'],
+            box['x']+box['w']+box['h'],
+            box['y']+box['w']+box['h'],
+            box['x']+box['h'],
+            box['y']+box['h']
+        )
 
     def segment(self):
         """
@@ -119,7 +128,16 @@ class RegionSegmenter:
         Constructs a polygon representation from a (rectangle) box
         """
         # tesseract uses a different region representation format
-        return "%i,%i %i,%i %i,%i %i,%i" % (box['x'],box['y'],box['x']+box['w'],box['y']+box['w'],box['x']+box['w']+box['h'],box['y']+box['w']+box['h'],box['x']+box['h'],box['y']+box['h'])
+        return "%i,%i %i,%i %i,%i %i,%i" % (
+            box['x'],
+            box['y'],
+            box['x']+box['w'],
+            box['y']+box['w'],
+            box['x']+box['w']+box['h'],
+            box['y']+box['w']+box['h'],
+            box['x']+box['h'],
+            box['y']+box['h']
+        )
 
     def segment(self):
         """
