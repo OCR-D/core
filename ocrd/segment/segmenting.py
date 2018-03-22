@@ -74,19 +74,19 @@ class PageSegmenter:
                         else:
                             page = ET.SubElement(PcGts,"Page")
                         reading_order = ET.SubElement(page,"ReadingOrder")
-                    for i, (im, box, index, _) in enumerate(boxes):
+                        for i, (im, box, index, _) in enumerate(boxes):
 
-                        # the region reference in the reading order element
-                        region_ref = "r%i" % index
-                        region_ref_indexed = ET.SubElement(reading_order,"RegionRefIndexed")
-                        region_ref_indexed.set("regionRef", region_ref)
-                        region_ref_indexed.set("index", "%i" % index)
+                            # the region reference in the reading order element
+                            region_ref = "r%i" % index
+                            region_ref_indexed = ET.SubElement(reading_order,"RegionRefIndexed")
+                            region_ref_indexed.set("regionRef", region_ref)
+                            region_ref_indexed.set("index", "%i" % index)
 
-                        # the actual region
-                        region = ET.SubElement(page, "TextRegion")
-                        region.set("id", region_ref)
-                        coords = ET.SubElement(region, "Coords")
-                        coords.set("points",self._points_from_box(box))
+                            # the actual region
+                            region = ET.SubElement(page, "TextRegion")
+                            region.set("id", region_ref)
+                            coords = ET.SubElement(region, "Coords")
+                            coords.set("points",self._points_from_box(box))
 
 class RegionSegmenter:
     """

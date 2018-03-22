@@ -89,7 +89,10 @@ class Initializer:
         """
         Loads or creates missing PAGE XML from internal METS tree.
         """
-        page_fileGrps = self.handle.tree.getroot().findall(".//mets:fileGrp[@USE='FULLTEXT']", ns)
+        try:
+            page_fileGrps = self.handle.tree.getroot().findall(".//mets:fileGrp[@USE='FULLTEXT']", ns)
+        except:
+            return
         # case load page
         if page_fileGrps:
             for page_fileGrp in page_fileGrps:
@@ -118,7 +121,10 @@ class Initializer:
         """
         Retrieves images referenced in the METS and copies them to the WD.
         """
-        img_fileGrps = self.handle.tree.getroot().findall(".//mets:fileGrp[@USE='IMAGE']", ns)
+        try:
+            img_fileGrps = self.handle.tree.getroot().findall(".//mets:fileGrp[@USE='IMAGE']", ns)
+        except:
+            return
         for img_fileGrp in img_fileGrps:
             img_files = img_fileGrp.findall("./mets:file", ns)
             for img_file in img_files:
