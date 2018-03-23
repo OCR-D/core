@@ -3,6 +3,7 @@ export
 SHELL = /bin/bash
 PYTHON = python2
 PYTHONPATH := .:$(PYTHONPATH)
+PIP = pip
 LOG_LEVEL = INFO
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
@@ -37,7 +38,7 @@ deps-ubuntu:
 
 # Install python deps via pip
 deps-pip:
-	pip3 install --user -r requirements.txt
+	$(PIP) install -r requirements.txt
 
 # Clone the spec dir for sample files
 spec:
@@ -45,7 +46,7 @@ spec:
 
 # (Re)install the tool
 install:
-	pip3 install --user .
+	$(PIP) install .
 
 test/assets: spec
 	mkdir -p test/assets
@@ -53,7 +54,7 @@ test/assets: spec
 
 # Install test python deps via pip
 test-deps-pip:
-	pip3 install --user -r requirements.txt
+	$(PIP) install -r requirements.txt
 
 .PHONY: test
 # Run all unit tests

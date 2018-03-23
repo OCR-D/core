@@ -1,0 +1,11 @@
+language: python
+python:
+  - 2.7
+  - 3.6
+before_install:
+  - sudo apt-get -qq update
+  - sudo make deps-ubuntu
+install:
+  - make deps-pip test-deps-pip
+script:
+  - make test
