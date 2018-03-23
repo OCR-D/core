@@ -19,11 +19,10 @@ class Tesseract3Recognizer(Processor):
         with tesserocr.PyTessBaseAPI(path=DEFAULT_PATH, lang=DEFAULT_MODEL) as tessapi:
             tessapi.SetPageSegMode(tesserocr.PSM.SINGLE_LINE)
             for (n, input_file) in enumerate(self.input_files):
-                log.info(input_file)
                 page = OcrdPage.from_file(self.workspace.download_file(input_file))
                 image_url = page.imageFileName
                 for region_ref in page.text_region_refs:
-                    print("NONO %s" % page.number_of_text_lines(parent=region_ref))
+                    log.info("About to recognize text in %i lines in '%s'", page.number_of_text_lines(parent=region_ref), region_ref)
                     for line_no in range(0, page.number_of_text_lines(parent=region_ref)):
                         log.debug("Recognizing text in region '%s' line '%s'", region_ref, line_no)
                         coords = page.get_text_line_coords(line_no, parent=region_ref)

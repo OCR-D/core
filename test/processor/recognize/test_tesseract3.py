@@ -14,7 +14,8 @@ WORKSPACE_DIR = '/tmp/pyocrd-test-recognizer'
 class TestTesseract3Recognizer(TestCase):
 
     def setUp(self):
-        shutil.rmtree(WORKSPACE_DIR)
+        if os.path.exists(WORKSPACE_DIR):
+            shutil.rmtree(WORKSPACE_DIR)
         os.makedirs(WORKSPACE_DIR)
 
     def runTest(self):
