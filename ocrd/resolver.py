@@ -14,6 +14,12 @@ class Resolver(object):
     Handle Uploads, Downloads, Repository access and manage temporary directories
     """
 
+    def __init__(self, cache_directory=None):
+        if cache_directory:
+            self.caching = True
+            self.cache_directory = cache_directory
+        pass
+
     def download_to_directory(self, directory, url, basename=None, overwrite=False):
         """
         Download a file to the workspace.
