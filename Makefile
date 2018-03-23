@@ -1,3 +1,8 @@
+export
+
+SHELL = /bin/bash
+PYTHONPATH := .:$(PYTHONPATH)
+
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
@@ -8,7 +13,7 @@ help:
 	@echo "    deps-pip     Install python deps via pip"
 	@echo "    spec         Clone the spec dir for sample files"
 	@echo "    install      (Re)install the tool"
-	@echo "    test-run     Test the run command"
+	@echo "    test         Run all unit tests"
 
 # END-EVAL
 
@@ -36,10 +41,14 @@ spec:
 install:
 	pip3 install --user .
 
-# Test the run command
-test-run: spec
-	run-ocrd spec/io/example/mets.xml
-
 test/assets: spec
 	mkdir -p test/assets
 	cp -r spec/io/example test/assets/herold
+
+.PHONY: test
+# Run all unit tests
+test:
+	for t in test/*.test.py; do\
+	    python $$t;\
+	done
+
