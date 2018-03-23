@@ -17,12 +17,12 @@ def create():
         run_processor(ExifProcessor, request.args['mets_url'], resolver)
         return 'DONE', 200
 
-    @app.route('/processor/segent_line/tesseract3', methods=['PUT'])
+    @app.route('/processor/segment_line/tesseract3', methods=['PUT'])
     def _segment_line_tesseract3():
         run_processor(Tesseract3LineSegmenter, request.args['mets_url'], resolver)
         return 'DONE', 200
 
-    @app.route('/processor/segent_region/tesseract3', methods=['PUT'])
+    @app.route('/processor/segment_region/tesseract3', methods=['PUT'])
     def _segment_region_tesseract3():
         run_processor(Tesseract3RegionSegmenter, request.args['mets_url'], resolver)
         return 'DONE', 200
