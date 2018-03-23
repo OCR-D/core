@@ -1,0 +1,8 @@
+[MESSAGES CONTROL]
+disable =
+    missing-docstring,
+    no-self-use,
+    superfluous-parens,
+    invalid-name,
+    line-too-long,
+    too-few-public-methods,
