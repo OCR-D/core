@@ -39,3 +39,7 @@ install:
 # Test the run command
 test-run: spec
 	run-ocrd spec/io/example/mets.xml
+
+test/assets: spec
+	mkdir -p test/assets
+	cp -r spec/io/example test/assets/herold

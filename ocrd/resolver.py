@@ -3,22 +3,23 @@ from shutil import copyfile
 import tempfile
 import requests
 
-from ocrd.workspace import Workspace
 from ocrd.log import logging as log
+from ocrd.resolver_cache import ResolverCache
+from ocrd.workspace import Workspace
 
 PREFIX = 'pyocrd-'
 tempfile.tempdir = '/tmp'
+CACHE_DIR = '/tmp/cache-pyocrd'
 
 class Resolver(object):
     """
     Handle Uploads, Downloads, Repository access and manage temporary directories
+    Optionally cache files.
     """
 
-    def __init__(self, cache_directory=None):
-        if cache_directory:
-            self.caching = True
-            self.cache_directory = cache_directory
-        pass
+    def __init__(self, cache_enabled=False, cache_directory=CACHE_DIR):
+        self.cache_enabled = cache_enabled
+        self.cache = ResolverCache(cache_directory) if cache_enabled else None
 
     def download_to_directory(self, directory, url, basename=None, overwrite=False):
         """
@@ -29,17 +30,30 @@ class Resolver(object):
         if basename is None:
             basename = url.rsplit('/', 1)[-1]
         outfilename = os.path.join(directory, basename)
-        log.debug("Downloading <%s> to '%s'" % (url, outfilename))
+
         if (os.path.exists(outfilename) and not overwrite):
             log.info("File already exists and overwrite=False: %s" % outfilename)
-        if url.startswith('file://'):
-            copyfile(url[len('file://'):], outfilename)
+
+        cached_filename = self.cache.get(url) if self.cache_enabled else False
+
+        if cached_filename:
+            log.debug("Found cached version of <%s> at '%s'" % (url, cached_filename))
+            copyfile(cached_filename, outfilename)
         else:
-            with open(outfilename, 'wb') as outfile:
-                response = requests.get(url)
-                if response.status_code != 200:
-                    raise Exception("Not found: %s" % (url))
-                outfile.write(response.content)
+            log.debug("Downloading <%s> to '%s'" % (url, outfilename))
+            if url.startswith('file://'):
+                copyfile(url[len('file://'):], outfilename)
+            else:
+                with open(outfilename, 'wb') as outfile:
+                    response = requests.get(url)
+                    if response.status_code != 200:
+                        raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
+                    outfile.write(response.content)
+
+        if self.cache_enabled and not cached_filename:
+            cached_filename = self.cache.put(url, filename=outfilename)
+            log.debug("Stored in cache <%s> at '%s'" % (url, cached_filename))
+
         return outfilename
 
     def create_workspace(self, mets_url):

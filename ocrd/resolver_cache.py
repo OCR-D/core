@@ -1,5 +1,11 @@
+import os
+import re
+
+from ocrd.log import logging as log
+
 def cache_key_from_url(url):
-    return re.replace(url, '[^A-Za-z0-9]', '', 'g')
+    ret = re.sub('[^A-Za-z0-9]', '', url)
+    return ret
 
 class ResolverCache(object):
     """
@@ -9,18 +15,21 @@ class ResolverCache(object):
     def __init__(self, directory):
         self.directory = directory
         if not os.path.isdir(self.directory):
-            raise Exception("Cache directory does not exist: %s" % (self.directory))
+            log.info("Cache directory does not exist, creating: '%s'" % (self.directory))
+            os.makedirs(self.directory)
 
-    def get(url):
-        filename = os.path.join(self.directory, cache_key_from_url(url))
-        if os.path.exists():
-            return filename
-        else:
-            return None
+    def get(self, url):
+        cached_filename = os.path.join(self.directory, cache_key_from_url(url))
+        if os.path.exists(cached_filename):
+            return cached_filename
 
-    def put(url, content):
-        filename = os.path.join(self.directory, cache_key_from_url(url))
-        with open(filename, 'wb') as outfile:
+    def put(self, url, filename=None, content=None):
+        cached_filename = os.path.join(self.directory, cache_key_from_url(url))
+        if filename is None and content is None:
+            raise Exception("cache.put requires 'filename' or 'content' kwarg")
+        elif filename:
+            with open(filename, 'r') as f:
+                content = f.read()
+        with open(cached_filename, 'wb') as outfile:
             outfile.write(content)
-        return filename
-
+        return cached_filename
