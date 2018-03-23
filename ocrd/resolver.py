@@ -3,7 +3,7 @@ from shutil import copyfile
 import tempfile
 import requests
 
-from ocrd.utils import getLogger
+from ocrd.utils import getLogger, safe_filename
 from ocrd.resolver_cache import ResolverCache
 from ocrd.workspace import Workspace
 
@@ -42,11 +42,25 @@ class Resolver(object):
         """
         Download a file to the workspace.
 
-        Basename defaults to last URL path segment.
+        If basename is not given but subdir is, assume user knows what she's doing and use last URL segment as the basename.
+        If basename is not given and no subdir is given, use the alnum characters in the URL as the basename.
+
+        Args:
+            directory (string): Directory to download files to
+            basename (string, None): basename part of the filename on disk.
+            url (string): URL to download from
+            overwrite (boolean): Whether to overwrite existing files with that name
+            subdir (boolean, None): Subdirectory to create within the directory. Think fileGrp.
+            prefer_symlink (boolean): Whether to use symlinks instead of copying. Overrides self.prefer_symlink
+
+        Returns:
+            Local filename
         """
-        #  print(self, directory, url, basename, overwrite, subdir)
         if basename is None:
-            basename = url.rsplit('/', 1)[-1]
+            if subdir is not None:
+                basename = url.rsplit('/', 1)[-1]
+            else:
+                basename = safe_filename(url)
 
         if subdir is not None:
             basename = os.path.join(subdir, basename)

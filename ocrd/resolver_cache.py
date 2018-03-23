@@ -1,14 +1,9 @@
 import os
-import re
 
 from ocrd.constants import DEFAULT_CACHE_FOLDER
 
-from ocrd.utils import getLogger
+from ocrd.utils import getLogger, safe_filename
 log = getLogger('ocrd.cache')
-
-def cache_key_from_url(url):
-    ret = re.sub('[^A-Za-z0-9]', '', url)
-    return ret
 
 class ResolverCache(object):
     """
@@ -29,12 +24,12 @@ class ResolverCache(object):
             os.makedirs(self.directory)
 
     def get(self, url):
-        cached_filename = os.path.join(self.directory, cache_key_from_url(url))
+        cached_filename = os.path.join(self.directory, safe_filename(url))
         if os.path.exists(cached_filename):
             return cached_filename
 
     def put(self, url, filename=None, content=None):
-        cached_filename = os.path.join(self.directory, cache_key_from_url(url))
+        cached_filename = os.path.join(self.directory, safe_filename(url))
         if filename is None and content is None:
             raise Exception("cache.put requires 'filename' or 'content' kwarg")
         elif filename:
