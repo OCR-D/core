@@ -34,6 +34,7 @@ class Resolver(object):
                 if response.status_code != 200:
                     raise Exception("Not found: %s" % (url))
                 outfile.write(response.content)
+        return outfilename
 
     def create_workspace(self, mets_url):
         """

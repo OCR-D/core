@@ -9,7 +9,10 @@ class TestResolver(unittest.TestCase):
     def test_basic(self):
         resolver = Resolver()
         workspace = resolver.create_workspace(METS_URL)
-        f = workspace.download_input(workspace.list_input_files()[0])
+        input_files = workspace.list_input_files()
+        mets_file = input_files[0]
+        f = workspace.download_file(mets_file)
+        print(mets_file)
         print(f)
 
 if __name__ == '__main__':
