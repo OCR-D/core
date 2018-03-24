@@ -7,7 +7,7 @@ from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
 from ocrd.processor.recognize.tesserocr import Tesseract3Recognizer
 
 from test.assets import METS_HEROLD_SMALL
-from test.base import TestCase, main
+from test.base import TestCase, skip, main
 
 WORKSPACE_DIR = '/tmp/pyocrd-test-recognizer'
 
@@ -18,6 +18,7 @@ class TestTesseract3Recognizer(TestCase):
             shutil.rmtree(WORKSPACE_DIR)
         os.makedirs(WORKSPACE_DIR)
 
+    skip("Takes too long")
     def runTest(self):
         resolver = Resolver(cache_enabled=True)
         workspace = resolver.create_workspace(METS_HEROLD_SMALL, directory=WORKSPACE_DIR)
