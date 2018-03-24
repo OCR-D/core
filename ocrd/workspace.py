@@ -1,7 +1,8 @@
 import os
 
-from ocrd.model import OcrdMets, OcrdPage
-from ocrd.log import logging as log
+from ocrd.model import OcrdMets
+from ocrd.log import logging
+log = logging.getLogger('workspace')
 
 class Workspace(object):
     """
@@ -15,57 +16,63 @@ class Workspace(object):
         self.directory = directory
         self.mets = OcrdMets(filename=os.path.join(directory, 'mets.xml'))
 
-    def list_input_files(self):
-        """
-        List input files, delegates to OcrdMets.
-        """
-        return self.mets.files_in_group('INPUT')
+    def __str__(self):
+        return 'Workspace[directory=%s, file_groups=%s, files=%s]' % (
+            self.directory,
+            self.mets.file_groups,
+            [str(f) for f in self.mets.files],
+        )
 
-    def list_output_files(self):
-        """
-        List output files, delegates to OcrdMets.
-        """
-        return self.mets.files_in_group('OUTPUT')
-
-    def download_url(self, url, basename=None):
+    def download_url(self, url, **kwargs):
         """
         Download a URL to the workspace.
         """
-        return self.resolver.download_to_directory(self.directory, url, basename)
+        return self.resolver.download_to_directory(self.directory, url, **kwargs)
 
-    def download_file(self, mets_file):
+    @property
+    def pages(self):
+        self.mets.files_in_group('INPUT')
+
+    def download_file(self, f, **kwargs):
         """
-        Download a ~OcrdMetsFile to the workspace.
+        Download a ~OcrdFile to the workspace.
         """
-        if mets_file.filename:
-            log.debug("Alrady downloaded: %s" % (mets_file.filename))
-            filename = mets_file.filename
+        if f.local_filename:
+            log.debug("Alrady downloaded: %s", f.local_filename)
         else:
-            filename = self.download_url(mets_file.url)
-            mets_file.filename = filename
-        if mets_file.mimetype.startswith('image'):
-            return OcrdPage.from_mets_file(mets_file)
-        elif mets_file.mimetype == 'text/xml':
-            return OcrdPage(filename=filename)
+            f.local_filename = self.download_url(f.url, **kwargs)
+        return f
 
     def download_all_inputs(self):
         """
-        Download all  the ~OcrdMetsFile in the INPUT file group.
+        Download all  the ~OcrdFile in the INPUT file group.
         """
-        for input_file in self.list_input_files():
-            self.download_file(input_file)
+        for input_file in self.mets.files_in_group('INPUT'):
+            self.download_file(input_file, subdir='INPUT')
 
-    def add_output_file(self, basename, ID, mimetype, url):
+    def add_file(self, use, basename=None, content=None, local_filename=None, **kwargs):
         """
-        Add an output file. Creates the file on-disk in the workspace
-        directory, creates an ~OcrdMetsFile to pass around and adds that to the
+        Add an output file. Creates an ~OcrdFile to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
-        pass
+        if basename is not None:
+            if use is not None:
+                basename = os.path.join(use, basename)
+            local_filename = os.path.join(self.directory, basename)
+
+        local_filename_dir = local_filename.rsplit('/', 1)[0]
+        if not os.path.isdir(local_filename_dir):
+            os.makedirs(local_filename_dir)
+
+        self.mets.add_file(use, local_filename=local_filename, **kwargs)
+
+        if content is not None:
+            with open(local_filename, 'wb') as f:
+                f.write(content)
 
     def persist(self):
         """
         Persist the workspace using the resolver. Uploads the files in the
         OUTPUT group to the data repository, sets their URL accordingly.
         """
-        pass
+        raise Exception("Not implemented")

@@ -48,7 +48,8 @@ test/assets: spec
 .PHONY: test
 # Run all unit tests
 test:
-	for t in test/*.test.py; do\
+	@for t in test/*.test.py; do\
+	    echo -e "# ***\n# *** Testing $$t\n# ***";\
 	    python $$t;\
 	done
 

@@ -1,7 +1,8 @@
 import os
 import re
 
-from ocrd.log import logging as log
+from ocrd.log import logging
+log = logging.getLogger('cache')
 
 def cache_key_from_url(url):
     ret = re.sub('[^A-Za-z0-9]', '', url)
@@ -15,7 +16,7 @@ class ResolverCache(object):
     def __init__(self, directory):
         self.directory = directory
         if not os.path.isdir(self.directory):
-            log.info("Cache directory does not exist, creating: '%s'" % (self.directory))
+            log.info("Cache directory does not exist, creating: '%s'", self.directory)
             os.makedirs(self.directory)
 
     def get(self, url):

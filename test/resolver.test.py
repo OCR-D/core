@@ -9,11 +9,11 @@ class TestResolver(unittest.TestCase):
     def test_basic(self):
         resolver = Resolver(cache_enabled=True)
         workspace = resolver.create_workspace(METS_URL)
-        input_files = workspace.list_input_files()
+        input_files = workspace.mets.files_in_group('INPUT')
         mets_file = input_files[0]
         f = workspace.download_file(mets_file)
-        print(mets_file)
-        print(f)
+        self.assertEquals(f.ID, 'FILE_0001_IMAGE')
+        #  print(f)
 
 if __name__ == '__main__':
     unittest.main()

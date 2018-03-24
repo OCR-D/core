@@ -13,6 +13,10 @@ PAGE_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
 </PcGts>
 '''
 
+TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
+TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
+TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
+
 EXIF_COMPRESSION_METHODS = {
     1: "Uncompressed",
     2: "CCITT 1D",

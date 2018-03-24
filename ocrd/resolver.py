@@ -3,10 +3,11 @@ from shutil import copyfile
 import tempfile
 import requests
 
-from ocrd.log import logging as log
+from ocrd.log import logging
 from ocrd.resolver_cache import ResolverCache
 from ocrd.workspace import Workspace
 
+log = logging.getLogger('resolver')
 PREFIX = 'pyocrd-'
 tempfile.tempdir = '/tmp'
 CACHE_DIR = '/tmp/cache-pyocrd'
@@ -21,7 +22,7 @@ class Resolver(object):
         self.cache_enabled = cache_enabled
         self.cache = ResolverCache(cache_directory) if cache_enabled else None
 
-    def download_to_directory(self, directory, url, basename=None, overwrite=False):
+    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None):
         """
         Download a file to the workspace.
 
@@ -29,10 +30,19 @@ class Resolver(object):
         """
         if basename is None:
             basename = url.rsplit('/', 1)[-1]
+
+        if subdir is not None:
+            basename = os.path.join(subdir, basename)
+
         outfilename = os.path.join(directory, basename)
 
-        if (os.path.exists(outfilename) and not overwrite):
+        if os.path.exists(outfilename) and not overwrite:
             log.info("File already exists and overwrite=False: %s" % outfilename)
+
+        outfiledir = outfilename.rsplit('/', 1)[0]
+        #  print(outfiledir)
+        if not os.path.isdir(outfiledir):
+            os.makedirs(outfiledir)
 
         cached_filename = self.cache.get(url) if self.cache_enabled else False
 
@@ -64,5 +74,5 @@ class Resolver(object):
         """
         directory = tempfile.mkdtemp(prefix=PREFIX)
         log.debug("Creating workspace '%s' for METS @ <%s>" % (directory, mets_url))
-        self.download_to_directory(directory, mets_url, 'mets.xml')
+        self.download_to_directory(directory, mets_url, basename='mets.xml')
         return Workspace(self, directory)
