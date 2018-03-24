@@ -1,8 +1,8 @@
 import os
 import re
 
-from ocrd.utils import logging
-log = logging.getLogger('cache')
+from ocrd.utils import getLogger
+log = getLogger('ocrd.cache')
 
 def cache_key_from_url(url):
     ret = re.sub('[^A-Za-z0-9]', '', url)

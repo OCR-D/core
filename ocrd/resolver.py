@@ -3,11 +3,11 @@ from shutil import copyfile
 import tempfile
 import requests
 
-from ocrd.utils import logging
+from ocrd.utils import getLogger
 from ocrd.resolver_cache import ResolverCache
 from ocrd.workspace import Workspace
 
-log = logging.getLogger('resolver')
+log = getLogger('ocrd.resolver')
 PREFIX = 'pyocrd-'
 tempfile.tempdir = '/tmp'
 CACHE_DIR = '/tmp/cache-pyocrd'
