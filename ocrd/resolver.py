@@ -28,6 +28,7 @@ class Resolver(object):
 
         Basename defaults to last URL path segment.
         """
+        #  print(self, directory, url, basename, overwrite, subdir)
         if basename is None:
             basename = url.rsplit('/', 1)[-1]
 

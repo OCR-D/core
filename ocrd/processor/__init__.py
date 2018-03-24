@@ -5,8 +5,10 @@ class Processor(object):
     parameters.
     """
 
-    def __init__(self, workspace, parameters=None):
+    def __init__(self, workspace, parameters=None, inputGrp="INPUT", outputGrp="OUTPUT"):
         self.workspace = workspace
+        self.inputGrp = inputGrp
+        self.outputGrp = outputGrp
         self.parameters = parameters if parameters is not None else {}
 
     def verify(self):

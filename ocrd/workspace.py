@@ -44,12 +44,12 @@ class Workspace(object):
             f.local_filename = self.download_url(f.url, **kwargs)
         return f
 
-    def download_all_inputs(self):
+    def download_files_in_group(self, use):
         """
-        Download all  the ~OcrdFile in the INPUT file group.
+        Download all  the ~OcrdFile in the file group given.
         """
-        for input_file in self.mets.files_in_group('INPUT'):
-            self.download_file(input_file, subdir='INPUT')
+        for input_file in self.mets.files_in_group(use):
+            self.download_file(input_file, subdir=use)
 
     def add_file(self, use, basename=None, content=None, local_filename=None, **kwargs):
         """
