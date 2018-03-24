@@ -13,6 +13,8 @@ PAGE_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
 </PcGts>
 '''
 
+MIMETYPE_PAGE = 'text/page+xml'
+
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
 TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
