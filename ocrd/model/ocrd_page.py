@@ -110,7 +110,7 @@ class OcrdPage(OcrdXmlBase):
         self.page.set('imageResolutionUnit', v)
 
     def add_reading_order_ref(self, region_ref, index):
-        if not self.page.find('.//page:ReadingOrder', NAMESPACES):
+        if self.page.find('.//page:ReadingOrder', NAMESPACES) is None:
             ET.SubElement(self.page, TAG_PAGE_READINGORDER)
         region_ref_indexed = ET.SubElement(self.page.find('.//page:ReadingOrder', NAMESPACES), TAG_PAGE_REGIONREFINDEXED)
         region_ref_indexed.set("regionRef", region_ref)
