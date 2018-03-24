@@ -21,4 +21,19 @@ class Processor(object):
         """
         Process the workspace
         """
-        pass
+        raise Exception("Must be implemented")
+
+    @property
+    def input_files(self):
+        """
+        List the input files
+        """
+        return self.workspace.mets.files_in_group(self.inputGrp)
+
+    def add_output_file(self, input_file=None, basename=None, **kwargs):
+        """
+        Add an output file.
+        """
+        if basename is None and input_file is not None:
+            basename = input_file.basename_without_extension + '.xml'
+        self.workspace.add_file(self.outputGrp, basename=basename, **kwargs)
