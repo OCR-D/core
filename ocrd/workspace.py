@@ -1,7 +1,7 @@
 import os
 
 from ocrd.model import OcrdMets
-from ocrd.log import logging
+from ocrd.utils import logging
 log = logging.getLogger('workspace')
 
 class Workspace(object):

@@ -3,7 +3,7 @@ from shutil import copyfile
 import tempfile
 import requests
 
-from ocrd.log import logging
+from ocrd.utils import logging
 from ocrd.resolver_cache import ResolverCache
 from ocrd.workspace import Workspace
 
