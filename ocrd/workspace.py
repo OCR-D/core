@@ -14,7 +14,8 @@ class Workspace(object):
     def __init__(self, resolver, directory):
         self.resolver = resolver
         self.directory = directory
-        self.mets = OcrdMets(filename=os.path.join(directory, 'mets.xml'))
+        self.mets_filename = os.path.join(directory, 'mets.xml')
+        self.mets = OcrdMets(filename=self.mets_filename)
 
     def __str__(self):
         return 'Workspace[directory=%s, file_groups=%s, files=%s]' % (
@@ -76,3 +77,10 @@ class Workspace(object):
         OUTPUT group to the data repository, sets their URL accordingly.
         """
         raise Exception("Not implemented")
+
+    def save_mets(self):
+        """
+        Write out the current state of the METS file.
+        """
+        with open(self.mets_filename, 'wb') as f:
+            f.write(self.mets.to_xml())
