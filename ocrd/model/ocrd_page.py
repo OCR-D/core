@@ -1,4 +1,16 @@
-from ocrd.constants import PAGE_XML_EMPTY, NAMESPACES
+from ocrd.constants import (
+    PAGE_XML_EMPTY,
+    NAMESPACES,
+    TAG_PAGE_COORDS,
+    TAG_PAGE_READINGORDER,
+    TAG_PAGE_REGIONREFINDEXED,
+    TAG_PAGE_TEXTLINE,
+    TAG_PAGE_TEXTREGION,
+)
+from ocrd.utils import (
+    coordinate_string_from_xywh,
+    xywh_from_coordinate_string
+)
 
 from .ocrd_xml_base import OcrdXmlBase, ET
 
@@ -96,3 +108,33 @@ class OcrdPage(OcrdXmlBase):
     @imageResolutionUnit.setter
     def imageResolutionUnit(self, v):
         self.page.set('imageResolutionUnit', v)
+
+    def add_reading_order_ref(self, region_ref, index):
+        if not self.page.find('.//page:ReadingOrder', NAMESPACES):
+            ET.SubElement(self.page, TAG_PAGE_READINGORDER)
+        region_ref_indexed = ET.SubElement(self.page.find('.//page:ReadingOrder', NAMESPACES), TAG_PAGE_REGIONREFINDEXED)
+        region_ref_indexed.set("regionRef", region_ref)
+        region_ref_indexed.set("index", "%i" % index)
+
+    def add_text_region(self, region_ref, box):
+        region = ET.SubElement(self.page, TAG_PAGE_TEXTREGION)
+        region.set("id", region_ref)
+        coords = ET.SubElement(region, TAG_PAGE_COORDS)
+        coords.set("points", coordinate_string_from_xywh(box))
+
+    def get_region_coords(self, region_ref):
+        points = self.page.find('.//page:TextRegion[@id="%s"]/page:Coords' % (region_ref)).get('points')
+        return xywh_from_coordinate_string(points)
+
+    @property
+    def text_region_refs(self):
+        return [el.get('id') for el in self.page.findall('.//page:TextRegion', NAMESPACES)]
+
+    def add_text_line(self, box, parent=None):
+        if parent is None:
+            parent = self.page
+        else:
+            parent = self.page.find('.//*[@id="%s"]' % parent)
+        line = ET.SubElement(parent, TAG_PAGE_TEXTLINE)
+        coords = ET.SubElement(line, TAG_PAGE_COORDS)
+        coords.set("points", coordinate_string_from_xywh(box))
