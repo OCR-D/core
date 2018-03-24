@@ -37,7 +37,7 @@ class Resolver(object):
         outfilename = os.path.join(directory, basename)
 
         if os.path.exists(outfilename) and not overwrite:
-            log.info("File already exists and overwrite=False: %s" % outfilename)
+            log.info("File already exists and overwrite=False: %s", outfilename)
 
         outfiledir = outfilename.rsplit('/', 1)[0]
         #  print(outfiledir)
@@ -47,10 +47,10 @@ class Resolver(object):
         cached_filename = self.cache.get(url) if self.cache_enabled else False
 
         if cached_filename:
-            log.debug("Found cached version of <%s> at '%s'" % (url, cached_filename))
+            log.debug("Found cached version of <%s> at '%s'", url, cached_filename)
             copyfile(cached_filename, outfilename)
         else:
-            log.debug("Downloading <%s> to '%s'" % (url, outfilename))
+            log.debug("Downloading <%s> to '%s'", url, outfilename)
             if url.startswith('file://'):
                 copyfile(url[len('file://'):], outfilename)
             else:
@@ -62,7 +62,7 @@ class Resolver(object):
 
         if self.cache_enabled and not cached_filename:
             cached_filename = self.cache.put(url, filename=outfilename)
-            log.debug("Stored in cache <%s> at '%s'" % (url, cached_filename))
+            log.debug("Stored in cache <%s> at '%s'", url, cached_filename)
 
         return outfilename
 
@@ -73,6 +73,6 @@ class Resolver(object):
         Sets the mets.xml file
         """
         directory = tempfile.mkdtemp(prefix=PREFIX)
-        log.debug("Creating workspace '%s' for METS @ <%s>" % (directory, mets_url))
+        log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
         self.download_to_directory(directory, mets_url, basename='mets.xml')
         return Workspace(self, directory)
