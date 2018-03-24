@@ -1,6 +1,6 @@
 [MASTER]
 extension-pkg-whitelist=lxml
-ignored-modules=lxml
+ignored-modules=cv2,tesserocr
 
 [MESSAGES CONTROL]
 disable =
