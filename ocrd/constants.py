@@ -16,6 +16,11 @@ PAGE_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
 TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
+TAG_PAGE_COORDS = '{%s}Coords' % NAMESPACES['page']
+TAG_PAGE_READINGORDER = '{%s}ReadingOrder' % NAMESPACES['page']
+TAG_PAGE_REGIONREFINDEXED = '{%s}RegionRefIndexed' % NAMESPACES['page']
+TAG_PAGE_TEXTLINE = '{%s}TextLine' % NAMESPACES['page']
+TAG_PAGE_TEXTREGION = '{%s}TextRegion' % NAMESPACES['page']
 
 EXIF_COMPRESSION_METHODS = {
     1: "Uncompressed",
