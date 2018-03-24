@@ -51,8 +51,7 @@ class Processor(object):
         """
         Add an output file.
         """
-        if input_file is not None:
-            print input_file
+        log.debug("Adding output file %s", input_file)
         if basename is None and input_file is not None:
             basename = input_file.basename_without_extension + '.xml'
         #  if ID is None and input_file is not None:

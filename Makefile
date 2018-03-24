@@ -59,7 +59,7 @@ test-deps-pip:
 .PHONY: test
 # Run all unit tests
 test:
-	pytest --log-level=$(LOG_LEVEL) --duration=10 test
+	$(PYTHON) -m pytest --log-level=$(LOG_LEVEL) --duration=10 test
 
 .PHONY: docs
 # Build documentation
