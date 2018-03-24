@@ -19,3 +19,13 @@ def coordinate_string_from_xywh(box):
         box['x'] + box['h'],
         box['y'] + box['h']
     )
+
+def xywh_from_coordinate_string(points):
+    """
+    Constructs a numpy-compatible polygon from a page representation.
+    """
+    polygon = []
+    for pair in points.split(" "):
+        x_y = pair.split(",")
+        polygon.append([float(x_y[0]), float(x_y[1])])
+    return polygon
