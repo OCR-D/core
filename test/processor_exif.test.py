@@ -12,7 +12,7 @@ class TestProcessorExif(unittest.TestCase):
     def test_basic(self):
         resolver = Resolver(cache_enabled=True)
         workspace = resolver.create_workspace(METS_URL)
-        workspace.download_all_inputs()
+        #  workspace.download_all_inputs()
         processor = ExifProcessor(workspace)
         processor.verify()
         processor.process()
