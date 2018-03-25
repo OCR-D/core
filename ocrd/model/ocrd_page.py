@@ -46,6 +46,10 @@ class OcrdPage(OcrdXmlBase):
         return self._tree.find('.//page:Page', NAMESPACES)
 
     @property
+    def pcGtsId(self):
+        return self._tree.getroot().get('pcGtsId')
+
+    @property
     def imageFileName(self):
         return self.page.get('imageFileName')
 
