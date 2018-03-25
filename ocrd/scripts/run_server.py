@@ -1,25 +1,18 @@
 from __future__ import absolute_import
 
 import click
+from ocrd.webservice.processor import create as create_processor_ws
 
-from ocrd import init, segment, webservices
-
-@click.command()
-@click.option('-w', '--working-dir', default='/tmp', help='Path to store intermediate and result files (default: "/tmp")', type=click.Path(exists=True))
-def cli(working_dir):
+@click.group()
+def cli():
     """
-    Starts a web service.
+    Start OCR-D web services
     """
 
-    # create initializer (needed for standalone running)
-    initializer = init.Initializer()
-    initializer.set_working_dir(working_dir)
-
-    # page segmentation
-    page_segmenter = segment.PageSegmenter()
-
-    #
-    # load app and run
-    #
-    ws = webservices.create_page_segmentation_ws(initializer,page_segmenter)
-    ws.run()
+@cli.command()
+@click.option('-p', '--port', help="Port to run processor webservice on", default=5010)
+def processor(port):
+    """
+    Start a server exposing the processors as webservices
+    """
+    create_processor_ws().run(port=port)
