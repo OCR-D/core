@@ -1,5 +1,9 @@
 import os
 
+import cv2
+import PIL
+import numpy as np
+
 from ocrd.model import OcrdMets
 from ocrd.utils import getLogger
 log = getLogger('ocrd.workspace')
@@ -16,6 +20,7 @@ class Workspace(object):
         self.directory = directory
         self.mets_filename = os.path.join(directory, 'mets.xml')
         self.mets = OcrdMets(filename=self.mets_filename)
+        self.image_cache = {'pil': {}, 'cv2': {}}
 
     def __str__(self):
         return 'Workspace[directory=%s, file_groups=%s, files=%s]' % (
@@ -89,3 +94,33 @@ class Workspace(object):
         """
         with open(self.mets_filename, 'wb') as f:
             f.write(self.mets.to_xml())
+
+    def resolve_image_as_pil(self, image_url, coords=None):
+        """
+        Resolve an image URL to a PIL image.
+
+        Args:
+            coords (list) : Coordinates of the bounding box to cut from the image
+
+        Returns:
+            Image or region in image as PIL.Image
+        """
+        image_filename = self.download_url(image_url)
+
+        if image_url not in self.image_cache['pil']:
+            self.image_cache['pil'][image_url] = PIL.Image.open(image_filename)
+
+        pil_image = self.image_cache['pil'][image_url]
+
+        if coords is None:
+            return pil_image
+        else:
+            if image_url not in self.image_cache['cv2']:
+                self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            cv2_image = self.image_cache['cv2'][image_url]
+            poly = np.array(coords, np.int32)
+            region_cut = cv2_image[
+                np.min(poly[:, 1]):np.max(poly[:, 1]),
+                np.min(poly[:, 0]):np.max(poly[:, 0])
+            ]
+            return PIL.Image.fromarray(region_cut)

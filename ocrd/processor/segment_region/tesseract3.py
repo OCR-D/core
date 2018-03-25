@@ -4,7 +4,6 @@ from ocrd.utils import getLogger
 from ocrd.constants import MIMETYPE_PAGE
 
 import tesserocr
-import PIL
 
 log = getLogger('processor.segment_region.tesseract3')
 
@@ -16,12 +15,10 @@ class Tesseract3RegionSegmenter(Processor):
         """
         with tesserocr.PyTessBaseAPI() as tessapi:
             for input_file in self.input_files:
-                self.workspace.download_file(input_file)
-                page = OcrdPage.from_file(input_file)
-                image_filename = self.workspace.download_url(page.imageFileName)
-                image = PIL.Image.open(image_filename)
-                tessapi.SetImage(image)
+                page = OcrdPage.from_file(self.workspace.download_file(input_file))
+                image = self.workspace.resolve_image_as_pil(page.imageFileName)
                 log.debug("Detecting regions with tesseract")
+                tessapi.SetImage(image)
                 for component in tessapi.GetComponentImages(tesserocr.RIL.BLOCK, True):
                     box, index = component[1], component[2]
                     # the region reference in the reading order element

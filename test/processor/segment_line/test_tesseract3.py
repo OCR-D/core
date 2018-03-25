@@ -13,11 +13,8 @@ class TestProcessorSegmentLineTesseract3(TestCase):
         workspace = resolver.create_workspace(METS_HEROLD_SMALL)
         Tesseract3RegionSegmenter(workspace, inputGrp="INPUT", outputGrp="OCR-D-SEG-BLOCK").process()
         #  workspace.save_mets()
-        print "XXXX"
-        print "XXXX"
-        print "XXXX"
         Tesseract3LineSegmenter(workspace, inputGrp="OCR-D-SEG-BLOCK", outputGrp="OCR-D-SEG-LINE").process()
-        #  workspace.save_mets()
+        workspace.save_mets()
 
 if __name__ == '__main__':
     main()

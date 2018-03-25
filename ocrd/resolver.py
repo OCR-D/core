@@ -54,7 +54,8 @@ class Resolver(object):
         outfilename = os.path.join(directory, basename)
 
         if os.path.exists(outfilename) and not overwrite:
-            log.info("File already exists and overwrite=False: %s", outfilename)
+            log.debug("File already exists and overwrite=False: %s", outfilename)
+            return outfilename
 
         outfiledir = outfilename.rsplit('/', 1)[0]
         #  print(outfiledir)

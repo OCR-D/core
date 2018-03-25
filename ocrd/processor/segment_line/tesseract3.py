@@ -4,9 +4,6 @@ from ocrd.utils import getLogger
 from ocrd.constants import MIMETYPE_PAGE
 
 import tesserocr
-import cv2
-import PIL
-import numpy as np
 
 log = getLogger('processor.segment_line.tesseract3')
 
@@ -18,22 +15,13 @@ class Tesseract3LineSegmenter(Processor):
         """
         with tesserocr.PyTessBaseAPI() as tessapi:
             for input_file in self.input_files:
-                #  print "XXXX"
-                #  print(input_file)
-                #  print "XXXX"
-                self.workspace.download_file(input_file)
-                page = OcrdPage.from_file(input_file)
-                image_filename = self.workspace.download_url(page.imageFileName)
-                image = cv2.imread(image_filename)
-                log.debug("Detecting text lines with tesseract")
+                page = OcrdPage.from_file(self.workspace.download_file(input_file))
+                image_url = page.imageFileName
                 for region_ref in page.text_region_refs:
-                    poly = np.array(page.get_region_coords(region_ref), np.int32)
-                    region_cut = image[
-                        np.min(poly[:, 1]):np.max(poly[:, 1]),
-                        np.min(poly[:, 0]):np.max(poly[:, 0])
-                    ]
-                    region_img = PIL.Image.fromarray(region_cut)
-                    tessapi.SetImage(region_img)
+                    log.debug("Detecting lines in %s with tesseract", region_ref)
+                    coords = page.get_region_coords(region_ref)
+                    image = self.workspace.resolve_image_as_pil(image_url, coords)
+                    tessapi.SetImage(image)
                     for component in tessapi.GetComponentImages(tesserocr.RIL.TEXTLINE, True):
                         page.add_text_line(component[1], parent=region_ref)
                 self.add_output_file(input_file=input_file, mimetype=MIMETYPE_PAGE, content=page.to_xml())

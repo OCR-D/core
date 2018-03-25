@@ -1,5 +1,6 @@
 import logging
 logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
 
 def getLogger(*args, **kwargs):
     return logging.getLogger(*args, **kwargs)
