@@ -1,47 +1,63 @@
-from __future__ import absolute_import
-
 import click
 
-import xml.dom.minidom as md
+from ocrd.resolver import Resolver
+from ocrd.processor.characterize.exif import ExifProcessor
 
-from lxml import etree as ET
-
-from ocrd import init, characterize, segment
-
-@click.command()
+@click.group()
 @click.option('-w', '--working-dir', default='/tmp', help='Path to store intermediate and result files (default: "/tmp")', type=click.Path(exists=True))
-@click.argument('METS_XML', type=click.File('rb'))
-def cli(working_dir, mets_xml):
+@click.option('-m', '--mets-xml', help="METS file to run", type=click.Path(exists=True))
+@click.pass_context
+def cli(ctx, working_dir, mets_xml):
     """
     Perform OCR for a given METS file.
     """
+    resolver = Resolver(cache_enabled=False)
+    workspace = resolver.create_workspace('file://' + mets_xml)
+    ctx.obj = workspace
+    #  setattr(ctx, 'workspace', workspace)
+    #  ctx.obj = {}
+    #  ctx.obj.workspace = workspace
+    #  setattr(ctx.obj, 'workspace', workspace)
+    #  setattr(ctx.obj, 'mets_xml', mets_xml)
 
-    # read METS
-    initializer = init.Initializer()
-    initializer.load(mets_xml)
+@cli.command('characterize/exif')
+@click.pass_context
+def characterize_exif(ctx):
+    """
+    Characterize images with exiftool
+    """
+    workspace = ctx.obj
+    ExifProcessor(workspace).process()
+    workspace.save_mets()
 
-    # set the working dir
-    initializer.set_working_dir(working_dir)
+    #  #  print subcommand
 
-    # initialize
-    initializer.initialize()
+    #  # read METS
+    #  initializer = init.Initializer()
+    #  initializer.load(mets_xml)
 
-    # image characterization
-    characterizer = characterize.Characterizer()
-    characterizer.set_handle(initializer.get_handle())
-    characterizer.characterize()
+    #  # set the working dir
+    #  initializer.set_working_dir(working_dir)
 
-    # page segmentation
-    page_segmenter = segment.PageSegmenter()
-    page_segmenter.set_handle(initializer.get_handle())
-    page_segmenter.segment()
+    #  # initialize
+    #  initializer.initialize()
 
-    # region segmentation
-    region_segmenter = segment.RegionSegmenter()
-    region_segmenter.set_handle(initializer.get_handle())
-    region_segmenter.segment()
+    #  # image characterization
+    #  characterizer = characterize.Characterizer()
+    #  characterizer.set_handle(initializer.get_handle())
+    #  characterizer.characterize()
 
-    # output
-    for ID in initializer.get_handle().page_trees:
-        print(md.parseString(ET.tostring(initializer.get_handle().page_trees[ID].getroot(), encoding='utf8', method='xml')).toprettyxml(indent="\t"))
-        pass
+    #  # page segmentation
+    #  page_segmenter = segment.PageSegmenter()
+    #  page_segmenter.set_handle(initializer.get_handle())
+    #  page_segmenter.segment()
+
+    #  # region segmentation
+    #  region_segmenter = segment.RegionSegmenter()
+    #  region_segmenter.set_handle(initializer.get_handle())
+    #  region_segmenter.segment()
+
+    #  # output
+    #  for ID in initializer.get_handle().page_trees:
+    #      print(md.parseString(ET.tostring(initializer.get_handle().page_trees[ID].getroot(), encoding='utf8', method='xml')).toprettyxml(indent="\t"))
+    #      pass
