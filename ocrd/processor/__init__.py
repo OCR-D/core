@@ -1,3 +1,6 @@
+from ocrd.utils import getLogger
+log = getLogger('ocrd.processor')
+
 def run_processor(processor, mets_url=None, resolver=None, workspace=None):
     """
     Create a workspace for mets_url and run processor through it
@@ -8,6 +11,7 @@ def run_processor(processor, mets_url=None, resolver=None, workspace=None):
         if mets_url is None:
             raise Exception("Need to pass mets_url to create a workspace")
         workspace = resolver.create_workspace(mets_url)
+    log.debug("Running processor %s", processor)
     processor(workspace).process()
     workspace.persist()
 

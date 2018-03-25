@@ -10,9 +10,14 @@ from ocrd.webservice.processor import create as create_processor_ws
 
 @click.group()
 def cli():
-    pass
+    """
+    CLI to OCR-D
+    """
+# ----------------------------------------------------------------------
+# ocrd process
+# ----------------------------------------------------------------------
 
-@cli.group('process')
+@cli.group('process', chain=True)
 @click.option('-m', '--mets-xml', help="METS file to run", type=click.Path(exists=True))
 @click.pass_context
 def process_cli(ctx, mets_xml):
@@ -48,6 +53,10 @@ def _segment_line_tesseract3(ctx):
     Segment page/regions into lines
     """
     run_processor(Tesseract3LineSegmenter, workspace=ctx.obj['workspace'])
+
+# ----------------------------------------------------------------------
+# ocrd server
+# ----------------------------------------------------------------------
 
 @cli.group('server')
 def server_cli():
