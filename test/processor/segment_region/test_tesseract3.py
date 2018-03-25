@@ -7,7 +7,7 @@ from ocrd.processor.segment_region.tesseract3 import Tesseract3RegionSegmenter
 
 class TestProcessorSegmentRegionTesseract3(TestCase):
 
-    def test_basic(self):
+    def runTest(self):
         resolver = Resolver(cache_enabled=True)
         workspace = resolver.create_workspace(METS_HEROLD_SMALL)
         Tesseract3RegionSegmenter(workspace).process()

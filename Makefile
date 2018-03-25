@@ -3,6 +3,7 @@ export
 SHELL = /bin/bash
 PYTHON = python2
 PYTHONPATH := .:$(PYTHONPATH)
+LOG_LEVEL = INFO
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -46,8 +47,12 @@ test/assets: spec
 	mkdir -p test/assets
 	cp -r spec/io/example test/assets/herold
 
+# Install test python deps via pip
+test-deps-pip:
+	pip3 install --user -r requirements.txt
+
 .PHONY: test
 # Run all unit tests
 test:
-	$(PYTHON) -m unittest discover test
+	pytest --log-level=$(LOG_LEVEL) --duration=10 test
 

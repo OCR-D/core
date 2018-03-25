@@ -8,7 +8,7 @@ from test.base import TestCase, main
 
 class TestProcessorSegmentLineTesseract3(TestCase):
 
-    def test_basic(self):
+    def runTest(self):
         resolver = Resolver(cache_enabled=True)
         workspace = resolver.create_workspace(METS_HEROLD_SMALL)
         Tesseract3RegionSegmenter(workspace, inputGrp="INPUT", outputGrp="OCR-D-SEG-BLOCK").process()

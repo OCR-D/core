@@ -108,3 +108,4 @@ ocrd.egg-info
 /src
 spec
 test/assets
+.pytest_cache

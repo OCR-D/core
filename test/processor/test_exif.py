@@ -7,7 +7,7 @@ from ocrd.processor.characterize.exif import ExifProcessor
 
 class TestProcessorExif(TestCase):
 
-    def test_basic(self):
+    def runTest(self):
         resolver = Resolver(cache_enabled=True)
         workspace = resolver.create_workspace(METS_HEROLD)
         #  workspace.download_all_inputs()

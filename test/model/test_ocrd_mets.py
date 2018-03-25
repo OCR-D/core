@@ -4,7 +4,7 @@ from ocrd.model import OcrdMets
 
 class TestOcrdMets(TestCase):
 
-    def test_basic(self):
+    def runTest(self):
         mets = OcrdMets(filename=METS_HEROLD.replace('file://', ''))
         mets.add_file('OUTPUT', mimetype="bla/quux")
         #  print(mets.to_xml())
