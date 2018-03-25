@@ -36,7 +36,7 @@ class Workspace(object):
 
     def download_file(self, f, **kwargs):
         """
-        Download a ~OcrdFile to the workspace.
+        Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
         if f.local_filename:
             log.debug("Alrady downloaded: %s", f.local_filename)
@@ -46,14 +46,14 @@ class Workspace(object):
 
     def download_files_in_group(self, use):
         """
-        Download all  the ~OcrdFile in the file group given.
+        Download all  the :py:mod:`ocrd.model.ocrd_file.OcrdFile` in the file group given.
         """
         for input_file in self.mets.files_in_group(use):
             self.download_file(input_file, subdir=use)
 
     def add_file(self, use, basename=None, content=None, local_filename=None, **kwargs):
         """
-        Add an output file. Creates an ~OcrdFile to pass around and adds that to the
+        Add an output file. Creates an :py:mod:`ocrd.model.ocrd_file.OcrdFile` to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
         log.debug('outputfile use=%s basename=%s local_filename=%s content=%s', use, basename, local_filename, content is not None)

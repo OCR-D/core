@@ -1,5 +1,5 @@
 from ocrd.model import OcrdPage
-from ocrd.processor import Processor
+from ocrd.processor.base import Processor
 from ocrd.utils import getLogger
 from ocrd.constants import MIMETYPE_PAGE
 

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import exiftool
 
 from ocrd.constants import EXIF_COMPRESSION_METHODS, EXIF_PHOTOMETRICINTERPRETATION_VALUES, EXIF_RESOLUTIONUNIT_VALUES
-from ocrd.processor import Processor
+from ocrd.processor.base import Processor
 from ocrd.model.ocrd_page import OcrdPage
 
 class ExifProcessor(Processor):

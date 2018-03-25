@@ -1,6 +1,6 @@
 import click
 
-from ocrd.processor import run_processor
+from ocrd.processor.base import run_processor
 from ocrd.processor.characterize.exif import ExifProcessor
 from ocrd.processor.segment_region.tesseract3 import Tesseract3RegionSegmenter
 from ocrd.processor.segment_line.tesseract3 import Tesseract3LineSegmenter

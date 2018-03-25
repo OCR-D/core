@@ -15,16 +15,14 @@ class Resolver(object):
     """
     Handle Uploads, Downloads, Repository access and manage temporary directories
     Optionally cache files.
+
+    Args:
+        cache_enabled (Boolean): Whether to cache files. If True, passes kwargs to ~ResolverCache.
+        prefer_symlink (Boolean): If True, symlink from cached file to the workspace instead of copying to reduce I/O.
     """
 
     def __init__(self, cache_enabled=False, prefer_symlink=True, **kwargs):
         """
-        Parameters
-        ----------
-        cache_enabled : Boolean
-                        Whether to cache files. If True, passes kwargs to ~ResolverCache.
-        prefer_symlink : Boolean
-                         If True, symlink from cached file to the workspace instead of copying to reduce I/O.
         """
         self.cache_enabled = cache_enabled
         self.prefer_symlink = prefer_symlink

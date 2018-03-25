@@ -14,14 +14,14 @@ class ResolverCache(object):
     """
     Cache of downloads, based on URL.
 
-    Parameters
-    ----------
-    cache_directory : String
-                      Where to store cached files
+    Args:
+        cache_directory (string): Where to store cached files
+
     """
 
     def __init__(self, cache_directory=DEFAULT_CACHE_FOLDER):
         """
+        Instantiate a cache
         """
         self.directory = cache_directory
         if not os.path.isdir(self.directory):
