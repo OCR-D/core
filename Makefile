@@ -49,9 +49,5 @@ test/assets: spec
 .PHONY: test
 # Run all unit tests
 test:
-	$(PYTHON) test/test_resolver.py
-	$(PYTHON) test/model/test_ocrd_mets.py
-	$(PYTHON) test/processor/test_exif.py
-	$(PYTHON) test/processor/segment_region/test_tesseract3.py
-	$(PYTHON) test/processor/segment_line/test_tesseract3.py
+	$(PYTHON) -m unittest discover test
 

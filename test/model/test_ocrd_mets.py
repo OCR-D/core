@@ -1,5 +1,3 @@
-#  from pprint import pprint
-
 from test.base import TestCase, main
 from test.assets import METS_HEROLD
 from ocrd.model import OcrdMets
