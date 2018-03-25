@@ -1,6 +1,7 @@
 export
 
 SHELL = /bin/bash
+PYTHON = python2
 PYTHONPATH := .:$(PYTHONPATH)
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
@@ -48,8 +49,9 @@ test/assets: spec
 .PHONY: test
 # Run all unit tests
 test:
-	@for t in test/*.test.py; do\
-	    echo -e "# ***\n# *** Testing $$t\n# ***";\
-	    python $$t;\
-	done
+	$(PYTHON) test/test_resolver.py
+	$(PYTHON) test/model/test_ocrd_mets.py
+	$(PYTHON) test/processor/test_exif.py
+	$(PYTHON) test/processor/segment_region/test_tesseract3.py
+	$(PYTHON) test/processor/segment_line/test_tesseract3.py
 

@@ -1,17 +1,15 @@
 #  from pprint import pprint
 
-import base as unittest
-from base import PWD
+from test.base import TestCase, main
+from test.assets import METS_HEROLD
 from ocrd.resolver import Resolver
 from ocrd.processor.characterize.exif import ExifProcessor
 
-METS_URL = 'file://' + PWD + '/assets/herold/mets.xml'
-
-class TestProcessorExif(unittest.TestCase):
+class TestProcessorExif(TestCase):
 
     def test_basic(self):
         resolver = Resolver(cache_enabled=True)
-        workspace = resolver.create_workspace(METS_URL)
+        workspace = resolver.create_workspace(METS_HEROLD)
         #  workspace.download_all_inputs()
         processor = ExifProcessor(workspace)
         processor.verify()
@@ -22,4 +20,4 @@ class TestProcessorExif(unittest.TestCase):
         #  print(mets.files_in_group('INPUT')[0])
 
 if __name__ == '__main__':
-    unittest.main()
+    main()
