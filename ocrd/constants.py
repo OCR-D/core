@@ -4,6 +4,7 @@ NAMESPACES = {
     'mods': "http://www.loc.gov/mods/v3",
     'xlink': "http://www.w3.org/1999/xlink",
     'page': "http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15",
+    'xsl': 'http://www.w3.org/1999/XSL/Transform#',
 }
 
 PAGE_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
