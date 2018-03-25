@@ -1,3 +1,4 @@
 pytest
 pytest-tap
 tappy
+httpie

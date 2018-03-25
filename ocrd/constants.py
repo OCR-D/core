@@ -16,6 +16,9 @@ PAGE_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
 
 MIMETYPE_PAGE = 'text/page+xml'
 
+DEFAULT_UPLOAD_FOLDER = '/tmp/uploads-pyocrd'
+DEFAULT_REPOSITORY_URL = 'http://localhost:5000/'
+
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
 TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
