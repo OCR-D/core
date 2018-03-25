@@ -80,7 +80,8 @@ class Workspace(object):
         Persist the workspace using the resolver. Uploads the files in the
         OUTPUT group to the data repository, sets their URL accordingly.
         """
-        raise Exception("Not implemented")
+        self.save_mets()
+        # TODO: persist file:// urls
 
     def save_mets(self):
         """

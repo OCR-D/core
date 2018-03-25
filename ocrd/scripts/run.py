@@ -2,23 +2,18 @@ import click
 
 from ocrd.resolver import Resolver
 from ocrd.processor.characterize.exif import ExifProcessor
+from ocrd.processor.segment_region.tesseract3 import Tesseract3RegionSegmenter
+from ocrd.processor.segment_line.tesseract3 import Tesseract3LineSegmenter
 
 @click.group()
-@click.option('-w', '--working-dir', default='/tmp', help='Path to store intermediate and result files (default: "/tmp")', type=click.Path(exists=True))
 @click.option('-m', '--mets-xml', help="METS file to run", type=click.Path(exists=True))
 @click.pass_context
-def cli(ctx, working_dir, mets_xml):
+def cli(ctx, mets_xml):
     """
-    Perform OCR for a given METS file.
+    Execute OCR-D modules for a METS file.
     """
-    resolver = Resolver(cache_enabled=False)
-    workspace = resolver.create_workspace('file://' + mets_xml)
-    ctx.obj = workspace
-    #  setattr(ctx, 'workspace', workspace)
-    #  ctx.obj = {}
-    #  ctx.obj.workspace = workspace
-    #  setattr(ctx.obj, 'workspace', workspace)
-    #  setattr(ctx.obj, 'mets_xml', mets_xml)
+    resolver = Resolver(cache_enabled=True)
+    ctx.obj = resolver.create_workspace('file://' + mets_xml)
 
 @cli.command('characterize/exif')
 @click.pass_context
@@ -26,38 +21,23 @@ def characterize_exif(ctx):
     """
     Characterize images with exiftool
     """
-    workspace = ctx.obj
-    ExifProcessor(workspace).process()
-    workspace.save_mets()
+    ExifProcessor(ctx.obj).process()
+    ctx.obj.persist()
 
-    #  #  print subcommand
+@cli.command('segment-region/tesseract3')
+@click.pass_context
+def segment_region_tesseract3(ctx):
+    """
+    Segment page into regions
+    """
+    Tesseract3RegionSegmenter(ctx.obj).process()
+    ctx.obj.persist()
 
-    #  # read METS
-    #  initializer = init.Initializer()
-    #  initializer.load(mets_xml)
-
-    #  # set the working dir
-    #  initializer.set_working_dir(working_dir)
-
-    #  # initialize
-    #  initializer.initialize()
-
-    #  # image characterization
-    #  characterizer = characterize.Characterizer()
-    #  characterizer.set_handle(initializer.get_handle())
-    #  characterizer.characterize()
-
-    #  # page segmentation
-    #  page_segmenter = segment.PageSegmenter()
-    #  page_segmenter.set_handle(initializer.get_handle())
-    #  page_segmenter.segment()
-
-    #  # region segmentation
-    #  region_segmenter = segment.RegionSegmenter()
-    #  region_segmenter.set_handle(initializer.get_handle())
-    #  region_segmenter.segment()
-
-    #  # output
-    #  for ID in initializer.get_handle().page_trees:
-    #      print(md.parseString(ET.tostring(initializer.get_handle().page_trees[ID].getroot(), encoding='utf8', method='xml')).toprettyxml(indent="\t"))
-    #      pass
+@cli.command('segment-line/tesseract3')
+@click.pass_context
+def segment_line_tesseract3(ctx):
+    """
+    Segment page/regions into lines
+    """
+    Tesseract3LineSegmenter(ctx.obj).process()
+    ctx.obj.persist()
