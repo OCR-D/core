@@ -56,6 +56,7 @@ class Workspace(object):
         Add an output file. Creates an ~OcrdFile to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
+        log.debug('outputfile use=%s basename=%s local_filename=%s content=%s', use, basename, local_filename, content is not None)
         if basename is not None:
             if use is not None:
                 basename = os.path.join(use, basename)
@@ -64,6 +65,9 @@ class Workspace(object):
         local_filename_dir = local_filename.rsplit('/', 1)[0]
         if not os.path.isdir(local_filename_dir):
             os.makedirs(local_filename_dir)
+
+        if 'url' not in kwargs:
+            kwargs['url'] = 'file://' + local_filename
 
         self.mets.add_file(use, local_filename=local_filename, **kwargs)
 

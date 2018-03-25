@@ -17,8 +17,8 @@ class Tesseract3LineSegmenter(Processor):
         Performs the line segmentation.
         """
         with tesserocr.PyTessBaseAPI() as tessapi:
-            for input_file in self.workspace.mets.files_in_group(self.inputGrp):
-                print(input_file)
+            for input_file in self.input_files:
+                #  print(input_file)
                 self.workspace.download_file(input_file)
                 page = OcrdPage.from_file(input_file)
                 image_filename = self.workspace.download_url(page.imageFileName)
