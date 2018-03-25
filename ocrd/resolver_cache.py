@@ -1,6 +1,8 @@
 import os
 import re
 
+from ocrd.constants import DEFAULT_CACHE_FOLDER
+
 from ocrd.utils import getLogger
 log = getLogger('ocrd.cache')
 
@@ -11,10 +13,17 @@ def cache_key_from_url(url):
 class ResolverCache(object):
     """
     Cache of downloads, based on URL.
+
+    Parameters
+    ----------
+    cache_directory : String
+                      Where to store cached files
     """
 
-    def __init__(self, directory):
-        self.directory = directory
+    def __init__(self, cache_directory=DEFAULT_CACHE_FOLDER):
+        """
+        """
+        self.directory = cache_directory
         if not os.path.isdir(self.directory):
             log.info("Cache directory does not exist, creating: '%s'", self.directory)
             os.makedirs(self.directory)

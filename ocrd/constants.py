@@ -19,6 +19,8 @@ MIMETYPE_PAGE = 'text/page+xml'
 DEFAULT_UPLOAD_FOLDER = '/tmp/uploads-pyocrd'
 DEFAULT_REPOSITORY_URL = 'http://localhost:5000/'
 
+DEFAULT_CACHE_FOLDER = '/tmp/cache-pyocrd'
+
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
 TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']

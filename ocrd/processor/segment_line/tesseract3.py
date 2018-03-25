@@ -18,7 +18,9 @@ class Tesseract3LineSegmenter(Processor):
         """
         with tesserocr.PyTessBaseAPI() as tessapi:
             for input_file in self.input_files:
+                #  print "XXXX"
                 #  print(input_file)
+                #  print "XXXX"
                 self.workspace.download_file(input_file)
                 page = OcrdPage.from_file(input_file)
                 image_filename = self.workspace.download_url(page.imageFileName)
