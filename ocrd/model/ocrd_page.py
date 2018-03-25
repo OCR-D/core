@@ -30,7 +30,7 @@ class OcrdPage(OcrdXmlBase):
             content = PAGE_XML_EMPTY.replace('<Page>', '<Page imageFileName="%s">' % (input_file.url))
             return OcrdPage(content=content)
         elif input_file.mimetype == 'text/page+xml':
-            return OcrdPage(filnename=input_file.local_filename)
+            return OcrdPage(filename=input_file.local_filename)
 
     def __str__(self):
         return '''
@@ -123,7 +123,7 @@ class OcrdPage(OcrdXmlBase):
         coords.set("points", coordinate_string_from_xywh(box))
 
     def get_region_coords(self, region_ref):
-        points = self.page.find('.//page:TextRegion[@id="%s"]/page:Coords' % (region_ref)).get('points')
+        points = self.page.find('.//page:TextRegion[@id="%s"]/page:Coords' % (region_ref), NAMESPACES).get('points')
         return xywh_from_coordinate_string(points)
 
     @property
