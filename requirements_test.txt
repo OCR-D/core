@@ -2,3 +2,4 @@ pytest
 pytest-tap
 tappy
 httpie
+sphinx

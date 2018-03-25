@@ -11,11 +11,14 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps-ubuntu  Dependencies for deployment in an ubuntu/debian linux"
-	@echo "    deps-pip     Install python deps via pip"
-	@echo "    spec         Clone the spec dir for sample files"
-	@echo "    install      (Re)install the tool"
-	@echo "    test         Run all unit tests"
+	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
+	@echo "    deps-pip       Install python deps via pip"
+	@echo "    spec           Clone the spec dir for sample files"
+	@echo "    install        (Re)install the tool"
+	@echo "    test-deps-pip  Install test python deps via pip"
+	@echo "    test           Run all unit tests"
+	@echo "    docs           Build documentation"
+	@echo "    docs-clean     Clean docs"
 
 # END-EVAL
 
@@ -55,4 +58,14 @@ test-deps-pip:
 # Run all unit tests
 test:
 	pytest --log-level=$(LOG_LEVEL) --duration=10 test
+
+.PHONY: docs
+# Build documentation
+docs:
+	sphinx-apidoc -f -o docs/api ocrd
+	cd docs ; $(MAKE) html
+
+# Clean docs
+docs-clean:
+	cd docs ; rm -rf _build api
 
