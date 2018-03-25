@@ -43,10 +43,16 @@ class OcrdPage(OcrdXmlBase):
 
     @property
     def page(self):
+        """
+        The Page element
+        """
         return self._tree.find('.//page:Page', NAMESPACES)
 
     @property
     def pcGtsId(self):
+        """
+        The pcGtsId of the root element
+        """
         return self._tree.getroot().get('pcGtsId')
 
     @property
@@ -114,6 +120,9 @@ class OcrdPage(OcrdXmlBase):
         self.page.set('imageResolutionUnit', v)
 
     def add_reading_order_ref(self, region_ref, index):
+        """
+        Add the id of a region to the ReadingOrder
+        """
         if self.page.find('.//page:ReadingOrder', NAMESPACES) is None:
             ET.SubElement(self.page, TAG_PAGE_READINGORDER)
         region_ref_indexed = ET.SubElement(self.page.find('.//page:ReadingOrder', NAMESPACES), TAG_PAGE_REGIONREFINDEXED)
@@ -121,20 +130,33 @@ class OcrdPage(OcrdXmlBase):
         region_ref_indexed.set("index", "%i" % index)
 
     def add_text_region(self, region_ref, box):
+        """
+        Add a TextRegion to page
+        """
         region = ET.SubElement(self.page, TAG_PAGE_TEXTREGION)
         region.set("id", region_ref)
         coords = ET.SubElement(region, TAG_PAGE_COORDS)
         coords.set("points", coordinate_string_from_xywh(box))
 
     def get_region_coords(self, region_ref):
+        """
+        Get the bounding box of a region
+        """
         points = self.page.find('.//page:TextRegion[@id="%s"]/page:Coords' % (region_ref), NAMESPACES).get('points')
         return xywh_from_coordinate_string(points)
 
     @property
     def text_region_refs(self):
+        """
+        List of the ids of all the TextRegion in a page
+        """
         return [el.get('id') for el in self.page.findall('.//page:TextRegion', NAMESPACES)]
 
     def add_text_line(self, box, parent=None):
+        """
+        Add a TextLine. If parent is None, add TextLine to page. Otherwise
+        choose parent by id.
+        """
         if parent is None:
             parent = self.page
         else:
