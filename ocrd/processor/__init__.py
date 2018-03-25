@@ -1,3 +1,16 @@
+def run_processor(processor, mets_url=None, resolver=None, workspace=None):
+    """
+    Create a workspace for mets_url and run processor through it
+    """
+    if workspace is None:
+        if resolver is None:
+            raise Exception("Need to pass a resolver to create a workspace")
+        if mets_url is None:
+            raise Exception("Need to pass mets_url to create a workspace")
+        workspace = resolver.create_workspace(mets_url)
+    processor(workspace).process()
+    workspace.persist()
+
 class Processor(object):
     """
     A processor runs an algorithm based on the workspace, the mets.xml in the
