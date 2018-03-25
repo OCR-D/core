@@ -1,6 +1,8 @@
 from ocrd.model import OcrdPage
 from ocrd.processor import Processor
 from ocrd.utils import getLogger
+from ocrd.constants import MIMETYPE_PAGE
+
 import tesserocr
 import PIL
 
@@ -13,7 +15,7 @@ class Tesseract3RegionSegmenter(Processor):
         Performs the region segmentation.
         """
         with tesserocr.PyTessBaseAPI() as tessapi:
-            for input_file in self.workspace.mets.files_in_group(self.inputGrp):
+            for input_file in self.input_files:
                 self.workspace.download_file(input_file)
                 page = OcrdPage.from_file(input_file)
                 image_filename = self.workspace.download_url(page.imageFileName)
@@ -26,4 +28,4 @@ class Tesseract3RegionSegmenter(Processor):
                     region_ref = "r%i" % index
                     page.add_reading_order_ref(region_ref, index)
                     page.add_text_region(region_ref, box)
-                self.workspace.add_file(self.outputGrp, basename=input_file.basename_without_extension + '.xml', content=page.to_xml())
+                self.add_output_file(input_file=input_file, mimetype=MIMETYPE_PAGE, content=page.to_xml())

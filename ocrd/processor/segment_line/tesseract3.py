@@ -1,6 +1,7 @@
 from ocrd.model import OcrdPage
 from ocrd.processor import Processor
 from ocrd.utils import getLogger
+from ocrd.constants import MIMETYPE_PAGE
 
 import tesserocr
 import cv2
@@ -33,4 +34,4 @@ class Tesseract3LineSegmenter(Processor):
                     tessapi.SetImage(region_img)
                     for component in tessapi.GetComponentImages(tesserocr.RIL.TEXTLINE, True):
                         page.add_text_line(component[1], parent=region_ref)
-                self.workspace.add_file(self.outputGrp, basename=input_file.basename_without_extension + '.xml', content=page.to_xml())
+                self.add_output_file(input_file=input_file, mimetype=MIMETYPE_PAGE, content=page.to_xml())
