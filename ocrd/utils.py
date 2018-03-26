@@ -42,3 +42,6 @@ def xmllint_format(xml):
     )
     output, _ = proc.communicate(xml)
     return output
+
+def mets_file_id(grp, n):
+    return "%s_%04i"  % (grp, n + 1)

@@ -1,6 +1,6 @@
 from ocrd.model import OcrdPage
 from ocrd.processor.base import Processor
-from ocrd.utils import getLogger
+from ocrd.utils import getLogger, mets_file_id
 from ocrd.constants import MIMETYPE_PAGE
 
 import tesserocr
@@ -14,7 +14,7 @@ class Tesseract3LineSegmenter(Processor):
         Performs the line segmentation.
         """
         with tesserocr.PyTessBaseAPI() as tessapi:
-            for input_file in self.input_files:
+            for (n, input_file) in enumerate(self.input_files):
                 page = OcrdPage.from_file(self.workspace.download_file(input_file))
                 image_url = page.imageFileName
                 for region_ref in page.text_region_refs:
@@ -24,4 +24,9 @@ class Tesseract3LineSegmenter(Processor):
                     tessapi.SetImage(image)
                     for component in tessapi.GetComponentImages(tesserocr.RIL.TEXTLINE, True):
                         page.add_text_line(component[1], parent=region_ref)
-                self.add_output_file(input_file=input_file, mimetype=MIMETYPE_PAGE, content=page.to_xml())
+                self.add_output_file(
+                    ID=mets_file_id(self.outputGrp, n),
+                    input_file=input_file,
+                    mimetype=MIMETYPE_PAGE,
+                    content=page.to_xml()
+                )
