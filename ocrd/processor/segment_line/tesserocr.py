@@ -19,13 +19,12 @@ class Tesseract3LineSegmenter(Processor):
             for (n, input_file) in enumerate(self.input_files):
                 page = OcrdPage.from_file(self.workspace.download_file(input_file))
                 image_url = page.imageFileName
-                for region_ref in page.text_region_refs:
-                    log.debug("Detecting lines in %s with tesseract", region_ref)
-                    coords = page.get_region_coords(region_ref)
-                    image = self.workspace.resolve_image_as_pil(image_url, coords)
+                for region in page.list_textregions():
+                    log.debug("Detecting lines in %s with tesseract", region)
+                    image = self.workspace.resolve_image_as_pil(image_url, region.coords)
                     tessapi.SetImage(image)
                     for component in tessapi.GetComponentImages(tesserocr.RIL.TEXTLINE, True):
-                        page.add_text_line(component[1], parent=region_ref)
+                        page.add_text_line(component[1], parent=region.ID)
                 self.add_output_file(
                     ID=mets_file_id(self.outputGrp, n),
                     input_file=input_file,

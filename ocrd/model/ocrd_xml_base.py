@@ -6,6 +6,11 @@ from lxml import etree as ET
 for curie in NAMESPACES:
     ET.register_namespace(curie, NAMESPACES[curie])
 
+class OcrdXmlFragment(object):
+
+    def __init__(self, el):
+        self.el = el
+
 class OcrdXmlDocument(object):
 
     def __init__(self, filename=None, content=None):

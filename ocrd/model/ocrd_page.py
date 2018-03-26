@@ -15,6 +15,7 @@ from ocrd.utils import (
 )
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
+from .ocrd_page_textregion import OcrdPageTextRegion
 
 log = getLogger('ocrd.model.ocrd_page')
 
@@ -133,28 +134,23 @@ class OcrdPage(OcrdXmlDocument):
         region_ref_indexed.set("regionRef", region_ref)
         region_ref_indexed.set("index", "%i" % index)
 
-    def add_text_region(self, region_ref, box):
+    def add_textregion(self, ID, coords):
         """
-        Add a TextRegion to page
+        Add a TextRegion
         """
-        region = ET.SubElement(self.page, TAG_PAGE_TEXTREGION)
-        region.set("id", region_ref)
-        coords = ET.SubElement(region, TAG_PAGE_COORDS)
-        coords.set("points", coordinate_string_from_xywh(box))
+        return OcrdPageTextRegion.create(self.page, ID=ID, coords=coords)
 
-    def get_region_coords(self, region_ref):
+    def get_textregion(self, ID):
         """
-        Get the bounding box of a region
+        Get TextRegion with ID.
         """
-        points = self.page.find('.//page:TextRegion[@id="%s"]/page:Coords' % (region_ref), NAMESPACES).get('points')
-        return xywh_from_coordinate_string(points)
+        return OcrdPageTextRegion(self.page.find('.//*[id="%s"' % ID))
 
-    @property
-    def text_region_refs(self):
+    def list_textregions(self):
         """
-        List of the ids of all the TextRegion in a page
+        List TextRegions as :py:mod:`OcrdPageTextRegion`
         """
-        return [el.get('id') for el in self.page.findall('.//page:TextRegion', NAMESPACES)]
+        return [OcrdPageTextRegion(el) for el in self.page.findall('.//page:TextRegion', NAMESPACES)]
 
     def add_text_line(self, box, parent=None):
         """
