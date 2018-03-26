@@ -71,3 +71,11 @@ docs:
 docs-clean:
 	cd docs ; rm -rf _build api
 
+pyclean:
+	rm **/*.pyc
+	rm -rf .pytest_cache
+
+test-profile:
+	$(PYTHON) -m cProfile -o profile $(which py.test) test
+	$(PYTHON) analyze_profile.py
+

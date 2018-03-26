@@ -109,3 +109,4 @@ ocrd.egg-info
 spec
 .pytest_cache
 .~lock*
+/profile
