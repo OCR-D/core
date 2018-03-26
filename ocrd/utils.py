@@ -1,4 +1,6 @@
+import subprocess
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
 
@@ -30,3 +32,13 @@ def xywh_from_coordinate_string(points):
         x_y = pair.split(",")
         polygon.append([float(x_y[0]), float(x_y[1])])
     return polygon
+
+# https://stackoverflow.com/a/10133365/201318
+def xmllint_format(xml):
+    proc = subprocess.Popen(
+        ['xmllint', '--format', '/dev/stdin'],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    output, _ = proc.communicate(xml)
+    return output

@@ -93,7 +93,7 @@ class Workspace(object):
         Write out the current state of the METS file.
         """
         with open(self.mets_filename, 'wb') as f:
-            f.write(self.mets.to_xml())
+            f.write(self.mets.to_xml(xmllint=True))
 
     def resolve_image_as_pil(self, image_url, coords=None):
         """

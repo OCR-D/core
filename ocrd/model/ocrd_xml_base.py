@@ -1,4 +1,5 @@
 from ocrd.constants import NAMESPACES
+from ocrd.utils import xmllint_format
 
 from lxml import etree as ET
 
@@ -18,8 +19,11 @@ class OcrdXmlBase(object):
             self._tree = ET.ElementTree() # pylint: disable=no-member
             self._tree.parse(filename)
 
-    def to_xml(self):
+    def to_xml(self, xmllint=False):
         root = self._tree
         if hasattr(root, 'getroot'):
             root = root.getroot()
-        return ET.tostring(ET.ElementTree(root), pretty_print=True)
+        ret = ET.tostring(ET.ElementTree(root), pretty_print=True)
+        if xmllint:
+            ret = xmllint_format(ret)
+        return ret

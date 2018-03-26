@@ -30,6 +30,7 @@ deps-ubuntu:
 		libtesseract-dev \
 		libleptonica-dev \
 		libimage-exiftool-perl \
+		libxml2-utils \
 		tesseract-ocr-eng \
 		tesseract-ocr-deu \
 		tesseract-ocr-deu-frak
