@@ -28,6 +28,7 @@ TAG_PAGE_COORDS = '{%s}Coords' % NAMESPACES['page']
 TAG_PAGE_READINGORDER = '{%s}ReadingOrder' % NAMESPACES['page']
 TAG_PAGE_REGIONREFINDEXED = '{%s}RegionRefIndexed' % NAMESPACES['page']
 TAG_PAGE_TEXTLINE = '{%s}TextLine' % NAMESPACES['page']
+TAG_PAGE_TEXTEQUIV = '{%s}TextEquiv' % NAMESPACES['page']
 TAG_PAGE_TEXTREGION = '{%s}TextRegion' % NAMESPACES['page']
 
 EXIF_COMPRESSION_METHODS = {

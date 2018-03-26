@@ -5,6 +5,7 @@ from ocrd.constants import (
     TAG_PAGE_READINGORDER,
     TAG_PAGE_REGIONREFINDEXED,
     TAG_PAGE_TEXTLINE,
+    TAG_PAGE_TEXTEQUIV,
     TAG_PAGE_TEXTREGION,
 )
 from ocrd.utils import (
@@ -157,10 +158,32 @@ class OcrdPage(OcrdXmlBase):
         Add a TextLine. If parent is None, add TextLine to page. Otherwise
         choose parent by id.
         """
-        if parent is None:
-            parent = self.page
-        else:
-            parent = self.page.find('.//*[@id="%s"]' % parent)
+        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
         line = ET.SubElement(parent, TAG_PAGE_TEXTLINE)
         coords = ET.SubElement(line, TAG_PAGE_COORDS)
         coords.set("points", coordinate_string_from_xywh(box))
+
+    def number_of_text_lines(self, parent=None):
+        """
+        List number of lines for looping.
+        """
+        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
+        print self.page.findall('.//page:TextLine', NAMESPACES)
+        return len(parent.findall('.//page:TextLine', NAMESPACES))
+
+    def get_text_line_coords(self, n, parent=None):
+        """
+        Find the n-th text line in page or region with id 'parent'.
+        """
+        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
+        points = parent.find('page:TextLine[%i]/page:Coords' % n, NAMESPACES).get('points')
+        return xywh_from_coordinate_string(points)
+
+    def set_text_line_text_equiv(self, n, content, parent=None):
+        """
+        Set the TextEquiv text of the n-th line.
+        """
+        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
+        line = parent.find('page:TextLine[%i]' % n, NAMESPACES)
+        text_equiv = ET.SubElement(line, TAG_PAGE_TEXTEQUIV)
+        text_equiv.text = content
