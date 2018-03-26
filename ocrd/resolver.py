@@ -21,7 +21,7 @@ class Resolver(object):
         prefer_symlink (Boolean): If True, symlink from cached file to the workspace instead of copying to reduce I/O.
     """
 
-    def __init__(self, cache_enabled=False, prefer_symlink=True, **kwargs):
+    def __init__(self, cache_enabled=False, prefer_symlink=False, **kwargs):
         """
         """
         self.cache_enabled = cache_enabled
@@ -84,13 +84,14 @@ class Resolver(object):
 
         return outfilename
 
-    def create_workspace(self, mets_url):
+    def create_workspace(self, mets_url, directory=None):
         """
         Create a workspace for a processor.
 
         Sets the mets.xml file
         """
-        directory = tempfile.mkdtemp(prefix=PREFIX)
+        if directory is None:
+            directory = tempfile.mkdtemp(prefix=PREFIX)
         log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
         self.download_to_directory(directory, mets_url, basename='mets.xml', prefer_symlink=False)
         return Workspace(self, directory)
