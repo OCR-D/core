@@ -3,8 +3,8 @@ from flask import request
 
 from ocrd.processor.base import run_processor
 from ocrd.processor.characterize.exif import ExifProcessor
-from ocrd.processor.segment_line.tesseract3 import Tesseract3LineSegmenter
-from ocrd.processor.segment_region.tesseract3 import Tesseract3RegionSegmenter
+from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
+from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
 from ocrd.resolver import Resolver
 
 resolver = Resolver(cache_enabled=True)
@@ -17,13 +17,13 @@ def create():
         run_processor(ExifProcessor, request.args['mets_url'], resolver)
         return 'DONE', 200
 
-    @app.route('/processor/segment_line/tesseract3', methods=['PUT'])
-    def _segment_line_tesseract3():
+    @app.route('/processor/segment_line/tesserocr', methods=['PUT'])
+    def _segment_line_tesserocr():
         run_processor(Tesseract3LineSegmenter, request.args['mets_url'], resolver)
         return 'DONE', 200
 
-    @app.route('/processor/segment_region/tesseract3', methods=['PUT'])
-    def _segment_region_tesseract3():
+    @app.route('/processor/segment_region/tesserocr', methods=['PUT'])
+    def _segment_region_tesserocr():
         run_processor(Tesseract3RegionSegmenter, request.args['mets_url'], resolver)
         return 'DONE', 200
 

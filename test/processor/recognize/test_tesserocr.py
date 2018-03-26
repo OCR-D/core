@@ -2,9 +2,9 @@ import os
 import shutil
 
 from ocrd.resolver import Resolver
-from ocrd.processor.segment_region.tesseract3 import Tesseract3RegionSegmenter
-from ocrd.processor.segment_line.tesseract3 import Tesseract3LineSegmenter
-from ocrd.processor.recognize.tesseract3 import Tesseract3Recognizer
+from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
+from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
+from ocrd.processor.recognize.tesserocr import Tesseract3Recognizer
 
 from test.assets import METS_HEROLD_SMALL
 from test.base import TestCase, main

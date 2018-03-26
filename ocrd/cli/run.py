@@ -2,8 +2,8 @@ import click
 
 from ocrd.processor.base import run_processor
 from ocrd.processor.characterize.exif import ExifProcessor
-from ocrd.processor.segment_region.tesseract3 import Tesseract3RegionSegmenter
-from ocrd.processor.segment_line.tesseract3 import Tesseract3LineSegmenter
+from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
+from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
 from ocrd.resolver import Resolver
 
 from ocrd.webservice.processor import create as create_processor_ws
@@ -39,17 +39,17 @@ def _characterize_exif(ctx):
     """
     run_processor(ExifProcessor, workspace=ctx.obj['workspace'])
 
-@process_cli.command('segment-region/tesseract3')
+@process_cli.command('segment-region/tesserocr')
 @click.pass_context
-def _segment_region_tesseract3(ctx):
+def _segment_region_tesserocr(ctx):
     """
     Segment page into regions
     """
     run_processor(Tesseract3RegionSegmenter, workspace=ctx.obj['workspace'])
 
-@process_cli.command('segment-line/tesseract3')
+@process_cli.command('segment-line/tesserocr')
 @click.pass_context
-def _segment_line_tesseract3(ctx):
+def _segment_line_tesserocr(ctx):
     """
     Segment page/regions into lines
     """

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from ocrd.model import OcrdPage
 from ocrd.processor.base import Processor
 from ocrd.utils import getLogger, mets_file_id
@@ -5,7 +7,7 @@ from ocrd.constants import MIMETYPE_PAGE
 
 import tesserocr
 
-log = getLogger('processor.segment_region.tesseract3')
+log = getLogger('processor.segment_region.tesserocr')
 
 class Tesseract3RegionSegmenter(Processor):
 
