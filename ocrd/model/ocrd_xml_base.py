@@ -6,7 +6,6 @@ from lxml import etree as ET
 for curie in NAMESPACES:
     ET.register_namespace(curie, NAMESPACES[curie])
 
-# pylint: disable=no-member
 class OcrdXmlBase(object):
 
     def __init__(self, filename=None, content=None):
@@ -16,7 +15,7 @@ class OcrdXmlBase(object):
         elif content:
             self._tree = ET.XML(content.encode('utf-8'), parser=ET.XMLParser(encoding='utf-8'))
         else:
-            self._tree = ET.ElementTree() # pylint: disable=no-member
+            self._tree = ET.ElementTree()
             self._tree.parse(filename)
 
     def to_xml(self, xmllint=False):

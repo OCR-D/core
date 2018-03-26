@@ -22,7 +22,7 @@ class OcrdPage(OcrdXmlBase):
 
     def __init__(self, *args, **kwargs):
         super(OcrdPage, self).__init__(*args, **kwargs)
-        self._image_el = ET.Element('file') # pylint: disable=no-member
+        self._image_el = ET.Element('file')
         self._image_file = None
 
     @staticmethod

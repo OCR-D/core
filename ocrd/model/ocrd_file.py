@@ -73,6 +73,5 @@ class OcrdFile(object):
             return
         el_FLocat = self._el.find('mets:FLocat', NS)
         if el_FLocat is None:
-            # pylint: disable=no-member
             el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
         el_FLocat.set("{%s}href" % NS["xlink"], url)

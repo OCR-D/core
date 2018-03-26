@@ -1,6 +1,5 @@
 from ocrd.constants import NAMESPACES as NS, TAG_METS_FILE, TAG_METS_FILEGRP
 
-# pylint: disable=no-member
 from .ocrd_xml_base import OcrdXmlBase, ET
 from .ocrd_file import OcrdFile
 
