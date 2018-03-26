@@ -1,9 +1,9 @@
 from ocrd.constants import NAMESPACES as NS, TAG_METS_FILE, TAG_METS_FILEGRP
 
-from .ocrd_xml_base import OcrdXmlBase, ET
+from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
 
-class OcrdMets(OcrdXmlBase):
+class OcrdMets(OcrdXmlDocument):
 
     def __init__(self, *args, **kwargs):
         super(OcrdMets, self).__init__(*args, **kwargs)

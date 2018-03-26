@@ -14,11 +14,11 @@ from ocrd.utils import (
     xywh_from_coordinate_string
 )
 
-from .ocrd_xml_base import OcrdXmlBase, ET
+from .ocrd_xml_base import OcrdXmlDocument, ET
 
 log = getLogger('ocrd.model.ocrd_page')
 
-class OcrdPage(OcrdXmlBase):
+class OcrdPage(OcrdXmlDocument):
 
     def __init__(self, *args, **kwargs):
         super(OcrdPage, self).__init__(*args, **kwargs)
