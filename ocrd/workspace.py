@@ -32,12 +32,15 @@ class Workspace(object):
     def download_url(self, url, **kwargs):
         """
         Download a URL to the workspace.
+
+        Args:
+            url (string): URL to download to directory
+            **kwargs : See :py:mod:`ocrd.resolver.Resolver`
+
+        Returns:
+            The local filename of the downloaded file
         """
         return self.resolver.download_to_directory(self.directory, url, **kwargs)
-
-    @property
-    def pages(self):
-        self.mets.files_in_group('INPUT')
 
     def download_file(self, f, **kwargs):
         """
