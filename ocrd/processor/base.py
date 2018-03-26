@@ -47,11 +47,14 @@ class Processor(object):
         """
         return self.workspace.mets.files_in_group(self.inputGrp)
 
-    def add_output_file(self, input_file=None, basename=None, **kwargs):
+    def add_output_file(self, input_file=None, basename=None, ID=None, **kwargs):
         """
         Add an output file.
         """
+        if input_file is not None:
+            print input_file
         if basename is None and input_file is not None:
             basename = input_file.basename_without_extension + '.xml'
-        self.workspace.add_file(self.outputGrp, basename=basename, **kwargs)
-
+        #  if ID is None and input_file is not None:
+        #      basename = input_file.ID + self.outputGrp
+        self.workspace.add_file(self.outputGrp, basename=basename, ID=ID, **kwargs)
