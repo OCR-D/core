@@ -24,7 +24,7 @@ class Tesseract3LineSegmenter(Processor):
                     image = self.workspace.resolve_image_as_pil(image_url, region.coords)
                     tessapi.SetImage(image)
                     for component in tessapi.GetComponentImages(tesserocr.RIL.TEXTLINE, True):
-                        page.add_text_line(component[1], parent=region.ID)
+                        region.add_textline(coords=component[1])
                 self.add_output_file(
                     ID=mets_file_id(self.outputGrp, n),
                     input_file=input_file,

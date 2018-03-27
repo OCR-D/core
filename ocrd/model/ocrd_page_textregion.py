@@ -1,13 +1,14 @@
-from ocrd.utils import (
-    coordinate_string_from_xywh,
-    xywh_from_coordinate_string
-)
 from ocrd.constants import (
     NAMESPACES,
-    TAG_PAGE_COORDS,
     TAG_PAGE_TEXTREGION,
 )
-from .ocrd_xml_base import OcrdXmlFragment, ET
+from ocrd.model.ocrd_page_textline import OcrdPageTextLine
+from .ocrd_xml_base import (
+    OcrdXmlFragment,
+    ET,
+    get_coords,
+    set_coords,
+)
 
 class OcrdPageTextRegion(OcrdXmlFragment):
 
@@ -37,18 +38,33 @@ class OcrdPageTextRegion(OcrdXmlFragment):
         """
         Get the bounding box of a region
         """
-        coords = self.el.find('page:Coords', NAMESPACES)
-        if coords is not None:
-            points = coords.get('points')
-            return xywh_from_coordinate_string(points)
+        return get_coords(self.el)
 
     @coords.setter
     def coords(self, box):
         """
         Set the bounding box of a region
         """
-        if box is not None:
-            coords = self.el.find('page:Coords', NAMESPACES)
-            if coords is None:
-                coords = ET.SubElement(self.el, TAG_PAGE_COORDS)
-            coords.set("points", coordinate_string_from_xywh(box))
+        set_coords(self.el, box)
+
+    # --------------------------------------------------
+    # TextLine
+    # --------------------------------------------------
+
+    def add_textline(self, textequiv=None, ID=None, coords=None):
+        """
+        Add a TextLine to the TextRegion.
+        """
+        return OcrdPageTextLine.create(self.el, textequiv=textequiv, ID=ID, coords=coords)
+
+    def get_textline(self, n):
+        """
+        Get the n-th TextLine on the TextRegion.
+        """
+        return OcrdPageTextLine(self.el.find('page:TextLine[%i]' % (n + 1), NAMESPACES))
+
+    def list_textlines(self):
+        """
+        List TextLine on TextRegion.
+        """
+        return [OcrdPageTextLine(el) for el in self.el.findall('page:TextLine', NAMESPACES)]

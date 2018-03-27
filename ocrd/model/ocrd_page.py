@@ -1,21 +1,14 @@
 from ocrd.constants import (
     PAGE_XML_EMPTY,
     NAMESPACES,
-    TAG_PAGE_COORDS,
     TAG_PAGE_READINGORDER,
     TAG_PAGE_REGIONREFINDEXED,
-    TAG_PAGE_TEXTLINE,
-    TAG_PAGE_TEXTEQUIV,
-    TAG_PAGE_TEXTREGION,
 )
-from ocrd.utils import (
-    getLogger,
-    coordinate_string_from_xywh,
-    xywh_from_coordinate_string
-)
+from ocrd.utils import getLogger
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_page_textregion import OcrdPageTextRegion
+from .ocrd_page_textline import OcrdPageTextLine
 
 log = getLogger('ocrd.model.ocrd_page')
 
@@ -134,6 +127,10 @@ class OcrdPage(OcrdXmlDocument):
         region_ref_indexed.set("regionRef", region_ref)
         region_ref_indexed.set("index", "%i" % index)
 
+    # --------------------------------------------------
+    # TextRegion
+    # --------------------------------------------------
+
     def add_textregion(self, ID, coords):
         """
         Add a TextRegion
@@ -152,36 +149,24 @@ class OcrdPage(OcrdXmlDocument):
         """
         return [OcrdPageTextRegion(el) for el in self.page.findall('.//page:TextRegion', NAMESPACES)]
 
-    def add_text_line(self, box, parent=None):
-        """
-        Add a TextLine. If parent is None, add TextLine to page. Otherwise
-        choose parent by id.
-        """
-        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
-        line = ET.SubElement(parent, TAG_PAGE_TEXTLINE)
-        coords = ET.SubElement(line, TAG_PAGE_COORDS)
-        coords.set("points", coordinate_string_from_xywh(box))
+    # --------------------------------------------------
+    # TextLine
+    # --------------------------------------------------
 
-    def number_of_text_lines(self, parent=None):
+    def add_textline(self, ID=None, coords=None):
         """
-        List number of lines for looping.
+        Add a TextLine to the page.
         """
-        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
-        return len(parent.findall('.//page:TextLine', NAMESPACES))
+        return OcrdPageTextLine.create(self.page, ID=ID, coords=coords)
 
-    def get_text_line_coords(self, n, parent=None):
+    def get_textline(self, n):
         """
-        Find the n-th text line in page or region with id 'parent'.
+        Get the n-th TextLine on the page.
         """
-        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
-        points = parent.find('page:TextLine[%i]/page:Coords' % (n+1), NAMESPACES).get('points')
-        return xywh_from_coordinate_string(points)
+        return OcrdPageTextLine(self.page.find('page:TextLine[%i]' % (n + 1), NAMESPACES))
 
-    def set_text_line_text_equiv(self, n, content, parent=None):
+    def list_textlines(self):
         """
-        Set the TextEquiv text of the n-th line.
+        List TextLine on page
         """
-        parent = self.page if parent is None else self.page.find('.//*[@id="%s"]' % parent)
-        line = parent.find('page:TextLine[%i]' % (n+1), NAMESPACES)
-        text_equiv = ET.SubElement(line, TAG_PAGE_TEXTEQUIV)
-        text_equiv.text = content
+        return [OcrdPageTextLine(el) for el in self.page.findall('page:TextLine', NAMESPACES)]
