@@ -1,5 +1,5 @@
-import base as unittest
-from base import PWD
+import test.base as unittest
+from test.base import PWD
 from ocrd.resolver import Resolver
 
 METS_URL = 'file://' + PWD + '/assets/herold/mets.xml'
