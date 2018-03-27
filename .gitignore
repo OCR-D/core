@@ -107,3 +107,6 @@ env2/
 ocrd.egg-info
 /src
 spec
+.pytest_cache
+.~lock*
+/profile

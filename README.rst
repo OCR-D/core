@@ -10,15 +10,17 @@ To bootstrap the tool, you'll need installed (Ubuntu packages):
 
 * Python (``python``)
 * pip (``python-pip``)
-* Tesseract (3.04) headers (``libtesseract-dev``)
-* Some tesseract (3.04) language models (``tesseract-ocr-{eng,deu,deu-frak,...}``)
+* Tesseract headers (``libtesseract-dev``)
+* Some tesseract language models (``tesseract-ocr-{eng,deu,deu-frak,...}``)
 * Leptonica headers (``libleptonica-dev``)
 * exiftool (``libimage-exiftool-perl``)
+* libxml2-utils for xmllint (``libxml2-utils``)
 
 To install system-wide:
 
 ::
 
+    sudo make deps-ubuntu
     pip install -r requirements.txt
     pip install .
 
@@ -26,6 +28,7 @@ To install to user HOME dir
 
 ::
 
+    sudo make deps-ubuntu
     pip install --user -r requirements.txt
     pip install .
 
@@ -48,21 +51,38 @@ If tesserocr fails to compile with an error:::
 
 This is due to some inconsistencies in the installed tesseract C headers. Replace ``string`` with ``std::string`` in ``$PREFIX/include/tesseract/unicharset.h:265:5:`` and ``$PREFIX/include/tesseract/unichar.h:164:10:`` ff.
 
-If tesserocr fails with an error about ``LSTM``/``CUBE``, you are using th 4.00
-headers. Downgrade to 3.04: ``apt install libtesseract-dev=3.04.01-6`` or
-whatever ``apt policy libtesseract-dev`` offers. Make sure there are no spurious pkg-config artifacts, e.g. in ``/usr/local/lib/pkgconfig/tesseract.pc``. The same goes for language models
+If tesserocr fails with an error about ``LSTM``/``CUBE``, you are have a
+mismatch between tesseract header/data/pkg-config versions. ``apt policy
+libtesseract-dev`` lists the apt-installable versions, keep it consistent. Make
+sure there are no spurious pkg-config artifacts, e.g. in
+``/usr/local/lib/pkgconfig/tesseract.pc``. The same goes for language models.
 
 
 Usage
 -----
 
+pyocrd installs a binary ``ocrd`` that can be used to invoke the processors
+directly (``ocrd process``) or start (development) webservices (``ocrd server``)
+
+Examples:
+
 ::
 
-    run-ocrd <METS-FILE>
+    # List available processors
+    ocrd process
 
-This will run the image characterization, page segmentation and region segmentation.
+    # Region-segment with tesserocr all files in METS INPUT fileGrp
+    ocrd process -m /path/to/mets.xml segment-region/tesserocr
+
+    # Chain multiple processors
+    ocrd process -m /path/to/mets.xml characterize/exif segment-line/tesserocr recognize/tesserocr
+
+    # Start a processor web service at port 6543
+    ocrd server process -p 6543
+    http PUT localhost:6543/characterize url==http://server/path/to/mets.xml
 
 See Also
 --------
 
 * `OCR-D Specifications <https://github.com/ocr-d/spec>`_
+* `pyocrd wiki <https://github.com/ocr-d/pyocrd/wiki>`_
