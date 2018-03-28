@@ -19,6 +19,7 @@ class Tesseract3Recognizer(Processor):
         Performs the (text) recognition.
         """
         with tesserocr.PyTessBaseAPI(path=DEFAULT_PATH, lang=DEFAULT_MODEL) as tessapi:
+            log.info("Using model %s in %s for recognition", tesserocr.get_languages()[0], tesserocr.get_languages()[1][-1])
             tessapi.SetPageSegMode(tesserocr.PSM.SINGLE_LINE)
             for (n, input_file) in enumerate(self.input_files):
                 page = OcrdPage.from_file(self.workspace.download_file(input_file))
