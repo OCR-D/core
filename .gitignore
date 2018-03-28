@@ -110,3 +110,4 @@ spec
 .pytest_cache
 .~lock*
 /profile
+.pynative
