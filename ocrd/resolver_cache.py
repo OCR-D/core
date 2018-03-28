@@ -33,8 +33,8 @@ class ResolverCache(object):
         if filename is None and content is None:
             raise Exception("cache.put requires 'filename' or 'content' kwarg")
         elif filename:
-            with open(filename, 'r') as f:
+            with open(filename, 'rb') as f:
                 content = f.read()
         with open(cached_filename, 'wb') as outfile:
-            outfile.write(content.encode('utf-8'))
+            outfile.write(content)
         return cached_filename
