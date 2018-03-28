@@ -54,12 +54,12 @@ test/assets: spec
 
 # Install test python deps via pip
 test-deps-pip:
-	$(PIP) install -r requirements.txt
+	$(PIP) install -r requirements_test.txt
 
 .PHONY: test
 # Run all unit tests
 test:
-	$(PYTHON) -m pytest --log-level=$(LOG_LEVEL) --duration=10 test
+	$(PYTHON) -m pytest --duration=10 test
 
 .PHONY: docs
 # Build documentation
