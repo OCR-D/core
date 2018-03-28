@@ -22,18 +22,20 @@ class Tesseract3Recognizer(Processor):
             log.info("Using model %s in %s for recognition", tesserocr.get_languages()[0], tesserocr.get_languages()[1][-1])
             tessapi.SetPageSegMode(tesserocr.PSM.SINGLE_LINE)
             for (n, input_file) in enumerate(self.input_files):
-                page = OcrdPage.from_file(self.workspace.download_file(input_file))
+                log.info("INPUT FILE %i / %s", n, input_file)
+                self.workspace.download_file(input_file)
+                page = OcrdPage.from_file(input_file)
                 image_url = page.imageFileName
-                for region_ref in page.text_region_refs:
-                    log.info("About to recognize text in %i lines in '%s'", page.number_of_text_lines(parent=region_ref), region_ref)
-                    for line_no in range(0, page.number_of_text_lines(parent=region_ref)):
-                        log.debug("Recognizing text in region '%s' line '%s'", region_ref, line_no)
-                        coords = page.get_text_line_coords(line_no, parent=region_ref)
+                log.info("page %s", page)
+                for region in page.list_textregions():
+                    textlines = region.list_textlines()
+                    log.info("About to recognize text in %i lines of region '%s'", len(textlines), region.ID)
+                    for (line_no, line) in enumerate(textlines):
+                        log.debug("Recognizing text in region '%s' line '%s'", region.ID, line_no)
                         # TODO use binarized / gray
-                        image = self.workspace.resolve_image_as_pil(image_url, coords)
+                        image = self.workspace.resolve_image_as_pil(image_url, line.coords)
                         tessapi.SetImage(image)
-                        content = tessapi.GetUTF8Text()
-                        page.set_text_line_text_equiv(line_no, content, parent=region_ref)
+                        line.textequiv = tessapi.GetUTF8Text()
                 self.add_output_file(
                     ID=mets_file_id(self.outputGrp, n),
                     input_file=input_file,

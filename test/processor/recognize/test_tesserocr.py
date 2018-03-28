@@ -26,8 +26,8 @@ class TestTesseract3Recognizer(TestCase):
         workspace.save_mets()
         Tesseract3LineSegmenter(workspace, inputGrp="OCR-D-SEG-BLOCK", outputGrp="OCR-D-SEG-LINE").process()
         workspace.save_mets()
-        # TODO takes too long
-        #  Tesseract3Recognizer(workspace, inputGrp="OCR-D-SEG-LINE", outputGrp="OCR-D-OCR-TESS").process()
+        #  TODO takes too long
+        Tesseract3Recognizer(workspace, inputGrp="OCR-D-SEG-LINE", outputGrp="OCR-D-OCR-TESS").process()
         workspace.save_mets()
 
 if __name__ == '__main__':
