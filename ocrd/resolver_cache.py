@@ -36,5 +36,5 @@ class ResolverCache(object):
             with open(filename, 'rb') as f:
                 content = f.read()
         with open(cached_filename, 'wb') as outfile:
-            outfile.write(content.encode('utf-8'))
+            outfile.write(content)
         return cached_filename
