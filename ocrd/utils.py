@@ -56,18 +56,24 @@ def mets_file_id(grp, n):
     return "%s_%04i"  % (grp, n + 1)
 
 def safe_filename(url):
+    """
+    Create a safe_filename, also used as cache key
+    """
     (basename, ext) = filename_without_extension(url)
+    basename = re.sub(UNSAFE_CHARS, '_', basename)
     ext = re.sub(UNSAFE_CHARS, '_', ext[1:]) if ext is not None else ''
-    return "%s%s" % (
-        re.sub(UNSAFE_CHARS, '_', basename),
-        ext
-    )
+    return "%s%s" % (basename, ext)
 
 def filename_without_extension(fname):
     """
     Return a tuple (filename, extension). Extensions DO include a leading dot.
+
+    >>> filename_without_extension("foo.png")
+    ('foo', '.png')
+    >>> filename_without_extension("foo.tar.gz")
+    ('foo', '.tar.gz')
     """
-    ret = fname.rsplit('.', 1)[0]
+    ret = fname.rsplit('.', 2)[0]
     if ret.endswith('.tar'):
         ret = ret[0:len(ret)-4]
     return (ret, fname[len(ret):])

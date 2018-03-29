@@ -14,7 +14,7 @@ class OcropusNlbinBinarizer(Processor):
             subprocess.check_output([
                 "ocropus-nlbin",
                 image_filename
-            ])
+            ], cwd=self.workspace.directory)
             self.workspace.add_file(
                 'OCR-D-IMG-BIN',
                 ID=mets_file_id('OCR-D-IMG-BIN', n),

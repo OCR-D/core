@@ -38,6 +38,10 @@ class OcrdFile(object):
         return os.path.basename(self.local_filename)
 
     @property
+    def abspath(self):
+        return os.path.abspath(self.local_filename)
+
+    @property
     def basename_without_extension(self):
         (ret, _) = filename_without_extension(self.basename)
         return ret
