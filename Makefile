@@ -72,7 +72,8 @@ docs-clean:
 	cd docs ; rm -rf _build api
 
 pyclean:
-	rm **/*.pyc
+	rm -f **/*.pyc
+	rm -rf **/__pycache__
 	rm -rf .pytest_cache
 
 test-profile:
