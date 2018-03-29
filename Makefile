@@ -54,12 +54,12 @@ test/assets: spec
 
 # Install test python deps via pip
 test-deps-pip:
-	$(PIP) install -r requirements.txt
+	$(PIP) install -r requirements_test.txt
 
 .PHONY: test
 # Run all unit tests
 test:
-	$(PYTHON) -m pytest --log-level=$(LOG_LEVEL) --duration=10 test
+	$(PYTHON) -m pytest --duration=10 test
 
 .PHONY: docs
 # Build documentation
@@ -77,6 +77,6 @@ pyclean:
 	rm -rf .pytest_cache
 
 test-profile:
-	$(PYTHON) -m cProfile -o profile $(which py.test) test
+	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 

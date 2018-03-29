@@ -4,6 +4,7 @@ from ocrd.processor.base import run_processor
 from ocrd.processor.characterize.exif import ExifProcessor
 from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
 from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
+from ocrd.processor.recognize.tesserocr import Tesseract3Recognizer
 from ocrd.resolver import Resolver
 
 from ocrd.webservice.processor import create as create_processor_ws
@@ -54,6 +55,14 @@ def _segment_line_tesserocr(ctx):
     Segment page/regions into lines
     """
     run_processor(Tesseract3LineSegmenter, workspace=ctx.obj['workspace'])
+
+@process_cli.command('recognize/tesserocr')
+@click.pass_context
+def _recognize_tesserocr(ctx):
+    """
+    Recognize lines
+    """
+    run_processor(Tesseract3Recognizer, workspace=ctx.obj['workspace'])
 
 # ----------------------------------------------------------------------
 # ocrd server
