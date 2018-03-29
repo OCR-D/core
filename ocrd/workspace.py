@@ -70,12 +70,12 @@ class Workspace(object):
                 basename = os.path.join(use, basename)
             local_filename = os.path.join(self.directory, basename)
 
-        local_filename_dir = local_filename.rsplit('/', 1)[0]
+        local_filename_dir = os.path.abspath(os.path.dirname(local_filename.rsplit('/', 1)[0]))
         if not os.path.isdir(local_filename_dir):
             os.makedirs(local_filename_dir)
 
         if 'url' not in kwargs:
-            kwargs['url'] = 'file://' + local_filename
+            kwargs['url'] = 'file://' + os.path.abspath(local_filename)
 
         self.mets.add_file(use, local_filename=local_filename, **kwargs)
 

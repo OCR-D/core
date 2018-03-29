@@ -5,6 +5,8 @@ import re
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
 
+UNSAFE_CHARS = r'[^A-Za-z0-9\.]'
+
 def getLogger(*args, **kwargs):
     return logging.getLogger(*args, **kwargs)
 
@@ -36,6 +38,9 @@ def xywh_from_coordinate_string(points):
 
 # https://stackoverflow.com/a/10133365/201318
 def xmllint_format(xml):
+    """
+    Format XML by passing it thrugh libxml2's xmllint --format
+    """
     proc = subprocess.Popen(
         ['xmllint', '--format', '/dev/stdin'],
         stdin=subprocess.PIPE,
@@ -45,8 +50,30 @@ def xmllint_format(xml):
     return output
 
 def mets_file_id(grp, n):
+    """
+    Canonical ID of a file within a fileGrp
+    """
     return "%s_%04i"  % (grp, n + 1)
 
 def safe_filename(url):
-    ret = re.sub('[^A-Za-z0-9]', '', url)
-    return ret
+    """
+    Create a safe_filename, also used as cache key
+    """
+    (basename, ext) = filename_without_extension(url)
+    basename = re.sub(UNSAFE_CHARS, '_', basename)
+    ext = re.sub(UNSAFE_CHARS, '_', ext[1:]) if ext is not None else ''
+    return "%s%s" % (basename, ext)
+
+def filename_without_extension(fname):
+    """
+    Return a tuple (filename, extension). Extensions DO include a leading dot.
+
+    >>> filename_without_extension("foo.png")
+    ('foo', '.png')
+    >>> filename_without_extension("foo.tar.gz")
+    ('foo', '.tar.gz')
+    """
+    ret = fname.rsplit('.', 2)[0]
+    if ret.endswith('.tar'):
+        ret = ret[0:len(ret)-4]
+    return (ret, fname[len(ret):])

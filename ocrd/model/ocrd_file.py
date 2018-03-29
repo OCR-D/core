@@ -1,7 +1,10 @@
 import os
 from ocrd.constants import NAMESPACES as NS, TAG_METS_FLOCAT
+from ocrd.utils import getLogger, filename_without_extension
 
 from .ocrd_xml_base import ET
+
+log = getLogger('OcrdFile')
 
 class OcrdFile(object):
     """
@@ -35,10 +38,12 @@ class OcrdFile(object):
         return os.path.basename(self.local_filename)
 
     @property
+    def abspath(self):
+        return os.path.abspath(self.local_filename)
+
+    @property
     def basename_without_extension(self):
-        ret = self.basename.rsplit('.', 1)[0]
-        if ret.endswith('.tar'):
-            ret = ret[0:len(ret)-4]
+        (ret, _) = filename_without_extension(self.basename)
         return ret
 
     @property
