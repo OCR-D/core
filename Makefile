@@ -76,6 +76,6 @@ pyclean:
 	rm -rf .pytest_cache
 
 test-profile:
-	$(PYTHON) -m cProfile -o profile $(which py.test) test
+	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
