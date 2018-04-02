@@ -80,3 +80,6 @@ test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
+
+watch:
+	source venv/bin/activate ; nodemon -e 'py' -w 'ocrd' -w 'test' -x pip install --upgrade .
