@@ -83,4 +83,3 @@ test-profile:
 # Start asset server at http://localhost:5001
 asset-server:
 	cd ocrd-assets && make start
-
