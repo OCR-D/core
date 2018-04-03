@@ -23,6 +23,6 @@ COPY setup.py .
 COPY requirements.txt .
 COPY README.rst .
 COPY LICENSE .
-RUN apt-get install -y 
+RUN make deps-pip install
 
-# ENTRYPOINT '/usr/local/bin/ocrd'
+ENTRYPOINT ["/usr/local/bin/ocrd"]
