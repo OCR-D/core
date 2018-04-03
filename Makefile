@@ -5,6 +5,7 @@ PYTHON = python
 PYTHONPATH := .:$(PYTHONPATH)
 PIP = pip
 LOG_LEVEL = INFO
+PYTHONIOENCODING=utf8
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -25,7 +26,7 @@ help:
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt install \
+	apt install -y \
 		python3 \
 		python3-pip \
 		libtesseract-dev \
