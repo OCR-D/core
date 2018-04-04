@@ -1,6 +1,6 @@
 click
 requests
--e git+https://github.com/smarnach/pyexiftool.git#egg=pyexiftool
+git+https://github.com/smarnach/pyexiftool.git#egg=pyexiftool
 tesserocr
 lxml
 Pillow
