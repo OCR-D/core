@@ -6,7 +6,12 @@ ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
 WORKDIR /build-ocrd
+COPY ocrd ./ocrd
 COPY Makefile .
+COPY setup.py .
+COPY requirements.txt .
+COPY README.rst .
+COPY LICENSE .
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
     ca-certificates \
@@ -18,11 +23,6 @@ RUN apt-get update && \
     libxext6
 RUN make deps-ubuntu
 RUN pip3 install --upgrade pip
-COPY ocrd ./ocrd
-COPY setup.py .
-COPY requirements.txt .
-COPY README.rst .
-COPY LICENSE .
 RUN make deps-pip install
 
 ENTRYPOINT ["/usr/local/bin/ocrd"]
