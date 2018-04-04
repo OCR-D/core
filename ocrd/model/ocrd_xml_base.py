@@ -41,7 +41,7 @@ class OcrdXmlDocument(object):
             self._tree = ET.XML(content.encode('utf-8'), parser=ET.XMLParser(encoding='utf-8'))
         else:
             self._tree = ET.ElementTree()
-            self._tree.parse(filename)
+            self._tree.parse(filename.replace('file://', ''))
 
     def to_xml(self, xmllint=False):
         root = self._tree

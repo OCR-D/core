@@ -5,11 +5,27 @@ METS_HEROLD = assets.url_of('SBB0000F29300010000/mets.xml')
 
 class TestOcrdMets(TestCase):
 
-    def runTest(self):
-        mets = OcrdMets(filename=METS_HEROLD.replace('file://', ''))
-        mets.add_file('OUTPUT', mimetype="bla/quux")
-        #  print(mets.to_xml())
-        #  print(mets.files_in_group('INPUT')[0])
+    def setUp(self):
+        self.mets = OcrdMets(filename=METS_HEROLD)
+
+    def test_file_groups(self):
+        self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
+
+    def test_find_files(self):
+        self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 2, '2 files in "OCR-D-IMG"')
+        self.assertEqual(len(self.mets.find_files()), 34, '2 files total')
+
+    def test_add_group(self):
+        self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
+        self.mets.add_file_group('TEST')
+        self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
+
+    def test_add_file(self):
+        self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
+        self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 0, '0 files in "OUTPUT"')
+        self.mets.add_file('OUTPUT', mimetype="bla/quux")
+        self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
+        self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 1, '1 files in "OUTPUT"')
 
 if __name__ == '__main__':
     main()

@@ -56,7 +56,7 @@ class Workspace(object):
         """
         Download all  the :py:mod:`ocrd.model.ocrd_file.OcrdFile` in the file group given.
         """
-        for input_file in self.mets.files_in_group(use):
+        for input_file in self.mets.find_files(fileGrp=use):
             self.download_file(input_file, subdir=use)
 
     def add_file(self, use, basename=None, content=None, local_filename=None, **kwargs):
