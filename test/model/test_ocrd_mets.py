@@ -1,6 +1,7 @@
-from test.base import TestCase, main
-from test.assets import METS_HEROLD
 from ocrd.model import OcrdMets
+
+from test.base import TestCase, main, assets
+METS_HEROLD = assets.url_of('SBB0000F29300010000/mets.xml')
 
 class TestOcrdMets(TestCase):
 

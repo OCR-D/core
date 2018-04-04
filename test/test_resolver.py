@@ -1,9 +1,8 @@
-import test.base as unittest
-from test.assets import METS_HEROLD
 from ocrd.resolver import Resolver
+from test.base import TestCase, assets, main
+METS_HEROLD = assets.url_of('SBB0000F29300010000/mets.xml')
 
-
-class TestResolver(unittest.TestCase):
+class TestResolver(TestCase):
 
     def test_basic(self):
         resolver = Resolver(cache_enabled=True)
@@ -15,8 +14,8 @@ class TestResolver(unittest.TestCase):
         image_file = input_files[0]
         #  print(image_file)
         f = workspace.download_file(image_file)
-        self.assertEquals(f.ID, 'FILE_0001_IMAGE')
+        self.assertEqual(f.ID, 'FILE_0001_IMAGE')
         #  print(f)
 
 if __name__ == '__main__':
-    unittest.main()
+    main()

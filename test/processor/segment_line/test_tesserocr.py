@@ -5,8 +5,8 @@ from ocrd.resolver import Resolver
 from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
 from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
 
-from test.assets import METS_HEROLD_SMALL
-from test.base import TestCase, main
+from test.base import TestCase, main, assets
+METS_HEROLD_SMALL = assets.url_of('SBB0000F29300010000/mets_one_file.xml')
 
 WORKSPACE_DIR = '/tmp/pyocrd-test-segment-line-tesserocr'
 

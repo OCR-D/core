@@ -81,3 +81,7 @@ test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
+# Start asset server at http://localhost:5001
+asset-server:
+	cd ocrd-assets && make start
+

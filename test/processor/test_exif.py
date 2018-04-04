@@ -1,9 +1,9 @@
-#  from pprint import pprint
-
-from test.base import TestCase, main
-from test.assets import METS_HEROLD
 from ocrd.resolver import Resolver
 from ocrd.processor.characterize.exif import ExifProcessor
+
+from test.base import TestCase, main, assets
+
+METS_HEROLD = assets.url_of('SBB0000F29300010000/mets.xml')
 
 class TestProcessorExif(TestCase):
 

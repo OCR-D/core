@@ -81,6 +81,20 @@ Examples:
     ocrd server process -p 6543
     http PUT localhost:6543/characterize url==http://server/path/to/mets.xml
 
+Testing
+-------
+
+Download ocrd-assets (``make assets``)
+
+Test with local files: ``make test``
+
+Test with local asset server:
+  - Start asset-server: ``make asset-server``
+  - ``OCRD_BASEURL='http://localhost:5001/' make test``
+
+Test with remote assets:
+  - ``OCRD_BASEURL='https://github.com/OCR-D/ocrd-assets/raw/master/data/' make test``
+
 See Also
 --------
 
