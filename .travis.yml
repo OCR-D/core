@@ -28,4 +28,5 @@ before_install:
 install:
   - make deps-pip test-deps-pip
 script:
+  - make assets
   - make test
