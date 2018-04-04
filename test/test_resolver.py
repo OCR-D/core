@@ -1,18 +1,20 @@
 import test.base as unittest
-from test.base import PWD
+from test.assets import METS_HEROLD
 from ocrd.resolver import Resolver
 
-METS_URL = 'file://' + PWD + '/assets/herold/mets.xml'
 
 class TestResolver(unittest.TestCase):
 
     def test_basic(self):
         resolver = Resolver(cache_enabled=True)
-        workspace = resolver.create_workspace(METS_URL)
-        input_files = workspace.mets.files_in_group('INPUT')
+        workspace = resolver.create_workspace(METS_HEROLD)
+        #  print(METS_HEROLD)
+        #  print(workspace.mets)
+        input_files = workspace.mets.files_in_group('OCR-D-IMG')
         #  print [str(f) for f in input_files]
-        mets_file = input_files[0]
-        f = workspace.download_file(mets_file)
+        image_file = input_files[0]
+        #  print(image_file)
+        f = workspace.download_file(image_file)
         self.assertEquals(f.ID, 'FILE_0001_IMAGE')
         #  print(f)
 

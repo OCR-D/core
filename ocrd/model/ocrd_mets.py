@@ -9,6 +9,9 @@ class OcrdMets(OcrdXmlDocument):
         super(OcrdMets, self).__init__(*args, **kwargs)
         self._file_by_id = {}
 
+    def __str__(self):
+        return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.file_by_id)
+
     @property
     def files(self):
         return [self._file_by_id[i] for i in self._file_by_id]
