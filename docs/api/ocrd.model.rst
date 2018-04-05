@@ -28,6 +28,22 @@ ocrd.model.ocrd\_page module
     :undoc-members:
     :show-inheritance:
 
+ocrd.model.ocrd\_page\_textline module
+--------------------------------------
+
+.. automodule:: ocrd.model.ocrd_page_textline
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ocrd.model.ocrd\_page\_textregion module
+----------------------------------------
+
+.. automodule:: ocrd.model.ocrd_page_textregion
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.model.ocrd\_xml\_base module
 ---------------------------------
 

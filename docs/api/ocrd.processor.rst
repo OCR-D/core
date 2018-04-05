@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     ocrd.processor.characterize
+    ocrd.processor.recognize
     ocrd.processor.segment_line
     ocrd.processor.segment_region
 
