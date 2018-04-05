@@ -1,7 +1,11 @@
 pyOCR-D
 =======
 
+
     Collection of OCR-related python tools and wrappers from the OCR-D team
+
+.. image:: https://travis-ci.org/OCR-D/pyocrd.svg?branch=master
+    :target: https://travis-ci.org/OCR-D/pyocrd
 
 Installation
 ------------
