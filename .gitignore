@@ -106,8 +106,10 @@ env2/
 *.swp
 ocrd.egg-info
 /src
-spec
+ocrd-assets
 .pytest_cache
 .~lock*
 /profile
 .pynative
+test/assets/SBB0000F29300010000
+venv3
