@@ -3,13 +3,12 @@ from __future__ import absolute_import
 from ocrd.model import OcrdPage
 from ocrd.processor.base import Processor
 from ocrd.utils import getLogger, mets_file_id
-from ocrd.constants import MIMETYPE_PAGE
+from ocrd.constants import MIMETYPE_PAGE, TESSDATA_PREFIX
 
 import tesserocr
 
 log = getLogger('processor.Tesseract3Recognizer')
 
-DEFAULT_PATH = tesserocr.get_languages()[0]
 DEFAULT_MODEL = tesserocr.get_languages()[1][-1]
 
 class Tesseract3Recognizer(Processor):
@@ -18,7 +17,7 @@ class Tesseract3Recognizer(Processor):
         """
         Performs the (text) recognition.
         """
-        with tesserocr.PyTessBaseAPI(path=DEFAULT_PATH, lang=DEFAULT_MODEL) as tessapi:
+        with tesserocr.PyTessBaseAPI(path=TESSDATA_PREFIX, lang=DEFAULT_MODEL) as tessapi:
             log.info("Using model %s in %s for recognition", tesserocr.get_languages()[0], tesserocr.get_languages()[1][-1])
             tessapi.SetPageSegMode(tesserocr.PSM.SINGLE_LINE)
             for (n, input_file) in enumerate(self.input_files):

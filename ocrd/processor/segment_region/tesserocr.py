@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+import os
 
 from ocrd.model import OcrdPage
 from ocrd.processor.base import Processor
 from ocrd.utils import getLogger, mets_file_id
-from ocrd.constants import MIMETYPE_PAGE
+from ocrd.constants import MIMETYPE_PAGE, TESSDATA_PREFIX
 
 import tesserocr
 
@@ -15,7 +16,7 @@ class Tesseract3RegionSegmenter(Processor):
         """
         Performs the region segmentation.
         """
-        with tesserocr.PyTessBaseAPI() as tessapi:
+        with tesserocr.PyTessBaseAPI(path=TESSDATA_PREFIX) as tessapi:
             for (n, input_file) in enumerate(self.input_files):
                 page = OcrdPage.from_file(self.workspace.download_file(input_file))
                 image = self.workspace.resolve_image_as_pil(page.imageFileName)

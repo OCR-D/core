@@ -1,3 +1,4 @@
+import os
 
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",
@@ -30,6 +31,8 @@ TAG_PAGE_REGIONREFINDEXED = '{%s}RegionRefIndexed' % NAMESPACES['page']
 TAG_PAGE_TEXTLINE = '{%s}TextLine' % NAMESPACES['page']
 TAG_PAGE_TEXTEQUIV = '{%s}TextEquiv' % NAMESPACES['page']
 TAG_PAGE_TEXTREGION = '{%s}TextRegion' % NAMESPACES['page']
+
+TESSDATA_PREFIX = os.environ['TESSDATA_PREFIX'] if 'TESSDATA_PREFIX' in os.environ else None
 
 EXIF_COMPRESSION_METHODS = {
     1: "Uncompressed",

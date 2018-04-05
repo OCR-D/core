@@ -32,9 +32,7 @@ deps-ubuntu:
 		libleptonica-dev \
 		libimage-exiftool-perl \
 		libxml2-utils \
-		tesseract-ocr-eng \
-		tesseract-ocr-deu \
-		tesseract-ocr-deu-frak
+		tesseract-ocr-eng
 
 # Install python deps via pip
 deps-pip:
@@ -43,6 +41,7 @@ deps-pip:
 # Clone the ocrd-assets repo for sample files
 assets:
 	if [ ! -e ocrd-assets ];then git clone https://github.com/OCR-D/ocrd-assets;fi
+	mkdir -p test/assets
 	cd test/assets && ln -fs ../../ocrd-assets/data/* .
 
 # (Re)install the tool
