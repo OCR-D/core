@@ -7,6 +7,10 @@ pyOCR-D
 .. image:: https://travis-ci.org/OCR-D/pyocrd.svg?branch=master
     :target: https://travis-ci.org/OCR-D/pyocrd
 
+.. image:: https://img.shields.io/docker/automated/ocrd/pyocrd.svg
+    :target: https://hub.docker.com/r/ocrd/pyocrd/tags/
+    :alt: Docker Automated build
+
 Installation
 ------------
 
