@@ -9,7 +9,7 @@ class TestResolver(TestCase):
         workspace = resolver.create_workspace(METS_HEROLD)
         #  print(METS_HEROLD)
         #  print(workspace.mets)
-        input_files = workspace.mets.files_in_group('OCR-D-IMG')
+        input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
         #  print [str(f) for f in input_files]
         image_file = input_files[0]
         #  print(image_file)

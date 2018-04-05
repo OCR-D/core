@@ -45,7 +45,7 @@ class Processor(object):
         """
         List the input files
         """
-        return self.workspace.mets.files_in_group(self.inputGrp)
+        return self.workspace.mets.find_files(fileGrp=self.inputGrp)
 
     def add_output_file(self, input_file=None, basename=None, ID=None, **kwargs):
         """

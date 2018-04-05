@@ -17,7 +17,7 @@ class TestProcessorExif(TestCase):
         #  workspace.upload_all_outputs()
         #  print(workspace)
         #  mets = OcrdMets(filename=METS_URL)
-        #  print(mets.files_in_group('INPUT')[0])
+        #  print(mets.find_files(fileGrp='INPUT')[0])
 
 if __name__ == '__main__':
     main()

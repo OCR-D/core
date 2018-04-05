@@ -23,7 +23,7 @@ class ExifProcessor(Processor):
         Performs the image characterization.
         """
         with exiftool.ExifTool() as et:
-            for input_file in self.workspace.mets.files_in_group('INPUT'):
+            for input_file in self.workspace.mets.find_files(fileGrp='INPUT'):
                 self.workspace.download_file(input_file)
                 page = OcrdPage.from_file(input_file)
                 image_filename = self.workspace.download_url(page.imageFileName)
