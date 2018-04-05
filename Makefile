@@ -48,6 +48,10 @@ assets:
 install:
 	$(PIP) install .
 
+#
+# Tests
+#
+
 test/assets: spec
 	mkdir -p test/assets
 	cp -r spec/io/example test/assets/herold
@@ -61,15 +65,27 @@ test-deps-pip:
 test:
 	$(PYTHON) -m pytest --duration=10 test
 
+#
+# Documentation
+#
+
 .PHONY: docs
 # Build documentation
-docs:
+docs: gh-pages
 	sphinx-apidoc -f -o docs/api ocrd
 	cd docs ; $(MAKE) html
+	cp -r docs/build/html/* gh-pages
 
 # Clean docs
 docs-clean:
 	cd docs ; rm -rf _build api
+
+gh-pages:
+	git clone --branch gh-pages https://github.com/OCR-D/pyocrd gh-pages
+
+#
+# Clean up
+#
 
 pyclean:
 	rm -f **/*.pyc

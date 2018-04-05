@@ -4,10 +4,10 @@ ocrd.processor.segment\_line package
 Submodules
 ----------
 
-ocrd.processor.segment\_line.tesseract3 module
-----------------------------------------------
+ocrd.processor.segment\_line.tesserocr module
+---------------------------------------------
 
-.. automodule:: ocrd.processor.segment_line.tesseract3
+.. automodule:: ocrd.processor.segment_line.tesserocr
     :members:
     :undoc-members:
     :show-inheritance:
