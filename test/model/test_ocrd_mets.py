@@ -8,6 +8,9 @@ class TestOcrdMets(TestCase):
     def setUp(self):
         self.mets = OcrdMets(filename=METS_HEROLD)
 
+    def test_unique_identifier(self):
+        self.assertEqual(self.mets.unique_identifier, 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier')
+
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
 

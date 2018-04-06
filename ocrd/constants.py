@@ -23,6 +23,9 @@ DEFAULT_REPOSITORY_URL = 'http://localhost:5000/'
 
 DEFAULT_CACHE_FOLDER = '/tmp/cache-pyocrd'
 
+FILE_GROUP_CATEGORIES = ['IMG', 'SEG', 'OCR', 'CORR']
+IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
+
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
 TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
