@@ -52,6 +52,16 @@ class OcrdFile(object):
         self._el.set('ID', ID)
 
     @property
+    def groupId(self):
+        return self._el.get('GROUPID')
+
+    @groupId.setter
+    def groupId(self, groupId):
+        if groupId is None:
+            return
+        self._el.set('GROUPID', groupId)
+
+    @property
     def mimetype(self):
         return self._el.get('MIMETYPE')
 
