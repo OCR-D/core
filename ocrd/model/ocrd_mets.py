@@ -20,7 +20,7 @@ class OcrdMets(OcrdXmlDocument):
     def file_groups(self):
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
-    def find_files(self, fileGrp=None):
+    def find_files(self, fileGrp=None, groupId=None):
         """
         List files.
 
@@ -31,10 +31,9 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
-        if fileGrp is not None:
-            file_els = self._tree.getroot().findall(".//mets:fileGrp[@USE='%s']/mets:file" % (fileGrp), NS)
-        else:
-            file_els = self._tree.getroot().findall(".//mets:fileGrp/mets:file", NS)
+        fileGrp_clause = '' if fileGrp is None else '[@USE="%s"]' % fileGrp
+        file_clause = '' if groupId is None else '[@GROUPID="%s"]' % groupId
+        file_els = self._tree.getroot().findall(".//mets:fileGrp%s/mets:file%s" % (fileGrp_clause, file_clause), NS)
         for el in file_els:
             file_id = el.get('ID')
             if file_id not in self._file_by_id:
