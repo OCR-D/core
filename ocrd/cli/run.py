@@ -6,6 +6,7 @@ from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
 from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
 from ocrd.processor.recognize.tesserocr import Tesseract3Recognizer
 from ocrd.resolver import Resolver
+from ocrd.validator import Validator
 
 from ocrd.webservice.processor import create as create_processor_ws
 from ocrd.webservice.repository import create as create_repository_ws
@@ -15,6 +16,18 @@ def cli():
     """
     CLI to OCR-D
     """
+# ----------------------------------------------------------------------
+# ocrd validate
+# ----------------------------------------------------------------------
+@cli.command('validate')
+@click.option('-m', '--mets-url', help="METS URL to validate")
+def validate_cli(mets_url):
+    resolver = Resolver(cache_enabled=True)
+    report = Validator.validate(resolver, mets_url)
+    print(report.to_xml())
+    if not report.is_valid:
+        return 128
+
 # ----------------------------------------------------------------------
 # ocrd process
 # ----------------------------------------------------------------------
