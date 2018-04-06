@@ -1,4 +1,4 @@
-from ocrd.constants import NAMESPACES as NS, TAG_METS_FILE, TAG_METS_FILEGRP
+from ocrd.constants import NAMESPACES as NS, TAG_METS_FILE, TAG_METS_FILEGRP, IDENTIFIER_PRIORITY
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
@@ -11,6 +11,13 @@ class OcrdMets(OcrdXmlDocument):
 
     def __str__(self):
         return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.file_by_id)
+
+    @property
+    def unique_identifier(self):
+        for t in IDENTIFIER_PRIORITY:
+            found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
+            if found is not None:
+                return found.text
 
     @property
     def file_by_id(self):
