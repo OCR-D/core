@@ -40,7 +40,7 @@ To install to user HOME dir
     pip install --user -r requirements.txt
     pip install .
 
-To develop, install to a virtulenv
+To develop, install to a virtualenv
 
 ::
 
@@ -59,7 +59,7 @@ If tesserocr fails to compile with an error:::
 
 This is due to some inconsistencies in the installed tesseract C headers. Replace ``string`` with ``std::string`` in ``$PREFIX/include/tesseract/unicharset.h:265:5:`` and ``$PREFIX/include/tesseract/unichar.h:164:10:`` ff.
 
-If tesserocr fails with an error about ``LSTM``/``CUBE``, you are have a
+If tesserocr fails with an error about ``LSTM``/``CUBE``, you have a
 mismatch between tesseract header/data/pkg-config versions. ``apt policy
 libtesseract-dev`` lists the apt-installable versions, keep it consistent. Make
 sure there are no spurious pkg-config artifacts, e.g. in
