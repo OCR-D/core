@@ -1,4 +1,4 @@
-from ocrd.constants import NAMESPACES as NS, TAG_METS_FILE, TAG_METS_FILEGRP
+from ocrd.constants import NAMESPACES as NS, TAG_METS_FILE, TAG_METS_FILEGRP, IDENTIFIER_PRIORITY
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
@@ -13,6 +13,13 @@ class OcrdMets(OcrdXmlDocument):
         return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.file_by_id)
 
     @property
+    def unique_identifier(self):
+        for t in IDENTIFIER_PRIORITY:
+            found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
+            if found is not None:
+                return found.text
+
+    @property
     def file_by_id(self):
         return self._file_by_id
 
@@ -20,7 +27,7 @@ class OcrdMets(OcrdXmlDocument):
     def file_groups(self):
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
-    def find_files(self, fileGrp=None):
+    def find_files(self, fileGrp=None, groupId=None):
         """
         List files.
 
@@ -31,10 +38,9 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
-        if fileGrp is not None:
-            file_els = self._tree.getroot().findall(".//mets:fileGrp[@USE='%s']/mets:file" % (fileGrp), NS)
-        else:
-            file_els = self._tree.getroot().findall(".//mets:fileGrp/mets:file", NS)
+        fileGrp_clause = '' if fileGrp is None else '[@USE="%s"]' % fileGrp
+        file_clause = '' if groupId is None else '[@GROUPID="%s"]' % groupId
+        file_els = self._tree.getroot().findall(".//mets:fileGrp%s/mets:file%s" % (fileGrp_clause, file_clause), NS)
         for el in file_els:
             file_id = el.get('ID')
             if file_id not in self._file_by_id:
