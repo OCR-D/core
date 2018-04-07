@@ -22,6 +22,14 @@ ocrd.constants module
     :undoc-members:
     :show-inheritance:
 
+ocrd.decorators module
+----------------------
+
+.. automodule:: ocrd.decorators
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.resolver module
 --------------------
 

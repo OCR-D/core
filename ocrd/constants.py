@@ -1,5 +1,4 @@
 import os
-import tesserocr
 
 TMP_PREFIX = 'pyocrd-'
 
@@ -38,8 +37,6 @@ TAG_PAGE_REGIONREFINDEXED = '{%s}RegionRefIndexed' % NAMESPACES['page']
 TAG_PAGE_TEXTLINE = '{%s}TextLine' % NAMESPACES['page']
 TAG_PAGE_TEXTEQUIV = '{%s}TextEquiv' % NAMESPACES['page']
 TAG_PAGE_TEXTREGION = '{%s}TextRegion' % NAMESPACES['page']
-
-TESSDATA_PREFIX = os.environ['TESSDATA_PREFIX'] if 'TESSDATA_PREFIX' in os.environ else tesserocr.get_languages()[0]
 
 METS_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
 <mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="info:lc/xmlns/premis-v2 http://www.loc.gov/standards/premis/v2/premis-v2-0.xsd http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-6.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/version17/mets.v1-7.xsd http://www.loc.gov/mix/v10 http://www.loc.gov/standards/mix/mix10/mix10.xsd">

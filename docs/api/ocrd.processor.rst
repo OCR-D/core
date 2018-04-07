@@ -1,15 +1,6 @@
 ocrd.processor package
 ======================
 
-Subpackages
------------
-
-.. toctree::
-
-    ocrd.processor.recognize
-    ocrd.processor.segment_line
-    ocrd.processor.segment_region
-
 Submodules
 ----------
 

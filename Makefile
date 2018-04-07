@@ -32,11 +32,8 @@ deps-ubuntu:
 	apt install -y \
 		python3 \
 		python3-pip \
-		libtesseract-dev \
-		libleptonica-dev \
 		libimage-exiftool-perl \
-		libxml2-utils \
-		tesseract-ocr-eng
+		libxml2-utils
 
 # Install python deps via pip
 deps-pip:
@@ -99,7 +96,7 @@ gh-pages:
 
 pyclean:
 	rm -f **/*.pyc
-	rm -rf **/*/__pycache__
+	find ocrd -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 test-profile:

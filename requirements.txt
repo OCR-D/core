@@ -1,7 +1,6 @@
 click
 requests
 git+https://github.com/smarnach/pyexiftool.git#egg=pyexiftool
-git+https://github.com/sirfz/tesserocr#egg=tesserocr
 lxml
 Pillow
 numpy

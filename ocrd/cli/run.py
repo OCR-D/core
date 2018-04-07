@@ -1,9 +1,5 @@
 import click
 
-from ocrd.processor.base import run_processor
-from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
-from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
-from ocrd.processor.recognize.tesserocr import Tesseract3Recognizer
 from ocrd.resolver import Resolver
 from ocrd.validator import Validator
 
@@ -22,7 +18,7 @@ def cli():
 @click.option('-m', '--mets-url', help="METS URL to validate")
 def validate_cli(mets_url):
     resolver = Resolver(cache_enabled=True)
-    report = Validator.validate(resolver, mets_url)
+    report = Validator.validate_url(resolver, mets_url)
     print(report.to_xml())
     if not report.is_valid:
         return 128
@@ -43,30 +39,6 @@ def process_cli(ctx, mets_xml):
     if mets_xml:
         ctx.obj['mets_url'] = 'file://' + mets_xml
         ctx.obj['workspace'] = resolver.workspace_from_url(ctx.obj['mets_url'])
-
-@process_cli.command('segment-region/tesserocr')
-@click.pass_context
-def _segment_region_tesserocr(ctx):
-    """
-    Segment page into regions
-    """
-    run_processor(Tesseract3RegionSegmenter, workspace=ctx.obj['workspace'])
-
-@process_cli.command('segment-line/tesserocr')
-@click.pass_context
-def _segment_line_tesserocr(ctx):
-    """
-    Segment page/regions into lines
-    """
-    run_processor(Tesseract3LineSegmenter, workspace=ctx.obj['workspace'])
-
-@process_cli.command('recognize/tesserocr')
-@click.pass_context
-def _recognize_tesserocr(ctx):
-    """
-    Recognize lines
-    """
-    run_processor(Tesseract3Recognizer, workspace=ctx.obj['workspace'])
 
 # ----------------------------------------------------------------------
 # ocrd server
