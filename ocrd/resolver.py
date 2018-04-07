@@ -3,23 +3,14 @@ from shutil import copyfile
 import tempfile
 import requests
 
-from ocrd.constants import METS_XML_EMPTY
+from ocrd.constants import METS_XML_EMPTY, TMP_PREFIX, EXT_TO_MIME
 from ocrd.utils import getLogger, safe_filename
 from ocrd.resolver_cache import ResolverCache
 from ocrd.workspace import Workspace
 from ocrd.model import OcrdMets
 
 log = getLogger('ocrd.resolver')
-PREFIX = 'pyocrd-'
 tempfile.tempdir = '/tmp'
-EXT_TO_MIME = {
-    '.tif': 'image/tiff',
-    '.tiff': 'image/tiff',
-    '.png': 'image/png',
-    '.jpg': 'image/jpg',
-    '.jpeg': 'image/jpg',
-    '.xml': 'text/xml'
-}
 
 class Resolver(object):
     """
@@ -115,29 +106,17 @@ class Resolver(object):
         Sets the mets.xml file
         """
         if directory is None:
-            directory = tempfile.mkdtemp(prefix=PREFIX)
+            directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
         log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
         self.download_to_directory(directory, mets_url, basename='mets.xml', prefer_symlink=False)
         return Workspace(self, directory)
 
-    def workspace_from_folder(self, directory, return_mets=False, clobber_mets=False):
+    def workspace_from_folder(self, directory, return_mets=False, clobber_mets=False, convention='ocrd-gt'):
         """
         Create a workspace from a folder, creating a METS file.
 
-        Convention:
-            Subfolder name ==> mets:fileGrp @USE
-                'page' => 'OCR-D-OCR-PAGE'
-                'alto' => 'OCR-D-OCR-ALTO'
-                'tei' => 'OCR-D-OCR-TEI'
-            fileGrp + '_' + upper(Basename of file without extension) == mets:file @ID
-            File in root folder == mets:fileGrp @USE == 'OCR-D-IMG'
-            Extension ==> mets.file @MIMETYPE
-                .tif => image/tif
-                .png => image/png
-                .jpg => image/jpg
-                .xml => image/xml
-
         Args:
+            convention: See add_files_to_mets
             clobber_mets (boolean) : Whether to overwrite existing mets.xml. Default: False.
             return_mets (boolean) : Do not create the actual mets.xml file but return the :class:`OcrdMets`. Default: False.
         """
@@ -154,7 +133,7 @@ class Resolver(object):
             os.makedirs(directory)
         directory = os.path.abspath(directory)
 
-        self.add_files_to_mets(mets, directory)
+        self.add_files_to_mets(convention, mets, directory)
 
         if return_mets:
             return mets
@@ -167,24 +146,46 @@ class Resolver(object):
 
         return Workspace(self, directory)
 
-    def add_files_to_mets(self, mets, directory):
-        for root, dirs, files in os.walk(directory):
-            dirname = root[len(directory):]
-            if not dirname:
-                fileGrp = 'OCR-D-IMG'
-            elif '/' in dirname:
-                del dirs[:]
-                fileGrp = dirname[1:].upper()
-            for f in files:
-                for ext in EXT_TO_MIME:
-                    if f.endswith(ext):
-                        mimetype = EXT_TO_MIME[ext]
-                if dirname == '/alto':
-                    mimetype = 'application/alto+xml'
-                    fileGrp = 'OCR-D-OCR-ALTO'
-                elif dirname == '/page':
-                    fileGrp = 'OCR-D-OCR-PAGE'
-                ID = '_'.join([fileGrp, f.replace('.', '_')]).upper()
-                local_filename = os.path.join(directory, f)
-                url = 'file://' + local_filename
-                mets.add_file(fileGrp, mimetype=mimetype, url=url, local_filename=local_filename, ID=ID)
+    def add_files_to_mets(self, convention, mets, directory):
+        """
+        Add files from folder to METS, accoding to a file structure convention.
+
+        Args:
+            convention (string) : Which file structure convention to adhere to.
+
+                'ocrd-gt' (Default)::
+
+                    Subfolder name ==> mets:fileGrp @USE
+                        'page' => 'OCR-D-OCR-PAGE'
+                        'alto' => 'OCR-D-OCR-ALTO'
+                        'tei' => 'OCR-D-OCR-TEI'
+                    fileGrp + '_' + upper(Basename of file without extension) == mets:file @ID
+                    File in root folder == mets:fileGrp @USE == 'OCR-D-IMG'
+                    Extension ==> mets.file @MIMETYPE
+                        .tif => image/tif
+                        .png => image/png
+                        .jpg => image/jpg
+                        .xml => image/xml
+
+        """
+        if convention == 'ocrd-gt':
+            for root, dirs, files in os.walk(directory):
+                dirname = root[len(directory):]
+                if not dirname:
+                    fileGrp = 'OCR-D-IMG'
+                elif '/' in dirname:
+                    del dirs[:]
+                    fileGrp = dirname[1:].upper()
+                for f in files:
+                    for ext in EXT_TO_MIME:
+                        if f.endswith(ext):
+                            mimetype = EXT_TO_MIME[ext]
+                    if dirname == '/alto':
+                        mimetype = 'application/alto+xml'
+                        fileGrp = 'OCR-D-OCR-ALTO'
+                    elif dirname == '/page':
+                        fileGrp = 'OCR-D-OCR-PAGE'
+                    ID = '_'.join([fileGrp, f.replace('.', '_')]).upper()
+                    local_filename = os.path.join(directory, f)
+                    url = 'file://' + local_filename
+                    mets.add_file(fileGrp, mimetype=mimetype, url=url, local_filename=local_filename, ID=ID)

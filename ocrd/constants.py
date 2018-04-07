@@ -1,6 +1,8 @@
 import os
 import tesserocr
 
+TMP_PREFIX = 'pyocrd-'
+
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",
     'mods': "http://www.loc.gov/mods/v3",
@@ -61,3 +63,12 @@ METS_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
   </mets:fileSec>
 </mets:mets>
 '''
+
+EXT_TO_MIME = {
+    '.tif': 'image/tiff',
+    '.tiff': 'image/tiff',
+    '.png': 'image/png',
+    '.jpg': 'image/jpg',
+    '.jpeg': 'image/jpg',
+    '.xml': 'text/xml'
+}
