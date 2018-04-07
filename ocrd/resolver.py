@@ -106,10 +106,18 @@ class Resolver(object):
         :TODO:
         Unpack an OCRD-ZIP to a local workspace.
 
+        1. Create directory
+        3. Unpack zipfile into it
+        4. Initiate workspace
+
         Args:
             zip_filename (string) : Path to OCRD-ZIP file
         """
-        raise Exception("NIH")
+        directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        log.debug("Unpacking to %s", directory)
+        with ZipFile(zip_filename, 'r') as z:
+            z.extractall(path=directory)
+        return Workspace(self, directory)
 
     def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None, prefer_symlink=None):
         """
@@ -241,6 +249,7 @@ class Resolver(object):
                         .xml => image/xml
 
         """
+        log = getLogger('ocrd.resolver.add_files_to_mets')
         log.debug("Reading files in '%s' according to '%s' convention", directory, convention)
 
         if convention == 'ocrd-gt':
@@ -273,4 +282,4 @@ class Resolver(object):
                         ID='_'.join([fileGrp, f.replace('.', '_')]).upper(),
                         url='file://' + local_filename,
                     )
-                    log.info("Added as %s", x)
+                    log.debug("Added as %s", x)

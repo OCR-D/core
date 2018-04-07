@@ -53,12 +53,14 @@ class Workspace(object):
         Returns:
             The local filename of the downloaded file
         """
+        os.chdir(self.directory)
         return self.resolver.download_to_directory(self.directory, url, **kwargs)
 
     def download_file(self, f, **kwargs):
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
+        os.chdir(self.directory)
         if f.local_filename:
             log.debug("Alrady downloaded: %s", f.local_filename)
         else:
@@ -108,7 +110,7 @@ class Workspace(object):
         OUTPUT group to the data repository, sets their URL accordingly.
         """
         self.save_mets()
-        # TODO: persist file:// urls
+        raise Exception("NIH")
 
     def save_mets(self):
         """
