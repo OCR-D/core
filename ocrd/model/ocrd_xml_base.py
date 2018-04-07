@@ -38,7 +38,7 @@ class OcrdXmlDocument(object):
         if filename is None and content is None:
             raise Exception("Must pass 'filename' or 'content' to " + self.__class__.__name__)
         elif content:
-            self._tree = ET.XML(content.encode('utf-8'), parser=ET.XMLParser(encoding='utf-8'))
+            self._tree = ET.ElementTree(ET.XML(content.encode('utf-8'), parser=ET.XMLParser(encoding='utf-8')))
         else:
             self._tree = ET.ElementTree()
             self._tree.parse(filename.replace('file://', ''))

@@ -55,15 +55,15 @@ class OcrdMets(OcrdXmlDocument):
             ret.append(self._file_by_id[file_id])
         return ret
 
-    def add_file_group(self, use):
+    def add_file_group(self, fileGrp):
         el_fileGrp = ET.SubElement(self._tree.getroot().find('.//mets:fileSec', NS), TAG_METS_FILEGRP)
-        el_fileGrp.set('USE', use)
+        el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
-    def add_file(self, use, mimetype=None, url=None, ID=None, local_filename=None):
-        el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (use), NS)
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, local_filename=None):
+        el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
-            el_fileGrp = self.add_file_group(use)
+            el_fileGrp = self.add_file_group(fileGrp)
         mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE))
         mets_file.url = url
         mets_file.mimetype = mimetype

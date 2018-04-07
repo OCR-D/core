@@ -10,7 +10,7 @@ def run_processor(processor, mets_url=None, resolver=None, workspace=None):
             raise Exception("Need to pass a resolver to create a workspace")
         if mets_url is None:
             raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.create_workspace(mets_url)
+        workspace = resolver.workspace_from_url(mets_url)
     log.debug("Running processor %s", processor)
     processor(workspace).process()
     workspace.persist()

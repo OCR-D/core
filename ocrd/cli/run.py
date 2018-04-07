@@ -42,7 +42,7 @@ def process_cli(ctx, mets_xml):
     ctx.obj = {}
     if mets_xml:
         ctx.obj['mets_url'] = 'file://' + mets_xml
-        ctx.obj['workspace'] = resolver.create_workspace(ctx.obj['mets_url'])
+        ctx.obj['workspace'] = resolver.workspace_from_url(ctx.obj['mets_url'])
 
 @process_cli.command('segment-region/tesserocr')
 @click.pass_context

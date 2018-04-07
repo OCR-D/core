@@ -8,7 +8,7 @@ class TestProcessorSegmentRegionTesseract3(TestCase):
 
     def runTest(self):
         resolver = Resolver(cache_enabled=True)
-        workspace = resolver.create_workspace(METS_HEROLD_SMALL)
+        workspace = resolver.workspace_from_url(METS_HEROLD_SMALL)
         Tesseract3RegionSegmenter(workspace).process()
         workspace.save_mets()
 

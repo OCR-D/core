@@ -52,7 +52,7 @@ class Validator(object):
         self.resolver = resolver
         self.mets_url = mets_url
         self.report = ValidationReport()
-        self.workspace = self.resolver.create_workspace(mets_url)
+        self.workspace = self.resolver.workspace_from_url(mets_url)
         self.mets = self.workspace.mets
 
     @staticmethod
