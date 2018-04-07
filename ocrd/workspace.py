@@ -96,11 +96,11 @@ class Workspace(object):
             with open(local_filename, 'wb') as f:
                 f.write(content)
 
-    def move_file(self, file, dst):
+    def move_file(self, fobj, dst):
         """
-        Move a file within the workspace
+        Move a fobj within the workspace
         """
-        shutil.move(file.local_filename, os.path.join(self.directory, dst))
+        shutil.move(fobj.local_filename, os.path.join(self.directory, dst))
 
     def persist(self):
         """

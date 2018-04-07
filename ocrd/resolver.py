@@ -1,5 +1,6 @@
 import os
 from shutil import copyfile
+from zipfile import ZipFile
 import tempfile
 import requests
 
@@ -39,42 +40,65 @@ class Resolver(object):
         else:
             copyfile(src, dst)
 
-    def pack_workspace(self, workspace):
+    def pack_workspace(self, workspace, zpath=None):
         """
         :TODO:
         Pack a workspace as OCRD-ZIP.
 
         1. Create a subfolder for every fileGrp@USE
         2. Download all files without local_filename
-        3. Move every file to fileGrp@USE/file@ID
-        4. Replace url of every file with ``file://`` URL relative to folder
-        5. Save updated mets.xml
-        6. ZIP mets.xml and fileGrp@USE-subfolders and store in workspace
+        3. Create a directory DIR
+        3. Copy every mets:file to DIR/mets:fileGrp@USE/mets:file@ID
+        4. Replace url of every file with ``file://`` URL relative to DIR
+        5. Save mets.xml to DIR
+        6. ZIP mets.xml and fileGrp@USE-subfolders and store in workspace.zip
 
         Args:
             workspace (string) : Workspace to pack as OCRD-ZIP
+            zpath (string) : Path to ZIP file to savce
 
         Returns:
             zip_filename (string) : Path to OCRD-ZIP file
         """
         mets = workspace.mets
+        outdir = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        log.debug("Temporary directory for packing: %s", outdir)
+
+        if zpath is None:
+            zpath = os.path.join(workspace.directory, 'workspace.zip')
         for fileGrp in mets.file_groups:
-            fileGrp_dir = os.path.join(workspace.directory, fileGrp)
+            fileGrp_dir = os.path.join(outdir, fileGrp)
             # 1.
-            if not os.path.isdir(fileGrp):
+            if not os.path.isdir(fileGrp_dir):
+                log.debug("Create directory %s", fileGrp_dir)
                 os.makedirs(fileGrp_dir)
             # 2.
+            #  log.error("%s: %s", fileGrp, [str(f) for f in mets.find_files()])
             for f in mets.find_files(fileGrp=fileGrp):
                 if f.local_filename is None:
-                    workspace.download_file(f)
+                    #  log.debug("No local file: %s", f)
+                    workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+                    #  print(f.local_filename)
                 # 3.
-                workspace.move_file(f, os.path.join(workspace.directory, fileGrp, f.ID))
+                new_local_filename = os.path.join(fileGrp_dir, f.ID)
+                copyfile(f.local_filename, new_local_filename)
+                f.local_filename = new_local_filename
                 # 4.
+                # TODO PAGE
                 f.url = 'file://' + os.path.join(fileGrp, f.ID)
         # 5.
-        workspace.save_mets()
-        # 4.
-        raise Exception("NIH")
+        metspath = os.path.join(outdir, 'mets.xml')
+        with open(metspath, 'wb') as fmets:
+            fmets.write(mets.to_xml(xmllint=True))
+        # 6.
+        log.info("Writing to %s", zpath)
+        with ZipFile(zpath, 'w') as z:
+            z.write(metspath, 'mets.xml')
+            for fileGrp in mets.file_groups:
+                for f in mets.find_files(fileGrp=fileGrp):
+                    z.write(f.local_filename, os.path.join(fileGrp, f.ID))
+
+        return zpath
 
     def unpack_workspace_from_filename(self, zip_filename):
         """
@@ -105,6 +129,7 @@ class Resolver(object):
         Returns:
             Local filename
         """
+        log = getLogger('ocrd.resolver.download_to_directory')
         if basename is None:
             if subdir is not None:
                 basename = url.rsplit('/', 1)[-1]
@@ -216,7 +241,7 @@ class Resolver(object):
                         .xml => image/xml
 
         """
-        log.debug("Reading files in workspace according to %s convention" % convention)
+        log.debug("Reading files in '%s' according to '%s' convention", directory, convention)
 
         if convention == 'ocrd-gt':
             for root, dirs, files in os.walk(directory):
@@ -225,7 +250,8 @@ class Resolver(object):
                     fileGrp = 'OCR-D-IMG'
                 elif '/' in dirname:
                     del dirs[:]
-                    fileGrp = dirname[1:].upper()
+                    dirname = dirname[1:]
+                    fileGrp = dirname.upper()
                 for f in files:
                     if f == 'mets.xml':
                         continue
@@ -234,12 +260,17 @@ class Resolver(object):
                         if f.endswith(ext):
                             mimetype = EXT_TO_MIME[ext]
                             break
-                    if dirname == '/alto':
+                    if dirname == 'alto':
                         mimetype = 'application/alto+xml'
                         fileGrp = 'OCR-D-OCR-ALTO'
-                    elif dirname == '/page':
+                    elif dirname == 'page':
                         fileGrp = 'OCR-D-OCR-PAGE'
-                    ID = '_'.join([fileGrp, f.replace('.', '_')]).upper()
                     local_filename = os.path.join(directory, dirname, f)
-                    url = 'file://' + local_filename
-                    mets.add_file(fileGrp, mimetype=mimetype, url=url, local_filename=local_filename, ID=ID)
+                    x = mets.add_file(
+                        fileGrp,
+                        mimetype=mimetype,
+                        local_filename=local_filename,
+                        ID='_'.join([fileGrp, f.replace('.', '_')]).upper(),
+                        url='file://' + local_filename,
+                    )
+                    log.info("Added as %s", x)
