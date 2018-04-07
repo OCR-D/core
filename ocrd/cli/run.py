@@ -1,7 +1,7 @@
 import click
 
 from ocrd.resolver import Resolver
-from ocrd.validator import Validator
+from ocrd.validator import WorkspaceValidator
 
 from ocrd.webservice.processor import create as create_processor_ws
 from ocrd.webservice.repository import create as create_repository_ws
@@ -12,13 +12,14 @@ def cli():
     CLI to OCR-D
     """
 # ----------------------------------------------------------------------
-# ocrd validate
+# ocrd validate-workspace
 # ----------------------------------------------------------------------
-@cli.command('validate')
+
+@cli.command('validate-workspace', help='Validate a workspace')
 @click.option('-m', '--mets-url', help="METS URL to validate")
 def validate_cli(mets_url):
     resolver = Resolver(cache_enabled=True)
-    report = Validator.validate_url(resolver, mets_url)
+    report = WorkspaceValidator.validate_url(resolver, mets_url)
     print(report.to_xml())
     if not report.is_valid:
         return 128

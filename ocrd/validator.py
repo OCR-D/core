@@ -39,7 +39,7 @@ class ValidationReport(object):
     def add_error(self, msg):
         self.errors.append(msg)
 
-class Validator(object):
+class WorkspaceValidator(object):
     """
     Validates an OCR-D/METS workspace against the specs.
 
@@ -63,7 +63,7 @@ class Validator(object):
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        validator = Validator(resolver, mets_url)
+        validator = WorkspaceValidator(resolver, mets_url)
         validator.validate()
         return validator.report
 
