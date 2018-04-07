@@ -28,10 +28,9 @@ class ValidationReport(object):
 
     def to_xml(self):
         body = ''
-        for warning in self.warnings:
-            body += '\n  <warning>%s</warning>' % (warning)
-        for error in self.errors:
-            body += '\n  <error>%s</error>' % (error)
+        for k in ['warning', 'error']:
+            for msg in self.__dict__[k + 's']:
+                body += '\n  <%s>%s</%s>' % (k, msg, k)
         return '<report valid="%s">%s\n</report>' % ("true" if self.is_valid else "false", body)
 
     def add_warning(self, msg):
