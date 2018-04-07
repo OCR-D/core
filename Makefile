@@ -43,7 +43,12 @@ deps-pip:
 assets:
 	if [ ! -e ocrd-assets ];then git clone https://github.com/OCR-D/ocrd-assets;fi
 	mkdir -p test/assets
-	cd test/assets && ln -fs ../../ocrd-assets/data/* .
+	cp -r -t test/assets ocrd-assets/data/*
+	# cd test/assets && ln -fs ../../ocrd-assets/data/* .
+
+# Remove symlinks in test/assets
+assets-clean:
+	rm -rf test/assets
 
 # (Re)install the tool
 install:

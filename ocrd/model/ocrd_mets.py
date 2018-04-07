@@ -5,12 +5,14 @@ from .ocrd_file import OcrdFile
 
 class OcrdMets(OcrdXmlDocument):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, file_by_id=None, *args, **kwargs):
         super(OcrdMets, self).__init__(*args, **kwargs)
-        self._file_by_id = {}
+        if file_by_id is None:
+            file_by_id = {}
+        self._file_by_id = file_by_id
 
     def __str__(self):
-        return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.file_by_id)
+        return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.find_files())
 
     @property
     def unique_identifier(self):
@@ -18,10 +20,6 @@ class OcrdMets(OcrdXmlDocument):
             found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
             if found is not None:
                 return found.text
-
-    @property
-    def file_by_id(self):
-        return self._file_by_id
 
     @property
     def file_groups(self):

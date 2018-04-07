@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import cv2
 import PIL
@@ -13,13 +14,21 @@ class Workspace(object):
     A workspace is a temporary directory set up for a processor. It's the
     interface to the METS/PAGE XML and delegates download and upload to the
     Resolver.
+
+    Args:
+
+        directory (string) : Foldert to work in
+        mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
     """
 
-    def __init__(self, resolver, directory):
+    def __init__(self, resolver, directory, mets=None):
         self.resolver = resolver
         self.directory = directory
         self.mets_filename = os.path.join(directory, 'mets.xml')
-        self.mets = OcrdMets(filename=self.mets_filename)
+        if mets is None:
+            mets = OcrdMets(filename=self.mets_filename)
+        self.mets = mets
+        #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
             'pil': {},
             'cv2': {},
@@ -86,6 +95,12 @@ class Workspace(object):
         if content is not None:
             with open(local_filename, 'wb') as f:
                 f.write(content)
+
+    def move_file(self, file, dst):
+        """
+        Move a file within the workspace
+        """
+        shutil.move(file.local_filename, os.path.join(self.directory, dst))
 
     def persist(self):
         """

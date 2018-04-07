@@ -78,12 +78,12 @@ class Validator(object):
             self.report.add_error("METS has no unique identifier")
 
     def _validate_pixel_density(self):
-        for file in self.mets.find_files(mimetype='image/tif'):
-            exif = self.workspace.resolve_image_exif(file.url)
+        for f in self.mets.find_files(mimetype='image/tif'):
+            exif = self.workspace.resolve_image_exif(f.url)
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)
                 if v is None or v <= 72:
-                    self.report.add_error("Image %s: %s (%s pixels per %s) is too low" % (file.ID, k, v, exif.resolutionUnit))
+                    self.report.add_error("Image %s: %s (%s pixels per %s) is too low" % (f.ID, k, v, exif.resolutionUnit))
 
     def _validate_mets_file_group_names(self):
         for fileGrp in self.mets.file_groups:

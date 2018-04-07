@@ -39,6 +39,54 @@ class Resolver(object):
         else:
             copyfile(src, dst)
 
+    def pack_workspace(self, workspace):
+        """
+        :TODO:
+        Pack a workspace as OCRD-ZIP.
+
+        1. Create a subfolder for every fileGrp@USE
+        2. Download all files without local_filename
+        3. Move every file to fileGrp@USE/file@ID
+        4. Replace url of every file with ``file://`` URL relative to folder
+        5. Save updated mets.xml
+        6. ZIP mets.xml and fileGrp@USE-subfolders and store in workspace
+
+        Args:
+            workspace (string) : Workspace to pack as OCRD-ZIP
+
+        Returns:
+            zip_filename (string) : Path to OCRD-ZIP file
+        """
+        mets = workspace.mets
+        for fileGrp in mets.file_groups:
+            fileGrp_dir = os.path.join(workspace.directory, fileGrp)
+            # 1.
+            if not os.path.isdir(fileGrp):
+                os.makedirs(fileGrp_dir)
+            # 2.
+            for f in mets.find_files(fileGrp=fileGrp):
+                if f.local_filename is None:
+                    workspace.download_file(f)
+                # 3.
+                workspace.move_file(f, os.path.join(workspace.directory, fileGrp, f.ID))
+                # 4.
+                f.url = 'file://' + os.path.join(fileGrp, f.ID)
+        # 5.
+        workspace.save_mets()
+        # 4.
+        raise Exception("NIH")
+
+    def unpack_workspace_from_filename(self, zip_filename):
+        """
+
+        :TODO:
+        Unpack an OCRD-ZIP to a local workspace.
+
+        Args:
+            zip_filename (string) : Path to OCRD-ZIP file
+        """
+        raise Exception("NIH")
+
     def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None, prefer_symlink=None):
         """
         Download a file to the workspace.
@@ -144,7 +192,7 @@ class Resolver(object):
             log.info("Writing %s", mets_fpath)
             fmets.write(mets.to_xml(xmllint=True))
 
-        return Workspace(self, directory)
+        return Workspace(self, directory, mets)
 
     def add_files_to_mets(self, convention, mets, directory):
         """
@@ -168,6 +216,8 @@ class Resolver(object):
                         .xml => image/xml
 
         """
+        log.debug("Reading files in workspace according to %s convention" % convention)
+
         if convention == 'ocrd-gt':
             for root, dirs, files in os.walk(directory):
                 dirname = root[len(directory):]
@@ -177,15 +227,19 @@ class Resolver(object):
                     del dirs[:]
                     fileGrp = dirname[1:].upper()
                 for f in files:
+                    if f == 'mets.xml':
+                        continue
+                    mimetype = 'application/octet-stream'
                     for ext in EXT_TO_MIME:
                         if f.endswith(ext):
                             mimetype = EXT_TO_MIME[ext]
+                            break
                     if dirname == '/alto':
                         mimetype = 'application/alto+xml'
                         fileGrp = 'OCR-D-OCR-ALTO'
                     elif dirname == '/page':
                         fileGrp = 'OCR-D-OCR-PAGE'
                     ID = '_'.join([fileGrp, f.replace('.', '_')]).upper()
-                    local_filename = os.path.join(directory, f)
+                    local_filename = os.path.join(directory, dirname, f)
                     url = 'file://' + local_filename
                     mets.add_file(fileGrp, mimetype=mimetype, url=url, local_filename=local_filename, ID=ID)
