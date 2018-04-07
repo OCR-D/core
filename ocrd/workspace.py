@@ -1,6 +1,5 @@
 import os
 
-import exiftool
 import cv2
 import PIL
 import numpy as np
@@ -100,12 +99,13 @@ class Workspace(object):
             f.write(self.mets.to_xml(xmllint=True))
 
     def resolve_image_exif(self, image_url):
+        """
+        Get the EXIF metadata about an image URL as :class:`OcrdExif`
+        """
         image_filename = self.download_url(image_url)
 
         if image_url not in self.image_cache['exif']:
-            with exiftool.ExifTool() as et:
-                exif_props = et.get_metadata(image_filename)
-                self.image_cache['exif'][image_url] = OcrdExif(exif_props)
+            self.image_cache['exif'][image_url] = OcrdExif.from_filename(image_filename)
         return self.image_cache['exif']
 
     def resolve_image_as_pil(self, image_url, coords=None):

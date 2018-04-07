@@ -1,3 +1,5 @@
+import exiftool
+
 EXIF_COMPRESSION_METHODS = {
     1: "Uncompressed",
     2: "CCITT 1D",
@@ -69,11 +71,24 @@ class OcrdExif(object):
     Represents technical image metadata
     """
 
+    @staticmethod
+    def from_filename(image_filename):
+        with exiftool.ExifTool() as et:
+            exif_props = et.get_metadata(image_filename)
+            return OcrdExif(exif_props)
+
     def __init__(self, props):
-        self.width = "%d" % props.get("EXIF:ImageWidth", "")
-        self.height = "%d" % props.get("EXIF:ImageHeight", "")
-        self.xResolution = "%d" % props.get("EXIF:XResolution")
-        self.yResolution = "%d" % props.get("EXIF:YResolution", "")
-        self.compression = "%s" % EXIF_COMPRESSION_METHODS.get(props.get("EXIF:Compression", 0), "Unknown")
-        self.photometricInterpretation = "%s" % EXIF_PHOTOMETRICINTERPRETATION_VALUES.get(props.get("EXIF:PhotometricInterpretation", 0), "Unknown")
-        self.resolutionUnit = "%s" % EXIF_RESOLUTIONUNIT_VALUES.get(props.get("EXIF:ResolutionUnit", 1), "None")
+        self.width = props["EXIF:ImageWidth"]
+        self.height = props["EXIF:ImageHeight"]
+        self.xResolution = props["EXIF:XResolution"]
+        self.yResolution = props["EXIF:YResolution"]
+        self.compression = EXIF_COMPRESSION_METHODS.get(props["EXIF:Compression"], "Unknown")
+        self.photometricInterpretation = EXIF_PHOTOMETRICINTERPRETATION_VALUES.get(props["EXIF:PhotometricInterpretation"], "Unknown")
+        self.resolutionUnit = "%s" % EXIF_RESOLUTIONUNIT_VALUES.get(props["EXIF:ResolutionUnit"], "None")
+
+    def to_xml(self):
+        ret = '<exif>'
+        for k in self.__dict__:
+            ret += '<%s>%s</%s>' % (k, self.__dict__[k], k)
+        ret += '</exif>'
+        return ret
