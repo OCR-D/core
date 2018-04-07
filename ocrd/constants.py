@@ -1,5 +1,3 @@
-import os
-
 TMP_PREFIX = 'pyocrd-'
 
 NAMESPACES = {
