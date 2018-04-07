@@ -24,6 +24,9 @@ help:
 
 # END-EVAL
 
+# Docker tag.
+DOCKER_TAG = 'ocrd/pyocrd'
+
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	apt install -y \
@@ -106,3 +109,11 @@ test-profile:
 # Start asset server at http://localhost:5001
 asset-server:
 	cd ocrd-assets && make start
+
+#
+# Docker
+#
+
+# Build docker image
+docker:
+	docker build -t $(DOCKER_TAG) .
