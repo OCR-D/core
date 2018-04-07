@@ -2,7 +2,6 @@ from flask import Flask
 from flask import request
 
 from ocrd.processor.base import run_processor
-from ocrd.processor.characterize.exif import ExifProcessor
 from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
 from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
 from ocrd.resolver import Resolver
@@ -11,11 +10,6 @@ resolver = Resolver(cache_enabled=True)
 
 def create():
     app = Flask(__name__)
-
-    @app.route('/processor/characterize/exif', methods=['PUT'])
-    def _characterize_exif():
-        run_processor(ExifProcessor, request.args['mets_url'], resolver)
-        return 'DONE', 200
 
     @app.route('/processor/segment_line/tesserocr', methods=['PUT'])
     def _segment_line_tesserocr():

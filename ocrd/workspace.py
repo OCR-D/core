@@ -1,10 +1,11 @@
 import os
 
+import exiftool
 import cv2
 import PIL
 import numpy as np
 
-from ocrd.model import OcrdMets
+from ocrd.model import OcrdMets, OcrdExif
 from ocrd.utils import getLogger
 log = getLogger('ocrd.workspace')
 
@@ -26,7 +27,7 @@ class Workspace(object):
         return 'Workspace[directory=%s, file_groups=%s, files=%s]' % (
             self.directory,
             self.mets.file_groups,
-            [str(f) for f in self.mets.files],
+            [str(f) for f in self.mets.find_files()],
         )
 
     def download_url(self, url, **kwargs):
@@ -61,7 +62,7 @@ class Workspace(object):
 
     def add_file(self, use, basename=None, content=None, local_filename=None, **kwargs):
         """
-        Add an output file. Creates an :py:mod:`ocrd.model.ocrd_file.OcrdFile` to pass around and adds that to the
+        Add an output file. Creates an :class:`OcrdFile` to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
         log.debug('outputfile use=%s basename=%s local_filename=%s content=%s', use, basename, local_filename, content is not None)
@@ -97,6 +98,15 @@ class Workspace(object):
         """
         with open(self.mets_filename, 'wb') as f:
             f.write(self.mets.to_xml(xmllint=True))
+
+    def resolve_image_exif(self, image_url):
+        image_filename = self.download_url(image_url)
+
+        if image_url not in self.image_cache['exif']:
+            with exiftool.ExifTool() as et:
+                exif_props = et.get_metadata(image_filename)
+                self.image_cache['exif'][image_url] = OcrdExif(exif_props)
+        return self.image_cache['exif']
 
     def resolve_image_as_pil(self, image_url, coords=None):
         """

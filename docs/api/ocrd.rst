@@ -46,6 +46,14 @@ ocrd.utils module
     :undoc-members:
     :show-inheritance:
 
+ocrd.validator module
+---------------------
+
+.. automodule:: ocrd.validator
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.workspace module
 ---------------------
 

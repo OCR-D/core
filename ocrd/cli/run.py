@@ -1,7 +1,6 @@
 import click
 
 from ocrd.processor.base import run_processor
-from ocrd.processor.characterize.exif import ExifProcessor
 from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
 from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
 from ocrd.processor.recognize.tesserocr import Tesseract3Recognizer
@@ -44,14 +43,6 @@ def process_cli(ctx, mets_xml):
     if mets_xml:
         ctx.obj['mets_url'] = 'file://' + mets_xml
         ctx.obj['workspace'] = resolver.create_workspace(ctx.obj['mets_url'])
-
-@process_cli.command('characterize/exif')
-@click.pass_context
-def _characterize_exif(ctx):
-    """
-    Characterize images with exiftool
-    """
-    run_processor(ExifProcessor, workspace=ctx.obj['workspace'])
 
 @process_cli.command('segment-region/tesserocr')
 @click.pass_context
