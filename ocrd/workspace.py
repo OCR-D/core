@@ -20,7 +20,11 @@ class Workspace(object):
         self.directory = directory
         self.mets_filename = os.path.join(directory, 'mets.xml')
         self.mets = OcrdMets(filename=self.mets_filename)
-        self.image_cache = {'pil': {}, 'cv2': {}}
+        self.image_cache = {
+            'pil': {},
+            'cv2': {},
+            'exif': {},
+        }
 
     def __str__(self):
         return 'Workspace[directory=%s, file_groups=%s, files=%s]' % (
@@ -101,12 +105,18 @@ class Workspace(object):
     def resolve_image_exif(self, image_url):
         """
         Get the EXIF metadata about an image URL as :class:`OcrdExif`
+
+        Args:
+            image_url (string) : URL of image
+
+        Return
+            :class:`OcrdExif`
         """
         image_filename = self.download_url(image_url)
 
         if image_url not in self.image_cache['exif']:
             self.image_cache['exif'][image_url] = OcrdExif.from_filename(image_filename)
-        return self.image_cache['exif']
+        return self.image_cache['exif'][image_url]
 
     def resolve_image_as_pil(self, image_url, coords=None):
         """

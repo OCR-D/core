@@ -1,7 +1,7 @@
 from ocrd.resolver import Resolver
 from ocrd.validator import Validator, ValidationReport
 from test.base import TestCase, assets, main
-METS_HEROLD = assets.url_of('SBB0000F29300010000/mets.xml')
+METS_HEROLD_SMALL = assets.url_of('SBB0000F29300010000/mets_one_file.xml')
 
 class TestValidator(TestCase):
 
@@ -20,7 +20,7 @@ class TestValidator(TestCase):
 </report>''')
 
     def test_basic(self):
-        report = Validator.validate(self.resolver, METS_HEROLD)
+        report = Validator.validate_url(self.resolver, METS_HEROLD_SMALL)
         print(report.to_xml())
 
 if __name__ == '__main__':

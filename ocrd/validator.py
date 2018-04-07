@@ -56,7 +56,7 @@ class Validator(object):
         self.mets = self.workspace.mets
 
     @staticmethod
-    def validate(resolver, mets_url):
+    def validate_url(resolver, mets_url):
         """
         Validates the workspace of a METS URL against the specs
 
@@ -64,17 +64,26 @@ class Validator(object):
             report (:class:`ValidationReport`) Report on the validity
         """
         validator = Validator(resolver, mets_url)
-        validator.validate_all()
+        validator.validate()
         return validator.report
 
-    def validate_all(self):
+    def validate(self):
         self._validate_mets_unique_identifier()
         self._validate_mets_file_group_names()
         self._validate_mets_files()
+        self._validate_pixel_density()
 
     def _validate_mets_unique_identifier(self):
         if self.mets.unique_identifier is None:
             self.report.add_error("METS has no unique identifier")
+
+    def _validate_pixel_density(self):
+        for file in self.mets.find_files(mimetype='image/tif'):
+            exif = self.workspace.resolve_image_exif(file.url)
+            for k in ['xResolution', 'yResolution']:
+                v = exif.__dict__.get(k)
+                if v is None or v <= 72:
+                    self.report.add_error("Image %s: %s (%s pixels per %s) is too low" % (file.ID, k, v, exif.resolutionUnit))
 
     def _validate_mets_file_group_names(self):
         for fileGrp in self.mets.file_groups:
