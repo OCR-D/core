@@ -76,6 +76,7 @@ docs: gh-pages
 	sphinx-apidoc -f -o docs/api ocrd
 	cd docs ; $(MAKE) html
 	cp -r docs/build/html/* gh-pages
+	cd gh-pages; git add . && git commit -m 'Updated docs $$(date)' && git push
 
 # Clean docs
 docs-clean:
