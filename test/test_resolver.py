@@ -22,8 +22,8 @@ class TestResolver(TestCase):
 
     def test_unpack_workspace(self):
         workspace = self.resolver.unpack_workspace_from_filename(TEST_ZIP)
-        files = workspace.mets.find_files(mimetype='image/tif')
-        self.assertEqual(len(files), 5, '5 TIF')
+        files = workspace.mets.find_files(mimetype='image/tiff')
+        self.assertEqual(len(files), 2, '2 TIF')
         for f in files:
             workspace.download_file(f)
         print([OcrdExif.from_filename(f.local_filename).to_xml() for f in files])
