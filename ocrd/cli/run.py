@@ -4,6 +4,7 @@ import json
 import click
 
 from ocrd.resolver import Resolver
+from ocrd.processor.base import run_cli
 from ocrd.validator import WorkspaceValidator, OcrdToolValidator
 from ocrd.decorators import ocrd_cli_options
 
@@ -70,11 +71,12 @@ def process_cli(mets_url, *args, **kwargs):
             raise Exception("Tool not registered: '%s'" % cmd)
 
     for cmd in kwargs['steps']:
-        # TODO: Run CLI
-        pass
+        run_cli(cmd, mets_url, resolver, workspace)
+
+    workspace.reload_mets()
 
     #  print('\n'.join(k + '=' + str(kwargs[k]) for k in kwargs))
-    #  print(workspace)
+    print(workspace)
 
 # ----------------------------------------------------------------------
 # ocrd server

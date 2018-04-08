@@ -42,6 +42,12 @@ class Workspace(object):
             [str(f) for f in self.mets.find_files()],
         )
 
+    def reload_mets(self):
+        """
+        Reload METS from disk.
+        """
+        self.mets = OcrdMets(filename=self.mets_filename)
+
     def download_url(self, url, **kwargs):
         """
         Download a URL to the workspace.

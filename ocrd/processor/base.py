@@ -1,3 +1,4 @@
+import subprocess
 from ocrd.utils import getLogger
 log = getLogger('ocrd.processor')
 
@@ -13,7 +14,25 @@ def run_processor(processor, mets_url=None, resolver=None, workspace=None):
         workspace = resolver.workspace_from_url(mets_url)
     log.debug("Running processor %s", processor)
     processor(workspace).process()
-    workspace.persist()
+    #  workspace.persist()
+
+def run_cli(binary, mets_url=None, resolver=None, workspace=None):
+    """
+    Create a workspace for mets_url and run MP CLI through it
+    """
+    if workspace is None:
+        if resolver is None:
+            raise Exception("Need to pass a resolver to create a workspace")
+        if mets_url is None:
+            raise Exception("Need to pass mets_url to create a workspace")
+        workspace = resolver.workspace_from_url(mets_url)
+    log.debug("Running binary '%s'", binary)
+    subprocess.call([
+        binary,
+        '-m', mets_url,
+        '-w', workspace.directory
+    ])
+    #  workspace.persist()
 
 class Processor(object):
     """
