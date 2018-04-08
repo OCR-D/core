@@ -32,6 +32,7 @@ def ocrd_cli_options(f):
         click.option('-o', '--output-mets', help="METS URL to write resulting METS to"),
         click.option('-p', '--parameter', type=click.Path()),
         click.option('-w', '--working-dir', help="Working Directory"),
+        click.option('-g', '--group-id', help="mets:file GROUPID"),
         click.option('-I', '--input-filegrp', help='File group(s) used as input.'),
         click.option('-O', '--output-filegrp', help='File group(s) used as output.'),
     ]

@@ -17,11 +17,12 @@ def run_processor(
         mets_url=None,
         resolver=None,
         workspace=None,
-        working_dir=None,
-        output_filegrp=None,
+        group_id=None,
         input_filegrp=None,
+        output_filegrp=None,
         output_mets=None,
         parameter=None,
+        working_dir=None,
 ):
     """
     Create a workspace for mets_url and run processor through it
@@ -36,11 +37,12 @@ def run_cli(
         mets_url=None,
         resolver=None,
         workspace=None,
-        working_dir=None,
-        output_filegrp=None,
+        group_id=None,
         input_filegrp=None,
+        output_filegrp=None,
         output_mets=None,
         parameter=None,
+        working_dir=None,
 ):
     """
     Create a workspace for mets_url and run MP CLI through it
