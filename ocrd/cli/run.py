@@ -3,9 +3,7 @@ import json
 
 import click
 
-from ocrd.resolver import Resolver
-from ocrd.processor.base import run_cli
-from ocrd.validator import WorkspaceValidator, OcrdToolValidator
+from ocrd import run_cli, OcrdSwagger, Resolver, WorkspaceValidator, OcrdToolValidator
 from ocrd.decorators import ocrd_cli_options
 
 from ocrd.webservice.processor import create as create_processor_ws
@@ -41,6 +39,17 @@ def validate_ocrd_tool(json_file):
     print(report.to_xml())
     if not report.is_valid:
         return 128
+
+# ----------------------------------------------------------------------
+# ocrd generate-swagger
+# ----------------------------------------------------------------------
+
+@cli.command('generate-swagger', help="Generate Swagger schema from ocrd-tool.json files")
+@click.option('-S', '--swagger-template', help="Swagger template to add operations to. Use builtin if not specified.")
+@click.option('-T', '--ocrd-tool', multiple=True, help="ocrd-tool.json file to generate from. Repeatable")
+def generate_swagger(swagger_template, ocrd_tool):
+    swagger = OcrdSwagger.from_ocrd_tools(swagger_template, *ocrd_tool)
+    print(json.dumps(swagger, indent=2))
 
 # ----------------------------------------------------------------------
 # ocrd process

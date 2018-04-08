@@ -1,15 +1,12 @@
 import json
 import re
-from pkg_resources import resource_string
 
 import jsonschema # pylint: disable=import-error
 
-from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
+from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX, OCRD_TOOL_SCHEMA
 from ocrd.utils import getLogger
 
 log = getLogger('ocrd.validator')
-
-CLI_JSON_SCHEMA = json.loads(resource_string(__name__, 'model/ocrd_tool.schema.json'))
 
 #
 # -------------------------------------------------
@@ -81,7 +78,7 @@ class JsonValidator(object):
 class OcrdToolValidator(JsonValidator):
 
     @staticmethod
-    def validate_json(obj, schema=CLI_JSON_SCHEMA):
+    def validate_json(obj, schema=OCRD_TOOL_SCHEMA):
         return JsonValidator.validate_json(obj, schema)
 
 #

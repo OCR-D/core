@@ -52,6 +52,14 @@ ocrd.model.ocrd\_page\_textregion module
     :undoc-members:
     :show-inheritance:
 
+ocrd.model.ocrd\_swagger module
+-------------------------------
+
+.. automodule:: ocrd.model.ocrd_swagger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.model.ocrd\_xml\_base module
 ---------------------------------
 

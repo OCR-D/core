@@ -21,7 +21,7 @@ setup(
     packages=find_packages(exclude=('tests', 'docs')),
     include_package_data=True,
     package_data={
-        '': ['*.json'],
+        '': ['*.json', '*.yaml'],
     },
     entry_points={
         'console_scripts': [

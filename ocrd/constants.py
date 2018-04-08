@@ -1,3 +1,7 @@
+import json
+import yaml
+from pkg_resources import resource_string
+
 TMP_PREFIX = 'pyocrd-'
 
 NAMESPACES = {
@@ -67,3 +71,6 @@ EXT_TO_MIME = {
     '.jpeg': 'image/jpg',
     '.xml': 'text/xml'
 }
+
+OCRD_TOOL_SCHEMA = json.loads(resource_string(__name__, 'model/ocrd_tool.schema.json'))
+SWAGGER_TEMPLATE = yaml.load(resource_string(__name__, 'model/swagger-2.0.yaml'))

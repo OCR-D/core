@@ -21,7 +21,7 @@
         "type": "object",
         "required": [
           "description",
-          "category",
+          "step",
           "binary"
         ],
         "properties": {
@@ -37,7 +37,7 @@
             "description": "Concise description what the tool does",
             "type": "string"
           },
-          "category": {
+          "step": {
             "description": "Step in the OCR-D functional model for this tool",
             "type": "string",
             "enum": [
@@ -45,6 +45,18 @@
               "segment-line",
               "segment-region",
               "recognize"
+            ]
+          },
+          "tags": {
+            "description": "Tag",
+            "enum": [
+              "Bildvorverarbeitung",
+              "Layouterkennung",
+              "Texterkennung",
+              "Textoptimierung",
+              "Modellbildung",
+              "Langzeitarchivierung",
+              "Qualitätssicherung"
             ]
           }
         }
