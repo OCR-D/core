@@ -16,11 +16,18 @@ help:
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-pip       Install python deps via pip"
 	@echo "    assets         Clone the ocrd-assets repo for sample files"
+	@echo "    assets-clean   Remove symlinks in test/assets"
 	@echo "    install        (Re)install the tool"
 	@echo "    test-deps-pip  Install test python deps via pip"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
+	@echo "    asset-server   Start asset server at http://localhost:5001"
+	@echo "    docker         Build docker image"
+	@echo ""
+	@echo "  Variables"
+	@echo ""
+	@echo "    DOCKER_TAG  Docker tag."
 
 # END-EVAL
 
