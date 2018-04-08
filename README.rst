@@ -37,7 +37,7 @@ To install to user HOME dir
     pip install --user -r requirements.txt
     pip install .
 
-To develop, install to a virtulenv
+To develop, install to a virtualenv
 
 ::
 
@@ -46,7 +46,6 @@ To develop, install to a virtulenv
     source venv/bin/activate
     pip install -r requirements.txt
     pip install .
-
 
 Usage
 -----
