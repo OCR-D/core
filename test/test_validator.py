@@ -29,7 +29,7 @@ class TestWorkspaceValidator(TestCase):
         report = WorkspaceValidator.validate_url(self.resolver, METS_HEROLD_SMALL)
         print(report.to_xml())
 
-class TestCliJsonValidator(TestCase):
+class TestOcrdToolValidator(TestCase):
 
     def runTest(self):
         report = OcrdToolValidator.validate_json(json.loads('''

@@ -50,7 +50,7 @@ def validate_ocrd_tool(json_file):
 @ocrd_cli_options
 @click.option('-T', '--ocrd-tool', multiple=True)
 @click.argument('steps', nargs=-1)
-def process_cli(mets_url, *args, **kwargs):
+def process_cli(mets_url, **kwargs):
     """
     Execute OCR-D processors for a METS file directly.
     """

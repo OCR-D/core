@@ -2,30 +2,50 @@ import subprocess
 from ocrd.utils import getLogger
 log = getLogger('ocrd.processor')
 
-def run_processor(processor, mets_url=None, resolver=None, workspace=None):
-    """
-    Create a workspace for mets_url and run processor through it
-    """
+def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
     if workspace is None:
         if resolver is None:
             raise Exception("Need to pass a resolver to create a workspace")
         if mets_url is None:
             raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.workspace_from_url(mets_url)
+        workspace = resolver.workspace_from_url(mets_url, directory=working_dir)
+    return workspace
+
+# pylint: disable=unused-argument
+def run_processor(
+        processor,
+        mets_url=None,
+        resolver=None,
+        workspace=None,
+        working_dir=None,
+        output_filegrp=None,
+        input_filegrp=None,
+        output_mets=None,
+        parameter=None,
+):
+    """
+    Create a workspace for mets_url and run processor through it
+    """
+    workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
     log.debug("Running processor %s", processor)
     processor(workspace).process()
     #  workspace.persist()
 
-def run_cli(binary, mets_url=None, resolver=None, workspace=None):
+def run_cli(
+        binary,
+        mets_url=None,
+        resolver=None,
+        workspace=None,
+        working_dir=None,
+        output_filegrp=None,
+        input_filegrp=None,
+        output_mets=None,
+        parameter=None,
+):
     """
     Create a workspace for mets_url and run MP CLI through it
     """
-    if workspace is None:
-        if resolver is None:
-            raise Exception("Need to pass a resolver to create a workspace")
-        if mets_url is None:
-            raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.workspace_from_url(mets_url)
+    workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
     log.debug("Running binary '%s'", binary)
     subprocess.call([
         binary,
