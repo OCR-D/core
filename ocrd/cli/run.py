@@ -1,8 +1,11 @@
 import codecs
+import json
+
 import click
 
 from ocrd.resolver import Resolver
 from ocrd.validator import WorkspaceValidator, OcrdToolValidator
+from ocrd.decorators import ocrd_cli_options
 
 from ocrd.webservice.processor import create as create_processor_ws
 from ocrd.webservice.repository import create as create_repository_ws
@@ -42,18 +45,36 @@ def validate_ocrd_tool(json_file):
 # ocrd process
 # ----------------------------------------------------------------------
 
-@cli.group('process', chain=True)
-@click.option('-m', '--mets-xml', help="METS file to run", type=click.Path(exists=True))
-@click.pass_context
-def process_cli(ctx, mets_xml):
+@cli.command('process')
+@ocrd_cli_options
+@click.option('-T', '--ocrd-tool', multiple=True)
+@click.argument('steps', nargs=-1)
+def process_cli(mets_url, *args, **kwargs):
     """
     Execute OCR-D processors for a METS file directly.
     """
+    if mets_url.find('://') == -1:
+        mets_url = 'file://' + mets_url
     resolver = Resolver(cache_enabled=True)
-    ctx.obj = {}
-    if mets_xml:
-        ctx.obj['mets_url'] = 'file://' + mets_xml
-        ctx.obj['workspace'] = resolver.workspace_from_url(ctx.obj['mets_url'])
+    workspace = resolver.workspace_from_url(mets_url)
+
+    cmds = []
+    for ocrd_tool_file in kwargs['ocrd_tool']:
+        with codecs.open(ocrd_tool_file, encoding='utf-8') as f:
+            obj = json.loads(f.read())
+            for tool in obj['tools']:
+                cmds.append(tool['binary'])
+
+    for cmd in kwargs['steps']:
+        if cmd not in cmds:
+            raise Exception("Tool not registered: '%s'" % cmd)
+
+    for cmd in kwargs['steps']:
+        # TODO: Run CLI
+        pass
+
+    #  print('\n'.join(k + '=' + str(kwargs[k]) for k in kwargs))
+    #  print(workspace)
 
 # ----------------------------------------------------------------------
 # ocrd server
