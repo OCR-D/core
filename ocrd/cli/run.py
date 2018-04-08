@@ -1,7 +1,8 @@
+import codecs
 import click
 
 from ocrd.resolver import Resolver
-from ocrd.validator import WorkspaceValidator
+from ocrd.validator import WorkspaceValidator, OcrdToolValidator
 
 from ocrd.webservice.processor import create as create_processor_ws
 from ocrd.webservice.repository import create as create_repository_ws
@@ -17,9 +18,22 @@ def cli():
 
 @cli.command('validate-workspace', help='Validate a workspace')
 @click.option('-m', '--mets-url', help="METS URL to validate")
-def validate_cli(mets_url):
+def validate_workspace(mets_url):
     resolver = Resolver(cache_enabled=True)
     report = WorkspaceValidator.validate_url(resolver, mets_url)
+    print(report.to_xml())
+    if not report.is_valid:
+        return 128
+
+# ----------------------------------------------------------------------
+# ocrd validate-workspace
+# ----------------------------------------------------------------------
+
+@cli.command('validate-ocrd-tool', help='Validate an ocrd-tool.json')
+@click.argument('json_file', "ocrd-tool.json to validate")
+def validate_ocrd_tool(json_file):
+    with codecs.open(json_file, encoding='utf-8') as f:
+        report = OcrdToolValidator.validate_json(f.read())
     print(report.to_xml())
     if not report.is_valid:
         return 128
