@@ -137,7 +137,7 @@ class Resolver(object):
         Returns:
             Local filename
         """
-        log = getLogger('ocrd.resolver.download_to_directory')
+        log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
         if basename is None:
             if subdir is not None:
                 basename = url.rsplit('/', 1)[-1]
@@ -186,6 +186,10 @@ class Resolver(object):
 
         Sets the mets.xml file
         """
+        if mets_url is None:
+            raise Exception("Must pass mets_url to workspace_from_url")
+        if mets_url.find('://') == -1:
+            mets_url = 'file://' + mets_url
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
         log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
@@ -249,7 +253,7 @@ class Resolver(object):
                         .xml => image/xml
 
         """
-        log = getLogger('ocrd.resolver.add_files_to_mets')
+        log = getLogger('ocrd.resolver.add_files_to_mets') # pylint: disable=redefined-outer-name
         log.debug("Reading files in '%s' according to '%s' convention", directory, convention)
 
         if convention == 'ocrd-gt':
