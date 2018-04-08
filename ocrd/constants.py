@@ -1,5 +1,4 @@
-import os
-import tesserocr
+TMP_PREFIX = 'pyocrd-'
 
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",
@@ -23,7 +22,8 @@ DEFAULT_REPOSITORY_URL = 'http://localhost:5000/'
 
 DEFAULT_CACHE_FOLDER = '/tmp/cache-pyocrd'
 
-FILE_GROUP_CATEGORIES = ['IMG', 'SEG', 'OCR', 'CORR']
+FILE_GROUP_PREFIX = 'OCR-D-'
+FILE_GROUP_CATEGORIES = ['IMG', 'SEG', 'OCR', 'COR']
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
@@ -36,70 +36,34 @@ TAG_PAGE_TEXTLINE = '{%s}TextLine' % NAMESPACES['page']
 TAG_PAGE_TEXTEQUIV = '{%s}TextEquiv' % NAMESPACES['page']
 TAG_PAGE_TEXTREGION = '{%s}TextRegion' % NAMESPACES['page']
 
-TESSDATA_PREFIX = os.environ['TESSDATA_PREFIX'] if 'TESSDATA_PREFIX' in os.environ else tesserocr.get_languages()[0]
+METS_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="info:lc/xmlns/premis-v2 http://www.loc.gov/standards/premis/v2/premis-v2-0.xsd http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-6.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/version17/mets.v1-7.xsd http://www.loc.gov/mix/v10 http://www.loc.gov/standards/mix/mix10/mix10.xsd">
+  <mets:metsHdr CREATEDATE="2017-11-30T16:18:26">
+    <mets:agent OTHERTYPE="SOFTWARE" ROLE="CREATOR" TYPE="OTHER">
+      <mets:name>DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)</mets:name>
+      <mets:note>OCR-D</mets:note>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="DMDLOG_0001">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="AMD">
+  </mets:amdSec>
+  <mets:fileSec>
+  </mets:fileSec>
+</mets:mets>
+'''
 
-EXIF_COMPRESSION_METHODS = {
-    1: "Uncompressed",
-    2: "CCITT 1D",
-    3: "T4/Group 3 Fax",
-    4: "T6/Group 4 Fax",
-    5: "LZW",
-    6: "JPEG (old-style)",
-    7: "JPEG",
-    8: "Adobe Deflate",
-    9: "JBIG B&W",
-    10: "JBIG Color",
-    99: "JPEG",
-    262: "Kodak 262",
-    32766: "Next",
-    32767: "Sony ARW Compressed",
-    32769: "Packed RAW",
-    32770: "Samsung SRW Compressed",
-    32771: "CCIRLEW",
-    32772: "Samsung SRW Compressed 2",
-    32773: "PackBits",
-    32809: "Thunderscan",
-    32867: "Kodak KDC Compressed",
-    32895: "IT8CTPAD",
-    32896: "IT8LW",
-    32897: "IT8MP",
-    32898: "IT8BL",
-    32908: "PixarFilm",
-    32909: "PixarLog",
-    32946: "Deflate",
-    32947: "DCS",
-    34661: "JBIG",
-    34676: "SGILog",
-    34677: "SGILog24",
-    34712: "JPEG 2000",
-    34713: "Nikon NEF Compressed",
-    34715: "JBIG2 TIFF FX",
-    34718: "Microsoft Document Imaging (MDI) Binary Level Codec",
-    34719: "Microsoft Document Imaging (MDI) Progressive Transform Codec",
-    34720: "Microsoft Document Imaging (MDI) Vector",
-    34892: "Lossy JPEG",
-    65000: "Kodak DCR Compressed",
-    65535: "Pentax PEF Compressed",
-}
-
-EXIF_PHOTOMETRICINTERPRETATION_VALUES = {
-    0: "WhiteIsZero",
-    1: "BlackIsZero",
-    2: "RGB",
-    3: "RGB Palette",
-    4: "Transparency Mask",
-    5: "CMYK",
-    6: "YCbCr",
-    8: "CIELab",
-    9: "ICCLab",
-    10: "ITULab",
-    32803: "Color Filter Array",
-    32844: "Pixar LogL",
-    32845: "Pixar LogLuv",
-    34892: "Linear Raw",
-}
-
-EXIF_RESOLUTIONUNIT_VALUES = {
-    2: "inches",
-    3: "cm",
+EXT_TO_MIME = {
+    '.tif': 'image/tiff',
+    '.tiff': 'image/tiff',
+    '.png': 'image/png',
+    '.jpg': 'image/jpg',
+    '.jpeg': 'image/jpg',
+    '.xml': 'text/xml'
 }

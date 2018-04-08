@@ -4,6 +4,14 @@ ocrd.model package
 Submodules
 ----------
 
+ocrd.model.ocrd\_exif module
+----------------------------
+
+.. automodule:: ocrd.model.ocrd_exif
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.model.ocrd\_file module
 ----------------------------
 

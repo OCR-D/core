@@ -24,16 +24,16 @@ help:
 
 # END-EVAL
 
+# Docker tag.
+DOCKER_TAG = 'ocrd/pyocrd'
+
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	apt install -y \
 		python3 \
 		python3-pip \
-		libtesseract-dev \
-		libleptonica-dev \
 		libimage-exiftool-perl \
-		libxml2-utils \
-		tesseract-ocr-eng
+		libxml2-utils
 
 # Install python deps via pip
 deps-pip:
@@ -43,7 +43,12 @@ deps-pip:
 assets:
 	if [ ! -e ocrd-assets ];then git clone https://github.com/OCR-D/ocrd-assets;fi
 	mkdir -p test/assets
-	cd test/assets && ln -fs ../../ocrd-assets/data/* .
+	cp -r -t test/assets ocrd-assets/data/*
+	# cd test/assets && ln -fs ../../ocrd-assets/data/* .
+
+# Remove symlinks in test/assets
+assets-clean:
+	rm -rf test/assets
 
 # (Re)install the tool
 install:
@@ -76,6 +81,7 @@ docs: gh-pages
 	sphinx-apidoc -f -o docs/api ocrd
 	cd docs ; $(MAKE) html
 	cp -r docs/build/html/* gh-pages
+	cd gh-pages; git add . && git commit -m 'Updated docs $$(date)' && git push
 
 # Clean docs
 docs-clean:
@@ -90,7 +96,7 @@ gh-pages:
 
 pyclean:
 	rm -f **/*.pyc
-	rm -rf **/*/__pycache__
+	find ocrd -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 test-profile:
@@ -100,3 +106,11 @@ test-profile:
 # Start asset server at http://localhost:5001
 asset-server:
 	cd ocrd-assets && make start
+
+#
+# Docker
+#
+
+# Build docker image
+docker:
+	docker build -t $(DOCKER_TAG) .

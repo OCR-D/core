@@ -3,11 +3,8 @@ python:
   # - 2.7
   - 3.6
 before_install:
-  - sudo add-apt-repository -y ppa:alex-p/tesseract-ocr
   - sudo apt-get -qq update
-  # - sudo apt-get -y install --no-install-recommends autoconf automake libtool make libglib2.0.0 libsm6 libxrender1 libxext6
   - sudo make deps-ubuntu
-  - find /usr/share/tesseract-ocr
 install:
   - make deps-pip test-deps-pip
 script:

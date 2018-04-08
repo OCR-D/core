@@ -1,11 +1,12 @@
+import codecs
+import json
+
 import click
 
-from ocrd.processor.base import run_processor
-from ocrd.processor.characterize.exif import ExifProcessor
-from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
-from ocrd.processor.segment_line.tesserocr import Tesseract3LineSegmenter
-from ocrd.processor.recognize.tesserocr import Tesseract3Recognizer
 from ocrd.resolver import Resolver
+from ocrd.processor.base import run_cli
+from ocrd.validator import WorkspaceValidator, OcrdToolValidator
+from ocrd.decorators import ocrd_cli_options
 
 from ocrd.webservice.processor import create as create_processor_ws
 from ocrd.webservice.repository import create as create_repository_ws
@@ -16,53 +17,66 @@ def cli():
     CLI to OCR-D
     """
 # ----------------------------------------------------------------------
+# ocrd validate-workspace
+# ----------------------------------------------------------------------
+
+@cli.command('validate-workspace', help='Validate a workspace')
+@click.option('-m', '--mets-url', help="METS URL to validate")
+def validate_workspace(mets_url):
+    resolver = Resolver(cache_enabled=True)
+    report = WorkspaceValidator.validate_url(resolver, mets_url)
+    print(report.to_xml())
+    if not report.is_valid:
+        return 128
+
+# ----------------------------------------------------------------------
+# ocrd validate-workspace
+# ----------------------------------------------------------------------
+
+@cli.command('validate-ocrd-tool', help='Validate an ocrd-tool.json')
+@click.argument('json_file', "ocrd-tool.json to validate")
+def validate_ocrd_tool(json_file):
+    with codecs.open(json_file, encoding='utf-8') as f:
+        report = OcrdToolValidator.validate_json(f.read())
+    print(report.to_xml())
+    if not report.is_valid:
+        return 128
+
+# ----------------------------------------------------------------------
 # ocrd process
 # ----------------------------------------------------------------------
 
-@cli.group('process', chain=True)
-@click.option('-m', '--mets-xml', help="METS file to run", type=click.Path(exists=True))
-@click.pass_context
-def process_cli(ctx, mets_xml):
+@cli.command('process')
+@ocrd_cli_options
+@click.option('-T', '--ocrd-tool', multiple=True)
+@click.argument('steps', nargs=-1)
+def process_cli(mets_url, **kwargs):
     """
     Execute OCR-D processors for a METS file directly.
     """
+    if mets_url.find('://') == -1:
+        mets_url = 'file://' + mets_url
     resolver = Resolver(cache_enabled=True)
-    ctx.obj = {}
-    if mets_xml:
-        ctx.obj['mets_url'] = 'file://' + mets_xml
-        ctx.obj['workspace'] = resolver.create_workspace(ctx.obj['mets_url'])
+    workspace = resolver.workspace_from_url(mets_url)
 
-@process_cli.command('characterize/exif')
-@click.pass_context
-def _characterize_exif(ctx):
-    """
-    Characterize images with exiftool
-    """
-    run_processor(ExifProcessor, workspace=ctx.obj['workspace'])
+    cmds = []
+    for ocrd_tool_file in kwargs['ocrd_tool']:
+        with codecs.open(ocrd_tool_file, encoding='utf-8') as f:
+            obj = json.loads(f.read())
+            for tool in obj['tools']:
+                cmds.append(tool['binary'])
 
-@process_cli.command('segment-region/tesserocr')
-@click.pass_context
-def _segment_region_tesserocr(ctx):
-    """
-    Segment page into regions
-    """
-    run_processor(Tesseract3RegionSegmenter, workspace=ctx.obj['workspace'])
+    for cmd in kwargs['steps']:
+        if cmd not in cmds:
+            raise Exception("Tool not registered: '%s'" % cmd)
 
-@process_cli.command('segment-line/tesserocr')
-@click.pass_context
-def _segment_line_tesserocr(ctx):
-    """
-    Segment page/regions into lines
-    """
-    run_processor(Tesseract3LineSegmenter, workspace=ctx.obj['workspace'])
+    for cmd in kwargs['steps']:
+        run_cli(cmd, mets_url, resolver, workspace)
 
-@process_cli.command('recognize/tesserocr')
-@click.pass_context
-def _recognize_tesserocr(ctx):
-    """
-    Recognize lines
-    """
-    run_processor(Tesseract3Recognizer, workspace=ctx.obj['workspace'])
+    workspace.reload_mets()
+
+    #  print('\n'.join(k + '=' + str(kwargs[k]) for k in kwargs))
+    print(workspace)
 
 # ----------------------------------------------------------------------
 # ocrd server
