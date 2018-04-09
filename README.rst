@@ -96,10 +96,10 @@ Test with local files: ``make test``
 
 Test with local asset server:
   - Start asset-server: ``make asset-server``
-  - ``OCRD_BASEURL='http://localhost:5001/' make test``
+  - ``make test OCRD_BASEURL='http://localhost:5001/'``
 
 Test with remote assets:
-  - ``OCRD_BASEURL='https://github.com/OCR-D/ocrd-assets/raw/master/data/' make test``
+  - ``make test OCRD_BASEURL='https://github.com/OCR-D/ocrd-assets/raw/master/data/'``
 
 See Also
 --------
