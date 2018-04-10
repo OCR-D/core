@@ -1,5 +1,6 @@
 type: object
 description: Schema for tools by OCR-D MP
+additonalProperties: false
 required:
   - git_url
   - tools
@@ -29,21 +30,26 @@ properties:
         description:
           description: Concise description what the tool does
           type: string
-        step:
+        summary:
+          description: Even more concise description what the tool does
+          type: string
+        steps:
           description: Step in the OCR-D functional model for this tool
           type: string
           enum:
-            - preprocess
-            - segment-line
-            - segment-region
-            - recognize
+            - preprocessing
+            - layout/segmentation
+            - recognition
         tags:
+          type: array
           description: Tag
-          enum:
-            - Bildvorverarbeitung
-            - Layouterkennung
-            - Texterkennung
-            - Textoptimierung
-            - Modellbildung
-            - Langzeitarchivierung
-            - Qualitätssicherung
+          items:
+            type: string
+            enum:
+              - Bildvorverarbeitung
+              - Layouterkennung
+              - Texterkennung
+              - Textoptimierung
+              - Modellbildung
+              - Langzeitarchivierung
+              - Qualitätssicherung

@@ -1,15 +1,15 @@
-type: object
-required:
-  - mets
-  - mediaType
-properties:
-  mets:
-    type: string
-    format: base64
-    description: METS file
-  parameterJson:
-    type: object
-    description: Parameter definition provided by MP
-  mediaType:
-    type: string
-    description: Media type of file
+required: true
+content:
+  multipart/mixed:
+    schema:
+      type: object
+      required:
+        - mets
+      properties:
+        mets:
+          type: string
+          format: base64
+          description: METS file
+        parameterJson:
+          type: object
+          description: Parameter definition provided by MP

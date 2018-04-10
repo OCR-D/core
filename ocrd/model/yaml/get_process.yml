@@ -1,0 +1,25 @@
+get:
+  summary: Get Job result
+  description: Get file thumbnail
+  parameters:
+    - name: id
+      in: path
+      description: Upload ID
+      required: true
+      schema:
+        type: string
+  responses:
+    '200':
+      content:
+        'application/vnd.ocrd.mets+zip':
+          description: The workspace as a ZIP
+        'application/mets+xml':
+          summary: The METS file
+        'text/status+plain':
+          schema:
+            type: string
+            enum: ['RUNNING', 'FAILED', 'FINISHED']
+    '404':
+      description: Job not found
+    '410':
+      description: Job deleted on server
