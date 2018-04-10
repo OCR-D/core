@@ -16,13 +16,13 @@ help:
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-pip       Install python deps via pip"
 	@echo "    assets         Clone the ocrd-assets repo for sample files"
+	@echo "    assets-server  Start asset server at http://localhost:5001"
 	@echo "    assets-clean   Remove symlinks in test/assets"
 	@echo "    install        (Re)install the tool"
 	@echo "    test-deps-pip  Install test python deps via pip"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
-	@echo "    asset-server   Start asset server at http://localhost:5001"
 	@echo "    docker         Build docker image"
 	@echo ""
 	@echo "  Variables"
@@ -46,28 +46,35 @@ deps-ubuntu:
 deps-pip:
 	$(PIP) install -r requirements.txt
 
-# Clone the ocrd-assets repo for sample files
-assets:
-	if [ ! -e ocrd-assets ];then git clone https://github.com/OCR-D/ocrd-assets;fi
-	mkdir -p test/assets
-	cp -r -t test/assets ocrd-assets/data/*
-	# cd test/assets && ln -fs ../../ocrd-assets/data/* .
-
-# Remove symlinks in test/assets
-assets-clean:
-	rm -rf test/assets
-
 # (Re)install the tool
 install:
 	$(PIP) install .
 
 #
-# Tests
+# Assets
 #
 
-test/assets: spec
+# Clone the ocrd-assets repo for sample files
+assets: ocrd-assets test/assets
+
+ocrd-assets:
+	git clone https://github.com/OCR-D/ocrd-assets
+
+test/assets:
 	mkdir -p test/assets
-	cp -r spec/io/example test/assets/herold
+	cp -r -t test/assets ocrd-assets/data/*
+
+# Start asset server at http://localhost:5001
+assets-server:
+	cd ocrd-assets && make start
+
+# Remove symlinks in test/assets
+assets-clean:
+	rm -rf test/assets
+
+#
+# Tests
+#
 
 # Install test python deps via pip
 test-deps-pip:
@@ -109,10 +116,6 @@ pyclean:
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
-
-# Start asset server at http://localhost:5001
-asset-server:
-	cd ocrd-assets && make start
 
 #
 # Docker
