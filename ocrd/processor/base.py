@@ -13,7 +13,7 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
 
 # pylint: disable=unused-argument
 def run_processor(
-        processor,
+        processorClass,
         mets_url=None,
         resolver=None,
         workspace=None,
@@ -28,8 +28,10 @@ def run_processor(
     Create a workspace for mets_url and run processor through it
     """
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
-    log.debug("Running processor %s", processor)
-    processor(workspace).process()
+    log.debug("Running processor %s", processorClass)
+    processor = processorClass(workspace, input_filegrp=input_filegrp, output_filegrp=output_filegrp)
+    log.debug("Processor instance %s", processor)
+    processor.process()
     #  workspace.persist()
 
 def run_cli(
@@ -63,10 +65,10 @@ class Processor(object):
     parameters.
     """
 
-    def __init__(self, workspace, parameters=None, inputGrp="INPUT", outputGrp="OUTPUT"):
+    def __init__(self, workspace, parameters=None, input_filegrp="INPUT", output_filegrp="OUTPUT"):
         self.workspace = workspace
-        self.inputGrp = inputGrp
-        self.outputGrp = outputGrp
+        self.input_filegrp = input_filegrp
+        self.output_filegrp = output_filegrp
         self.parameters = parameters if parameters is not None else {}
 
     def verify(self):
@@ -86,7 +88,7 @@ class Processor(object):
         """
         List the input files
         """
-        return self.workspace.mets.find_files(fileGrp=self.inputGrp)
+        return self.workspace.mets.find_files(fileGrp=self.input_filegrp)
 
     def add_output_file(self, input_file=None, basename=None, ID=None, **kwargs):
         """
@@ -96,5 +98,5 @@ class Processor(object):
         if basename is None and input_file is not None:
             basename = input_file.basename_without_extension + '.xml'
         #  if ID is None and input_file is not None:
-        #      basename = input_file.ID + self.outputGrp
-        self.workspace.add_file(self.outputGrp, basename=basename, ID=ID, **kwargs)
+        #      basename = input_file.ID + self.output_filegrp
+        self.workspace.add_file(self.output_filegrp, basename=basename, ID=ID, **kwargs)
