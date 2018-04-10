@@ -1,0 +1,49 @@
+type: object
+description: Schema for tools by OCR-D MP
+required:
+  - git_url
+  - tools
+properties:
+  git_url:
+    description: Github/Gitlab URL
+    type: string
+    format: url
+  dockerhub:
+    description: DockerHub image
+    type: string
+  tools:
+    type: array
+    items:
+      type: object
+      required:
+        - description
+        - step
+        - binary
+      properties:
+        binary:
+          description: The name of the CLI in $PATH
+          type: string
+        parameterSchema:
+          description: JSON Schema for the parameters.json file
+          type: object
+        description:
+          description: Concise description what the tool does
+          type: string
+        step:
+          description: Step in the OCR-D functional model for this tool
+          type: string
+          enum:
+            - preprocess
+            - segment-line
+            - segment-region
+            - recognize
+        tags:
+          description: Tag
+          enum:
+            - Bildvorverarbeitung
+            - Layouterkennung
+            - Texterkennung
+            - Textoptimierung
+            - Modellbildung
+            - Langzeitarchivierung
+            - Qualitätssicherung

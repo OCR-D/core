@@ -1,7 +1,7 @@
 import codecs
 import json
 
-from ocrd.constants import OCRD_TOOL_SCHEMA, SWAGGER_TEMPLATE
+from ocrd.constants import OCRD_TOOL_SCHEMA, OCRD_OAS3_TPL
 
 PARAM_METS_URL = {
     "name": "mets_url",
@@ -43,34 +43,38 @@ class OcrdSwagger(object):
     """
 
     @staticmethod
+    def _add_paths_for_tool(swagger, tool):
+        p = "/%s/%s" % (tool['step'], tool['binary'].replace('ocrd_', ''))
+        swagger['paths'][p] = {
+            "post": {
+                "description": tool['description'],
+                "parameters": [
+                    _clone(PARAM_METS_URL),
+                    _clone(PARAM_PARAMETER_JSON),
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully ran '%s'" % tool['binary'],
+                        "headers": {
+                            "Location": _clone(HEADER_LOCATION_METS_URL),
+                        },
+                        "schema": {},
+                    }
+                }
+            },
+            "get": _clone(OP_GET_OCRD_TOOL_JSON)
+        }
+
+    @staticmethod
     def from_ocrd_tools(swagger_template, *ocrd_tool):
         if swagger_template is not None:
             with codecs.open(swagger_template, encoding='utf-8') as f:
                 swagger = json.load(f)
         else:
-            swagger = _clone(SWAGGER_TEMPLATE)
+            swagger = _clone(OCRD_OAS3_TPL)
         for ocrd_tool_file in ocrd_tool:
             with codecs.open(ocrd_tool_file, encoding='utf-8') as f:
                 ocrd_json = json.load(f)
                 for tool in ocrd_json['tools']:
-                    p = "/%s/%s" % (tool['step'], tool['binary'].replace('ocrd_', ''))
-                    swagger['paths'][p] = {
-                        "post": {
-                            "description": tool['description'],
-                            "parameters": [
-                                _clone(PARAM_METS_URL),
-                                _clone(PARAM_PARAMETER_JSON),
-                            ],
-                            "responses": {
-                                "201": {
-                                    "description": "Successfully ran '%s'" % tool['binary'],
-                                    "headers": {
-                                        "Location": _clone(HEADER_LOCATION_METS_URL),
-                                    },
-                                    "schema": {},
-                                }
-                            }
-                        },
-                        "get": _clone(OP_GET_OCRD_TOOL_JSON)
-                    }
+                    OcrdSwagger._add_paths_for_tool(swagger, tool)
         return swagger

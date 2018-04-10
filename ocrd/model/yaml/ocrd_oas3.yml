@@ -1,0 +1,857 @@
+openapi: 3.0.0
+servers:
+  - url: 'http://docr.kba.cloud:8765/'
+info:
+  version: 0.0.1
+  title: OCR Job server API
+  description: This is a definition of the modules used for the OCR-D project.
+  contact:
+    email: volker.hartmann@kit.edu
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags:
+  - name: Bildvorverarbeitung
+    description: >
+      Verfahren, die die Digitalisate für die Layout- und Texterkennung
+      charakterisieren und optimieren.
+  - name: Layouterkennung
+    description: >
+      Die Erfassung des korrekten, d.h. die Wiedergabe des logisch strukturell
+      auf sich beziehenden Textflusses und hohe Textgenauigkeit.
+  - name: Textoptimierung
+    description: >
+      Kombination mehrere OCR-Engines mit anschließender Nachkorrektur zur
+      Verbesserung der Textergebnisse.
+  - name: Modellbildung
+    description: >
+      Training der Modelle und Bereitstellung dieser.
+  - name: Langzeitarchivierung
+    description: >
+      Sicherung der Langzeitverfügbarkeit und Referenzierbarkeit der gewonnenen
+      Texte.
+  - name: Qualitätssicherung
+    description: >
+      Bestimmung/Schätzung des Potenzials der einzelnen Komponenten.
+paths:
+  /layout/segment_line:
+    post:
+      tags: ['Bildvorverarbeitung']
+      summary: "Determine specific characteristics of a digitalization."
+      description: "Determine intrinsic and extrensic characteristics of a digitalization. These characteristics should be stored as metadata."
+      requestBody:
+        required: true
+        content:
+          multipart/mixed:
+            schema:
+              $ref: '#/definitions/OcrdJobRequest'
+  # /upload/:
+  #   get:
+  #     tags:
+  #       - Uploads
+  #     summary: Search files
+  #     description: Search files
+  #     parameters:
+  #       - name: q
+  #         in: query
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: 'Mongo query to search, as url-encoded JSON'
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         headers:
+  #           X-Total-Count:
+  #             $ref: '#/components/headers/X-Total-Count'
+  #   post:
+  #     tags:
+  #       - Uploads
+  #     summary: Upload a file
+  #     description: Upload a file
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         multipart/mixed:
+  #           schema:
+  #             type: object
+  #             required:
+  #               - file
+  #               - mediaType
+  #             properties:
+  #               file:
+  #                 type: string
+  #                 format: base64
+  #                 description: File to upload
+  #               mediaType:
+  #                 type: string
+  #                 description: Media type of file
+  #     parameters:
+  #       - name: slug
+  #         in: header
+  #         schema:
+  #           type: string
+  #         description: Slug for the uploaded file
+  #     responses:
+  #       '200':
+  #         description: the uploaded file
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/File'
+  #       '409':
+  #         description: Existing slug re-used
+  # '/upload/{_id}/metadata':
+  #   get:
+  #     tags:
+  #       - Uploads
+  #     summary: Get file metadata
+  #     description: Get file metadata
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         description: Upload ID
+  #         required: true
+  #         schema:
+  #           type: string
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             $ref: '#/components/schemas/File'
+  # '/upload/{_id}/thumbnail':
+  #   get:
+  #     tags:
+  #       - Uploads
+  #     summary: Get file thumbnail
+  #     description: Get file thumbnail
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         description: Upload ID
+  #         required: true
+  #         schema:
+  #           type: string
+  #     responses:
+  #       '200':
+  #         description: the thumbnail
+  #         content:
+  #           application/png: {}
+  #       '404':
+  #         description: File not found
+  # '/upload/{_id}':
+  #   get:
+  #     tags:
+  #       - Uploads
+  #     summary: Get file
+  #     description: Get file
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         description: Upload ID
+  #         required: true
+  #         schema:
+  #           type: string
+  #   delete:
+  #     tags:
+  #       - Uploads
+  #     summary: Delete a file
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: ID of Upload to delete
+  #     responses:
+  #       '200':
+  #         description: Deleted
+  #       '404':
+  #         description: File not found
+  # /media-type/:
+  #   get:
+  #     tags:
+  #       - Meta
+  #     summary: List all media types
+  #     description: List all media types
+  #     responses:
+  #       '200':
+  #         description: list of media types
+  #         content: {}
+  # '/media-type/{type}/{subtype}':
+  #   get:
+  #     tags:
+  #       - Meta
+  #     summary: Get the description of one media type
+  #     description: Get the description of one media type
+  #     responses:
+  #       '200':
+  #         description: description of that media type
+  #         content: {}
+  #       '404':
+  #         description: media type not found
+  # /json-schema/:
+  #   get:
+  #     tags:
+  #       - Meta
+  #     summary: List all JSON schemas
+  #     description: List all JSON schemas
+  #     responses:
+  #       '200':
+  #         description: map of JSON schemas
+  #         content:
+  #           application/json:
+  #             type: object
+  #             patternProperties:
+  #               .+:
+  #                 type: object
+  # '/json-schema/{_id}':
+  #   get:
+  #     tags:
+  #       - Meta
+  #     summary: Get one JSON schema
+  #     description: Get one JSON schema
+  #     responses:
+  #       '200':
+  #         description: JSON schema
+  #         content:
+  #           application/json:
+  #             type: object
+  #             patternProperties:
+  #               .+:
+  #                 type: object
+  #       '404':
+  #         description: No such schema
+  # /openapi/:
+  #   get:
+  #     tags:
+  #       - Meta
+  #     summary: Get OpenAPI schema
+  #     description: Get OpenAPI 3.0 schema
+  # /command/:
+  #   get:
+  #     tags:
+  #       - Commands
+  #     summary: List all commands
+  #     description: List all commands
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             type: object
+  # /command/gm:
+  #   post:
+  #     tags:
+  #       - Commands/gm
+  #     summary: Create a new gm job
+  #     description: Create a new gm job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.gm'
+  #   get:
+  #     tags:
+  #       - Commands/gm
+  #     summary: Find schema for gm
+  #     description: Find schema for gm
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/gm/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/gm
+  #     summary: Create a new gm job
+  #     description: Create a new gm job
+  #     parameters: []
+  # /command/kraken-binarize-segment-ocr:
+  #   post:
+  #     tags:
+  #       - Commands/kraken-binarize-segment-ocr
+  #     summary: Create a new kraken-binarize-segment-ocr job
+  #     description: Create a new kraken-binarize-segment-ocr job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.kraken-binarize-segment-ocr'
+  #   get:
+  #     tags:
+  #       - Commands/kraken-binarize-segment-ocr
+  #     summary: Find schema for kraken-binarize-segment-ocr
+  #     description: Find schema for kraken-binarize-segment-ocr
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/kraken-binarize-segment-ocr/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/kraken-binarize-segment-ocr
+  #     summary: Create a new kraken-binarize-segment-ocr job
+  #     description: Create a new kraken-binarize-segment-ocr job
+  #     parameters: []
+  # /command/kraken-segment:
+  #   post:
+  #     tags:
+  #       - Commands/kraken-segment
+  #     summary: Create a new kraken-segment job
+  #     description: Create a new kraken-segment job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.kraken-segment'
+  #   get:
+  #     tags:
+  #       - Commands/kraken-segment
+  #     summary: Find schema for kraken-segment
+  #     description: Find schema for kraken-segment
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/kraken-segment/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/kraken-segment
+  #     summary: Create a new kraken-segment job
+  #     description: Create a new kraken-segment job
+  #     parameters: []
+  # /command/kraken-binarize:
+  #   post:
+  #     tags:
+  #       - Commands/kraken-binarize
+  #     summary: Create a new kraken-binarize job
+  #     description: Create a new kraken-binarize job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.kraken-binarize'
+  #   get:
+  #     tags:
+  #       - Commands/kraken-binarize
+  #     summary: Find schema for kraken-binarize
+  #     description: Find schema for kraken-binarize
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/kraken-binarize/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/kraken-binarize
+  #     summary: Create a new kraken-binarize job
+  #     description: Create a new kraken-binarize job
+  #     parameters: []
+  # /command/kraken-ocr:
+  #   post:
+  #     tags:
+  #       - Commands/kraken-ocr
+  #     summary: Create a new kraken-ocr job
+  #     description: Create a new kraken-ocr job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.kraken-ocr'
+  #   get:
+  #     tags:
+  #       - Commands/kraken-ocr
+  #     summary: Find schema for kraken-ocr
+  #     description: Find schema for kraken-ocr
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/kraken-ocr/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/kraken-ocr
+  #     summary: Create a new kraken-ocr job
+  #     description: Create a new kraken-ocr job
+  #     parameters: []
+  # /command/ocropus-rpred:
+  #   post:
+  #     tags:
+  #       - Commands/ocropus-rpred
+  #     summary: Create a new ocropus-rpred job
+  #     description: Create a new ocropus-rpred job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.ocropus-rpred'
+  #   get:
+  #     tags:
+  #       - Commands/ocropus-rpred
+  #     summary: Find schema for ocropus-rpred
+  #     description: Find schema for ocropus-rpred
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/ocropus-rpred/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/ocropus-rpred
+  #     summary: Create a new ocropus-rpred job
+  #     description: Create a new ocropus-rpred job
+  #     parameters: []
+  # /command/tesseract3:
+  #   post:
+  #     tags:
+  #       - Commands/tesseract3
+  #     summary: Create a new tesseract3 job
+  #     description: Create a new tesseract3 job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.tesseract3'
+  #   get:
+  #     tags:
+  #       - Commands/tesseract3
+  #     summary: Find schema for tesseract3
+  #     description: Find schema for tesseract3
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/tesseract3/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/tesseract3
+  #     summary: Create a new tesseract3 job
+  #     description: Create a new tesseract3 job
+  #     parameters: []
+  # /command/test-date:
+  #   post:
+  #     tags:
+  #       - Commands/test-date
+  #     summary: Create a new test-date job
+  #     description: Create a new test-date job
+  #     parameters:
+  #       - name: desc
+  #         in: body
+  #         schema:
+  #           $ref: '#/components/schemas/command-input.test-date'
+  #   get:
+  #     tags:
+  #       - Commands/test-date
+  #     summary: Find schema for test-date
+  #     description: Find schema for test-date
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Command schema
+  #         content:
+  #           application/json: {}
+  # /command/test-date/json-schema:
+  #   get:
+  #     tags:
+  #       - Commands/test-date
+  #     summary: Create a new test-date job
+  #     description: Create a new test-date job
+  #     parameters: []
+  # /job/_stats:
+  #   get:
+  #     tags:
+  #       - Meta
+  #     summary: Return current queue state
+  #     description: Return current queue state
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: Current queue state
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 stats:
+  #                   type: object
+  #                   description: Mapping queue name to number of jobs in that queue
+  # /job/:
+  #   get:
+  #     tags:
+  #       - Commands
+  #     summary: Search jobs
+  #     description: Search jobs
+  #     parameters: []
+  #     responses:
+  #       '200':
+  #         description: List of jobs found
+  #         headers:
+  #           X-Total-Count:
+  #             $ref: '#/components/headers/X-Total-Count'
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/Job'
+  # '/job/{_id}':
+  #   get:
+  #     tags:
+  #       - Commands
+  #     summary: Retrieve a job
+  #     description: Retrieve a job
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: ID of Job to retrieve
+  #     responses:
+  #       '200':
+  #         description: Job found
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/Job'
+  #       '404':
+  #         description: Job not found
+  #       '410':
+  #         description: Job deleted
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/Job'
+  #   delete:
+  #     tags:
+  #       - Commands
+  #     summary: Delete one job
+  #     description: Delete one job
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: ID of Job to delete
+  #     responses:
+  #       '204':
+  #         description: Deleted
+  #       '404':
+  #         description: Job not found
+  #       '410':
+  #         description: Job already deleted
+  # '/job/{_id}/log':
+  #   get:
+  #     tags:
+  #       - Commands
+  #     summary: Get log of a job
+  #     description: Get log of a job
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: ID of Job to retrieve log for
+  #     responses:
+  #       '200':
+  #         description: Job found
+  #         content:
+  #           text/plain:
+  #             description: job log
+  # '/job/{_id}/output/{output}':
+  #   get:
+  #     tags:
+  #       - Commands
+  #     summary: Get one output of a job
+  #     description: Get one output of a job
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: ID of Job to retrieve log for
+  #       - name: output
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: Name of the output
+  #     responses:
+  #       '200':
+  #         description: Output found
+  #         content:
+  #           application/json:
+  #             $ref: '#/components/schemas/File'
+  # '/job/{_id}/workspace':
+  #   get:
+  #     tags:
+  #       - Commands
+  #     summary: Get the workspace of a job as a ZIP
+  #     description: Get the workspace of a job as a ZIP
+  #     parameters:
+  #       - name: _id
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: string
+  #         description: ID of Job to retrieve workspace for
+  #     responses:
+  #       '200':
+  #         description: Workspace found
+  #         content:
+  #           application/zip: {}
+  #       '404':
+  #         description: Job not found
+  #       '410':
+  #         description: Job deleted
+components:
+  headers:
+    X-Total-Count:
+      description: Total number of items found for this query
+      schema:
+        type: integer
+  schemas:
+    File:
+      type: object
+      required:
+        - url
+        - mediaType
+        - size
+        - path
+      properties:
+        mediaType:
+          type: string
+        path:
+          type: string
+        url:
+          type: string
+        size:
+          type: number
+    command-input.gm:
+      type: object
+      required:
+        - inputFile
+        - commands
+      additionalProperties: false
+      properties:
+        inputFile:
+          type: string
+          file: true
+          mediaType:
+            - image/png
+            - image/jpeg
+        commands:
+          type: array
+          minLength: 1
+          items:
+            type: string
+            match: ^(rotate)
+          default: []
+    command-input.kraken-binarize-segment-ocr:
+      type: object
+      required:
+        - image
+      additionalProperties: false
+      properties:
+        image:
+          type: string
+          file: true
+          mediaType:
+            - image/png
+    command-input.kraken-segment:
+      type: object
+      required:
+        - image
+      additionalProperties: false
+      properties:
+        image:
+          type: string
+          file: true
+          mediaType:
+            - image/png
+        noScriptDetect:
+          type: boolean
+          default: false
+        textDirection:
+          type: string
+          enum:
+            - horizontal-lr
+            - horizontal-rl
+            - vertical-lr
+            - vertical-rl
+          default: horizontal-lr
+        blackColSeps:
+          type: boolean
+          default: false
+        whiteColSeps:
+          type: boolean
+          default: true
+        scale:
+          type: number
+    command-input.kraken-binarize:
+      type: object
+      required:
+        - image
+      additionalProperties: false
+      properties:
+        image:
+          type: string
+          file: true
+          mediaType:
+            - image/png
+            - image/jpeg
+        threshold:
+          type: string
+        zoom:
+          type: string
+        escale:
+          type: string
+        border:
+          type: string
+        perc:
+          type: string
+        range:
+          type: string
+        low:
+          type: string
+        high:
+          type: string
+    command-input.kraken-ocr:
+      type: object
+      required:
+        - image
+        - lines
+        - model
+      additionalProperties: false
+      properties:
+        image:
+          type: string
+          file: true
+          mediaType:
+            - image/png
+        lines:
+          type: string
+          file: true
+          mediaType:
+            - application/vnd.ocr.lines+json
+        model:
+          type: string
+          file: true
+          mediaType:
+            - application/vnd.ocr.clstm
+            - application/vnd.ocr.pyrnn
+            - application/vnd.ocr.pronn
+        reorder:
+          type: boolean
+          default: true
+        noReorder:
+          type: boolean
+          default: false
+        outputMediaType:
+          type: string
+          enum:
+            - text/hocr+html
+    command-input.ocropus-rpred:
+      type: object
+      required:
+        - image
+        - model
+      additionalProperties: false
+      properties:
+        image:
+          type: string
+          file: true
+          mediaType:
+            - image/vnd.ocr.png.binarized
+            - image/vnd.ocr.png.binarized+dewarped
+        pseg:
+          type: string
+          file: true
+          mediaType:
+            - image/vnd.ocr.png.pseg
+        model:
+          type: string
+          file: true
+          mediaType:
+            - application/vnd.ocr.pyrnn
+    command-input.tesseract3:
+      type: object
+      required:
+        - image
+        - configfile
+        - langs
+      additionalProperties: false
+      properties:
+        image:
+          type: string
+          file: true
+          mediaType:
+            - image/png
+            - image/tif
+            - image/jpeg
+        configfile:
+          type: string
+          file: true
+          mediaType:
+            - text/vnc.ocr.tesseract.configfile
+        langs:
+          type: array
+          minLength: 1
+          file: true
+          default: []
+          items:
+            type: string
+          mediaType:
+            - application/vnd.ocr.traineddata.3
+            - application/vnd.ocr.traineddata.3+4
+    command-input.test-date:
+      type: object
+      required: []
+      additionalProperties: false
+      properties:
+        sleeptime:
+          type: number
+          default: 5
+        max:
+          type: number
+          default: 5
+    Job:
+      type: object
+      description: State of a running command
+      properties:
+        status:
+          type: string
+    OcrdJobRequest:
+      type: object
+      required:
+        - mets
+        - mediaType
+      properties:
+        mets:
+          type: string
+          format: base64
+          description: METS file
+        parameterJson:
+          type: object
+          description: Parameter definition provided by MP
+        mediaType:
+          type: string
+          description: Media type of file
