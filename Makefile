@@ -47,8 +47,20 @@ deps-pip:
 	$(PIP) install -r requirements.txt
 
 # (Re)install the tool
-install:
+install: spec
 	$(PIP) install .
+
+#
+# Spec
+#
+
+spec: ocrd/model/yaml/ocrd_oas3.spec.yml
+
+ocrd-spec:
+	git clone https://github.com/OCR-D/spec "$@"
+
+ocrd/model/yaml/ocrd_oas3.spec.yml: ocrd-spec
+	cp ocrd-spec/ocrd_api.swagger.yaml "$@"
 
 #
 # Assets
@@ -82,7 +94,7 @@ test-deps-pip:
 
 .PHONY: test
 # Run all unit tests
-test:
+test: spec
 	$(PYTHON) -m pytest --duration=10 test
 
 #
