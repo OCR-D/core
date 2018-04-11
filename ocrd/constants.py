@@ -71,7 +71,5 @@ EXT_TO_MIME = {
     '.xml': 'text/xml'
 }
 
-OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
-OCRD_OAS3_SKELETON = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.yml'))
-OCRD_OAS3_REQUEST_BODY = yaml.load(resource_string(__name__, 'model/yaml/request_body.yml'))
-OCRD_OAS3_GET_PROCESS = yaml.load(resource_string(__name__, 'model/yaml/get_process.yml'))
+
+OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.yml'))
