@@ -1,37 +1,20 @@
 import codecs
 import json
 
-from ocrd.constants import OCRD_TOOL_SCHEMA, SWAGGER_TEMPLATE
+from ocrd.constants import (OCRD_TOOL_SCHEMA, OCRD_OAS3_SPEC)
 
-PARAM_METS_URL = {
-    "name": "mets_url",
-    "in": "formData",
-    "type": "string",
-    "description": "XML holding all information of the digitized document. All references of the images are available via fileGrp section (ID=\"OCR-D-IMG\") inside the METS document."
-    }
 
-PARAM_PARAMETER_JSON = {
-    "name": "parameter_json",
-    "in": "formData",
-    "description": "Parameter in JSON",
-    "type": "string"
-    }
-
-OP_GET_OCRD_TOOL_JSON = {
+GET_SCHEMA = {
     "description": "Get ocrd-tool.json",
-    "produces": ['application/json'],
+    "produces": [],
     'responses': {
         "200": {
-            "description": "Got ocrd-tool.json",
-            "schema": OCRD_TOOL_SCHEMA,
+            'application/json': {
+                "description": "Got ocrd-tool.json",
+                "schema": OCRD_TOOL_SCHEMA,
             }
         }
     }
-
-HEADER_LOCATION_METS_URL = {
-    "type": "string",
-    "format": "uri",
-    "description": "URL of the resulting METS"
 }
 
 def _clone(obj):
@@ -48,29 +31,63 @@ class OcrdSwagger(object):
             with codecs.open(swagger_template, encoding='utf-8') as f:
                 swagger = json.load(f)
         else:
-            swagger = _clone(SWAGGER_TEMPLATE)
+            swagger = _clone(OCRD_OAS3_SPEC)
+            del swagger['paths']['/ocrd/processor']
+            del swagger['paths']['/ocrd/processor/jobid/{jobID}']
+
+        # add all components
+        if 'components' not in swagger:
+            swagger['components'] = {}
+        for component in OCRD_OAS3_SPEC['components']:
+            swagger['components'][component] = OCRD_OAS3_SPEC['components'][component]
+
+        # Add specific paths
         for ocrd_tool_file in ocrd_tool:
             with codecs.open(ocrd_tool_file, encoding='utf-8') as f:
                 ocrd_json = json.load(f)
                 for tool in ocrd_json['tools']:
-                    p = "/%s/%s" % (tool['step'], tool['binary'].replace('ocrd_', ''))
-                    swagger['paths'][p] = {
-                        "post": {
-                            "description": tool['description'],
-                            "parameters": [
-                                _clone(PARAM_METS_URL),
-                                _clone(PARAM_PARAMETER_JSON),
-                            ],
-                            "responses": {
-                                "201": {
-                                    "description": "Successfully ran '%s'" % tool['binary'],
-                                    "headers": {
-                                        "Location": _clone(HEADER_LOCATION_METS_URL),
-                                    },
-                                    "schema": {},
-                                }
-                            }
-                        },
-                        "get": _clone(OP_GET_OCRD_TOOL_JSON)
-                    }
+                    OcrdSwagger._add_paths_for_tool(swagger, tool)
+
         return swagger
+
+    @staticmethod
+    def _add_paths_for_tool(swagger, tool):
+
+        # e.g. /preprocessing/binarization/kraken-binarize
+        p = "/%s/%s" % (tool['step'], tool['binary'].replace('ocrd_', '').replace('ocrd-', ''))
+
+        # parameters are optional
+        if 'parameterSchema' not in tool:
+            tool['parameterSchema'] = {}
+        tool['parameterSchema'] = {
+            'type': 'object',
+            'properties': tool['parameterSchema']
+        }
+
+        if 'summary' not in tool:
+            tool['summary'] = tool['description']
+
+        # POST /ocrd/processor/{{ PROCESSOR_NAME }}
+        post = _clone(OCRD_OAS3_SPEC['paths']['/ocrd/processor']['post'])
+        post['tags'] = tool['tags']
+        post['summary'] = tool['summary']
+        post['description'] = tool['description']
+        post['requestBody']['content']['multipart/form-data']['schema'] = _clone(OCRD_OAS3_SPEC['components']['schemas']['processors'])
+        post['requestBody']['content']['multipart/form-data']['schema']['parameters'] = tool['parameterSchema']
+
+        get_schema = _clone(GET_SCHEMA)
+        get_schema['tags'] = tool['tags']
+        swagger['paths'][p] = {
+            'post': post,
+            'get': get_schema
+        }
+
+        # GET /ocrd/processor/{{ PROCESSOR_NAME }}/{_id}
+        get = _clone(OCRD_OAS3_SPEC['paths']['/ocrd/processor/jobid/{jobID}']['get'])
+        get['tags'] = tool['tags']
+        delete = _clone(OCRD_OAS3_SPEC['paths']['/ocrd/processor/jobid/{jobID}']['delete'])
+        delete['tags'] = tool['tags']
+        swagger['paths']["%s/{_id}" % p] = {
+            'delete': delete,
+            'get': get
+        }

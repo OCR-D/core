@@ -15,10 +15,11 @@ help:
 	@echo ""
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-pip       Install python deps via pip"
+	@echo "    install        (Re)install the tool"
+	@echo "    spec           Fetch JSON Schema, OpenAPI from ocr-d/spec"
 	@echo "    assets         Clone the ocrd-assets repo for sample files"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
 	@echo "    assets-clean   Remove symlinks in test/assets"
-	@echo "    install        (Re)install the tool"
 	@echo "    test-deps-pip  Install test python deps via pip"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
@@ -47,8 +48,21 @@ deps-pip:
 	$(PIP) install -r requirements.txt
 
 # (Re)install the tool
-install:
+install: spec
 	$(PIP) install .
+
+#
+# Spec
+#
+
+# Fetch JSON Schema, OpenAPI from ocr-d/spec
+spec: ocrd/model/yaml/ocrd_oas3.spec.yml
+
+ocrd-spec:
+	git clone https://github.com/OCR-D/spec "$@"
+
+ocrd/model/yaml/ocrd_oas3.spec.yml: ocrd-spec
+	cp ocrd-spec/ocrd_api.swagger.yaml "$@"
 
 #
 # Assets
@@ -82,7 +96,7 @@ test-deps-pip:
 
 .PHONY: test
 # Run all unit tests
-test:
+test: spec
 	$(PYTHON) -m pytest --duration=10 test
 
 #

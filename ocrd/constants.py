@@ -1,4 +1,3 @@
-import json
 import yaml
 from pkg_resources import resource_string
 
@@ -72,5 +71,6 @@ EXT_TO_MIME = {
     '.xml': 'text/xml'
 }
 
-OCRD_TOOL_SCHEMA = json.loads(resource_string(__name__, 'model/ocrd_tool.schema.json'))
-SWAGGER_TEMPLATE = yaml.load(resource_string(__name__, 'model/swagger-2.0.yaml'))
+
+OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.yml'))
+OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
