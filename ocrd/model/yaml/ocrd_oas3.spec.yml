@@ -1,0 +1,275 @@
+openapi: 3.0.0
+info:
+  description: This is a generic definition of the modules used for the OCR-D project. 
+  
+      * Implementation path for the different processors (description)
+      
+      * /preprocessing/characterization (Determine specific characteristics of a digitalization.)
+      
+      *  /preprocessing/characterization/font (Estimate font families and languages used.)
+      
+      * /preprocessing/optimization (Execute all steps for image optimization at once.)
+      
+      * /preprocessing/optimization/cropping (Crops the digitization to printspace.)
+      
+      * /preprocessing/optimization/deskewing (Deskews the digitization.)
+      
+      * /preprocessing/optimization/despeckling (Despeckles the digitization.)
+      
+      * /preprocessing/optimization/dewarping (Dewarps the digitization.)
+      
+      * /preprocessing/optimization/binarization (Binarize the digitization.)
+      
+      * /layout/segmentation (Detect and classify all regions of a page.)
+      
+      * /layout/segmentation/page (Detect all regions of a page.)
+      
+      * /layout/segmentation/line (Detect all text line regions inside the text regions of a page.)
+      
+      * /layout/segmentation/classification | Classify all detected regions of a page.)
+      
+      * /layout/analysis (Analyse regions on document level.)
+  version: "0.9"
+  title: "OCR-D"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "volker.hartmann@kit.edu"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+servers:
+    - url: "http://test.ocr-d.de/v1"
+tags:
+    - name: "Bildvorverarbeitung"
+      description: "Verfahren, die die Digitalisate für die Layout- und Texterkennung charakterisieren und optimieren."
+    - name: "Layouterkennung"
+      description: "Die Erfassung des korrekten, d.h. die Wiedergabe des logischstrukturell auf sich beziehenden Textflusses und hohe Textgenauigkeit."
+    - name: "Textoptimierung"
+      description: "Kombination mehrere OCR-Engines mit anschließender Nachkorrektur zur Verbesserung der Textergebnisse."
+    - name: "Modellbildung"
+      description: "Training der Modelle und Bereitstellung dieser."
+    - name: "Langzeitarchivierung"
+      description: "Sicherung der Langzeitverfügbarkeit und Referenzierbarkeit der gewonnenen Texte."
+    - name: "Qualitätssicherung"
+      description: "Bestimmung/Schätzung des Potenzials der einzelnen Komponenten."
+paths:
+  /ocrd/processor:
+    post:
+      tags:
+        - "Bildvorverarbeitung"
+        - "Layouterkennung"
+        - "Textoptimierung"
+      summary: "Start job for processing one of the tasks defined by OCR-D."
+      description: "Start job for processing one of the tasks defined by OCR-D. May create new images and/or new PAGE XML files depending on algorithm. It has to create a provenance file and a new METS file."
+      operationId: "startProcessor"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/processors'
+      responses:
+        '201':
+          description: Successful Operation. The created file(s) has/have to be referenced inside the given fileGrp sections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jobId'
+          headers:
+            Location:
+              schema:
+                type: string
+                format: url
+              description: URL of the generated job.
+          # -----------------------------------------------------
+          # Link
+          # -----------------------------------------------------
+          links:
+            GetFilesByJobId:   # <---- arbitrary name for the link
+              operationId: getCreatedFilesOfProcessor
+              parameters:
+                jobID: '$response.body#/jobID'
+
+              description: >
+                The `jobId` value returned in the response can be used as
+                the `jobID` parameter in `GET /ocrd/processor/jobid/{jobID}`.
+        '400':
+          description: "Invalid input"
+        '500':
+          description: "Internal error"
+  /ocrd/processor/jobid/{jobID}:
+    get:
+      tags:
+        - "Bildvorverarbeitung"
+        - "Layouterkennung"
+        - "Textoptimierung"
+      summary: Get created files.
+      description: Fetch all file created by job with id 'jobID'. If more than one file is created per mimetype use mimetype 'application/zip' as accept header to fetch all files at once.
+      operationId: getCreatedFilesOfProcessor
+      parameters:
+        - in: path
+          name: jobID
+          schema:
+            type: string
+          required: true
+          description: job ID of the started process.
+      responses:
+        '200':
+          description: Successful Operation. 
+          content:
+            application/vnd.ocrd+jobstatus:
+              schema:
+                $ref: '#/components/schemas/jobStatus'
+            application/mets+xml:
+              schema:
+                $ref: '#/components/schemas/metsFile'
+            image/*:
+              schema: 
+                $ref: '#/components/schemas/imageFile'
+            application/vnd.ocrd.page+xml:
+              schema: 
+                $ref: '#/components/schemas/pageFile'
+            application/vnd.ocrd.prov+json:
+              schema: 
+                $ref: '#/components/schemas/provenanceFile'
+            application/vnd.ocrd.log+json:
+              schema: 
+                $ref: '#/components/schemas/logging'
+            application/zip:
+              schema: 
+                $ref: '#/components/schemas/zipFile'
+        '400':
+          description: "Bad request. Maybe more than one file of at least one mimetype was created. Please use mimetype 'application/zip' as accept header to fetch all files at once."
+        '500':
+          description: "Internal error"
+    delete:
+      tags:
+        - "Bildvorverarbeitung"
+      summary: Delete all files created by job with ID 'jobID'.
+      parameters:
+        - in: path
+          name: jobID
+          schema:
+            type: string
+          required: true
+          description: job ID of the started process.
+      responses:
+        '204':
+          description: Successful Operation. All linked ressources are removed successfully. 
+          content:
+            application/vnd.ocrd+jobstatus:
+              schema:
+                $ref: '#/components/schemas/jobStatus'
+        '404':
+          description: "Not found."
+        '410':
+          description: "Ressource is not available anymore."
+        '500':
+          description: "Internal error"
+components:
+  schemas:
+    processors:
+      type: object
+      description: Object holding all parameters needed by most processors.
+      properties:
+        mets:
+          $ref: '#/components/schemas/metsFile'
+        inputFileGrp:
+          type: array
+          items: 
+            type: string
+          description: ID(s) of the fileGrps which have to be used as input. (fileGrp@USE). 
+        outputFileGrp:
+          type: array
+          items: 
+            type: string
+          description: ID(s) of the fileGrps which have to be used as output. (fileGrp@USE).
+        groupID:
+          type: array
+          items: 
+            type: string
+          description: All IDs of the image files which should be characterized. 
+        parameter:
+          type: array
+          items: 
+            type: string
+          description: Parameter file in JSON format. 
+        logLevel:
+          $ref: '#/components/schemas/logLevel'
+      required:
+        - mets
+        - inputFileGrp
+        - outputFileGrp
+    metsFile:
+      type: string
+      description: XML holding all information of the digitized document. All references of the images and the PAGE XMLs are available via fileGrp section  (see http://www.loc.gov/standards/mets/mets.xsd)
+    pageFile:
+      type: string
+      description: XML holding all information of the digitized page. (see http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15/pagecontent.xsd)
+    imageFile:
+      type: string
+      format: binary
+      description: Image created by processor.
+    zipFile:
+      type: string
+      format: binary
+      description: >
+        Zipfile containing all files created by the processor. 
+        Content of zipfile: 
+          * METS file (mandatory) (default: mets.xml)
+          * Provenance (mandatory) (default: provenance.json)
+          * PAGE XML (optional) 
+          * Images (optional) 
+          * Output of (error) console. (optional) (default: output.json)
+        
+        All files have to be referenced inside the METS file.
+    provenanceFile:
+      type: string
+      description: JSON file holding all information about the provenance.
+    logging:
+      type: object
+      properties:
+        stdout:
+          type: string   
+          description: Output of console.
+        stderr:
+          type: string   
+          description: Output of error console.
+      description: JSON file holding the output of the job.
+    jobId:
+      type: object
+      properties:
+        status: 
+          $ref: '#/components/schemas/status'
+        jobId:
+          type: string
+          description: ID of the created job.
+      description: Status and job ID of created job.
+    status:
+      type: string
+      enum:
+        - OK
+    jobStatus:
+      type: string
+      enum:
+        - RUNNING
+        - FINISHED
+        - ERROR
+        - STOPPED
+      description: >
+        Description of the status:
+          * `RUNNING` - Job is not finished yet.
+          * `FINISHED` - Job was executed successfully.
+          * `ERROR` - Job was cancelled due to an error.
+          * `STOPPED` - Job was stopped due to server restrictions.
+    logLevel:
+      type: string
+      enum:
+        - OFF
+        - ERROR
+        - WARN
+        - INFO
+        - DEBUG
+        - TRACE
+      default: INFO
+      example: DEBUG
+      description: Minimum Log level. One of (OFF, ERROR, WARN, INFO (default), DEBUG, TRACE). Actual mechanism for filtering log messages must not be implemented by processors.
