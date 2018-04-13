@@ -62,7 +62,7 @@ ocrd-spec:
 	git clone https://github.com/OCR-D/spec "$@"
 
 ocrd/model/yaml/ocrd_oas3.spec.yml: ocrd-spec
-	cp ocrd-spec/ocrd_api.swagger.yaml "$@"
+	cp ocrd-spec/ocrd_api.swagger.yml "$@"
 
 #
 # Assets
