@@ -31,7 +31,7 @@ info:
       * /layout/segmentation/classification | Fine-grained classification of all detected regions of a page.)
       
       * /layout/analysis (Analyse regions on document level.)
-  version: "0.9"
+  version: "1.0.0"
   title: "OCR-D"
   termsOfService: "http://swagger.io/terms/"
   contact:
