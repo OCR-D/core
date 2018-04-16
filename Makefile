@@ -13,19 +13,21 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
-	@echo "    deps-pip       Install python deps via pip"
-	@echo "    install        (Re)install the tool"
-	@echo "    spec           Fetch JSON Schema, OpenAPI from ocr-d/spec"
-	@echo "    swagger        Force rebuild of swagger from spec"
-	@echo "    assets         Clone the ocrd-assets repo for sample files"
-	@echo "    assets-server  Start asset server at http://localhost:5001"
-	@echo "    assets-clean   Remove symlinks in test/assets"
-	@echo "    test-deps-pip  Install test python deps via pip"
-	@echo "    test           Run all unit tests"
-	@echo "    docs           Build documentation"
-	@echo "    docs-clean     Clean docs"
-	@echo "    docker         Build docker image"
+	@echo "    deps-ubuntu       Dependencies for deployment in an ubuntu/debian linux"
+	@echo "    deps-pip          Install python deps via pip"
+	@echo "    install           (Re)install the tool"
+	@echo "    spec              Fetch JSON Schema, OpenAPI from ocr-d/spec"
+	@echo "    swagger           Force rebuild of swagger from spec"
+	@echo "    swagger           Force rebuild of swagger from spec"
+	@echo "    ocrd-tool-schema  Force rebuild of ocrd-tool schema from spec"
+	@echo "    assets            Clone the ocrd-assets repo for sample files"
+	@echo "    assets-server     Start asset server at http://localhost:5001"
+	@echo "    assets-clean      Remove symlinks in test/assets"
+	@echo "    test-deps-pip     Install test python deps via pip"
+	@echo "    test              Run all unit tests"
+	@echo "    docs              Build documentation"
+	@echo "    docs-clean        Clean docs"
+	@echo "    docker            Build docker image"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -57,7 +59,7 @@ install: spec
 #
 
 # Fetch JSON Schema, OpenAPI from ocr-d/spec
-spec: ocrd/model/yaml/ocrd_oas3.spec.yml
+spec: ocrd/model/yaml/ocrd_oas3.spec.yml ocrd/model/yaml/ocrd_tool.schema.yml
 
 ocrd-spec:
 	git clone https://github.com/OCR-D/spec "$@"
@@ -70,6 +72,13 @@ swagger:
 ocrd/model/yaml/ocrd_oas3.spec.yml: ocrd-spec
 	cp ocrd-spec/ocrd_api.swagger.yml "$@"
 
+# Force rebuild of ocrd-tool schema from spec
+ocrd-tool-schema:
+	rm ocrd/model/yaml/ocrd_tool.schema.yml
+	$(MAKE) ocrd/model/yaml/ocrd_tool.schema.yml
+
+ocrd/model/yaml/ocrd_tool.schema.yml: ocrd-spec
+	cp ocrd-spec/ocrd_tool.schema.yml "$@"
 #
 # Assets
 #
