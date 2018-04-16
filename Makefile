@@ -17,6 +17,7 @@ help:
 	@echo "    deps-pip       Install python deps via pip"
 	@echo "    install        (Re)install the tool"
 	@echo "    spec           Fetch JSON Schema, OpenAPI from ocr-d/spec"
+	@echo "    swagger        Force rebuild of swagger from spec"
 	@echo "    assets         Clone the ocrd-assets repo for sample files"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
 	@echo "    assets-clean   Remove symlinks in test/assets"
@@ -60,6 +61,11 @@ spec: ocrd/model/yaml/ocrd_oas3.spec.yml
 
 ocrd-spec:
 	git clone https://github.com/OCR-D/spec "$@"
+
+# Force rebuild of swagger from spec
+swagger:
+	rm ocrd/model/yaml/ocrd_oas3.spec.yml
+	$(MAKE) ocrd/model/yaml/ocrd_oas3.spec.yml
 
 ocrd/model/yaml/ocrd_oas3.spec.yml: ocrd-spec
 	cp ocrd-spec/ocrd_api.swagger.yml "$@"
