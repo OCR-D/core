@@ -6,8 +6,6 @@ info:
       
       * /preprocessing/characterization (Determine specific characteristics of a digitalization.)
       
-      *  /preprocessing/characterization/font (Estimate font families and languages used.)
-      
       * /preprocessing/optimization (Execute all steps for image optimization at once.)
       
       * /preprocessing/optimization/cropping (Crops the digitization to printspace.)
@@ -20,13 +18,17 @@ info:
       
       * /preprocessing/optimization/binarization (Binarize the digitization.)
       
+      *  /recognition/text-recognition (Estimate font families and languages used.)
+
+      *  /recognition/font-identification (Estimate font families and languages used.)
+
       * /layout/segmentation (Detect and classify all regions of a page.)
       
       * /layout/segmentation/page (Detect all regions of a page.)
       
       * /layout/segmentation/line (Detect all text line regions inside the text regions of a page.)
       
-      * /layout/segmentation/classification | Classify all detected regions of a page.)
+      * /layout/segmentation/classification | Fine-grained classification of all detected regions of a page.)
       
       * /layout/analysis (Analyse regions on document level.)
   version: "0.9"
@@ -40,28 +42,28 @@ info:
 servers:
     - url: "http://test.ocr-d.de/v1"
 tags:
-    - name: "Bildvorverarbeitung"
-      description: "Verfahren, die die Digitalisate für die Layout- und Texterkennung charakterisieren und optimieren."
-    - name: "Layouterkennung"
-      description: "Die Erfassung des korrekten, d.h. die Wiedergabe des logischstrukturell auf sich beziehenden Textflusses und hohe Textgenauigkeit."
-    - name: "Textoptimierung"
-      description: "Kombination mehrere OCR-Engines mit anschließender Nachkorrektur zur Verbesserung der Textergebnisse."
-    - name: "Modellbildung"
-      description: "Training der Modelle und Bereitstellung dieser."
-    - name: "Langzeitarchivierung"
-      description: "Sicherung der Langzeitverfügbarkeit und Referenzierbarkeit der gewonnenen Texte."
-    - name: "Qualitätssicherung"
-      description: "Bestimmung/Schätzung des Potenzials der einzelnen Komponenten."
+    - name: "Image preprocessing"
+      description: "Methods that characterize and optimize the digital representations for layout and text recognition."
+    - name: "Layout analysis"
+      description: "Registration of the correct text flow, that means the reproduction of the logical-structural text flow and high text accuracy."
+    - name: "Text recognition and optimization"
+      description: "Combination of several OCR engines with subsequent corrections to improve text results."
+    - name: "Model training"
+      description: "Training and provision of models."
+    - name: "Long-term archiving"
+      description: "Ensuring the long-term availability and referenceability of the texts obtained."
+    - name: "Quality assurance"
+      description: "Determination/estimation of the potential of each component."
 paths:
   /ocrd/processor:
     post:
       tags:
-        - "Bildvorverarbeitung"
-        - "Layouterkennung"
-        - "Textoptimierung"
+        - "Image preprocessing"
+        - "Layout analysis"
+        - "Text recognition and optimization"
       summary: "Start job for processing one of the tasks defined by OCR-D."
       description: "Start job for processing one of the tasks defined by OCR-D. May create new images and/or new PAGE XML files depending on algorithm. It has to create a provenance file and a new METS file."
-      operationId: "startProcessor"
+      operationId: start-processor
       requestBody:
         content:
           multipart/form-data:
@@ -73,7 +75,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobId'
+                $ref: '#/components/schemas/job-id'
           headers:
             Location:
               schema:
@@ -85,7 +87,7 @@ paths:
           # -----------------------------------------------------
           links:
             GetFilesByJobId:   # <---- arbitrary name for the link
-              operationId: getCreatedFilesOfProcessor
+              operationId: get-created-files-of-processor
               parameters:
                 jobID: '$response.body#/jobID'
 
@@ -99,12 +101,12 @@ paths:
   /ocrd/processor/jobid/{jobID}:
     get:
       tags:
-        - "Bildvorverarbeitung"
-        - "Layouterkennung"
-        - "Textoptimierung"
+        - "Image preprocessing"
+        - "Layout analysis"
+        - "Text recognition and optimization"
       summary: Get created files.
       description: Fetch all file created by job with id 'jobID'. If more than one file is created per mimetype use mimetype 'application/zip' as accept header to fetch all files at once.
-      operationId: getCreatedFilesOfProcessor
+      operationId: get-created-files-of-processor
       parameters:
         - in: path
           name: jobID
@@ -116,34 +118,34 @@ paths:
         '200':
           description: Successful Operation. 
           content:
-            application/vnd.ocrd+jobstatus:
+            application/vnd.ocrd+job-status:
               schema:
-                $ref: '#/components/schemas/jobStatus'
+                $ref: '#/components/schemas/job-status'
             application/mets+xml:
               schema:
-                $ref: '#/components/schemas/metsFile'
+                $ref: '#/components/schemas/mets-file'
             image/*:
               schema: 
-                $ref: '#/components/schemas/imageFile'
+                $ref: '#/components/schemas/image-file'
             application/vnd.ocrd.page+xml:
               schema: 
-                $ref: '#/components/schemas/pageFile'
+                $ref: '#/components/schemas/page-file'
             application/vnd.ocrd.prov+json:
               schema: 
-                $ref: '#/components/schemas/provenanceFile'
+                $ref: '#/components/schemas/provenance-file'
             application/vnd.ocrd.log+json:
               schema: 
                 $ref: '#/components/schemas/logging'
             application/zip:
               schema: 
-                $ref: '#/components/schemas/zipFile'
+                $ref: '#/components/schemas/zip-file'
         '400':
           description: "Bad request. Maybe more than one file of at least one mimetype was created. Please use mimetype 'application/zip' as accept header to fetch all files at once."
         '500':
           description: "Internal error"
     delete:
       tags:
-        - "Bildvorverarbeitung"
+        - "Image preprocessing"
       summary: Delete all files created by job with ID 'jobID'.
       parameters:
         - in: path
@@ -156,9 +158,9 @@ paths:
         '204':
           description: Successful Operation. All linked ressources are removed successfully. 
           content:
-            application/vnd.ocrd+jobstatus:
+            application/vnd.ocrd+job-status:
               schema:
-                $ref: '#/components/schemas/jobStatus'
+                $ref: '#/components/schemas/job-status'
         '404':
           description: "Not found."
         '410':
@@ -172,18 +174,18 @@ components:
       description: Object holding all parameters needed by most processors.
       properties:
         mets:
-          $ref: '#/components/schemas/metsFile'
-        inputFileGrp:
+          $ref: '#/components/schemas/mets-file'
+        input-file-grp:
           type: array
           items: 
             type: string
           description: ID(s) of the fileGrps which have to be used as input. (fileGrp@USE). 
-        outputFileGrp:
+        output-file-grp:
           type: array
           items: 
             type: string
           description: ID(s) of the fileGrps which have to be used as output. (fileGrp@USE).
-        groupID:
+        group-id:
           type: array
           items: 
             type: string
@@ -193,28 +195,28 @@ components:
           items: 
             type: string
           description: Parameter file in JSON format. 
-        logLevel:
-          $ref: '#/components/schemas/logLevel'
+        log-level:
+          $ref: '#/components/schemas/log-level'
       required:
         - mets
-        - inputFileGrp
-        - outputFileGrp
-    metsFile:
+        - input-file-grp
+        - output-file-grp
+    mets-file:
       type: string
       description: XML holding all information of the digitized document. All references of the images and the PAGE XMLs are available via fileGrp section  (see http://www.loc.gov/standards/mets/mets.xsd)
-    pageFile:
+    page-file:
       type: string
       description: XML holding all information of the digitized page. (see http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15/pagecontent.xsd)
-    imageFile:
+    image-file:
       type: string
       format: binary
       description: Image created by processor.
-    zipFile:
+    zip-file:
       type: string
       format: binary
       description: >
-        Zipfile containing all files created by the processor. 
-        Content of zipfile: 
+        zip-file containing all files created by the processor. 
+        Content of zip-file: 
           * METS file (mandatory) (default: mets.xml)
           * Provenance (mandatory) (default: provenance.json)
           * PAGE XML (optional) 
@@ -222,20 +224,35 @@ components:
           * Output of (error) console. (optional) (default: output.json)
         
         All files have to be referenced inside the METS file.
-    provenanceFile:
+    provenance-file:
       type: string
       description: JSON file holding all information about the provenance.
+    message-with-timestamp:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          description: 'timestamp'
+          format: date
+        message:
+          type: string
+          description: 'message'
     logging:
+      additionalProperties: false
       type: object
       properties:
         stdout:
-          type: string   
+          type: array   
           description: Output of console.
+          items:
+            $ref: '#/components/schemas/message-with-timestamp'
         stderr:
-          type: string   
+          type: array
           description: Output of error console.
+          items:
+            $ref: '#/components/schemas/message-with-timestamp'
       description: JSON file holding the output of the job.
-    jobId:
+    job-id:
       type: object
       properties:
         status: 
@@ -248,7 +265,7 @@ components:
       type: string
       enum:
         - OK
-    jobStatus:
+    job-status:
       type: string
       enum:
         - RUNNING
@@ -261,7 +278,7 @@ components:
           * `FINISHED` - Job was executed successfully.
           * `ERROR` - Job was cancelled due to an error.
           * `STOPPED` - Job was stopped due to server restrictions.
-    logLevel:
+    log-level:
       type: string
       enum:
         - OFF
