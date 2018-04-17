@@ -18,12 +18,11 @@ help:
 	@echo "    install           (Re)install the tool"
 	@echo "    spec              Fetch JSON Schema, OpenAPI from ocr-d/spec"
 	@echo "    swagger           Force rebuild of swagger from spec"
-	@echo "    swagger           Force rebuild of swagger from spec"
 	@echo "    ocrd-tool-schema  Force rebuild of ocrd-tool schema from spec"
 	@echo "    assets            Clone the ocrd-assets repo for sample files"
 	@echo "    assets-server     Start asset server at http://localhost:5001"
 	@echo "    assets-clean      Remove symlinks in test/assets"
-	@echo "    test-deps-pip     Install test python deps via pip"
+	@echo "    deps-pip-test     Install test python deps via pip"
 	@echo "    test              Run all unit tests"
 	@echo "    docs              Build documentation"
 	@echo "    docs-clean        Clean docs"
@@ -106,7 +105,7 @@ assets-clean:
 #
 
 # Install test python deps via pip
-test-deps-pip:
+deps-pip-test:
 	$(PIP) install -r requirements_test.txt
 
 .PHONY: test
