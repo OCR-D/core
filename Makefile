@@ -2,7 +2,6 @@ export
 
 SHELL = /bin/bash
 PYTHON = python
-PYTHONPATH := .:$(PYTHONPATH)
 PIP = pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
