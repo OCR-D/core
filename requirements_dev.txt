@@ -1,6 +1,7 @@
+-e git+https://github.com/smarnach/pyexiftool.git#egg=pyexiftool
+
 click
 requests
-pyexiftool
 lxml
 Pillow
 numpy
