@@ -25,7 +25,7 @@ To install system-wide:
 
 ::
 
-    sudo make deps-ubuntu deps-pip install
+    make deps-ubuntu deps-pip install
 
 
 To develop, install to a virtualenv

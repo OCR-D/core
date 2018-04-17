@@ -39,7 +39,7 @@ DOCKER_TAG = 'ocrd/pyocrd'
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt install -y \
+	sudo apt install -y \
 		python3 \
 		python3-pip \
 		libimage-exiftool-perl \
