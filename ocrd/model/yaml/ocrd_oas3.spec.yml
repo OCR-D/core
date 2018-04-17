@@ -50,7 +50,7 @@ tags:
       description: "Combination of several OCR engines with subsequent corrections to improve text results."
     - name: "Model training"
       description: "Training and provision of models."
-    - name: "Long-term archiving"
+    - name: "Long-term preservation"
       description: "Ensuring the long-term availability and referenceability of the texts obtained."
     - name: "Quality assurance"
       description: "Determination/estimation of the potential of each component."
