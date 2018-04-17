@@ -156,7 +156,7 @@ paths:
           description: job ID of the started process.
       responses:
         '204':
-          description: Successful Operation. All linked ressources are removed successfully. 
+          description: Successful Operation. All linked resources are removed successfully.
           content:
             application/vnd.ocrd+job-status:
               schema:
@@ -164,7 +164,7 @@ paths:
         '404':
           description: "Not found."
         '410':
-          description: "Ressource is not available anymore."
+          description: "Resource is not available anymore."
         '500':
           description: "Internal error"
 components:
