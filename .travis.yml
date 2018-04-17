@@ -6,7 +6,7 @@ before_install:
   - sudo apt-get -qq update
   - make deps-ubuntu
 install:
-  - make deps-pip test-deps-pip
+  - make deps-pip deps-pip-test
 script:
   - make assets
   - export TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"; make test TESSDATA_PREFIX="/usr/share/tesseract-ocr/4.00/tessdata"
