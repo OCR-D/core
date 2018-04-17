@@ -6,8 +6,6 @@ before_install:
   - sudo apt-get -qq update
   - make deps-ubuntu
 install:
-  - pip -r requirements_dev.txt
-  - pip -r requirements_test.txt
-  - make assets
+  - make deps-pip deps-pip-test assets
 script:
   - make test

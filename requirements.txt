@@ -1,6 +1,6 @@
 click
 requests
-pyexiftool
+ocrd-pyexiftool
 lxml
 Pillow
 numpy
