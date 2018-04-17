@@ -13,20 +13,20 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps-ubuntu       Dependencies for deployment in an ubuntu/debian linux"
-	@echo "    deps-pip          Install python deps via pip"
-	@echo "    install           (Re)install the tool"
-	@echo "    spec              Fetch JSON Schema, OpenAPI from ocr-d/spec"
-	@echo "    swagger           Force rebuild of swagger from spec"
-	@echo "    ocrd-tool-schema  Force rebuild of ocrd-tool schema from spec"
-	@echo "    assets            Clone the ocrd-assets repo for sample files"
-	@echo "    assets-server     Start asset server at http://localhost:5001"
-	@echo "    assets-clean      Remove symlinks in test/assets"
-	@echo "    deps-pip-test     Install test python deps via pip"
-	@echo "    test              Run all unit tests"
-	@echo "    docs              Build documentation"
-	@echo "    docs-clean        Clean docs"
-	@echo "    docker            Build docker image"
+	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
+	@echo "    deps-pip       Install python deps via pip"
+	@echo "    deps-pip-test  Install test python deps via pip"
+	@echo "    install        (Re)install the tool"
+	@echo "    repo/assets    Clone OCR-D/ocrd-assets to ./repo/assets"
+	@echo "    repo/spec      Clone OCR-D/spec to ./repo/spec"
+	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
+	@echo "    assets         Setup test assets"
+	@echo "    assets-server  Start asset server at http://localhost:5001"
+	@echo "    assets-clean   Remove symlinks in test/assets"
+	@echo "    test           Run all unit tests"
+	@echo "    docs           Build documentation"
+	@echo "    docs-clean     Clean docs"
+	@echo "    docker         Build docker image"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -49,52 +49,49 @@ deps-ubuntu:
 deps-pip:
 	$(PIP) install -r requirements.txt
 
+# Install test python deps via pip
+deps-pip-test:
+	$(PIP) install -r requirements_test.txt
+
 # (Re)install the tool
 install: spec
 	$(PIP) install .
 
 #
+# Repos
+#
+
+# Clone OCR-D/ocrd-assets to ./repo/assets
+repo/assets:
+	mkdir -p $(dir $@)
+	git clone https://github.com/OCR-D/ocrd-assets "$@"
+
+# Clone OCR-D/spec to ./repo/spec
+repo/spec:
+	mkdir -p $(dir $@)
+	git clone https://github.com/OCR-D/spec "$@"
+
+#
 # Spec
 #
 
-# Fetch JSON Schema, OpenAPI from ocr-d/spec
-spec: ocrd/model/yaml/ocrd_oas3.spec.yml ocrd/model/yaml/ocrd_tool.schema.yml
+# Copy JSON Schema, OpenAPI from OCR-D/spec
+spec: repo/spec
+	cp repo/spec/ocrd_api.swagger.yml ocrd/model/yaml/ocrd_oas3.spec.yml
+	cp repo/spec/ocrd_tool.schema.yml ocrd/model/yaml/ocrd_tool.schema.yml
 
-ocrd-spec:
-	git clone https://github.com/OCR-D/spec "$@"
-
-# Force rebuild of swagger from spec
-swagger:
-	rm ocrd/model/yaml/ocrd_oas3.spec.yml
-	$(MAKE) ocrd/model/yaml/ocrd_oas3.spec.yml
-
-ocrd/model/yaml/ocrd_oas3.spec.yml: ocrd-spec
-	cp ocrd-spec/ocrd_api.swagger.yml "$@"
-
-# Force rebuild of ocrd-tool schema from spec
-ocrd-tool-schema:
-	rm ocrd/model/yaml/ocrd_tool.schema.yml
-	$(MAKE) ocrd/model/yaml/ocrd_tool.schema.yml
-
-ocrd/model/yaml/ocrd_tool.schema.yml: ocrd-spec
-	cp ocrd-spec/ocrd_tool.schema.yml "$@"
 #
 # Assets
 #
 
-# Clone the ocrd-assets repo for sample files
-assets: ocrd-assets test/assets
-
-ocrd-assets:
-	git clone https://github.com/OCR-D/ocrd-assets
-
-test/assets:
+# Setup test assets
+assets: repo/assets
 	mkdir -p test/assets
-	cp -r -t test/assets ocrd-assets/data/*
+	cp -r -t test/assets repo/assets/data/*
 
 # Start asset server at http://localhost:5001
 assets-server:
-	cd ocrd-assets && make start
+	cd assets && make start
 
 # Remove symlinks in test/assets
 assets-clean:
@@ -103,10 +100,6 @@ assets-clean:
 #
 # Tests
 #
-
-# Install test python deps via pip
-deps-pip-test:
-	$(PIP) install -r requirements_test.txt
 
 .PHONY: test
 # Run all unit tests

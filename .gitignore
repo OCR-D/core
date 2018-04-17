@@ -104,19 +104,20 @@ env2/
 
 # vim swp
 *.swp
+
 ocrd.egg-info
-/src
-ocrd-assets
 .pytest_cache
-.~lock*
+/src
 /profile
+/repo
+.~lock*
 .pynative
-test/assets/SBB0000F29300010000
 venv3
 gh-pages
+test/assets
+OLD.*
+
+test/assets/SBB0000F29300010000
 test/assets/kant_aufklaerung_1784
 test/assets/00000001.jpg
 test/assets/test.ocrd.zip
-test/assets
-OLD.*
-ocrd-spec
