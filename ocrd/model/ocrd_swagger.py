@@ -54,7 +54,7 @@ class OcrdSwagger(object):
     def _add_paths_for_tool(swagger, tool):
 
         # e.g. /preprocessing/binarization/kraken-binarize
-        p = "/%s/%s" % (tool['step'], tool['binary'].replace('ocrd_', '').replace('ocrd-', ''))
+        p = "/%s/%s" % (tool['step'], tool['executable'].replace('ocrd_', '').replace('ocrd-', ''))
 
         # parameters are optional
         if 'parameterSchema' not in tool:

@@ -18,10 +18,10 @@ properties:
       required:
         - description
         - step
-        - binary
+        - exceutable
       properties:
-        binary:
-          description: The name of the CLI in $PATH
+        exceutable:
+          description: The name of the CLI executable in $PATH
           type: string
         parameterSchema:
           description: JSON Schema for the parameters.json file
