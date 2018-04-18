@@ -11,6 +11,11 @@ Changed
 Fixed
 Removed
 
+## [0.0.3] - 2018-04-18
+
+Changed
+  * Adapted click wrapper in decorators to v1.0.0 of OCR-D/spec
+
 ## [0.0.2] - 2018-04-17
 
 Fixed
