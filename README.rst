@@ -11,6 +11,9 @@ pyocrd
     :target: https://hub.docker.com/r/ocrd/pyocrd/tags/
     :alt: Docker Automated build
 
+.. image:: https://img.shields.io/pypi/v/ocrd.svg
+    :target: https://pypi.org/project/ocrd/
+
 Installation
 ------------
 
