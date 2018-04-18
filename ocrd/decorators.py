@@ -28,13 +28,14 @@ def ocrd_cli_options(f):
             print(mets_url)
     """
     params = [
-        click.option('-m', '--mets-url', help="METS URL to validate", required=True),
+        click.option('-m', '--mets', help="METS URL to validate", required=True),
+        click.option('-w', '--working-dir', help="Working Directory"),
+        click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
+        click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
+        click.option('-g', '--group-id', help="mets:file GROUPID"),
         click.option('-o', '--output-mets', help="METS URL to write resulting METS to"),
         click.option('-p', '--parameter', type=click.Path()),
-        click.option('-w', '--working-dir', help="Working Directory"),
-        click.option('-g', '--group-id', help="mets:file GROUPID"),
-        click.option('-I', '--input-filegrp', help='File group(s) used as input.', default='INPUT'),
-        click.option('-O', '--output-filegrp', help='File group(s) used as output.', default='OUTPUT'),
+        click.option('-l', '--log-level', help="Log level", type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']), default='INFO'),
     ]
     for param in params:
         param(f)
