@@ -11,6 +11,11 @@ Changed
 Fixed
 Removed
 
+## [0.0.6] - 2018-04-18
+
+Changed
+  * Support parameters in run_processor
+
 ## [0.0.5] - 2018-04-18
 
 Changed
@@ -31,6 +36,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.0.6]: ../../compare/v0.0.5...v0.0.6
 [0.0.5]: ../../compare/v0.0.4...v0.0.5
 [0.0.4]: ../../compare/v0.0.2...v0.0.4
 [0.0.2]: ../../compare/v0.0.1...v0.0.2
