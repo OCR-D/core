@@ -11,6 +11,11 @@ Changed
 Fixed
 Removed
 
+## [0.0.5] - 2018-04-18
+
+Changed
+  * Adapted schemas to v1.1.0 of OCR-D/spec
+
 ## [0.0.4] - 2018-04-18
 
 Changed
