@@ -1,3 +1,4 @@
+import json
 import subprocess
 from ocrd.utils import getLogger
 log = getLogger('ocrd.processor')
@@ -11,25 +12,32 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
         workspace = resolver.workspace_from_url(mets_url, directory=working_dir)
     return workspace
 
-# pylint: disable=unused-argument
 def run_processor(
         processorClass,
         mets_url=None,
         resolver=None,
         workspace=None,
         group_id=None,
-        input_filegrp=None,
-        output_filegrp=None,
+        log_level=None,
+        input_file_grp=None,
+        output_file_grp=None,
         output_mets=None,
         parameter=None,
         working_dir=None,
 ):
     """
     Create a workspace for mets_url and run processor through it
+
+    Args:
+        parameter (string): URL to the parameter
     """
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
+    if parameter is not None:
+        fname = workspace.download_url(parameter)
+        with open(fname, 'rb') as param_json_file:
+            parameter = json.load(param_json_file)
     log.debug("Running processor %s", processorClass)
-    processor = processorClass(workspace, input_filegrp=input_filegrp, output_filegrp=output_filegrp)
+    processor = processorClass(workspace, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
     log.debug("Processor instance %s", processor)
     processor.process()
     #  workspace.persist()
@@ -40,8 +48,9 @@ def run_cli(
         resolver=None,
         workspace=None,
         group_id=None,
-        input_filegrp=None,
-        output_filegrp=None,
+        log_level=None,
+        input_file_grp=None,
+        output_file_grp=None,
         output_mets=None,
         parameter=None,
         working_dir=None,
@@ -62,14 +71,14 @@ class Processor(object):
     """
     A processor runs an algorithm based on the workspace, the mets.xml in the
     workspace (and the input files defined therein) as well as optional
-    parameters.
+    parameter.
     """
 
-    def __init__(self, workspace, parameters=None, input_filegrp="INPUT", output_filegrp="OUTPUT"):
+    def __init__(self, workspace, parameter=None, input_file_grp="INPUT", output_file_grp="OUTPUT"):
         self.workspace = workspace
-        self.input_filegrp = input_filegrp
-        self.output_filegrp = output_filegrp
-        self.parameters = parameters if parameters is not None else {}
+        self.input_file_grp = input_file_grp
+        self.output_file_grp = output_file_grp
+        self.parameter = parameter if parameter is not None else {}
 
     def verify(self):
         """
@@ -88,7 +97,7 @@ class Processor(object):
         """
         List the input files
         """
-        return self.workspace.mets.find_files(fileGrp=self.input_filegrp)
+        return self.workspace.mets.find_files(fileGrp=self.input_file_grp)
 
     def add_output_file(self, input_file=None, basename=None, ID=None, **kwargs):
         """
@@ -98,5 +107,5 @@ class Processor(object):
         if basename is None and input_file is not None:
             basename = input_file.basename_without_extension + '.xml'
         #  if ID is None and input_file is not None:
-        #      basename = input_file.ID + self.output_filegrp
-        self.workspace.add_file(self.output_filegrp, basename=basename, ID=ID, **kwargs)
+        #      basename = input_file.ID + self.output_file_grp
+        self.workspace.add_file(self.output_file_grp, basename=basename, ID=ID, **kwargs)

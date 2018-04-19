@@ -17,7 +17,7 @@ class Workspace(object):
 
     Args:
 
-        directory (string) : Foldert to work in
+        directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
     """
 

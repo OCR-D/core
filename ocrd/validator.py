@@ -71,6 +71,21 @@ class JsonValidator(object):
             for v in self.validator.iter_errors(cli_json):
                 report.add_error("[%s] %s" % ('.'.join(str(vv) for vv in v.path), v.message))
         return report
+
+#
+# -------------------------------------------------
+#
+
+#  # TODO Implement
+
+#  class ParameterValidator(object):
+#      """
+#      Validates parameters against an ``ocrd-tool.json`` schema.
+#      """
+
+#      def __init__(self, ocrd_tool):
+#          self.validator = JsonValidator(ocrd_tool['parameter'])
+
 #
 # -------------------------------------------------
 #
