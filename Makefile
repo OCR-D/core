@@ -16,7 +16,7 @@ help:
 	@echo "    deps-pip       Install python deps via pip"
 	@echo "    deps-pip-test  Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
-	@echo "    repo/assets    Clone OCR-D/ocrd-assets to ./repo/assets"
+	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
 	@echo "    repo/spec      Clone OCR-D/spec to ./repo/spec"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
@@ -60,10 +60,10 @@ install: spec
 # Repos
 #
 
-# Clone OCR-D/ocrd-assets to ./repo/assets
+# Clone OCR-D/assets to ./repo/assets
 repo/assets:
 	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/ocrd-assets "$@"
+	git clone https://github.com/OCR-D/assets "$@"
 
 # Clone OCR-D/spec to ./repo/spec
 repo/spec:

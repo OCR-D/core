@@ -77,7 +77,7 @@ Test with local asset server:
   - ``make test OCRD_BASEURL='http://localhost:5001/'``
 
 Test with remote assets:
-  - ``make test OCRD_BASEURL='https://github.com/OCR-D/ocrd-assets/raw/master/data/'``
+  - ``make test OCRD_BASEURL='https://github.com/OCR-D/assets/raw/master/data/'``
 
 See Also
 --------
