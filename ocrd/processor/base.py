@@ -34,7 +34,7 @@ def run_processor(
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
     if parameter is not None:
         fname = workspace.download_url(parameter)
-        with open(fname, 'rb') as param_json_file:
+        with open(fname, 'r') as param_json_file:
             parameter = json.load(param_json_file)
     log.debug("Running processor %s", processorClass)
     processor = processorClass(workspace, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
