@@ -68,7 +68,7 @@ Examples:
 Testing
 -------
 
-Download ocrd-assets (``make assets``)
+Download assets (``make assets``)
 
 Test with local files: ``make test``
 
