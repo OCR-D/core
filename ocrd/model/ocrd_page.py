@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Apr 23 22:52:20 2018 by generateDS.py version 2.29.11.
+# Generated Tue Apr 24 00:06:26 2018 by generateDS.py version 2.29.11.
 # Python 3.6.3 (default, Oct  3 2017, 21:45:48)  [GCC 7.2.0]
 #
 # Command line options:
-#   ('-o', 'page.py')
+#   ('-o', 'ocrd/model/ocrd_page.py')
 #
 # Command line arguments:
-#   test/assets/schema/2017-07-15.xsd
+#   repo/assets/data/schema/2017-07-15.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/venv3/bin/generateDS -o "page.py" test/assets/schema/2017-07-15.xsd
+#   /home/kba/build/github.com/OCR-D/monorepo/venv3/bin/generateDS -o "ocrd/model/ocrd_page.py" repo/assets/data/schema/2017-07-15.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -7306,8 +7306,8 @@ def parseLiteral(inFileName, silence=False):
     # Enable Python to collect the space used by the DOM.
     doc = None
     if not silence:
-        sys.stdout.write('#from page import *\n\n')
-        sys.stdout.write('import page as model_\n\n')
+        sys.stdout.write('#from ocrd_page import *\n\n')
+        sys.stdout.write('import ocrd_page as model_\n\n')
         sys.stdout.write('rootObj = model_.rootClass(\n')
         rootObj.exportLiteral(sys.stdout, 0, name_=rootTag)
         sys.stdout.write(')\n')

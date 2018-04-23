@@ -56,6 +56,10 @@ deps-pip-test:
 install: spec
 	$(PIP) install .
 
+
+generate-page: repo/assets
+	generateDS -o ocrd/model/ocrd_page.py repo/assets/data/schema/2017-07-15.xsd
+
 #
 # Repos
 #
