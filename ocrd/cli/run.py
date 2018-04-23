@@ -2,6 +2,7 @@ import codecs
 import json
 
 import click
+import yaml
 
 from ocrd import run_cli, OcrdSwagger, Resolver, WorkspaceValidator, OcrdToolValidator, Workspace
 from ocrd.decorators import ocrd_cli_options
@@ -80,9 +81,13 @@ def workspace_add_file(working_dir, filegrp, local_filename, fileid, groupid):
 @cli.command('generate-swagger', help="Generate Swagger schema from ocrd-tool.json files")
 @click.option('-S', '--swagger-template', help="Swagger template to add operations to. Use builtin if not specified.")
 @click.option('-T', '--ocrd-tool', multiple=True, help="ocrd-tool.json file to generate from. Repeatable")
-def generate_swagger(swagger_template, ocrd_tool):
+@click.option('-f', '--format', help="Format to generate, JSON or YAML", type=click.Choice(['JSON', 'YAML']), default='JSON')
+def generate_swagger(swagger_template, ocrd_tool, **kwargs):
     swagger = OcrdSwagger.from_ocrd_tools(swagger_template, *ocrd_tool)
-    print(json.dumps(swagger, indent=2))
+    if kwargs['format'] == 'YAML':
+        print(yaml.dump(swagger))
+    else:
+        print(json.dumps(swagger, indent=2))
 
 # ----------------------------------------------------------------------
 # ocrd process
