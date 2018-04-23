@@ -16,6 +16,7 @@ RUN apt-get update && \
     apt-get -y install --no-install-recommends \
     ca-certificates \
     make \
+    sudo \
     git \
     libglib2.0.0 \
     libsm6 \
