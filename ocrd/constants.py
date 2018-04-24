@@ -13,18 +13,6 @@ NAMESPACES = {
     'xsl': 'http://www.w3.org/1999/XSL/Transform#',
 }
 
-PAGE_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
-<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15/pagecontent.xsd">
-    <Metadata>
-        <Creator>ocrd/core</Creator>
-        <Created>2018-01-01T00:00:00Z</Created>
-        <LastChange>2018-01-01T00:00:00Z</LastChange>
-    </Metadata>
-    <Page>
-    </Page>
-</PcGts>
-'''
-
 MIMETYPE_PAGE = 'text/page+xml'
 
 DEFAULT_UPLOAD_FOLDER = '/tmp/uploads-pyocrd'

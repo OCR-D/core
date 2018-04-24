@@ -1,3 +1,5 @@
+from lxml import etree as ET
+
 from ocrd.constants import (
     NAMESPACES,
     TAG_PAGE_COORDS
@@ -7,8 +9,6 @@ from ocrd.utils import (
     xywh_from_coordinate_string,
     coordinate_string_from_xywh
 )
-
-from lxml import etree as ET
 
 for curie in NAMESPACES:
     ET.register_namespace(curie, NAMESPACES[curie])
