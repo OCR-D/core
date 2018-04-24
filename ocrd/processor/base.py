@@ -99,13 +99,18 @@ class Processor(object):
         """
         return self.workspace.mets.find_files(fileGrp=self.input_file_grp)
 
-    def add_output_file(self, input_file=None, basename=None, ID=None, **kwargs):
+    def add_output_file(self, basename=None, file_grp=None, ID=None, **kwargs):
         """
         Add an output file.
+
+        Args:
+            basename (string) : basename of the file
+            file_grp (string) : fileGrp to add this file to. Default: self.output_file_grp
+            ID (string) : file@ID
         """
-        log.debug("Adding output file %s", input_file)
-        if basename is None and input_file is not None:
-            basename = input_file.basename_without_extension + '.xml'
-        #  if ID is None and input_file is not None:
-        #      basename = input_file.ID + self.output_file_grp
-        self.workspace.add_file(self.output_file_grp, basename=basename, ID=ID, **kwargs)
+        if basename is None:
+            raise Exception("Must give 'basename' for add_output_file")
+        log.debug("Adding output file %s", basename)
+        if file_grp is None:
+            file_grp = self.output_file_grp
+        self.workspace.add_file(file_grp, basename=basename, ID=ID, **kwargs)
