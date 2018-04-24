@@ -7,7 +7,7 @@ import ocrd.model.ocrd_page as ocrd_page
 class TestOcrdPage(TestCase):
 
     def setUp(self):
-        with open(assets.url_of('page-with-glyphs.xml', remove_file=True), 'rb') as f:
+        with open(assets.path_to('page-with-glyphs.xml'), 'rb') as f:
             self.xml_as_str = f.read()
             self.pcgts = ocrd_page.parseString(self.xml_as_str, silence=True)
 
@@ -15,11 +15,11 @@ class TestOcrdPage(TestCase):
         f = ocrd_file.OcrdFile(
             None,
             mimetype='image/tif',
-            local_filename=assets.url_of('kant_aufklaerung_1784/kant_aufklaerung_1784_0017.tif', remove_file=True)
+            local_filename=assets.path_to('kant_aufklaerung_1784/kant_aufklaerung_1784_0017.tif')
         )
         self.assertEqual(f.mimetype, 'image/tif')
         p = ocrd_page.from_file(f)
-        print(ocrd_page.to_xml(p))
+        self.assertEqual(p.get_Page().imageWidth, 1457)
 
     def test_pcGtsId(self):
         self.assertEqual(self.pcgts.pcGtsId, 'glyph-test')
