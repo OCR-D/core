@@ -1,6 +1,8 @@
 import yaml
 from pkg_resources import resource_string
 
+VERSION = '0.0.8-pre1'
+
 TMP_PREFIX = 'pyocrd-'
 
 NAMESPACES = {

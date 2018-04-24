@@ -24,7 +24,7 @@ def from_file(input_file):
     """
     Create a new PAGE-XML from a METS file representing a PAGE-XML or an image.
     """
-    print("PARSING PARSING '%s'" % input_file)
+    #  print("PARSING PARSING '%s'" % input_file)
     if input_file.mimetype.startswith('image'):
         exif = OcrdExif.from_filename(input_file.local_filename)
         content = PAGE_XML_EMPTY.replace('<Page>', '<Page imageWidth="%d" imageHeight="%i" imageFilename="%s">' % (
