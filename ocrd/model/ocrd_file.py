@@ -1,5 +1,5 @@
 import os
-from ocrd.constants import NAMESPACES as NS, TAG_METS_FLOCAT
+from ocrd.constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
 
 from .ocrd_xml_base import ET
 
@@ -12,9 +12,13 @@ class OcrdFile(object):
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, instance=None, local_filename=None, workspace=None):
+    def __init__(self, el, mimetype=None, instance=None, local_filename=None, workspace=None):
+        if el is None:
+            el = ET.Element(TAG_METS_FILE)
         self._el = el
+        self.mimetype = mimetype
         self.local_filename = local_filename
+
         self._instance = instance
         self.workspace = workspace
 

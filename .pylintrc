@@ -5,6 +5,7 @@ ignored-modules=cv2,tesserocr,ocrd.model
 [MESSAGES CONTROL]
 ignore-patterns='.*generateds.*'
 disable =
+    inconsistent-return-statements,
     ungrouped-imports,
     missing-docstring,
     no-self-use,
