@@ -14,19 +14,28 @@ def points_from_xywh(box):
     """
     Constructs a polygon representation from a rectangle described as a dict with keys x, y, w, h.
     """
+    x, y, w, h = box['x'], box['y'], box['w'], box['h']
     # tesseract uses a different region representation format
     return "%i,%i %i,%i %i,%i %i,%i" % (
-        box['x'],
-        box['y'],
-        box['x'] + box['w'],
-        box['y'] + box['w'],
-        box['x'] + box['w'] + box['h'],
-        box['y'] + box['w'] + box['h'],
-        box['x'] + box['h'],
-        box['y'] + box['h']
+        x, y,
+        x + w, y,
+        x + w, y + h,
+        x, y + h
     )
 
 def xywh_from_points(points):
+    """
+    Constructs an dict representing a rectangle with keys x, y, w, h
+    """
+    [tl, tr, br] = [[float(p) for p in pair.split(',')] for pair in points.split(' ')[:3]]
+    return {
+        'x': tl[0],
+        'y': tl[1],
+        'w': tr[0] - tl[0],
+        'h': br[1] - tr[1],
+    }
+
+def polygon_from_points(points):
     """
     Constructs a numpy-compatible polygon from a page representation.
     """
@@ -46,7 +55,11 @@ def xmllint_format(xml):
     output, _ = proc.communicate(xml)
     return output
 
+# TODO better name
 def mets_file_id(grp, n):
+    """
+    Concatenate string and zero-padded 4 digit number
+    """
     return "%s_%04i"  % (grp, n + 1)
 
 def safe_filename(url):
