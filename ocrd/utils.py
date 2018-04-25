@@ -27,7 +27,7 @@ def xywh_from_points(points):
     """
     Constructs an dict representing a rectangle with keys x, y, w, h
     """
-    [tl, tr, br] = [[float(p) for p in pair.split(',')] for pair in points.split(' ')[:3]]
+    [tl, tr, br] = [[int(p) for p in pair.split(',')] for pair in points.split(' ')[:3]]
     return {
         'x': tl[0],
         'y': tl[1],
