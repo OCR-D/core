@@ -4,8 +4,8 @@ from ocrd.constants import (
 )
 from ocrd.utils import (
     xmllint_format,
-    xywh_from_coordinate_string,
-    coordinate_string_from_xywh
+    xywh_from_points,
+    points_from_xywh
 )
 
 from lxml import etree as ET
@@ -22,14 +22,14 @@ def get_coords(el):
     coords = el.find('page:Coords', NAMESPACES)
     if coords is not None:
         points = coords.get('points')
-        return xywh_from_coordinate_string(points)
+        return xywh_from_points(points)
 
 def set_coords(el, box):
     if box is not None:
         coords = el.find('page:Coords', NAMESPACES)
         if coords is None:
             coords = ET.SubElement(el, TAG_PAGE_COORDS)
-        coords.set("points", coordinate_string_from_xywh(box))
+        coords.set("points", points_from_xywh(box))
 
 class OcrdXmlDocument(object):
 

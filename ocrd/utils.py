@@ -10,7 +10,7 @@ logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
 def getLogger(*args, **kwargs):
     return logging.getLogger(*args, **kwargs)
 
-def coordinate_string_from_xywh(box):
+def points_from_xywh(box):
     """
     Constructs a polygon representation from a rectangle described as a dict with keys x, y, w, h.
     """
@@ -26,7 +26,7 @@ def coordinate_string_from_xywh(box):
         box['y'] + box['h']
     )
 
-def xywh_from_coordinate_string(points):
+def xywh_from_points(points):
     """
     Constructs a numpy-compatible polygon from a page representation.
     """
