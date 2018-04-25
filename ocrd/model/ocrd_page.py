@@ -15,6 +15,7 @@ from ocrd.model.ocrd_page_generateds import (
     TextEquivType,
     TextRegionType,
     TextLineType,
+    WordType,
 )
 from ocrd.constants import NAMESPACES, VERSION
 from ocrd.model.ocrd_exif import OcrdExif
@@ -38,7 +39,8 @@ def page_from_image(input_file):
         Page=PageType(
             imageWidth=exif.width,
             imageHeight=exif.height,
-            imageFilename=input_file.local_filename
+            # XXX brittle
+            imageFilename=input_file.url if input_file.url is not None else 'file://' + input_file.local_filename
         )
     )
 
