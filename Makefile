@@ -56,6 +56,15 @@ deps-pip-test:
 install: spec
 	$(PIP) install .
 
+# Regenerate python code from PAGE XSD
+generate-page: repo/assets
+	generateDS \
+		-f \
+		--no-namespace-defs \
+		--root-element='PcGts' \
+		-o ocrd/model/ocrd_page_generateds.py \
+		repo/assets/data/schema/2017-07-15.xsd
+
 #
 # Repos
 #

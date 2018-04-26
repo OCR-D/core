@@ -1,9 +1,12 @@
 [MASTER]
 extension-pkg-whitelist=lxml
-ignored-modules=cv2,tesserocr
+ignored-modules=cv2,tesserocr,ocrd.model
 
 [MESSAGES CONTROL]
+ignore-patterns='.*generateds.*'
 disable =
+    inconsistent-return-statements,
+    ungrouped-imports,
     missing-docstring,
     no-self-use,
     too-many-arguments,

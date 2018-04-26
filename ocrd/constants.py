@@ -1,6 +1,8 @@
 import yaml
 from pkg_resources import resource_string
 
+VERSION = '0.0.8-pre1'
+
 TMP_PREFIX = 'pyocrd-'
 
 NAMESPACES = {
@@ -10,13 +12,6 @@ NAMESPACES = {
     'page': "http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15",
     'xsl': 'http://www.w3.org/1999/XSL/Transform#',
 }
-
-PAGE_XML_EMPTY = '''<?xml version="1.0" encoding="UTF-8"?>
-<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15/pagecontent.xsd">
-        <Page>
-        </Page>
-</PcGts>
-'''
 
 MIMETYPE_PAGE = 'text/page+xml'
 

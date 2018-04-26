@@ -1,14 +1,8 @@
-from ocrd.constants import (
-    NAMESPACES,
-    TAG_PAGE_COORDS
-)
-from ocrd.utils import (
-    xmllint_format,
-    xywh_from_points,
-    points_from_xywh
-)
-
 from lxml import etree as ET
+
+from ocrd.constants import NAMESPACES
+from ocrd.utils import xmllint_format
+
 
 for curie in NAMESPACES:
     ET.register_namespace(curie, NAMESPACES[curie])
@@ -17,19 +11,6 @@ class OcrdXmlFragment(object):
 
     def __init__(self, el):
         self.el = el
-
-def get_coords(el):
-    coords = el.find('page:Coords', NAMESPACES)
-    if coords is not None:
-        points = coords.get('points')
-        return xywh_from_points(points)
-
-def set_coords(el, box):
-    if box is not None:
-        coords = el.find('page:Coords', NAMESPACES)
-        if coords is None:
-            coords = ET.SubElement(el, TAG_PAGE_COORDS)
-        coords.set("points", points_from_xywh(box))
 
 class OcrdXmlDocument(object):
 
