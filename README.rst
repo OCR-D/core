@@ -4,11 +4,11 @@ pyocrd
 
     Collection of OCR-related python tools and wrappers from the OCR-D team
 
-.. image:: https://travis-ci.org/OCR-D/pyocrd.svg?branch=master
-    :target: https://travis-ci.org/OCR-D/pyocrd
+.. image:: https://travis-ci.org/OCR-D/core.svg?branch=master
+    :target: https://travis-ci.org/OCR-D/core
 
 .. image:: https://img.shields.io/docker/automated/ocrd/pyocrd.svg
-    :target: https://hub.docker.com/r/ocrd/pyocrd/tags/
+    :target: https://hub.docker.com/r/ocrd/core/tags/
     :alt: Docker Automated build
 
 .. image:: https://img.shields.io/pypi/v/ocrd.svg
