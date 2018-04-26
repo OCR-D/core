@@ -11,6 +11,12 @@ Changed
 Fixed
 Removed
 
+## [0.1.0] - 2018-04-26
+
+Changed:
+  * ocrd_page API based on XSD
+  * rename/fix coordinate code
+
 ## [0.0.7] - 2018-04-18
 
 Changed
@@ -41,6 +47,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.1.0]: ../../compare/v0.0.7...v0.1.0
+[0.0.7]: ../../compare/v0.0.6...v0.0.7
 [0.0.6]: ../../compare/v0.0.5...v0.0.6
 [0.0.5]: ../../compare/v0.0.4...v0.0.5
 [0.0.4]: ../../compare/v0.0.2...v0.0.4

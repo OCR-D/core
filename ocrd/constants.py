@@ -1,7 +1,7 @@
 import yaml
 from pkg_resources import resource_string
 
-VERSION = '0.0.8-pre1'
+VERSION = '0.1.0'
 
 TMP_PREFIX = 'pyocrd-'
 
