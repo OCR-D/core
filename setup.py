@@ -34,7 +34,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'ocrd=ocrd.cli.run:cli',
+            'ocrd=ocrd.cli:cli',
         ]
     },
 )
