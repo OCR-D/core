@@ -63,7 +63,7 @@ generate-page: repo/assets
 		--no-namespace-defs \
 		--root-element='PcGts' \
 		-o ocrd/model/ocrd_page_generateds.py \
-		repo/assets/data/schema/2017-07-15.xsd
+		repo/assets/data/schema/2018.xsd
 
 #
 # Repos
