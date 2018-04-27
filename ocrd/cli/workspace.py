@@ -40,17 +40,26 @@ def workspace_create(mets_url, download_all):
     print(workspace.directory)
 
 # ----------------------------------------------------------------------
-# ocrd workspace add-file
+# ocrd workspace add
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('add-file', help="Add a file to METS in a workspace")
+@workspace_cli.command('add', help="""
+
+    Add a file to METS in a workspace.
+
+""")
 @click.option('-w', '--working-dir', help="Directory of the workspace", required=True)
-@click.option('-G', '--filegrp', help="fileGrp USE", required=True)
-@click.option('-i', '--fileid', help="ID for the file")
-@click.option('-g', '--groupid', help="GROUPID")
-@click.argument('local_filename')
-def workspace_add_file(working_dir, filegrp, local_filename, fileid, groupid):
+@click.option('-G', '--file-grp', help="fileGrp USE", required=True)
+@click.option('-i', '--file-id', help="ID for the file")
+@click.option('-g', '--group-id', help="GROUPID")
+@click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
+def workspace_add_file(working_dir, file_grp, local_filename, file_id, group_id):
     resolver = Resolver(cache_enabled=True)
     workspace = Workspace(resolver, working_dir)
-    workspace.mets.add_file(filegrp, local_filename=local_filename)
+    workspace.mets.add_file(
+        file_grp=file_grp,
+        file_id=file_id,
+        group_id=group_id,
+        local_filename=local_filename
+    )
     workspace.save_mets()
