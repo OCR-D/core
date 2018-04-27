@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri Apr 27 16:37:42 2018 by generateDS.py version 2.29.11.
+# Generated Fri Apr 27 17:03:45 2018 by generateDS.py version 2.29.11.
 # Python 3.6.3 (default, Oct  3 2017, 21:45:48)  [GCC 7.2.0]
 #
 # Command line options:
@@ -1953,7 +1953,7 @@ class TextLineType(GeneratedsSuper):
     line within the parent text region."""
     subclass = None
     superclass = None
-    def __init__(self, id=None, primaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, index=None, Coords=None, Baseline=None, Word=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
+    def __init__(self, id=None, primaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, index=None, AlternativeImage=None, Coords=None, Baseline=None, Word=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.primaryLanguage = _cast(None, primaryLanguage)
@@ -1964,6 +1964,10 @@ class TextLineType(GeneratedsSuper):
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
         self.index = _cast(int, index)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         self.Baseline = Baseline
         if Word is None:
@@ -1991,6 +1995,11 @@ class TextLineType(GeneratedsSuper):
         else:
             return TextLineType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_Baseline(self): return self.Baseline
@@ -2034,6 +2043,7 @@ class TextLineType(GeneratedsSuper):
     def set_index(self, index): self.index = index
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.Baseline is not None or
             self.Word or
@@ -2099,6 +2109,8 @@ class TextLineType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         if self.Baseline is not None:
@@ -2161,7 +2173,12 @@ class TextLineType(GeneratedsSuper):
             except ValueError as exp:
                 raise_parse_error(node, 'Bad integer attribute: %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -2207,7 +2224,7 @@ class WordType(GeneratedsSuper):
     text line and/or text region. For generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, language=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, Coords=None, Glyph=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
+    def __init__(self, id=None, language=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Glyph=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.language = _cast(None, language)
@@ -2217,6 +2234,10 @@ class WordType(GeneratedsSuper):
         self.production = _cast(None, production)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         if Glyph is None:
             self.Glyph = []
@@ -2243,6 +2264,11 @@ class WordType(GeneratedsSuper):
         else:
             return WordType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_Glyph(self): return self.Glyph
@@ -2282,6 +2308,7 @@ class WordType(GeneratedsSuper):
     def set_comments(self, comments): self.comments = comments
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.Glyph or
             self.TextEquiv or
@@ -2343,6 +2370,8 @@ class WordType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         for Glyph_ in self.Glyph:
@@ -2396,7 +2425,12 @@ class WordType(GeneratedsSuper):
             already_processed.add('comments')
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -2434,7 +2468,7 @@ class GlyphType(GeneratedsSuper):
     the parent word / text line / text region. For generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, ligature=None, symbol=None, script=None, production=None, custom=None, comments=None, Coords=None, Graphemes=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
+    def __init__(self, id=None, ligature=None, symbol=None, script=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Graphemes=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.ligature = _cast(bool, ligature)
@@ -2443,6 +2477,10 @@ class GlyphType(GeneratedsSuper):
         self.production = _cast(None, production)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         self.Graphemes = Graphemes
         if TextEquiv is None:
@@ -2466,6 +2504,11 @@ class GlyphType(GeneratedsSuper):
         else:
             return GlyphType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_Graphemes(self): return self.Graphemes
@@ -2500,6 +2543,7 @@ class GlyphType(GeneratedsSuper):
     def set_comments(self, comments): self.comments = comments
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.Graphemes is not None or
             self.TextEquiv or
@@ -2558,6 +2602,8 @@ class GlyphType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         if self.Graphemes is not None:
@@ -2617,7 +2663,12 @@ class GlyphType(GeneratedsSuper):
             already_processed.add('comments')
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -5088,12 +5139,16 @@ class RegionType(GeneratedsSuper):
     previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, extensiontype_=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, extensiontype_=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
         self.continuation = _cast(bool, continuation)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         self.UserDefined = UserDefined
         if Labels is None:
@@ -5165,6 +5220,11 @@ class RegionType(GeneratedsSuper):
         else:
             return RegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_UserDefined(self): return self.UserDefined
@@ -5253,6 +5313,7 @@ class RegionType(GeneratedsSuper):
     def set_extensiontype_(self, extensiontype_): self.extensiontype_ = extensiontype_
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.UserDefined is not None or
             self.Labels or
@@ -5317,6 +5378,8 @@ class RegionType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         if self.UserDefined is not None:
@@ -5385,7 +5448,12 @@ class RegionType(GeneratedsSuper):
             already_processed.add('xsi:type')
             self.extensiontype_ = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -6467,9 +6535,9 @@ class UnknownRegionType(RegionType):
     """To be used if the region type cannot be ascertained."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
         self.original_tagname_ = None
-        super(UnknownRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(UnknownRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6533,9 +6601,9 @@ class NoiseRegionType(RegionType):
     created by artifacts on the document or scanner noise."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
         self.original_tagname_ = None
-        super(NoiseRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(NoiseRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6602,9 +6670,9 @@ class AdvertRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(AdvertRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(AdvertRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -6694,9 +6762,9 @@ class MusicRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(MusicRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(MusicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -6785,9 +6853,9 @@ class MapRegionType(RegionType):
     clockwise rotation). Range: -179.999,180"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None):
         self.original_tagname_ = None
-        super(MapRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(MapRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -6867,9 +6935,9 @@ class ChemRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(ChemRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(ChemRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -6960,9 +7028,9 @@ class MathsRegionType(RegionType):
     of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(MathsRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(MathsRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -7053,9 +7121,9 @@ class SeparatorRegionType(RegionType):
     -179.999,180 The colour of the separator"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colour=None):
         self.original_tagname_ = None
-        super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.colour = _cast(None, colour)
     def factory(*args_, **kwargs_):
@@ -7148,9 +7216,9 @@ class ChartRegionType(RegionType):
     also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None):
         self.original_tagname_ = None
-        super(ChartRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(ChartRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.numColours = _cast(int, numColours)
@@ -7283,9 +7351,9 @@ class TableRegionType(RegionType):
     Specifies whether the region also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None):
         self.original_tagname_ = None
-        super(TableRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(TableRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.rows = _cast(int, rows)
         self.columns = _cast(int, columns)
@@ -7458,9 +7526,9 @@ class GraphicRegionType(RegionType):
     text."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, embText=None):
         self.original_tagname_ = None
-        super(GraphicRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(GraphicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.numColours = _cast(int, numColours)
@@ -7580,9 +7648,9 @@ class LineDrawingRegionType(RegionType):
     also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, penColour=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, penColour=None, bgColour=None, embText=None):
         self.original_tagname_ = None
-        super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.penColour = _cast(None, penColour)
         self.bgColour = _cast(None, bgColour)
@@ -7699,9 +7767,9 @@ class ImageRegionType(RegionType):
     of the region Specifies whether the region also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None):
         self.original_tagname_ = None
-        super(ImageRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(ImageRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.colourDepth = _cast(None, colourDepth)
         self.bgColour = _cast(None, bgColour)
@@ -7829,9 +7897,9 @@ class TextRegionType(RegionType):
     region The secondary script used in the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None):
         self.original_tagname_ = None
-        super(TextRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(TextRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.leading = _cast(int, leading)
