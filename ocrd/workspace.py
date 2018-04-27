@@ -2,7 +2,7 @@ import os
 import shutil
 
 import cv2
-import PIL
+from PIL import Image
 import numpy as np
 
 from ocrd.model import OcrdMets, OcrdExif
@@ -154,7 +154,7 @@ class Workspace(object):
         image_filename = self.download_url(image_url)
 
         if image_url not in self.image_cache['pil']:
-            self.image_cache['pil'][image_url] = PIL.Image.open(image_filename)
+            self.image_cache['pil'][image_url] = Image.open(image_filename)
 
         pil_image = self.image_cache['pil'][image_url]
 
@@ -169,4 +169,4 @@ class Workspace(object):
                 np.min(poly[:, 1]):np.max(poly[:, 1]),
                 np.min(poly[:, 0]):np.max(poly[:, 0])
             ]
-            return PIL.Image.fromarray(region_cut)
+            return Image.fromarray(region_cut)
