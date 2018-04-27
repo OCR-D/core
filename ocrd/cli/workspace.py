@@ -13,7 +13,11 @@ def workspace_cli():
 # ocrd workspace validate
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('validate', help='Validate a workspace')
+@workspace_cli.command('validate', help='''
+
+    Validate a workspace
+
+''')
 @click.option('-m', '--mets-url', help="METS URL to validate", required=True)
 def validate_workspace(mets_url):
     resolver = Resolver(cache_enabled=True)
@@ -23,10 +27,14 @@ def validate_workspace(mets_url):
         return 128
 
 # ----------------------------------------------------------------------
-# ocrd workspace create-from-url
+# ocrd workspace clone
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('create-from-url', help="Create a workspace from a METS URL and return the directory")
+@workspace_cli.command('clone', help="""
+
+    Create a workspace from a METS URL and return the directory
+
+""")
 @click.option('-m', '--mets-url', help="METS URL to create workspace for", required=True)
 @click.option('-a', '--download-all', is_flag=True, default=False, help="Whether to download all files into the workspace")
 def workspace_create(mets_url, download_all):
