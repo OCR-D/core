@@ -99,15 +99,17 @@ def workspace_create(ctx, mets_url, download_all):
 
 """)
 @click.option('-G', '--file-grp', help="fileGrp USE", required=True)
-@click.option('-i', '--file-id', help="ID for the file")
+@click.option('-i', '--file-id', help="ID for the file", required=True)
+@click.option('-m', '--mimetype', help="Media type of the file", required=True)
 @click.option('-g', '--group-id', help="GROUPID")
 @click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
 @pass_workspace
-def workspace_add_file(ctx, file_grp, local_filename, file_id, group_id):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filename):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace.mets.add_file(
         file_grp=file_grp,
         file_id=file_id,
+        mimetype=mimetype,
         group_id=group_id,
         local_filename=local_filename
     )
