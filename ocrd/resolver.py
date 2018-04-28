@@ -100,7 +100,7 @@ class Resolver(object):
 
         return zpath
 
-    def unpack_workspace_from_filename(self, zip_filename):
+    def unpack_workspace_from_filename(self, zip_filename, directory=None):
         """
 
         :TODO:
@@ -113,7 +113,8 @@ class Resolver(object):
         Args:
             zip_filename (string) : Path to OCRD-ZIP file
         """
-        directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        if directory is None:
+            directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
         log.debug("Unpacking to %s", directory)
         with ZipFile(zip_filename, 'r') as z:
             z.extractall(path=directory)
