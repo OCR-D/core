@@ -58,8 +58,11 @@ def workspace_cli(ctx, directory, config, verbose):
     Validate a workspace
 
 ''')
-@click.option('-m', '--mets-url', help="METS URL to validate", required=True)
-def validate_workspace(ctx, mets_url):
+@click.option('-m', '--mets-url', help="METS URL to validate")
+@pass_workspace
+def validate_workspace(ctx, mets_url=None):
+    if mets_url is None:
+        mets_url = 'file://%s/mets.xml' % ctx.directory
     report = WorkspaceValidator.validate_url(ctx.resolver, mets_url)
     print(report.to_xml())
     if not report.is_valid:
@@ -76,6 +79,7 @@ def validate_workspace(ctx, mets_url):
 """)
 @click.option('-m', '--mets-url', help="METS URL to create workspace for", required=True)
 @click.option('-a', '--download-all', is_flag=True, default=False, help="Whether to download all files into the workspace")
+@pass_workspace
 def workspace_create(ctx, mets_url, download_all):
     workspace = ctx.resolver.workspace_from_url(mets_url)
     if download_all:
@@ -98,8 +102,9 @@ def workspace_create(ctx, mets_url, download_all):
 @click.option('-i', '--file-id', help="ID for the file")
 @click.option('-g', '--group-id', help="GROUPID")
 @click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
+@pass_workspace
 def workspace_add_file(ctx, file_grp, local_filename, file_id, group_id):
-    workspace = Workspace(ctx.resolver, working_dir)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace.mets.add_file(
         file_grp=file_grp,
         file_id=file_id,
