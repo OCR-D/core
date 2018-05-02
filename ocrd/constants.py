@@ -13,7 +13,7 @@ NAMESPACES = {
     'xsl': 'http://www.w3.org/1999/XSL/Transform#',
 }
 
-MIMETYPE_PAGE = 'text/page+xml'
+MIMETYPE_PAGE = 'application/vnd.prima.page+xml'
 
 DEFAULT_UPLOAD_FOLDER = '/tmp/uploads-pyocrd'
 DEFAULT_REPOSITORY_URL = 'http://localhost:5000/'
@@ -63,7 +63,7 @@ EXT_TO_MIME = {
     '.png': 'image/png',
     '.jpg': 'image/jpg',
     '.jpeg': 'image/jpg',
-    '.xml': 'text/xml'
+    '.xml': MIMETYPE_PAGE
 }
 
 
