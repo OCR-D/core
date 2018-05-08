@@ -1,4 +1,5 @@
 import os
+import sys
 
 import click
 
@@ -66,7 +67,7 @@ def validate_workspace(ctx, mets_url=None):
     report = WorkspaceValidator.validate_url(ctx.resolver, mets_url)
     print(report.to_xml())
     if not report.is_valid:
-        return 128
+        sys.exit(128)
 
 # ----------------------------------------------------------------------
 # ocrd workspace clone
