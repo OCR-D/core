@@ -13,6 +13,12 @@ Removed
 
 ## [0.2.0] - 2018-05-08
 
+Added
+  * CLI: `ocrd workspace {add,clone,pack,unpack,validate}`, #75
+
+
+## [0.2.0] - 2018-05-08
+
 Changed:
   * Use 2018 PAGE namespace http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15, PRImA-Research-Lab/PAGE-XML#4
 
@@ -52,7 +58,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-[0.1.0]: ../../compare/v0.1.0...v0.2.0
+[0.2.1]: ../../compare/v0.2.0...v0.2.1
+[0.2.0]: ../../compare/v0.1.0...v0.2.0
 [0.1.0]: ../../compare/v0.0.7...v0.1.0
 [0.0.7]: ../../compare/v0.0.6...v0.0.7
 [0.0.6]: ../../compare/v0.0.5...v0.0.6
