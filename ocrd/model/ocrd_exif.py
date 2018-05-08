@@ -73,18 +73,24 @@ class OcrdExif(object):
 
     @staticmethod
     def from_filename(image_filename):
+        if image_filename is None:
+            raise Exception("Must pass 'image_filename' to OcrdExif.from_filename")
         with exiftool.ExifTool() as et:
             exif_props = et.get_metadata(image_filename)
+            print(exif_props)
             return OcrdExif(exif_props)
 
     def __init__(self, props):
-        self.width = props["EXIF:ImageWidth"]
-        self.height = props["EXIF:ImageHeight"]
-        self.xResolution = props["EXIF:XResolution"]
-        self.yResolution = props["EXIF:YResolution"]
-        self.compression = EXIF_COMPRESSION_METHODS.get(props["EXIF:Compression"], "Unknown")
-        self.photometricInterpretation = EXIF_PHOTOMETRICINTERPRETATION_VALUES.get(props["EXIF:PhotometricInterpretation"], "Unknown")
-        self.resolutionUnit = "%s" % EXIF_RESOLUTIONUNIT_VALUES.get(props["EXIF:ResolutionUnit"], "None")
+        self.width = props["EXIF:ImageWidth"] if "EXIF:ImageWidth" in props else props["PNG:ImageWidth"]
+        self.height = props["EXIF:ImageHeight"] if "EXIF:ImageHeight" in props else props["PNG:ImageHeight"]
+        self.xResolution = props["EXIF:XResolution"] if "EXIF:XResolution" in props else 0
+        self.yResolution = props["EXIF:YResolution"] if "EXIF:YResolution" in props else 0
+        if "EXIF:Compression" in props:
+            self.compression = EXIF_COMPRESSION_METHODS.get(props["EXIF:Compression"], "Unknown")
+        if "EXIF:PhotometricInterpretation" in props:
+            self.photometricInterpretation = EXIF_PHOTOMETRICINTERPRETATION_VALUES.get(props["EXIF:PhotometricInterpretation"], "Unknown")
+        if "EXIF:ResolutionUnit" in props:
+            self.resolutionUnit = "%s" % EXIF_RESOLUTIONUNIT_VALUES.get(props["EXIF:ResolutionUnit"], "None")
 
     def to_xml(self):
         ret = '<exif>'
