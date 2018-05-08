@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri Apr 27 17:03:45 2018 by generateDS.py version 2.29.11.
+# Generated Tue May  8 12:14:28 2018 by generateDS.py version 2.29.11.
 # Python 3.6.3 (default, Oct  3 2017, 21:45:48)  [GCC 7.2.0]
 #
 # Command line options:
@@ -1309,16 +1309,17 @@ class PageType(GeneratedsSuper):
     definitions override the page-level definition) Inner-block
     order of text lines (in addition to “readingDirection” which is
     the inner-text line order of words and characters) (lower-level
-    definitions override the page-level definition)"""
+    definitions override the page-level definition)Confidence value
+    for whole page (between 0 and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, imageFilename=None, imageWidth=None, imageHeight=None, imageXResolution=None, imageYResolution=None, imageResolutionUnit=None, custom=None, type_=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, textLineOrder=None, AlternativeImage=None, Border=None, PrintSpace=None, ReadingOrder=None, Layers=None, Relations=None, UserDefined=None, Labels=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, MapRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, imageFilename=None, imageWidth=None, imageHeight=None, imageXResolution=None, imageYResolution=None, imageResolutionUnit=None, custom=None, type_=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, textLineOrder=None, conf=None, AlternativeImage=None, Border=None, PrintSpace=None, ReadingOrder=None, Layers=None, Relations=None, UserDefined=None, Labels=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, MapRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
         self.original_tagname_ = None
         self.imageFilename = _cast(None, imageFilename)
         self.imageWidth = _cast(int, imageWidth)
         self.imageHeight = _cast(int, imageHeight)
-        self.imageXResolution = _cast(int, imageXResolution)
-        self.imageYResolution = _cast(int, imageYResolution)
+        self.imageXResolution = _cast(float, imageXResolution)
+        self.imageYResolution = _cast(float, imageYResolution)
         self.imageResolutionUnit = _cast(None, imageResolutionUnit)
         self.custom = _cast(None, custom)
         self.type_ = _cast(None, type_)
@@ -1328,6 +1329,7 @@ class PageType(GeneratedsSuper):
         self.secondaryScript = _cast(None, secondaryScript)
         self.readingDirection = _cast(None, readingDirection)
         self.textLineOrder = _cast(None, textLineOrder)
+        self.conf = _cast(float, conf)
         if AlternativeImage is None:
             self.AlternativeImage = []
         else:
@@ -1529,6 +1531,8 @@ class PageType(GeneratedsSuper):
     def set_readingDirection(self, readingDirection): self.readingDirection = readingDirection
     def get_textLineOrder(self): return self.textLineOrder
     def set_textLineOrder(self, textLineOrder): self.textLineOrder = textLineOrder
+    def get_conf(self): return self.conf
+    def set_conf(self, conf): self.conf = conf
     def hasContent_(self):
         if (
             self.AlternativeImage or
@@ -1590,10 +1594,10 @@ class PageType(GeneratedsSuper):
             outfile.write(' imageHeight="%s"' % self.gds_format_integer(self.imageHeight, input_name='imageHeight'))
         if self.imageXResolution is not None and 'imageXResolution' not in already_processed:
             already_processed.add('imageXResolution')
-            outfile.write(' imageXResolution="%s"' % self.gds_format_integer(self.imageXResolution, input_name='imageXResolution'))
+            outfile.write(' imageXResolution="%s"' % self.gds_format_float(self.imageXResolution, input_name='imageXResolution'))
         if self.imageYResolution is not None and 'imageYResolution' not in already_processed:
             already_processed.add('imageYResolution')
-            outfile.write(' imageYResolution="%s"' % self.gds_format_integer(self.imageYResolution, input_name='imageYResolution'))
+            outfile.write(' imageYResolution="%s"' % self.gds_format_float(self.imageYResolution, input_name='imageYResolution'))
         if self.imageResolutionUnit is not None and 'imageResolutionUnit' not in already_processed:
             already_processed.add('imageResolutionUnit')
             outfile.write(' imageResolutionUnit=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.imageResolutionUnit), input_name='imageResolutionUnit')), ))
@@ -1621,6 +1625,9 @@ class PageType(GeneratedsSuper):
         if self.textLineOrder is not None and 'textLineOrder' not in already_processed:
             already_processed.add('textLineOrder')
             outfile.write(' textLineOrder=%s' % (quote_attrib(self.textLineOrder), ))
+        if self.conf is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespace_='pc:', name_='PageType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
@@ -1700,16 +1707,16 @@ class PageType(GeneratedsSuper):
         if value is not None and 'imageXResolution' not in already_processed:
             already_processed.add('imageXResolution')
             try:
-                self.imageXResolution = int(value)
+                self.imageXResolution = float(value)
             except ValueError as exp:
-                raise_parse_error(node, 'Bad integer attribute: %s' % exp)
+                raise ValueError('Bad float/double attribute (imageXResolution): %s' % exp)
         value = find_attr_value_('imageYResolution', node)
         if value is not None and 'imageYResolution' not in already_processed:
             already_processed.add('imageYResolution')
             try:
-                self.imageYResolution = int(value)
+                self.imageYResolution = float(value)
             except ValueError as exp:
-                raise_parse_error(node, 'Bad integer attribute: %s' % exp)
+                raise ValueError('Bad float/double attribute (imageYResolution): %s' % exp)
         value = find_attr_value_('imageResolutionUnit', node)
         if value is not None and 'imageResolutionUnit' not in already_processed:
             already_processed.add('imageResolutionUnit')
@@ -1746,6 +1753,13 @@ class PageType(GeneratedsSuper):
         if value is not None and 'textLineOrder' not in already_processed:
             already_processed.add('textLineOrder')
             self.textLineOrder = value
+        value = find_attr_value_('conf', node)
+        if value is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            try:
+                self.conf = float(value)
+            except ValueError as exp:
+                raise ValueError('Bad float/double attribute (conf): %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'AlternativeImage':
             obj_ = AlternativeImageType.factory()
@@ -2929,11 +2943,12 @@ class GridType(GeneratedsSuper):
 
 
 class GridPointsType(GeneratedsSuper):
-    """Points with x,y coordinates."""
+    """Points with x,y coordinates. The grid row index"""
     subclass = None
     superclass = None
-    def __init__(self, points=None):
+    def __init__(self, index=None, points=None):
         self.original_tagname_ = None
+        self.index = _cast(int, index)
         self.points = _cast(None, points)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -2946,6 +2961,8 @@ class GridPointsType(GeneratedsSuper):
         else:
             return GridPointsType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_index(self): return self.index
+    def set_index(self, index): self.index = index
     def get_points(self): return self.points
     def set_points(self, points): self.points = points
     def hasContent_(self):
@@ -2976,6 +2993,9 @@ class GridPointsType(GeneratedsSuper):
         else:
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GridPointsType'):
+        if self.index is not None and 'index' not in already_processed:
+            already_processed.add('index')
+            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (quote_attrib(self.points), ))
@@ -2989,6 +3009,13 @@ class GridPointsType(GeneratedsSuper):
             self.buildChildren(child, node, nodeName_)
         return self
     def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('index', node)
+        if value is not None and 'index' not in already_processed:
+            already_processed.add('index')
+            try:
+                self.index = int(value)
+            except ValueError as exp:
+                raise_parse_error(node, 'Bad integer attribute: %s' % exp)
         value = find_attr_value_('points', node)
         if value is not None and 'points' not in already_processed:
             already_processed.add('points')
@@ -4510,11 +4537,13 @@ class LayerType(GeneratedsSuper):
 
 
 class BaselineType(GeneratedsSuper):
+    """Confidence value (between 0 and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, points=None):
+    def __init__(self, points=None, conf=None):
         self.original_tagname_ = None
         self.points = _cast(None, points)
+        self.conf = _cast(float, conf)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4528,6 +4557,8 @@ class BaselineType(GeneratedsSuper):
     factory = staticmethod(factory)
     def get_points(self): return self.points
     def set_points(self, points): self.points = points
+    def get_conf(self): return self.conf
+    def set_conf(self, conf): self.conf = conf
     def hasContent_(self):
         if (
 
@@ -4559,6 +4590,9 @@ class BaselineType(GeneratedsSuper):
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (quote_attrib(self.points), ))
+        if self.conf is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespace_='pc:', name_='BaselineType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
@@ -4573,6 +4607,13 @@ class BaselineType(GeneratedsSuper):
         if value is not None and 'points' not in already_processed:
             already_processed.add('points')
             self.points = value
+        value = find_attr_value_('conf', node)
+        if value is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            try:
+                self.conf = float(value)
+            except ValueError as exp:
+                raise ValueError('Bad float/double attribute (conf): %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         pass
 # end class BaselineType
@@ -4664,7 +4705,7 @@ class RelationType(GeneratedsSuper):
     """One-to-one relation between to layout object. Use 'link' for loose
     relations and 'join' for strong relations (where something is
     fragmented for instance). Examples for 'link': caption - image
-    floating - paragraph paragraph - paragraph (when a pragraph is
+    floating - paragraph paragraph - paragraph (when a paragraph is
     split across columns and the last word of the first paragraph
     DOES NOT continue in the second paragraph) drop-cap - paragraph
     (when the drop-cap is a whole word) Examples for 'join': word -
@@ -4675,8 +4716,9 @@ class RelationType(GeneratedsSuper):
     generic use"""
     subclass = None
     superclass = None
-    def __init__(self, type_=None, custom=None, comments=None, Labels=None, SourceRegionRef=None, TargetRegionRef=None):
+    def __init__(self, id=None, type_=None, custom=None, comments=None, Labels=None, SourceRegionRef=None, TargetRegionRef=None):
         self.original_tagname_ = None
+        self.id = _cast(None, id)
         self.type_ = _cast(None, type_)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
@@ -4706,6 +4748,8 @@ class RelationType(GeneratedsSuper):
     def set_SourceRegionRef(self, SourceRegionRef): self.SourceRegionRef = SourceRegionRef
     def get_TargetRegionRef(self): return self.TargetRegionRef
     def set_TargetRegionRef(self, TargetRegionRef): self.TargetRegionRef = TargetRegionRef
+    def get_id(self): return self.id
+    def set_id(self, id): self.id = id
     def get_type(self): return self.type_
     def set_type(self, type_): self.type_ = type_
     def get_custom(self): return self.custom
@@ -4743,6 +4787,9 @@ class RelationType(GeneratedsSuper):
         else:
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='RelationType'):
+        if self.id is not None and 'id' not in already_processed:
+            already_processed.add('id')
+            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
         if self.type_ is not None and 'type_' not in already_processed:
             already_processed.add('type_')
             outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
@@ -4771,6 +4818,10 @@ class RelationType(GeneratedsSuper):
             self.buildChildren(child, node, nodeName_)
         return self
     def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('id', node)
+        if value is not None and 'id' not in already_processed:
+            already_processed.add('id')
+            self.id = value
         value = find_attr_value_('type', node)
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
@@ -8189,7 +8240,7 @@ def parse(inFileName, silence=False):
         sys.stdout.write('<?xml version="1.0" ?>\n')
         rootObj.export(
             sys.stdout, 0, name_=rootTag,
-            namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15"',
+            namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15"',
             pretty_print=True)
     return rootObj
 
@@ -8240,7 +8291,7 @@ def parseString(inString, silence=False):
         sys.stdout.write('<?xml version="1.0" ?>\n')
         rootObj.export(
             sys.stdout, 0, name_=rootTag,
-            namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2017-07-15"')
+            namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2018-07-15"')
     return rootObj
 
 
