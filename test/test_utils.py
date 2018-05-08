@@ -1,6 +1,7 @@
 from test.base import TestCase, main
 from ocrd.utils import (
     points_from_xywh,
+    points_from_x0y0x1y1,
     xywh_from_points,
     polygon_from_points
 )
@@ -14,6 +15,13 @@ class TestResolver(TestCase):
             points_from_xywh({'x': 100, 'y': 100, 'w': 100, 'h': 100}),
             '100,100 200,100 200,200 100,200'
         )
+
+    def test_points_from_x0y0x1y1(self):
+        self.assertEqual(
+            points_from_x0y0x1y1([100, 100, 200, 200]),
+            '100,100 200,100 200,200 100,200'
+        )
+
 
     def test_xywh_from_points(self):
         self.assertEqual(

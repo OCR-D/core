@@ -37,6 +37,18 @@ def points_from_xywh(box):
         x, y + h
     )
 
+def points_from_x0y0x1y1(xyxy):
+    """
+    Constructs a polygon representation from a rectangle described as a list [x0, y0, x1, y1]
+    """
+    [x0, y0, x1, y1] = xyxy
+    return "%s,%s %s,%s %s,%s %s,%s" % (
+        x0, y0,
+        x1, y0,
+        x1, y1,
+        x0, y1
+    )
+
 def xywh_from_points(points):
     """
     Constructs an dict representing a rectangle with keys x, y, w, h
