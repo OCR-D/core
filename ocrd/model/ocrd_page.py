@@ -5,7 +5,10 @@ from datetime import datetime
 from ocrd.model.ocrd_page_generateds import (
     parse,
     parseString,
+
+    AlternativeImageType,
     CoordsType,
+    GlyphType,
     OrderedGroupType,
     PcGtsType,
     PageType,

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Tue Apr 24 19:08:12 2018 by generateDS.py version 2.29.11.
+# Generated Fri Apr 27 17:03:45 2018 by generateDS.py version 2.29.11.
 # Python 3.6.3 (default, Oct  3 2017, 21:45:48)  [GCC 7.2.0]
 #
 # Command line options:
@@ -12,10 +12,10 @@
 #   ('-o', 'ocrd/model/ocrd_page_generateds.py')
 #
 # Command line arguments:
-#   repo/assets/data/schema/2017-07-15.xsd
+#   repo/assets/data/schema/2018.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/venv3/bin/generateDS -f --no-namespace-defs --root-element="PcGts" -o "ocrd/model/ocrd_page_generateds.py" repo/assets/data/schema/2017-07-15.xsd
+#   /home/kba/build/github.com/OCR-D/monorepo/venv3/bin/generateDS -f --no-namespace-defs --root-element="PcGts" -o "ocrd/model/ocrd_page_generateds.py" repo/assets/data/schema/2018.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -815,7 +815,7 @@ class MetadataType(GeneratedsSuper):
     """External reference of any kind"""
     subclass = None
     superclass = None
-    def __init__(self, externalRef=None, Creator=None, Created=None, LastChange=None, Comments=None, UserDefined=None):
+    def __init__(self, externalRef=None, Creator=None, Created=None, LastChange=None, Comments=None, UserDefined=None, MetadataItem=None):
         self.original_tagname_ = None
         self.externalRef = _cast(None, externalRef)
         self.Creator = Creator
@@ -831,6 +831,10 @@ class MetadataType(GeneratedsSuper):
         self.LastChange = initvalue_
         self.Comments = Comments
         self.UserDefined = UserDefined
+        if MetadataItem is None:
+            self.MetadataItem = []
+        else:
+            self.MetadataItem = MetadataItem
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -852,6 +856,11 @@ class MetadataType(GeneratedsSuper):
     def set_Comments(self, Comments): self.Comments = Comments
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_MetadataItem(self): return self.MetadataItem
+    def set_MetadataItem(self, MetadataItem): self.MetadataItem = MetadataItem
+    def add_MetadataItem(self, value): self.MetadataItem.append(value)
+    def insert_MetadataItem_at(self, index, value): self.MetadataItem.insert(index, value)
+    def replace_MetadataItem_at(self, index, value): self.MetadataItem[index] = value
     def get_externalRef(self): return self.externalRef
     def set_externalRef(self, externalRef): self.externalRef = externalRef
     def hasContent_(self):
@@ -860,7 +869,8 @@ class MetadataType(GeneratedsSuper):
             self.Created is not None or
             self.LastChange is not None or
             self.Comments is not None or
-            self.UserDefined is not None
+            self.UserDefined is not None or
+            self.MetadataItem
         ):
             return True
         else:
@@ -909,6 +919,8 @@ class MetadataType(GeneratedsSuper):
             outfile.write('<pc:Comments>%s</pc:Comments>%s' % (self.gds_encode(self.gds_format_string(quote_xml(self.Comments), input_name='Comments')), eol_))
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for MetadataItem_ in self.MetadataItem:
+            MetadataItem_.export(outfile, level, namespace_, name_='MetadataItem', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -943,29 +955,371 @@ class MetadataType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'MetadataItem':
+            obj_ = MetadataItemType.factory()
+            obj_.build(child_)
+            self.MetadataItem.append(obj_)
+            obj_.original_tagname_ = 'MetadataItem'
 # end class MetadataType
 
 
-class PageType(GeneratedsSuper):
-    """For generic usePage type The primary language used in the page
-    (lower-level definitions override the page-level definition) The
-    secondary language used in the page (lower-level definitions
-    override the page-level definition) The primary script used in
-    the page (lower-level definitions override the page-level
-    definition) The secondary script used in the page (lower-level
-    definitions override the page-level definition) The direction in
-    which text in a region should be read (within lines) (lower-
-    level definitions override the page-level definition) Inner-
-    block order of text lines (in addition to “readingDirection”
-    which is the inner-text line order of words and characters)
-    (lower-level definitions override the page-level definition)"""
+class MetadataItemType(GeneratedsSuper):
+    """Type of metadata (e.g. author) E.g. imagePhotometricInterpretation
+    E.g. RGB"""
     subclass = None
     superclass = None
-    def __init__(self, imageFilename=None, imageWidth=None, imageHeight=None, custom=None, type_=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, textLineOrder=None, AlternativeImage=None, Border=None, PrintSpace=None, ReadingOrder=None, Layers=None, Relations=None, UserDefined=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, type_=None, name=None, value=None, date=None, Labels=None):
+        self.original_tagname_ = None
+        self.type_ = _cast(None, type_)
+        self.name = _cast(None, name)
+        self.value = _cast(None, value)
+        if isinstance(date, BaseStrType_):
+            initvalue_ = datetime_.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        else:
+            initvalue_ = date
+        self.date = initvalue_
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, MetadataItemType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if MetadataItemType.subclass:
+            return MetadataItemType.subclass(*args_, **kwargs_)
+        else:
+            return MetadataItemType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
+    def get_type(self): return self.type_
+    def set_type(self, type_): self.type_ = type_
+    def get_name(self): return self.name
+    def set_name(self, name): self.name = name
+    def get_value(self): return self.value
+    def set_value(self, value): self.value = value
+    def get_date(self): return self.date
+    def set_date(self, date): self.date = date
+    def hasContent_(self):
+        if (
+            self.Labels
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='pc:', name_='MetadataItemType', namespacedef_='', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('MetadataItemType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None:
+            name_ = self.original_tagname_
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='MetadataItemType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='MetadataItemType', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='MetadataItemType'):
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
+        if self.name is not None and 'name' not in already_processed:
+            already_processed.add('name')
+            outfile.write(' name=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.name), input_name='name')), ))
+        if self.value is not None and 'value' not in already_processed:
+            already_processed.add('value')
+            outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
+        if self.date is not None and 'date' not in already_processed:
+            already_processed.add('date')
+            outfile.write(' date="%s"' % self.gds_format_datetime(self.date, input_name='date'))
+    def exportChildren(self, outfile, level, namespace_='pc:', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('type', node)
+        if value is not None and 'type' not in already_processed:
+            already_processed.add('type')
+            self.type_ = value
+        value = find_attr_value_('name', node)
+        if value is not None and 'name' not in already_processed:
+            already_processed.add('name')
+            self.name = value
+        value = find_attr_value_('value', node)
+        if value is not None and 'value' not in already_processed:
+            already_processed.add('value')
+            self.value = value
+        value = find_attr_value_('date', node)
+        if value is not None and 'date' not in already_processed:
+            already_processed.add('date')
+            try:
+                self.date = self.gds_parse_datetime(value)
+            except ValueError as exp:
+                raise ValueError('Bad date-time attribute (date): %s' % exp)
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
+# end class MetadataItemType
+
+
+class LabelsType(GeneratedsSuper):
+    """Reference to external model / ontology Prefix for all labels (e.g.
+    first part of an URI)"""
+    subclass = None
+    superclass = None
+    def __init__(self, externalRef=None, prefix=None, comments=None, Label=None):
+        self.original_tagname_ = None
+        self.externalRef = _cast(None, externalRef)
+        self.prefix = _cast(None, prefix)
+        self.comments = _cast(None, comments)
+        if Label is None:
+            self.Label = []
+        else:
+            self.Label = Label
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, LabelsType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if LabelsType.subclass:
+            return LabelsType.subclass(*args_, **kwargs_)
+        else:
+            return LabelsType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_Label(self): return self.Label
+    def set_Label(self, Label): self.Label = Label
+    def add_Label(self, value): self.Label.append(value)
+    def insert_Label_at(self, index, value): self.Label.insert(index, value)
+    def replace_Label_at(self, index, value): self.Label[index] = value
+    def get_externalRef(self): return self.externalRef
+    def set_externalRef(self, externalRef): self.externalRef = externalRef
+    def get_prefix(self): return self.prefix
+    def set_prefix(self, prefix): self.prefix = prefix
+    def get_comments(self): return self.comments
+    def set_comments(self, comments): self.comments = comments
+    def hasContent_(self):
+        if (
+            self.Label
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='pc:', name_='LabelsType', namespacedef_='', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelsType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None:
+            name_ = self.original_tagname_
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='LabelsType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='LabelsType', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='LabelsType'):
+        if self.externalRef is not None and 'externalRef' not in already_processed:
+            already_processed.add('externalRef')
+            outfile.write(' externalRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalRef), input_name='externalRef')), ))
+        if self.prefix is not None and 'prefix' not in already_processed:
+            already_processed.add('prefix')
+            outfile.write(' prefix=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.prefix), input_name='prefix')), ))
+        if self.comments is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
+    def exportChildren(self, outfile, level, namespace_='pc:', name_='LabelsType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        for Label_ in self.Label:
+            Label_.export(outfile, level, namespace_, name_='Label', pretty_print=pretty_print)
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('externalRef', node)
+        if value is not None and 'externalRef' not in already_processed:
+            already_processed.add('externalRef')
+            self.externalRef = value
+        value = find_attr_value_('prefix', node)
+        if value is not None and 'prefix' not in already_processed:
+            already_processed.add('prefix')
+            self.prefix = value
+        value = find_attr_value_('comments', node)
+        if value is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            self.comments = value
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'Label':
+            obj_ = LabelType.factory()
+            obj_.build(child_)
+            self.Label.append(obj_)
+            obj_.original_tagname_ = 'Label'
+# end class LabelsType
+
+
+class LabelType(GeneratedsSuper):
+    """Semantic label The label / tag (e.g. 'person') Additional
+    information on the label (e.g. 'YYYY-mm-dd' for a date label)"""
+    subclass = None
+    superclass = None
+    def __init__(self, value=None, type_=None, comments=None):
+        self.original_tagname_ = None
+        self.value = _cast(None, value)
+        self.type_ = _cast(None, type_)
+        self.comments = _cast(None, comments)
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, LabelType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if LabelType.subclass:
+            return LabelType.subclass(*args_, **kwargs_)
+        else:
+            return LabelType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_value(self): return self.value
+    def set_value(self, value): self.value = value
+    def get_type(self): return self.type_
+    def set_type(self, type_): self.type_ = type_
+    def get_comments(self): return self.comments
+    def set_comments(self, comments): self.comments = comments
+    def hasContent_(self):
+        if (
+
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='pc:', name_='LabelType', namespacedef_='', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None:
+            name_ = self.original_tagname_
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='LabelType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='LabelType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='LabelType'):
+        if self.value is not None and 'value' not in already_processed:
+            already_processed.add('value')
+            outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
+        if self.comments is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
+    def exportChildren(self, outfile, level, namespace_='pc:', name_='LabelType', fromsubclass_=False, pretty_print=True):
+        pass
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('value', node)
+        if value is not None and 'value' not in already_processed:
+            already_processed.add('value')
+            self.value = value
+        value = find_attr_value_('type', node)
+        if value is not None and 'type' not in already_processed:
+            already_processed.add('type')
+            self.type_ = value
+        value = find_attr_value_('comments', node)
+        if value is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            self.comments = value
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        pass
+# end class LabelType
+
+
+class PageType(GeneratedsSuper):
+    """Contains the image file name including the file extension. Specifies
+    the width of the image.Specifies the height of the
+    image.Specifies the image resolution in width.Specifies the
+    image resolution in height. Specifies the unit of the resolution
+    information referring to a standardised unit of measurement
+    (pixels per inch, pixels per centimeter or other). For generic
+    usePage type The primary language used in the page (lower-level
+    definitions override the page-level definition) The secondary
+    language used in the page (lower-level definitions override the
+    page-level definition) The primary script used in the page
+    (lower-level definitions override the page-level definition) The
+    secondary script used in the page (lower-level definitions
+    override the page-level definition) The direction in which text
+    in a region should be read (within lines) (lower-level
+    definitions override the page-level definition) Inner-block
+    order of text lines (in addition to “readingDirection” which is
+    the inner-text line order of words and characters) (lower-level
+    definitions override the page-level definition)"""
+    subclass = None
+    superclass = None
+    def __init__(self, imageFilename=None, imageWidth=None, imageHeight=None, imageXResolution=None, imageYResolution=None, imageResolutionUnit=None, custom=None, type_=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, textLineOrder=None, AlternativeImage=None, Border=None, PrintSpace=None, ReadingOrder=None, Layers=None, Relations=None, UserDefined=None, Labels=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, MapRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
         self.original_tagname_ = None
         self.imageFilename = _cast(None, imageFilename)
         self.imageWidth = _cast(int, imageWidth)
         self.imageHeight = _cast(int, imageHeight)
+        self.imageXResolution = _cast(int, imageXResolution)
+        self.imageYResolution = _cast(int, imageYResolution)
+        self.imageResolutionUnit = _cast(None, imageResolutionUnit)
         self.custom = _cast(None, custom)
         self.type_ = _cast(None, type_)
         self.primaryLanguage = _cast(None, primaryLanguage)
@@ -984,6 +1338,10 @@ class PageType(GeneratedsSuper):
         self.Layers = Layers
         self.Relations = Relations
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
         if TextRegion is None:
             self.TextRegion = []
         else:
@@ -1008,6 +1366,10 @@ class PageType(GeneratedsSuper):
             self.ChartRegion = []
         else:
             self.ChartRegion = ChartRegion
+        if MapRegion is None:
+            self.MapRegion = []
+        else:
+            self.MapRegion = MapRegion
         if SeparatorRegion is None:
             self.SeparatorRegion = []
         else:
@@ -1064,6 +1426,11 @@ class PageType(GeneratedsSuper):
     def set_Relations(self, Relations): self.Relations = Relations
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_TextRegion(self): return self.TextRegion
     def set_TextRegion(self, TextRegion): self.TextRegion = TextRegion
     def add_TextRegion(self, value): self.TextRegion.append(value)
@@ -1094,6 +1461,11 @@ class PageType(GeneratedsSuper):
     def add_ChartRegion(self, value): self.ChartRegion.append(value)
     def insert_ChartRegion_at(self, index, value): self.ChartRegion.insert(index, value)
     def replace_ChartRegion_at(self, index, value): self.ChartRegion[index] = value
+    def get_MapRegion(self): return self.MapRegion
+    def set_MapRegion(self, MapRegion): self.MapRegion = MapRegion
+    def add_MapRegion(self, value): self.MapRegion.append(value)
+    def insert_MapRegion_at(self, index, value): self.MapRegion.insert(index, value)
+    def replace_MapRegion_at(self, index, value): self.MapRegion[index] = value
     def get_SeparatorRegion(self): return self.SeparatorRegion
     def set_SeparatorRegion(self, SeparatorRegion): self.SeparatorRegion = SeparatorRegion
     def add_SeparatorRegion(self, value): self.SeparatorRegion.append(value)
@@ -1135,6 +1507,12 @@ class PageType(GeneratedsSuper):
     def set_imageWidth(self, imageWidth): self.imageWidth = imageWidth
     def get_imageHeight(self): return self.imageHeight
     def set_imageHeight(self, imageHeight): self.imageHeight = imageHeight
+    def get_imageXResolution(self): return self.imageXResolution
+    def set_imageXResolution(self, imageXResolution): self.imageXResolution = imageXResolution
+    def get_imageYResolution(self): return self.imageYResolution
+    def set_imageYResolution(self, imageYResolution): self.imageYResolution = imageYResolution
+    def get_imageResolutionUnit(self): return self.imageResolutionUnit
+    def set_imageResolutionUnit(self, imageResolutionUnit): self.imageResolutionUnit = imageResolutionUnit
     def get_custom(self): return self.custom
     def set_custom(self, custom): self.custom = custom
     def get_type(self): return self.type_
@@ -1160,12 +1538,14 @@ class PageType(GeneratedsSuper):
             self.Layers is not None or
             self.Relations is not None or
             self.UserDefined is not None or
+            self.Labels or
             self.TextRegion or
             self.ImageRegion or
             self.LineDrawingRegion or
             self.GraphicRegion or
             self.TableRegion or
             self.ChartRegion or
+            self.MapRegion or
             self.SeparatorRegion or
             self.MathsRegion or
             self.ChemRegion or
@@ -1208,6 +1588,15 @@ class PageType(GeneratedsSuper):
         if self.imageHeight is not None and 'imageHeight' not in already_processed:
             already_processed.add('imageHeight')
             outfile.write(' imageHeight="%s"' % self.gds_format_integer(self.imageHeight, input_name='imageHeight'))
+        if self.imageXResolution is not None and 'imageXResolution' not in already_processed:
+            already_processed.add('imageXResolution')
+            outfile.write(' imageXResolution="%s"' % self.gds_format_integer(self.imageXResolution, input_name='imageXResolution'))
+        if self.imageYResolution is not None and 'imageYResolution' not in already_processed:
+            already_processed.add('imageYResolution')
+            outfile.write(' imageYResolution="%s"' % self.gds_format_integer(self.imageYResolution, input_name='imageYResolution'))
+        if self.imageResolutionUnit is not None and 'imageResolutionUnit' not in already_processed:
+            already_processed.add('imageResolutionUnit')
+            outfile.write(' imageResolutionUnit=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.imageResolutionUnit), input_name='imageResolutionUnit')), ))
         if self.custom is not None and 'custom' not in already_processed:
             already_processed.add('custom')
             outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
@@ -1251,6 +1640,8 @@ class PageType(GeneratedsSuper):
             self.Relations.export(outfile, level, namespace_, name_='Relations', pretty_print=pretty_print)
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
         for TextRegion_ in self.TextRegion:
             TextRegion_.export(outfile, level, namespace_, name_='TextRegion', pretty_print=pretty_print)
         for ImageRegion_ in self.ImageRegion:
@@ -1263,6 +1654,8 @@ class PageType(GeneratedsSuper):
             TableRegion_.export(outfile, level, namespace_, name_='TableRegion', pretty_print=pretty_print)
         for ChartRegion_ in self.ChartRegion:
             ChartRegion_.export(outfile, level, namespace_, name_='ChartRegion', pretty_print=pretty_print)
+        for MapRegion_ in self.MapRegion:
+            MapRegion_.export(outfile, level, namespace_, name_='MapRegion', pretty_print=pretty_print)
         for SeparatorRegion_ in self.SeparatorRegion:
             SeparatorRegion_.export(outfile, level, namespace_, name_='SeparatorRegion', pretty_print=pretty_print)
         for MathsRegion_ in self.MathsRegion:
@@ -1303,6 +1696,24 @@ class PageType(GeneratedsSuper):
                 self.imageHeight = int(value)
             except ValueError as exp:
                 raise_parse_error(node, 'Bad integer attribute: %s' % exp)
+        value = find_attr_value_('imageXResolution', node)
+        if value is not None and 'imageXResolution' not in already_processed:
+            already_processed.add('imageXResolution')
+            try:
+                self.imageXResolution = int(value)
+            except ValueError as exp:
+                raise_parse_error(node, 'Bad integer attribute: %s' % exp)
+        value = find_attr_value_('imageYResolution', node)
+        if value is not None and 'imageYResolution' not in already_processed:
+            already_processed.add('imageYResolution')
+            try:
+                self.imageYResolution = int(value)
+            except ValueError as exp:
+                raise_parse_error(node, 'Bad integer attribute: %s' % exp)
+        value = find_attr_value_('imageResolutionUnit', node)
+        if value is not None and 'imageResolutionUnit' not in already_processed:
+            already_processed.add('imageResolutionUnit')
+            self.imageResolutionUnit = value
         value = find_attr_value_('custom', node)
         if value is not None and 'custom' not in already_processed:
             already_processed.add('custom')
@@ -1371,6 +1782,11 @@ class PageType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'TextRegion':
             obj_ = TextRegionType.factory()
             obj_.build(child_)
@@ -1401,6 +1817,11 @@ class PageType(GeneratedsSuper):
             obj_.build(child_)
             self.ChartRegion.append(obj_)
             obj_.original_tagname_ = 'ChartRegion'
+        elif nodeName_ == 'MapRegion':
+            obj_ = MapRegionType.factory()
+            obj_.build(child_)
+            self.MapRegion.append(obj_)
+            obj_.original_tagname_ = 'MapRegion'
         elif nodeName_ == 'SeparatorRegion':
             obj_ = SeparatorRegionType.factory()
             obj_.build(child_)
@@ -1440,12 +1861,14 @@ class PageType(GeneratedsSuper):
 
 
 class CoordsType(GeneratedsSuper):
-    """ Point list with format "x1,y1 x2,y2 ..." """
+    """Point list with format "x1,y1 x2,y2 ..."Confidence value (between 0
+    and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, points=None):
+    def __init__(self, points=None, conf=None):
         self.original_tagname_ = None
         self.points = _cast(None, points)
+        self.conf = _cast(float, conf)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1459,6 +1882,8 @@ class CoordsType(GeneratedsSuper):
     factory = staticmethod(factory)
     def get_points(self): return self.points
     def set_points(self, points): self.points = points
+    def get_conf(self): return self.conf
+    def set_conf(self, conf): self.conf = conf
     def hasContent_(self):
         if (
 
@@ -1490,6 +1915,9 @@ class CoordsType(GeneratedsSuper):
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (quote_attrib(self.points), ))
+        if self.conf is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespace_='pc:', name_='CoordsType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
@@ -1504,6 +1932,13 @@ class CoordsType(GeneratedsSuper):
         if value is not None and 'points' not in already_processed:
             already_processed.add('points')
             self.points = value
+        value = find_attr_value_('conf', node)
+        if value is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            try:
+                self.conf = float(value)
+            except ValueError as exp:
+                raise ValueError('Bad float/double attribute (conf): %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         pass
 # end class CoordsType
@@ -1514,10 +1949,11 @@ class TextLineType(GeneratedsSuper):
     primary script used in the text line The secondary script used
     in the text line The direction in which text in a text line
     should be read Overrides the production attribute of the parent
-    text region For generic use"""
+    text region For generic use Position (order number) of this text
+    line within the parent text region."""
     subclass = None
     superclass = None
-    def __init__(self, id=None, primaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, Coords=None, Baseline=None, Word=None, TextEquiv=None, TextStyle=None, UserDefined=None):
+    def __init__(self, id=None, primaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, index=None, AlternativeImage=None, Coords=None, Baseline=None, Word=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.primaryLanguage = _cast(None, primaryLanguage)
@@ -1527,6 +1963,11 @@ class TextLineType(GeneratedsSuper):
         self.production = _cast(None, production)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
+        self.index = _cast(int, index)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         self.Baseline = Baseline
         if Word is None:
@@ -1539,6 +1980,10 @@ class TextLineType(GeneratedsSuper):
             self.TextEquiv = TextEquiv
         self.TextStyle = TextStyle
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1550,6 +1995,11 @@ class TextLineType(GeneratedsSuper):
         else:
             return TextLineType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_Baseline(self): return self.Baseline
@@ -1568,6 +2018,11 @@ class TextLineType(GeneratedsSuper):
     def set_TextStyle(self, TextStyle): self.TextStyle = TextStyle
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_id(self): return self.id
     def set_id(self, id): self.id = id
     def get_primaryLanguage(self): return self.primaryLanguage
@@ -1584,14 +2039,18 @@ class TextLineType(GeneratedsSuper):
     def set_custom(self, custom): self.custom = custom
     def get_comments(self): return self.comments
     def set_comments(self, comments): self.comments = comments
+    def get_index(self): return self.index
+    def set_index(self, index): self.index = index
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.Baseline is not None or
             self.Word or
             self.TextEquiv or
             self.TextStyle is not None or
-            self.UserDefined is not None
+            self.UserDefined is not None or
+            self.Labels
         ):
             return True
         else:
@@ -1642,11 +2101,16 @@ class TextLineType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
+        if self.index is not None and 'index' not in already_processed:
+            already_processed.add('index')
+            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
     def exportChildren(self, outfile, level, namespace_='pc:', name_='TextLineType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         if self.Baseline is not None:
@@ -1659,6 +2123,8 @@ class TextLineType(GeneratedsSuper):
             self.TextStyle.export(outfile, level, namespace_, name_='TextStyle', pretty_print=pretty_print)
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1699,8 +2165,20 @@ class TextLineType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
+        value = find_attr_value_('index', node)
+        if value is not None and 'index' not in already_processed:
+            already_processed.add('index')
+            try:
+                self.index = int(value)
+            except ValueError as exp:
+                raise_parse_error(node, 'Bad integer attribute: %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -1730,6 +2208,11 @@ class TextLineType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
 # end class TextLineType
 
 
@@ -1741,7 +2224,7 @@ class WordType(GeneratedsSuper):
     text line and/or text region. For generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, language=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, Coords=None, Glyph=None, TextEquiv=None, TextStyle=None, UserDefined=None):
+    def __init__(self, id=None, language=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Glyph=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.language = _cast(None, language)
@@ -1751,6 +2234,10 @@ class WordType(GeneratedsSuper):
         self.production = _cast(None, production)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         if Glyph is None:
             self.Glyph = []
@@ -1762,6 +2249,10 @@ class WordType(GeneratedsSuper):
             self.TextEquiv = TextEquiv
         self.TextStyle = TextStyle
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1773,6 +2264,11 @@ class WordType(GeneratedsSuper):
         else:
             return WordType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_Glyph(self): return self.Glyph
@@ -1789,6 +2285,11 @@ class WordType(GeneratedsSuper):
     def set_TextStyle(self, TextStyle): self.TextStyle = TextStyle
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_id(self): return self.id
     def set_id(self, id): self.id = id
     def get_language(self): return self.language
@@ -1807,11 +2308,13 @@ class WordType(GeneratedsSuper):
     def set_comments(self, comments): self.comments = comments
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.Glyph or
             self.TextEquiv or
             self.TextStyle is not None or
-            self.UserDefined is not None
+            self.UserDefined is not None or
+            self.Labels
         ):
             return True
         else:
@@ -1867,6 +2370,8 @@ class WordType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         for Glyph_ in self.Glyph:
@@ -1877,6 +2382,8 @@ class WordType(GeneratedsSuper):
             self.TextStyle.export(outfile, level, namespace_, name_='TextStyle', pretty_print=pretty_print)
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1918,7 +2425,12 @@ class WordType(GeneratedsSuper):
             already_processed.add('comments')
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -1943,6 +2455,11 @@ class WordType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
 # end class WordType
 
 
@@ -1951,7 +2468,7 @@ class GlyphType(GeneratedsSuper):
     the parent word / text line / text region. For generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, ligature=None, symbol=None, script=None, production=None, custom=None, comments=None, Coords=None, Graphemes=None, TextEquiv=None, TextStyle=None, UserDefined=None):
+    def __init__(self, id=None, ligature=None, symbol=None, script=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Graphemes=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.ligature = _cast(bool, ligature)
@@ -1960,6 +2477,10 @@ class GlyphType(GeneratedsSuper):
         self.production = _cast(None, production)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         self.Graphemes = Graphemes
         if TextEquiv is None:
@@ -1968,6 +2489,10 @@ class GlyphType(GeneratedsSuper):
             self.TextEquiv = TextEquiv
         self.TextStyle = TextStyle
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1979,6 +2504,11 @@ class GlyphType(GeneratedsSuper):
         else:
             return GlyphType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_Graphemes(self): return self.Graphemes
@@ -1992,6 +2522,11 @@ class GlyphType(GeneratedsSuper):
     def set_TextStyle(self, TextStyle): self.TextStyle = TextStyle
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_id(self): return self.id
     def set_id(self, id): self.id = id
     def get_ligature(self): return self.ligature
@@ -2008,11 +2543,13 @@ class GlyphType(GeneratedsSuper):
     def set_comments(self, comments): self.comments = comments
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.Graphemes is not None or
             self.TextEquiv or
             self.TextStyle is not None or
-            self.UserDefined is not None
+            self.UserDefined is not None or
+            self.Labels
         ):
             return True
         else:
@@ -2065,6 +2602,8 @@ class GlyphType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         if self.Graphemes is not None:
@@ -2075,6 +2614,8 @@ class GlyphType(GeneratedsSuper):
             self.TextStyle.export(outfile, level, namespace_, name_='TextStyle', pretty_print=pretty_print)
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2122,7 +2663,12 @@ class GlyphType(GeneratedsSuper):
             already_processed.add('comments')
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -2147,6 +2693,11 @@ class GlyphType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
 # end class GlyphType
 
 
@@ -2296,6 +2847,157 @@ class TextEquivType(GeneratedsSuper):
 # end class TextEquivType
 
 
+class GridType(GeneratedsSuper):
+    """Matrix of grid points defining the table grid on the page"""
+    subclass = None
+    superclass = None
+    def __init__(self, GridPoints=None):
+        self.original_tagname_ = None
+        if GridPoints is None:
+            self.GridPoints = []
+        else:
+            self.GridPoints = GridPoints
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, GridType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if GridType.subclass:
+            return GridType.subclass(*args_, **kwargs_)
+        else:
+            return GridType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_GridPoints(self): return self.GridPoints
+    def set_GridPoints(self, GridPoints): self.GridPoints = GridPoints
+    def add_GridPoints(self, value): self.GridPoints.append(value)
+    def insert_GridPoints_at(self, index, value): self.GridPoints.insert(index, value)
+    def replace_GridPoints_at(self, index, value): self.GridPoints[index] = value
+    def hasContent_(self):
+        if (
+            self.GridPoints
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='pc:', name_='GridType', namespacedef_='', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None:
+            name_ = self.original_tagname_
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GridType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GridType', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GridType'):
+        pass
+    def exportChildren(self, outfile, level, namespace_='pc:', name_='GridType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        for GridPoints_ in self.GridPoints:
+            GridPoints_.export(outfile, level, namespace_, name_='GridPoints', pretty_print=pretty_print)
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        pass
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'GridPoints':
+            obj_ = GridPointsType.factory()
+            obj_.build(child_)
+            self.GridPoints.append(obj_)
+            obj_.original_tagname_ = 'GridPoints'
+# end class GridType
+
+
+class GridPointsType(GeneratedsSuper):
+    """Points with x,y coordinates."""
+    subclass = None
+    superclass = None
+    def __init__(self, points=None):
+        self.original_tagname_ = None
+        self.points = _cast(None, points)
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, GridPointsType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if GridPointsType.subclass:
+            return GridPointsType.subclass(*args_, **kwargs_)
+        else:
+            return GridPointsType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_points(self): return self.points
+    def set_points(self, points): self.points = points
+    def hasContent_(self):
+        if (
+
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='pc:', name_='GridPointsType', namespacedef_='', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridPointsType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None:
+            name_ = self.original_tagname_
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GridPointsType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GridPointsType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GridPointsType'):
+        if self.points is not None and 'points' not in already_processed:
+            already_processed.add('points')
+            outfile.write(' points=%s' % (quote_attrib(self.points), ))
+    def exportChildren(self, outfile, level, namespace_='pc:', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
+        pass
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('points', node)
+        if value is not None and 'points' not in already_processed:
+            already_processed.add('points')
+            self.points = value
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        pass
+# end class GridPointsType
+
+
 class PrintSpaceType(GeneratedsSuper):
     """Determines the effective area on the paper of a printed page. Its
     size is equal for all pages of a book (exceptions: titlepage,
@@ -2379,11 +3081,13 @@ class PrintSpaceType(GeneratedsSuper):
 class ReadingOrderType(GeneratedsSuper):
     """Definition of the reading order within the page. To express a
     reading order between elements they have to be included in an
-    OrderedGroup. Groups may contain further groups."""
+    OrderedGroup. Groups may contain further groups.Confidence value
+    (between 0 and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, OrderedGroup=None, UnorderedGroup=None):
+    def __init__(self, conf=None, OrderedGroup=None, UnorderedGroup=None):
         self.original_tagname_ = None
+        self.conf = _cast(float, conf)
         self.OrderedGroup = OrderedGroup
         self.UnorderedGroup = UnorderedGroup
     def factory(*args_, **kwargs_):
@@ -2401,6 +3105,8 @@ class ReadingOrderType(GeneratedsSuper):
     def set_OrderedGroup(self, OrderedGroup): self.OrderedGroup = OrderedGroup
     def get_UnorderedGroup(self): return self.UnorderedGroup
     def set_UnorderedGroup(self, UnorderedGroup): self.UnorderedGroup = UnorderedGroup
+    def get_conf(self): return self.conf
+    def set_conf(self, conf): self.conf = conf
     def hasContent_(self):
         if (
             self.OrderedGroup is not None or
@@ -2431,7 +3137,9 @@ class ReadingOrderType(GeneratedsSuper):
         else:
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='ReadingOrderType'):
-        pass
+        if self.conf is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespace_='pc:', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
@@ -2449,7 +3157,13 @@ class ReadingOrderType(GeneratedsSuper):
             self.buildChildren(child, node, nodeName_)
         return self
     def buildAttributes(self, node, attrs, already_processed):
-        pass
+        value = find_attr_value_('conf', node)
+        if value is not None and 'conf' not in already_processed:
+            already_processed.add('conf')
+            try:
+                self.conf = float(value)
+            except ValueError as exp:
+                raise ValueError('Bad float/double attribute (conf): %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'OrderedGroup':
             obj_ = OrderedGroupType.factory()
@@ -2557,7 +3271,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     (from previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None):
+    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
@@ -2568,6 +3282,10 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
         if RegionRefIndexed is None:
             self.RegionRefIndexed = []
         else:
@@ -2593,6 +3311,11 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     factory = staticmethod(factory)
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_RegionRefIndexed(self): return self.RegionRefIndexed
     def set_RegionRefIndexed(self, RegionRefIndexed): self.RegionRefIndexed = RegionRefIndexed
     def add_RegionRefIndexed(self, value): self.RegionRefIndexed.append(value)
@@ -2627,6 +3350,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     def hasContent_(self):
         if (
             self.UserDefined is not None or
+            self.Labels or
             self.RegionRefIndexed or
             self.OrderedGroupIndexed or
             self.UnorderedGroupIndexed
@@ -2687,6 +3411,8 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             eol_ = ''
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
         for RegionRefIndexed_ in self.RegionRefIndexed:
             RegionRefIndexed_.export(outfile, level, namespace_, name_='RegionRefIndexed', pretty_print=pretty_print)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
@@ -2747,6 +3473,11 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRefIndexed':
             obj_ = RegionRefIndexedType.factory()
             obj_.build(child_)
@@ -2774,7 +3505,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
     another group (from previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None):
+    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
@@ -2785,6 +3516,10 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
         if RegionRef is None:
             self.RegionRef = []
         else:
@@ -2810,6 +3545,11 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
     factory = staticmethod(factory)
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_RegionRef(self): return self.RegionRef
     def set_RegionRef(self, RegionRef): self.RegionRef = RegionRef
     def add_RegionRef(self, value): self.RegionRef.append(value)
@@ -2844,6 +3584,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
     def hasContent_(self):
         if (
             self.UserDefined is not None or
+            self.Labels or
             self.RegionRef or
             self.OrderedGroup or
             self.UnorderedGroup
@@ -2904,6 +3645,8 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             eol_ = ''
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
         for RegionRef_ in self.RegionRef:
             RegionRef_.export(outfile, level, namespace_, name_='RegionRef', pretty_print=pretty_print)
         for OrderedGroup_ in self.OrderedGroup:
@@ -2964,6 +3707,11 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRef':
             obj_ = RegionRefType.factory()
             obj_.build(child_)
@@ -3059,7 +3807,7 @@ class OrderedGroupType(GeneratedsSuper):
     previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None):
+    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
@@ -3069,6 +3817,10 @@ class OrderedGroupType(GeneratedsSuper):
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
         if RegionRefIndexed is None:
             self.RegionRefIndexed = []
         else:
@@ -3094,6 +3846,11 @@ class OrderedGroupType(GeneratedsSuper):
     factory = staticmethod(factory)
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_RegionRefIndexed(self): return self.RegionRefIndexed
     def set_RegionRefIndexed(self, RegionRefIndexed): self.RegionRefIndexed = RegionRefIndexed
     def add_RegionRefIndexed(self, value): self.RegionRefIndexed.append(value)
@@ -3126,6 +3883,7 @@ class OrderedGroupType(GeneratedsSuper):
     def hasContent_(self):
         if (
             self.UserDefined is not None or
+            self.Labels or
             self.RegionRefIndexed or
             self.OrderedGroupIndexed or
             self.UnorderedGroupIndexed
@@ -3183,6 +3941,8 @@ class OrderedGroupType(GeneratedsSuper):
             eol_ = ''
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
         for RegionRefIndexed_ in self.RegionRefIndexed:
             RegionRefIndexed_.export(outfile, level, namespace_, name_='RegionRefIndexed', pretty_print=pretty_print)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
@@ -3236,6 +3996,11 @@ class OrderedGroupType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRefIndexed':
             obj_ = RegionRefIndexedType.factory()
             obj_.build(child_)
@@ -3262,7 +4027,7 @@ class UnorderedGroupType(GeneratedsSuper):
     (from previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None):
+    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
@@ -3272,6 +4037,10 @@ class UnorderedGroupType(GeneratedsSuper):
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
         if RegionRef is None:
             self.RegionRef = []
         else:
@@ -3297,6 +4066,11 @@ class UnorderedGroupType(GeneratedsSuper):
     factory = staticmethod(factory)
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_RegionRef(self): return self.RegionRef
     def set_RegionRef(self, RegionRef): self.RegionRef = RegionRef
     def add_RegionRef(self, value): self.RegionRef.append(value)
@@ -3329,6 +4103,7 @@ class UnorderedGroupType(GeneratedsSuper):
     def hasContent_(self):
         if (
             self.UserDefined is not None or
+            self.Labels or
             self.RegionRef or
             self.OrderedGroup or
             self.UnorderedGroup
@@ -3386,6 +4161,8 @@ class UnorderedGroupType(GeneratedsSuper):
             eol_ = ''
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
         for RegionRef_ in self.RegionRef:
             RegionRef_.export(outfile, level, namespace_, name_='RegionRef', pretty_print=pretty_print)
         for OrderedGroup_ in self.OrderedGroup:
@@ -3439,6 +4216,11 @@ class UnorderedGroupType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRef':
             obj_ = RegionRefType.factory()
             obj_.build(child_)
@@ -3893,15 +4675,17 @@ class RelationType(GeneratedsSuper):
     generic use"""
     subclass = None
     superclass = None
-    def __init__(self, type_=None, custom=None, comments=None, RegionRef=None):
+    def __init__(self, type_=None, custom=None, comments=None, Labels=None, SourceRegionRef=None, TargetRegionRef=None):
         self.original_tagname_ = None
         self.type_ = _cast(None, type_)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
-        if RegionRef is None:
-            self.RegionRef = []
+        if Labels is None:
+            self.Labels = []
         else:
-            self.RegionRef = RegionRef
+            self.Labels = Labels
+        self.SourceRegionRef = SourceRegionRef
+        self.TargetRegionRef = TargetRegionRef
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -3913,11 +4697,15 @@ class RelationType(GeneratedsSuper):
         else:
             return RelationType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_RegionRef(self): return self.RegionRef
-    def set_RegionRef(self, RegionRef): self.RegionRef = RegionRef
-    def add_RegionRef(self, value): self.RegionRef.append(value)
-    def insert_RegionRef_at(self, index, value): self.RegionRef.insert(index, value)
-    def replace_RegionRef_at(self, index, value): self.RegionRef[index] = value
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
+    def get_SourceRegionRef(self): return self.SourceRegionRef
+    def set_SourceRegionRef(self, SourceRegionRef): self.SourceRegionRef = SourceRegionRef
+    def get_TargetRegionRef(self): return self.TargetRegionRef
+    def set_TargetRegionRef(self, TargetRegionRef): self.TargetRegionRef = TargetRegionRef
     def get_type(self): return self.type_
     def set_type(self, type_): self.type_ = type_
     def get_custom(self): return self.custom
@@ -3926,7 +4714,9 @@ class RelationType(GeneratedsSuper):
     def set_comments(self, comments): self.comments = comments
     def hasContent_(self):
         if (
-            self.RegionRef
+            self.Labels or
+            self.SourceRegionRef is not None or
+            self.TargetRegionRef is not None
         ):
             return True
         else:
@@ -3967,8 +4757,12 @@ class RelationType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        for RegionRef_ in self.RegionRef:
-            RegionRef_.export(outfile, level, namespace_, name_='RegionRef', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+        if self.SourceRegionRef is not None:
+            self.SourceRegionRef.export(outfile, level, namespace_, name_='SourceRegionRef', pretty_print=pretty_print)
+        if self.TargetRegionRef is not None:
+            self.TargetRegionRef.export(outfile, level, namespace_, name_='TargetRegionRef', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3990,11 +4784,21 @@ class RelationType(GeneratedsSuper):
             already_processed.add('comments')
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'RegionRef':
+        if nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
+        elif nodeName_ == 'SourceRegionRef':
             obj_ = RegionRefType.factory()
             obj_.build(child_)
-            self.RegionRef.append(obj_)
-            obj_.original_tagname_ = 'RegionRef'
+            self.SourceRegionRef = obj_
+            obj_.original_tagname_ = 'SourceRegionRef'
+        elif nodeName_ == 'TargetRegionRef':
+            obj_ = RegionRefType.factory()
+            obj_.build(child_)
+            self.TargetRegionRef = obj_
+            obj_.original_tagname_ = 'TargetRegionRef'
 # end class RelationType
 
 
@@ -4335,14 +5139,22 @@ class RegionType(GeneratedsSuper):
     previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, extensiontype_=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, extensiontype_=None):
         self.original_tagname_ = None
         self.id = _cast(None, id)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
         self.continuation = _cast(bool, continuation)
+        if AlternativeImage is None:
+            self.AlternativeImage = []
+        else:
+            self.AlternativeImage = AlternativeImage
         self.Coords = Coords
         self.UserDefined = UserDefined
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
         self.Roles = Roles
         if TextRegion is None:
             self.TextRegion = []
@@ -4408,10 +5220,20 @@ class RegionType(GeneratedsSuper):
         else:
             return RegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_AlternativeImage(self): return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
     def get_Coords(self): return self.Coords
     def set_Coords(self, Coords): self.Coords = Coords
     def get_UserDefined(self): return self.UserDefined
     def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
+    def get_Labels(self): return self.Labels
+    def set_Labels(self, Labels): self.Labels = Labels
+    def add_Labels(self, value): self.Labels.append(value)
+    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value): self.Labels[index] = value
     def get_Roles(self): return self.Roles
     def set_Roles(self, Roles): self.Roles = Roles
     def get_TextRegion(self): return self.TextRegion
@@ -4491,8 +5313,10 @@ class RegionType(GeneratedsSuper):
     def set_extensiontype_(self, extensiontype_): self.extensiontype_ = extensiontype_
     def hasContent_(self):
         if (
+            self.AlternativeImage or
             self.Coords is not None or
             self.UserDefined is not None or
+            self.Labels or
             self.Roles is not None or
             self.TextRegion or
             self.ImageRegion or
@@ -4554,10 +5378,14 @@ class RegionType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
         if self.Roles is not None:
             self.Roles.export(outfile, level, namespace_, name_='Roles', pretty_print=pretty_print)
         for TextRegion_ in self.TextRegion:
@@ -4620,7 +5448,12 @@ class RegionType(GeneratedsSuper):
             already_processed.add('xsi:type')
             self.extensiontype_ = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
-        if nodeName_ == 'Coords':
+        if nodeName_ == 'AlternativeImage':
+            obj_ = AlternativeImageType.factory()
+            obj_.build(child_)
+            self.AlternativeImage.append(obj_)
+            obj_.original_tagname_ = 'AlternativeImage'
+        elif nodeName_ == 'Coords':
             obj_ = CoordsType.factory()
             obj_.build(child_)
             self.Coords = obj_
@@ -4630,6 +5463,11 @@ class RegionType(GeneratedsSuper):
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory()
+            obj_.build(child_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'Roles':
             obj_ = RolesType.factory()
             obj_.build(child_)
@@ -5493,15 +6331,16 @@ class TableCellRoleType(GeneratedsSuper):
     """Cell position in table starting with row 0Cell position in table
     starting with column 0Number of rows the cell spans (optional;
     default is 1)Number of columns the cell spans (optional; default
-    is 1)"""
+    is 1) Is the cell a column or row header?"""
     subclass = None
     superclass = None
-    def __init__(self, rowIndex=None, columnIndex=None, rowSpan=None, colSpan=None):
+    def __init__(self, rowIndex=None, columnIndex=None, rowSpan=None, colSpan=None, header=None):
         self.original_tagname_ = None
         self.rowIndex = _cast(int, rowIndex)
         self.columnIndex = _cast(int, columnIndex)
         self.rowSpan = _cast(int, rowSpan)
         self.colSpan = _cast(int, colSpan)
+        self.header = _cast(bool, header)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5521,6 +6360,8 @@ class TableCellRoleType(GeneratedsSuper):
     def set_rowSpan(self, rowSpan): self.rowSpan = rowSpan
     def get_colSpan(self): return self.colSpan
     def set_colSpan(self, colSpan): self.colSpan = colSpan
+    def get_header(self): return self.header
+    def set_header(self, header): self.header = header
     def hasContent_(self):
         if (
 
@@ -5561,6 +6402,9 @@ class TableCellRoleType(GeneratedsSuper):
         if self.colSpan is not None and 'colSpan' not in already_processed:
             already_processed.add('colSpan')
             outfile.write(' colSpan="%s"' % self.gds_format_integer(self.colSpan, input_name='colSpan'))
+        if self.header is not None and 'header' not in already_processed:
+            already_processed.add('header')
+            outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
     def exportChildren(self, outfile, level, namespace_='pc:', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
@@ -5599,6 +6443,15 @@ class TableCellRoleType(GeneratedsSuper):
                 self.colSpan = int(value)
             except ValueError as exp:
                 raise_parse_error(node, 'Bad integer attribute: %s' % exp)
+        value = find_attr_value_('header', node)
+        if value is not None and 'header' not in already_processed:
+            already_processed.add('header')
+            if value in ('true', '1'):
+                self.header = True
+            elif value in ('false', '0'):
+                self.header = False
+            else:
+                raise_parse_error(node, 'Bad boolean attribute')
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         pass
 # end class TableCellRoleType
@@ -5682,9 +6535,9 @@ class UnknownRegionType(RegionType):
     """To be used if the region type cannot be ascertained."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
         self.original_tagname_ = None
-        super(UnknownRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(UnknownRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5748,9 +6601,9 @@ class NoiseRegionType(RegionType):
     created by artifacts on the document or scanner noise."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
         self.original_tagname_ = None
-        super(NoiseRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(NoiseRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5817,9 +6670,9 @@ class AdvertRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(AdvertRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(AdvertRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -5909,9 +6762,9 @@ class MusicRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(MusicRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(MusicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -5993,6 +6846,87 @@ class MusicRegionType(RegionType):
 # end class MusicRegionType
 
 
+class MapRegionType(RegionType):
+    """Regions containing maps. The angle the rectangle encapsulating a
+    region has to be rotated in clockwise direction in order to
+    correct the present skew (negative values indicate anti-
+    clockwise rotation). Range: -179.999,180"""
+    subclass = None
+    superclass = RegionType
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None):
+        self.original_tagname_ = None
+        super(MapRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.orientation = _cast(float, orientation)
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, MapRegionType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if MapRegionType.subclass:
+            return MapRegionType.subclass(*args_, **kwargs_)
+        else:
+            return MapRegionType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_orientation(self): return self.orientation
+    def set_orientation(self, orientation): self.orientation = orientation
+    def hasContent_(self):
+        if (
+            super(MapRegionType, self).hasContent_()
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='pc:', name_='MapRegionType', namespacedef_='', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('MapRegionType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None:
+            name_ = self.original_tagname_
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self.exportAttributes(outfile, level, already_processed, namespace_, name_='MapRegionType')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='MapRegionType', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='MapRegionType'):
+        super(MapRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='MapRegionType')
+        if self.orientation is not None and 'orientation' not in already_processed:
+            already_processed.add('orientation')
+            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
+    def exportChildren(self, outfile, level, namespace_='pc:', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
+        super(MapRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('orientation', node)
+        if value is not None and 'orientation' not in already_processed:
+            already_processed.add('orientation')
+            try:
+                self.orientation = float(value)
+            except ValueError as exp:
+                raise ValueError('Bad float/double attribute (orientation): %s' % exp)
+        super(MapRegionType, self).buildAttributes(node, attrs, already_processed)
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        super(MapRegionType, self).buildChildren(child_, node, nodeName_, True)
+        pass
+# end class MapRegionType
+
+
 class ChemRegionType(RegionType):
     """Regions containing chemical formulas. The angle the rectangle
     encapsulating a region has to be rotated in clockwise direction
@@ -6001,9 +6935,9 @@ class ChemRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(ChemRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(ChemRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -6094,9 +7028,9 @@ class MathsRegionType(RegionType):
     of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
         self.original_tagname_ = None
-        super(MathsRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(MathsRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -6187,9 +7121,9 @@ class SeparatorRegionType(RegionType):
     -179.999,180 The colour of the separator"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colour=None):
         self.original_tagname_ = None
-        super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.colour = _cast(None, colour)
     def factory(*args_, **kwargs_):
@@ -6282,9 +7216,9 @@ class ChartRegionType(RegionType):
     also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None):
         self.original_tagname_ = None
-        super(ChartRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(ChartRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.numColours = _cast(int, numColours)
@@ -6417,9 +7351,9 @@ class TableRegionType(RegionType):
     Specifies whether the region also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None):
         self.original_tagname_ = None
-        super(TableRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(TableRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.rows = _cast(int, rows)
         self.columns = _cast(int, columns)
@@ -6427,6 +7361,7 @@ class TableRegionType(RegionType):
         self.bgColour = _cast(None, bgColour)
         self.lineSeparators = _cast(bool, lineSeparators)
         self.embText = _cast(bool, embText)
+        self.Grid = Grid
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6438,6 +7373,8 @@ class TableRegionType(RegionType):
         else:
             return TableRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
+    def get_Grid(self): return self.Grid
+    def set_Grid(self, Grid): self.Grid = Grid
     def get_orientation(self): return self.orientation
     def set_orientation(self, orientation): self.orientation = orientation
     def get_rows(self): return self.rows
@@ -6454,6 +7391,7 @@ class TableRegionType(RegionType):
     def set_embText(self, embText): self.embText = embText
     def hasContent_(self):
         if (
+            self.Grid is not None or
             super(TableRegionType, self).hasContent_()
         ):
             return True
@@ -6505,6 +7443,12 @@ class TableRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespace_='pc:', name_='TableRegionType', fromsubclass_=False, pretty_print=True):
         super(TableRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.Grid is not None:
+            self.Grid.export(outfile, level, namespace_, name_='Grid', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6562,8 +7506,12 @@ class TableRegionType(RegionType):
                 raise_parse_error(node, 'Bad boolean attribute')
         super(TableRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        if nodeName_ == 'Grid':
+            obj_ = GridType.factory()
+            obj_.build(child_)
+            self.Grid = obj_
+            obj_.original_tagname_ = 'Grid'
         super(TableRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class TableRegionType
 
 
@@ -6578,9 +7526,9 @@ class GraphicRegionType(RegionType):
     text."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, embText=None):
         self.original_tagname_ = None
-        super(GraphicRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(GraphicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.numColours = _cast(int, numColours)
@@ -6700,9 +7648,9 @@ class LineDrawingRegionType(RegionType):
     also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, penColour=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, penColour=None, bgColour=None, embText=None):
         self.original_tagname_ = None
-        super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.penColour = _cast(None, penColour)
         self.bgColour = _cast(None, bgColour)
@@ -6819,9 +7767,9 @@ class ImageRegionType(RegionType):
     of the region Specifies whether the region also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None):
         self.original_tagname_ = None
-        super(ImageRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(ImageRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.colourDepth = _cast(None, colourDepth)
         self.bgColour = _cast(None, bgColour)
@@ -6949,9 +7897,9 @@ class TextRegionType(RegionType):
     region The secondary script used in the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, Coords=None, UserDefined=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None):
         self.original_tagname_ = None
-        super(TextRegionType, self).__init__(id, custom, comments, continuation, Coords, UserDefined, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        super(TextRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.leading = _cast(int, leading)
@@ -7344,11 +8292,17 @@ __all__ = [
     "GraphemeType",
     "GraphemesType",
     "GraphicRegionType",
+    "GridPointsType",
+    "GridType",
     "ImageRegionType",
+    "LabelType",
+    "LabelsType",
     "LayerType",
     "LayersType",
     "LineDrawingRegionType",
+    "MapRegionType",
     "MathsRegionType",
+    "MetadataItemType",
     "MetadataType",
     "MusicRegionType",
     "NoiseRegionType",
