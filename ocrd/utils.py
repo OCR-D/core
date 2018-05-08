@@ -1,3 +1,17 @@
+"""
+* xywh_from_points, points_from_xywh, polygon_from_points
+
+The functions have the syntax X_from_Y, where X/Y can be
+
+points a string encoding a polygon: "0,0 100,0 100,100, 0,100"
+polygon an array of x-y-tuples of a polygon: [[0,0], [100,0], [100,100], [0,100]]
+xywh a dict with keys for x, y, width and height: {'x': 0, 'y': 0, 'w': 100, 'h': 100}
+points is for PAGE
+
+polygon is what opencv2 expects
+
+xywh is what tesserocr expects/produces.
+"""
 import subprocess
 import logging
 import re

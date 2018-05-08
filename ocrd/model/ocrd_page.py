@@ -5,7 +5,10 @@ from datetime import datetime
 from ocrd.model.ocrd_page_generateds import (
     parse,
     parseString,
+
+    AlternativeImageType,
     CoordsType,
+    GlyphType,
     OrderedGroupType,
     PcGtsType,
     PageType,
@@ -17,7 +20,7 @@ from ocrd.model.ocrd_page_generateds import (
     TextLineType,
     WordType,
 )
-from ocrd.constants import NAMESPACES, VERSION
+from ocrd.constants import NAMESPACES, VERSION, MIMETYPE_PAGE
 from ocrd.model.ocrd_exif import OcrdExif
 
 def to_xml(el):
@@ -51,7 +54,7 @@ def from_file(input_file):
     #  print("PARSING PARSING '%s'" % input_file)
     if input_file.mimetype.startswith('image'):
         return page_from_image(input_file)
-    elif input_file.mimetype == 'text/page+xml':
+    elif input_file.mimetype == MIMETYPE_PAGE:
         return parse(input_file.local_filename, silence=True)
     else:
         raise Exception("Unsupported mimetype '%s'" % input_file.mimetype)

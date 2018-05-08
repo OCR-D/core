@@ -1,7 +1,7 @@
 import yaml
 from pkg_resources import resource_string
 
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 TMP_PREFIX = 'pyocrd-'
 
@@ -13,7 +13,7 @@ NAMESPACES = {
     'xsl': 'http://www.w3.org/1999/XSL/Transform#',
 }
 
-MIMETYPE_PAGE = 'text/page+xml'
+MIMETYPE_PAGE = 'application/vnd.prima.page+xml'
 
 DEFAULT_UPLOAD_FOLDER = '/tmp/uploads-pyocrd'
 DEFAULT_REPOSITORY_URL = 'http://localhost:5000/'
@@ -63,7 +63,7 @@ EXT_TO_MIME = {
     '.png': 'image/png',
     '.jpg': 'image/jpg',
     '.jpeg': 'image/jpg',
-    '.xml': 'text/xml'
+    '.xml': MIMETYPE_PAGE
 }
 
 
