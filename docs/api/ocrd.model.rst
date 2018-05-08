@@ -1,6 +1,13 @@
 ocrd.model package
 ==================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    ocrd.model.yaml
+
 Submodules
 ----------
 
@@ -36,18 +43,10 @@ ocrd.model.ocrd\_page module
     :undoc-members:
     :show-inheritance:
 
-ocrd.model.ocrd\_page\_textline module
---------------------------------------
-
-.. automodule:: ocrd.model.ocrd_page_textline
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-ocrd.model.ocrd\_page\_textregion module
+ocrd.model.ocrd\_page\_generateds module
 ----------------------------------------
 
-.. automodule:: ocrd.model.ocrd_page_textregion
+.. automodule:: ocrd.model.ocrd_page_generateds
     :members:
     :undoc-members:
     :show-inheritance:
