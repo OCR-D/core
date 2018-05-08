@@ -73,22 +73,28 @@ class Workspace(object):
             f.local_filename = self.download_url(f.url, **kwargs)
         return f
 
-    def download_files_in_group(self, use):
+    def download_files_in_group(self, file_grp):
         """
         Download all  the :py:mod:`ocrd.model.ocrd_file.OcrdFile` in the file group given.
         """
-        for input_file in self.mets.find_files(fileGrp=use):
-            self.download_file(input_file, subdir=use)
+        for input_file in self.mets.find_files(fileGrp=file_grp):
+            self.download_file(input_file, subdir=file_grp)
 
-    def add_file(self, use, basename=None, content=None, local_filename=None, **kwargs):
+    def add_file(self, file_grp, basename=None, content=None, local_filename=None, **kwargs):
         """
         Add an output file. Creates an :class:`OcrdFile` to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
-        log.debug('outputfile use=%s basename=%s local_filename=%s content=%s', use, basename, local_filename, content is not None)
+        log.debug(
+            'outputfile file_grp=%s basename=%s local_filename=%s content=%s',
+            file_grp,
+            basename,
+            local_filename,
+            content is not None
+        )
         if basename is not None:
-            if use is not None:
-                basename = os.path.join(use, basename)
+            if file_grp is not None:
+                basename = os.path.join(file_grp, basename)
             local_filename = os.path.join(self.directory, basename)
 
         local_filename_dir = local_filename.rsplit('/', 1)[0]
@@ -98,7 +104,7 @@ class Workspace(object):
         if 'url' not in kwargs:
             kwargs['url'] = 'file://' + local_filename
 
-        self.mets.add_file(use, local_filename=local_filename, **kwargs)
+        self.mets.add_file(file_grp, local_filename=local_filename, **kwargs)
 
         if content is not None:
             with open(local_filename, 'wb') as f:
