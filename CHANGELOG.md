@@ -11,7 +11,16 @@ Changed
 Fixed
 Removed
 
-## [0.2.0] - 2018-05-08
+## [0.2.2] - 2018-05-15
+
+Added:
+  * points_from_x0y0x1y1 util
+
+Fixed:
+  * EXIF tags for PNG
+
+
+## [0.2.1] - 2018-05-08
 
 Added
   * CLI: `ocrd workspace {add,clone,pack,unpack,validate}`, #75
@@ -58,6 +67,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.2.2]: ../../compare/v0.2.1...v0.2.2
 [0.2.1]: ../../compare/v0.2.0...v0.2.1
 [0.2.0]: ../../compare/v0.1.0...v0.2.0
 [0.1.0]: ../../compare/v0.0.7...v0.1.0
