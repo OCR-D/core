@@ -77,7 +77,6 @@ class OcrdExif(object):
             raise Exception("Must pass 'image_filename' to OcrdExif.from_filename")
         with exiftool.ExifTool() as et:
             exif_props = et.get_metadata(image_filename)
-            print(exif_props)
             return OcrdExif(exif_props)
 
     def __init__(self, props):
