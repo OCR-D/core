@@ -8,4 +8,4 @@ before_install:
 install:
   - make deps-pip deps-pip-test assets
 script:
-  - tox
+  - make test
