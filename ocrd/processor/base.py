@@ -74,10 +74,11 @@ class Processor(object):
     parameter.
     """
 
-    def __init__(self, workspace, parameter=None, input_file_grp="INPUT", output_file_grp="OUTPUT"):
+    def __init__(self, workspace, parameter=None, input_file_grp="INPUT", output_file_grp="OUTPUT", group_id=None):
         self.workspace = workspace
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
+        self.group_id = None if group_id == [] or group_id is None else group_id
         self.parameter = parameter if parameter is not None else {}
 
     def verify(self):
@@ -97,7 +98,7 @@ class Processor(object):
         """
         List the input files
         """
-        return self.workspace.mets.find_files(fileGrp=self.input_file_grp)
+        return self.workspace.mets.find_files(fileGrp=self.input_file_grp, groupId=self.group_id)
 
     def add_output_file(self, basename=None, file_grp=None, ID=None, **kwargs):
         """
