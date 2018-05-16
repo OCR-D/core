@@ -1,7 +1,7 @@
 from ocrd.model import OcrdExif
 
 from test.base import TestCase, main, assets
-TEST_IMG = assets.url_of('SBB0000F29300010000//00000001.tif')[len('file://'):]
+TEST_IMG = assets.path_to('SBB0000F29300010000/00000001.tif')
 
 class TestOcrdExif(TestCase):
 
