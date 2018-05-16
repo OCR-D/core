@@ -1,11 +1,11 @@
 language: python
 python:
-  # - 2.7
-  - 3.6
+  - 2.7
+  - 3.4
 before_install:
   - sudo apt-get -qq update
   - make deps-ubuntu
 install:
   - make deps-pip deps-pip-test assets
 script:
-  - make test
+  - tox
