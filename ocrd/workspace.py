@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 
 import cv2
@@ -108,6 +109,8 @@ class Workspace(object):
 
         if content is not None:
             with open(local_filename, 'wb') as f:
+                if sys.version_info >= (3, 0) and isinstance(content, str):
+                    content = bytes(content, 'utf-8')
                 f.write(content)
 
     def move_file(self, fobj, dst):
