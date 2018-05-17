@@ -5,14 +5,14 @@ import click
 from ocrd.resolver import Resolver
 from ocrd.processor.base import run_processor
 
-def ocrd_cli_wrap_processor(processorClass, mets=None, working_dir=None, cache_enabled=True, *args, **kwargs):
+def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, cache_enabled=True, *args, **kwargs):
     if mets.find('://') == -1:
         mets = 'file://' + mets
     if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
         raise Exception("File does not exist: %s" % mets)
     resolver = Resolver(cache_enabled=cache_enabled)
     workspace = resolver.workspace_from_url(mets, working_dir)
-    run_processor(processorClass, mets, workspace=workspace, *args, **kwargs)
+    run_processor(processorClass, ocrd_tool, mets, workspace=workspace, *args, **kwargs)
 
 def ocrd_cli_options(f):
     """

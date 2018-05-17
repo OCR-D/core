@@ -1,6 +1,8 @@
 import json
 import subprocess
 from ocrd.utils import getLogger
+from ocrd.validator import ParameterValidator
+
 log = getLogger('ocrd.processor')
 
 def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
@@ -14,6 +16,7 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
 
 def run_processor(
         processorClass,
+        ocrd_tool=None,
         mets_url=None,
         resolver=None,
         workspace=None,
@@ -37,7 +40,7 @@ def run_processor(
         with open(fname, 'r') as param_json_file:
             parameter = json.load(param_json_file)
     log.debug("Running processor %s", processorClass)
-    processor = processorClass(workspace, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
+    processor = processorClass(workspace, ocrd_tool, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
     log.debug("Processor instance %s", processor)
     processor.process()
     #  workspace.persist()
@@ -74,12 +77,22 @@ class Processor(object):
     parameter.
     """
 
-    def __init__(self, workspace, parameter=None, input_file_grp="INPUT", output_file_grp="OUTPUT", group_id=None):
+    def __init__(
+        self,
+        workspace,
+        ocrd_tool=None,
+        parameter={},
+        input_file_grp="INPUT",
+        output_file_grp="OUTPUT",
+        group_id=None
+    ):
         self.workspace = workspace
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
         self.group_id = None if group_id == [] or group_id is None else group_id
-        self.parameter = parameter if parameter is not None else {}
+        parameterValidator = ParameterValidator(ocrd_tool)
+        parameterValidator.validate(parameter)
+        self.parameter = parameter
 
     def verify(self):
         """
