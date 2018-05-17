@@ -1,4 +1,4 @@
-from io import StringIO
+from StringIO import StringIO
 from datetime import datetime
 
 # pylint: disable=unused-import
