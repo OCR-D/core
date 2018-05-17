@@ -1,7 +1,13 @@
 import json
-from ocrd.resolver import Resolver
-from ocrd.validator import ValidationReport, WorkspaceValidator, OcrdToolValidator
 from test.base import TestCase, assets, main
+
+from ocrd.resolver import Resolver
+from ocrd.validator import (
+    ValidationReport,
+    WorkspaceValidator,
+    ParameterValidator,
+    OcrdToolValidator
+)
 METS_HEROLD_SMALL = assets.url_of('SBB0000F29300010000/mets_one_file.xml')
 
 class TestValidationReport(TestCase):

@@ -48,7 +48,6 @@ properties:
             - layout/segmentation
             - layout/segmentation/region
             - layout/segmentation/line
-            - layout/segmentation/word
             - layout/segmentation/classification
             - layout/analysis
         tags:

@@ -30,6 +30,7 @@ class TestResolver(TestCase):
 
     def test_workspace_from_folder(self):
         workspace = self.resolver.workspace_from_folder(self.folder, clobber_mets=True)
+        #  print([ f.url for f in workspace.mets.find_files() ])
         self.assertEqual(len(workspace.mets.find_files()), 6, '6 files total')
 
     def test_workspace_from_url(self):
