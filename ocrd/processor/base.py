@@ -40,7 +40,7 @@ def run_processor(
         with open(fname, 'r') as param_json_file:
             parameter = json.load(param_json_file)
     log.debug("Running processor %s", processorClass)
-    processor = processorClass(workspace, ocrd_tool, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
+    processor = processorClass(workspace, ocrd_tool=ocrd_tool, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
     log.debug("Processor instance %s", processor)
     processor.process()
     #  workspace.persist()
