@@ -5,8 +5,8 @@ from .ocrd_file import OcrdFile
 
 class OcrdMets(OcrdXmlDocument):
 
-    def __init__(self, file_by_id=None, *args, **kwargs):
-        super(OcrdMets, self).__init__(*args, **kwargs)
+    def __init__(self, file_by_id=None, **kwargs):
+        super(OcrdMets, self).__init__(**kwargs)
         if file_by_id is None:
             file_by_id = {}
         self._file_by_id = file_by_id
