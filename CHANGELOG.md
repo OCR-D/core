@@ -9,6 +9,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added
 Changed
 Fixed
+  * `GT` is a valid category for mets `fileGrp@USE`
 Removed
 
 ## [0.2.3] - 2018-05-17
