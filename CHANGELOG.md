@@ -11,6 +11,17 @@ Changed
 Fixed
 Removed
 
+## [0.2.3] - 2018-05-17
+
+#79
+
+Fixed:
+  * Adapted to spec v1.1.5
+  * Ensure python 2.7 backwards compatibility
+
+Changed:
+  * ocrd_tool must be passed to `Processor` constructor
+
 ## [0.2.2] - 2018-05-15
 
 Added:
@@ -67,6 +78,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.2.3]: ../../compare/v0.2.2...v0.2.3
 [0.2.2]: ../../compare/v0.2.1...v0.2.2
 [0.2.1]: ../../compare/v0.2.0...v0.2.1
 [0.2.0]: ../../compare/v0.1.0...v0.2.0
