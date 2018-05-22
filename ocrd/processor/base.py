@@ -1,5 +1,6 @@
 import json
 import subprocess
+from ocrd.resolver import Resolver
 from ocrd.utils import getLogger
 from ocrd.validator import ParameterValidator
 
@@ -27,6 +28,7 @@ def run_processor(
         output_mets=None,
         parameter=None,
         working_dir=None,
+        **kwarg
 ):
     """
     Create a workspace for mets_url and run processor through it
@@ -45,29 +47,26 @@ def run_processor(
     processor.process()
     #  workspace.persist()
 
-def run_cli(
-        binary,
-        mets_url=None,
-        resolver=None,
-        workspace=None,
-        group_id=None,
-        log_level=None,
-        input_file_grp=None,
-        output_file_grp=None,
-        output_mets=None,
-        parameter=None,
-        working_dir=None,
-):
+def run_executable(executable, **kwargs):
     """
     Create a workspace for mets_url and run MP CLI through it
     """
-    workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
-    log.debug("Running binary '%s'", binary)
-    subprocess.call([
-        binary,
-        '-m', mets_url,
-        '-w', workspace.directory
-    ])
+    workspace = _get_workspace(
+        kwargs.get('workspace'),
+        kwargs.get('resolver', Resolver(cache_enabled=True)),
+        kwargs.get('mets_url'),
+        kwargs.get('working_dir')
+    )
+    log.debug("Running executable '%s'", executable)
+    args = []
+    for arg in ['log_level', 'parameter', 'output_mets', 'group_id', 'input_file_grp', 'output_file_grp']:
+        if arg in kwargs:
+            args.append(arg.replace('-', '_'))
+            args.append(kwargs[arg])
+    if 'mets_url' in kwargs:
+        args.append('--mets')
+        args.append(kwargs['mets_url'])
+    subprocess.call([executable] + args)
     #  workspace.persist()
 
 class Processor(object):
@@ -90,6 +89,7 @@ class Processor(object):
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
         self.group_id = None if group_id == [] or group_id is None else group_id
+        self.ocrd_tool = ocrd_tool
         parameterValidator = ParameterValidator(ocrd_tool)
         parameterValidator.validate(parameter)
         self.parameter = parameter

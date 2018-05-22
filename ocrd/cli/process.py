@@ -3,7 +3,7 @@ import codecs
 
 import click
 
-from ocrd import run_cli, Resolver
+from ocrd import run_executable, Resolver
 from ocrd.decorators import ocrd_cli_options
 
 # ----------------------------------------------------------------------
@@ -33,7 +33,7 @@ def process_cli(mets_url, **kwargs):
             raise Exception("Tool not registered: '%s'" % cmd)
 
     for cmd in kwargs['steps']:
-        run_cli(cmd, mets_url, resolver, workspace)
+        run_executable(cmd, mets_url, resolver, workspace)
 
     workspace.reload_mets()
 
