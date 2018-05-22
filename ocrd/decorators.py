@@ -35,7 +35,7 @@ def ocrd_cli_options(f):
         click.option('-g', '--group-id', help="mets:file GROUPID"),
         click.option('-o', '--output-mets', help="METS URL to write resulting METS to"),
         click.option('-p', '--parameter', type=click.Path()),
-        click.option('-J', '--ocrd-tool', is_flag=True, default=False),
+        click.option('-J', '--ocrd-tool', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         click.option('-l', '--log-level', help="Log level", type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']), default='INFO'),
     ]
     for param in params:
