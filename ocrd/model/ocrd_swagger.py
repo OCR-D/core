@@ -69,14 +69,14 @@ class OcrdSwagger(object):
 
         # POST /ocrd/processor/{{ PROCESSOR_NAME }}
         post = _clone(OCRD_OAS3_SPEC['paths']['/ocrd/processor']['post'])
-        post['tags'] = tool['tags']
+        post['tags'] = tool['categories']
         post['summary'] = tool['summary']
         post['description'] = tool['description']
         post['requestBody']['content']['multipart/form-data']['schema'] = _clone(OCRD_OAS3_SPEC['components']['schemas']['processors'])
         post['requestBody']['content']['multipart/form-data']['schema']['parameters'] = tool['parameterSchema']
 
         get_schema = _clone(GET_SCHEMA)
-        get_schema['tags'] = tool['tags']
+        get_schema['tags'] = tool['categories']
         swagger['paths'][p] = {
             'post': post,
             'get': get_schema
@@ -84,9 +84,9 @@ class OcrdSwagger(object):
 
         # GET /ocrd/processor/{{ PROCESSOR_NAME }}/{_id}
         get = _clone(OCRD_OAS3_SPEC['paths']['/ocrd/processor/jobid/{jobID}']['get'])
-        get['tags'] = tool['tags']
+        get['tags'] = tool['categories']
         delete = _clone(OCRD_OAS3_SPEC['paths']['/ocrd/processor/jobid/{jobID}']['delete'])
-        delete['tags'] = tool['tags']
+        delete['tags'] = tool['categories']
         swagger['paths']["%s/{_id}" % p] = {
             'delete': delete,
             'get': get
