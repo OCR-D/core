@@ -22,7 +22,7 @@ def _clone(obj):
 
 class OcrdSwagger(object):
     """
-    Representing a Swagger OAI 2 schema.
+    Representing a Swagger OAI 3 schema.
     """
 
     @staticmethod
@@ -45,7 +45,7 @@ class OcrdSwagger(object):
         for ocrd_tool_file in ocrd_tool:
             with codecs.open(ocrd_tool_file, encoding='utf-8') as f:
                 ocrd_json = json.load(f)
-                for tool in ocrd_json['tools']:
+                for tool in ocrd_json['tools'].values():
                     OcrdSwagger._add_paths_for_tool(swagger, tool)
 
         return swagger
@@ -54,7 +54,7 @@ class OcrdSwagger(object):
     def _add_paths_for_tool(swagger, tool):
 
         # e.g. /preprocessing/binarization/kraken-binarize
-        p = "/%s/%s" % (tool['step'], tool['executable'].replace('ocrd_', '').replace('ocrd-', ''))
+        p = "/%s" % (tool['executable'].replace('ocrd_', '').replace('ocrd-', ''))
 
         # parameters are optional
         if 'parameterSchema' not in tool:
