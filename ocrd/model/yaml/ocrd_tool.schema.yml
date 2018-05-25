@@ -13,53 +13,57 @@ properties:
     description: DockerHub image
     type: string
   tools:
-    type: array
-    items:
-      type: object
-      additionalProperties: false
-      required:
-        - description
-        - step
-        - executable
-      properties:
-        executable:
-          description: The name of the CLI executable in $PATH
-          type: string
-        parameterSchema:
-          description: JSON Schema for the parameters.json file
-          type: object
-        description:
-          description: Concise description what the tool does
-          type: string
-        step:
-          description: Step in the OCR-D functional model for this tool
-          type: string
-          enum:
-            - preprocessing/characterization
-            - preprocessing/optimization
-            - preprocessing/optimization/cropping
-            - preprocessing/optimization/deskewing
-            - preprocessing/optimization/despeckling
-            - preprocessing/optimization/dewarping
-            - preprocessing/optimization/binarization
-            - preprocessing/optimization/grayscale_normalization
-            - recognition/text-recognition
-            - recognition/font-identification
-            - layout/segmentation
-            - layout/segmentation/region
-            - layout/segmentation/line
-            - layout/segmentation/word
-            - layout/segmentation/classification
-            - layout/analysis
-        tags:
-          description: Tools belong to this category, representing modules within the OCR-D project structure
-          type: array
-          items:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      'ocrd-.*':
+        type: object
+        additionalProperties: false
+        required:
+          - description
+          - steps
+          - executable
+          - categories
+        properties:
+          executable:
+            description: The name of the CLI executable in $PATH
             type: string
-            enum:
-              - Image preprocessing
-              - Layout analysis
-              - Text recognition and optimization
-              - Model training
-              - Long-term preservation
-              - Quality assurance
+          parameters:
+            description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
+            type: object
+          description:
+            description: Concise description what the tool does
+          categories:
+            description: Tools belong to this categories, representing modules within the OCR-D project structure
+            type: array
+            items:
+              type: string
+              enum:
+                - Image preprocessing
+                - Layout analysis
+                - Text recognition and optimization
+                - Model training
+                - Long-term preservation
+                - Quality assurance
+          steps:
+            description: This tool can be used at these steps in the OCR-D functional model
+            type: array
+            items:
+              type: string
+              enum:
+                - preprocessing/characterization
+                - preprocessing/optimization
+                - preprocessing/optimization/cropping
+                - preprocessing/optimization/deskewing
+                - preprocessing/optimization/despeckling
+                - preprocessing/optimization/dewarping
+                - preprocessing/optimization/binarization
+                - preprocessing/optimization/grayscale_normalization
+                - recognition/text-recognition
+                - recognition/font-identification
+                - layout/segmentation
+                - layout/segmentation/region
+                - layout/segmentation/line
+                - layout/segmentation/word
+                - layout/segmentation/classification
+                - layout/analysis
