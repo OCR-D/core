@@ -12,14 +12,15 @@ ocrd__raise () {
 ## 
 ## Output ocrd-tool.json.
 ## 
-## Requires `$OCRD_TOOL_JSON` to be set:
+## Requires `$OCRD_TOOL_JSON` and `$OCRD_TOOL_NAME` to be set:
 ## 
 ## ```sh
 ## export OCRD_TOOL_JSON=/path/to/ocrd-tool.json
+## export OCRD_TOOL_NAME=ocrd-foo-bar
 ## ```
 ## 
 ocrd__dumpjson () {
-    cat "$OCRD_TOOL_JSON"
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" dump
 }
 
 # END-INCLUDE 
@@ -58,11 +59,16 @@ Options:
 ## ```
 ocrd__parse_argv () {
 
+    if ! declare -p "argv" >/dev/null 2>/dev/null ;then
+        ocrd__raise "Must set \$argv"
+    fi
+
+
     while [[ "$1" = -* ]];do
         case "$1" in
             -l|--log-level) argv['log_level']=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
-            -J|--dump-json) ocrd__dumpjson ;;
+            -J|--dump-json) ocrd__dumpjson; exit ;;
             -p|--parameter) argv['parameter']=$2 ; shift ;;
             -o|--output-mets) argv['output_mets']=$2 ; shift ;;
             -g|--group-id) argv['group_id']=$2 ; shift ;;
@@ -79,8 +85,16 @@ ocrd__parse_argv () {
         ocrd__raise "Option -m/--mets-file required"
     fi
 
-    if [[ "${argv[working_dir]}" = "" ]];then
-        argv[working_dir]="$PWD"
+    if [[ "${argv[log_level]}" = "" ]];then
+        argv[log_level]="INFO"
+    fi
+
+    if [[ "${argv[input_file_grp]}" = "" ]];then
+        argv[input_file_grp]="OCR-D-IMG"
+    fi
+
+    if [[ "${argv[output_file_grp]}" = "" ]];then
+        argv[output_file_grp]="OCR-D-TEXT"
     fi
 }
 
@@ -93,10 +107,12 @@ fi
 if ! declare -p "OCRD_TOOL_JSON" >/dev/null 2>/dev/null;then
     ocrd__raise "Must set \$OCRD_TOOL_JSON"
 elif [[ ! -r "$OCRD_TOOL_JSON" ]];then
-    ocrd__raise "Cannot read \$OCRD_TOOL_JSON: $OCRD_TOOL_JSON"
+    ocrd__raise "Cannot read \$OCRD_TOOL_JSON: '$OCRD_TOOL_JSON'"
 fi
 
-if ! declare -p "argv" >/dev/null 2>/dev/null ;then
-    ocrd__raise "Must set \$argv"
+if [[ -z "$OCRD_TOOL_NAME" ]];then
+    ocrd__raise "Must set \$OCRD_TOOL_NAME"
+elif ! ocrd ocrd-tool "$OCRD_TOOL_JSON" list-tools|grep -q "$OCRD_TOOL_NAME";then
+    ocrd__raise "No such command \$OCRD_TOOL_NAME: $OCRD_TOOL_NAME"
 fi
 

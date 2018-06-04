@@ -163,4 +163,3 @@ docker:
 # Build bash library
 bashlib:
 	cd bashlib; make lib
-	ln bashlib/lib.bash ocrd/lib.bash
