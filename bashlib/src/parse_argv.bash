@@ -10,6 +10,7 @@ ocrd__parse_argv () {
     while [[ "$1" = -* ]];do
         case "$1" in
             -l|--log-level) argv['log_level']=$2 ; shift ;;
+            -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson ;;
             -p|--parameter) argv['parameter']=$2 ; shift ;;
             -o|--output-mets) argv['output_mets']=$2 ; shift ;;

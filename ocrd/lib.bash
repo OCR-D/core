@@ -1,4 +1,4 @@
-# BEGIN-INCLUDE ./src/util.bash 
+# BEGIN-INCLUDE ./src/raise.bash 
 ## ### `ocrd__raise`
 ## 
 ## Raise an error and exit
@@ -24,22 +24,26 @@ ocrd__dumpjson () {
 
 # END-INCLUDE 
 # BEGIN-INCLUDE ./src/usage.bash 
+## ### `ocrd__usage`
+## 
+## Print usage
+## 
 ocrd__usage () {
     echo "
-    Usage: $0 [OPTIONS]
+Usage: $0 [OPTIONS]
 
-    Options:
-    -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
-    Log level
-    -J, --dump-json                 Dump tool description as JSON and exit
-    -p, --parameter PATH
-    -o, --output-mets TEXT          METS URL to write resulting METS to
-    -g, --group-id TEXT             mets:file GROUPID
-    -O, --output-file-grp TEXT      File group(s) used as output.
-    -I, --input-file-grp TEXT       File group(s) used as input.
-    -w, --working-dir TEXT          Working Directory
-    -m, --mets TEXT                 METS URL to validate  [required]
-    --help                          Show this message and exit.
+Options:
+-l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
+                                Log level
+-J, --dump-json                 Dump tool description as JSON and exit
+-p, --parameter PATH
+-o, --output-mets TEXT          METS URL to write resulting METS to
+-g, --group-id TEXT             mets:file GROUPID
+-O, --output-file-grp TEXT      File group(s) used as output.
+-I, --input-file-grp TEXT       File group(s) used as input.
+-w, --working-dir TEXT          Working Directory
+-m, --mets TEXT                 METS URL to validate  [required]
+--help                          Show this message and exit.
     "
 }
 
@@ -57,6 +61,7 @@ ocrd__parse_argv () {
     while [[ "$1" = -* ]];do
         case "$1" in
             -l|--log-level) argv['log_level']=$2 ; shift ;;
+            -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson ;;
             -p|--parameter) argv['parameter']=$2 ; shift ;;
             -o|--output-mets) argv['output_mets']=$2 ; shift ;;
