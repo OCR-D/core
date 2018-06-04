@@ -7,6 +7,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 Added
+  * CLI command `ocrd-tool`
 Changed
 Fixed
 Removed
