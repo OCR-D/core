@@ -85,3 +85,12 @@ def ocrd_tool_tool_categories(ctx):
 @pass_ocrd_tool
 def ocrd_tool_tool_steps(ctx):
     print('\n'.join(ctx.json['tools'][ctx.tool_name]['steps']))
+
+# ----------------------------------------------------------------------
+# ocrd ocrd-tool tool dump
+# ----------------------------------------------------------------------
+
+@ocrd_tool_tool.command('dump', help="Dump JSON of tool")
+@pass_ocrd_tool
+def ocrd_tool_tool_dump(ctx):
+    print(json.dumps(ctx.json['tools'][ctx.tool_name], indent=True))
