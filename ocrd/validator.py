@@ -157,7 +157,7 @@ class WorkspaceValidator(object):
             self.report.add_error("METS has no unique identifier")
 
     def _validate_pixel_density(self):
-        for f in self.mets.find_files(mimetype='image/tif'):
+        for f in self.mets.find_files(mimetype='image/tiff'):
             exif = self.workspace.resolve_image_exif(f.url)
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)

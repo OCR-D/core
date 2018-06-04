@@ -23,10 +23,10 @@ class TestOcrdPage(TestCase):
     def test_from_file(self):
         f = ocrd_file.OcrdFile(
             None,
-            mimetype='image/tif',
+            mimetype='image/tiff',
             local_filename=assets.path_to('kant_aufklaerung_1784/kant_aufklaerung_1784_0017.tif')
         )
-        self.assertEqual(f.mimetype, 'image/tif')
+        self.assertEqual(f.mimetype, 'image/tiff')
         p = ocrd_page.from_file(f)
         self.assertEqual(p.get_Page().imageWidth, 1457)
 
