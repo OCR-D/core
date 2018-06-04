@@ -9,8 +9,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added
 Changed
 Fixed
-  * `GT` is a valid category for mets `fileGrp@USE`
 Removed
+
+## [0.2.4] - 2018-06-04
+
+Fixed
+  * `GT` is a valid category for mets `fileGrp@USE`
+
+Changed:
+  * Adapted to spec v1.2.0
+
 
 ## [0.2.3] - 2018-05-17
 
@@ -79,6 +87,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.2.4]: ../../compare/v0.2.3...v0.2.4
 [0.2.3]: ../../compare/v0.2.2...v0.2.3
 [0.2.2]: ../../compare/v0.2.1...v0.2.2
 [0.2.1]: ../../compare/v0.2.0...v0.2.1
