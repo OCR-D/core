@@ -1,6 +1,6 @@
-export OCRD_TOOL_JSON=foo
+export OCRD_TOOL_JSON=./test/ocrd-tool.json
 declare -A argv
-source ./lib.bash
+source `ocrd bashlib`
 
 ocrd__parse_argv "$@"
 

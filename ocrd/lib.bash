@@ -1,11 +1,29 @@
+# BEGIN-INCLUDE ./src/util.bash 
+## ### `ocrd__raise`
+## 
+## Raise an error and exit
 ocrd__raise () {
     echo >&2 "ERROR: $1"; exit 127
 }
 
+# END-INCLUDE 
+# BEGIN-INCLUDE ./src/dumpjson.bash 
+## ### `ocrd__dumpjson`
+## 
+## Output ocrd-tool.json.
+## 
+## Requires `$OCRD_TOOL_JSON` to be set:
+## 
+## ```sh
+## export OCRD_TOOL_JSON=/path/to/ocrd-tool.json
+## ```
+## 
 ocrd__dumpjson () {
     cat "$OCRD_TOOL_JSON"
 }
 
+# END-INCLUDE 
+# BEGIN-INCLUDE ./src/usage.bash 
 ocrd__usage () {
     echo "
     Usage: $0 [OPTIONS]
@@ -25,6 +43,15 @@ ocrd__usage () {
     "
 }
 
+# END-INCLUDE 
+# BEGIN-INCLUDE ./src/parse_argv.bash 
+## ### `ocrd__parse_argv`
+## 
+## Expects an associative array ("hash"/"dict") `argv` to be defined:
+## 
+## ```sh
+## declare -A argv
+## ```
 ocrd__parse_argv () {
 
     while [[ "$1" = -* ]];do
@@ -46,8 +73,13 @@ ocrd__parse_argv () {
     if [[ "${argv[mets_file]}" = "" ]];then
         ocrd__raise "Option -m/--mets-file required"
     fi
+
+    if [[ "${argv[working_dir]}" = "" ]];then
+        argv[working_dir]="$PWD"
+    fi
 }
 
+# END-INCLUDE 
 
 if ! which "ocrd" >/dev/null 2>/dev/null;then
     ocrd__raise "ocrd not in \$PATH"

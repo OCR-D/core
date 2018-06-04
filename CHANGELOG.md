@@ -7,6 +7,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 Added
+  * bash library to build wrappers
 Changed
 Fixed
 Removed

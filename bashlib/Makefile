@@ -14,7 +14,7 @@ help:
 lib: lib.bash
 
 lib.bash: $(wildcard src/*.bash)
-	shinclude -c pound src/lib.bash |grep -v '^\s*#' > "$@"
+	shinclude -c pound src/lib.bash > "$@"
 
 # Continously build lib
 watch-lib:

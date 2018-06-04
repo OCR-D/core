@@ -26,5 +26,9 @@ ocrd__parse_argv () {
     if [[ "${argv[mets_file]}" = "" ]];then
         ocrd__raise "Option -m/--mets-file required"
     fi
+
+    if [[ "${argv[working_dir]}" = "" ]];then
+        argv[working_dir]="$PWD"
+    fi
 }
 
