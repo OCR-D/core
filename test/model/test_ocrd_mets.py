@@ -17,7 +17,7 @@ class TestOcrdMets(TestCase):
     def test_find_files(self):
         self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 2, '2 files in "OCR-D-IMG"')
         self.assertEqual(len(self.mets.find_files(groupId='FILE_0001_IMAGE')), 17, '17 files with GROUPID "FILE_0001_IMAGE"')
-        self.assertEqual(len(self.mets.find_files(mimetype='image/tif')), 12, '12 image/tif')
+        self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 12, '12 image/tiff')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_files()), 34, '34 files total')
 

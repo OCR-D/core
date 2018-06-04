@@ -39,6 +39,8 @@ def run_processor(
         fname = workspace.download_url(parameter)
         with open(fname, 'r') as param_json_file:
             parameter = json.load(param_json_file)
+    else:
+        parameter = {}
     log.debug("Running processor %s", processorClass)
     processor = processorClass(workspace, ocrd_tool=ocrd_tool, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
     log.debug("Processor instance %s", processor)

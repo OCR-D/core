@@ -248,7 +248,7 @@ class Resolver(object):
                     fileGrp + '_' + upper(Basename of file without extension) == mets:file @ID
                     File in root folder == mets:fileGrp @USE == 'OCR-D-IMG'
                     Extension ==> mets.file @MIMETYPE
-                        .tif => image/tif
+                        .tif => image/tiff
                         .png => image/png
                         .jpg => image/jpg
                         .xml => image/xml
