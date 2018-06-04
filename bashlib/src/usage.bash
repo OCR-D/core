@@ -4,7 +4,9 @@
 ## 
 ocrd__usage () {
     echo "
-Usage: $0 [OPTIONS]
+Usage: $OCRD_TOOL_NAME [OPTIONS]
+
+`ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" description`
 
 Options:
 -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
