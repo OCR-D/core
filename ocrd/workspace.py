@@ -69,7 +69,7 @@ class Workspace(object):
         """
         os.chdir(self.directory)
         if f.local_filename:
-            log.debug("Alrady downloaded: %s", f.local_filename)
+            log.debug("Already downloaded: %s", f.local_filename)
         else:
             f.local_filename = self.download_url(f.url, **kwargs)
         return f

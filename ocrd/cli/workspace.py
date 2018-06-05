@@ -85,8 +85,9 @@ def workspace_create(ctx, mets_url, download_all):
     workspace = ctx.resolver.workspace_from_url(mets_url)
     if download_all:
         for fileGrp in workspace.mets.file_groups:
-            for f in workspace.mets.find_files(fileGrp=fileGrp):
-                workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+            workspace.download_files_in_group(fileGrp)
+            #  for f in workspace.mets.find_files(fileGrp=fileGrp):
+            #      workspace.download_file(f, subdir=fileGrp, basename=f.ID)
     workspace.save_mets()
     print(workspace.directory)
 
