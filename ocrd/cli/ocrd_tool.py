@@ -4,6 +4,7 @@ import codecs
 import click
 
 from ocrd import OcrdToolValidator
+from ocrd.validator import ParameterValidator
 
 class OcrdToolCtx(object):
 
@@ -93,4 +94,13 @@ def ocrd_tool_tool_steps(ctx):
 @ocrd_tool_tool.command('dump', help="Dump JSON of tool")
 @pass_ocrd_tool
 def ocrd_tool_tool_dump(ctx):
+    print(json.dumps(ctx.json['tools'][ctx.tool_name], indent=True))
+
+# ----------------------------------------------------------------------
+# ocrd ocrd-tool tool parse-params
+# ----------------------------------------------------------------------
+
+@ocrd_tool_tool.command('parse-params', help="Parse parameters with fallback to defaults")
+@pass_ocrd_tool
+def ocrd_tool_tool_parse_params(ctx):
     print(json.dumps(ctx.json['tools'][ctx.tool_name], indent=True))
