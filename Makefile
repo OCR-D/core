@@ -154,3 +154,12 @@ test-profile:
 # Build docker image
 docker:
 	docker build -t $(DOCKER_TAG) .
+
+#
+# bash library
+#
+.PHONY: bashlib
+
+# Build bash library
+bashlib:
+	cd bashlib; make lib

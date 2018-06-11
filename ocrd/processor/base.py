@@ -27,6 +27,7 @@ def run_processor(
         output_mets=None,
         parameter=None,
         working_dir=None,
+        dump_json=None,
 ):
     """
     Create a workspace for mets_url and run processor through it
@@ -45,6 +46,7 @@ def run_processor(
     processor = processorClass(workspace, ocrd_tool=ocrd_tool, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
     log.debug("Processor instance %s", processor)
     processor.process()
+    # TODO: dump_json
     #  workspace.persist()
 
 def run_cli(

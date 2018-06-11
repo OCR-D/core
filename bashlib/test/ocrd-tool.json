@@ -1,0 +1,9 @@
+{
+  "tools": {
+    "ocrd-test-bashlib": {
+      "name": "ocrd-test-bashlib",
+      "params": {
+      }
+    }
+  }
+}

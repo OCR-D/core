@@ -85,8 +85,9 @@ def workspace_create(ctx, mets_url, download_all):
     workspace = ctx.resolver.workspace_from_url(mets_url)
     if download_all:
         for fileGrp in workspace.mets.file_groups:
-            for f in workspace.mets.find_files(fileGrp=fileGrp):
-                workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+            workspace.download_files_in_group(fileGrp)
+            #  for f in workspace.mets.find_files(fileGrp=fileGrp):
+            #      workspace.download_file(f, subdir=fileGrp, basename=f.ID)
     workspace.save_mets()
     print(workspace.directory)
 
@@ -102,19 +103,49 @@ def workspace_create(ctx, mets_url, download_all):
 @click.option('-G', '--file-grp', help="fileGrp USE", required=True)
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
+@click.option('-u', '--url', help="url", default="file://local_filename")
 @click.option('-g', '--group-id', help="GROUPID")
 @click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filename):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_filename):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace.mets.add_file(
-        file_grp=file_grp,
-        file_id=file_id,
+        fileGrp=file_grp,
+        ID=file_id,
         mimetype=mimetype,
-        group_id=group_id,
+        url="file://" + local_filename,
         local_filename=local_filename
     )
     workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace find
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('find', help="""
+
+    Find files
+
+""")
+@click.option('-G', '--file-grp', help="fileGrp USE")
+@click.option('-m', '--mimetype', help="Media type to look for")
+@click.option('-g', '--group-id', help="GROUPID")
+@click.option('-l', '--local-filename', is_flag=True, help="Whether to print the local_filename of files")
+@click.option('-a', '--download-all', is_flag=True, help="Whether to download found files")
+@pass_workspace
+def workspace_find(ctx, file_grp, mimetype, group_id, local_filename, download_all):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    for f in workspace.mets.find_files(
+            fileGrp=file_grp,
+            mimetype=mimetype,
+            groupId=group_id,
+        ):
+        if download_all:
+            workspace.download_file(f)
+        if local_filename:
+            print(f.local_filename)
+        else:
+            print(f.url)
 
 # ----------------------------------------------------------------------
 # ocrd workspace pack

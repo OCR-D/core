@@ -1,5 +1,5 @@
 import yaml
-from pkg_resources import resource_string
+from pkg_resources import resource_string, resource_filename
 
 VERSION = '0.2.4'
 
@@ -69,3 +69,5 @@ EXT_TO_MIME = {
 
 OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.yml'))
 OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
+
+BASHLIB_FILENAME = resource_filename(__name__, 'lib.bash')

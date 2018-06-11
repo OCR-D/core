@@ -30,7 +30,7 @@ setup(
         'requests',
     ],
     package_data={
-        '': ['*.json', '*.yml', '*.yaml'],
+        '': ['*.json', '*.yml', '*.yaml', '*.bash'],
     },
     entry_points={
         'console_scripts': [

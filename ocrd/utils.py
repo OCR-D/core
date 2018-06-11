@@ -89,5 +89,5 @@ def mets_file_id(grp, n):
     return "%s_%04i"  % (grp, n + 1)
 
 def safe_filename(url):
-    ret = re.sub('[^A-Za-z0-9]', '', url)
+    ret = re.sub('[^A-Za-z0-9]+', '.', url)
     return ret
