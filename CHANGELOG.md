@@ -9,6 +9,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added
   * CLI command `ocrd-tool`
   * CLI command `workspace find`
+  * CLI command `workspace create`
   * bash library to build wrappers
 Changed
 Fixed
