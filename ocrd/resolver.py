@@ -197,6 +197,25 @@ class Resolver(object):
         self.download_to_directory(directory, mets_url, basename='mets.xml', prefer_symlink=False)
         return Workspace(self, directory)
 
+    def workspace_from_nothing(self, directory, clobber_mets=False):
+        """
+        Create an empty workspace.
+        """
+        if directory is None:
+            directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        mets_fpath = os.path.join(directory, 'mets.xml')
+        if not clobber_mets and os.path.exists(mets_fpath):
+            raise Exception("Not clobbering existing mets.xml in '%s'." % directory)
+        mets = OcrdMets(content=METS_XML_EMPTY)
+        with open(mets_fpath, 'wb') as fmets:
+            log.info("Writing %s", mets_fpath)
+            fmets.write(mets.to_xml(xmllint=True))
+
+        return Workspace(self, directory, mets)
+
     def workspace_from_folder(self, directory, return_mets=False, clobber_mets=False, convention='ocrd-gt'):
         """
         Create a workspace from a folder, creating a METS file.
@@ -220,7 +239,6 @@ class Resolver(object):
         directory = os.path.abspath(directory)
 
         self.add_files_to_mets(convention, mets, directory)
-
         if return_mets:
             return mets
 

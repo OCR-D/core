@@ -81,13 +81,29 @@ def validate_workspace(ctx, mets_url=None):
 @click.option('-m', '--mets-url', help="METS URL to create workspace for", required=True)
 @click.option('-a', '--download-all', is_flag=True, default=False, help="Whether to download all files into the workspace")
 @pass_workspace
-def workspace_create(ctx, mets_url, download_all):
+def workspace_clone(ctx, mets_url, download_all):
     workspace = ctx.resolver.workspace_from_url(mets_url)
     if download_all:
         for fileGrp in workspace.mets.file_groups:
             workspace.download_files_in_group(fileGrp)
             #  for f in workspace.mets.find_files(fileGrp=fileGrp):
             #      workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+    workspace.save_mets()
+    print(workspace.directory)
+
+# ----------------------------------------------------------------------
+# ocrd workspace create
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('create', help="""
+
+    Create a workspace with an empty METS file.
+
+""")
+@click.option('-f', '--force', help="Clobber mets.xml if it exists", is_flag=True, default=False)
+@pass_workspace
+def workspace_create(ctx, force):
+    workspace = ctx.resolver.workspace_from_nothing(directory=ctx.directory, clobber_mets=force)
     workspace.save_mets()
     print(workspace.directory)
 
