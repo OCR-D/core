@@ -7,9 +7,9 @@ from ocrd import Resolver, WorkspaceValidator, Workspace
 
 class WorkspaceCtx(object):
 
-    def __init__(self, directory):
+    def __init__(self, directory, cache_enabled):
         self.directory = directory
-        self.resolver = Resolver(cache_enabled=True)
+        self.resolver = Resolver(cache_enabled=cache_enabled)
         self.config = {}
         self.verbose = False
 
@@ -43,9 +43,14 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
     is_flag=True,
     help='Enables verbose mode.'
 )
+@click.option(
+    '--no-cache',
+    is_flag=True,
+    help='Disables caching of assets.'
+)
 @click.pass_context
-def workspace_cli(ctx, directory, config, verbose):
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory))
+def workspace_cli(ctx, directory, config, verbose, no_cache):
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), cache_enabled=not no_cache)
     ctx.obj.verbose = verbose
     for key, value in config:
         ctx.obj.config[key] = value
