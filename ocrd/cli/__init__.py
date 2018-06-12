@@ -8,6 +8,7 @@ from ocrd.cli.server import server_cli
 from ocrd.cli.bashlib import bashlib_cli
 
 @click.group()
+@click.version_option()
 def cli():
     """
     CLI to OCR-D
