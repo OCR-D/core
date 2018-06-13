@@ -169,6 +169,20 @@ def workspace_find(ctx, file_grp, mimetype, group_id, local_filename, download_a
             print(f.url)
 
 # ----------------------------------------------------------------------
+# ocrd workspace list-group
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('list-group', help="""
+
+    List fileGrp USE attributes
+
+""")
+@pass_workspace
+def list_groups(ctx):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    print("\n".join(workspace.mets.file_groups))
+
+# ----------------------------------------------------------------------
 # ocrd workspace pack
 # ----------------------------------------------------------------------
 
@@ -197,3 +211,4 @@ def pack(ctx, output_filename):
 def unpack(ctx, input_filename):
     workspace = ctx.resolver.unpack_workspace_from_filename(input_filename)
     print(workspace)
+
