@@ -35,7 +35,12 @@ def run_processor(
     Args:
         parameter (string): URL to the parameter
     """
-    workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
+    workspace = _get_workspace(
+        workspace,
+        resolver,
+        mets_url,
+        working_dir
+    )
     if parameter is not None:
         fname = workspace.download_url(parameter)
         with open(fname, 'r') as param_json_file:
@@ -43,11 +48,18 @@ def run_processor(
     else:
         parameter = {}
     log.debug("Running processor %s", processorClass)
-    processor = processorClass(workspace, ocrd_tool=ocrd_tool, input_file_grp=input_file_grp, output_file_grp=output_file_grp, parameter=parameter)
+    # TODO: dump_json
+    processor = processorClass(
+        workspace,
+        ocrd_tool=ocrd_tool,
+        group_id=group_id,
+        input_file_grp=input_file_grp,
+        output_file_grp=output_file_grp,
+        parameter=parameter
+    )
     log.debug("Processor instance %s", processor)
     processor.process()
-    # TODO: dump_json
-    #  workspace.persist()
+    workspace.save_mets()
 
 def run_cli(
         binary,
@@ -69,10 +81,9 @@ def run_cli(
     log.debug("Running binary '%s'", binary)
     subprocess.call([
         binary,
-        '-m', mets_url,
-        '-w', workspace.directory
+        '--mets', mets_url,
+        '--working-dir', workspace.directory
     ])
-    #  workspace.persist()
 
 class Processor(object):
     """
@@ -82,13 +93,13 @@ class Processor(object):
     """
 
     def __init__(
-        self,
-        workspace,
-        ocrd_tool=None,
-        parameter={},
-        input_file_grp="INPUT",
-        output_file_grp="OUTPUT",
-        group_id=None
+            self,
+            workspace,
+            ocrd_tool=None,
+            parameter={},
+            input_file_grp="INPUT",
+            output_file_grp="OUTPUT",
+            group_id=None
     ):
         self.workspace = workspace
         self.input_file_grp = input_file_grp
