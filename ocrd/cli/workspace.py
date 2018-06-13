@@ -151,10 +151,18 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_fi
 @click.option('-G', '--file-grp', help="fileGrp USE")
 @click.option('-m', '--mimetype', help="Media type to look for")
 @click.option('-g', '--group-id', help="GROUPID")
-@click.option('-l', '--local-filename', is_flag=True, help="Whether to print the local_filename of files")
+@click.option('-k', '--output-field', help="Output field", default='url', type=click.Choice([
+    'url',
+    'mimetype',
+    'groupId',
+    'ID',
+    'basename',
+    'basename_without_extension',
+    'local_filename',
+]))
 @click.option('-a', '--download-all', is_flag=True, help="Whether to download found files")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, group_id, local_filename, download_all):
+def workspace_find(ctx, file_grp, mimetype, group_id, output_field, download_all):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     for f in workspace.mets.find_files(
             fileGrp=file_grp,
@@ -163,10 +171,7 @@ def workspace_find(ctx, file_grp, mimetype, group_id, local_filename, download_a
         ):
         if download_all:
             workspace.download_file(f)
-        if local_filename:
-            print(f.local_filename)
-        else:
-            print(f.url)
+        print(getattr(f, output_field))
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-group
@@ -211,4 +216,3 @@ def pack(ctx, output_filename):
 def unpack(ctx, input_filename):
     workspace = ctx.resolver.unpack_workspace_from_filename(input_filename)
     print(workspace)
-
