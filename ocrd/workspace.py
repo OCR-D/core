@@ -72,6 +72,7 @@ class Workspace(object):
             log.debug("Already downloaded: %s", f.local_filename)
         else:
             f.local_filename = self.download_url(f.url, **kwargs)
+        f.url = 'file://' + f.local_filename
         return f
 
     def download_files_in_group(self, file_grp):
