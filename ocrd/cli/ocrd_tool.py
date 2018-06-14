@@ -100,7 +100,23 @@ def ocrd_tool_tool_dump(ctx):
 # ocrd ocrd-tool tool parse-params
 # ----------------------------------------------------------------------
 
-@ocrd_tool_tool.command('parse-params', help="Parse parameters with fallback to defaults")
+@ocrd_tool_tool.command('parse-params')
+@click.option('-p', '--parameters', help='Parameter JSON file', type=click.Path())
+@click.option('-j', '--json', help='Output JSON instead of shell variables', is_flag=True, default=False)
 @pass_ocrd_tool
-def ocrd_tool_tool_parse_params(ctx):
-    print(json.dumps(ctx.json['tools'][ctx.tool_name], indent=True))
+def ocrd_tool_tool_parse_params(ctx, parameters, json):
+    """
+    Parse parameters with fallback to defaults and output as shell-eval'able assignments to params var.
+    """
+    if parameters is None or parameters == "":
+        parameters = {}
+    else:
+        with open(parameters, 'r') as f:
+            parameters = json.loads(f.read())
+    parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
+    parameterValidator.validate(parameters)
+    if json:
+        print(json.dumps(parameters))
+    else:
+        for k in parameters:
+            print('params["%s"]="%s"' % (k, parameters[k]))
