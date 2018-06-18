@@ -7,8 +7,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 Added
+
+  * find_files supports `ID`
+
 Changed
 Fixed
+
+  * `GROUPID` was not passed when adding files
+  
 Removed
 
 ## [0.2.5] - 2018-06-18

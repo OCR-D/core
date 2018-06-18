@@ -34,6 +34,10 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
         self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 1, '1 files in "OUTPUT"')
 
+    def test_add_file_2(self):
+        f = self.mets.add_file('OUTPUT', mimetype="bla/quux")
+        self.assertEqual(f.groupId, None, 'No GROUPID')
+
     def test_file_groupid(self):
         f = self.mets.find_files()[0]
         self.assertEqual(f.groupId, 'FILE_0001_IMAGE')
