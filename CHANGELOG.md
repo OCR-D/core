@@ -16,6 +16,7 @@ Changed
 
 Fixed
 
+  * Wrapped tools support `-J`/`--dump-json`
   * `GROUPID` was not passed when adding files
 
 Removed
