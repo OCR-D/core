@@ -13,7 +13,6 @@ Options:
                                 Log level
 -J, --dump-json                 Dump tool description as JSON and exit
 -p, --parameter PATH
--o, --output-mets TEXT          METS URL to write resulting METS to
 -g, --group-id TEXT             mets:file GROUPID
 -O, --output-file-grp TEXT      File group(s) used as output.
 -I, --input-file-grp TEXT       File group(s) used as input.

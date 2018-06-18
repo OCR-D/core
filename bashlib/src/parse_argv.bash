@@ -22,7 +22,6 @@ ocrd__parse_argv () {
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
             -p|--parameter) argv['parameter']=$2 ; shift ;;
-            -o|--output-mets) argv['output_mets']=$2 ; shift ;;
             -g|--group-id) argv['group_id']=$2 ; shift ;;
             -O|--output-file-grp) argv['output_file_grp']=$2 ; shift ;;
             -I|--input-file-grp) argv['input_file_grp']=$2 ; shift ;;
