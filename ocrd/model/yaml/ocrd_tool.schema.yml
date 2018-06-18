@@ -1,10 +1,15 @@
 type: object
 description: Schema for tools by OCR-D MP
 required:
+  - version
   - git_url
   - tools
 additionalProperties: false
 properties:
+  version:
+    description: "Version of the tool, expressed as MAJOR.MINOR.PATCH."
+    type: string
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
   git_url:
     description: Github/Gitlab URL
     type: string
