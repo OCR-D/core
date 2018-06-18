@@ -2,12 +2,16 @@ import os
 
 import click
 
+from ocrd.constants import VERSION as OCRD_VERSION
 from ocrd.resolver import Resolver
 from ocrd.processor.base import run_processor
 
-def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, cache_enabled=True, dump_json=False, **kwargs):
+def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, cache_enabled=True, dump_json=False, version=False, **kwargs):
     if dump_json:
         processorClass(workspace=None, dump_json=True)
+    elif version:
+        p = processorClass(workspace=None)
+        print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:
         raise Exception('Error: Missing option "-m" / "--mets".')
     else:
@@ -41,6 +45,7 @@ def ocrd_cli_options(f):
         click.option('-p', '--parameter', type=click.Path()),
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         click.option('-l', '--log-level', help="Log level", type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']), default='INFO'),
+        click.option('-V', '--version', help="Show version", is_flag=True, default=False)
     ]
     for param in params:
         param(f)
