@@ -25,11 +25,12 @@ class OcrdMets(OcrdXmlDocument):
     def file_groups(self):
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
-    def find_files(self, fileGrp=None, groupId=None, mimetype=None):
+    def find_files(self, ID=None, fileGrp=None, groupId=None, mimetype=None):
         """
         List files.
 
         Args:
+            ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
             groupId (string) : GROUPID of matching files
             mimetype (string) : MIMETYPE of matching files
@@ -40,6 +41,8 @@ class OcrdMets(OcrdXmlDocument):
         ret = []
         fileGrp_clause = '' if fileGrp is None else '[@USE="%s"]' % fileGrp
         file_clause = ''
+        if ID is not None:
+            file_clause += '[@ID="%s"]' % ID
         if groupId is not None:
             file_clause += '[@GROUPID="%s"]' % groupId
         if mimetype is not None:
@@ -58,12 +61,16 @@ class OcrdMets(OcrdXmlDocument):
         el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, local_filename=None):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, groupId=None, local_filename=None):
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
+        if ID is not None:
+            if self.find_files(ID=ID) != []:
+                raise Exception("File with ID='%s' already exists" % ID)
         mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE))
         mets_file.url = url
+        mets_file.groupId = groupId
         mets_file.mimetype = mimetype
         mets_file.ID = ID
         mets_file.local_filename = local_filename

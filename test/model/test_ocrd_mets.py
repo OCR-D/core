@@ -29,9 +29,22 @@ class TestOcrdMets(TestCase):
     def test_add_file(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
         self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 0, '0 files in "OUTPUT"')
-        self.mets.add_file('OUTPUT', mimetype="bla/quux")
+        f = self.mets.add_file('OUTPUT', mimetype="bla/quux", groupId="foobar")
+        self.assertEqual(f.groupId, 'foobar', 'GROUPID set')
         self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
         self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 1, '1 files in "OUTPUT"')
+
+    def test_add_file_no_groupid(self):
+        f = self.mets.add_file('OUTPUT', mimetype="bla/quux")
+        self.assertEqual(f.groupId, None, 'No GROUPID')
+
+    def test_add_file_ID_fail(self):
+        f = self.mets.add_file('OUTPUT', ID='best-id-ever')
+        self.assertEqual(f.ID, 'best-id-ever', "ID kept")
+        with self.assertRaises(Exception) as cm:
+            self.mets.add_file('OUTPUT', ID='best-id-ever')
+        self.assertEquals(str(cm.exception), "File with ID='best-id-ever' already exists")
+
 
     def test_file_groupid(self):
         f = self.mets.find_files()[0]
