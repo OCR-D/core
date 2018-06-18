@@ -1,6 +1,7 @@
 from test.base import TestCase, main
 from ocrd.utils import (
     points_from_xywh,
+    concat_padded,
     points_from_x0y0x1y1,
     xywh_from_points,
     polygon_from_points
@@ -32,6 +33,15 @@ class TestResolver(TestCase):
         self.assertEqual(
             polygon_from_points('100,100 200,100 200,200 100,200'),
             [[100, 100], [200, 100], [200, 200], [100, 200]])
+
+    def test_concat_padded(self):
+        self.assertEqual(concat_padded('x', 0), 'x_0001')
+        self.assertEqual(concat_padded('x', 0, 1, 2), 'x_0001_0002_0003')
+        self.assertEqual(concat_padded('x', 0, '1', 2), 'x_0001_1_0003')
+
+    def test_is_string(self):
+        self.assertTrue('x')
+        self.assertTrue(u'x')
 
 if __name__ == '__main__':
     main()

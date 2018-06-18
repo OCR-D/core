@@ -15,6 +15,7 @@ xywh is what tesserocr expects/produces.
 import subprocess
 import logging
 import re
+import sys
 
 logging.basicConfig(level=logging.DEBUG)
 #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
@@ -81,12 +82,20 @@ def xmllint_format(xml):
     output, _ = proc.communicate(xml)
     return output
 
-# TODO better name
-def mets_file_id(grp, n):
+def is_string(val):
+    return isinstance(val, (str, unicode)) if sys.version_info < (3, 0) else isinstance(val, str)
+
+def concat_padded(base, *args):
     """
     Concatenate string and zero-padded 4 digit number
     """
-    return "%s_%04i"  % (grp, n + 1)
+    ret = base
+    for n in args:
+        if is_string(n):
+            ret = "%s_%s" % (ret, n)
+        else:
+            ret = "%s_%04i"  % (ret, n + 1)
+    return ret
 
 def safe_filename(url):
     ret = re.sub('[^A-Za-z0-9]+', '.', url)
