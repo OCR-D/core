@@ -4,6 +4,7 @@ import codecs
 import click
 
 from ocrd import OcrdToolValidator
+from ocrd.constants import VERSION as OCRD_VERSION
 from ocrd.validator import ParameterValidator
 
 class OcrdToolCtx(object):
@@ -25,6 +26,15 @@ pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
 @click.pass_context
 def ocrd_tool_cli(ctx, json_file):
     ctx.obj = OcrdToolCtx(json_file)
+
+# ----------------------------------------------------------------------
+# ocrd ocrd-tool version
+# ----------------------------------------------------------------------
+
+@ocrd_tool_cli.command('version', help='Version of ocrd-tool.json')
+@pass_ocrd_tool
+def ocrd_tool_version(ctx):
+    print('Version "%s", ocrd/core "%s"' % (ctx.json['version'], OCRD_VERSION))
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool validate

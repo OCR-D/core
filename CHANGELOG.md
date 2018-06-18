@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## TODO
 
+Added:
+
+  * CLI: `ocrd ocrd-tool version` to show version
+
 ## [0.3.1] - 2018-06-18
 
 Added
