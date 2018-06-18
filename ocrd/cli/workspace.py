@@ -135,6 +135,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_fi
         ID=file_id,
         mimetype=mimetype,
         url="file://" + local_filename,
+        groupId=group_id
         local_filename=local_filename
     )
     workspace.save_mets()

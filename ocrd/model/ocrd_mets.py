@@ -58,12 +58,13 @@ class OcrdMets(OcrdXmlDocument):
         el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, local_filename=None):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, groupId=None, local_filename=None):
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
         mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE))
         mets_file.url = url
+        mets_file.groupId = groupId
         mets_file.mimetype = mimetype
         mets_file.ID = ID
         mets_file.local_filename = local_filename
