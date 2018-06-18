@@ -7,6 +7,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+Added
+
+  * CLI support `--version`
+
 Fixed:
 
   * CLI: validate of ocrd-tool.json didn't parse JSON, #115
