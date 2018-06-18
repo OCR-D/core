@@ -96,11 +96,13 @@ class Processor(object):
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             group_id=None,
-            dump_json=False
+            dump_json=False,
+            version=None
     ):
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return
+        self.version = version
         self.workspace = workspace
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
