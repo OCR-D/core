@@ -7,6 +7,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+Fixed:
+
+  * CLI: validate of ocrd-tool.json didn't parse JSON, #115
+
 ## [0.3.0] - 2018-06-18
 
 Added
