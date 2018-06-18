@@ -27,6 +27,7 @@ ocrd__parse_argv () {
             -I|--input-file-grp) argv['input_file_grp']=$2 ; shift ;;
             -w|--working-dir) argv['working_dir']=$2 ; shift ;;
             -m|--mets-file) argv['mets_file']=$2 ; shift ;;
+            -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
         shift

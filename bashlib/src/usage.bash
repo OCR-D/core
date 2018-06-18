@@ -19,6 +19,7 @@ Options:
 -w, --working-dir TEXT          Working Directory
 -m, --mets TEXT                 METS URL to validate  [required]
 --help                          Show this message and exit.
+-V, --version                   Show version.
     "
 }
 
