@@ -7,6 +7,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+Changed:
+
+  * `mets_file_id` in utils is now `concat_padded` and more flexible
+
 ## [0.3.0] - 2018-06-18
 
 Added
