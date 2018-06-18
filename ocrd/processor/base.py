@@ -26,7 +26,6 @@ def run_processor(
         output_file_grp=None,
         parameter=None,
         working_dir=None,
-        dump_json=None,
 ):
     """
     Create a workspace for mets_url and run processor through it
@@ -47,7 +46,6 @@ def run_processor(
     else:
         parameter = {}
     log.debug("Running processor %s", processorClass)
-    # TODO: dump_json
     processor = processorClass(
         workspace,
         ocrd_tool=ocrd_tool,
@@ -97,8 +95,12 @@ class Processor(object):
             parameter={},
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
-            group_id=None
+            group_id=None,
+            dump_json=False
     ):
+        if dump_json:
+            print(json.dumps(ocrd_tool, indent=True))
+            return
         self.workspace = workspace
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp

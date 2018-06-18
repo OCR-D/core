@@ -5,14 +5,19 @@ import click
 from ocrd.resolver import Resolver
 from ocrd.processor.base import run_processor
 
-def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, cache_enabled=True, **kwargs):
-    if mets.find('://') == -1:
-        mets = 'file://' + mets
-    if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
-        raise Exception("File does not exist: %s" % mets)
-    resolver = Resolver(cache_enabled=cache_enabled)
-    workspace = resolver.workspace_from_url(mets, working_dir)
-    run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
+def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, cache_enabled=True, dump_json=False, **kwargs):
+    if dump_json:
+        processorClass(workspace=None, dump_json=True)
+    elif mets is None:
+        raise Exception('Error: Missing option "-m" / "--mets".')
+    else:
+        if mets.find('://') == -1:
+            mets = 'file://' + mets
+        if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
+            raise Exception("File does not exist: %s" % mets)
+        resolver = Resolver(cache_enabled=cache_enabled)
+        workspace = resolver.workspace_from_url(mets, working_dir)
+        run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
 
 def ocrd_cli_options(f):
     """
@@ -28,7 +33,7 @@ def ocrd_cli_options(f):
             print(mets_url)
     """
     params = [
-        click.option('-m', '--mets', help="METS URL to validate", required=True),
+        click.option('-m', '--mets', help="METS URL to validate"),
         click.option('-w', '--working-dir', help="Working Directory"),
         click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
         click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
