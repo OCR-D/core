@@ -17,8 +17,10 @@ Changed
 Fixed
 
   * `GROUPID` was not passed when adding files
-  
+
 Removed
+
+  * `--output-mets`, spec v2.0.0
 
 ## [0.2.5] - 2018-06-18
 
