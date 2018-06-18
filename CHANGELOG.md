@@ -11,6 +11,9 @@ Added
   * find_files supports `ID`
 
 Changed
+
+  * Adding a file with an existing `ID` will raise an exception, #110
+
 Fixed
 
   * `GROUPID` was not passed when adding files
