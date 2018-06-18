@@ -1,4 +1,4 @@
-import json
+from json import dumps, loads
 import codecs
 
 import click
@@ -12,7 +12,7 @@ class OcrdToolCtx(object):
         self.filename = filename
         with codecs.open(filename, encoding='utf-8') as f:
             self.content = f.read()
-            self.json = json.loads(self.content)
+            self.json = loads(self.content)
 
 pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
 
@@ -21,7 +21,7 @@ pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
 # ----------------------------------------------------------------------
 
 @click.group('ocrd-tool', help='Work with ocrd-tool.json')
-@click.argument('json_file', "ocrd-tool.json to validate")
+@click.argument('json_file', "ocrd-tool.json to operate on")
 @click.pass_context
 def ocrd_tool_cli(ctx, json_file):
     ctx.obj = OcrdToolCtx(json_file)
@@ -33,7 +33,7 @@ def ocrd_tool_cli(ctx, json_file):
 @ocrd_tool_cli.command('validate', help='Validate an ocrd-tool.json')
 @pass_ocrd_tool
 def ocrd_tool_validate(ctx):
-    report = OcrdToolValidator.validate_json(ctx.content)
+    report = OcrdToolValidator.validate_json(ctx.json)
     print(report.to_xml())
     if not report.is_valid:
         return 128
@@ -94,7 +94,7 @@ def ocrd_tool_tool_steps(ctx):
 @ocrd_tool_tool.command('dump', help="Dump JSON of tool")
 @pass_ocrd_tool
 def ocrd_tool_tool_dump(ctx):
-    print(json.dumps(ctx.json['tools'][ctx.tool_name], indent=True))
+    print(dumps(ctx.json['tools'][ctx.tool_name], indent=True))
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool parse-params
@@ -112,11 +112,11 @@ def ocrd_tool_tool_parse_params(ctx, parameters, json):
         parameters = {}
     else:
         with open(parameters, 'r') as f:
-            parameters = json.loads(f.read())
+            parameters = loads(f.read())
     parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
     parameterValidator.validate(parameters)
     if json:
-        print(json.dumps(parameters))
+        print(dumps(parameters))
     else:
         for k in parameters:
             print('params["%s"]="%s"' % (k, parameters[k]))
