@@ -8,7 +8,11 @@
 ocrd__parse_argv () {
 
     if ! declare -p "argv" >/dev/null 2>/dev/null ;then
-        ocrd__raise "Must set \$argv"
+        ocrd__raise "Must set \$argv (declare -A argv)"
+    fi
+
+    if ! declare -p "params" >/dev/null 2>/dev/null ;then
+        ocrd__raise "Must set \$params (declare -A params)"
     fi
 
 
@@ -44,5 +48,8 @@ ocrd__parse_argv () {
     if [[ "${argv[output_file_grp]}" = "" ]];then
         argv[output_file_grp]="OCR-D-TEXT"
     fi
+
+    eval `ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" parse-params -p "${argv[parameter]}"`
+
 }
 
