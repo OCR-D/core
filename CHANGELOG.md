@@ -7,15 +7,25 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 Added
+Changed
+Fixed
+Removed
+
+## [0.2.5] - 2018-06-18
+
+Added
+  * Bash library
   * CLI command `ocrd-tool`
   * CLI command `workspace find`
   * CLI command `workspace list-group`
   * CLI command `workspace create`
   * CLI `workspace` flag --no-cache
   * bash library to build wrappers
+  * CLI: `--version` global flag
 Changed
+  * Downloading a file will set the URL in the METS
 Fixed
-Removed
+  * run_processor will save_mets after process
 
 ## [0.2.4] - 2018-06-04
 
