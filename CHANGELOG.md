@@ -6,6 +6,9 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 ## TODO
 
 ## [unreleased]
+
+## [0.3.0] - 2018-06-18
+
 Added
 
   * find_files supports `ID`
@@ -115,6 +118,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.3.0]: ../../compare/v0.3.0...v0.2.5
+[0.2.5]: ../../compare/v0.2.5...v0.2.4
 [0.2.4]: ../../compare/v0.2.3...v0.2.4
 [0.2.3]: ../../compare/v0.2.2...v0.2.3
 [0.2.2]: ../../compare/v0.2.1...v0.2.2
