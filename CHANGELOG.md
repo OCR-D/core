@@ -5,7 +5,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## TODO
 
-## [unreleased]
+## [0.3.1] - 2018-06-18
 
 Added
 
@@ -130,6 +130,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.3.1]: ../../compare/v0.3.1...v0.3.0
 [0.3.0]: ../../compare/v0.3.0...v0.2.5
 [0.2.5]: ../../compare/v0.2.5...v0.2.4
 [0.2.4]: ../../compare/v0.2.3...v0.2.4
