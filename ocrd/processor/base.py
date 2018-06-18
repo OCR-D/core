@@ -24,7 +24,6 @@ def run_processor(
         log_level=None,
         input_file_grp=None,
         output_file_grp=None,
-        output_mets=None,
         parameter=None,
         working_dir=None,
         dump_json=None,
@@ -70,7 +69,6 @@ def run_cli(
         log_level=None,
         input_file_grp=None,
         output_file_grp=None,
-        output_mets=None,
         parameter=None,
         working_dir=None,
 ):

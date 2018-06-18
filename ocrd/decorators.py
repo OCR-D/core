@@ -33,7 +33,6 @@ def ocrd_cli_options(f):
         click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
         click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         click.option('-g', '--group-id', help="mets:file GROUPID"),
-        click.option('-o', '--output-mets', help="METS URL to write resulting METS to"),
         click.option('-p', '--parameter', type=click.Path()),
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         click.option('-l', '--log-level', help="Log level", type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']), default='INFO'),
