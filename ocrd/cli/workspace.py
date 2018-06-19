@@ -4,6 +4,9 @@ import sys
 import click
 
 from ocrd import Resolver, WorkspaceValidator, Workspace
+from ocrd.utils import getLogger
+
+log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx(object):
 
@@ -94,25 +97,30 @@ def workspace_create(ctx, clobber_mets):
 # ocrd workspace add
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('add', help="""
-
-    Add a file to METS in a workspace.
-
-""")
+@workspace_cli.command('add')
 @click.option('-G', '--file-grp', help="fileGrp USE", required=True)
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
-@click.option('-u', '--url', help="url", default="file://local_filename")
 @click.option('-g', '--group-id', help="GROUPID")
-@click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
+@click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_filename):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filename):
+    """
+    Add a file to METS in a workspace.
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+
+    if not local_filename.startswith(ctx.directory):
+        log.debug("File '%s' is not in repository, copying", local_filename)
+        local_filename = ctx.resolver.download_to_directory(ctx.directory, "file://" + local_filename, subdir=file_grp)
+
+    url = "file://" + local_filename
+
     workspace.mets.add_file(
         fileGrp=file_grp,
         ID=file_id,
         mimetype=mimetype,
-        url="file://" + local_filename,
+        url=url,
         groupId=group_id,
         local_filename=local_filename
     )
