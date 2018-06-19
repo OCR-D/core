@@ -193,18 +193,18 @@ class Resolver(object):
             else:
                 mets_url = 'file://%s/%s' % (directory, mets_basename)
         if mets_url.find('://') == -1:
-            mets_url = 'file://' + mets_url
+            mets_url = 'file://' + os.path.abspath(mets_url)
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
             log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
 
-        mets_target = os.path.join(directory, mets_basename)
-        log.debug("Using existing workspace '%s'", mets_target)
-        if 'file://' + mets_target == mets_url:
+        mets_fpath = os.path.join(directory, mets_basename)
+        log.debug("Using existing workspace '%s'", mets_fpath)
+        if 'file://' + mets_fpath == mets_url:
             log.debug("Target and source mets are identical")
         else:
-            if os.path.exists(mets_target) and not clobber_mets:
-                raise Exception("File '%s' already exists but clobber_mets is false" % mets_target)
+            if os.path.exists(mets_fpath) and not clobber_mets:
+                raise Exception("File '%s' already exists but clobber_mets is false" % mets_fpath)
             else:
                 self.download_to_directory(directory, mets_url, basename=mets_basename, prefer_symlink=False)
 
@@ -218,7 +218,7 @@ class Resolver(object):
 
         return workspace
 
-    def workspace_from_nothing(self, directory, clobber_mets=False):
+    def workspace_from_nothing(self, directory, mets_basename='mets.xml', clobber_mets=False):
         """
         Create an empty workspace.
         """
@@ -227,7 +227,7 @@ class Resolver(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        mets_fpath = os.path.join(directory, 'mets.xml')
+        mets_fpath = os.path.join(directory, mets_basename)
         if not clobber_mets and os.path.exists(mets_fpath):
             raise Exception("Not clobbering existing mets.xml in '%s'." % directory)
         mets = OcrdMets(content=METS_XML_EMPTY)
