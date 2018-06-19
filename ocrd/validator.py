@@ -98,9 +98,17 @@ class ParameterValidator(JsonValidator):
 
     def __init__(self, ocrd_tool):
         # TODO grep required properties
+        required = []
+        p = ocrd_tool['parameters']
+        for n in p:
+            if 'required' in p[n]:
+                if p[n]['required']:
+                    required.append(n)
+                del(p[n]['required'])
         super(ParameterValidator, self).__init__({
             "type": "object",
-            "properties": ocrd_tool['parameters']
+            "required": required,
+            "properties": p
         }, DefaultValidatingDraft4Validator)
 
 

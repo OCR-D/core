@@ -1,5 +1,6 @@
 from json import dumps, loads
 import codecs
+import sys
 
 import click
 
@@ -124,7 +125,10 @@ def ocrd_tool_tool_parse_params(ctx, parameters, json):
         with open(parameters, 'r') as f:
             parameters = loads(f.read())
     parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
-    parameterValidator.validate(parameters)
+    report = parameterValidator.validate(parameters)
+    if not report.is_valid:
+        print(report.to_xml())
+        sys.exit(1)
     if json:
         print(dumps(parameters))
     else:
