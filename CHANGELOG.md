@@ -9,6 +9,10 @@ Added:
 
   * CLI: `ocrd ocrd-tool version` to show version
 
+  * API: `OcrdMets` getters/setters for `unique_identifier`
+  * CLI: `ocrd workspace set-id MODS_IDENTIFIER_PURL` to set mods:identifier
+  * CLI: `ocrd workspace get-id` to get mods:identifier
+
 ## [0.3.1] - 2018-06-18
 
 Added

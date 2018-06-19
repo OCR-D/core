@@ -1,6 +1,6 @@
 from test.base import TestCase, main, assets
 
-from ocrd.constants import MIMETYPE_PAGE
+from ocrd.constants import MIMETYPE_PAGE, METS_XML_EMPTY
 from ocrd.model import OcrdMets
 
 class TestOcrdMets(TestCase):
@@ -10,6 +10,14 @@ class TestOcrdMets(TestCase):
 
     def test_unique_identifier(self):
         self.assertEqual(self.mets.unique_identifier, 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier')
+        self.mets.unique_identifier = 'foo'
+        self.assertEqual(self.mets.unique_identifier, 'foo', 'Right identifier after change')
+
+    def test_unique_identifier_from_nothing(self):
+        self.mets = OcrdMets(content=METS_XML_EMPTY)
+        self.assertEqual(self.mets.unique_identifier, None, 'no identifier')
+        self.mets.unique_identifier = 'foo'
+        self.assertEqual(self.mets.unique_identifier, 'foo', 'Right identifier after change')
 
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')

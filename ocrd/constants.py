@@ -27,6 +27,9 @@ IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
 TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
+
+TAG_MODS_IDENTIFIER = '{%s}identifier' % NAMESPACES['mods']
+
 TAG_PAGE_COORDS = '{%s}Coords' % NAMESPACES['page']
 TAG_PAGE_READINGORDER = '{%s}ReadingOrder' % NAMESPACES['page']
 TAG_PAGE_REGIONREFINDEXED = '{%s}RegionRefIndexed' % NAMESPACES['page']
