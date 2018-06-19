@@ -37,7 +37,7 @@ TAG_PAGE_TEXTLINE = '{%s}TextLine' % NAMESPACES['page']
 TAG_PAGE_TEXTEQUIV = '{%s}TextEquiv' % NAMESPACES['page']
 TAG_PAGE_TEXTREGION = '{%s}TextRegion' % NAMESPACES['page']
 
-METS_XML_EMPTY = str(resource_string(__name__, 'model/mets-empty.xml'))
+METS_XML_EMPTY = resource_string(__name__, 'model/mets-empty.xml')
 
 EXT_TO_MIME = {
     '.tif': 'image/tiff',
