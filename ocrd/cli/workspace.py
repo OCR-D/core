@@ -7,9 +7,10 @@ from ocrd import Resolver, WorkspaceValidator, Workspace
 
 class WorkspaceCtx(object):
 
-    def __init__(self, directory, cache_enabled):
+    def __init__(self, directory, mets_basename, cache_enabled):
         self.directory = directory
         self.resolver = Resolver(cache_enabled=cache_enabled)
+        self.mets_basename = mets_basename
         self.config = {}
         self.verbose = False
 
@@ -19,38 +20,18 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 # ocrd workspace
 # ----------------------------------------------------------------------
 
-@click.group("workspace", help="Working with workspace")
-@click.option(
-    '-d',
-    '--directory',
-    envvar='WORKSPACE_DIR',
-    default=os.path.abspath('.'),
-    type=click.Path(file_okay=False),
-    metavar='PATH',
-    help='Changes the repository folder location.'
-)
-@click.option(
-    '-c',
-    '--config',
-    nargs=2,
-    multiple=True,
-    metavar='KEY VALUE',
-    help='Overrides a config key/value pair.'
-)
-@click.option(
-    '-v',
-    '--verbose',
-    is_flag=True,
-    help='Enables verbose mode.'
-)
-@click.option(
-    '--no-cache',
-    is_flag=True,
-    help='Disables caching of assets.'
-)
+@click.group("workspace")
+@click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the repository folder location.', show_default=True)
+@click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
+@click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
+@click.option('--no-cache', is_flag=True, help='Disables caching of assets.')
 @click.pass_context
-def workspace_cli(ctx, directory, config, verbose, no_cache):
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), cache_enabled=not no_cache)
+def workspace_cli(ctx, directory, mets_basename, config, verbose, no_cache):
+    """
+    Working with workspace
+    """
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, cache_enabled=not no_cache)
     ctx.obj.verbose = verbose
     for key, value in config:
         ctx.obj.config[key] = value
@@ -64,7 +45,6 @@ def workspace_cli(ctx, directory, config, verbose, no_cache):
     Validate a workspace
 
 ''')
-@click.option('-m', '--mets-url', help="METS URL to validate")
 @pass_workspace
 def validate_workspace(ctx, mets_url=None):
     report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, directory=ctx.directory)
@@ -76,21 +56,22 @@ def validate_workspace(ctx, mets_url=None):
 # ocrd workspace clone
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('clone', help="""
-
-    Create a workspace from a METS URL and return the directory
-
-""")
-@click.option('-m', '--mets-url', help="METS URL to create workspace for", required=True)
+@workspace_cli.command('clone')
+@click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download-all', is_flag=True, default=False, help="Whether to download all files into the workspace")
+@click.argument('mets_url', "METS URL to create workspace for")
 @pass_workspace
-def workspace_clone(ctx, mets_url, download_all):
-    workspace = ctx.resolver.workspace_from_url(mets_url)
-    if download_all:
-        for fileGrp in workspace.mets.file_groups:
-            workspace.download_files_in_group(fileGrp)
-            #  for f in workspace.mets.find_files(fileGrp=fileGrp):
-            #      workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+def workspace_clone(ctx, mets_url, clobber_mets, download_all):
+    """
+    Create a workspace from a METS URL and return the directory
+    """
+    workspace = ctx.resolver.workspace_from_url(
+        mets_url,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        clobber_mets=clobber_mets,
+        download_all=download_all
+    )
     workspace.save_mets()
     print(workspace.directory)
 

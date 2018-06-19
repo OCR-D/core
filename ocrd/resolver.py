@@ -181,7 +181,7 @@ class Resolver(object):
 
         return outfilename
 
-    def workspace_from_url(self, mets_url, directory=None):
+    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename='mets.xml', download_all=False):
         """
         Create a workspace from a METS by URL.
 
@@ -189,18 +189,34 @@ class Resolver(object):
         """
         if mets_url is None:
             if directory is None:
-                raise Exception("Must pass mets_url to workspace_from_url")
+                raise Exception("Must pass mets_url and/or directory to workspace_from_url")
             else:
-                mets_url = 'file://%s/mets.xml' % directory
+                mets_url = 'file://%s/%s' % (directory, mets_basename)
         if mets_url.find('://') == -1:
             mets_url = 'file://' + mets_url
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
             log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
-            self.download_to_directory(directory, mets_url, basename='mets.xml', prefer_symlink=False)
+
+        mets_target = os.path.join(directory, mets_basename)
+        log.debug("Using existing workspace '%s'", mets_target)
+        if 'file://' + mets_target == mets_url:
+            log.debug("Target and source mets are identical")
         else:
-            log.debug("Reusing workspace '%s' for METS @ <%s>", directory, mets_url)
-        return Workspace(self, directory)
+            if os.path.exists(mets_target) and not clobber_mets:
+                raise Exception("File '%s' already exists but clobber_mets is false" % mets_target)
+            else:
+                self.download_to_directory(directory, mets_url, basename=mets_basename, prefer_symlink=False)
+
+        workspace = Workspace(self, directory)
+
+        if download_all:
+            for fileGrp in workspace.mets.file_groups:
+                workspace.download_files_in_group(fileGrp)
+                #  for f in workspace.mets.find_files(fileGrp=fileGrp):
+                #      workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+
+        return workspace
 
     def workspace_from_nothing(self, directory, clobber_mets=False):
         """

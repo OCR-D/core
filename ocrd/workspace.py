@@ -20,14 +20,15 @@ class Workspace(object):
 
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
+        mets_file (string) : Basename of the METS XML file. Default: mets.xml
     """
 
-    def __init__(self, resolver, directory, mets=None):
+    def __init__(self, resolver, directory, mets=None, mets_file='mets.xml'):
         self.resolver = resolver
         self.directory = directory
-        self.mets_filename = os.path.join(directory, 'mets.xml')
+        self.mets_target = os.path.join(directory, mets_file)
         if mets is None:
-            mets = OcrdMets(filename=self.mets_filename)
+            mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
@@ -47,7 +48,7 @@ class Workspace(object):
         """
         Reload METS from disk.
         """
-        self.mets = OcrdMets(filename=self.mets_filename)
+        self.mets = OcrdMets(filename=self.mets_target)
 
     def download_url(self, url, **kwargs):
         """
@@ -132,7 +133,7 @@ class Workspace(object):
         """
         Write out the current state of the METS file.
         """
-        with open(self.mets_filename, 'wb') as f:
+        with open(self.mets_target, 'wb') as f:
             f.write(self.mets.to_xml(xmllint=True))
 
     def resolve_image_exif(self, image_url):
