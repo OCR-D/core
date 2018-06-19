@@ -127,22 +127,22 @@ class WorkspaceValidator(object):
         mets_url (string) : URL of the METS file
     """
 
-    def __init__(self, resolver, mets_url):
+    def __init__(self, resolver, mets_url, directory=None):
         self.resolver = resolver
         self.mets_url = mets_url
         self.report = ValidationReport()
-        self.workspace = self.resolver.workspace_from_url(mets_url)
+        self.workspace = self.resolver.workspace_from_url(mets_url, directory=directory)
         self.mets = self.workspace.mets
 
     @staticmethod
-    def validate_url(resolver, mets_url):
+    def validate_url(resolver, mets_url, directory=None):
         """
         Validates the workspace of a METS URL against the specs
 
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        validator = WorkspaceValidator(resolver, mets_url)
+        validator = WorkspaceValidator(resolver, mets_url, directory=directory)
         return validator.validate()
 
     def validate(self):

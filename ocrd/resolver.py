@@ -188,13 +188,18 @@ class Resolver(object):
         Sets the mets.xml file
         """
         if mets_url is None:
-            raise Exception("Must pass mets_url to workspace_from_url")
+            if directory is None:
+                raise Exception("Must pass mets_url to workspace_from_url")
+            else:
+                mets_url = 'file://%s/mets.xml' % directory
         if mets_url.find('://') == -1:
             mets_url = 'file://' + mets_url
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
-        self.download_to_directory(directory, mets_url, basename='mets.xml', prefer_symlink=False)
+            log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
+            self.download_to_directory(directory, mets_url, basename='mets.xml', prefer_symlink=False)
+        else:
+            log.debug("Reusing workspace '%s' for METS @ <%s>", directory, mets_url)
         return Workspace(self, directory)
 
     def workspace_from_nothing(self, directory, clobber_mets=False):

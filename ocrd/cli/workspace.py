@@ -67,9 +67,7 @@ def workspace_cli(ctx, directory, config, verbose, no_cache):
 @click.option('-m', '--mets-url', help="METS URL to validate")
 @pass_workspace
 def validate_workspace(ctx, mets_url=None):
-    if mets_url is None:
-        mets_url = 'file://%s/mets.xml' % ctx.directory
-    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url)
+    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, directory=ctx.directory)
     print(report.to_xml())
     if not report.is_valid:
         sys.exit(128)
