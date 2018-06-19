@@ -5,10 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## TODO
 
+## [0.3.2] - 2018-06-19
+
 Added:
 
   * CLI: `ocrd ocrd-tool version` to show version
-
   * API: `OcrdMets` getters/setters for `unique_identifier`
   * CLI: `ocrd workspace set-id MODS_IDENTIFIER_PURL` to set mods:identifier
   * CLI: `ocrd workspace get-id` to get mods:identifier
@@ -143,6 +144,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.3.2]: ../../compare/v0.3.2...v0.3.1
 [0.3.1]: ../../compare/v0.3.1...v0.3.0
 [0.3.0]: ../../compare/v0.3.0...v0.2.5
 [0.2.5]: ../../compare/v0.2.5...v0.2.4
