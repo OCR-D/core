@@ -13,6 +13,10 @@ Added:
   * CLI: `ocrd workspace set-id MODS_IDENTIFIER_PURL` to set mods:identifier
   * CLI: `ocrd workspace get-id` to get mods:identifier
 
+Fixed:
+
+  * CLI: `cord ocrd-tool tool parse-params` validate as well as merges with default
+
 ## [0.3.1] - 2018-06-18
 
 Added
