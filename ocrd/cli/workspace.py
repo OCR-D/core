@@ -189,6 +189,38 @@ def list_groups(ctx):
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
+# ocrd workspace get-id
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('get-id', help="""
+
+    Get METS id if any
+
+""")
+@pass_workspace
+def get_id(ctx):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    ID = workspace.mets.unique_identifier
+    if ID:
+        print(ID)
+
+# ----------------------------------------------------------------------
+# ocrd workspace set-id
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('set-id', help="""
+
+    Set METS id
+
+""")
+@click.argument('ID', "Identifier")
+@pass_workspace
+def set_id(ctx, ID):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    workspace.mets.unique_identifier = ID
+    workspace.save_mets()
+
+# ----------------------------------------------------------------------
 # ocrd workspace pack
 # ----------------------------------------------------------------------
 

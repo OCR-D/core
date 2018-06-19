@@ -1,6 +1,7 @@
 from test.base import TestCase, main
 from ocrd.utils import (
     points_from_xywh,
+    is_string,
     concat_padded,
     points_from_x0y0x1y1,
     xywh_from_points,
@@ -40,8 +41,8 @@ class TestResolver(TestCase):
         self.assertEqual(concat_padded('x', 0, '1', 2), 'x_0001_1_0003')
 
     def test_is_string(self):
-        self.assertTrue('x')
-        self.assertTrue(u'x')
+        self.assertTrue(is_string('x'))
+        self.assertTrue(is_string(u'x'))
 
 if __name__ == '__main__':
     main()
