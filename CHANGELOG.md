@@ -16,6 +16,7 @@ Added:
 Fixed:
 
   * CLI: `cord ocrd-tool tool parse-params` validate as well as merges with default
+  * Parameter validation: Check whether parameter is `required: true`
 
 ## [0.3.1] - 2018-06-18
 
