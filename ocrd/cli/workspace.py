@@ -28,7 +28,7 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
 @click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
 @click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
-@click.option('--enable-cache', is_flag=True, help='Enable aggressive caching of assets.', default=False)
+@click.option('--cache-enabled', is_flag=True, help='Enable aggressive caching of assets.', default=False)
 @click.pass_context
 def workspace_cli(ctx, directory, mets_basename, config, verbose, cache_enabled):
     """
@@ -63,14 +63,19 @@ def validate_workspace(ctx, mets_url=None):
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download-all', is_flag=True, default=False, help="Whether to download all files into the workspace")
 @click.argument('mets_url', "METS URL to create workspace for")
+@click.argument('workspace_dir', "Directory to clone to. If not given, a temporary directory.", default=None, required=False)
 @pass_workspace
-def workspace_clone(ctx, mets_url, clobber_mets, download_all):
+def workspace_clone(ctx, clobber_mets, download_all, mets_url, workspace_dir):
     """
     Create a workspace from a METS URL and return the directory
+
+    METS_URL can be a URL, an absolute path or a path relative to $PWD.
+
+    If WORKSPACE_DIR is not provided, creates a temporary directory.
     """
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
-        directory=ctx.directory,
+        directory=os.path.abspath(workspace_dir) if workspace_dir else None,
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download_all=download_all
