@@ -124,7 +124,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_fi
 
 @workspace_cli.command('find', help="""
 
-    Find files
+    Find files.
 
 """)
 @click.option('-G', '--file-grp', help="fileGrp USE")
@@ -139,16 +139,16 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_fi
     'basename_without_extension',
     'local_filename',
 ]))
-@click.option('-a', '--download-all', is_flag=True, help="Whether to download found files")
+@click.option('--download', is_flag=True, help="Download found files")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, group_id, output_field, download_all):
+def workspace_find(ctx, file_grp, mimetype, group_id, output_field, download):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     for f in workspace.mets.find_files(
             fileGrp=file_grp,
             mimetype=mimetype,
             groupId=group_id,
         ):
-        if download_all:
+        if download:
             workspace.download_file(f)
         print(getattr(f, output_field))
 
