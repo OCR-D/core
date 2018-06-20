@@ -181,7 +181,7 @@ class Resolver(object):
 
         return outfilename
 
-    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename='mets.xml', download_all=False):
+    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename='mets.xml', download=False, download_local=False):
         """
         Create a workspace from a METS by URL.
 
@@ -210,11 +210,13 @@ class Resolver(object):
 
         workspace = Workspace(self, directory)
 
-        if download_all:
-            for fileGrp in workspace.mets.file_groups:
-                workspace.download_files_in_group(fileGrp)
-                #  for f in workspace.mets.find_files(fileGrp=fileGrp):
-                #      workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+        if download_local or download:
+            for file_grp in workspace.mets.file_groups:
+                if download_local:
+                    for f in workspace.mets.find_files(fileGrp=file_grp, local_only=True):
+                        workspace.download_file(f, subdir=file_grp)
+                else:
+                    workspace.download_files_in_group(file_grp)
 
         return workspace
 

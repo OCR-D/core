@@ -36,7 +36,7 @@ class OcrdMets(OcrdXmlDocument):
     def file_groups(self):
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
-    def find_files(self, ID=None, fileGrp=None, groupId=None, mimetype=None):
+    def find_files(self, ID=None, fileGrp=None, groupId=None, mimetype=None, local_only=False):
         """
         List files.
 
@@ -45,6 +45,7 @@ class OcrdMets(OcrdXmlDocument):
             fileGrp (string) : USE of the fileGrp to list files of
             groupId (string) : GROUPID of matching files
             mimetype (string) : MIMETYPE of matching files
+            local (boolean) : Whether to restrict results to local files, i.e. file://-URL
 
         Return:
             List of files.
@@ -58,12 +59,19 @@ class OcrdMets(OcrdXmlDocument):
             file_clause += '[@GROUPID="%s"]' % groupId
         if mimetype is not None:
             file_clause += '[@MIMETYPE="%s"]' % mimetype
+        # TODO lxml says invalid predicate. I disagree
+        #  if local_only:
+        #      file_clause += "[mets:FLocat[starts-with(@xlink:href, 'file://')]]"
 
         file_els = self._tree.getroot().findall(".//mets:fileGrp%s/mets:file%s" % (fileGrp_clause, file_clause), NS)
         for el in file_els:
             file_id = el.get('ID')
             if file_id not in self._file_by_id:
                 self._file_by_id[file_id] = OcrdFile(el)
+            if local_only:
+                url = el.find('mets:FLocat', NS).get('{%s}href' % NS['xlink'])
+                if not url.startswith('file://'):
+                    continue
             ret.append(self._file_by_id[file_id])
         return ret
 

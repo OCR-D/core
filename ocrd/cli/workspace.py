@@ -61,11 +61,12 @@ def validate_workspace(ctx, mets_url=None):
 
 @workspace_cli.command('clone')
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
-@click.option('-a', '--download-all', is_flag=True, default=False, help="Whether to download all files into the workspace")
+@click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
+@click.option('-l', '--download-local', is_flag=True, help="Copy all local files to workspace and change location in METS file after cloning")
 @click.argument('mets_url', "METS URL to create workspace for")
 @click.argument('workspace_dir', "Directory to clone to. If not given, a temporary directory.", default=None, required=False)
 @pass_workspace
-def workspace_clone(ctx, clobber_mets, download_all, mets_url, workspace_dir):
+def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, workspace_dir):
     """
     Create a workspace from a METS URL and return the directory
 
@@ -78,7 +79,8 @@ def workspace_clone(ctx, clobber_mets, download_all, mets_url, workspace_dir):
         directory=os.path.abspath(workspace_dir) if workspace_dir else None,
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
-        download_all=download_all
+        download=download,
+        download_local=download_local,
     )
     workspace.save_mets()
     print(workspace.directory)
@@ -135,15 +137,12 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filenam
 # ocrd workspace find
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('find', help="""
-
-    Find files.
-
-""")
+@workspace_cli.command('find')
 @click.option('-G', '--file-grp', help="fileGrp USE")
 @click.option('-m', '--mimetype', help="Media type to look for")
 @click.option('-g', '--group-id', help="GROUPID")
 @click.option('-i', '--file-id', help="ID")
+@click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
 @click.option('-k', '--output-field', help="Output field", default='url', type=click.Choice([
     'url',
     'mimetype',
@@ -153,13 +152,17 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filenam
     'basename_without_extension',
     'local_filename',
 ]))
-@click.option('--download', is_flag=True, help="Download found files")
+@click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, group_id, file_id, output_field, download):
+def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, output_field, download):
+    """
+    Find files.
+    """
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     for f in workspace.mets.find_files(
             ID=file_id,
             fileGrp=file_grp,
+            local_only=local_only,
             mimetype=mimetype,
             groupId=group_id,
         ):
