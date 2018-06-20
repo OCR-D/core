@@ -20,14 +20,15 @@ class Workspace(object):
 
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
+        mets_basename (string) : Basename of the METS XML file. Default: mets.xml
     """
 
-    def __init__(self, resolver, directory, mets=None):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml'):
         self.resolver = resolver
         self.directory = directory
-        self.mets_filename = os.path.join(directory, 'mets.xml')
+        self.mets_target = os.path.join(directory, mets_basename)
         if mets is None:
-            mets = OcrdMets(filename=self.mets_filename)
+            mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
@@ -47,7 +48,7 @@ class Workspace(object):
         """
         Reload METS from disk.
         """
-        self.mets = OcrdMets(filename=self.mets_filename)
+        self.mets = OcrdMets(filename=self.mets_target)
 
     def download_url(self, url, **kwargs):
         """
@@ -106,13 +107,15 @@ class Workspace(object):
         if 'url' not in kwargs:
             kwargs['url'] = 'file://' + local_filename
 
-        self.mets.add_file(file_grp, local_filename=local_filename, **kwargs)
+        ret = self.mets.add_file(file_grp, local_filename=local_filename, **kwargs)
 
         if content is not None:
             with open(local_filename, 'wb') as f:
                 if sys.version_info >= (3, 0) and isinstance(content, str):
                     content = bytes(content, 'utf-8')
                 f.write(content)
+
+        return ret
 
     def move_file(self, fobj, dst):
         """
@@ -132,7 +135,7 @@ class Workspace(object):
         """
         Write out the current state of the METS file.
         """
-        with open(self.mets_filename, 'wb') as f:
+        with open(self.mets_target, 'wb') as f:
             f.write(self.mets.to_xml(xmllint=True))
 
     def resolve_image_exif(self, image_url):

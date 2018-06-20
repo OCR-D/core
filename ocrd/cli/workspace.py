@@ -4,12 +4,16 @@ import sys
 import click
 
 from ocrd import Resolver, WorkspaceValidator, Workspace
+from ocrd.utils import getLogger
+
+log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx(object):
 
-    def __init__(self, directory, cache_enabled):
+    def __init__(self, directory, mets_basename, cache_enabled):
         self.directory = directory
         self.resolver = Resolver(cache_enabled=cache_enabled)
+        self.mets_basename = mets_basename
         self.config = {}
         self.verbose = False
 
@@ -19,38 +23,18 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 # ocrd workspace
 # ----------------------------------------------------------------------
 
-@click.group("workspace", help="Working with workspace")
-@click.option(
-    '-d',
-    '--directory',
-    envvar='WORKSPACE_DIR',
-    default=os.path.abspath('.'),
-    type=click.Path(file_okay=False),
-    metavar='PATH',
-    help='Changes the repository folder location.'
-)
-@click.option(
-    '-c',
-    '--config',
-    nargs=2,
-    multiple=True,
-    metavar='KEY VALUE',
-    help='Overrides a config key/value pair.'
-)
-@click.option(
-    '-v',
-    '--verbose',
-    is_flag=True,
-    help='Enables verbose mode.'
-)
-@click.option(
-    '--no-cache',
-    is_flag=True,
-    help='Disables caching of assets.'
-)
+@click.group("workspace")
+@click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the repository folder location.', show_default=True)
+@click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
+@click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
+@click.option('--cache-enabled', is_flag=True, help='Enable aggressive caching of assets.', default=False)
 @click.pass_context
-def workspace_cli(ctx, directory, config, verbose, no_cache):
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), cache_enabled=not no_cache)
+def workspace_cli(ctx, directory, mets_basename, config, verbose, cache_enabled):
+    """
+    Working with workspace
+    """
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, cache_enabled=cache_enabled)
     ctx.obj.verbose = verbose
     for key, value in config:
         ctx.obj.config[key] = value
@@ -64,12 +48,9 @@ def workspace_cli(ctx, directory, config, verbose, no_cache):
     Validate a workspace
 
 ''')
-@click.option('-m', '--mets-url', help="METS URL to validate")
 @pass_workspace
 def validate_workspace(ctx, mets_url=None):
-    if mets_url is None:
-        mets_url = 'file://%s/mets.xml' % ctx.directory
-    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url)
+    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, directory=ctx.directory)
     print(report.to_xml())
     if not report.is_valid:
         sys.exit(128)
@@ -78,21 +59,29 @@ def validate_workspace(ctx, mets_url=None):
 # ocrd workspace clone
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('clone', help="""
-
+@workspace_cli.command('clone')
+@click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
+@click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
+@click.option('-l', '--download-local', is_flag=True, help="Copy all local files to workspace and change location in METS file after cloning")
+@click.argument('mets_url', "METS URL to create workspace for")
+@click.argument('workspace_dir', "Directory to clone to. If not given, a temporary directory.", default=None, required=False)
+@pass_workspace
+def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, workspace_dir):
+    """
     Create a workspace from a METS URL and return the directory
 
-""")
-@click.option('-m', '--mets-url', help="METS URL to create workspace for", required=True)
-@click.option('-a', '--download-all', is_flag=True, default=False, help="Whether to download all files into the workspace")
-@pass_workspace
-def workspace_clone(ctx, mets_url, download_all):
-    workspace = ctx.resolver.workspace_from_url(mets_url)
-    if download_all:
-        for fileGrp in workspace.mets.file_groups:
-            workspace.download_files_in_group(fileGrp)
-            #  for f in workspace.mets.find_files(fileGrp=fileGrp):
-            #      workspace.download_file(f, subdir=fileGrp, basename=f.ID)
+    METS_URL can be a URL, an absolute path or a path relative to $PWD.
+
+    If WORKSPACE_DIR is not provided, creates a temporary directory.
+    """
+    workspace = ctx.resolver.workspace_from_url(
+        mets_url,
+        directory=os.path.abspath(workspace_dir) if workspace_dir else None,
+        mets_basename=ctx.mets_basename,
+        clobber_mets=clobber_mets,
+        download=download,
+        download_local=download_local,
+    )
     workspace.save_mets()
     print(workspace.directory)
 
@@ -100,15 +89,14 @@ def workspace_clone(ctx, mets_url, download_all):
 # ocrd workspace create
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('create', help="""
-
-    Create a workspace with an empty METS file.
-
-""")
-@click.option('-f', '--force', help="Clobber mets.xml if it exists", is_flag=True, default=False)
+@workspace_cli.command('create')
+@click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
 @pass_workspace
-def workspace_create(ctx, force):
-    workspace = ctx.resolver.workspace_from_nothing(directory=ctx.directory, clobber_mets=force)
+def workspace_create(ctx, clobber_mets):
+    """
+    Create a workspace with an empty METS file.
+    """
+    workspace = ctx.resolver.workspace_from_nothing(directory=ctx.directory, mets_basename=ctx.mets_basename, clobber_mets=clobber_mets)
     workspace.save_mets()
     print(workspace.directory)
 
@@ -116,25 +104,30 @@ def workspace_create(ctx, force):
 # ocrd workspace add
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('add', help="""
-
-    Add a file to METS in a workspace.
-
-""")
+@workspace_cli.command('add')
 @click.option('-G', '--file-grp', help="fileGrp USE", required=True)
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
-@click.option('-u', '--url', help="url", default="file://local_filename")
 @click.option('-g', '--group-id', help="GROUPID")
-@click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
+@click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_filename):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filename):
+    """
+    Add a file to METS in a workspace.
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+
+    if not local_filename.startswith(ctx.directory):
+        log.debug("File '%s' is not in repository, copying", local_filename)
+        local_filename = ctx.resolver.download_to_directory(ctx.directory, "file://" + local_filename, subdir=file_grp)
+
+    url = "file://" + local_filename
+
     workspace.mets.add_file(
         fileGrp=file_grp,
         ID=file_id,
         mimetype=mimetype,
-        url="file://" + local_filename,
+        url=url,
         groupId=group_id,
         local_filename=local_filename
     )
@@ -144,14 +137,12 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_fi
 # ocrd workspace find
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('find', help="""
-
-    Find files
-
-""")
+@workspace_cli.command('find')
 @click.option('-G', '--file-grp', help="fileGrp USE")
 @click.option('-m', '--mimetype', help="Media type to look for")
 @click.option('-g', '--group-id', help="GROUPID")
+@click.option('-i', '--file-id', help="ID")
+@click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
 @click.option('-k', '--output-field', help="Output field", default='url', type=click.Choice([
     'url',
     'mimetype',
@@ -161,16 +152,21 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, url, group_id, local_fi
     'basename_without_extension',
     'local_filename',
 ]))
-@click.option('-a', '--download-all', is_flag=True, help="Whether to download found files")
+@click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, group_id, output_field, download_all):
+def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, output_field, download):
+    """
+    Find files.
+    """
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     for f in workspace.mets.find_files(
+            ID=file_id,
             fileGrp=file_grp,
+            local_only=local_only,
             mimetype=mimetype,
             groupId=group_id,
         ):
-        if download_all:
+        if download:
             workspace.download_file(f)
         print(getattr(f, output_field))
 
@@ -210,11 +206,15 @@ def get_id(ctx):
 
 @workspace_cli.command('set-id', help="""
 
-    Set METS id
+    Set METS ID.
 
+    If one of the supported identifier mechanisms is used, will set this identifier.
+
+    Otherwise will create a new <mods:identifier type="purl">{{ ID }}</mods:identifier>.
 """)
 @click.argument('ID', "Identifier")
 @pass_workspace
+
 def set_id(ctx, ID):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace.mets.unique_identifier = ID

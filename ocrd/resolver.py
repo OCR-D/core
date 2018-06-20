@@ -181,23 +181,46 @@ class Resolver(object):
 
         return outfilename
 
-    def workspace_from_url(self, mets_url, directory=None):
+    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename='mets.xml', download=False, download_local=False):
         """
         Create a workspace from a METS by URL.
 
         Sets the mets.xml file
         """
         if mets_url is None:
-            raise Exception("Must pass mets_url to workspace_from_url")
+            if directory is None:
+                raise Exception("Must pass mets_url and/or directory to workspace_from_url")
+            else:
+                mets_url = 'file://%s/%s' % (directory, mets_basename)
         if mets_url.find('://') == -1:
-            mets_url = 'file://' + mets_url
+            mets_url = 'file://' + os.path.abspath(mets_url)
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
-        self.download_to_directory(directory, mets_url, basename='mets.xml', prefer_symlink=False)
-        return Workspace(self, directory)
+            log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
 
-    def workspace_from_nothing(self, directory, clobber_mets=False):
+        mets_fpath = os.path.join(directory, mets_basename)
+        log.debug("Using existing workspace '%s'", mets_fpath)
+        if 'file://' + mets_fpath == mets_url:
+            log.debug("Target and source mets are identical")
+        else:
+            if os.path.exists(mets_fpath) and not clobber_mets:
+                raise Exception("File '%s' already exists but clobber_mets is false" % mets_fpath)
+            else:
+                self.download_to_directory(directory, mets_url, basename=mets_basename, prefer_symlink=False)
+
+        workspace = Workspace(self, directory)
+
+        if download_local or download:
+            for file_grp in workspace.mets.file_groups:
+                if download_local:
+                    for f in workspace.mets.find_files(fileGrp=file_grp, local_only=True):
+                        workspace.download_file(f, subdir=file_grp)
+                else:
+                    workspace.download_files_in_group(file_grp)
+
+        return workspace
+
+    def workspace_from_nothing(self, directory, mets_basename='mets.xml', clobber_mets=False):
         """
         Create an empty workspace.
         """
@@ -206,7 +229,7 @@ class Resolver(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        mets_fpath = os.path.join(directory, 'mets.xml')
+        mets_fpath = os.path.join(directory, mets_basename)
         if not clobber_mets and os.path.exists(mets_fpath):
             raise Exception("Not clobbering existing mets.xml in '%s'." % directory)
         mets = OcrdMets(content=METS_XML_EMPTY)
