@@ -28,13 +28,13 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
 @click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
 @click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
-@click.option('--no-cache', is_flag=True, help='Disables caching of assets.')
+@click.option('--enable-cache', is_flag=True, help='Enable aggressive caching of assets.', default=False)
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename, config, verbose, no_cache):
+def workspace_cli(ctx, directory, mets_basename, config, verbose, cache_enabled):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, cache_enabled=not no_cache)
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, cache_enabled=cache_enabled)
     ctx.obj.verbose = verbose
     for key, value in config:
         ctx.obj.config[key] = value
