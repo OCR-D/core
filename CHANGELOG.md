@@ -5,7 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## TODO
 
-## [0.3.2] - 2018-06-19
+## [0.4.0] - 2018-06-18
+
+Changed:
+
+  * Caching is disabled by default
 
 Added:
 
@@ -13,6 +17,12 @@ Added:
   * API: `OcrdMets` getters/setters for `unique_identifier`
   * CLI: `ocrd workspace set-id MODS_IDENTIFIER_PURL` to set mods:identifier
   * CLI: `ocrd workspace get-id` to get mods:identifier
+  * CLI: `ocrd workspace clone` syntax changed
+  * CLI: `ocrd workspace clone/find` support downloading files
+  * CLI: `ocrd workspace find -L` for local files
+  * CLI: `ocrd workspace find -i ID` to search by ID
+
+## [0.3.2] - 2018-06-19
 
 Fixed:
 
@@ -144,6 +154,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.4.0]: ../../compare/v0.4.0...v0.3.2
 [0.3.2]: ../../compare/v0.3.2...v0.3.1
 [0.3.1]: ../../compare/v0.3.1...v0.3.0
 [0.3.0]: ../../compare/v0.3.0...v0.2.5
