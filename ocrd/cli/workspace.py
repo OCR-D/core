@@ -203,11 +203,15 @@ def get_id(ctx):
 
 @workspace_cli.command('set-id', help="""
 
-    Set METS id
+    Set METS ID.
 
+    If one of the supported identifier mechanisms is used, will set this identifier.
+
+    Otherwise will create a new <mods:identifier type="purl">{{ ID }}</mods:identifier>.
 """)
 @click.argument('ID', "Identifier")
 @pass_workspace
+
 def set_id(ctx, ID):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace.mets.unique_identifier = ID
