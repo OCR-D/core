@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## TODO
 
+## Unreleased
+
+Changed:
+  
+  * CLI: rename `workspace create` -> `workspace init` and align with clone syntax
+
 ## [0.4.0] - 2018-06-18
 
 Changed:
