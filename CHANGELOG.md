@@ -3,7 +3,13 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
-## TODO
+## Unreleased
+
+## [0.4.1] - 2018-06-22
+
+Changed:
+
+  * CLI: rename `workspace create` -> `workspace init` and align with clone syntax
 
 ## [0.4.0] - 2018-06-18
 
@@ -154,6 +160,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.4.1]: ../../compare/v0.4.1...v0.4.0
 [0.4.0]: ../../compare/v0.4.0...v0.3.2
 [0.3.2]: ../../compare/v0.3.2...v0.3.1
 [0.3.1]: ../../compare/v0.3.1...v0.3.0

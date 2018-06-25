@@ -86,17 +86,22 @@ def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, works
     print(workspace.directory)
 
 # ----------------------------------------------------------------------
-# ocrd workspace create
+# ocrd workspace init
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('create')
+@workspace_cli.command('init')
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
+@click.argument('directory', "Directory to create. Use '.' for $PWD", required=True)
 @pass_workspace
-def workspace_create(ctx, clobber_mets):
+def workspace_create(ctx, clobber_mets, directory):
     """
     Create a workspace with an empty METS file.
     """
-    workspace = ctx.resolver.workspace_from_nothing(directory=ctx.directory, mets_basename=ctx.mets_basename, clobber_mets=clobber_mets)
+    workspace = ctx.resolver.workspace_from_nothing(
+        directory=os.path.abspath(directory),
+        mets_basename=ctx.mets_basename,
+        clobber_mets=clobber_mets
+    )
     workspace.save_mets()
     print(workspace.directory)
 
