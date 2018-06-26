@@ -3,7 +3,7 @@
 ## Expects an associative array ("hash"/"dict") `argv` to be defined:
 ## 
 ## ```sh
-## declare -A argv
+## declare -A argv=()
 ## ```
 ocrd__parse_argv () {
 

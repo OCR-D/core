@@ -38,7 +38,7 @@ export OCRD_TOOL_JSON=/path/to/ocrd-tool.json
 Expects an associative array ("hash"/"dict") `args` to be defined:
 
 ```sh
-declare -A args
+declare -A args=()
 ```
 
 <!-- END-RENDER -->
