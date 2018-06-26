@@ -103,7 +103,13 @@ ocrd__parse_argv () {
         argv[output_file_grp]="OCR-D-TEXT"
     fi
 
-    eval `ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" parse-params -p "${argv[parameter]}"`
+    local params_parsed=$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${argv[parameter]}")
+    if [[ $? != 0 ]];then
+        echo "Error: Failed to parse parameters:"
+        echo "$params_parsed"
+        exit 42
+    fi
+    eval "$params_parsed"
 
 }
 
