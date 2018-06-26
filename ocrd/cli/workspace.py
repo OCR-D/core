@@ -148,15 +148,18 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filenam
 @click.option('-g', '--group-id', help="GROUPID")
 @click.option('-i', '--file-id', help="ID")
 @click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
-@click.option('-k', '--output-field', help="Output field", default='url', type=click.Choice([
-    'url',
-    'mimetype',
-    'groupId',
-    'ID',
-    'basename',
-    'basename_without_extension',
-    'local_filename',
-]))
+@click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
+        default='url',
+        multiple=True,
+        type=click.Choice([
+            'url',
+            'mimetype',
+            'groupId',
+            'ID',
+            'basename',
+            'basename_without_extension',
+            'local_filename',
+        ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
 @pass_workspace
 def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, output_field, download):
@@ -173,7 +176,9 @@ def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, outpu
         ):
         if download:
             workspace.download_file(f)
-        print(getattr(f, output_field))
+        #  print(output_field, file=sys.stderr)
+        ret = '\t'.join([getattr(f, field) for field in output_field])
+        print(ret)
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-group
