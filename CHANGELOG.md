@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * bash 4.3 compat fixes, #131
+  * `ocrd workspace find` default was wrong, #130
+
 ## [0.4.2] - 2018-06-25
 
 Added:

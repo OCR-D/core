@@ -149,7 +149,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filenam
 @click.option('-i', '--file-id', help="ID")
 @click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
-        default='url',
+        default=['url'],
         multiple=True,
         type=click.Choice([
             'url',
