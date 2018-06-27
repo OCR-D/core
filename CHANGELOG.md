@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.4.3] - 2018-06-27
+
 Fixed:
 
   * bash 4.3 compat fixes, #131
@@ -176,6 +178,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.4.3]: ../../compare/v0.4.3...v0.4.2
+[0.4.2]: ../../compare/v0.4.2...v0.4.1
 [0.4.2]: ../../compare/v0.4.2...v0.4.1
 [0.4.1]: ../../compare/v0.4.1...v0.4.0
 [0.4.0]: ../../compare/v0.4.0...v0.3.2
