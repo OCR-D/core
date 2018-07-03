@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.4.4] - 2018-07-03
+
 Fixes:
 
   * CLI: `-k` on `workspace find` for non-existant fields, #133
@@ -187,6 +189,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.4.4]: ../../compare/v0.4.4...v0.4.3
 [0.4.3]: ../../compare/v0.4.3...v0.4.2
 [0.4.2]: ../../compare/v0.4.2...v0.4.1
 [0.4.2]: ../../compare/v0.4.2...v0.4.1
