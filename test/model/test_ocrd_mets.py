@@ -51,8 +51,11 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f.ID, 'best-id-ever', "ID kept")
         with self.assertRaises(Exception) as cm:
             self.mets.add_file('OUTPUT', ID='best-id-ever')
-        self.assertEquals(str(cm.exception), "File with ID='best-id-ever' already exists")
+        self.assertEqual(str(cm.exception), "File with ID='best-id-ever' already exists")
 
+    def test_filegrp_from_file(self):
+        f = self.mets.find_files(fileGrp='OCR-D-IMG')[0]
+        self.assertEqual(f.fileGrp, 'OCR-D-IMG')
 
     def test_file_groupid(self):
         f = self.mets.find_files()[0]

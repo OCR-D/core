@@ -69,6 +69,13 @@ class OcrdFile(object):
     def mimetype(self):
         return self._el.get('MIMETYPE')
 
+    @property
+    def fileGrp(self):
+        """
+        The ``USE`` attribute of the parent ``mets:fileGrp``
+        """
+        return self._el.getparent().get('USE')
+
     @mimetype.setter
     def mimetype(self, mimetype):
         if mimetype is None:
