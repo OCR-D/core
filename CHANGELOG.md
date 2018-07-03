@@ -9,6 +9,10 @@ Fixes:
 
   * CLI: `-k` on `workspace find` for non-existant fields, #133
   * CLI: Persist downloads in METS, #136
+  * CLI: `workspace find --download` will download to subdir of fileGrp, #137
+
+Added:
+  * `OcrdFile` has getter `fileGrp` for the `USE` attribute of parent `mets:fileGrp`, #139
 
 ## [0.4.3] - 2018-06-27
 
