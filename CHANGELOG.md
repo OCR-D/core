@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * EXIF supports JFIF metadata, #141
+
 ## [0.4.4] - 2018-07-03
 
 Fixes:
