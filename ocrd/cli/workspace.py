@@ -177,7 +177,7 @@ def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, outpu
         if download:
             workspace.download_file(f)
         #  print(output_field, file=sys.stderr)
-        ret = '\t'.join([getattr(f, field) for field in output_field])
+        ret = '\t'.join([getattr(f, field) or '' for field in output_field])
         print(ret)
 
 # ----------------------------------------------------------------------
