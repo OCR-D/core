@@ -80,10 +80,16 @@ class OcrdExif(object):
             return OcrdExif(exif_props)
 
     def __init__(self, props):
-        self.width = props["EXIF:ImageWidth"] if "EXIF:ImageWidth" in props else props["PNG:ImageWidth"]
-        self.height = props["EXIF:ImageHeight"] if "EXIF:ImageHeight" in props else props["PNG:ImageHeight"]
-        self.xResolution = props["EXIF:XResolution"] if "EXIF:XResolution" in props else 0
-        self.yResolution = props["EXIF:YResolution"] if "EXIF:YResolution" in props else 0
+        for selfattr in ['width', 'height', 'xResolution', 'yResolution']:
+            for prefix in ['EXIF', 'File', 'PNG', 'JFIF']:
+                prop = "%s:Image%s" % (prefix, selfattr[0].upper() + selfattr[1:])
+                if prop in props:
+                    setattr(self, selfattr, props[prop])
+        for requiredattr in ['width', 'height']:
+            if getattr(self, requiredattr) is None:
+                raise Exception("Failed to determine image %s" % requiredattr)
+        setattr(self, 'xResolution', getattr(self, 'xResolution', 0))
+        setattr(self, 'yResolution', getattr(self, 'yResolution', 0))
         if "EXIF:Compression" in props:
             self.compression = EXIF_COMPRESSION_METHODS.get(props["EXIF:Compression"], "Unknown")
         if "EXIF:PhotometricInterpretation" in props:
