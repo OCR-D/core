@@ -179,6 +179,8 @@ def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, outpu
         #  print(output_field, file=sys.stderr)
         ret = '\t'.join([getattr(f, field) or '' for field in output_field])
         print(ret)
+    if download:
+        workspace.save_mets()
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-group
