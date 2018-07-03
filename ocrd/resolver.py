@@ -139,6 +139,7 @@ class Resolver(object):
             Local filename
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
+        #  log.debug("url=|%s| subdir=|%s| overwrite=|%s|", url, subdir, overwrite)
         if basename is None:
             if subdir is not None:
                 basename = url.rsplit('/', 1)[-1]

@@ -83,6 +83,7 @@ def xmllint_format(xml):
     return output
 
 def is_string(val):
+    # pylint: disable=undefined-variable
     return isinstance(val, (str, unicode)) if sys.version_info < (3, 0) else isinstance(val, str)
 
 def concat_padded(base, *args):
