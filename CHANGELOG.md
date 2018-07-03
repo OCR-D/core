@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixes:
+
+  * CLI: `-k` on `workspace find` for non-existant fields, #133
+  * CLI: Persist downloads in METS, #136
+
 ## [0.4.3] - 2018-06-27
 
 Fixed:
