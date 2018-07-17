@@ -15,8 +15,7 @@ ocrd__parse_argv () {
         ocrd__raise "Must set \$params (declare -A params)"
     fi
 
-
-    while [[ "$1" = -* ]];do
+    while [[ "${1:-}" = -* ]];do
         case "$1" in
             -l|--log-level) argv['log_level']=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
@@ -33,19 +32,23 @@ ocrd__parse_argv () {
         shift
     done
 
-    if [[ "${argv[mets_file]}" = "" ]];then
+    if [[ "${argv[mets_file]:-}" = "" ]];then
         ocrd__raise "Option -m/--mets-file required"
     fi
 
-    if [[ "${argv[log_level]}" = "" ]];then
+    if [[ "${argv[working_dir]:-}" = "" ]];then
+        argv[working_dir]=$(dirname "${argv[mets_file]}")
+    fi
+
+    if [[ "${argv[log_level]:-}" = "" ]];then
         argv[log_level]="INFO"
     fi
 
-    if [[ "${argv[input_file_grp]}" = "" ]];then
+    if [[ "${argv[input_file_grp]:-}" = "" ]];then
         argv[input_file_grp]="OCR-D-IMG"
     fi
 
-    if [[ "${argv[output_file_grp]}" = "" ]];then
+    if [[ "${argv[output_file_grp]:-}" = "" ]];then
         argv[output_file_grp]="OCR-D-TEXT"
     fi
 
