@@ -9,6 +9,10 @@ Fixed:
 
   * EXIF supports JFIF metadata, #141
 
+Changed:
+
+  * sh wrapper: set `working_dir` always, default to `$PWD`
+
 ## [0.4.4] - 2018-07-03
 
 Fixes:
