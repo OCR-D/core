@@ -24,7 +24,7 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 # ----------------------------------------------------------------------
 
 @click.group("workspace")
-@click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the repository folder location.', show_default=True)
+@click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
 @click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
 @click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
 @click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
@@ -123,7 +123,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, local_filenam
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
 
     if not local_filename.startswith(ctx.directory):
-        log.debug("File '%s' is not in repository, copying", local_filename)
+        log.debug("File '%s' is not in workspace, copying", local_filename)
         local_filename = ctx.resolver.download_to_directory(ctx.directory, "file://" + local_filename, subdir=file_grp)
 
     url = "file://" + local_filename

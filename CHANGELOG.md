@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * EXIF supports JFIF metadata, #141
+  * typo: repository -> workspace
 
 Changed:
 
