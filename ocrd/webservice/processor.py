@@ -6,7 +6,7 @@ from ocrd.processor.base import run_processor
 #  from ocrd.processor.segment_region.tesserocr import Tesseract3RegionSegmenter
 from ocrd.resolver import Resolver
 
-resolver = Resolver(cache_enabled=True)
+resolver = Resolver()
 
 def create():
     app = Flask(__name__)

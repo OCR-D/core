@@ -13,7 +13,7 @@ TEST_ZIP = assets.url_of('test.ocrd.zip')[len('file://'):]
 class TestResolver(TestCase):
 
     def setUp(self):
-        self.resolver = Resolver(cache_enabled=True)
+        self.resolver = Resolver()
         self.folder = os.path.join(TMP_FOLDER, 'kant_aufklaerung_1784')
         if os.path.exists(TMP_FOLDER):
             rmtree(TMP_FOLDER)

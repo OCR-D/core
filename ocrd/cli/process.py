@@ -18,7 +18,7 @@ def process_cli(mets_url, **kwargs):
     """
     Execute OCR-D processors for a METS file directly.
     """
-    resolver = Resolver(cache_enabled=True)
+    resolver = Resolver()
     workspace = resolver.workspace_from_url(mets_url)
 
     cmds = []

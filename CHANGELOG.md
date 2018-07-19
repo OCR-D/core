@@ -13,6 +13,7 @@ Fixed:
 Changed:
 
   * sh wrapper: set `working_dir` always, default to `$PWD`
+  * Drop all caching, #132, #143, #126, #100, #92, #45, #85
 
 ## [0.4.4] - 2018-07-03
 

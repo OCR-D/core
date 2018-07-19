@@ -6,7 +6,6 @@ import requests
 
 from ocrd.constants import METS_XML_EMPTY, TMP_PREFIX, EXT_TO_MIME
 from ocrd.utils import getLogger, safe_filename
-from ocrd.resolver_cache import ResolverCache
 from ocrd.workspace import Workspace
 from ocrd.model import OcrdMets
 
@@ -16,19 +15,15 @@ tempfile.tempdir = '/tmp'
 class Resolver(object):
     """
     Handle Uploads, Downloads, Repository access and manage temporary directories
-    Optionally cache files.
 
     Args:
-        cache_enabled (Boolean): Whether to cache files. If True, passes kwargs to ~ResolverCache.
-        prefer_symlink (Boolean): If True, symlink from cached file to the workspace instead of copying to reduce I/O.
+        prefer_symlink (Boolean): If True, symlink from source file to the workspace instead of copying to reduce I/O.
     """
 
-    def __init__(self, cache_enabled=False, prefer_symlink=False, **kwargs):
+    def __init__(self, prefer_symlink=False):
         """
         """
-        self.cache_enabled = cache_enabled
         self.prefer_symlink = prefer_symlink
-        self.cache = ResolverCache(**kwargs) if cache_enabled else None
 
     def _copy_or_symlink(self, src, dst, prefer_symlink=None):
         if prefer_symlink is None:
@@ -160,25 +155,15 @@ class Resolver(object):
         if not os.path.isdir(outfiledir):
             os.makedirs(outfiledir)
 
-        cached_filename = self.cache.get(url) if self.cache_enabled else False
-
-        if cached_filename:
-            log.debug("Found cached version of <%s> at '%s'", url, cached_filename)
-            self._copy_or_symlink(cached_filename, outfilename, prefer_symlink)
+        log.debug("Downloading <%s> to '%s'", url, outfilename)
+        if url.startswith('file://'):
+            self._copy_or_symlink(url[len('file://'):], outfilename, prefer_symlink)
         else:
-            log.debug("Downloading <%s> to '%s'", url, outfilename)
-            if url.startswith('file://'):
-                self._copy_or_symlink(url[len('file://'):], outfilename, prefer_symlink)
-            else:
-                with open(outfilename, 'wb') as outfile:
-                    response = requests.get(url)
-                    if response.status_code != 200:
-                        raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
-                    outfile.write(response.content)
-
-        if self.cache_enabled and not cached_filename:
-            cached_filename = self.cache.put(url, filename=outfilename)
-            log.debug("Stored in cache <%s> at '%s'", url, cached_filename)
+            with open(outfilename, 'wb') as outfile:
+                response = requests.get(url)
+                if response.status_code != 200:
+                    raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
+                outfile.write(response.content)
 
         return outfilename
 
@@ -274,6 +259,7 @@ class Resolver(object):
 
         return Workspace(self, directory, mets)
 
+    # pylint: disable=too-many-locals
     def add_files_to_mets(self, convention, mets, directory):
         """
         Add files from folder to METS, accoding to a file structure convention.
