@@ -47,11 +47,13 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f.groupId, None, 'No GROUPID')
 
     def test_add_file_ID_fail(self):
-        f = self.mets.add_file('OUTPUT', ID='best-id-ever')
+        f = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
         self.assertEqual(f.ID, 'best-id-ever', "ID kept")
         with self.assertRaises(Exception) as cm:
-            self.mets.add_file('OUTPUT', ID='best-id-ever')
+            self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep")
         self.assertEqual(str(cm.exception), "File with ID='best-id-ever' already exists")
+        f2 = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
+        self.assertEqual(f._el, f2._el)
 
     def test_filegrp_from_file(self):
         f = self.mets.find_files(fileGrp='OCR-D-IMG')[0]
