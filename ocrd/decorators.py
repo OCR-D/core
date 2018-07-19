@@ -6,7 +6,7 @@ from ocrd.constants import VERSION as OCRD_VERSION
 from ocrd.resolver import Resolver
 from ocrd.processor.base import run_processor
 
-def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, cache_enabled=True, dump_json=False, version=False, **kwargs):
+def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
     if dump_json:
         processorClass(workspace=None, dump_json=True)
     elif version:
@@ -19,7 +19,7 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
             mets = 'file://' + mets
         if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
             raise Exception("File does not exist: %s" % mets)
-        resolver = Resolver(cache_enabled=cache_enabled)
+        resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
 

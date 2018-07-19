@@ -18,8 +18,6 @@ MIMETYPE_PAGE = 'application/vnd.prima.page+xml'
 DEFAULT_UPLOAD_FOLDER = '/tmp/uploads-pyocrd'
 DEFAULT_REPOSITORY_URL = 'http://localhost:5000/'
 
-DEFAULT_CACHE_FOLDER = '/tmp/cache-pyocrd'
-
 FILE_GROUP_PREFIX = 'OCR-D-'
 FILE_GROUP_CATEGORIES = ['IMG', 'SEG', 'OCR', 'COR', 'GT']
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']

@@ -10,9 +10,9 @@ log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx(object):
 
-    def __init__(self, directory, mets_basename, cache_enabled):
+    def __init__(self, directory, mets_basename):
         self.directory = directory
-        self.resolver = Resolver(cache_enabled=cache_enabled)
+        self.resolver = Resolver()
         self.mets_basename = mets_basename
         self.config = {}
         self.verbose = False
@@ -28,13 +28,12 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
 @click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
 @click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
-@click.option('--cache-enabled', is_flag=True, help='Enable aggressive caching of assets.', default=False)
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename, config, verbose, cache_enabled):
+def workspace_cli(ctx, directory, mets_basename, config, verbose):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, cache_enabled=cache_enabled)
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename)
     ctx.obj.verbose = verbose
     for key, value in config:
         ctx.obj.config[key] = value

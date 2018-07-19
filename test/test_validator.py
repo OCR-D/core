@@ -13,7 +13,7 @@ METS_HEROLD_SMALL = assets.url_of('SBB0000F29300010000/mets_one_file.xml')
 class TestValidationReport(TestCase):
 
     def setUp(self):
-        self.resolver = Resolver(cache_enabled=True)
+        self.resolver = Resolver()
 
     def runTest(self):
         report = ValidationReport()
@@ -29,7 +29,7 @@ class TestValidationReport(TestCase):
 class TestWorkspaceValidator(TestCase):
 
     def setUp(self):
-        self.resolver = Resolver(cache_enabled=True)
+        self.resolver = Resolver()
 
     def runTest(self):
         report = WorkspaceValidator.validate_url(self.resolver, METS_HEROLD_SMALL)
