@@ -80,14 +80,16 @@ class OcrdMets(OcrdXmlDocument):
         el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, groupId=None, local_filename=None):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, groupId=None, force=False, local_filename=None):
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
-        if ID is not None:
-            if self.find_files(ID=ID) != []:
+        if ID is not None and self.find_files(ID=ID) != []:
+            if not force:
                 raise Exception("File with ID='%s' already exists" % ID)
-        mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE))
+            mets_file = self.find_files(ID=ID)[0]
+        else:
+            mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE))
         mets_file.url = url
         mets_file.groupId = groupId
         mets_file.mimetype = mimetype

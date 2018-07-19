@@ -14,6 +14,10 @@ Changed:
 
   * sh wrapper: set `working_dir` always, default to `$PWD`
 
+Added:
+
+  * CLI: `--force` option for `workspace add` to replace existing ID, #134
+
 ## [0.4.4] - 2018-07-03
 
 Fixes:
