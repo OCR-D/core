@@ -1,3 +1,4 @@
+import os
 import json
 import subprocess
 from ocrd.utils import getLogger
@@ -40,7 +41,10 @@ def run_processor(
         working_dir
     )
     if parameter is not None:
-        fname = workspace.download_url(parameter)
+        if not '://' in parameter:
+            fname = os.path.abspath(parameter)
+        else:
+            fname = workspace.download_url(parameter)
         with open(fname, 'r') as param_json_file:
             parameter = json.load(param_json_file)
     else:
