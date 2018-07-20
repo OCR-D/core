@@ -16,7 +16,7 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
         raise Exception('Error: Missing option "-m" / "--mets".')
     else:
         if mets.find('://') == -1:
-            mets = 'file://' + mets
+            mets = 'file://' + os.path.abspath(mets)
         if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
             raise Exception("File does not exist: %s" % mets)
         resolver = Resolver()
