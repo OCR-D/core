@@ -173,6 +173,8 @@ class Resolver(object):
 
         Sets the mets.xml file
         """
+        if directory is not None and not directory.startswith('/'):
+            directory = os.path.abspath(directory)
         if mets_url is None:
             if directory is None:
                 raise Exception("Must pass mets_url and/or directory to workspace_from_url")
