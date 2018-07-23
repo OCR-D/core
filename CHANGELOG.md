@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.6.0] - 2018-07-23
+
+Changed:
+
+  * Harmonized URL handling according to https://ocr-d.github.io/cli#urlfile-convention / spec v2.2.0
+
 ## [0.5.0] - 2018-07-19
 
 Fixed:
@@ -205,6 +211,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.6.0]: ../../compare/v0.6.0...v0.5.0
 [0.5.0]: ../../compare/v0.5.0...v0.4.4
 [0.4.4]: ../../compare/v0.4.4...v0.4.3
 [0.4.3]: ../../compare/v0.4.3...v0.4.2
