@@ -175,16 +175,26 @@ class Resolver(object):
         """
         if directory is not None and not directory.startswith('/'):
             directory = os.path.abspath(directory)
+
         if mets_url is None:
             if directory is None:
                 raise Exception("Must pass mets_url and/or directory to workspace_from_url")
             else:
                 mets_url = 'file://%s/%s' % (directory, mets_basename)
         if mets_url.find('://') == -1:
-            mets_url = 'file://' + os.path.abspath(mets_url)
+            # resolve to absolute
+            mets_url = os.path.abspath(mets_url)
+            mets_url = 'file://' + mets_url
         if directory is None:
-            directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-            log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
+            # if mets_url is a file-url assume working directory to be  where
+            # the mets.xml resides
+            if mets_url.startswith('file://'):
+                # if directory was not given and mets_url is a file assume that
+                # directory should be the directory where the mets.xml resides
+                directory = os.path.dirname(mets_url[len('file://'):])
+            else:
+                directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
+                log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
 
         mets_fpath = os.path.join(directory, mets_basename)
         log.debug("Using existing workspace '%s'", mets_fpath)
