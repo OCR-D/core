@@ -5,6 +5,17 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.7.0] - 2018-07-25
+
+Changed:
+
+  * Behavior of workspace generation from URL changes (#149)
+    * when cloning from a `file://` URL and no directory is given do NOT create
+      a temporary directory but reuse the existing directory
+    * When not providing `mets_basename`, assume the last URL path segment to be
+      the METS basename instead of the fixed string `mets.xml`
+  * incoroporate changes to ocrd_tool schema from spec/v2.2.1
+
 ## [0.6.0] - 2018-07-23
 
 Changed:
@@ -211,6 +222,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.7.0]: ../../compare/v0.7.0...v0.6.0
 [0.6.0]: ../../compare/v0.6.0...v0.5.0
 [0.5.0]: ../../compare/v0.5.0...v0.4.4
 [0.4.4]: ../../compare/v0.4.4...v0.4.3
