@@ -197,7 +197,7 @@ class Resolver(object):
                 log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
 
         mets_fpath = os.path.join(directory, mets_basename)
-        log.debug("Using existing workspace '%s'", mets_fpath)
+        log.debug("Copying mets url '%s' to '%s'", mets_url, mets_fpath)
         if 'file://' + mets_fpath == mets_url:
             log.debug("Target and source mets are identical")
         else:
