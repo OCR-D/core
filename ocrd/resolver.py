@@ -159,10 +159,10 @@ class Resolver(object):
         if url.startswith('file://'):
             self._copy_or_symlink(url[len('file://'):], outfilename, prefer_symlink)
         else:
+            response = requests.get(url)
+            if response.status_code != 200:
+                raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
             with open(outfilename, 'wb') as outfile:
-                response = requests.get(url)
-                if response.status_code != 200:
-                    raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
                 outfile.write(response.content)
 
         return outfilename
