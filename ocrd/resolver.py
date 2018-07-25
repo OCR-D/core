@@ -167,7 +167,7 @@ class Resolver(object):
 
         return outfilename
 
-    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename='mets.xml', download=False, download_local=False):
+    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename=None, download=False, download_local=False):
         """
         Create a workspace from a METS by URL.
 
@@ -195,6 +195,13 @@ class Resolver(object):
             else:
                 directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
                 log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
+
+        # if mets_basename is not given, use the last URL segment of the mets_url
+        if mets_basename is None:
+            mets_basename = mets_url \
+                .rsplit('/', 1)[-1] \
+                .split('?')[0] \
+                .split('#')[0]
 
         mets_fpath = os.path.join(directory, mets_basename)
         log.debug("Copying mets url '%s' to '%s'", mets_url, mets_fpath)
