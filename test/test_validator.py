@@ -8,7 +8,6 @@ from ocrd.validator import (
     ParameterValidator,
     OcrdToolValidator
 )
-METS_HEROLD_SMALL = assets.url_of('SBB0000F29300010000/mets_one_file.xml')
 
 class TestValidationReport(TestCase):
 
@@ -32,7 +31,7 @@ class TestWorkspaceValidator(TestCase):
         self.resolver = Resolver()
 
     def runTest(self):
-        report = WorkspaceValidator.validate_url(self.resolver, METS_HEROLD_SMALL)
+        report = WorkspaceValidator.validate_url(self.resolver, assets.url_of('SBB0000F29300010000/mets_one_file.xml'))
         print(report.to_xml())
 
 class TestOcrdToolValidator(TestCase):
@@ -41,13 +40,15 @@ class TestOcrdToolValidator(TestCase):
         report = OcrdToolValidator.validate_json(json.loads('''
         {
             "git_url": "https://github.com/ocr-d/foo",
-            "tools": [
-                {
-                    "xxx binary": "foo",
+            "version": "0.0.1",
+            "tools": {
+                "ocrd-xyz": {
+                    "executable": "ocrd-xyz",
                     "description": "bars all the foos",
-                    "category": "preprocess"
+                    "categories": ["Layout analysis"],
+                    "steps": ["layout/analysis"]
                 }
-            ]
+            }
         }
         '''))
         print(report.to_xml())
