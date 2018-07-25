@@ -159,15 +159,15 @@ class Resolver(object):
         if url.startswith('file://'):
             self._copy_or_symlink(url[len('file://'):], outfilename, prefer_symlink)
         else:
+            response = requests.get(url)
+            if response.status_code != 200:
+                raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
             with open(outfilename, 'wb') as outfile:
-                response = requests.get(url)
-                if response.status_code != 200:
-                    raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
                 outfile.write(response.content)
 
         return outfilename
 
-    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename='mets.xml', download=False, download_local=False):
+    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename=None, download=False, download_local=False):
         """
         Create a workspace from a METS by URL.
 
@@ -175,19 +175,36 @@ class Resolver(object):
         """
         if directory is not None and not directory.startswith('/'):
             directory = os.path.abspath(directory)
+
         if mets_url is None:
             if directory is None:
                 raise Exception("Must pass mets_url and/or directory to workspace_from_url")
             else:
                 mets_url = 'file://%s/%s' % (directory, mets_basename)
         if mets_url.find('://') == -1:
-            mets_url = 'file://' + os.path.abspath(mets_url)
+            # resolve to absolute
+            mets_url = os.path.abspath(mets_url)
+            mets_url = 'file://' + mets_url
         if directory is None:
-            directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-            log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
+            # if mets_url is a file-url assume working directory to be  where
+            # the mets.xml resides
+            if mets_url.startswith('file://'):
+                # if directory was not given and mets_url is a file assume that
+                # directory should be the directory where the mets.xml resides
+                directory = os.path.dirname(mets_url[len('file://'):])
+            else:
+                directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
+                log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
+
+        # if mets_basename is not given, use the last URL segment of the mets_url
+        if mets_basename is None:
+            mets_basename = mets_url \
+                .rsplit('/', 1)[-1] \
+                .split('?')[0] \
+                .split('#')[0]
 
         mets_fpath = os.path.join(directory, mets_basename)
-        log.debug("Using existing workspace '%s'", mets_fpath)
+        log.debug("Copying mets url '%s' to '%s'", mets_url, mets_fpath)
         if 'file://' + mets_fpath == mets_url:
             log.debug("Target and source mets are identical")
         else:
@@ -196,7 +213,7 @@ class Resolver(object):
             else:
                 self.download_to_directory(directory, mets_url, basename=mets_basename, prefer_symlink=False)
 
-        workspace = Workspace(self, directory)
+        workspace = Workspace(self, directory, mets_basename=mets_basename)
 
         if download_local or download:
             for file_grp in workspace.mets.file_groups:

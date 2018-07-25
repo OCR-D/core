@@ -20,7 +20,7 @@ class Workspace(object):
 
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
-        mets_basename (string) : Basename of the METS XML file. Default: mets.xml
+        mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
     """
 
     def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml'):
