@@ -213,7 +213,7 @@ class Resolver(object):
             else:
                 self.download_to_directory(directory, mets_url, basename=mets_basename, prefer_symlink=False)
 
-        workspace = Workspace(self, directory)
+        workspace = Workspace(self, directory, mets_basename=mets_basename)
 
         if download_local or download:
             for file_grp in workspace.mets.file_groups:
