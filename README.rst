@@ -21,7 +21,6 @@ To bootstrap the tool, you'll need installed (Ubuntu packages):
 
 * Python (``python``)
 * pip (``python-pip``)
-* exiftool (``libimage-exiftool-perl``)
 * libxml2-utils for xmllint (``libxml2-utils``)
 
 To install system-wide:
