@@ -34,8 +34,8 @@ class OcrdExif(object):
             #  if img.format == 'JPEG2000':
             #      import sys
             #      print('JPEG 2000 not supported yet :(', file=sys.stderr)
-            self.xResolution = -1
-            self.yResolution = -1
+            self.xResolution = 1
+            self.yResolution = 1
             self.resolutionUnit = 'inches'
 
     def to_xml(self):

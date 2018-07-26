@@ -19,8 +19,8 @@ class TestOcrdExif(TestCase):
         exif = OcrdExif.from_filename(assets.path_to('kant_aufklaerung_1784-binarized/kant_aufklaerung_1784_0020.bin.png'))
         self.assertEqual(exif.width, 1457)
         self.assertEqual(exif.height, 2084)
-        self.assertEqual(exif.xResolution, -1)
-        self.assertEqual(exif.yResolution, -1)
+        self.assertEqual(exif.xResolution, 1)
+        self.assertEqual(exif.yResolution, 1)
         self.assertEqual(exif.compression, None)
         self.assertEqual(exif.photometricInterpretation, 'L')
 
@@ -28,8 +28,8 @@ class TestOcrdExif(TestCase):
         exif = OcrdExif.from_filename(assets.path_to('scribo-test/orig.sauvola.png'))
         self.assertEqual(exif.width, 2097)
         self.assertEqual(exif.height, 3062)
-        self.assertEqual(exif.xResolution, -1)
-        self.assertEqual(exif.yResolution, -1)
+        self.assertEqual(exif.xResolution, 1)
+        self.assertEqual(exif.yResolution, 1)
         self.assertEqual(exif.photometricInterpretation, '1')
 
     def test_jpg(self):
@@ -44,8 +44,8 @@ class TestOcrdExif(TestCase):
         exif = OcrdExif.from_filename(assets.path_to('kant_aufklaerung_1784-jp2/kant_aufklaerung_1784_0020.jp2'))
         self.assertEqual(exif.width, 1457)
         self.assertEqual(exif.height, 2084)
-        self.assertEqual(exif.xResolution, -1)
-        self.assertEqual(exif.yResolution, -1)
+        self.assertEqual(exif.xResolution, 1)
+        self.assertEqual(exif.yResolution, 1)
         self.assertEqual(exif.photometricInterpretation, 'RGB')
 
 if __name__ == '__main__':
