@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Remove dependency on `exiftool`, #71, #150
+
 ## [0.7.0] - 2018-07-25
 
 Changed:
