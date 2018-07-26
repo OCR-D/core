@@ -1,14 +1,15 @@
-from test.base import TestCase, main
+from test.base import TestCase, main, assets
 from ocrd.utils import (
     points_from_xywh,
     is_string,
     concat_padded,
     points_from_x0y0x1y1,
     xywh_from_points,
-    polygon_from_points
+    polygon_from_points,
+    xmllint_format
 )
 
-class TestResolver(TestCase):
+class TestUtils(TestCase):
 
     #  def runTest(self):
 
@@ -43,6 +44,13 @@ class TestResolver(TestCase):
     def test_is_string(self):
         self.assertTrue(is_string('x'))
         self.assertTrue(is_string(u'x'))
+
+    #  def test_xmllint(self):
+    #      with open(assets.path_to('page-with-glyphs.xml'), 'rb') as f:
+    #          xml_as_str = f.read()
+    #          pretty_xml = xmllint_format(xml_as_str)
+    #          self.assertEqual(xml_as_str, pretty_xml)
+
 
 if __name__ == '__main__':
     main()
