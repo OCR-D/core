@@ -21,7 +21,6 @@ To bootstrap the tool, you'll need installed (Ubuntu packages):
 
 * Python (``python``)
 * pip (``python-pip``)
-* exiftool (``libimage-exiftool-perl``)
 
 To install system-wide:
 

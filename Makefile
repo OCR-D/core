@@ -40,8 +40,7 @@ DOCKER_TAG = 'ocrd/pyocrd'
 deps-ubuntu:
 	sudo apt install -y \
 		python3 \
-		python3-pip \
-		libimage-exiftool-perl
+		python3-pip
 
 # Install python deps via pip
 deps-pip:

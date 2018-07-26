@@ -24,7 +24,6 @@ setup(
         'jsonschema',
         'lxml',
         'numpy',
-        'ocrd-pyexiftool',
         'opencv-python',
         'pyyaml',
         'requests',

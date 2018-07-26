@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * Remove dependency on `xmllint` command line tool, #72, #151
+  * Remove dependency on `exiftool`, #71, #150
 
 ## [0.7.0] - 2018-07-25
 
