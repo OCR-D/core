@@ -12,7 +12,6 @@ polygon is what opencv2 expects
 
 xywh is what tesserocr expects/produces.
 """
-import subprocess
 import logging
 import re
 import sys
@@ -72,15 +71,14 @@ def polygon_from_points(points):
         polygon.append([float(x_y[0]), float(x_y[1])])
     return polygon
 
-# https://stackoverflow.com/a/10133365/201318
 def xmllint_format(xml):
-    proc = subprocess.Popen(
-        ['xmllint', '--format', '/dev/stdin'],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
+    from lxml import etree as ET
+    parser = ET.XMLParser(resolve_entities=False, strip_cdata=False, remove_blank_text=True)
+    document = ET.fromstring(xml, parser)
+    return '%s\n%s' % (
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        ET.tostring(document, pretty_print=True)
     )
-    output, _ = proc.communicate(xml)
-    return output
 
 def is_string(val):
     # pylint: disable=undefined-variable

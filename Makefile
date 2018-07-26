@@ -41,8 +41,7 @@ deps-ubuntu:
 	sudo apt install -y \
 		python3 \
 		python3-pip \
-		libimage-exiftool-perl \
-		libxml2-utils
+		libimage-exiftool-perl
 
 # Install python deps via pip
 deps-pip:
