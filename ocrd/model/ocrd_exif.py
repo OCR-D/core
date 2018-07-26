@@ -77,14 +77,23 @@ class OcrdExif(object):
             raise Exception("Must pass 'image_filename' to OcrdExif.from_filename")
         with exiftool.ExifTool() as et:
             exif_props = et.get_metadata(image_filename)
+            #  import json
+            #  print(json.dumps(exif_props, indent=2))
             return OcrdExif(exif_props)
 
     def __init__(self, props):
-        for selfattr in ['width', 'height', 'xResolution', 'yResolution']:
-            for prefix in ['EXIF', 'File', 'PNG', 'JFIF']:
+        for selfattr in ['width', 'height']:
+            for prefix in ['EXIF', 'File', 'PNG', 'JFIF', 'Jpeg2000']:
                 prop = "%s:Image%s" % (prefix, selfattr[0].upper() + selfattr[1:])
                 if prop in props:
                     setattr(self, selfattr, props[prop])
+                    break
+        for selfattr in ['XResolution', 'YResolution']:
+            for prefix in ['EXIF', 'File', 'PNG', 'JFIF', 'Jpeg2000']:
+                prop = "%s:%s" % (prefix, selfattr)
+                if prop in props:
+                    setattr(self, selfattr[0].lower() + selfattr[1:], props[prop])
+                    break
         for requiredattr in ['width', 'height']:
             if getattr(self, requiredattr) is None:
                 raise Exception("Failed to determine image %s" % requiredattr)
