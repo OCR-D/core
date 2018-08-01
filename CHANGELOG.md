@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.7.1] - 2019-08-01
+
+Fixed
+
+  * Regression in XML pretty printing, #152
+
 ## [0.7.1] - 2019-07-25
 
 Changed:
