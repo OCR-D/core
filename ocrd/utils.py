@@ -76,10 +76,7 @@ def xmllint_format(xml):
     from lxml import etree as ET
     parser = ET.XMLParser(resolve_entities=False, strip_cdata=False, remove_blank_text=True)
     document = ET.fromstring(xml, parser)
-    return ('%s\n%s' % (
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        ET.tostring(document, pretty_print=True)
-    )).encode('utf-8')
+    return ('%s\n%s' % ('<?xml version="1.0" encoding="UTF-8"?>', ET.tostring(document, pretty_print=True).decode('utf-8'))).encode('utf-8')
 
 def is_string(val):
     # pylint: disable=undefined-variable

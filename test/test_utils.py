@@ -45,11 +45,10 @@ class TestUtils(TestCase):
         self.assertTrue(is_string('x'))
         self.assertTrue(is_string(u'x'))
 
-    #  def test_xmllint(self):
-    #      with open(assets.path_to('page-with-glyphs.xml'), 'rb') as f:
-    #          xml_as_str = f.read()
-    #          pretty_xml = xmllint_format(xml_as_str)
-    #          self.assertEqual(xml_as_str, pretty_xml)
+    def test_xmllint(self):
+        xml_str = '<beep>\n  <boop>42</boop>\n</beep>\n'
+        pretty_xml = xmllint_format(xml_str).decode('utf-8')
+        self.assertEqual(pretty_xml, '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str)
 
 
 if __name__ == '__main__':
