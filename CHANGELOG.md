@@ -5,7 +5,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [0.7.1] - 2019-08-01
+## [0.7.2] - 2019-08-01
 
 Fixed
 
@@ -235,6 +235,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.7.2]: ../../compare/v0.7.2...v0.7.1
 [0.7.1]: ../../compare/v0.7.1...v0.7.0
 [0.7.0]: ../../compare/v0.7.0...v0.6.0
 [0.6.0]: ../../compare/v0.6.0...v0.5.0
