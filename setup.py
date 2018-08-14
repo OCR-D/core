@@ -8,7 +8,7 @@ with codecs.open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='ocrd',
-    version='0.7.2',
+    version='0.7.3',
     description='OCR-D framework',
     long_description=README,
     author='Kay-Michael Würzner, Konstantin Baierer',
