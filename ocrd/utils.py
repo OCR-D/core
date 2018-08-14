@@ -54,12 +54,26 @@ def xywh_from_points(points):
     """
     Constructs an dict representing a rectangle with keys x, y, w, h
     """
-    [tl, tr, br] = [[int(p) for p in pair.split(',')] for pair in points.split(' ')[:3]]
+    xys = [[int(p) for p in pair.split(',')] for pair in points.split(' ')]
+    minx = sys.maxsize
+    miny = sys.maxsize
+    maxx = 0
+    maxy = 0
+    for xy in xys:
+        if xy[0] < minx:
+            minx = xy[0]
+        if xy[0] > maxx:
+            maxx = xy[0]
+        if xy[1] < miny:
+            miny = xy[1]
+        if xy[1] > maxy:
+            maxy = xy[1]
+
     return {
-        'x': tl[0],
-        'y': tl[1],
-        'w': tr[0] - tl[0],
-        'h': br[1] - tr[1],
+        'x': minx,
+        'y': miny,
+        'w': maxx - minx,
+        'h': maxy - miny,
     }
 
 def polygon_from_points(points):
