@@ -31,6 +31,11 @@ class TestUtils(TestCase):
             xywh_from_points('100,100 200,100 200,200 100,200'),
             {'x': 100, 'y': 100, 'w': 100, 'h': 100})
 
+    def test_xywh_from_points_unordered(self):
+        self.assertEqual(
+            xywh_from_points('500,500 100,100 200,100 200,200 100,200'),
+            {'x': 100, 'y': 100, 'w': 400, 'h': 400})
+
     def test_polygon_from_points(self):
         self.assertEqual(
             polygon_from_points('100,100 200,100 200,200 100,200'),
