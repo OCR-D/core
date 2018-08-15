@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.7.4] - 2019-08-15
+
+Fixed:
+
+  * Sort coordinates clockwise, #159, https://github.com/OCR-D/assets/issues/11
+
 ## [0.7.3] - 2019-08-14
 
 Changed:
@@ -241,6 +247,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.7.4]: ../../compare/v0.7.4...v0.7.3
 [0.7.3]: ../../compare/v0.7.3...v0.7.2
 [0.7.2]: ../../compare/v0.7.2...v0.7.1
 [0.7.1]: ../../compare/v0.7.1...v0.7.0
