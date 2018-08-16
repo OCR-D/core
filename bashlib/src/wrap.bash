@@ -5,7 +5,9 @@ ocrd__wrap () {
     shift
     shift
     declare -Agx params
+    params=()
     declare -Agx ocrd__argv
+    ocrd__argv=()
 
     if ! which "ocrd" >/dev/null 2>/dev/null;then
         ocrd__raise "ocrd not in \$PATH"

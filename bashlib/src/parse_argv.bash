@@ -7,6 +7,9 @@
 ## ```
 ocrd__parse_argv () {
 
+    # if [[ -n "$ZSH_VERSION" ]];then
+    #     print -r -- ${+ocrd__argv} ${(t)ocrd__argv}
+    # fi
     if ! declare -p "ocrd__argv" >/dev/null 2>/dev/null ;then
         ocrd__raise "Must set \$ocrd__argv (declare -A ocrd__argv)"
     fi
@@ -52,11 +55,13 @@ ocrd__parse_argv () {
         ocrd__argv[output_file_grp]="OCR-D-TEXT"
     fi
 
-    local params_parsed=$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]}")
-    if [[ $? != 0 ]];then
-        echo "Error: Failed to parse parameters:"
+    local params_parsed retval
+    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]}")"
+    retval=$?
+    if [[ $retval != 0 ]];then
+        echo "Error: Failed to parse parameters (retval $retval):"
         echo "$params_parsed"
-        exit 42
+        exit 42 # $retval
     fi
     eval "$params_parsed"
 
