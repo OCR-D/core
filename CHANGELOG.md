@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.7.5] - 2019-08-16
+
+Fixed:
+
+  * bashlib: invalid parsers caused cryptic error, #161
+
 ## [0.7.4] - 2019-08-15
 
 Fixed:
@@ -247,6 +253,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.7.5]: ../../compare/v0.7.5...v0.7.4
 [0.7.4]: ../../compare/v0.7.4...v0.7.3
 [0.7.3]: ../../compare/v0.7.3...v0.7.2
 [0.7.2]: ../../compare/v0.7.2...v0.7.1
