@@ -11,6 +11,8 @@ Logging can be overridden either programmatically in code using the library or b
 
 These files will be executed in the context of ocrd/ocrd_logging.py, with `logging` global set.
 """
+from __future__ import absolute_import
+
 import logging
 import os
 
