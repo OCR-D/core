@@ -119,6 +119,8 @@ class Resolver(object):
         """
         Download a file to the workspace.
 
+        Early Shortcut: If iit's a file-URL and already in the directory, keep it there.
+
         If basename is not given but subdir is, assume user knows what she's doing and use last URL segment as the basename.
         If basename is not given and no subdir is given, use the alnum characters in the URL as the basename.
 
@@ -134,9 +136,10 @@ class Resolver(object):
             Local filename
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
-        #  log.debug("url=|%s| subdir=|%s| overwrite=|%s|", url, subdir, overwrite)
+        log.debug("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s| prefer_symlink=|%s|", directory, url, basename, overwrite, subdir, prefer_symlink)
         if basename is None:
-            if subdir is not None:
+            if (subdir is not None) or \
+                (directory and url.startswith('file://%s' % directory)): # in case downloading a url 'file:///tmp/foo/bar' to directory '/tmp/foo'
                 basename = url.rsplit('/', 1)[-1]
             else:
                 basename = safe_filename(url)
