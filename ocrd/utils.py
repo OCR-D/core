@@ -27,7 +27,7 @@ __all__ = [
 import re
 import sys
 
-from ocrd.ocrd_logging import getLogger, logging
+from ocrd.logging import getLogger, logging
 
 def points_from_xywh(box):
     """
