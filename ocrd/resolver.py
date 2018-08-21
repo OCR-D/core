@@ -119,7 +119,7 @@ class Resolver(object):
         """
         Download a file to the workspace.
 
-        Early Shortcut: If iit's a file-URL and already in the directory, keep it there.
+        Early Shortcut: If url is a file://-URL and that file is already in the directory, keep it there.
 
         If basename is not given but subdir is, assume user knows what she's doing and use last URL segment as the basename.
         If basename is not given and no subdir is given, use the alnum characters in the URL as the basename.
