@@ -12,18 +12,22 @@ polygon is what opencv2 expects
 
 xywh is what tesserocr expects/produces.
 """
-import logging
+
+__all__ = [
+    'logging',
+    'getLogger',
+    'points_from_xywh',
+    'xywh_from_points',
+    'polygon_from_points',
+    'is_string',
+    'concat_padded',
+    'safe_filename'
+]
+
 import re
 import sys
 
-logging.basicConfig(level=logging.DEBUG)
-#  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
-logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
-logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
-logging.getLogger('PIL').setLevel(logging.INFO)
-
-def getLogger(*args, **kwargs):
-    return logging.getLogger(*args, **kwargs)
+from ocrd.logging import getLogger, logging
 
 def points_from_xywh(box):
     """

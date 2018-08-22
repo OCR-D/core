@@ -5,6 +5,10 @@ import click
 from ocrd.constants import VERSION as OCRD_VERSION
 from ocrd.resolver import Resolver
 from ocrd.processor.base import run_processor
+from ocrd.utils import logging
+
+def _set_root_logger_version(ctx, param, value):
+    logging.getLogger('').setLevel(logging.getLevelName(value))
 
 def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
     if dump_json:
@@ -44,7 +48,9 @@ def ocrd_cli_options(f):
         click.option('-g', '--group-id', help="mets:file GROUPID"),
         click.option('-p', '--parameter', type=click.Path()),
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
-        click.option('-l', '--log-level', help="Log level", type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']), default='INFO'),
+        click.option('-l', '--log-level', help="Log level",
+            type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']),
+            default='INFO', callback=_set_root_logger_version),
         click.option('-V', '--version', help="Show version", is_flag=True, default=False)
     ]
     for param in params:
