@@ -135,7 +135,7 @@ class Processor(object):
         """
         return self.workspace.mets.find_files(fileGrp=self.input_file_grp, groupId=self.group_id)
 
-    @deprecated(version='0.7.6', reason="Use self.workspace.add_file directly. See https://github.com/OCR-D/core/issues/166.")
+    @deprecated(version='0.8.0', reason="Use self.workspace.add_file directly. See https://github.com/OCR-D/core/issues/166.")
     def add_output_file(self, basename=None, file_grp=None, ID=None, **kwargs):
         """
         DEPRECATED

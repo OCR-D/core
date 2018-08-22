@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.0] - 2018-08-22
+
 Fixed:
 
   * file://-URL will not be "downloaded" if already present, #165
@@ -262,6 +264,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.0]: ../../compare/v0.8.0...v0.7.5
 [0.7.5]: ../../compare/v0.7.5...v0.7.4
 [0.7.4]: ../../compare/v0.7.4...v0.7.3
 [0.7.3]: ../../compare/v0.7.3...v0.7.2
