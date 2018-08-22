@@ -12,6 +12,7 @@ Fixed:
 Changed:
 
   * Logging can be configured with a file `ocrd_logging.py` in either $PWD, $HOME or /etc, #164
+  * `Processor.add_output_file` deprecated, #166
 
 ## [0.7.5] - 2019-08-16
 

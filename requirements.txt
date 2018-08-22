@@ -7,3 +7,4 @@ opencv-python
 Flask
 jsonschema
 pyyaml
+Deprecated == 1.2.0
