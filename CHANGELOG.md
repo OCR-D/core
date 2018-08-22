@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * file://-URL will not be "downloaded" if already present, #165
+
 ## [0.7.5] - 2019-08-16
 
 Fixed:
