@@ -1,6 +1,7 @@
 import os
 import json
 import subprocess
+from deprecated.sphinx import deprecated
 from ocrd.utils import getLogger
 from ocrd.validator import ParameterValidator
 
@@ -134,8 +135,11 @@ class Processor(object):
         """
         return self.workspace.mets.find_files(fileGrp=self.input_file_grp, groupId=self.group_id)
 
+    @deprecated(version='0.7.6', reason="Use self.workspace.add_file directly. See https://github.com/OCR-D/core/issues/166.")
     def add_output_file(self, basename=None, file_grp=None, ID=None, **kwargs):
         """
+        DEPRECATED
+
         Add an output file.
 
         Args:

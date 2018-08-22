@@ -27,6 +27,7 @@ setup(
         'opencv-python',
         'pyyaml',
         'requests',
+        'Deprecated == 1.2.0',
     ],
     package_data={
         '': ['*.json', '*.yml', '*.yaml', '*.bash', '*.xml'],
