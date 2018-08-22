@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `Processor.add_output_file` deprecated, #166
+
 ## [0.7.5] - 2019-08-16
 
 Fixed:
