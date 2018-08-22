@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Logging can be configured with a file `ocrd_logging.py` in either $PWD, $HOME or /etc, #164
+
 ## [0.7.5] - 2019-08-16
 
 Fixed:
