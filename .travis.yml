@@ -8,6 +8,6 @@ before_install:
   - sudo apt-get -qq update
   - make deps-ubuntu
 install:
-  - make deps-pip deps-pip-test assets
+  - make deps deps-test assets
 script:
   - make test
