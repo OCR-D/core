@@ -24,6 +24,6 @@ RUN apt-get update && \
     libxext6
 RUN make deps-ubuntu
 RUN pip3 install --upgrade pip
-RUN make deps-pip install
+RUN make deps install
 
 ENTRYPOINT ["/usr/local/bin/ocrd"]

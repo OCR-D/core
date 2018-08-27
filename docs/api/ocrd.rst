@@ -30,18 +30,18 @@ ocrd.decorators module
     :undoc-members:
     :show-inheritance:
 
-ocrd.resolver module
---------------------
+ocrd.logging module
+-------------------
 
-.. automodule:: ocrd.resolver
+.. automodule:: ocrd.logging
     :members:
     :undoc-members:
     :show-inheritance:
 
-ocrd.resolver\_cache module
----------------------------
+ocrd.resolver module
+--------------------
 
-.. automodule:: ocrd.resolver_cache
+.. automodule:: ocrd.resolver
     :members:
     :undoc-members:
     :show-inheritance:
