@@ -1,0 +1,35 @@
+version: 2
+
+jobs:
+
+  build-python27:
+    docker:
+      - image: python:2.7.13
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: make deps deps-test test
+
+  build-python35:
+    docker:
+      - image: python:3.5.3
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: make deps deps-test test
+
+  build-python36:
+    docker:
+      - image: python:3.6.0
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: make deps deps-test test
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build-python27
+      - build-python35
+      - build-python36
