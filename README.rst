@@ -26,7 +26,7 @@ To install system-wide:
 
 ::
 
-    make deps-ubuntu deps-pip install
+    make deps-ubuntu deps install
 
 
 To develop, install to a virtualenv
@@ -36,7 +36,7 @@ To develop, install to a virtualenv
     pip install virtualenv
     virtualenv --no-site-packages venv
     source venv/bin/activate
-    make deps-pip install
+    make deps install
 
 Usage
 -----
