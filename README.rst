@@ -4,15 +4,27 @@ core
 
     Collection of OCR-related python tools and wrappers from the OCR-D team
 
+.. image:: https://img.shields.io/pypi/v/ocrd.svg
+    :target: https://pypi.org/project/ocrd/
+
 .. image:: https://travis-ci.org/OCR-D/core.svg?branch=master
     :target: https://travis-ci.org/OCR-D/core
+
+.. image:: https://circleci.com/gh/kba/ocrd-core.svg?style=svg
+    :target: https://circleci.com/gh/kba/ocrd-core
+
+.. image:: https://scrutinizer-ci.com/g/OCR-D/core/badges/build.png?b=master
+    :target: https://scrutinizer-ci.com/g/OCR-D/core
 
 .. image:: https://img.shields.io/docker/automated/ocrd/pyocrd.svg
     :target: https://hub.docker.com/r/ocrd/core/tags/
     :alt: Docker Automated build
 
-.. image:: https://img.shields.io/pypi/v/ocrd.svg
-    :target: https://pypi.org/project/ocrd/
+.. image:: https://codecov.io/gh/OCR-D/core/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/OCR-D/core
+
+.. image:: https://scrutinizer-ci.com/g/OCR-D/core/badges/quality-score.png?b=master
+    :target: https://scrutinizer-ci.com/g/OCR-D/core
 
 Installation
 ------------

@@ -112,7 +112,7 @@ assets-clean:
 
 .PHONY: test
 # Run all unit tests
-test: spec
+test: spec assets
 	$(PYTHON) -m pytest --duration=10 test
 
 #
