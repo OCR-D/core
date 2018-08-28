@@ -12,10 +12,11 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
+	@echo "    deps           Install python deps via pip"
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
-	@echo "    deps-pip       Install python deps via pip"
-	@echo "    deps-pip-test  Install test python deps via pip"
+	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
+	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
 	@echo "    repo/spec      Clone OCR-D/spec to ./repo/spec"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
@@ -26,6 +27,7 @@ help:
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
 	@echo "    docker         Build docker image"
+	@echo "    bashlib        Build bash library"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -36,18 +38,18 @@ help:
 # Docker tag.
 DOCKER_TAG = 'ocrd/pyocrd'
 
+# Install python deps via pip
+deps:
+	$(PIP) install -r requirements.txt
+
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	sudo apt install -y \
 		python3 \
 		python3-pip
 
-# Install python deps via pip
-deps-pip:
-	$(PIP) install -r requirements.txt
-
 # Install test python deps via pip
-deps-pip-test:
+deps-test:
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
@@ -110,7 +112,7 @@ assets-clean:
 
 .PHONY: test
 # Run all unit tests
-test: spec
+test: spec assets
 	$(PYTHON) -m pytest --duration=10 test
 
 #

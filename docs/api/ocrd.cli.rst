@@ -4,6 +4,14 @@ ocrd.cli package
 Submodules
 ----------
 
+ocrd.cli.bashlib module
+-----------------------
+
+.. automodule:: ocrd.cli.bashlib
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.cli.generate\_swagger module
 ---------------------------------
 
@@ -20,6 +28,14 @@ ocrd.cli.merge\_ocr\_txt module
     :undoc-members:
     :show-inheritance:
 
+ocrd.cli.ocrd\_tool module
+--------------------------
+
+.. automodule:: ocrd.cli.ocrd_tool
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.cli.process module
 -----------------------
 
@@ -32,14 +48,6 @@ ocrd.cli.server module
 ----------------------
 
 .. automodule:: ocrd.cli.server
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-ocrd.cli.validate\_ocrd\_tool module
-------------------------------------
-
-.. automodule:: ocrd.cli.validate_ocrd_tool
     :members:
     :undoc-members:
     :show-inheritance:

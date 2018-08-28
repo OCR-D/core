@@ -1,2 +1,5 @@
 pytest
 generateDS
+coverage
+sphinx
+codecov
