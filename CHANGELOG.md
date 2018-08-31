@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.1] - 2018-08-31
+
+Removed:
+
+  * `merge_ocr_txt.py` script to be reborn as its own project, #170
+
 ## [0.8.0] - 2018-08-22
 
 Fixed:
@@ -264,6 +270,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.1]: ../../compare/v0.8.1...v0.8.0
 [0.8.0]: ../../compare/v0.8.0...v0.7.5
 [0.7.5]: ../../compare/v0.7.5...v0.7.4
 [0.7.4]: ../../compare/v0.7.4...v0.7.3
