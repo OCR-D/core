@@ -63,6 +63,7 @@ def run_processor(
     processor.process()
     workspace.save_mets()
 
+# TODO not used as of 0.8.2
 def run_cli(
         binary,
         mets_url=None,

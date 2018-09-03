@@ -7,8 +7,8 @@ from test.base import TestCase, assets, main
 
 TMP_FOLDER = '/tmp/test-pyocrd-resolver'
 METS_HEROLD = assets.url_of('SBB0000F29300010000/mets.xml')
-FOLDER_KANT = assets.url_of('kant_aufklaerung_1784')[len('file://'):]
-TEST_ZIP = assets.url_of('test.ocrd.zip')[len('file://'):]
+FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
+TEST_ZIP = assets.path_to('test.ocrd.zip')
 
 class TestResolver(TestCase):
 

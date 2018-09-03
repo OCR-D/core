@@ -97,8 +97,11 @@ class JsonValidator(object):
 class ParameterValidator(JsonValidator):
 
     def __init__(self, ocrd_tool):
-        # TODO grep required properties
         required = []
+        if ocrd_tool is None:
+            ocrd_tool = {}
+        if 'parameters' not in ocrd_tool:
+            ocrd_tool['parameters'] = {}
         p = ocrd_tool['parameters']
         for n in p:
             if 'required' in p[n]:
