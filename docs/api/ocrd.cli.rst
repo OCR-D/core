@@ -20,14 +20,6 @@ ocrd.cli.generate\_swagger module
     :undoc-members:
     :show-inheritance:
 
-ocrd.cli.merge\_ocr\_txt module
--------------------------------
-
-.. automodule:: ocrd.cli.merge_ocr_txt
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 ocrd.cli.ocrd\_tool module
 --------------------------
 

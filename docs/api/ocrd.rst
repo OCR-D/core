@@ -9,6 +9,7 @@ Subpackages
     ocrd.cli
     ocrd.model
     ocrd.processor
+    ocrd.validator
     ocrd.webservice
 
 Submodules
@@ -50,14 +51,6 @@ ocrd.utils module
 -----------------
 
 .. automodule:: ocrd.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-ocrd.validator module
----------------------
-
-.. automodule:: ocrd.validator
     :members:
     :undoc-members:
     :show-inheritance:
