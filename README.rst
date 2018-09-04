@@ -10,8 +10,8 @@ core
 .. image:: https://travis-ci.org/OCR-D/core.svg?branch=master
     :target: https://travis-ci.org/OCR-D/core
 
-.. image:: https://circleci.com/gh/kba/ocrd-core.svg?style=svg
-    :target: https://circleci.com/gh/kba/ocrd-core
+.. image:: https://circleci.com/gh/OCR-D/core.svg?style=svg
+    :target: https://circleci.com/gh/OCR-D/core
 
 .. image:: https://scrutinizer-ci.com/g/OCR-D/core/badges/build.png?b=master
     :target: https://scrutinizer-ci.com/g/OCR-D/core
