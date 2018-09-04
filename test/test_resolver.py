@@ -1,9 +1,9 @@
 import os
 from shutil import copytree, rmtree
+from test.base import TestCase, assets, main
 
 from ocrd.model import OcrdExif
 from ocrd.resolver import Resolver
-from test.base import TestCase, assets, main
 
 TMP_FOLDER = '/tmp/test-pyocrd-resolver'
 METS_HEROLD = assets.url_of('SBB0000F29300010000/mets.xml')
@@ -30,7 +30,8 @@ class TestResolver(TestCase):
 
     def test_workspace_from_folder(self):
         workspace = self.resolver.workspace_from_folder(self.folder, clobber_mets=True)
-        #  print([ f.url for f in workspace.mets.find_files() ])
+        #  import json
+        #  print(json.dumps([f.url for f in workspace.mets.find_files()], indent=2))
         self.assertEqual(len(workspace.mets.find_files()), 6, '6 files total')
 
     def test_workspace_from_url(self):
