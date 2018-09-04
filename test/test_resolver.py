@@ -20,20 +20,6 @@ class TestResolver(TestCase):
             os.makedirs(TMP_FOLDER)
         copytree(FOLDER_KANT, self.folder)
 
-    def test_unpack_workspace(self):
-        workspace = self.resolver.unpack_workspace_from_filename(TEST_ZIP)
-        files = workspace.mets.find_files(mimetype='image/tiff')
-        self.assertEqual(len(files), 2, '2 TIF')
-        for f in files:
-            workspace.download_file(f)
-        print([OcrdExif.from_filename(f.local_filename).to_xml() for f in files])
-
-    def test_workspace_from_folder(self):
-        workspace = self.resolver.workspace_from_folder(self.folder, clobber_mets=True)
-        #  import json
-        #  print(json.dumps([f.url for f in workspace.mets.find_files()], indent=2))
-        self.assertEqual(len(workspace.mets.find_files()), 6, '6 files total')
-
     def test_workspace_from_url(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
         #  print(METS_HEROLD)
@@ -46,10 +32,18 @@ class TestResolver(TestCase):
         self.assertEqual(f.ID, 'FILE_0001_IMAGE')
         #  print(f)
 
-    def test_pack_workspace(self):
-        workspace = self.resolver.workspace_from_folder(self.folder, clobber_mets=True)
-        zpath = self.resolver.pack_workspace(workspace, zpath='/tmp/test-pyocrd-resolver.zip')
-        print(zpath)
+    def test_unpack_workspace(self):
+        workspace = self.resolver.unpack_workspace_from_filename(TEST_ZIP)
+        files = workspace.mets.find_files(mimetype='image/tiff')
+        self.assertEqual(len(files), 2, '2 TIF')
+        for f in files:
+            workspace.download_file(f)
+        print([OcrdExif.from_filename(f.local_filename).to_xml() for f in files])
+
+    #  def test_pack_workspace(self):
+    #      workspace = self.resolver.workspace_from_folder(self.folder, clobber_mets=True)
+    #      zpath = self.resolver.pack_workspace(workspace, zpath='/tmp/test-pyocrd-resolver.zip')
+    #      print(zpath)
 
 if __name__ == '__main__':
     main()
