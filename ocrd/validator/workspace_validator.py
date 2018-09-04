@@ -2,6 +2,9 @@ import re
 
 from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
+from ocrd.utils import getLogger
+
+log = getLogger('ocrd.workspace_validator')
 
 #
 # -------------------------------------------------
@@ -20,6 +23,9 @@ class WorkspaceValidator(object):
         self.resolver = resolver
         self.mets_url = mets_url
         self.report = ValidationReport()
+        log.debug('resolver=%s mets_url=%s directory=%s', resolver, mets_url, directory)
+        if mets_url is None:
+            mets_url = '%s/mets.xml' % directory
         self.workspace = self.resolver.workspace_from_url(mets_url, directory=directory)
         self.mets = self.workspace.mets
 
