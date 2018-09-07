@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import json
 
 import cv2
 from PIL import Image
@@ -30,6 +31,8 @@ class Workspace(object):
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
+        self._url_aliases = {}
+        self.load_url_aliases()
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
             'pil': {},
@@ -50,6 +53,40 @@ class Workspace(object):
         """
         self.mets = OcrdMets(filename=self.mets_target)
 
+    def get_url_alias(self, url):
+        """
+        Find the URL in url-aliases.json. If none exists, identity.
+
+        Args:
+            url (string): Possibly remote URL
+        """
+        if url in self._url_aliases:
+            return self._url_aliases[url]
+        return url
+
+    def set_url_alias(self, src, dst):
+        """
+        Set URL alias
+        """
+        self._url_aliases[src] = dst
+
+    def load_url_aliases(self):
+        """
+        Read url-aliases.json
+        """
+        csv_fpath = '%s/url-aliases.json' % self.directory
+        if os.path.exists(csv_fpath):
+            with open(csv_fpath, 'rb') as f:
+                self._url_aliases = json.loads(f.read())
+
+    def save_url_aliases(self):
+        """
+        Write url-aliases.json
+        """
+        csv_fpath = '%s/url-aliases.json' % self.directory
+        with open(csv_fpath, 'wb') as f:
+            f.write(json.dumps(self._url_aliases))
+
     def download_url(self, url, **kwargs):
         """
         Download a URL to the workspace.
@@ -62,6 +99,7 @@ class Workspace(object):
             The local filename of the downloaded file
         """
         os.chdir(self.directory)
+        url = self.get_url_alias(url)
         return self.resolver.download_to_directory(self.directory, url, **kwargs)
 
     def download_file(self, f, **kwargs):
@@ -128,6 +166,7 @@ class Workspace(object):
         Persist the workspace using the resolver. Uploads the files in the
         OUTPUT group to the data repository, sets their URL accordingly.
         """
+        self.save_url_aliases()
         self.save_mets()
         raise Exception("NIH")
 
