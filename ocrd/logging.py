@@ -11,17 +11,20 @@ Logging can be overridden either programmatically in code using the library or b
 
 These files will be executed in the context of ocrd/ocrd_logging.py, with `logging` global set.
 """
+# pylint: disable=no-member
+
 from __future__ import absolute_import
 
 import logging
 import os
 
-__all__ = ['logging', 'getLogger', 'getLevelName']
+__all__ = ['logging', 'getLogger', 'getLevelName', 'setOverrideLogLevel']
+
+_overrideLogLevel = None
 
 _ocrdLevel2pythonLevel = {
     'TRACE':    'DEBUG',
-    'OFF':      'NOTSET',
-    'CRITICAL': 'ERROR',
+    'OFF':      'CRITICAL',
     'FATAL':    'ERROR',
 }
 
@@ -32,8 +35,31 @@ def getLevelName(lvl):
     lvl = _ocrdLevel2pythonLevel.get(lvl, lvl)
     return logging.getLevelName(lvl)
 
+def setOverrideLogLevel(lvl):
+    """
+    Override all logger filter levels to include lvl and above.
+
+
+    - Set root logger level
+    - iterates all existing loggers and sets their log level to ``NOTSET``.
+
+    Args:
+        lvl (string): Log level name.
+    """
+    lvl = getLevelName(lvl)
+    _overrideLogLevel = lvl
+    logging.getLogger('').setLevel(lvl)
+    for loggerName in logging.Logger.manager.loggerDict:
+        logger = logging.Logger.manager.loggerDict[loggerName]
+        if isinstance(logger, logging.PlaceHolder):
+            continue
+        logger.setLevel(logging.NOTSET)
+
 def getLogger(*args, **kwargs):
-    return logging.getLogger(*args, **kwargs)
+    logger = logging.getLogger(*args, **kwargs)
+    if _overrideLogLevel is not None:
+        logger.setLevel(logging.NOTSET)
+    return logger
 
 # Default logging config
 
