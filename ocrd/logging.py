@@ -16,7 +16,21 @@ from __future__ import absolute_import
 import logging
 import os
 
-__all__ = ['logging', 'getLogger']
+__all__ = ['logging', 'getLogger', 'getLevelName']
+
+_ocrdLevel2pythonLevel = {
+    'TRACE':    'DEBUG',
+    'OFF':      'NOTSET',
+    'CRITICAL': 'ERROR',
+    'FATAL':    'ERROR',
+}
+
+def getLevelName(lvl):
+    """
+    Get (numerical) python logging level for (string) spec-defined log level name.
+    """
+    lvl = _ocrdLevel2pythonLevel.get(lvl, lvl)
+    return logging.getLevelName(lvl)
 
 def getLogger(*args, **kwargs):
     return logging.getLogger(*args, **kwargs)
