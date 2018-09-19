@@ -12,6 +12,10 @@ Fixed:
   * Handle missing parameters in ocrd-tool.json like empty array #160
   * cli: `ocrd workspace validate` #175
 
+Removed:
+
+  * `prefer_symlink` mechanism, #179
+
 ## [0.8.1] - 2018-08-31
 
 Removed:
