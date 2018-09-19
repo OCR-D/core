@@ -18,7 +18,12 @@ from __future__ import absolute_import
 import logging
 import os
 
-__all__ = ['logging', 'getLogger', 'getLevelName', 'setOverrideLogLevel']
+__all__ = [
+    'logging',
+    'getLogger',
+    'getLevelName',
+    'setOverrideLogLevel'
+]
 
 _overrideLogLevel = None
 
