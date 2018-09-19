@@ -71,7 +71,8 @@ def getLogger(*args, **kwargs):
 
 # Default logging config
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('').setLevel(logging.INFO)
 #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
 #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
 #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)

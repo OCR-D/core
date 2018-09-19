@@ -2,6 +2,7 @@ from test.base import TestCase, main
 import click
 from click.testing import CliRunner
 from ocrd.decorators import ocrd_cli_options
+from ocrd.logging import setOverrideLogLevel
 
 @click.command()
 @ocrd_cli_options
@@ -24,10 +25,12 @@ class TestCli(TestCase):
 
     def test_loglevel_override(self):
         import logging
+        self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.INFO)
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.INFO)
         result = self.runner.invoke(cli, ['--log-level', 'DEBUG'])
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.DEBUG)
+        setOverrideLogLevel('INFO')
 
 
 
