@@ -51,6 +51,9 @@ def setOverrideLogLevel(lvl):
     Args:
         lvl (string): Log level name.
     """
+    if lvl is None:
+        return
+    logging.info('Overriding log level globally to %s', lvl)
     lvl = getLevelName(lvl)
     _overrideLogLevel = lvl
     logging.getLogger('').setLevel(lvl)

@@ -50,7 +50,7 @@ def ocrd_cli_options(f):
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         click.option('-l', '--log-level', help="Log level",
                      type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']),
-                     default='INFO', callback=_set_root_logger_version),
+                     default=None, callback=_set_root_logger_version),
         click.option('-V', '--version', help="Show version", is_flag=True, default=False)
     ]
     for param in params:
