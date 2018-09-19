@@ -15,25 +15,7 @@ tempfile.tempdir = '/tmp'
 class Resolver(object):
     """
     Handle Uploads, Downloads, Repository access and manage temporary directories
-
-    Args:
-        prefer_symlink (Boolean): If True, symlink from source file to the workspace instead of copying to reduce I/O.
     """
-
-    def __init__(self, prefer_symlink=False):
-        """
-        """
-        self.prefer_symlink = prefer_symlink
-
-    def _copy_or_symlink(self, src, dst, prefer_symlink=None):
-        if prefer_symlink is None:
-            prefer_symlink = self.prefer_symlink
-        if os.path.exists(dst):
-            return
-        if prefer_symlink:
-            os.symlink(src, dst)
-        else:
-            copyfile(src, dst)
 
     def pack_workspace(self, workspace, zpath=None):
         """
@@ -115,7 +97,7 @@ class Resolver(object):
             z.extractall(path=directory)
         return Workspace(self, directory)
 
-    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None, prefer_symlink=None):
+    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None):
         """
         Download a file to the workspace.
 
@@ -130,13 +112,12 @@ class Resolver(object):
             url (string): URL to download from
             overwrite (boolean): Whether to overwrite existing files with that name
             subdir (boolean, None): Subdirectory to create within the directory. Think fileGrp.
-            prefer_symlink (boolean): Whether to use symlinks instead of copying. Overrides self.prefer_symlink
 
         Returns:
             Local filename
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
-        log.debug("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s| prefer_symlink=|%s|", directory, url, basename, overwrite, subdir, prefer_symlink)
+        log.debug("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s|", directory, url, basename, overwrite, subdir)
         if basename is None:
             if (subdir is not None) or \
                 (directory and url.startswith('file://%s' % directory)): # in case downloading a url 'file:///tmp/foo/bar' to directory '/tmp/foo'
@@ -160,7 +141,7 @@ class Resolver(object):
 
         log.debug("Downloading <%s> to '%s'", url, outfilename)
         if url.startswith('file://'):
-            self._copy_or_symlink(url[len('file://'):], outfilename, prefer_symlink)
+            copyfile(url[len('file://'):], outfilename)
         else:
             response = requests.get(url)
             if response.status_code != 200:
@@ -214,7 +195,7 @@ class Resolver(object):
             if os.path.exists(mets_fpath) and not clobber_mets:
                 raise Exception("File '%s' already exists but clobber_mets is false" % mets_fpath)
             else:
-                self.download_to_directory(directory, mets_url, basename=mets_basename, prefer_symlink=False)
+                self.download_to_directory(directory, mets_url, basename=mets_basename)
 
         workspace = Workspace(self, directory, mets_basename=mets_basename)
 
