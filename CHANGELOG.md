@@ -5,9 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+
+Removed:
+
+  * remove `workspace_from_folder`, #180
+
 Changed:
 
   * Creating METS from scratch will set creator agent and creation date, #147
+
 
 ## [0.8.3] - 2018-09-20
 
