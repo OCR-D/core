@@ -1,9 +1,26 @@
-from ocrd.constants import NAMESPACES as NS, TAG_METS_FILE, TAG_METS_FILEGRP, IDENTIFIER_PRIORITY, TAG_MODS_IDENTIFIER
+from datetime import datetime
+
+from ocrd.constants import (
+    NAMESPACES as NS,
+    TAG_METS_FILE,
+    TAG_METS_FILEGRP,
+    IDENTIFIER_PRIORITY,
+    TAG_MODS_IDENTIFIER,
+    METS_XML_EMPTY,
+    VERSION
+)
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
 
 class OcrdMets(OcrdXmlDocument):
+
+    @staticmethod
+    def empty_mets():
+        tpl = METS_XML_EMPTY.decode('utf-8')
+        tpl = tpl.replace('{{ VERSION }}', VERSION)
+        tpl = tpl.replace('{{ NOW }}', '%s' % datetime.now())
+        return OcrdMets(content=tpl.encode('utf-8'))
 
     def __init__(self, file_by_id=None, **kwargs):
         super(OcrdMets, self).__init__(**kwargs)
