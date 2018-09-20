@@ -5,20 +5,22 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [0.8.2] - 2018-09-04
+## [0.8.3] - 2018-09-20
 
 Changed:
 
   * Make logging logic spec-compliant according to #173
 
+Removed:
+
+  * `prefer_symlink` mechanism, #179
+
+## [0.8.2] - 2018-09-04
+
 Fixed:
 
   * Handle missing parameters in ocrd-tool.json like empty array #160
   * cli: `ocrd workspace validate` #175
-
-Removed:
-
-  * `prefer_symlink` mechanism, #179
 
 ## [0.8.1] - 2018-08-31
 
@@ -285,6 +287,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.3]: ../../compare/v0.8.3...v0.8.2
 [0.8.2]: ../../compare/v0.8.2...v0.8.1
 [0.8.1]: ../../compare/v0.8.1...v0.8.0
 [0.8.0]: ../../compare/v0.8.0...v0.7.5
