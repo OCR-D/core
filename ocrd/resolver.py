@@ -4,7 +4,7 @@ from zipfile import ZipFile
 import tempfile
 import requests
 
-from ocrd.constants import METS_XML_EMPTY, TMP_PREFIX, EXT_TO_MIME
+from ocrd.constants import TMP_PREFIX, EXT_TO_MIME
 from ocrd.utils import getLogger, safe_filename
 from ocrd.workspace import Workspace
 from ocrd.model import OcrdMets
@@ -221,7 +221,7 @@ class Resolver(object):
         mets_fpath = os.path.join(directory, mets_basename)
         if not clobber_mets and os.path.exists(mets_fpath):
             raise Exception("Not clobbering existing mets.xml in '%s'." % directory)
-        mets = OcrdMets(content=METS_XML_EMPTY)
+        mets = OcrdMets.empty_mets()
         with open(mets_fpath, 'wb') as fmets:
             log.info("Writing %s", mets_fpath)
             fmets.write(mets.to_xml(xmllint=True))
@@ -244,7 +244,7 @@ class Resolver(object):
         if not clobber_mets and os.path.exists(os.path.join(directory, 'mets.xml')):
             raise Exception("Not clobbering existing mets.xml in '%s'." % directory)
 
-        mets = OcrdMets(content=METS_XML_EMPTY)
+        mets = OcrdMets.empty_mets()
 
         if not os.path.exists(directory):
             os.makedirs(directory)
