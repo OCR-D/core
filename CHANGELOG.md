@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Removed:
+
+  * remove `workspace_from_folder`, #180
+
 ## [0.8.3] - 2018-09-20
 
 Changed:
