@@ -4,11 +4,13 @@ from test.base import TestCase, main
 from ocrd.logging import (
     getLevelName,
     setOverrideLogLevel,
+    initLogging
 )
 
 class TestLogging(TestCase):
 
-    #  def runTest(self):
+    def setUp(self):
+        initLogging()
 
     def test_getLevelName(self):
         self.assertEqual(getLevelName('ERROR'), logging.ERROR)

@@ -71,26 +71,32 @@ def getLogger(*args, **kwargs):
 
 # Default logging config
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('').setLevel(logging.INFO)
-#  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
-#  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
-#  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
-logging.getLogger('PIL').setLevel(logging.INFO)
+def initLogging():
+    """
+    Sets logging defaults
+    """
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger('').setLevel(logging.INFO)
+    #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
+    #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
+    #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
+    logging.getLogger('PIL').setLevel(logging.INFO)
 
-# Allow overriding
+    # Allow overriding
 
-CONFIG_PATHS = [
-    os.path.curdir,
-    os.path.join(os.path.expanduser('~')),
-    '/etc',
-]
+    CONFIG_PATHS = [
+        os.path.curdir,
+        os.path.join(os.path.expanduser('~')),
+        '/etc',
+    ]
 
 
-for p in CONFIG_PATHS:
-    config_file = os.path.join(p, 'ocrd_logging.py')
-    if os.path.exists(config_file):
-        logging.info("Loading logging configuration from '%s'", config_file)
-        with open(config_file) as f:
-            code = compile(f.read(), config_file, 'exec')
-            exec(code, globals(), locals()) # pylint: disable=exec-used
+    for p in CONFIG_PATHS:
+        config_file = os.path.join(p, 'ocrd_logging.py')
+        if os.path.exists(config_file):
+            logging.info("Loading logging configuration from '%s'", config_file)
+            with open(config_file) as f:
+                code = compile(f.read(), config_file, 'exec')
+                exec(code, globals(), locals()) # pylint: disable=exec-used
+
+initLogging()

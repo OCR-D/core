@@ -2,7 +2,7 @@ from test.base import TestCase, main
 import click
 from click.testing import CliRunner
 from ocrd.decorators import ocrd_cli_options
-from ocrd.logging import setOverrideLogLevel
+from ocrd.logging import setOverrideLogLevel, initLogging
 
 @click.command()
 @ocrd_cli_options
@@ -12,6 +12,7 @@ def cli(*args, **kwargs): # pylint: disable=unused-argument
 class TestCli(TestCase):
 
     def setUp(self):
+        initLogging()
         self.runner = CliRunner()
 
     def test_minimal(self):
