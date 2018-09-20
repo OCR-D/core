@@ -7,6 +7,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [0.8.2] - 2018-09-04
 
+Changed:
+
+  * Make logging logic spec-compliant according to #173
+
 Fixed:
 
   * Handle missing parameters in ocrd-tool.json like empty array #160
