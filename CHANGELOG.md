@@ -14,6 +14,10 @@ Changed:
 
   * Creating METS from scratch will set creator agent and creation date, #147
 
+Fixed:
+
+  * Schema regression in 0.8.3 (description)
+
 
 ## [0.8.3] - 2018-09-20
 
