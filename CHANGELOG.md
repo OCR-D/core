@@ -5,6 +5,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.4] - 2018-09-21
 
 Removed:
 
@@ -17,7 +18,6 @@ Changed:
 Fixed:
 
   * Schema regression in 0.8.3 (description)
-
 
 ## [0.8.3] - 2018-09-20
 
@@ -301,6 +301,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.4]: ../../compare/v0.8.4...v0.8.3
 [0.8.3]: ../../compare/v0.8.3...v0.8.2
 [0.8.2]: ../../compare/v0.8.2...v0.8.1
 [0.8.1]: ../../compare/v0.8.1...v0.8.0
