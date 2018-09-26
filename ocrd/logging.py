@@ -75,7 +75,10 @@ def initLogging():
     """
     Sets logging defaults
     """
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
+        datefmt='%H:%M:%S')
     logging.getLogger('').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
