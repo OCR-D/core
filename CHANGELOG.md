@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.5] - 2018-09-26
+
+Changed:
+
+  * Logger setup according to v2.3.0 of the spec, #185
+
 ## [0.8.4] - 2018-09-21
 
 Removed:
@@ -301,6 +307,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.5]: ../../compare/v0.8.5...v0.8.4
 [0.8.4]: ../../compare/v0.8.4...v0.8.3
 [0.8.3]: ../../compare/v0.8.3...v0.8.2
 [0.8.2]: ../../compare/v0.8.2...v0.8.1
