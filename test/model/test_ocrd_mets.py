@@ -3,6 +3,7 @@ from test.base import TestCase, main, assets
 from ocrd.constants import MIMETYPE_PAGE, VERSION
 from ocrd.model import OcrdMets
 
+# pylint: disable=protected-access
 class TestOcrdMets(TestCase):
 
     def setUp(self):
@@ -67,6 +68,14 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f.groupId, 'FILE_0001_IMAGE')
         f.groupId = 'foo'
         self.assertEqual(f.groupId, 'foo')
+
+    def test_agent(self):
+        #  Processor(workspace=self.workspace)
+        mets = self.mets
+        self.assertEqual(len(mets.agents), 1)
+        mets.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'YETOTHERSTILL')
+        #  print(['%s'%x for x in mets.agents])
+        self.assertEqual(len(mets.agents), 2)
 
 if __name__ == '__main__':
     main()

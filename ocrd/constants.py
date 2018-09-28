@@ -25,6 +25,8 @@ IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
 TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
+TAG_METS_AGENT = '{%s}agent' % NAMESPACES['mets']
+TAG_METS_NAME = '{%s}name' % NAMESPACES['mets']
 
 TAG_MODS_IDENTIFIER = '{%s}identifier' % NAMESPACES['mods']
 

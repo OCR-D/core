@@ -60,7 +60,9 @@ def run_processor(
         parameter=parameter
     )
     log.debug("Processor instance %s", processor)
+    log.debug('%s', ocrd_tool)
     processor.process()
+    #  workspace.add_agent(
     workspace.save_mets()
 
 # TODO not used as of 0.8.2
@@ -75,7 +77,7 @@ def run_cli(
         output_file_grp=None,
         parameter=None,
         working_dir=None,
-):
+): # pylint: disable=unused-argument
     """
     Create a workspace for mets_url and run MP CLI through it
     """

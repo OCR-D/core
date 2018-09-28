@@ -4,6 +4,7 @@ from ocrd.constants import (
     NAMESPACES as NS,
     TAG_METS_FILE,
     TAG_METS_FILEGRP,
+    TAG_METS_AGENT,
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
     METS_XML_EMPTY,
@@ -12,6 +13,7 @@ from ocrd.constants import (
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
+from .ocrd_agent import OcrdAgent
 
 class OcrdMets(OcrdXmlDocument):
 
@@ -48,6 +50,17 @@ class OcrdMets(OcrdXmlDocument):
             id_el = ET.SubElement(mods, TAG_MODS_IDENTIFIER)
             id_el.set('type', 'purl')
         id_el.text = purl
+
+    @property
+    def agents(self):
+        return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('.//mets:metsHdr/mets:agent', NS)]
+
+    def add_agent(self, *args, **kwargs):
+        el_metsHdr = self._tree.getroot().find('.//mets:metsHdr', NS)
+        #  assert(el_metsHdr is not None)
+        el_agent = ET.SubElement(el_metsHdr, TAG_METS_AGENT)
+        #  print(ET.tostring(el_metsHdr))
+        return OcrdAgent(el_agent, *args, **kwargs)
 
     @property
     def file_groups(self):

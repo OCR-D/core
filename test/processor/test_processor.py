@@ -1,7 +1,7 @@
+from test.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
+
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor
-
-from test.base import TestCase, assets, main
 
 class DummyProcessor(Processor):
 
@@ -20,12 +20,14 @@ class TestResolver(TestCase):
 
     def test_verify(self):
         proc = DummyProcessor(self.workspace)
-        self.assertEquals(proc.verify(), True)
+        self.assertEqual(proc.verify(), True)
 
     def test_json(self):
         DummyProcessor(self.workspace, dump_json=True)
 
     def test_params(self):
         proc = Processor(workspace=self.workspace)
-        self.assertEquals(proc.parameter, {})
+        self.assertEqual(proc.parameter, {})
 
+if __name__ == "__main__":
+    main()
