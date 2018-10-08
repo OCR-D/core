@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Calls to `click.argument` had too many arguments, #186
+
 ## [0.8.5] - 2018-09-26
 
 Changed:

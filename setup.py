@@ -21,6 +21,7 @@ setup(
         'Flask',
         'Pillow',
         'click',
+        'click >=7<8',
         'jsonschema',
         'lxml',
         'numpy',
