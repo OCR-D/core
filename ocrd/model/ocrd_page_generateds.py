@@ -6092,7 +6092,6 @@ class NonPrintingCharType(GraphemeBaseType):
         super(NonPrintingCharType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(NonPrintingCharType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class NonPrintingCharType
 
 
@@ -6643,7 +6642,6 @@ class UnknownRegionType(RegionType):
         super(UnknownRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(UnknownRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class UnknownRegionType
 
 
@@ -6709,7 +6707,6 @@ class NoiseRegionType(RegionType):
         super(NoiseRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(NoiseRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class NoiseRegionType
 
 
@@ -6801,7 +6798,6 @@ class AdvertRegionType(RegionType):
         super(AdvertRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(AdvertRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class AdvertRegionType
 
 
@@ -6893,7 +6889,6 @@ class MusicRegionType(RegionType):
         super(MusicRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(MusicRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class MusicRegionType
 
 
@@ -6974,7 +6969,6 @@ class MapRegionType(RegionType):
         super(MapRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(MapRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class MapRegionType
 
 
@@ -7066,7 +7060,6 @@ class ChemRegionType(RegionType):
         super(ChemRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(ChemRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class ChemRegionType
 
 
@@ -7159,7 +7152,6 @@ class MathsRegionType(RegionType):
         super(MathsRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(MathsRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class MathsRegionType
 
 
@@ -7252,7 +7244,6 @@ class SeparatorRegionType(RegionType):
         super(SeparatorRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(SeparatorRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class SeparatorRegionType
 
 
@@ -7385,7 +7376,6 @@ class ChartRegionType(RegionType):
         super(ChartRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(ChartRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class ChartRegionType
 
 
@@ -7685,7 +7675,6 @@ class GraphicRegionType(RegionType):
         super(GraphicRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(GraphicRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class GraphicRegionType
 
 
@@ -7804,7 +7793,6 @@ class LineDrawingRegionType(RegionType):
         super(LineDrawingRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(LineDrawingRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class LineDrawingRegionType
 
 
@@ -7923,7 +7911,6 @@ class ImageRegionType(RegionType):
         super(ImageRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         super(ImageRegionType, self).buildChildren(child_, node, nodeName_, True)
-        pass
 # end class ImageRegionType
 
 
