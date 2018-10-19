@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Update ocrd-tool schema to spec v2.4.0
+
 ## [0.8.5] - 2018-09-26
 
 Changed:
