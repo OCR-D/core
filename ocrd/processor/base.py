@@ -28,7 +28,7 @@ def run_processor(
         output_file_grp=None,
         parameter=None,
         working_dir=None,
-):
+): # pylint: disable=too-many-locals
     """
     Create a workspace for mets_url and run processor through it
 
@@ -59,10 +59,18 @@ def run_processor(
         output_file_grp=output_file_grp,
         parameter=parameter
     )
-    log.debug("Processor instance %s", processor)
-    log.debug('%s', ocrd_tool)
+    #  print(processor.version)
+    name = '%s v%s' % (ocrd_tool['executable'], processor.version)
+    otherrole = ocrd_tool['steps'][0]
+    log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     processor.process()
-    #  workspace.add_agent(
+    workspace.mets.add_agent(
+        name=name,
+        _type='OTHER',
+        othertype='SOFTWARE',
+        role='OTHER',
+        otherrole=otherrole
+    )
     workspace.save_mets()
 
 # TODO not used as of 0.8.2
