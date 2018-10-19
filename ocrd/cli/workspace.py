@@ -62,12 +62,12 @@ def validate_workspace(ctx, mets_url=None):
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.option('-l', '--download-local', is_flag=True, help="Copy all local files to workspace and change location in METS file after cloning")
-@click.argument('mets_url', "METS URL to create workspace for")
-@click.argument('workspace_dir', "Directory to clone to. If not given, a temporary directory.", default=None, required=False)
+@click.argument('mets_url')
+@click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
 def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, workspace_dir):
     """
-    Create a workspace from a METS URL and return the directory
+    Create a workspace from a METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
 
@@ -90,11 +90,13 @@ def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, works
 
 @workspace_cli.command('init')
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
-@click.argument('directory', "Directory to create. Use '.' for $PWD", required=True)
+@click.argument('directory', required=True)
 @pass_workspace
 def workspace_create(ctx, clobber_mets, directory):
     """
-    Create a workspace with an empty METS file.
+    Create a workspace with an empty METS file in DIRECTORY.
+
+    Use '.' for $PWD"
     """
     workspace = ctx.resolver.workspace_from_nothing(
         directory=os.path.abspath(directory),
@@ -118,7 +120,7 @@ def workspace_create(ctx, clobber_mets, directory):
 @pass_workspace
 def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_filename):
     """
-    Add a file to METS in a workspace.
+    Add a file LOCAL_FILENAME to METS in a workspace.
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
 
@@ -224,9 +226,8 @@ def get_id(ctx):
 
     Otherwise will create a new <mods:identifier type="purl">{{ ID }}</mods:identifier>.
 """)
-@click.argument('ID', "Identifier")
+@click.argument('ID')
 @pass_workspace
-
 def set_id(ctx, ID):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace.mets.unique_identifier = ID

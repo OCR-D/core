@@ -9,6 +9,10 @@ Changed:
 
   * Update ocrd-tool schema to spec v2.4.0
 
+Fixed:
+
+  * Calls to `click.argument` had too many arguments, #186
+
 ## [0.8.5] - 2018-09-26
 
 Changed:
