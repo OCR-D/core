@@ -4,7 +4,7 @@ from zipfile import ZipFile
 import tempfile
 import requests
 
-from ocrd.constants import TMP_PREFIX, EXT_TO_MIME
+from ocrd.constants import TMP_PREFIX
 from ocrd.utils import getLogger, safe_filename
 from ocrd.workspace import Workspace
 from ocrd.model import OcrdMets

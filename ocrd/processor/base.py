@@ -100,13 +100,15 @@ class Processor(object):
             self,
             workspace,
             ocrd_tool=None,
-            parameter={},
+            parameter=None,
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             group_id=None,
             dump_json=False,
             version=None
     ):
+        if parameter is None:
+            parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return
