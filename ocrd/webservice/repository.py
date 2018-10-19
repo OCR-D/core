@@ -42,3 +42,6 @@ def create(upload_folder=DEFAULT_UPLOAD_FOLDER, base_url=DEFAULT_REPOSITORY_URL)
         return send_from_directory(upload_folder, file_id, as_attachment=False, mimetype="text/xml")
 
     return app
+
+if __name__ == '__main__':
+    create().run(port=5052)

@@ -4,14 +4,10 @@ from ocrd.validator import ParameterValidator
 class TestParameterValidator(TestCase):
 
     def setUp(self):
-        self.ocrd_tool = {
-            "parameters": {
-                "num-param": {"type": "number", "default": 1}
-            }
-        }
+        pass
 
-    def runTest(self):
-        validator = ParameterValidator(self.ocrd_tool)
+    def test_default_assignment(self):
+        validator = ParameterValidator({"parameters": {"num-param": {"type": "number", "default": 1}}})
         obj = {}
         validator.validate(obj)
         self.assertEqual(obj, {"num-param": 1})

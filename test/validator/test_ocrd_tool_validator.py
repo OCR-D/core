@@ -2,10 +2,7 @@ from test.base import TestCase, main # pylint: disable=import-error,no-name-in-m
 import json
 from ocrd.validator import OcrdToolValidator
 
-class TestOcrdToolValidator(TestCase):
-
-    def runTest(self):
-        report = OcrdToolValidator.validate_json(json.loads('''
+skeleton = '''
         {
             "git_url": "https://github.com/ocr-d/foo",
             "version": "0.0.1",
@@ -18,8 +15,34 @@ class TestOcrdToolValidator(TestCase):
                 }
             }
         }
-        '''))
-        print(report.to_xml())
+'''
+
+class TestOcrdToolValidator(TestCase):
+
+    def test_something(self):
+        report = OcrdToolValidator.validate_json(json.loads(skeleton))
+        #  print(report.to_xml())
+        self.assertEqual(report.is_valid, True)
+
+    def test_file_param_ok(self):
+        ocrd_tool = json.loads(skeleton)
+        ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": 'application/rdf+xml'}}
+        report = OcrdToolValidator.validate_json(ocrd_tool)
+        self.assertEqual(report.is_valid, True)
+
+    def test_file_param_bad_content_types(self):
+        bad_and_why = [
+                [2, 'Number not string'],
+                ['foo', 'No subtype'],
+                ['foo/bar~300', 'Invalid char in subtype'],
+                ['foo/bar 300', 'Invalid char in subtype'],
+        ]
+        for case in bad_and_why:
+            ocrd_tool = json.loads(skeleton)
+            ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": case[0]}}
+            report = OcrdToolValidator.validate_json(ocrd_tool)
+            print('# %s: %s' % (case[0], case[1]))
+            self.assertEqual(report.is_valid, False, case[1])
 
 if __name__ == '__main__':
     main()
