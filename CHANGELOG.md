@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.6] - 2018-10-19
+
 Changed:
 
   * Update ocrd-tool schema to spec v2.4.0
@@ -315,6 +317,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.6]: ../../compare/v0.8.6...v0.8.5
 [0.8.5]: ../../compare/v0.8.5...v0.8.4
 [0.8.4]: ../../compare/v0.8.4...v0.8.3
 [0.8.3]: ../../compare/v0.8.3...v0.8.2
