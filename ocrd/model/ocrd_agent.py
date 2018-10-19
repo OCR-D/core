@@ -11,26 +11,27 @@ class OcrdAgent(object):
     #  @staticmethod
     #  from_el(el):
     #      role = el_agent.get('ROLE')
-    #      agent_type = el_agent.get('TYPE')
+    #      _type = el_agent.get('TYPE')
     #      otherrole = el_agent.get('OTHERROLE')
     #      name_parts = string.split(el.find('mets:name', NS).text, ' ', 2)
     #      #  name = name_parts[0]
     #      #  version = name_parts[1][1:]     # v0.0.1 => 0.0.1
-    #      return OcrdAgent(el, name, role, agent_type, otherrole)
+    #      return OcrdAgent(el, name, role, _type, otherrole)
 
-    def __init__(self, el=None, name=None, agent_type=None, role=None, otherrole=None):
+    def __init__(self, el=None, name=None, _type=None, othertype=None, role=None, otherrole=None):
         if el is None:
             el = ET.Element(TAG_METS_AGENT)
         self._el = el
         self.name = name
-        self.type = agent_type
+        self.type = _type
+        self.othertype = othertype
         self.role = role
         self.otherrole = otherrole
 
     def __str__(self):
         props = ', '.join([
             '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
-            for k in ['role', 'otherrole', 'name']
+            for k in ['type', 'othertype', 'role', 'otherrole', 'name']
         ])
         return '<OcrdAgent [' + props + ']/> '
 
@@ -39,9 +40,19 @@ class OcrdAgent(object):
         return self._el.get('TYPE')
 
     @type.setter
-    def type(self, agent_type):
-        if agent_type is not None:
-            self._el.set('TYPE', agent_type)
+    def type(self, _type):
+        if _type is not None:
+            self._el.set('TYPE', _type)
+
+    @property
+    def othertype(self):
+        return self._el.get('OTHERTYPE')
+
+    @othertype.setter
+    def othertype(self, othertype):
+        if othertype is not None:
+            self._el.set('TYPE', 'OTHER')
+            self._el.set('OTHERTYPE', othertype)
 
     @property
     def role(self):

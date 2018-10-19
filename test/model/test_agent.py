@@ -20,5 +20,10 @@ class TestOcrdAgent(TestCase):
         ag.name = 'barfoo'
         self.assertEqual(ag.name, 'barfoo')
 
+    def test_basic4(self):
+        ag = OcrdAgent(othertype='foobar')
+        self.assertEqual(ag.type, 'OTHER')
+        #  print(ag)
+
 if __name__ == '__main__':
     main()

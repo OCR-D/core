@@ -56,6 +56,9 @@ class OcrdMets(OcrdXmlDocument):
         return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('.//mets:metsHdr/mets:agent', NS)]
 
     def add_agent(self, *args, **kwargs):
+        """
+        Add an agent to the list of agents in the metsHdr.
+        """
         el_metsHdr = self._tree.getroot().find('.//mets:metsHdr', NS)
         #  assert(el_metsHdr is not None)
         el_agent = ET.SubElement(el_metsHdr, TAG_METS_AGENT)
