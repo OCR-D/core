@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `KeyError` because ocrd_tool not saved on processor instance, #192
+  * another `KeyError` because `pnginfo` isn't set for all PNG by exiftool, #194
 
 ## [0.8.7] - 2018-10-23
 
