@@ -59,7 +59,7 @@ def run_processor(
         output_file_grp=output_file_grp,
         parameter=parameter
     )
-    #  print(processor.version)
+    ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
@@ -120,6 +120,7 @@ class Processor(object):
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return
+        self.ocrd_tool = ocrd_tool
         self.version = version
         self.workspace = workspace
         self.input_file_grp = input_file_grp
