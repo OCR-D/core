@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.7] - 2018-10-23
+
+Changed:
+
+  * Calling `workspace.save_mets()` will now save processor information in the header, #147, #191
+
 ## [0.8.6] - 2018-10-19
 
 Changed:
@@ -252,8 +258,6 @@ Changed:
 
 ## [0.2.3] - 2018-05-17
 
-#79
-
 Fixed:
   * Adapted to spec v1.1.5
   * Ensure python 2.7 backwards compatibility
@@ -317,6 +321,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.7]: ../../compare/v0.8.7...v0.8.6
 [0.8.6]: ../../compare/v0.8.6...v0.8.5
 [0.8.5]: ../../compare/v0.8.5...v0.8.4
 [0.8.4]: ../../compare/v0.8.4...v0.8.3
