@@ -28,7 +28,7 @@ def run_processor(
         output_file_grp=None,
         parameter=None,
         working_dir=None,
-):
+): # pylint: disable=too-many-locals
     """
     Create a workspace for mets_url and run processor through it
 
@@ -59,8 +59,18 @@ def run_processor(
         output_file_grp=output_file_grp,
         parameter=parameter
     )
-    log.debug("Processor instance %s", processor)
+    #  print(processor.version)
+    name = '%s v%s' % (ocrd_tool['executable'], processor.version)
+    otherrole = ocrd_tool['steps'][0]
+    log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     processor.process()
+    workspace.mets.add_agent(
+        name=name,
+        _type='OTHER',
+        othertype='SOFTWARE',
+        role='OTHER',
+        otherrole=otherrole
+    )
     workspace.save_mets()
 
 # TODO not used as of 0.8.2
@@ -75,7 +85,7 @@ def run_cli(
         output_file_grp=None,
         parameter=None,
         working_dir=None,
-):
+): # pylint: disable=unused-argument
     """
     Create a workspace for mets_url and run MP CLI through it
     """
@@ -98,13 +108,15 @@ class Processor(object):
             self,
             workspace,
             ocrd_tool=None,
-            parameter={},
+            parameter=None,
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             group_id=None,
             dump_json=False,
             version=None
     ):
+        if parameter is None:
+            parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return

@@ -173,13 +173,12 @@ class Workspace(object):
 
         if coords is None:
             return pil_image
-        else:
-            if image_url not in self.image_cache['cv2']:
-                self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-            cv2_image = self.image_cache['cv2'][image_url]
-            poly = np.array(coords, np.int32)
-            region_cut = cv2_image[
-                np.min(poly[:, 1]):np.max(poly[:, 1]),
-                np.min(poly[:, 0]):np.max(poly[:, 0])
-            ]
-            return Image.fromarray(region_cut)
+        if image_url not in self.image_cache['cv2']:
+            self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+        cv2_image = self.image_cache['cv2'][image_url]
+        poly = np.array(coords, np.int32)
+        region_cut = cv2_image[
+            np.min(poly[:, 1]):np.max(poly[:, 1]),
+            np.min(poly[:, 0]):np.max(poly[:, 0])
+        ]
+        return Image.fromarray(region_cut)
