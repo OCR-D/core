@@ -27,7 +27,6 @@ class OcrdExif(object):
             self.yResolution = img.info['jfif_density'][1]
             self.resolutionUnit = img.info['jfif_unit']
         elif img.format == 'PNG' and 'dpi' in img.info:
-            print(img.info['pnginfo'])
             self.xResolution = img.info['dpi'][0]
             self.yResolution = img.info['dpi'][1]
         else:
