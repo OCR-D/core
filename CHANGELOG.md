@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `KeyError` because ocrd_tool not saved on processor instance, #192
+
 ## [0.8.7] - 2018-10-23
 
 Changed:
