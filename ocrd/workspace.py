@@ -174,9 +174,14 @@ class Workspace(object):
         if coords is None:
             return pil_image
         if image_url not in self.image_cache['cv2']:
-            self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            log.debug("Converting PIL to OpenCV: %s", image_url)
+            if pil_image.mode == '1':
+                self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+            else:
+                self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
         cv2_image = self.image_cache['cv2'][image_url]
         poly = np.array(coords, np.int32)
+        log.debug("Cutting region %s from %s", coords, image_url)
         region_cut = cv2_image[
             np.min(poly[:, 1]):np.max(poly[:, 1]),
             np.min(poly[:, 0]):np.max(poly[:, 0])
