@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.8] - 2018-10-24
+
 Fixed:
 
   * `KeyError` because ocrd_tool not saved on processor instance, #192
@@ -327,6 +329,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.8]: ../../compare/v0.8.8...v0.8.7
 [0.8.7]: ../../compare/v0.8.7...v0.8.6
 [0.8.6]: ../../compare/v0.8.6...v0.8.5
 [0.8.5]: ../../compare/v0.8.5...v0.8.4
