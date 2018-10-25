@@ -6,6 +6,7 @@ ignored-modules=cv2,tesserocr,ocrd.model
 ignore-patterns='.*generateds.*'
 disable =
     useless-object-inheritance,
+    too-many-instance-attributes,
     inconsistent-return-statements,
     ungrouped-imports,
     missing-docstring,

@@ -1,8 +1,9 @@
 from test.base import TestCase, main, assets
 
-from ocrd.constants import MIMETYPE_PAGE, METS_XML_EMPTY
+from ocrd.constants import MIMETYPE_PAGE, VERSION
 from ocrd.model import OcrdMets
 
+# pylint: disable=protected-access
 class TestOcrdMets(TestCase):
 
     def setUp(self):
@@ -14,10 +15,13 @@ class TestOcrdMets(TestCase):
         self.assertEqual(self.mets.unique_identifier, 'foo', 'Right identifier after change')
 
     def test_unique_identifier_from_nothing(self):
-        self.mets = OcrdMets(content=METS_XML_EMPTY)
-        self.assertEqual(self.mets.unique_identifier, None, 'no identifier')
-        self.mets.unique_identifier = 'foo'
-        self.assertEqual(self.mets.unique_identifier, 'foo', 'Right identifier after change')
+        mets = OcrdMets.empty_mets()
+        self.assertEqual(mets.unique_identifier, None, 'no identifier')
+        mets.unique_identifier = 'foo'
+        self.assertEqual(mets.unique_identifier, 'foo', 'Right identifier after change')
+        as_string = mets.to_xml().decode('utf-8')
+        self.assertIn('ocrd/core v%s' % VERSION, as_string)
+        self.assertIn('CREATEDATE="2018-', as_string)
 
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
@@ -64,6 +68,14 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f.groupId, 'FILE_0001_IMAGE')
         f.groupId = 'foo'
         self.assertEqual(f.groupId, 'foo')
+
+    def test_agent(self):
+        #  Processor(workspace=self.workspace)
+        mets = self.mets
+        self.assertEqual(len(mets.agents), 1)
+        mets.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'YETOTHERSTILL')
+        #  print(['%s'%x for x in mets.agents])
+        self.assertEqual(len(mets.agents), 2)
 
 if __name__ == '__main__':
     main()

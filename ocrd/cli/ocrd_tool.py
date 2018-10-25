@@ -22,8 +22,8 @@ pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
 # ocrd ocrd-tool
 # ----------------------------------------------------------------------
 
-@click.group('ocrd-tool', help='Work with ocrd-tool.json')
-@click.argument('json_file', "ocrd-tool.json to operate on")
+@click.group('ocrd-tool', help='Work with ocrd-tool.json JSON_FILE')
+@click.argument('json_file')
 @click.pass_context
 def ocrd_tool_cli(ctx, json_file):
     ctx.obj = OcrdToolCtx(json_file)
@@ -63,8 +63,8 @@ def ocrd_tool_list(ctx):
 # ocrd ocrd-tool tool
 # ----------------------------------------------------------------------
 
-@ocrd_tool_cli.group('tool', help='Work with a single tool')
-@click.argument('tool_name', "Name of the tool")
+@ocrd_tool_cli.group('tool', help='Work with a single tool TOOL_NAME')
+@click.argument('tool_name')
 @pass_ocrd_tool
 def ocrd_tool_tool(ctx, tool_name):
     if tool_name not in ctx.json['tools']:

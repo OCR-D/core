@@ -5,6 +5,60 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.8] - 2018-10-24
+
+Fixed:
+
+  * `KeyError` because ocrd_tool not saved on processor instance, #192
+  * another `KeyError` because `pnginfo` isn't set for all PNG by exiftool, #194
+  * support 1-bit bitonal images, #196
+
+## [0.8.7] - 2018-10-23
+
+Changed:
+
+  * Calling `workspace.save_mets()` will now save processor information in the header, #147, #191
+
+## [0.8.6] - 2018-10-19
+
+Changed:
+
+  * Update ocrd-tool schema to spec v2.4.0
+
+Fixed:
+
+  * Calls to `click.argument` had too many arguments, #186
+
+## [0.8.5] - 2018-09-26
+
+Changed:
+
+  * Logger setup according to v2.3.0 of the spec, #185
+
+## [0.8.4] - 2018-09-21
+
+Removed:
+
+  * remove `workspace_from_folder`, #180
+
+Changed:
+
+  * Creating METS from scratch will set creator agent and creation date, #147
+
+Fixed:
+
+  * Schema regression in 0.8.3 (description)
+
+## [0.8.3] - 2018-09-20
+
+Changed:
+
+  * Make logging logic spec-compliant according to #173
+
+Removed:
+
+  * `prefer_symlink` mechanism, #179
+
 ## [0.8.2] - 2018-09-04
 
 Fixed:
@@ -212,8 +266,6 @@ Changed:
 
 ## [0.2.3] - 2018-05-17
 
-#79
-
 Fixed:
   * Adapted to spec v1.1.5
   * Ensure python 2.7 backwards compatibility
@@ -277,6 +329,12 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.8.8]: ../../compare/v0.8.8...v0.8.7
+[0.8.7]: ../../compare/v0.8.7...v0.8.6
+[0.8.6]: ../../compare/v0.8.6...v0.8.5
+[0.8.5]: ../../compare/v0.8.5...v0.8.4
+[0.8.4]: ../../compare/v0.8.4...v0.8.3
+[0.8.3]: ../../compare/v0.8.3...v0.8.2
 [0.8.2]: ../../compare/v0.8.2...v0.8.1
 [0.8.1]: ../../compare/v0.8.1...v0.8.0
 [0.8.0]: ../../compare/v0.8.0...v0.7.5

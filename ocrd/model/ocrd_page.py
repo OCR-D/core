@@ -58,7 +58,6 @@ def from_file(input_file):
     #  print("PARSING PARSING '%s'" % input_file)
     if input_file.mimetype.startswith('image'):
         return page_from_image(input_file)
-    elif input_file.mimetype == MIMETYPE_PAGE:
+    if input_file.mimetype == MIMETYPE_PAGE:
         return parse(input_file.local_filename, silence=True)
-    else:
-        raise Exception("Unsupported mimetype '%s'" % input_file.mimetype)
+    raise Exception("Unsupported mimetype '%s'" % input_file.mimetype)
