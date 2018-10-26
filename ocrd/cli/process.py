@@ -16,32 +16,34 @@ from ocrd.decorators import ocrd_cli_options
 @click.argument('steps', nargs=-1)
 def process_cli(mets, steps, **kwargs):
     """
-    Execute OCR-D processors for a METS file directly.
-    
+    Execute OCR-D processor executables for a METS file.
+
     Run each of the STEPS executables one after another.
+
+    Order of comma-separated values for -I, -O, -p corresponds to order of steps.
     """
     resolver = Resolver()
     workspace = resolver.workspace_from_url(mets)
-    
+
     cmds = []
     for ocrd_tool_file in kwargs['ocrd_tool']:
         with codecs.open(ocrd_tool_file, encoding='utf-8') as f:
             obj = json.loads(f.read())
             for tool in obj['tools'].values():
                 cmds.append(tool['executable'])
-    
+
     for cmd in steps:
         if cmd not in cmds:
             raise Exception("Tool not registered: '%s'" % cmd)
-    
+
     # fixme: this really should be coming from workflow engine (giving steps, i/o fileGrps, parameter files)
     # fixme: using the command line here is inefficient
     # fixme: someone should go and check if the first input_file_grp actually exists
-    if not 'input_file_grp' in kwargs:
+    if 'input_file_grp' not in kwargs:
         raise Exception("Need input_file_grp USE(s)")
-    if not 'output_file_grp' in kwargs:
+    if 'output_file_grp' not in kwargs:
         raise Exception("Need output_file_grp USE(s)")
-    if not 'parameter' in kwargs:
+    if 'parameter' not in kwargs:
         raise Exception("Need parameter file(s)")
     input_file_grps = kwargs['input_file_grp'].split(',')
     if len(input_file_grps) != len(steps):
@@ -52,16 +54,16 @@ def process_cli(mets, steps, **kwargs):
     parameters = kwargs['parameter'].split(',')
     if len(parameters) != len(steps):
         raise Exception("Number of parameter files (%d) does not match number of steps (%d)" % (len(parameters), len(steps)))
-    
+
     for cmd, input_file_grp, output_file_grp, parameter in zip(steps, input_file_grps, output_file_grps, parameters):
-        run_cli(cmd, mets, resolver, workspace, 
-                log_level=kwargs['log_level'], 
-                group_id=kwargs['group_id'], 
-                input_file_grp=input_file_grp, 
-                output_file_grp=output_file_grp, 
+        run_cli(cmd, mets, resolver, workspace,
+                log_level=kwargs['log_level'],
+                group_id=kwargs['group_id'],
+                input_file_grp=input_file_grp,
+                output_file_grp=output_file_grp,
                 parameter=parameter)
-    
+
     workspace.reload_mets()
-    
+
     #  print('\n'.join(k + '=' + str(kwargs[k]) for k in kwargs))
     print(workspace)
