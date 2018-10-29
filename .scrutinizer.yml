@@ -1,0 +1,20 @@
+checks:
+  python: true
+
+build:
+  nodes:
+    analysis:
+      tests:
+        override:
+          - py-scrutinizer-run
+          -
+            command: pylint-run
+            use_website_config: false
+
+    tests: true
+filter:
+  excluded_paths:
+    - '*/test/*'
+    - 'core-models/ocrd_models/model/ocrd_page_generateds.py'
+  dependency_paths:
+    - 'lib/*'

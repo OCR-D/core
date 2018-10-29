@@ -1,6 +1,6 @@
 [MASTER]
 extension-pkg-whitelist=lxml
-ignored-modules=cv2,tesserocr,ocrd.model
+ignored-modules=cv2,tesserocr,ocrd_models.model.ocrd_page_generateds
 
 [MESSAGES CONTROL]
 ignore-patterns='.*generateds.*'
