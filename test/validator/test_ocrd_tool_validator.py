@@ -1,6 +1,6 @@
 from test.base import TestCase, main # pylint: disable=import-error,no-name-in-module
 import json
-from ocrd.validator import OcrdToolValidator
+from ocrd_models.validator import OcrdToolValidator
 
 skeleton = '''
         {
@@ -28,6 +28,7 @@ class TestOcrdToolValidator(TestCase):
         ocrd_tool = json.loads(skeleton)
         ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": 'application/rdf+xml'}}
         report = OcrdToolValidator.validate_json(ocrd_tool)
+        print(report.errors)
         self.assertEqual(report.is_valid, True)
 
     def test_file_param_bad_content_types(self):

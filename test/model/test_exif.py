@@ -1,7 +1,7 @@
 from test.base import TestCase, main, assets
 from PIL import Image
 
-from ocrd.model import OcrdExif
+from ocrd_models import OcrdExif
 
 # pylint: disable=no-member
 class TestOcrdExif(TestCase):

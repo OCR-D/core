@@ -28,7 +28,7 @@ import re
 import sys
 
 import logging
-from ocrd.logging import getLogger
+from ocrd_shared.logging import getLogger
 
 def points_from_xywh(box):
     """

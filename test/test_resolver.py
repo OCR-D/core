@@ -2,7 +2,7 @@ import os
 from shutil import copytree, rmtree
 from test.base import TestCase, assets, main
 
-from ocrd.model import OcrdExif
+from ocrd_models import OcrdExif
 from ocrd.resolver import Resolver
 
 TMP_FOLDER = '/tmp/test-pyocrd-resolver'

@@ -1,7 +1,7 @@
 import codecs
 import json
 
-from ocrd.constants import (OCRD_TOOL_SCHEMA, OCRD_OAS3_SPEC)
+from ..constants import (OCRD_TOOL_SCHEMA, OCRD_OAS3_SPEC)
 
 
 GET_SCHEMA = {

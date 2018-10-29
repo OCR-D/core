@@ -4,9 +4,10 @@ except ImportError:
     from io import StringIO
 
 from datetime import datetime
+from ocrd_shared.constants import NAMESPACES, VERSION, MIMETYPE_PAGE
 
 # pylint: disable=unused-import
-from ocrd.model.ocrd_page_generateds import (
+from .ocrd_page_generateds import (
     parse,
     parseString,
 
@@ -24,8 +25,7 @@ from ocrd.model.ocrd_page_generateds import (
     TextLineType,
     WordType,
 )
-from ocrd.constants import NAMESPACES, VERSION, MIMETYPE_PAGE
-from ocrd.model.ocrd_exif import OcrdExif
+from .ocrd_exif import OcrdExif
 
 def to_xml(el):
     sio = StringIO()

@@ -1,7 +1,7 @@
 from test.base import TestCase, main, assets
 
-from ocrd.constants import MIMETYPE_PAGE, VERSION
-from ocrd.model import OcrdMets
+from ocrd_shared.constants import MIMETYPE_PAGE, VERSION
+from ocrd_models import OcrdMets
 
 # pylint: disable=protected-access
 class TestOcrdMets(TestCase):

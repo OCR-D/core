@@ -1,6 +1,6 @@
 from test.base import TestCase, assets, main # pylint: disable=unused-import
 
-from ocrd.model import OcrdAgent
+from ocrd_models import OcrdAgent
 
 # pylint: disable=no-member
 class TestOcrdAgent(TestCase):

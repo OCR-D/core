@@ -37,8 +37,6 @@ TAG_PAGE_TEXTLINE = '{%s}TextLine' % NAMESPACES['page']
 TAG_PAGE_TEXTEQUIV = '{%s}TextEquiv' % NAMESPACES['page']
 TAG_PAGE_TEXTREGION = '{%s}TextRegion' % NAMESPACES['page']
 
-METS_XML_EMPTY = resource_string(__name__, 'model/mets-empty.xml')
-
 EXT_TO_MIME = {
     '.tif': 'image/tiff',
     '.tiff': 'image/tiff',
@@ -47,9 +45,3 @@ EXT_TO_MIME = {
     '.jpeg': 'image/jpg',
     '.xml': MIMETYPE_PAGE
 }
-
-
-OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.yml'))
-OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
-
-BASHLIB_FILENAME = resource_filename(__name__, 'lib.bash')

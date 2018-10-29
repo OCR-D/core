@@ -4,10 +4,10 @@ from zipfile import ZipFile
 import tempfile
 import requests
 
-from ocrd.constants import TMP_PREFIX
-from ocrd.utils import getLogger, safe_filename
+from ocrd_shared.constants import TMP_PREFIX
+from ocrd_shared.utils import getLogger, safe_filename
 from ocrd.workspace import Workspace
-from ocrd.model import OcrdMets
+from ocrd_models import OcrdMets
 
 log = getLogger('ocrd.resolver')
 tempfile.tempdir = '/tmp'

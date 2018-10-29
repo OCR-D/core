@@ -3,7 +3,7 @@ import hashlib
 
 from flask import Flask, Response, request, send_from_directory
 #  from werkzeug.utils import secure_filename
-from ocrd.constants import DEFAULT_UPLOAD_FOLDER, DEFAULT_REPOSITORY_URL
+from ocrd_shared.constants import DEFAULT_UPLOAD_FOLDER, DEFAULT_REPOSITORY_URL
 
 def create(upload_folder=DEFAULT_UPLOAD_FOLDER, base_url=DEFAULT_REPOSITORY_URL):
 

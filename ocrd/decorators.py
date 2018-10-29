@@ -2,10 +2,10 @@ import os
 
 import click
 
-from ocrd.constants import VERSION as OCRD_VERSION
+from ocrd_shared.constants import VERSION as OCRD_VERSION
 from ocrd.resolver import Resolver
 from ocrd.processor.base import run_processor
-from ocrd.logging import setOverrideLogLevel
+from ocrd_shared.logging import setOverrideLogLevel
 
 def _set_root_logger_version(ctx, param, value):    # pylint: disable=unused-argument
     setOverrideLogLevel(value)

@@ -1,8 +1,8 @@
 import re
 
-from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
+from ocrd_shared.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
-from ocrd.utils import getLogger
+from ocrd_shared.utils import getLogger
 
 log = getLogger('ocrd.workspace_validator')
 

@@ -4,7 +4,7 @@ import sys
 import click
 
 from ocrd import Resolver, WorkspaceValidator, Workspace
-from ocrd.utils import getLogger
+from ocrd_shared.utils import getLogger
 
 log = getLogger('ocrd.cli.workspace')
 

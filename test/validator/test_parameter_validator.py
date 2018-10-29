@@ -1,5 +1,5 @@
 from test.base import TestCase, main
-from ocrd.validator import ParameterValidator
+from ocrd_models.validator import ParameterValidator
 
 class TestParameterValidator(TestCase):
 

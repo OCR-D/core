@@ -6,8 +6,8 @@ import cv2
 from PIL import Image
 import numpy as np
 
-from ocrd.model import OcrdMets, OcrdExif
-from ocrd.utils import getLogger
+from ocrd_models import OcrdMets, OcrdExif
+from ocrd_shared.utils import getLogger
 log = getLogger('ocrd.workspace')
 
 class Workspace(object):

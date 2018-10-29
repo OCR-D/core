@@ -1,5 +1,5 @@
 from test.base import TestCase, main, assets
-from ocrd.utils import (
+from ocrd_shared.utils import (
     points_from_xywh,
     is_string,
     concat_padded,

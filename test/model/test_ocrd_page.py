@@ -1,7 +1,7 @@
 from test.base import TestCase, main, assets
-import ocrd.model.ocrd_file as ocrd_file
-import ocrd.model.ocrd_page as ocrd_page
-from ocrd.model.ocrd_page import (
+from ocrd_models import OcrdFile
+import ocrd_models.model.ocrd_page as ocrd_page
+from ocrd_models.model.ocrd_page import (
     AlternativeImageType,
     PcGtsType,
     PageType,
@@ -21,7 +21,7 @@ class TestOcrdPage(TestCase):
             self.pcgts = ocrd_page.parseString(self.xml_as_str, silence=True)
 
     def test_from_file(self):
-        f = ocrd_file.OcrdFile(
+        f = OcrdFile(
             None,
             mimetype='image/tiff',
             local_filename=assets.path_to('kant_aufklaerung_1784/kant_aufklaerung_1784_0017.tif')

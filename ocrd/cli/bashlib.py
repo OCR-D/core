@@ -1,6 +1,6 @@
 import click
 
-from ocrd.constants import BASHLIB_FILENAME
+from ocrd_shared.constants import BASHLIB_FILENAME
 
 # ----------------------------------------------------------------------
 # ocrd bashlib

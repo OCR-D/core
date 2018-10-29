@@ -54,7 +54,9 @@ deps-test:
 
 # (Re)install the tool
 install: spec
-	$(PIP) install .
+	cd core-shared && $(PIP) install -e .
+	cd core-models && $(PIP) install -e .
+	$(PIP) install -e .
 
 # Regenerate python code from PAGE XSD
 generate-page: repo/assets
@@ -62,7 +64,7 @@ generate-page: repo/assets
 		-f \
 		--no-namespace-defs \
 		--root-element='PcGts' \
-		-o ocrd/model/ocrd_page_generateds.py \
+		-o core-models/ocrd_models/model/ocrd_page_generateds.py \
 		repo/assets/data/schema/2018.xsd
 
 #
@@ -86,8 +88,8 @@ repo/spec:
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
 spec: repo/spec
-	cp repo/spec/ocrd_api.swagger.yml ocrd/model/yaml/ocrd_oas3.spec.yml
-	cp repo/spec/ocrd_tool.schema.yml ocrd/model/yaml/ocrd_tool.schema.yml
+	cp repo/spec/ocrd_api.swagger.yml core-models/ocrd_models/model/yaml/ocrd_oas3.spec.yml
+	cp repo/spec/ocrd_tool.schema.yml core-models/ocrd_models/model/yaml/ocrd_tool.schema.yml
 
 #
 # Assets
@@ -140,7 +142,7 @@ gh-pages:
 
 pyclean:
 	rm -f **/*.pyc
-	find ocrd -name '__pycache__' -exec rm -rf '{}' \;
+	find . -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 test-profile:

@@ -1,5 +1,5 @@
 import os
-from ocrd.constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
+from ocrd_shared.constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
 
 from .ocrd_xml_base import ET
 

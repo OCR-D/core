@@ -1,7 +1,7 @@
 from lxml import etree as ET
 
-from ocrd.constants import NAMESPACES
-from ocrd.utils import xmllint_format
+from ocrd_shared.constants import NAMESPACES
+from ocrd_shared.utils import xmllint_format
 
 
 for curie in NAMESPACES:

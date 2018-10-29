@@ -1,13 +1,14 @@
 from datetime import datetime
 
-from ocrd.constants import (
+from ocrd_models.constants import (METS_XML_EMPTY)
+
+from ocrd_shared.constants import (
     NAMESPACES as NS,
     TAG_METS_FILE,
     TAG_METS_FILEGRP,
     TAG_METS_AGENT,
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
-    METS_XML_EMPTY,
     VERSION
 )
 

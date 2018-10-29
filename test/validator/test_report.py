@@ -1,6 +1,6 @@
 from test.base import TestCase, main # pylint: disable=import-error,no-name-in-module
 from ocrd.resolver import Resolver
-from ocrd.validator import ValidationReport
+from ocrd_models.validator import ValidationReport
 
 class TestValidationReport(TestCase):
 
