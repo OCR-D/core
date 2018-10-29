@@ -8,7 +8,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps deps-test test
+      - run: make deps deps-test install test
 
   build-python35:
     docker:
@@ -16,7 +16,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps deps-test test
+      - run: make deps deps-test install test
 
   build-python36:
     docker:
@@ -24,7 +24,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps deps-test test
+      - run: make deps deps-test install test
 
 workflows:
   version: 2
