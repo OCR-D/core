@@ -9,6 +9,7 @@ from ocrd.logging import setOverrideLogLevel
 
 def _set_root_logger_version(ctx, param, value):    # pylint: disable=unused-argument
     setOverrideLogLevel(value)
+    return value
 
 def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
     if dump_json:
