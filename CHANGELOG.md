@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * CLI: `ocrd process`, #199
+
 ## [0.8.8] - 2018-10-24
 
 Fixed:
