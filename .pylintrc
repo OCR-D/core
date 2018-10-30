@@ -11,11 +11,13 @@ disable =
     line-too-long,
     missing-docstring,
     no-self-use,
-    no-space-check=empty-line,
     superfluous-parens,
     too-few-public-methods,
     too-many-arguments,
     too-many-branches,
     too-many-instance-attributes,
     ungrouped-imports,
-    useless-object-inheritance,
+    useless-object-inheritance
+
+[FORMAT]
+no-space-check=empty-line

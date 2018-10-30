@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * CLI: `ocrd process`, #199
+
+Changed:
+
+  * Implement changes from spec v2.5.0: ocrd-tool must have in/output groups
+
 ## [0.8.8] - 2018-10-24
 
 Fixed:
