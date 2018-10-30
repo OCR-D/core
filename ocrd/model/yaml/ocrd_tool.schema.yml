@@ -29,10 +29,24 @@ properties:
           - steps
           - executable
           - categories
+          - input_file_grp
+          - output_file_grp
         properties:
           executable:
             description: The name of the CLI executable in $PATH
             type: string
+          input_file_grp:
+            description: Input fileGrp@USE this tool expects by default
+            type: array
+            items:
+              type: string
+              pattern: '^OCR-D-[A-Z0-9-]+$'
+          output_file_grp:
+            description: Output fileGrp@USE this tool produces by default
+            type: array
+            items:
+              type: string
+              pattern: '^OCR-D-[A-Z0-9-]+$'
           parameters:
             description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
             type: object

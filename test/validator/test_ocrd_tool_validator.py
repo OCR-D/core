@@ -10,6 +10,8 @@ skeleton = '''
                 "ocrd-xyz": {
                     "executable": "ocrd-xyz",
                     "description": "bars all the foos",
+                    "input_file_grp": ["OCR-D-FOO"],
+                    "output_file_grp": ["OCR-D-BAR"],
                     "categories": ["Layout analysis"],
                     "steps": ["layout/analysis"]
                 }
