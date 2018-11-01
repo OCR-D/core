@@ -68,7 +68,7 @@ class WorkspaceBackupManager(object):
         self.add()
         log.info("Restoring from %s/mets.xml" % bak)
         src = join(bak, 'mets.xml')
-        dest = join(self.workspace.directory, 'mets.xml')
+        dest = self.workspace.mets_target
         log.debug('cp "%s" "%s"', src, dest)
         copy(src, dest)
 
