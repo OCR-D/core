@@ -124,14 +124,6 @@ class Workspace(object):
         """
         shutil.move(fobj.local_filename, os.path.join(self.directory, dst))
 
-    def persist(self):
-        """
-        Persist the workspace using the resolver. Uploads the files in the
-        OUTPUT group to the data repository, sets their URL accordingly.
-        """
-        self.save_mets()
-        raise Exception("NIH")
-
     def save_mets(self):
         """
         Write out the current state of the METS file.
