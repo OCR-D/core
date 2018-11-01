@@ -10,10 +10,11 @@ log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx(object):
 
-    def __init__(self, directory, mets_basename):
+    def __init__(self, directory, mets_basename, automatic_backup):
         self.directory = directory
         self.resolver = Resolver()
         self.mets_basename = mets_basename
+        self.automatic_backup = automatic_backup
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
@@ -24,12 +25,13 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.group("workspace")
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
 @click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('--no-backup', default=False, help="Don't backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename):
+def workspace_cli(ctx, directory, mets_basename, no_backup):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename)
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, automatic_backup=not(no_backup))
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
@@ -115,7 +117,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_
     """
     Add a file LOCAL_FILENAME to METS in a workspace.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
     if not local_filename.startswith(ctx.directory):
         log.debug("File '%s' is not in workspace, copying", local_filename)
@@ -222,7 +224,7 @@ def get_id(ctx):
 @click.argument('ID')
 @pass_workspace
 def set_id(ctx, ID):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     workspace.mets.unique_identifier = ID
     workspace.save_mets()
 
@@ -273,7 +275,7 @@ def workspace_backup_add(ctx):
     """
     Create a new backup
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
     backup_manager.add()
 
 @workspace_backup_cli.command('list')
@@ -282,7 +284,7 @@ def workspace_backup_list(ctx):
     """
     List backups
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
     for b in backup_manager.list():
         print(b)
 
@@ -294,7 +296,7 @@ def workspace_backup_restore(ctx, choose_first, bak):
     """
     Restore backup BAK
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
     backup_manager.restore(bak, choose_first)
 
 @workspace_backup_cli.command('undo')
@@ -303,5 +305,5 @@ def workspace_backup_undo(ctx):
     """
     Restore the last backup
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
     backup_manager.undo()

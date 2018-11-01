@@ -11,8 +11,6 @@ from .constants import BACKUP_DIR
 from .model.ocrd_mets import OcrdMets
 from .utils import getLogger
 
-log = getLogger('ocrd.workspace_backup')
-
 def _chksum(s):
     return hashlib.sha256(s).hexdigest()
 
@@ -53,6 +51,7 @@ class WorkspaceBackupManager(object):
         """
         Restore mets.xml to previous state
         """
+        log = getLogger('ocrd.workspace_backup.restore')
         bak = None
         if isdir(chksum):
             bak = abspath(chksum)
@@ -76,6 +75,7 @@ class WorkspaceBackupManager(object):
         """
         Create a backup in <self.backup_directory>
         """
+        log = getLogger('ocrd.workspace_backup.add')
         mets_str = self.workspace.mets.to_xml()
         chksum = _chksum(mets_str)
         backups = self.list()
@@ -107,6 +107,7 @@ class WorkspaceBackupManager(object):
         """
         Restore to last version
         """
+        log = getLogger('ocrd.workspace_backup.undo')
         backups = self.list()
         if backups:
             last_backup = backups[0]

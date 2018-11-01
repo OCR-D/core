@@ -6,8 +6,9 @@ import cv2
 from PIL import Image
 import numpy as np
 
-from ocrd.model import OcrdMets, OcrdExif
-from ocrd.utils import getLogger
+from .model import OcrdMets, OcrdExif
+from .utils import getLogger
+from .workspace_backup import WorkspaceBackupManager
 
 log = getLogger('ocrd.workspace')
 
@@ -24,13 +25,14 @@ class Workspace(object):
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml'):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=True):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = os.path.join(directory, mets_basename)
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
+        self.automatic_backup = automatic_backup
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
             'pil': {},
@@ -128,6 +130,9 @@ class Workspace(object):
         """
         Write out the current state of the METS file.
         """
+        log.info("Saving mets '%s'" % self.mets_target)
+        if self.automatic_backup:
+            WorkspaceBackupManager(self).add()
         with open(self.mets_target, 'wb') as f:
             f.write(self.mets.to_xml(xmllint=True))
 
