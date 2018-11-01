@@ -14,8 +14,6 @@ class WorkspaceCtx(object):
         self.directory = directory
         self.resolver = Resolver()
         self.mets_basename = mets_basename
-        self.config = {}
-        self.verbose = False
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
@@ -26,17 +24,12 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.group("workspace")
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
 @click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
-@click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
-@click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename, config, verbose):
+def workspace_cli(ctx, directory, mets_basename):
     """
     Working with workspace
     """
     ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename)
-    ctx.obj.verbose = verbose
-    for key, value in config:
-        ctx.obj.config[key] = value
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
