@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from ocrd import Resolver, WorkspaceValidator, Workspace
+from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd.utils import getLogger
 
 log = getLogger('ocrd.cli.workspace')
@@ -262,3 +262,53 @@ def pack(ctx, output_filename):
 def unpack(ctx, input_filename):
     workspace = ctx.resolver.unpack_workspace_from_filename(input_filename)
     print(workspace)
+
+# ----------------------------------------------------------------------
+# ocrd workspace backup
+# ----------------------------------------------------------------------
+
+@workspace_cli.group('backup')
+@click.pass_context
+def workspace_backup_cli(ctx): # pylint: disable=unused-argument
+    """
+    Backing and restoring workspaces - dev edition
+    """
+
+@workspace_backup_cli.command('add')
+@pass_workspace
+def workspace_backup_add(ctx):
+    """
+    Create a new backup
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    backup_manager.add()
+
+@workspace_backup_cli.command('list')
+@pass_workspace
+def workspace_backup_list(ctx):
+    """
+    List backups
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    for b in backup_manager.list():
+        print(b)
+
+@workspace_backup_cli.command('restore')
+@click.option('-f', '--choose-first', help="Restore first matching version if more than one", is_flag=True)
+@click.argument('bak') #, type=click.Path(dir_okay=False, readable=True, resolve_path=True))
+@pass_workspace
+def workspace_backup_restore(ctx, choose_first, bak):
+    """
+    Restore backup BAK
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    backup_manager.restore(bak, choose_first)
+
+@workspace_backup_cli.command('undo')
+@pass_workspace
+def workspace_backup_undo(ctx):
+    """
+    Restore the last backup
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename))
+    backup_manager.undo()

@@ -8,6 +8,7 @@ import numpy as np
 
 from ocrd.model import OcrdMets, OcrdExif
 from ocrd.utils import getLogger
+
 log = getLogger('ocrd.workspace')
 
 class Workspace(object):

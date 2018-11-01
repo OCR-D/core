@@ -53,3 +53,5 @@ OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.
 OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
 
 BASHLIB_FILENAME = resource_filename(__name__, 'lib.bash')
+
+BACKUP_DIR = '.backup'
