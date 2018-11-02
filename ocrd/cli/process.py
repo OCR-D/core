@@ -1,69 +1,120 @@
-import json
-import codecs
+import os
+from shlex import split as shlex_split
+from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
 
 import click
 
-from ocrd import run_cli, Resolver
-from ocrd.decorators import ocrd_cli_options
+from ..processor.base import run_cli
+from ..logging import getLogger
+from ..resolver import Resolver
+from ..decorators import ocrd_cli_options
+
+class ProcessorTask(object):
+
+    @classmethod
+    def parse(cls, argstr):
+        tokens = shlex_split(argstr)
+        executable = 'ocrd-%s' % tokens.pop(0)
+        input_file_grps = []
+        output_file_grps = []
+        parameter_path = None
+        while tokens:
+            if tokens[0] == '-I':
+                for grp in tokens[1].split(','):
+                    input_file_grps.append(grp)
+                tokens = tokens[2:]
+            elif tokens[0] == '-O':
+                for grp in tokens[1].split(','):
+                    output_file_grps.append(grp)
+                tokens = tokens[2:]
+            elif tokens[0] == '-p':
+                parameter_path = tokens[1]
+                tokens = tokens[2:]
+            else:
+                raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
+
+        if not which(executable):
+            raise Exception("Executable not found in PATH: %s" % executable)
+        if parameter_path and not os.access(parameter_path, os.R_OK):
+            raise Exception("Parameter file not readable: %s" % parameter_path)
+        if not input_file_grps:
+            raise Exception("Task must have input file group")
+        if not output_file_grps:
+            raise Exception("Task must have output file group")
+        return ProcessorTask(executable, input_file_grps, output_file_grps, parameter_path)
+
+    def __init__(self, executable, input_file_grps, output_file_grps, parameter_path=None):
+        self.executable = executable
+        self.input_file_grps = input_file_grps
+        self.output_file_grps = output_file_grps
+        self.parameter_path = parameter_path
+
+    def __str__(self):
+        ret = '%s -I %s -O %s' % (
+            self.executable.replace('ocrd-', '', 1),
+            ','.join(self.input_file_grps),
+            ','.join(self.output_file_grps))
+        if self.parameter_path:
+            ret += ' -p %s' % self.parameter_path
+        return ret
 
 # ----------------------------------------------------------------------
 # ocrd process
 # ----------------------------------------------------------------------
-
 @click.command('process')
 @ocrd_cli_options
-@click.option('-T', '--ocrd-tool', multiple=True, type=click.Path(exists=True, dir_okay=False), help='register all executables from a ocrd-tool.json file')
-@click.argument('steps', nargs=-1)
-def process_cli(mets, steps, **kwargs):
+@click.argument('tasks', nargs=-1, required=True)
+def process_cli(**kwargs):
     """
-    Execute OCR-D processor executables for a METS file.
-
-    Run each of the STEPS executables one after another.
-
-    Order of comma-separated values for -I, -O, -p corresponds to order of steps.
+    Process a series of tasks
     """
+    log = getLogger('ocrd.cli.process')
+
     resolver = Resolver()
-    workspace = resolver.workspace_from_url(mets)
+    task_strs = kwargs['tasks']
+    mets_url = kwargs['mets']
+    workspace = resolver.workspace_from_url(mets_url)
+    tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
-    cmds = []
-    for ocrd_tool_file in kwargs['ocrd_tool']:
-        with codecs.open(ocrd_tool_file, encoding='utf-8') as f:
-            obj = json.loads(f.read())
-            for tool in obj['tools'].values():
-                cmds.append(tool['executable'])
+    for task in tasks:
 
-    for cmd in steps:
-        if cmd not in cmds:
-            raise Exception("Tool not registered: '%s'" % cmd)
+        # check input file groups are in mets
+        for input_file_grp in task.input_file_grps:
+            if not input_file_grp in workspace.mets.file_groups:
+                raise Exception("Unmet requirement: expected input file group not contained in mets: %s" % input_file_grp)
 
-    # fixme: this really should be coming from workflow engine (giving steps, i/o fileGrps, parameter files)
-    # fixme: using the command line here is inefficient
-    # fixme: someone should go and check if the first input_file_grp actually exists
-    if 'input_file_grp' not in kwargs:
-        raise Exception("Need input_file_grp USE(s)")
-    if 'output_file_grp' not in kwargs:
-        raise Exception("Need output_file_grp USE(s)")
-    if 'parameter' not in kwargs:
-        raise Exception("Need parameter file(s)")
-    input_file_grps = kwargs['input_file_grp'].split(',')
-    if len(input_file_grps) != len(steps):
-        raise Exception("Number of input_file_grp arguments (%d) does not match number of steps (%d)" % (len(input_file_grps), len(steps)))
-    output_file_grps = kwargs['output_file_grp'].split(',')
-    if len(output_file_grps) != len(steps):
-        raise Exception("Number of output_file_grp arguments (%d) does not match number of steps (%d)" % (len(output_file_grps), len(steps)))
-    parameters = kwargs['parameter'].split(',')
-    if len(parameters) != len(steps):
-        raise Exception("Number of parameter files (%d) does not match number of steps (%d)" % (len(parameters), len(steps)))
+        # TODO correct?
+        for output_file_grp in task.output_file_grps:
+            if output_file_grp in workspace.mets.file_groups:
+                raise Exception("Conflict: output file group already contained in mets: %s" % output_file_grp)
 
-    for cmd, input_file_grp, output_file_grp, parameter in zip(steps, input_file_grps, output_file_grps, parameters):
-        run_cli(cmd, mets, resolver, workspace,
-                log_level=kwargs['log_level'],
-                group_id=kwargs['group_id'],
-                input_file_grp=input_file_grp,
-                output_file_grp=output_file_grp,
-                parameter=parameter)
+        log.info("Start processing task '%s'", task)
 
-    workspace.reload_mets()
+        # execute cli
+        returncode = run_cli(
+            task.executable,
+            mets_url,
+            resolver,
+            workspace,
+            log_level=kwargs['log_level'],
+            group_id=kwargs['group_id'],
+            input_file_grp=','.join(task.input_file_grps),
+            output_file_grp=','.join(task.output_file_grps),
+            parameter=task.parameter_path
+        )
 
-    #  print('\n'.join(k + '=' + str(kwargs[k]) for k in kwargs))
-    print(workspace)
+        # check return code
+        if returncode is not None:
+            raise Exception("%s exited with non-zero return value %s" % (task.executable, returncode))
+
+        log.info("Finished processing task '%s'", task)
+
+        # reload mets
+        workspace.reload_mets()
+
+        # check output file groups are in mets
+        for output_file_grp in task.output_file_grps:
+            if not output_file_grp in workspace.mets.file_groups:
+                raise Exception("Invalid state: expected output file group not in mets: %s" % output_file_grp)
+
+    log.info("Finished")
