@@ -9,6 +9,11 @@ from ocrd_shared.logging import setOverrideLogLevel
 
 def _set_root_logger_version(ctx, param, value):    # pylint: disable=unused-argument
     setOverrideLogLevel(value)
+    return value
+
+loglevel_option = click.option('-l', '--log-level', help="Log level",
+                               type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']),
+                               default=None, callback=_set_root_logger_version)
 
 def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
     if dump_json:
@@ -26,6 +31,13 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
+
+def ocrd_loglevel(f):
+    """
+    Add an option '--log-level' to set the log level.
+    """
+    loglevel_option(f)
+    return f
 
 def ocrd_cli_options(f):
     """
@@ -48,9 +60,7 @@ def ocrd_cli_options(f):
         click.option('-g', '--group-id', help="mets:file GROUPID"),
         click.option('-p', '--parameter', type=click.Path()),
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
-        click.option('-l', '--log-level', help="Log level",
-                     type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']),
-                     default=None, callback=_set_root_logger_version),
+        loglevel_option,
         click.option('-V', '--version', help="Show version", is_flag=True, default=False)
     ]
     for param in params:

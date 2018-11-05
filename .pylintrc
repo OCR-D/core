@@ -5,16 +5,19 @@ ignored-modules=cv2,tesserocr,ocrd_models.model.ocrd_page_generateds
 [MESSAGES CONTROL]
 ignore-patterns='.*generateds.*'
 disable =
-    useless-object-inheritance,
-    too-many-instance-attributes,
-    inconsistent-return-statements,
-    ungrouped-imports,
-    missing-docstring,
-    no-self-use,
     fixme,
-    too-many-arguments,
-    superfluous-parens,
+    inconsistent-return-statements,
     invalid-name,
     line-too-long,
-    too-many-branches,
+    missing-docstring,
+    no-self-use,
+    superfluous-parens,
     too-few-public-methods,
+    too-many-arguments,
+    too-many-branches,
+    too-many-instance-attributes,
+    ungrouped-imports,
+    useless-object-inheritance
+
+[FORMAT]
+no-space-check=empty-line

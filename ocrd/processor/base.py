@@ -73,7 +73,6 @@ def run_processor(
     )
     workspace.save_mets()
 
-# TODO not used as of 0.8.2
 def run_cli(
         binary,
         mets_url=None,
@@ -90,12 +89,21 @@ def run_cli(
     Create a workspace for mets_url and run MP CLI through it
     """
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
-    log.debug("Running binary '%s'", binary)
-    subprocess.call([
-        binary,
-        '--mets', mets_url,
-        '--working-dir', workspace.directory
-    ])
+    args = [binary, '--working-dir', workspace.directory]
+    if mets_url:
+        args += ['--mets', mets_url]
+    if log_level:
+        args += ['--log-level', log_level]
+    if group_id:
+        args += ['--group-id', group_id]
+    if input_file_grp:
+        args += ['--input-file-grp', input_file_grp]
+    if output_file_grp:
+        args += ['--output-file-grp', output_file_grp]
+    if parameter:
+        args += ['--parameter', parameter]
+    log.debug("Running subprocess '%s'", ' '.join(args))
+    subprocess.call(args)
 
 class Processor(object):
     """
