@@ -142,7 +142,9 @@ gh-pages:
 
 pyclean:
 	rm -f **/*.pyc
-	find . -name '__pycache__' -exec rm -rf '{}' \;
+	find ocrd -name '__pycache__' -exec rm -rf '{}' \;
+	find core-models -name '__pycache__' -exec rm -rf '{}' \;
+	find core-shared -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 test-profile:
