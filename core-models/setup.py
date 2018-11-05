@@ -9,10 +9,10 @@ with codecs.open('README.rst', encoding='utf-8') as f:
 setup(
     name='ocrd_models',
     version='0.8.8',
-    description='OCR-D framework',
+    description='OCR-D framework - File format wrappers',
     long_description=README,
-    author='Kay-Michael Würzner, Konstantin Baierer',
-    author_email='wuerzner@bbaw.de',
+    author='Konstantin Baierer',
+    author_email='unixprog@gmail.com',
     url='https://github.com/OCR-D/core-models',
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
