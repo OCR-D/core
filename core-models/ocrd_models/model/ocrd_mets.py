@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from ocrd_models.constants import (METS_XML_EMPTY)
+from ocrd_models.constants import METS_XML_EMPTY
 
 from ocrd_shared.constants import (
     NAMESPACES as NS,
