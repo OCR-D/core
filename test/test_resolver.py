@@ -49,18 +49,5 @@ class TestResolver(TestCase):
         img_pil2 = workspace.resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
         self.assertEqual(img_pil2.size, (1, 1))
 
-    def test_unpack_workspace(self):
-        workspace = self.resolver.unpack_workspace_from_filename(TEST_ZIP)
-        files = workspace.mets.find_files(mimetype='image/tiff')
-        self.assertEqual(len(files), 2, '2 TIF')
-        for f in files:
-            workspace.download_file(f)
-        print([OcrdExif.from_filename(f.local_filename).to_xml() for f in files])
-
-    #  def test_pack_workspace(self):
-    #      workspace = self.resolver.workspace_from_folder(self.folder, clobber_mets=True)
-    #      zpath = self.resolver.pack_workspace(workspace, zpath='/tmp/test-pyocrd-resolver.zip')
-    #      print(zpath)
-
 if __name__ == '__main__':
     main()
