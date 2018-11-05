@@ -7,10 +7,12 @@ from ocrd.cli.process import process_cli
 # TODO server CLI disabled
 #  from ocrd.cli.server import server_cli
 from ocrd.cli.bashlib import bashlib_cli
+from ocrd.decorators import ocrd_loglevel
 
 @click.group()
 @click.version_option()
-def cli():
+@ocrd_loglevel
+def cli(**kwargs): # pylint: disable=unused-argument
     """
     CLI to OCR-D
     """
