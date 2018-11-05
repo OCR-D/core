@@ -4,6 +4,7 @@ from pkg_resources import resource_string, resource_filename
 VERSION = '0.9.0'
 
 TMP_PREFIX = 'pyocrd-'
+TMP_BAGIT_PREFIX = 'ocrd-bagit-'
 
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",
@@ -53,3 +54,5 @@ OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.
 OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
 
 BASHLIB_FILENAME = resource_filename(__name__, 'lib.bash')
+
+BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'
