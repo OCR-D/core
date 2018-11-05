@@ -20,6 +20,7 @@ setup(
     install_requires=[
         'Flask',
         'Pillow',
+        'bagit >= 1.7.0',
         'click',
         'click >=7',
         'jsonschema',
