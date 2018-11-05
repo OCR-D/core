@@ -21,11 +21,13 @@ __all__ = [
     'polygon_from_points',
     'is_string',
     'concat_padded',
-    'safe_filename'
+    'safe_filename',
+    'is_local_filename'
 ]
 
 import re
 import sys
+from os.path import isfile
 
 import logging
 from ocrd.logging import getLogger
@@ -116,3 +118,13 @@ def concat_padded(base, *args):
 def safe_filename(url):
     ret = re.sub('[^A-Za-z0-9]+', '.', url)
     return ret
+
+def is_local_filename(url):
+    """
+    Whether a url is a local filename.
+    """
+    if url.startswith('file://'):
+        return True
+    if isfile(url):
+        return True
+    return False
