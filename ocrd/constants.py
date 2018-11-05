@@ -1,3 +1,4 @@
+import sys
 import yaml
 from pkg_resources import resource_string, resource_filename
 

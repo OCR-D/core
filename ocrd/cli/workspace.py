@@ -6,6 +6,8 @@ import click
 from ocrd import Resolver, WorkspaceValidator, Workspace
 from ocrd.utils import getLogger
 
+from ..workspace_bagger import WorkspaceBagger
+
 log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx(object):
@@ -235,31 +237,28 @@ def set_id(ctx, ID):
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
-# ocrd workspace pack
+# ocrd workspace bag
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('pack', help="""
-
-    Pack workspace as ZIP
-
-""")
-@click.argument('output_filename', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True))
+@workspace_cli.command('bag')
+@click.argument('dest', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True))
 @pass_workspace
-def pack(ctx, output_filename):
+def bag(ctx, dest):
+    """
+    Bag workspace as OCRD-ZIP at DEST
+    """
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
-    ctx.resolver.pack_workspace(workspace, output_filename)
+    workspace_bagger = WorkspaceBagger(ctx.resolver)
+    workspace_bagger.bag(workspace, dest)
 
 # ----------------------------------------------------------------------
-# ocrd workspace unpack
+# ocrd workspace spill
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('unpack', help="""
-
-    Unpack ZIP as workspace
-
-""")
-@click.argument('input_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
+@workspace_cli.command('spill')
+@click.argument('src', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
 @pass_workspace
-def unpack(ctx, input_filename):
-    workspace = ctx.resolver.unpack_workspace_from_filename(input_filename)
+def spill(ctx, src):
+    workspace_bagger = WorkspaceBagger(ctx.resolver)
+    workspace = workspace_bagger.spill(src)
     print(workspace)
