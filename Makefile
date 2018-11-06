@@ -88,6 +88,7 @@ repo/spec:
 spec: repo/spec
 	cp repo/spec/ocrd_api.swagger.yml ocrd/model/yaml/ocrd_oas3.spec.yml
 	cp repo/spec/ocrd_tool.schema.yml ocrd/model/yaml/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml ocrd/model/yaml/bagit-profile.yml
 
 #
 # Assets
