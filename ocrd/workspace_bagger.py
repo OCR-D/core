@@ -1,10 +1,11 @@
-from os import makedirs
+from os import makedirs, chdir
 from os.path import join, isdir
-from shutil import copyfile
+from shutil import make_archive
 import tempfile
 from zipfile import ZipFile
+from datetime import datetime
 
-from bagit import Bag
+from bagit import Bag, make_manifests
 
 from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX
 from .utils import is_local_filename
@@ -26,6 +27,7 @@ class WorkspaceBagger(object):
             ocrd_identifier,
             ocrd_mets='data/mets.xml',
             ocrd_manifestation_depth='full',
+            no_processes=1,
            ):
         """
         Bag a workspace
@@ -39,6 +41,7 @@ class WorkspaceBagger(object):
 
         # create bagdir
         bagdir = tempfile.mkdtemp(prefix=TMP_BAGIT_PREFIX)
+        chdir(bagdir)
         log.debug("Created bagdir: %s", bagdir)
 
         # create bagit.txt
@@ -52,14 +55,30 @@ class WorkspaceBagger(object):
                 if not isdir(file_grp_dir):
                     makedirs(file_grp_dir)
                 self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.ID)
-                f.url = join('data', f.ID)
+                f.url = join('data', f.fileGrp, f.ID)
 
         # save mets.xml
         with open(join(bagdir, ocrd_mets), 'wb') as f:
             f.write(workspace.mets.to_xml())
 
-        # TODO create bag-info.txt
+        # create manifests
+        total_bytes, total_files = make_manifests('data', no_processes, algorithms=['SHA512'])
+
+        # create bag-info.txt
         bag = Bag(bagdir)
+        bag.info['Ocrd-Identifier'] = ocrd_identifier
+        bag.info['Ocrd-Manifestation-Depth'] = ocrd_manifestation_depth
+        bag.info['Bagging-Date'] = str(datetime.now())
+        bag.info['Payload-Oxum'] = '%s.%s' % (total_bytes, total_files)
+
+        # save bag
+        bag.save()
+
+        bagzip = '%s.ocrd.zip' % bagdir
+        make_archive(bagzip[0:-4], 'zip', bagdir)
+
+        # ZIP it
+        print(bag, bagzip)
 
     def spill(self, src):
         """
