@@ -242,14 +242,27 @@ def set_id(ctx, ID):
 
 @workspace_cli.command('bag')
 @click.argument('dest', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True))
+@click.option('-i', '--id', '--identifier', help="Ocrd-Identifier", required=True)
+@click.option('-d', '--manifestation-depth', help="Ocrd-Manifestation-Depth", type=click.Choice(['full', 'partial']), default='partial')
+@click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
+@click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
+@click.option('-j', '--jobs', help="Number of parallel processes", type=int, default=1)
 @pass_workspace
-def bag(ctx, dest):
+def bag(ctx, dest, identifier, manifestation_depth, mets, base_version_checksum, jobs):
     """
     Bag workspace as OCRD-ZIP at DEST
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace_bagger = WorkspaceBagger(ctx.resolver)
-    workspace_bagger.bag(workspace, dest)
+    workspace_bagger.bag(
+        workspace,
+        dest=dest,
+        ocrd_identifier=identifier,
+        ocrd_manifestation_depth=manifestation_depth,
+        ocrd_mets=mets,
+        ocrd_base_version_checksum=base_version_checksum,
+        no_processes=jobs
+    )
 
 # ----------------------------------------------------------------------
 # ocrd workspace spill

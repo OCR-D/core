@@ -1,8 +1,7 @@
 from os import makedirs, chdir
 from os.path import join, isdir
-from shutil import make_archive
+from shutil import make_archive, rmtree
 import tempfile
-from zipfile import ZipFile
 from datetime import datetime
 
 from bagit import Bag, make_manifests
@@ -25,8 +24,10 @@ class WorkspaceBagger(object):
     def bag(self,
             workspace,
             ocrd_identifier,
-            ocrd_mets='data/mets.xml',
+            dest=None,
+            ocrd_mets='mets.xml',
             ocrd_manifestation_depth='full',
+            ocrd_base_version_checksum=None,
             no_processes=1,
            ):
         """
@@ -42,6 +43,9 @@ class WorkspaceBagger(object):
         # create bagdir
         bagdir = tempfile.mkdtemp(prefix=TMP_BAGIT_PREFIX)
         chdir(bagdir)
+
+        if dest is None:
+            dest = '%s.ocrd.zip' % bagdir
         log.debug("Created bagdir: %s", bagdir)
 
         # create bagit.txt
@@ -58,7 +62,7 @@ class WorkspaceBagger(object):
                 f.url = join('data', f.fileGrp, f.ID)
 
         # save mets.xml
-        with open(join(bagdir, ocrd_mets), 'wb') as f:
+        with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
             f.write(workspace.mets.to_xml())
 
         # create manifests
@@ -68,17 +72,21 @@ class WorkspaceBagger(object):
         bag = Bag(bagdir)
         bag.info['Ocrd-Identifier'] = ocrd_identifier
         bag.info['Ocrd-Manifestation-Depth'] = ocrd_manifestation_depth
+        if ocrd_base_version_checksum:
+            bag.info['Ocrd-Base-Version-Checksum'] = ocrd_base_version_checksum
         bag.info['Bagging-Date'] = str(datetime.now())
         bag.info['Payload-Oxum'] = '%s.%s' % (total_bytes, total_files)
 
         # save bag
         bag.save()
 
-        bagzip = '%s.ocrd.zip' % bagdir
-        make_archive(bagzip[0:-4], 'zip', bagdir)
-
         # ZIP it
-        print(bag, bagzip)
+        make_archive(dest.replace('.zip', ''), 'zip', bagdir)
+
+        # Remove temporary bagdir
+        rmtree(bagdir)
+
+        log.info('Created bag at %s' % dest)
 
     def spill(self, src):
         """
