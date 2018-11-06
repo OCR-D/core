@@ -52,7 +52,7 @@ class WorkspaceBagger(object):
         if dest is None:
             dest = '%s.ocrd.zip' % workspace.directory
 
-        log.info("Bagging %s to %s (temp dir %s)" % (workspace, dest, bagdir))
+        log.info("Bagging %s to %s (temp dir %s)" % (workspace.directory, dest, bagdir))
 
         # create data dir
         makedirs(join(bagdir, 'data'))
@@ -96,6 +96,7 @@ class WorkspaceBagger(object):
         rmtree(bagdir)
 
         log.info('Created bag at %s' % dest)
+        return dest
 
     def spill(self, src, dest):
         """
@@ -152,3 +153,13 @@ class WorkspaceBagger(object):
         # TODO validate workspace
 
         return workspace
+
+    def validate(self, bag):
+        """
+        Validate conformance with BagIt and OCR-D bagit profile.
+
+        See:
+            - https://ocr-d.github.io/ocrd_zip
+            - https://ocr-d.github.io/bagit-profile.json
+            - https://ocr-d.github.io/bagit-profile.yml
+        """

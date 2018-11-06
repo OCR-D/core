@@ -53,6 +53,7 @@ EXT_TO_MIME = {
 
 OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.yml'))
 OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
+OCRD_BAGIT_PROFILE_URL = 'https://ocr-d.github.io/bagit-profile.json'
 OCRD_BAGIT_PROFILE = yaml.load(resource_string(__name__, 'model/yaml/bagit-profile.yml'))
 
 BASHLIB_FILENAME = resource_filename(__name__, 'lib.bash')
