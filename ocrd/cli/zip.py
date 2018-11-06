@@ -48,3 +48,26 @@ def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, b
         ocrd_base_version_checksum=base_version_checksum,
         no_processes=jobs
     )
+
+# ----------------------------------------------------------------------
+# ocrd zip spill
+# ----------------------------------------------------------------------
+
+@zip_cli.command('spill')
+@click.option('-d', '--directory',
+              default='.',
+              type=click.Path(file_okay=False, dir_okay=True, writable=True, resolve_path=True),
+              help='Workspace folder location.',
+              show_default=True)
+@click.argument('src', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
+def spill(directory, src):
+    """
+    Spill/unpack OCRD-ZIP bag at SRC to DEST
+
+    SRC must exist an be an OCRD-ZIP
+    DEST must not exist and be a directory
+    """
+    resolver = Resolver()
+    workspace_bagger = WorkspaceBagger(resolver)
+    workspace = workspace_bagger.spill(src, directory)
+    print(workspace)

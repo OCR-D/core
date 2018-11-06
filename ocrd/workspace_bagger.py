@@ -12,6 +12,7 @@ from bagit import Bag, make_manifests
 from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX
 from .utils import is_local_filename
 from .logging import getLogger
+from .workspace import Workspace
 
 tempfile.tempdir = '/tmp' # TODO hard-coded
 log = getLogger('ocrd.workspace_bagger')
@@ -96,9 +97,58 @@ class WorkspaceBagger(object):
 
         log.info('Created bag at %s' % dest)
 
-    def spill(self, src):
+    def spill(self, src, dest):
         """
         Spill a workspace, i.e. unpack it and turn it into a workspace.
 
         See https://ocr-d.github.com/ocrd_zip#unpacking-ocrd-zip-to-a-workspace
+
+        Arguments:
+            src (string): Path to OCRD-ZIP
+            dest (string): Path to directory to unpack data folder to
         """
+        print(dest)
+
+        if exists(dest) and not isdir(dest):
+            raise Exception("Not a directory: %s" % dest)
+
+        # If dest is an existing directory, try to derive folder name from src
+        if isdir(dest):
+            workspace_name = re.sub(r'(\.ocrd)?\.zip$', '', basename(src))
+            new_dest = join(dest, workspace_name)
+            if exists(new_dest):
+                raise Exception("Directory exists: %s" % new_dest)
+            dest = new_dest
+        if not isdir(dest):
+            makedirs(dest)
+        print(dest)
+
+        log.info("Spilling %s to %s" % (src, dest))
+
+        bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
+        zip_ref = ZipFile(src, 'r')
+        zip_ref.extractall(bagdir)
+        zip_ref.close()
+
+        datadir = join(bagdir, 'data')
+        for root, _, files in walk(datadir):
+            for file in files:
+                srcfile = join(root, file)
+                destdir = join(dest, relpath(root, datadir))
+                destfile = join(destdir, file)
+                if not exists(destdir):
+                    makedirs(destdir)
+                log.debug("Copy %s -> %s" % (srcfile, destfile))
+                copyfile(srcfile, destfile)
+
+        # TODO validate bagit
+
+        # Drop tempdir
+        rmtree(bagdir)
+
+        # Create workspace
+        workspace = Workspace(self.resolver, directory=dest)
+
+        # TODO validate workspace
+
+        return workspace
