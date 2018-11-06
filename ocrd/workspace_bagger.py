@@ -1,8 +1,11 @@
-from os import makedirs, chdir
-from os.path import join, isdir
-from shutil import make_archive, rmtree
-import tempfile
 from datetime import datetime
+from os import makedirs, chdir, walk
+from os.path import join, isdir, basename, exists, relpath
+from shutil import make_archive, rmtree, copyfile
+from tempfile import mkdtemp
+import re
+import tempfile
+from zipfile import ZipFile
 
 from bagit import Bag, make_manifests
 
@@ -38,15 +41,20 @@ class WorkspaceBagger(object):
         if ocrd_manifestation_depth not in ('full', 'partial'):
             raise Exception("manifestation_depth must be 'full' or 'partial'")
 
+
         mets = workspace.mets
 
         # create bagdir
-        bagdir = tempfile.mkdtemp(prefix=TMP_BAGIT_PREFIX)
+        bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
         chdir(bagdir)
 
         if dest is None:
-            dest = '%s.ocrd.zip' % bagdir
-        log.debug("Created bagdir: %s", bagdir)
+            dest = '%s.ocrd.zip' % workspace.directory
+
+        log.info("Bagging %s to %s (temp dir %s)" % (workspace, dest, bagdir))
+
+        # create data dir
+        makedirs(join(bagdir, 'data'))
 
         # create bagit.txt
         with open(join(bagdir, 'bagit.txt'), 'wb') as f:
@@ -59,7 +67,7 @@ class WorkspaceBagger(object):
                 if not isdir(file_grp_dir):
                     makedirs(file_grp_dir)
                 self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.ID)
-                f.url = join('data', f.fileGrp, f.ID)
+                f.url = join(f.fileGrp, f.ID)
 
         # save mets.xml
         with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
