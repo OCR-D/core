@@ -8,7 +8,7 @@ import tempfile
 
 from bagit import Bag, make_manifests
 
-from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX
+from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
 from .utils import is_local_filename, unzip_file_to_dir
 from .logging import getLogger
 from .workspace import Workspace
@@ -74,10 +74,11 @@ class WorkspaceBagger(object):
             f.write(workspace.mets.to_xml())
 
         # create manifests
-        total_bytes, total_files = make_manifests('data', no_processes, algorithms=['SHA512'])
+        total_bytes, total_files = make_manifests('data', no_processes, algorithms=['sha512'])
 
         # create bag-info.txt
         bag = Bag(bagdir)
+        bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
         bag.info['Ocrd-Identifier'] = ocrd_identifier
         bag.info['Ocrd-Manifestation-Depth'] = ocrd_manifestation_depth
         if ocrd_base_version_checksum:
