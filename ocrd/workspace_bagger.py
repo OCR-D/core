@@ -5,12 +5,11 @@ from shutil import make_archive, rmtree, copyfile
 from tempfile import mkdtemp
 import re
 import tempfile
-from zipfile import ZipFile
 
 from bagit import Bag, make_manifests
 
 from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX
-from .utils import is_local_filename
+from .utils import is_local_filename, unzip_file_to_dir
 from .logging import getLogger
 from .workspace import Workspace
 
@@ -127,9 +126,7 @@ class WorkspaceBagger(object):
         log.info("Spilling %s to %s" % (src, dest))
 
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
-        zip_ref = ZipFile(src, 'r')
-        zip_ref.extractall(bagdir)
-        zip_ref.close()
+        unzip_file_to_dir(src, bagdir)
 
         datadir = join(bagdir, 'data')
         for root, _, files in walk(datadir):

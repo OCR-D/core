@@ -28,6 +28,7 @@ __all__ = [
 import re
 import sys
 from os.path import isfile
+from zipfile import ZipFile
 
 import logging
 from ocrd.logging import getLogger
@@ -128,3 +129,11 @@ def is_local_filename(url):
     if isfile(url):
         return True
     return False
+
+def unzip_file_to_dir(path_to_zip, output_directory):
+    """
+    Extract a ZIP archive to a folder
+    """
+    z = ZipFile(path_to_zip, 'r')
+    z.extractall(output_directory)
+    z.close()
