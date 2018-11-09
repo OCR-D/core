@@ -15,6 +15,7 @@ class TestOcrdZipValidator(TestCase):
         ocrdzip = self.bagger.bag(workspace, 'SBB0000F29300010000', ocrd_manifestation_depth='partial')
         validator = OcrdZipValidator(self.resolver, ocrdzip)
         report = validator.validate()
+        self.assertEqual(report.is_valid, True)
         print(report)
 
 if __name__ == '__main__':
