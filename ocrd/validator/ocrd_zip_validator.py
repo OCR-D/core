@@ -36,7 +36,11 @@ class OcrdZipValidator(object):
         self.resolver = resolver
         self.path_to_zip = path_to_zip
         self.report = ValidationReport()
-        self.profile_validator = Profile(OCRD_BAGIT_PROFILE_URL, profile=OCRD_BAGIT_PROFILE)
+        # TODO change back once
+        # https://github.com/bagit-profiles/bagit-profiles-validator/pull/7 has
+        # been merged/published
+        #  self.profile_validator = Profile(OCRD_BAGIT_PROFILE_URL, profile=OCRD_BAGIT_PROFILE)
+        self.profile_validator = Profile(OCRD_BAGIT_PROFILE_URL)
 
     def _validate_profile(self, bag):
         """
