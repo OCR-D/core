@@ -132,7 +132,7 @@ def is_local_filename(url):
 
 def unzip_file_to_dir(path_to_zip, output_directory):
     """
-    Extract a ZIP archive to a folder
+    Extract a ZIP archive to a directory
     """
     z = ZipFile(path_to_zip, 'r')
     z.extractall(output_directory)
