@@ -18,5 +18,11 @@ class TestOcrdZipValidator(TestCase):
         self.assertEqual(report.is_valid, True)
         print(report)
 
+    def test_validation_unzipped(self):
+        validator = OcrdZipValidator(self.resolver, assets.path_to('kant_aufklaerung_1784'))
+        report = validator.validate(skip_unzip=True)
+        self.assertEqual(report.is_valid, True)
+        print(report)
+
 if __name__ == '__main__':
     main()

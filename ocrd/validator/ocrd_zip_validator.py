@@ -85,7 +85,7 @@ class OcrdZipValidator(object):
         #  workspace_validator = WorkspaceValidator(self.resolver, path_to_mets)
         #  workspace_validator.validate()
 
-    def validate(self, skip_checksums=False, skip_workspace=False, skip_bag=False, processes=2):
+    def validate(self, skip_checksums=False, skip_workspace=False, skip_bag=False, skip_unzip=False, skip_delete=False, processes=2):
         """
         Validate an OCRD-ZIP file for profile, bag and workspace conformance
 
@@ -93,15 +93,24 @@ class OcrdZipValidator(object):
             skip_bag (boolean): Whether to skip all checks of manifests and files
             skip_checksums (boolean): Whether to omit checksum checks but still check basic BagIt conformance
             skip_workspace (boolean): Whether to skip the workspace check of files in /data
+            skip_unzip (boolean): Whether the OCRD-ZIP is unzipped, i.e. a directory
+            skip_delete (boolean): Whether to skip deleting the unpacked OCRD-ZIP dir after valdiation
             processes (integer): Number of processes used for checksum validation
 
         """
-        try:
-            self.profile_validator.validate_serialization(self.path_to_zip)
-        except (IOError, ProfileValidationError) as err:
-            self.report.add_error(err.value)
-        bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
-        unzip_file_to_dir(self.path_to_zip, bagdir)
+        if skip_unzip:
+            bagdir = self.path_to_zip
+            skip_delete = True
+        else:
+            try:
+                self.profile_validator.validate_serialization(self.path_to_zip)
+            except IOError as err:
+                raise err
+            except ProfileValidationError as err:
+                self.report.add_error(err.value)
+            bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
+            unzip_file_to_dir(self.path_to_zip, bagdir)
+
         bag = Bag(bagdir)
 
         try:
@@ -113,7 +122,8 @@ class OcrdZipValidator(object):
             if not skip_workspace:
                 self._validate_workspace(bag)
         finally:
-            # remove tempdir
-            rmtree(bagdir)
+            if not skip_delete:
+                # remove tempdir
+                rmtree(bagdir)
 
         return self.report
