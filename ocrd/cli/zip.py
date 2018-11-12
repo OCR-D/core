@@ -30,9 +30,10 @@ def zip_cli():
 @click.option('-D', '--manifestation-depth', help="Ocrd-Manifestation-Depth", type=click.Choice(['full', 'partial']), default='partial')
 @click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
+@click.option('-Z', '--skip-zip', help="Create a directory but do not ZIP it", is_flag=True, default=False)
 @click.option('-j', '--jobs', help="Number of parallel processes", type=int, default=1)
 @click.argument('dest', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True), required=False)
-def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, base_version_checksum, jobs):
+def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, base_version_checksum, skip_zip, jobs):
     """
     Bag workspace as OCRD-ZIP at DEST
     """
@@ -46,7 +47,8 @@ def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, b
         ocrd_manifestation_depth=manifestation_depth,
         ocrd_mets=mets,
         ocrd_base_version_checksum=base_version_checksum,
-        no_processes=jobs
+        skip_zip=skip_zip,
+        no_processes=jobs,
     )
 
 # ----------------------------------------------------------------------

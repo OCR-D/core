@@ -1,7 +1,7 @@
 from datetime import datetime
 from os import makedirs, chdir, walk
 from os.path import join, isdir, basename, exists, relpath
-from shutil import make_archive, rmtree, copyfile
+from shutil import make_archive, rmtree, copyfile, move
 from tempfile import mkdtemp
 import re
 import tempfile
@@ -31,12 +31,23 @@ class WorkspaceBagger(object):
             ocrd_mets='mets.xml',
             ocrd_manifestation_depth='full',
             ocrd_base_version_checksum=None,
+            skip_zip=False,
             no_processes=1,
            ):
         """
         Bag a workspace
 
         See https://ocr-d.github.com/ocrd_zip#packing-a-workspace-as-ocrd-zip
+
+        Arguments:
+            workspace (ocrd.Workspace): workspace to bag
+            ord_mets (string): Ocrd-Mets in bag-info.txt
+            dest (string): Path of the generated OCRD-ZIP.
+            ord_identifier (string): Ocrd-Identifier in bag-info.txt
+            ord_manifestation_depth (string): Ocrd-Manifestation-Depth in bag-info.txt
+            ord_base_version_checksum (string): Ocrd-Base-Version-Checksum in bag-info.txt
+            no_processes (integer): Number of parallel processes checksumming
+            skip_zip (boolean): Whether to leave directory unzipped
         """
         if ocrd_manifestation_depth not in ('full', 'partial'):
             raise Exception("manifestation_depth must be 'full' or 'partial'")
@@ -49,7 +60,10 @@ class WorkspaceBagger(object):
         chdir(bagdir)
 
         if dest is None:
-            dest = '%s.ocrd.zip' % workspace.directory
+            if not skip_zip:
+                dest = '%s.ocrd.zip' % workspace.directory
+            else:
+                dest = '%s.ocrd' % workspace.directory
 
         log.info("Bagging %s to %s (temp dir %s)" % (workspace.directory, dest, bagdir))
 
@@ -90,10 +104,13 @@ class WorkspaceBagger(object):
         bag.save()
 
         # ZIP it
-        make_archive(dest.replace('.zip', ''), 'zip', bagdir)
+        if not skip_zip:
+            make_archive(dest.replace('.zip', ''), 'zip', bagdir)
 
-        # Remove temporary bagdir
-        rmtree(bagdir)
+            # Remove temporary bagdir
+            rmtree(bagdir)
+        else:
+            move(bagdir, dest)
 
         log.info('Created bag at %s' % dest)
         return dest
