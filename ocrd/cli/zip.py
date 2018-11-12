@@ -1,10 +1,11 @@
-from os.path import abspath
+import sys
 
 import click
 
 from ..resolver import Resolver
 from ..workspace import Workspace
 from ..workspace_bagger import WorkspaceBagger
+from ..validator.ocrd_zip_validator import OcrdZipValidator
 
 @click.group("zip")
 def zip_cli():
@@ -31,9 +32,9 @@ def zip_cli():
 @click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
 @click.option('-Z', '--skip-zip', help="Create a directory but do not ZIP it", is_flag=True, default=False)
-@click.option('-j', '--jobs', help="Number of parallel processes", type=int, default=1)
+@click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
 @click.argument('dest', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True), required=False)
-def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, base_version_checksum, skip_zip, jobs):
+def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, base_version_checksum, skip_zip, processes):
     """
     Bag workspace as OCRD-ZIP at DEST
     """
@@ -48,7 +49,7 @@ def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, b
         ocrd_mets=mets,
         ocrd_base_version_checksum=base_version_checksum,
         skip_zip=skip_zip,
-        no_processes=jobs,
+        processes=processes,
     )
 
 # ----------------------------------------------------------------------
@@ -73,3 +74,28 @@ def spill(directory, src):
     workspace_bagger = WorkspaceBagger(resolver)
     workspace = workspace_bagger.spill(src, directory)
     print(workspace)
+
+# ----------------------------------------------------------------------
+# ocrd zip validate
+# ----------------------------------------------------------------------
+
+@zip_cli.command('validate')
+@click.argument('src', type=click.Path(dir_okay=True, readable=True, resolve_path=True), required=True)
+@click.option('-Z', '--skip-unzip', help="Treat SRC as a directory not a ZIP", is_flag=True, default=False)
+@click.option('-B', '--skip-bag', help="Whether to skip all checks of manifests and files", is_flag=True, default=False)
+@click.option('-C', '--skip-checksums', help="Whether to omit checksum checks but still check basic BagIt conformance", is_flag=True, default=False)
+@click.option('-W', '--skip-workspace', help="Whether to skip the workspace check of files in /data", is_flag=True, default=False)
+@click.option('-D', '--skip-delete', help="Whether to skip deleting the unpacked OCRD-ZIP dir after valdiation", is_flag=True, default=False)
+@click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
+def validate(src, **kwargs):
+    """
+    Validate OCRD-ZIP
+
+    SRC must exist an be an OCRD-ZIP
+    """
+    resolver = Resolver()
+    validator = OcrdZipValidator(resolver, src)
+    report = validator.validate(**kwargs)
+    print(report)
+    if not report.is_valid:
+        sys.exit(1)

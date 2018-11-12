@@ -5,7 +5,7 @@ from os.path import join, isfile
 from bagit import Bag, BagValidationError, ChecksumMismatch
 from bagit_profile import Profile, ProfileValidationError # pylint: disable=no-name-in-module
 
-from ..constants import OCRD_BAGIT_PROFILE_URL, OCRD_BAGIT_PROFILE, TMP_BAGIT_PREFIX
+from ..constants import OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
 from ..utils import getLogger, unzip_file_to_dir
 from .report import ValidationReport
 # TODO see below
@@ -111,9 +111,9 @@ class OcrdZipValidator(object):
             bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
             unzip_file_to_dir(self.path_to_zip, bagdir)
 
-        bag = Bag(bagdir)
 
         try:
+            bag = Bag(bagdir)
             self._validate_profile(bag)
 
             if not skip_bag:
@@ -125,5 +125,4 @@ class OcrdZipValidator(object):
             if not skip_delete:
                 # remove tempdir
                 rmtree(bagdir)
-
         return self.report

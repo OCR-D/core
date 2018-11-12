@@ -32,7 +32,7 @@ class WorkspaceBagger(object):
             ocrd_manifestation_depth='full',
             ocrd_base_version_checksum=None,
             skip_zip=False,
-            no_processes=1,
+            processes=1,
            ):
         """
         Bag a workspace
@@ -46,7 +46,7 @@ class WorkspaceBagger(object):
             ord_identifier (string): Ocrd-Identifier in bag-info.txt
             ord_manifestation_depth (string): Ocrd-Manifestation-Depth in bag-info.txt
             ord_base_version_checksum (string): Ocrd-Base-Version-Checksum in bag-info.txt
-            no_processes (integer): Number of parallel processes checksumming
+            processes (integer): Number of parallel processes checksumming
             skip_zip (boolean): Whether to leave directory unzipped
         """
         if ocrd_manifestation_depth not in ('full', 'partial'):
@@ -88,7 +88,7 @@ class WorkspaceBagger(object):
             f.write(workspace.mets.to_xml())
 
         # create manifests
-        total_bytes, total_files = make_manifests('data', no_processes, algorithms=['sha512'])
+        total_bytes, total_files = make_manifests('data', processes, algorithms=['sha512'])
 
         # create bag-info.txt
         bag = Bag(bagdir)
