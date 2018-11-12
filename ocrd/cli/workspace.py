@@ -6,8 +6,6 @@ import click
 from ocrd import Resolver, WorkspaceValidator, Workspace
 from ocrd.utils import getLogger
 
-from ..workspace_bagger import WorkspaceBagger
-
 log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx(object):

@@ -65,7 +65,7 @@ class WorkspaceBagger(object):
             else:
                 dest = '%s.ocrd' % workspace.directory
 
-        log.info("Bagging %s to %s (temp dir %s)" % (workspace.directory, dest, bagdir))
+        log.info("Bagging %s to %s (temp dir %s)", workspace.directory, dest, bagdir)
 
         # create data dir
         makedirs(join(bagdir, 'data'))
@@ -112,7 +112,7 @@ class WorkspaceBagger(object):
         else:
             move(bagdir, dest)
 
-        log.info('Created bag at %s' % dest)
+        log.info('Created bag at %s', dest)
         return dest
 
     def spill(self, src, dest):
@@ -141,7 +141,7 @@ class WorkspaceBagger(object):
             makedirs(dest)
         print(dest)
 
-        log.info("Spilling %s to %s" % (src, dest))
+        log.info("Spilling %s to %s", src, dest)
 
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
         unzip_file_to_dir(src, bagdir)
@@ -154,7 +154,7 @@ class WorkspaceBagger(object):
                 destfile = join(destdir, file)
                 if not exists(destdir):
                     makedirs(destdir)
-                log.debug("Copy %s -> %s" % (srcfile, destfile))
+                log.debug("Copy %s -> %s", srcfile, destfile)
                 copyfile(srcfile, destfile)
 
         # TODO validate bagit
