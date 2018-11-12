@@ -113,7 +113,7 @@ class WorkspaceBagger(object):
         if exists(dest) and not isdir(dest):
             raise Exception("Not a directory: %s" % dest)
 
-        # If dest is an existing directory, try to derive folder name from src
+        # If dest is an existing directory, try to derive its name from src
         if isdir(dest):
             workspace_name = re.sub(r'(\.ocrd)?\.zip$', '', basename(src))
             new_dest = join(dest, workspace_name)
