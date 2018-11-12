@@ -18,6 +18,7 @@ def zip_cli():
 # ----------------------------------------------------------------------
 
 @zip_cli.command('bag')
+@click.argument('dest', type=click.Path(dir_okay=True, writable=True, readable=False, resolve_path=True), required=False)
 @click.option('-d', '--directory',
               default='.',
               type=click.Path(file_okay=False, dir_okay=True, readable=True, resolve_path=True),
@@ -33,7 +34,6 @@ def zip_cli():
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
 @click.option('-Z', '--skip-zip', help="Create a directory but do not ZIP it", is_flag=True, default=False)
 @click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
-@click.argument('dest', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True), required=False)
 def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, base_version_checksum, skip_zip, processes):
     """
     Bag workspace as OCRD-ZIP at DEST
