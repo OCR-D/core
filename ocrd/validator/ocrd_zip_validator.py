@@ -75,7 +75,9 @@ class OcrdZipValidator(object):
         # TODO depending on how we decide on fetch.txt: Fetch now to fill the bag
 
         if not isfile(path_to_mets):
-            raise BagValidationError("Path to METS does not exist: %s. Check that either 'data/mets.xml' exists or set 'Ocrd-Mets' if named differently")
+            raise BagValidationError(
+                "Path to METS does not exist: %s. Check that either 'data/mets.xml' exists or set 'Ocrd-Mets' if named differently"
+                % path_to_mets)
         # TODO check 'partial' / 'full' manifestation depth
         # TODO check that all files in /data except mets.xml are referenced in mets.xml
 
