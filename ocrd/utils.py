@@ -22,12 +22,14 @@ __all__ = [
     'is_string',
     'concat_padded',
     'safe_filename',
-    'is_local_filename'
+    'is_local_filename',
+    'unzip_file_to_dir',
+    'abspath'
 ]
 
 import re
 import sys
-from os.path import isfile
+from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
 
 import logging
@@ -129,6 +131,16 @@ def is_local_filename(url):
     if isfile(url):
         return True
     return False
+
+def abspath(url):
+    """
+    Get a full path to a file or file URL
+
+    See os.abspath
+    """
+    if url.startswith('file://'):
+        url = url[len('file://'):]
+    return os_abspath(url)
 
 def unzip_file_to_dir(path_to_zip, output_directory):
     """
