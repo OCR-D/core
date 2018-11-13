@@ -16,6 +16,8 @@ from .workspace import Workspace
 tempfile.tempdir = '/tmp' # TODO hard-coded
 log = getLogger('ocrd.workspace_bagger')
 
+BACKUPDIR = join('/tmp', TMP_BAGIT_PREFIX + 'backup')
+
 class WorkspaceBagger(object):
     """
     Serialize/De-serialize from OCRD-ZIP to workspace and back.
@@ -31,8 +33,9 @@ class WorkspaceBagger(object):
             ocrd_mets='mets.xml',
             ocrd_manifestation_depth='full',
             ocrd_base_version_checksum=None,
-            skip_zip=False,
             processes=1,
+            skip_zip=False,
+            in_place=False
            ):
         """
         Bag a workspace
@@ -48,10 +51,15 @@ class WorkspaceBagger(object):
             ord_base_version_checksum (string): Ocrd-Base-Version-Checksum in bag-info.txt
             processes (integer): Number of parallel processes checksumming
             skip_zip (boolean): Whether to leave directory unzipped
+            in_place (boolean): Whether to **replace** the workspace with its BagIt variant
         """
         if ocrd_manifestation_depth not in ('full', 'partial'):
             raise Exception("manifestation_depth must be 'full' or 'partial'")
-
+        if in_place:
+            if dest is not None:
+                raise Exception("Setting 'dest' and 'in_place' is a contradiction")
+            if not skip_zip:
+                raise Exception("Unsetting 'skip_zip' and 'in_place' is a contradiction")
 
         mets = workspace.mets
 
@@ -65,7 +73,7 @@ class WorkspaceBagger(object):
             else:
                 dest = '%s.ocrd' % workspace.directory
 
-        log.info("Bagging %s to %s (temp dir %s)", workspace.directory, dest, bagdir)
+        log.info("Bagging %s to %s (temp dir %s)", workspace.directory, '(in-place)' if in_place else dest, bagdir)
 
         # create data dir
         makedirs(join(bagdir, 'data'))
@@ -104,13 +112,19 @@ class WorkspaceBagger(object):
         bag.save()
 
         # ZIP it
-        if not skip_zip:
+        if in_place:
+            if not exists(BACKUPDIR):
+                makedirs(BACKUPDIR)
+            backupdir = mkdtemp(dir=BACKUPDIR)
+            move(workspace.directory, backupdir)
+            move(bagdir, workspace.directory)
+        elif skip_zip:
+            move(bagdir, dest)
+        else:
             make_archive(dest.replace('.zip', ''), 'zip', bagdir)
 
             # Remove temporary bagdir
             rmtree(bagdir)
-        else:
-            move(bagdir, dest)
 
         log.info('Created bag at %s', dest)
         return dest

@@ -29,12 +29,13 @@ def zip_cli():
               help='The basename of the METS file.',
               show_default=True)
 @click.option('-i', '--identifier', '--id', help="Ocrd-Identifier", required=True)
+@click.option('-I', '--in-place', help="Replace workspace with bag (like bagit.py does)", required=True, is_flag=True)
 @click.option('-D', '--manifestation-depth', help="Ocrd-Manifestation-Depth", type=click.Choice(['full', 'partial']), default='partial')
 @click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
 @click.option('-Z', '--skip-zip', help="Create a directory but do not ZIP it", is_flag=True, default=False)
 @click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
-def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, base_version_checksum, skip_zip, processes):
+def bag(directory, mets_basename, dest, identifier, in_place, manifestation_depth, mets, base_version_checksum, skip_zip, processes):
     """
     Bag workspace as OCRD-ZIP at DEST
     """
@@ -48,8 +49,9 @@ def bag(directory, mets_basename, dest, identifier, manifestation_depth, mets, b
         ocrd_manifestation_depth=manifestation_depth,
         ocrd_mets=mets,
         ocrd_base_version_checksum=base_version_checksum,
-        skip_zip=skip_zip,
         processes=processes,
+        skip_zip=skip_zip,
+        in_place=in_place
     )
 
 # ----------------------------------------------------------------------
