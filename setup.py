@@ -21,7 +21,7 @@ setup(
         'Flask',
         'Pillow',
         'bagit >= 1.7.0',
-        'bagit_profile >= 1.1.1',
+        'bagit_profile >= 1.2.0',
         'click',
         'click >=7',
         'jsonschema',
