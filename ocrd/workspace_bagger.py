@@ -26,6 +26,15 @@ class WorkspaceBagger(object):
     def __init__(self, resolver):
         self.resolver = resolver
 
+    def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum):
+        bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
+        bag.info['Ocrd-Identifier'] = ocrd_identifier
+        bag.info['Ocrd-Manifestation-Depth'] = ocrd_manifestation_depth
+        if ocrd_base_version_checksum:
+            bag.info['Ocrd-Base-Version-Checksum'] = ocrd_base_version_checksum
+        bag.info['Bagging-Date'] = str(datetime.now())
+        bag.info['Payload-Oxum'] = '%s.%s' % (total_bytes, total_files)
+
     def bag(self,
             workspace,
             ocrd_identifier,
@@ -114,13 +123,7 @@ class WorkspaceBagger(object):
 
         # create bag-info.txt
         bag = Bag(bagdir)
-        bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
-        bag.info['Ocrd-Identifier'] = ocrd_identifier
-        bag.info['Ocrd-Manifestation-Depth'] = ocrd_manifestation_depth
-        if ocrd_base_version_checksum:
-            bag.info['Ocrd-Base-Version-Checksum'] = ocrd_base_version_checksum
-        bag.info['Bagging-Date'] = str(datetime.now())
-        bag.info['Payload-Oxum'] = '%s.%s' % (total_bytes, total_files)
+        self._set_bag_info(bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum)
 
         # save bag
         bag.save()
@@ -183,6 +186,8 @@ class WorkspaceBagger(object):
                     makedirs(destdir)
                 log.debug("Copy %s -> %s", srcfile, destfile)
                 copyfile(srcfile, destfile)
+
+        # TODO copy allowed tag files if present
 
         # TODO validate bagit
 
