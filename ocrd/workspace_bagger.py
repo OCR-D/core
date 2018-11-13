@@ -9,7 +9,7 @@ import tempfile
 from bagit import Bag, make_manifests
 
 from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
-from .utils import is_local_filename, unzip_file_to_dir
+from .utils import abspath, is_local_filename, unzip_file_to_dir
 from .logging import getLogger
 from .workspace import Workspace
 
@@ -65,10 +65,12 @@ class WorkspaceBagger(object):
 
         # create bagdir
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
-        chdir(bagdir)
+        chdir(workspace.directory)
 
         if dest is None:
-            if not skip_zip:
+            if in_place:
+                dest = workspace.directory
+            elif not skip_zip:
                 dest = '%s.ocrd.zip' % workspace.directory
             else:
                 dest = '%s.ocrd' % workspace.directory
@@ -84,12 +86,24 @@ class WorkspaceBagger(object):
 
         # TODO allow filtering by fileGrp@USE and such
         for f in mets.find_files():
-            if ocrd_manifestation_depth == 'full' or is_local_filename(f.url):
-                file_grp_dir = join(bagdir, 'data', f.fileGrp)
-                if not isdir(file_grp_dir):
-                    makedirs(file_grp_dir)
-                self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.ID)
-                f.url = join(f.fileGrp, f.ID)
+            log.info("Resolving %s", f.url)
+            if is_local_filename(f.url):
+                f.url = abspath(f.url)
+            elif is_local_filename(join(workspace.directory, 'data', f.url)):
+                f.url = abspath(join(workspace.directory, 'data', f.url))
+            elif ocrd_manifestation_depth != 'full':
+                log.info("Not fetching non-local files, skipping %s", f.url)
+                continue
+            elif not f.url.startswith('http'):
+                log.error("Not an http URL: %s", f.url)
+                continue
+            log.info("Resolved %s", f.url)
+
+            file_grp_dir = join(bagdir, 'data', f.fileGrp)
+            if not isdir(file_grp_dir):
+                makedirs(file_grp_dir)
+            self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.ID)
+            f.url = join(f.fileGrp, f.ID)
 
         # save mets.xml
         with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
@@ -117,8 +131,7 @@ class WorkspaceBagger(object):
                 makedirs(BACKUPDIR)
             backupdir = mkdtemp(dir=BACKUPDIR)
             move(workspace.directory, backupdir)
-            move(bagdir, workspace.directory)
-        elif skip_zip:
+        if skip_zip:
             move(bagdir, dest)
         else:
             make_archive(dest.replace('.zip', ''), 'zip', bagdir)
