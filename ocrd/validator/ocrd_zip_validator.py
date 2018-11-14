@@ -5,7 +5,7 @@ from os.path import join, isfile
 from bagit import Bag, BagValidationError, ChecksumMismatch
 from bagit_profile import Profile, ProfileValidationError # pylint: disable=no-name-in-module
 
-from ..constants import OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
+from ..constants import OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
 from ..utils import getLogger, unzip_file_to_dir
 from .report import ValidationReport
 # TODO see below
@@ -36,11 +36,7 @@ class OcrdZipValidator(object):
         self.resolver = resolver
         self.path_to_zip = path_to_zip
         self.report = ValidationReport()
-        # TODO change back once
-        # https://github.com/bagit-profiles/bagit-profiles-validator/pull/7 has
-        # been merged/published
-        #  self.profile_validator = Profile(OCRD_BAGIT_PROFILE_URL, profile=OCRD_BAGIT_PROFILE)
-        self.profile_validator = Profile(OCRD_BAGIT_PROFILE_URL)
+        self.profile_validator = Profile(OCRD_BAGIT_PROFILE_URL, profile=OCRD_BAGIT_PROFILE)
 
     def _validate_profile(self, bag):
         """

@@ -53,9 +53,9 @@ class WorkspaceBagger(object):
 
         Arguments:
             workspace (ocrd.Workspace): workspace to bag
-            ord_mets (string): Ocrd-Mets in bag-info.txt
-            dest (string): Path of the generated OCRD-ZIP.
             ord_identifier (string): Ocrd-Identifier in bag-info.txt
+            dest (string): Path of the generated OCRD-ZIP.
+            ord_mets (string): Ocrd-Mets in bag-info.txt
             ord_manifestation_depth (string): Ocrd-Manifestation-Depth in bag-info.txt
             ord_base_version_checksum (string): Ocrd-Base-Version-Checksum in bag-info.txt
             processes (integer): Number of parallel processes checksumming
@@ -178,10 +178,10 @@ class WorkspaceBagger(object):
 
         datadir = join(bagdir, 'data')
         for root, _, files in walk(datadir):
-            for file in files:
-                srcfile = join(root, file)
+            for f in files:
+                srcfile = join(root, f)
                 destdir = join(dest, relpath(root, datadir))
-                destfile = join(destdir, file)
+                destfile = join(destdir, f)
                 if not exists(destdir):
                     makedirs(destdir)
                 log.debug("Copy %s -> %s", srcfile, destfile)
