@@ -5,10 +5,12 @@ from shutil import make_archive, rmtree, copyfile, move
 from tempfile import mkdtemp
 import re
 import tempfile
+import sys
 
+from pkg_resources import get_distribution
 from bagit import Bag, make_manifests
 
-from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
+from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL, VERSION
 from .utils import abspath, is_local_filename, unzip_file_to_dir
 from .logging import getLogger
 from .workspace import Workspace
@@ -72,6 +74,12 @@ class WorkspaceBagger(object):
 
     def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum):
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
+        bag.info['Bag-Software-Agent'] = 'ocrd/core %s (bagit.py %s, bagit_profile %s) [cmdline: "%s"]' % (
+            VERSION, # TODO
+            get_distribution('bagit').version,
+            get_distribution('bagit_profile').version,
+            ' '.join(sys.argv))
+
         bag.info['Ocrd-Identifier'] = ocrd_identifier
         bag.info['Ocrd-Manifestation-Depth'] = ocrd_manifestation_depth
         if ocrd_base_version_checksum:
