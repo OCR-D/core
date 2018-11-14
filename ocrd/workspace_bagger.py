@@ -26,6 +26,50 @@ class WorkspaceBagger(object):
     def __init__(self, resolver):
         self.resolver = resolver
 
+    def _serialize_bag(self, workspace, bagdir, dest, in_place, skip_zip):
+        if in_place:
+            if not exists(BACKUPDIR):
+                makedirs(BACKUPDIR)
+            backupdir = mkdtemp(dir=BACKUPDIR)
+            move(workspace.directory, backupdir)
+        if skip_zip:
+            move(bagdir, dest)
+        else:
+            make_archive(dest.replace('.zip', ''), 'zip', bagdir)
+
+            # Remove temporary bagdir
+            rmtree(bagdir)
+
+    def _bag_mets_files(self, workspace, bagdir, ocrd_manifestation_depth, ocrd_mets, processes):
+        mets = workspace.mets
+
+        # TODO allow filtering by fileGrp@USE and such
+        for f in mets.find_files():
+            log.info("Resolving %s", f.url)
+            if is_local_filename(f.url):
+                f.url = abspath(f.url)
+            elif is_local_filename(join(workspace.directory, 'data', f.url)):
+                f.url = abspath(join(workspace.directory, 'data', f.url))
+            elif ocrd_manifestation_depth != 'full':
+                log.info("Not fetching non-local files, skipping %s", f.url)
+                continue
+            elif not f.url.startswith('http'):
+                log.error("Not an http URL: %s", f.url)
+                continue
+            log.info("Resolved %s", f.url)
+
+            file_grp_dir = join(bagdir, 'data', f.fileGrp)
+            if not isdir(file_grp_dir):
+                makedirs(file_grp_dir)
+            self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.ID)
+            f.url = join(f.fileGrp, f.ID)
+
+        # save mets.xml
+        with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
+            f.write(workspace.mets.to_xml())
+
+        return make_manifests(join(bagdir, 'data'), processes, algorithms=['sha512'])
+
     def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum):
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
         bag.info['Ocrd-Identifier'] = ocrd_identifier
@@ -70,8 +114,6 @@ class WorkspaceBagger(object):
             if not skip_zip:
                 raise Exception("Unsetting 'skip_zip' and 'in_place' is a contradiction")
 
-        mets = workspace.mets
-
         # create bagdir
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
         chdir(workspace.directory)
@@ -93,33 +135,8 @@ class WorkspaceBagger(object):
         with open(join(bagdir, 'bagit.txt'), 'wb') as f:
             f.write(BAGIT_TXT.encode('utf-8'))
 
-        # TODO allow filtering by fileGrp@USE and such
-        for f in mets.find_files():
-            log.info("Resolving %s", f.url)
-            if is_local_filename(f.url):
-                f.url = abspath(f.url)
-            elif is_local_filename(join(workspace.directory, 'data', f.url)):
-                f.url = abspath(join(workspace.directory, 'data', f.url))
-            elif ocrd_manifestation_depth != 'full':
-                log.info("Not fetching non-local files, skipping %s", f.url)
-                continue
-            elif not f.url.startswith('http'):
-                log.error("Not an http URL: %s", f.url)
-                continue
-            log.info("Resolved %s", f.url)
-
-            file_grp_dir = join(bagdir, 'data', f.fileGrp)
-            if not isdir(file_grp_dir):
-                makedirs(file_grp_dir)
-            self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.ID)
-            f.url = join(f.fileGrp, f.ID)
-
-        # save mets.xml
-        with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
-            f.write(workspace.mets.to_xml())
-
         # create manifests
-        total_bytes, total_files = make_manifests('data', processes, algorithms=['sha512'])
+        total_bytes, total_files = self._bag_mets_files(workspace, bagdir, ocrd_manifestation_depth, ocrd_mets, processes)
 
         # create bag-info.txt
         bag = Bag(bagdir)
@@ -129,18 +146,7 @@ class WorkspaceBagger(object):
         bag.save()
 
         # ZIP it
-        if in_place:
-            if not exists(BACKUPDIR):
-                makedirs(BACKUPDIR)
-            backupdir = mkdtemp(dir=BACKUPDIR)
-            move(workspace.directory, backupdir)
-        if skip_zip:
-            move(bagdir, dest)
-        else:
-            make_archive(dest.replace('.zip', ''), 'zip', bagdir)
-
-            # Remove temporary bagdir
-            rmtree(bagdir)
+        self._serialize_bag(workspace, bagdir, dest, in_place, skip_zip)
 
         log.info('Created bag at %s', dest)
         return dest
