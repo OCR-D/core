@@ -46,6 +46,7 @@ class WorkspaceBagger(object):
         mets = workspace.mets
 
         # TODO allow filtering by fileGrp@USE and such
+        chdir(workspace.directory)
         for f in mets.find_files():
             log.info("Resolving %s", f.url)
             if is_local_filename(f.url):
@@ -70,7 +71,8 @@ class WorkspaceBagger(object):
         with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
             f.write(workspace.mets.to_xml())
 
-        return make_manifests(join(bagdir, 'data'), processes, algorithms=['sha512'])
+        chdir(bagdir)
+        return make_manifests('data', processes, algorithms=['sha512'])
 
     def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum):
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
@@ -128,7 +130,6 @@ class WorkspaceBagger(object):
 
         # create bagdir
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
-        chdir(workspace.directory)
 
         if dest is None:
             if in_place:
