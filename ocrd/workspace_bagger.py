@@ -96,7 +96,8 @@ class WorkspaceBagger(object):
             ocrd_base_version_checksum=None,
             processes=1,
             skip_zip=False,
-            in_place=False
+            in_place=False,
+            tag_files=None
            ):
         """
         Bag a workspace
@@ -113,14 +114,17 @@ class WorkspaceBagger(object):
             processes (integer): Number of parallel processes checksumming
             skip_zip (boolean): Whether to leave directory unzipped
             in_place (boolean): Whether to **replace** the workspace with its BagIt variant
+            tag_files (list<string>): Path names of additional tag files to be bagged at the root of the bag
         """
         if ocrd_manifestation_depth not in ('full', 'partial'):
             raise Exception("manifestation_depth must be 'full' or 'partial'")
-        if in_place:
-            if dest is not None:
-                raise Exception("Setting 'dest' and 'in_place' is a contradiction")
-            if not skip_zip:
-                raise Exception("Unsetting 'skip_zip' and 'in_place' is a contradiction")
+        if in_place and dest is not None:
+            raise Exception("Setting 'dest' and 'in_place' is a contradiction")
+        if in_place and not skip_zip:
+            raise Exception("Unsetting 'skip_zip' and 'in_place' is a contradiction")
+
+        if tag_files is None:
+            tag_files = []
 
         # create bagdir
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
@@ -149,6 +153,9 @@ class WorkspaceBagger(object):
         # create bag-info.txt
         bag = Bag(bagdir)
         self._set_bag_info(bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum)
+
+        for tag_file in tag_files:
+            copyfile(tag_file, join(bagdir, basename(tag_file)))
 
         # save bag
         bag.save()
