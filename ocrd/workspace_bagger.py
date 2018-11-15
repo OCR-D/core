@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import makedirs, chdir, walk
+from os import makedirs, chdir, walk, getcwd
 from os.path import join, isdir, basename, exists, relpath
 from shutil import make_archive, rmtree, copyfile, move
 from tempfile import mkdtemp
@@ -46,6 +46,7 @@ class WorkspaceBagger(object):
         mets = workspace.mets
 
         # TODO allow filtering by fileGrp@USE and such
+        oldpwd = getcwd()
         chdir(workspace.directory)
         for f in mets.find_files():
             log.info("Resolving %s", f.url)
@@ -72,7 +73,9 @@ class WorkspaceBagger(object):
             f.write(workspace.mets.to_xml())
 
         chdir(bagdir)
-        return make_manifests('data', processes, algorithms=['sha512'])
+        total_bytes, total_files = make_manifests('data', processes, algorithms=['sha512'])
+        chdir(oldpwd)
+        return total_bytes, total_files
 
     def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum):
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
