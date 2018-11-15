@@ -26,7 +26,7 @@ def zip_cli():
               show_default=True)
 @click.option('-M', '--mets-basename',
               default="mets.xml",
-              help='The basename of the METS file.',
+              help='Basename of the METS file.',
               show_default=True)
 @click.option('-i', '--identifier', '--id', help="Ocrd-Identifier", required=True)
 @click.option('-I', '--in-place', help="Replace workspace with bag (like bagit.py does)", required=True, is_flag=True)

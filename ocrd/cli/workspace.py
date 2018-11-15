@@ -25,7 +25,7 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
 @click.group("workspace")
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
-@click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('-M', '--mets-basename', default="mets.xml", help='Basename of the METS file.', show_default=True)
 @click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
 @click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
 @click.pass_context
