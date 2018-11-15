@@ -114,7 +114,7 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	$(PYTHON) -m pytest --duration=10 test
+	$(PYTHON) -m pytest --duration=10 --continue-on-collection-errors test
 
 #
 # Documentation
