@@ -1,7 +1,7 @@
 import yaml
-from pkg_resources import resource_string, resource_filename
+from pkg_resources import resource_string, resource_filename, get_distribution
 
-VERSION = '0.9.0'
+VERSION = get_distribution('ocrd').version
 
 TMP_PREFIX = 'pyocrd-'
 TMP_BAGIT_PREFIX = 'ocrd-bagit-'
