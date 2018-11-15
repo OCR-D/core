@@ -21,11 +21,16 @@ __all__ = [
     'polygon_from_points',
     'is_string',
     'concat_padded',
-    'safe_filename'
+    'safe_filename',
+    'is_local_filename',
+    'unzip_file_to_dir',
+    'abspath'
 ]
 
 import re
 import sys
+from os.path import isfile, abspath as os_abspath
+from zipfile import ZipFile
 
 import logging
 from ocrd_shared.logging import getLogger
@@ -116,3 +121,31 @@ def concat_padded(base, *args):
 def safe_filename(url):
     ret = re.sub('[^A-Za-z0-9]+', '.', url)
     return ret
+
+def is_local_filename(url):
+    """
+    Whether a url is a local filename.
+    """
+    if url.startswith('file://'):
+        return True
+    if isfile(url):
+        return True
+    return False
+
+def abspath(url):
+    """
+    Get a full path to a file or file URL
+
+    See os.abspath
+    """
+    if url.startswith('file://'):
+        url = url[len('file://'):]
+    return os_abspath(url)
+
+def unzip_file_to_dir(path_to_zip, output_directory):
+    """
+    Extract a ZIP archive to a directory
+    """
+    z = ZipFile(path_to_zip, 'r')
+    z.extractall(output_directory)
+    z.close()

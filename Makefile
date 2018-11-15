@@ -90,6 +90,7 @@ repo/spec:
 spec: repo/spec
 	cp repo/spec/ocrd_api.swagger.yml core-models/ocrd_models/model/yaml/ocrd_oas3.spec.yml
 	cp repo/spec/ocrd_tool.schema.yml core-models/ocrd_models/model/yaml/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml    core-models/ocrd_models/model/yaml/bagit-profile.yml
 
 #
 # Assets
@@ -115,7 +116,7 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	$(PYTHON) -m pytest --duration=10 test
+	$(PYTHON) -m pytest --duration=10 --continue-on-collection-errors test
 
 #
 # Documentation

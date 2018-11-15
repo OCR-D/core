@@ -24,7 +24,7 @@ class TestOcrdPage(TestCase):
         f = OcrdFile(
             None,
             mimetype='image/tiff',
-            local_filename=assets.path_to('kant_aufklaerung_1784/kant_aufklaerung_1784_0017.tif')
+            local_filename=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017')
         )
         self.assertEqual(f.mimetype, 'image/tiff')
         p = ocrd_page.from_file(f)

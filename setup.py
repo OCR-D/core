@@ -8,7 +8,7 @@ with codecs.open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='ocrd',
-    version='0.9.0',
+    version='0.10.0',
     description='OCR-D framework',
     long_description=README,
     author='Kay-Michael Würzner, Konstantin Baierer',
@@ -21,6 +21,8 @@ setup(
         'ocrd_models',
         'Flask',
         'Pillow',
+        'bagit >= 1.7.0',
+        'bagit_profile >= 1.2.0',
         'click',
         'click >=7',
         'jsonschema',

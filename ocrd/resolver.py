@@ -1,7 +1,8 @@
-import os
+from os import makedirs
+from os.path import exists, isfile, join, isdir, abspath, dirname
 from shutil import copyfile
-from zipfile import ZipFile
 import tempfile
+
 import requests
 
 from ocrd_shared.constants import TMP_PREFIX
@@ -10,92 +11,11 @@ from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
 
 log = getLogger('ocrd.resolver')
-tempfile.tempdir = '/tmp'
 
 class Resolver(object):
     """
     Handle Uploads, Downloads, Repository access and manage temporary directories
     """
-
-    def pack_workspace(self, workspace, zpath=None):
-        """
-        :TODO:
-        Pack a workspace as OCRD-ZIP.
-
-        1. Create a subfolder for every fileGrp@USE
-        2. Download all files without local_filename
-        3. Create a directory DIR
-        3. Copy every mets:file to DIR/mets:fileGrp@USE/mets:file@ID
-        4. Replace url of every file with ``file://`` URL relative to DIR
-        5. Save mets.xml to DIR
-        6. ZIP mets.xml and fileGrp@USE-subfolders and store in workspace.zip
-
-        Args:
-            workspace (string) : Workspace to pack as OCRD-ZIP
-            zpath (string) : Path to ZIP file to savce
-
-        Returns:
-            zip_filename (string) : Path to OCRD-ZIP file
-        """
-        mets = workspace.mets
-        outdir = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        log.debug("Temporary directory for packing: %s", outdir)
-
-        if zpath is None:
-            zpath = os.path.join(workspace.directory, 'workspace.zip')
-        for fileGrp in mets.file_groups:
-            fileGrp_dir = os.path.join(outdir, fileGrp)
-            # 1.
-            if not os.path.isdir(fileGrp_dir):
-                log.debug("Create directory %s", fileGrp_dir)
-                os.makedirs(fileGrp_dir)
-            # 2.
-            #  log.error("%s: %s", fileGrp, [str(f) for f in mets.find_files()])
-            for f in mets.find_files(fileGrp=fileGrp):
-                if f.local_filename is None:
-                    #  log.debug("No local file: %s", f)
-                    workspace.download_file(f, subdir=fileGrp, basename=f.ID)
-                    #  print(f.local_filename)
-                # 3.
-                new_local_filename = os.path.join(fileGrp_dir, f.ID)
-                copyfile(f.local_filename, new_local_filename)
-                f.local_filename = new_local_filename
-                # 4.
-                # TODO PAGE
-                f.url = 'file://' + os.path.join(fileGrp, f.ID)
-        # 5.
-        metspath = os.path.join(outdir, 'mets.xml')
-        with open(metspath, 'wb') as fmets:
-            fmets.write(mets.to_xml(xmllint=True))
-        # 6.
-        log.info("Writing to %s", zpath)
-        with ZipFile(zpath, 'w') as z:
-            z.write(metspath, 'mets.xml')
-            for fileGrp in mets.file_groups:
-                for f in mets.find_files(fileGrp=fileGrp):
-                    z.write(f.local_filename, os.path.join(fileGrp, f.ID))
-
-        return zpath
-
-    def unpack_workspace_from_filename(self, zip_filename, directory=None):
-        """
-
-        :TODO:
-        Unpack an OCRD-ZIP to a local workspace.
-
-        1. Create directory
-        3. Unpack zipfile into it
-        4. Initiate workspace
-
-        Args:
-            zip_filename (string) : Path to OCRD-ZIP file
-        """
-        if directory is None:
-            directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        log.debug("Unpacking to %s", directory)
-        with ZipFile(zip_filename, 'r') as z:
-            z.extractall(path=directory)
-        return Workspace(self, directory)
 
     def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None):
         """
@@ -111,7 +31,7 @@ class Resolver(object):
             basename (string, None): basename part of the filename on disk.
             url (string): URL to download from
             overwrite (boolean): Whether to overwrite existing files with that name
-            subdir (boolean, None): Subdirectory to create within the directory. Think fileGrp.
+            subdir (string, None): Subdirectory to create within the directory. Think fileGrp.
 
         Returns:
             Local filename
@@ -126,21 +46,23 @@ class Resolver(object):
                 basename = safe_filename(url)
 
         if subdir is not None:
-            basename = os.path.join(subdir, basename)
+            basename = join(subdir, basename)
 
-        outfilename = os.path.join(directory, basename)
+        outfilename = join(directory, basename)
 
-        if os.path.exists(outfilename) and not overwrite:
+        if exists(outfilename) and not overwrite:
             log.debug("File already exists and overwrite=False: %s", outfilename)
             return outfilename
 
         outfiledir = outfilename.rsplit('/', 1)[0]
         #  print(outfiledir)
-        if not os.path.isdir(outfiledir):
-            os.makedirs(outfiledir)
+        if not isdir(outfiledir):
+            makedirs(outfiledir)
 
         log.debug("Downloading <%s> to '%s'", url, outfilename)
-        if url.startswith('file://'):
+        if isfile(url):
+            copyfile(url, outfilename)
+        elif url.startswith('file://'):
             copyfile(url[len('file://'):], outfilename)
         else:
             response = requests.get(url)
@@ -158,7 +80,7 @@ class Resolver(object):
         Sets the mets.xml file
         """
         if directory is not None and not directory.startswith('/'):
-            directory = os.path.abspath(directory)
+            directory = abspath(directory)
 
         if mets_url is None:
             if directory is None:
@@ -167,7 +89,7 @@ class Resolver(object):
                 mets_url = 'file://%s/%s' % (directory, mets_basename)
         if mets_url.find('://') == -1:
             # resolve to absolute
-            mets_url = os.path.abspath(mets_url)
+            mets_url = abspath(mets_url)
             mets_url = 'file://' + mets_url
         if directory is None:
             # if mets_url is a file-url assume working directory to be  where
@@ -175,7 +97,7 @@ class Resolver(object):
             if mets_url.startswith('file://'):
                 # if directory was not given and mets_url is a file assume that
                 # directory should be the directory where the mets.xml resides
-                directory = os.path.dirname(mets_url[len('file://'):])
+                directory = dirname(mets_url[len('file://'):])
             else:
                 directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
                 log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
@@ -187,12 +109,12 @@ class Resolver(object):
                 .split('?')[0] \
                 .split('#')[0]
 
-        mets_fpath = os.path.join(directory, mets_basename)
+        mets_fpath = join(directory, mets_basename)
         log.debug("Copying mets url '%s' to '%s'", mets_url, mets_fpath)
         if 'file://' + mets_fpath == mets_url:
             log.debug("Target and source mets are identical")
         else:
-            if os.path.exists(mets_fpath) and not clobber_mets:
+            if exists(mets_fpath) and not clobber_mets:
                 raise Exception("File '%s' already exists but clobber_mets is false" % mets_fpath)
             else:
                 self.download_to_directory(directory, mets_url, basename=mets_basename)
@@ -215,11 +137,11 @@ class Resolver(object):
         """
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if not exists(directory):
+            makedirs(directory)
 
-        mets_fpath = os.path.join(directory, mets_basename)
-        if not clobber_mets and os.path.exists(mets_fpath):
+        mets_fpath = join(directory, mets_basename)
+        if not clobber_mets and exists(mets_fpath):
             raise Exception("Not clobbering existing mets.xml in '%s'." % directory)
         mets = OcrdMets.empty_mets()
         with open(mets_fpath, 'wb') as fmets:

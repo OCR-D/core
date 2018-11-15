@@ -4,6 +4,9 @@ checks:
 build:
   nodes:
     analysis:
+      dependencies:
+        override:
+          - pip install -r requirements.txt
       tests:
         override:
           - py-scrutinizer-run

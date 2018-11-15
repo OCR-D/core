@@ -5,6 +5,18 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.10.0] - 2018-11-15
+
+Added:
+
+  * OCRD-ZIP implementation based on OCR-D/spec#70, #207
+  * CLI: `ocrd zip` to bag, spill and validate OCRD-ZIP
+
+Fixed:
+
+  * Adapted tests to work with bagit-based structure, OCR-D/assets#18
+  * Read `VERSION` constant from setup.py, #209
+
 ## [0.9.0] - 2018-10-30
 
 Fixed:
@@ -339,6 +351,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.10.0]: ../../compare/v0.10.0...v0.9.0
 [0.9.0]: ../../compare/v0.9.0...v0.8.8
 [0.8.8]: ../../compare/v0.8.8...v0.8.7
 [0.8.7]: ../../compare/v0.8.7...v0.8.6
