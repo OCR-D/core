@@ -116,6 +116,14 @@ assets-clean:
 test: spec assets
 	$(PYTHON) -m pytest --duration=10 --continue-on-collection-errors test
 
+test-profile:
+	$(PYTHON) -m cProfile -o profile $$(which pytest)
+	$(PYTHON) analyze_profile.py
+
+test-coverage:
+	coverage erase
+	make test PYTHON="coverage run"
+
 #
 # Documentation
 #
@@ -143,10 +151,6 @@ pyclean:
 	rm -f **/*.pyc
 	find ocrd -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
-
-test-profile:
-	$(PYTHON) -m cProfile -o profile $$(which pytest)
-	$(PYTHON) analyze_profile.py
 
 #
 # Docker
