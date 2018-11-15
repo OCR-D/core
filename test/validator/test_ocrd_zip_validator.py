@@ -11,7 +11,7 @@ class TestOcrdZipValidator(TestCase):
         self.bagger = WorkspaceBagger(self.resolver)
 
     def test_validation(self):
-        workspace = Workspace(self.resolver, directory=assets.path_to('SBB0000F29300010000'))
+        workspace = Workspace(self.resolver, directory=assets.path_to('SBB0000F29300010000/data'))
         ocrdzip = self.bagger.bag(workspace, 'SBB0000F29300010000', ocrd_manifestation_depth='partial')
         validator = OcrdZipValidator(self.resolver, ocrdzip)
         report = validator.validate()

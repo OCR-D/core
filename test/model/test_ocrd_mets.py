@@ -7,7 +7,7 @@ from ocrd.model import OcrdMets
 class TestOcrdMets(TestCase):
 
     def setUp(self):
-        self.mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/mets.xml'))
+        self.mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'))
 
     def test_unique_identifier(self):
         self.assertEqual(self.mets.unique_identifier, 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier')

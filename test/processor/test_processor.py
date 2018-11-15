@@ -20,7 +20,7 @@ class TestResolver(TestCase):
 
     def setUp(self):
         self.resolver = Resolver()
-        self.workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/mets.xml'))
+        self.workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
 
     def test_verify(self):
         proc = DummyProcessor(self.workspace)
