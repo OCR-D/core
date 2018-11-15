@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * OCRD-ZIP implementation based on OCR-D/spec#70
+  * CLI: `ocrd zip` to bag, spill and validate OCRD-ZIP
+
 ## [0.9.0] - 2018-10-30
 
 Fixed:

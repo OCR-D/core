@@ -7,7 +7,7 @@ from ocrd.model import OcrdMets
 class TestOcrdMets(TestCase):
 
     def setUp(self):
-        self.mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/mets.xml'))
+        self.mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'))
 
     def test_unique_identifier(self):
         self.assertEqual(self.mets.unique_identifier, 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier')
@@ -27,11 +27,11 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
 
     def test_find_files(self):
-        self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 2, '2 files in "OCR-D-IMG"')
+        self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
         self.assertEqual(len(self.mets.find_files(groupId='FILE_0001_IMAGE')), 17, '17 files with GROUPID "FILE_0001_IMAGE"')
-        self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 12, '12 image/tiff')
+        self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
-        self.assertEqual(len(self.mets.find_files()), 34, '34 files total')
+        self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
 
     def test_add_group(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
@@ -72,10 +72,10 @@ class TestOcrdMets(TestCase):
     def test_agent(self):
         #  Processor(workspace=self.workspace)
         mets = self.mets
-        self.assertEqual(len(mets.agents), 1)
+        beforelen = len(mets.agents)
         mets.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'YETOTHERSTILL')
         #  print(['%s'%x for x in mets.agents])
-        self.assertEqual(len(mets.agents), 2)
+        self.assertEqual(len(mets.agents), beforelen + 1)
 
 if __name__ == '__main__':
     main()
