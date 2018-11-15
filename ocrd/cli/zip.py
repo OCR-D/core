@@ -61,7 +61,7 @@ def bag(directory, mets_basename, dest, identifier, in_place, manifestation_dept
 # ----------------------------------------------------------------------
 
 @zip_cli.command('spill')
-@click.option('-d', '--directory',
+@click.option('-d', '--dest',
               default='.',
               type=click.Path(file_okay=False, dir_okay=True, writable=True, resolve_path=True),
               help='Workspace folder location.',
