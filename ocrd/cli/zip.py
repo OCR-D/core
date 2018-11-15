@@ -95,7 +95,7 @@ def validate(src, **kwargs):
     """
     Validate OCRD-ZIP
 
-    SRC must exist an be an OCRD-ZIP
+    SRC must exist an be an OCRD-ZIP, either a ZIP file or a directory.
     """
     resolver = Resolver()
     validator = OcrdZipValidator(resolver, src)
