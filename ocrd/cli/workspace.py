@@ -25,7 +25,7 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
 @click.group("workspace")
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
-@click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('-M', '--mets-basename', default="mets.xml", help='Basename of the METS file.', show_default=True)
 @click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
 @click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
 @click.pass_context
@@ -48,6 +48,7 @@ def workspace_cli(ctx, directory, mets_basename, config, verbose):
 
 ''')
 @pass_workspace
+@click.argument('mets_url')
 def validate_workspace(ctx, mets_url=None):
     report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, directory=ctx.directory)
     print(report.to_xml())
@@ -232,33 +233,3 @@ def set_id(ctx, ID):
     workspace = Workspace(ctx.resolver, directory=ctx.directory)
     workspace.mets.unique_identifier = ID
     workspace.save_mets()
-
-# ----------------------------------------------------------------------
-# ocrd workspace pack
-# ----------------------------------------------------------------------
-
-@workspace_cli.command('pack', help="""
-
-    Pack workspace as ZIP
-
-""")
-@click.argument('output_filename', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True))
-@pass_workspace
-def pack(ctx, output_filename):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
-    ctx.resolver.pack_workspace(workspace, output_filename)
-
-# ----------------------------------------------------------------------
-# ocrd workspace unpack
-# ----------------------------------------------------------------------
-
-@workspace_cli.command('unpack', help="""
-
-    Unpack ZIP as workspace
-
-""")
-@click.argument('input_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
-@pass_workspace
-def unpack(ctx, input_filename):
-    workspace = ctx.resolver.unpack_workspace_from_filename(input_filename)
-    print(workspace)

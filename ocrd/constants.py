@@ -1,9 +1,10 @@
 import yaml
-from pkg_resources import resource_string, resource_filename
+from pkg_resources import resource_string, resource_filename, get_distribution
 
-VERSION = '0.9.0'
+VERSION = get_distribution('ocrd').version
 
 TMP_PREFIX = 'pyocrd-'
+TMP_BAGIT_PREFIX = 'ocrd-bagit-'
 
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",
@@ -51,5 +52,9 @@ EXT_TO_MIME = {
 
 OCRD_OAS3_SPEC = yaml.load(resource_string(__name__, 'model/yaml/ocrd_oas3.spec.yml'))
 OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'model/yaml/ocrd_tool.schema.yml'))
+OCRD_BAGIT_PROFILE_URL = 'https://ocr-d.github.io/bagit-profile.json'
+OCRD_BAGIT_PROFILE = yaml.load(resource_string(__name__, 'model/yaml/bagit-profile.yml'))
 
 BASHLIB_FILENAME = resource_filename(__name__, 'lib.bash')
+
+BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'
