@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Removed:
+
+  * Code related to generating Open API / Swagger definitions, #210
+
 ## [0.10.0] - 2018-11-15
 
 Added:
