@@ -12,7 +12,7 @@ METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 TEST_ZIP = assets.path_to('test.ocrd.zip')
 
-# pylint: disable=redundant-unittest-assert, broad-except
+# pylint: disable=redundant-unittest-assert, broad-except, deprecated-method
 
 class TestResolver(TestCase):
 
@@ -66,11 +66,11 @@ class TestResolver(TestCase):
             self.assertTrue('Not clobbering' in str(e))
 
     def test_download_to_directory_badargs_url(self):
-        with self.assertRaisesRegex(Exception, "'url' must be a string"):
+        with self.assertRaisesRegexp(Exception, "'url' must be a string"):
             self.resolver.download_to_directory(None, None)
 
     def test_download_to_directory_badargs_directory(self):
-        with self.assertRaisesRegex(Exception, "'directory' must be a string"):
+        with self.assertRaisesRegexp(Exception, "'directory' must be a string"):
             self.resolver.download_to_directory(None, 'foo')
 
     def test_download_to_directory_default(self):
