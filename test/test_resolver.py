@@ -1,6 +1,8 @@
 import os
+from os.path import join, exists
 from shutil import copytree, rmtree
 from test.base import TestCase, assets, main
+from re import sub
 
 #  from ocrd.model import OcrdExif
 from ocrd.resolver import Resolver
@@ -10,12 +12,14 @@ METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 TEST_ZIP = assets.path_to('test.ocrd.zip')
 
+# pylint: disable=redundant-unittest-assert, broad-except
+
 class TestResolver(TestCase):
 
     def setUp(self):
         self.resolver = Resolver()
-        self.folder = os.path.join(TMP_FOLDER, 'kant_aufklaerung_1784')
-        if os.path.exists(TMP_FOLDER):
+        self.folder = join(TMP_FOLDER, 'kant_aufklaerung_1784')
+        if exists(TMP_FOLDER):
             rmtree(TMP_FOLDER)
             os.makedirs(TMP_FOLDER)
         copytree(FOLDER_KANT, self.folder)
@@ -48,6 +52,43 @@ class TestResolver(TestCase):
         self.assertEqual(img_pil1.size, (1457, 2083))
         img_pil2 = workspace.resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
         self.assertEqual(img_pil2.size, (1, 1))
+
+    def test_workspace_from_nothing(self):
+        ws1 = self.resolver.workspace_from_nothing(None)
+        self.assertIsNotNone(ws1.mets)
+        tmp_dir = join(TMP_FOLDER, 'from-nothing')
+        ws2 = self.resolver.workspace_from_nothing(tmp_dir)
+        self.assertEqual(ws2.directory, tmp_dir)
+        try:
+            ws2 = self.resolver.workspace_from_nothing(tmp_dir)
+            self.assertTrue(False, "expecting to fail")
+        except Exception as e:
+            self.assertTrue('Not clobbering' in str(e))
+
+    def test_download_to_directory_badargs_url(self):
+        with self.assertRaisesRegex(Exception, "'url' must be a string"):
+            self.resolver.download_to_directory(None, None)
+
+    def test_download_to_directory_badargs_directory(self):
+        with self.assertRaisesRegex(Exception, "'directory' must be a string"):
+            self.resolver.download_to_directory(None, 'foo')
+
+    def test_download_to_directory_default(self):
+        tmp_dir = join(TMP_FOLDER, 'target')
+        fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(self.folder, 'data/mets.xml'))
+        self.assertEqual(fn, join(tmp_dir, 'file%s.data.mets.xml' % sub(r'[/_\.\-]', '.', self.folder)))
+
+    def test_download_to_directory_basename(self):
+        tmp_dir = join(TMP_FOLDER, 'target')
+        fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(self.folder, 'data/mets.xml'), basename='foo')
+        self.assertEqual(fn, join(tmp_dir, 'foo'))
+
+    def test_download_to_directory_subdir(self):
+        tmp_dir = join(TMP_FOLDER, 'target')
+        fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(self.folder, 'data/mets.xml'), subdir='baz')
+        self.assertEqual(fn, join(tmp_dir, 'baz', 'mets.xml'))
+
+
 
 if __name__ == '__main__':
     main()

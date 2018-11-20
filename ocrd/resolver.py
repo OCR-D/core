@@ -38,6 +38,12 @@ class Resolver(object):
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
         log.debug("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s|", directory, url, basename, overwrite, subdir)
+
+        if url is None:
+            raise Exception("'url' must be a string")
+        if directory is None:
+            raise Exception("'directory' must be a string")
+
         if basename is None:
             if (subdir is not None) or \
                 (directory and url.startswith('file://%s' % directory)): # in case downloading a url 'file:///tmp/foo/bar' to directory '/tmp/foo'
