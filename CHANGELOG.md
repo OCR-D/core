@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.11.0] - 2018-11-21
+
 Changed:
 
   * `ocrd process` interface change, #205
@@ -359,6 +361,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.11.0]: ../../compare/v0.11.0...v0.10.0
 [0.10.0]: ../../compare/v0.10.0...v0.9.0
 [0.9.0]: ../../compare/v0.9.0...v0.8.8
 [0.8.8]: ../../compare/v0.8.8...v0.8.7
