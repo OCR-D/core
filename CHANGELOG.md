@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd process` interface change, #205
+
 Fixed:
 
   * Grayscale images can be handled by workspace correctly now, #211
