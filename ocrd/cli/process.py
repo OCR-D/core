@@ -7,7 +7,7 @@ import click
 from ..processor.base import run_cli
 from ..logging import getLogger
 from ..resolver import Resolver
-from ..decorators import ocrd_cli_options
+from ..decorators import ocrd_loglevel
 
 class ProcessorTask(object):
 
@@ -62,17 +62,19 @@ class ProcessorTask(object):
 # ocrd process
 # ----------------------------------------------------------------------
 @click.command('process')
-@ocrd_cli_options
+@ocrd_loglevel
+@click.option('-m', '--mets', help="METS to process")
+@click.option('-g', '--group-id', help="ID(s) of the pages to process")
 @click.argument('tasks', nargs=-1, required=True)
-def process_cli(**kwargs):
+def process_cli(log_level, mets, group_id, tasks):
     """
     Process a series of tasks
     """
     log = getLogger('ocrd.cli.process')
 
     resolver = Resolver()
-    task_strs = kwargs['tasks']
-    mets_url = kwargs['mets']
+    task_strs = tasks
+    mets_url = mets
     workspace = resolver.workspace_from_url(mets_url)
     tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
@@ -83,7 +85,6 @@ def process_cli(**kwargs):
             if not input_file_grp in workspace.mets.file_groups:
                 raise Exception("Unmet requirement: expected input file group not contained in mets: %s" % input_file_grp)
 
-        # TODO correct?
         for output_file_grp in task.output_file_grps:
             if output_file_grp in workspace.mets.file_groups:
                 raise Exception("Conflict: output file group already contained in mets: %s" % output_file_grp)
@@ -96,8 +97,8 @@ def process_cli(**kwargs):
             mets_url,
             resolver,
             workspace,
-            log_level=kwargs['log_level'],
-            group_id=kwargs['group_id'],
+            log_level=log_level,
+            group_id=group_id,
             input_file_grp=','.join(task.input_file_grps),
             output_file_grp=','.join(task.output_file_grps),
             parameter=task.parameter_path
