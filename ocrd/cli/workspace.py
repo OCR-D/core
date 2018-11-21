@@ -230,36 +230,6 @@ def set_id(ctx, ID):
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
-# ocrd workspace pack
-# ----------------------------------------------------------------------
-
-@workspace_cli.command('pack', help="""
-
-    Pack workspace as ZIP
-
-""")
-@click.argument('output_filename', type=click.Path(dir_okay=False, writable=True, readable=False, resolve_path=True))
-@pass_workspace
-def pack(ctx, output_filename):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
-    ctx.resolver.pack_workspace(workspace, output_filename)
-
-# ----------------------------------------------------------------------
-# ocrd workspace unpack
-# ----------------------------------------------------------------------
-
-@workspace_cli.command('unpack', help="""
-
-    Unpack ZIP as workspace
-
-""")
-@click.argument('input_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True))
-@pass_workspace
-def unpack(ctx, input_filename):
-    workspace = ctx.resolver.unpack_workspace_from_filename(input_filename)
-    print(workspace)
-
-# ----------------------------------------------------------------------
 # ocrd workspace backup
 # ----------------------------------------------------------------------
 
