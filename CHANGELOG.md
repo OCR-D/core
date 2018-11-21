@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Grayscale images can be handled by workspace correctly now, #211
+
 ## [0.10.0] - 2018-11-15
 
 Added:
