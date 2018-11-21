@@ -104,7 +104,7 @@ def process_cli(**kwargs):
         )
 
         # check return code
-        if returncode is not None:
+        if returncode != 0:
             raise Exception("%s exited with non-zero return value %s" % (task.executable, returncode))
 
         log.info("Finished processing task '%s'", task)
