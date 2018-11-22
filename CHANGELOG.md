@@ -9,6 +9,10 @@ Changed:
 
   * Depend on pillow >= 5.3.0 to mitigate https://github.com/python-pillow/Pillow/issues/2926
 
+Added:
+
+  * backup functionality for `ocrd workspace`, #204
+
 ## [0.11.0] - 2018-11-21
 
 Changed:
