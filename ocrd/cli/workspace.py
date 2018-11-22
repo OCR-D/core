@@ -25,13 +25,13 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.group("workspace")
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
 @click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
-@click.option('--no-backup', default=False, help="Don't backup mets.xml whenever it is saved.", is_flag=True)
+@click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename, no_backup):
+def workspace_cli(ctx, directory, mets_basename, backup):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, automatic_backup=not(no_backup))
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, automatic_backup=backup)
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate

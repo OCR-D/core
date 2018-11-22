@@ -25,7 +25,7 @@ class Workspace(object):
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=True):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = os.path.join(directory, mets_basename)
