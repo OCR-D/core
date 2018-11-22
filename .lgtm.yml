@@ -1,0 +1,3 @@
+path_classifiers:
+  generated:
+    - "ocrd/model/ocrd_page_generateds.py"
