@@ -57,4 +57,5 @@ OCRD_BAGIT_PROFILE = yaml.load(resource_string(__name__, 'model/yaml/bagit-profi
 
 BASHLIB_FILENAME = resource_filename(__name__, 'lib.bash')
 
+BACKUP_DIR = '.backup'
 BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'

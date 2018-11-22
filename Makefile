@@ -149,7 +149,7 @@ gh-pages:
 
 pyclean:
 	rm -f **/*.pyc
-	find ocrd -name '__pycache__' -exec rm -rf '{}' \;
+	find . -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 #
