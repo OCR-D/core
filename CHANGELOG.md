@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Adapt bagit profile to spec v2.6.2: allow fetch.txt
+
 ## [0.12.0] - 2018-11-22
 
 Changed:
