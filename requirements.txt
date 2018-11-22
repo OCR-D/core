@@ -3,7 +3,7 @@ bagit_profile >= 1.2.0
 click >=7<8
 requests
 lxml
-Pillow
+Pillow >= 5.3.0
 numpy
 opencv-python
 Flask

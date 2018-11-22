@@ -19,7 +19,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'Flask',
-        'Pillow',
+        'Pillow >= 5.3.0',
         'bagit >= 1.7.0',
         'bagit_profile >= 1.2.0',
         'click',
