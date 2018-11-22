@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.12.0] - 2018-11-22
+
 Changed:
 
   * Depend on pillow >= 5.3.0 to mitigate https://github.com/python-pillow/Pillow/issues/2926
@@ -369,6 +371,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.12.0]: ../../compare/v0.12.0...v0.11.0
 [0.11.0]: ../../compare/v0.11.0...v0.10.0
 [0.10.0]: ../../compare/v0.10.0...v0.9.0
 [0.9.0]: ../../compare/v0.9.0...v0.8.8
