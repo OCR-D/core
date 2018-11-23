@@ -26,6 +26,10 @@ core
 .. image:: https://scrutinizer-ci.com/g/OCR-D/core/badges/quality-score.png?b=master
     :target: https://scrutinizer-ci.com/g/OCR-D/core
 
+.. image:: https://img.shields.io/lgtm/alerts/g/OCR-D/core.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/OCR-D/core/alerts/
+
+
 Installation
 ------------
 

@@ -55,7 +55,7 @@ def setOverrideLogLevel(lvl):
         return
     logging.info('Overriding log level globally to %s', lvl)
     lvl = getLevelName(lvl)
-    _overrideLogLevel = lvl
+    _overrideLogLevel = lvl # lgtm [py/unused-local-variable]
     logging.getLogger('').setLevel(lvl)
     for loggerName in logging.Logger.manager.loggerDict:
         logger = logging.Logger.manager.loggerDict[loggerName]
