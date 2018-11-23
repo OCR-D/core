@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * Adapt bagit profile to spec v2.6.2: allow fetch.txt
+  * Adapt bagit profile to spec v2.6.3: Tag-Files-Allowed
 
 Removed:
 
