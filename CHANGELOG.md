@@ -9,6 +9,10 @@ Changed:
 
   * Adapt bagit profile to spec v2.6.2: allow fetch.txt
 
+Removed:
+
+  * Code related to generating Open API / Swagger definitions, #210
+
 ## [0.12.0] - 2018-11-22
 
 Changed:
