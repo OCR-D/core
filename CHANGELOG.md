@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.13.1] - 2018-11-26
+
 Fixed:
 
   * Relative files in workspace were resolved to target, not source dir of METS, #215
@@ -386,6 +388,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.13.1]: ../../compare/v0.13.1...v0.13.0
 [0.13.0]: ../../compare/v0.13.0...v0.12.0
 [0.12.0]: ../../compare/v0.12.0...v0.11.0
 [0.11.0]: ../../compare/v0.11.0...v0.10.0
