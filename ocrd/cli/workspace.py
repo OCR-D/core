@@ -45,7 +45,7 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 @pass_workspace
 @click.argument('mets_url')
 def validate_workspace(ctx, mets_url=None):
-    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, directory=ctx.directory)
+    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, src_dir=ctx.directory)
     print(report.to_xml())
     if not report.is_valid:
         sys.exit(128)
