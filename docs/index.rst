@@ -1,5 +1,5 @@
-Welcome to pyocrd's documentation!
-==================================
+OCR-D/core
+==========
 
 .. toctree::
    :maxdepth: 2

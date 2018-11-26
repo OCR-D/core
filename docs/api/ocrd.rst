@@ -9,6 +9,7 @@ Subpackages
     ocrd.cli
     ocrd.model
     ocrd.processor
+    ocrd.validator
     ocrd.webservice
 
 Submodules
@@ -54,18 +55,26 @@ ocrd.utils module
     :undoc-members:
     :show-inheritance:
 
-ocrd.validator module
----------------------
-
-.. automodule:: ocrd.validator
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 ocrd.workspace module
 ---------------------
 
 .. automodule:: ocrd.workspace
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ocrd.workspace\_backup module
+-----------------------------
+
+.. automodule:: ocrd.workspace_backup
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ocrd.workspace\_bagger module
+-----------------------------
+
+.. automodule:: ocrd.workspace_bagger
     :members:
     :undoc-members:
     :show-inheritance:

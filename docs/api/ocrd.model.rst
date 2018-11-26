@@ -11,6 +11,14 @@ Subpackages
 Submodules
 ----------
 
+ocrd.model.ocrd\_agent module
+-----------------------------
+
+.. automodule:: ocrd.model.ocrd_agent
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ocrd.model.ocrd\_exif module
 ----------------------------
 
@@ -47,14 +55,6 @@ ocrd.model.ocrd\_page\_generateds module
 ----------------------------------------
 
 .. automodule:: ocrd.model.ocrd_page_generateds
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-ocrd.model.ocrd\_swagger module
--------------------------------
-
-.. automodule:: ocrd.model.ocrd_swagger
     :members:
     :undoc-members:
     :show-inheritance:
