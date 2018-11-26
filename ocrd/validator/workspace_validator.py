@@ -1,8 +1,8 @@
 import re
 
 from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
-from .report import ValidationReport
 from ocrd.utils import getLogger
+from .report import ValidationReport
 
 log = getLogger('ocrd.workspace_validator')
 
@@ -19,25 +19,30 @@ class WorkspaceValidator(object):
         mets_url (string) : URL of the METS file
     """
 
-    def __init__(self, resolver, mets_url, directory=None):
+    def __init__(self, resolver, mets_url, src_dir=None):
         self.resolver = resolver
         self.mets_url = mets_url
         self.report = ValidationReport()
-        log.debug('resolver=%s mets_url=%s directory=%s', resolver, mets_url, directory)
-        if mets_url is None:
-            mets_url = '%s/mets.xml' % directory
-        self.workspace = self.resolver.workspace_from_url(mets_url, directory=directory)
+        log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
+        if mets_url is None and src_dir is not None:
+            mets_url = '%s/mets.xml' % src_dir
+        self.workspace = self.resolver.workspace_from_url(mets_url, src_dir=src_dir)
         self.mets = self.workspace.mets
 
     @staticmethod
-    def validate_url(resolver, mets_url, directory=None):
+    def validate_url(resolver, mets_url, src_dir=None):
         """
         Validates the workspace of a METS URL against the specs
+
+        Arguments:
+            resolver (:class:`ocrd.Resolver`): Resolver
+            mets_url (string): URL of the METS file
+            src_dir (string, None): Directory containing mets file
 
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        validator = WorkspaceValidator(resolver, mets_url, directory=directory)
+        validator = WorkspaceValidator(resolver, mets_url, src_dir=src_dir)
         return validator.validate()
 
     def validate(self):

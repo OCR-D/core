@@ -73,34 +73,47 @@ class Resolver(object):
 
         return outfilename
 
-    def workspace_from_url(self, mets_url, directory=None, clobber_mets=False, mets_basename=None, download=False, download_local=False):
+    def workspace_from_url(self, mets_url, src_dir=None, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, download_local=False):
         """
         Create a workspace from a METS by URL.
 
         Sets the mets.xml file
+
+        Arguments:
+            mets_url (string): Source mets URL
+            src_dir (string, None): Source directory containing the mets.xml
+            dst_dir (string, None): Target directory for the workspace
+            clobber_mets (boolean, False): Whether to overwrite existing mets.xml. By default existing mets.xml will raise an exception.
+            download (boolean, False): Whether to download all the files
+            download_local (boolean, False): Whether to download the file://-URL to the new location
+
+        Returns:
+            Workspace
         """
-        if directory is not None and not directory.startswith('/'):
-            directory = abspath(directory)
+        if src_dir is not None and not src_dir.startswith('/'):
+            src_dir = abspath(src_dir)
+        if dst_dir is not None and not dst_dir.startswith('/'):
+            dst_dir = abspath(dst_dir)
 
         if mets_url is None:
-            if directory is None:
-                raise Exception("Must pass mets_url and/or directory to workspace_from_url")
+            if src_dir is None:
+                raise Exception("Must pass mets_url and/or src_dir to workspace_from_url")
             else:
-                mets_url = 'file://%s/%s' % (directory, mets_basename)
-        if mets_url.find('://') == -1:
-            # resolve to absolute
-            mets_url = abspath(mets_url)
-            mets_url = 'file://' + mets_url
-        if directory is None:
-            # if mets_url is a file-url assume working directory to be  where
-            # the mets.xml resides
+                mets_url = 'file://%s/%s' % (src_dir, mets_basename)
+
+        # resolve to absolute
+        if '://' not in mets_url:
+            mets_url = 'file://%s' % abspath(mets_url)
+
+        if dst_dir is None:
+            # if mets_url is a file-url assume working directory is source directory
             if mets_url.startswith('file://'):
-                # if directory was not given and mets_url is a file assume that
-                # directory should be the directory where the mets.xml resides
-                directory = dirname(mets_url[len('file://'):])
+                # if dst_dir was not given and mets_url is a file assume that
+                # dst_dir should be the directory where the mets.xml resides
+                dst_dir = dirname(mets_url[len('file://'):])
             else:
-                directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-                log.debug("Creating workspace '%s' for METS @ <%s>", directory, mets_url)
+                dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
+                log.debug("Creating workspace '%s' for METS @ <%s>", dst_dir, mets_url)
 
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
@@ -109,17 +122,17 @@ class Resolver(object):
                 .split('?')[0] \
                 .split('#')[0]
 
-        mets_fpath = join(directory, mets_basename)
-        log.debug("Copying mets url '%s' to '%s'", mets_url, mets_fpath)
-        if 'file://' + mets_fpath == mets_url:
+        dst_mets = join(dst_dir, mets_basename)
+        log.debug("Copying mets url '%s' to '%s'", mets_url, dst_mets)
+        if 'file://' + dst_mets == mets_url:
             log.debug("Target and source mets are identical")
         else:
-            if exists(mets_fpath) and not clobber_mets:
-                raise Exception("File '%s' already exists but clobber_mets is false" % mets_fpath)
+            if exists(dst_mets) and not clobber_mets:
+                raise Exception("File '%s' already exists but clobber_mets is false" % dst_mets)
             else:
-                self.download_to_directory(directory, mets_url, basename=mets_basename)
+                self.download_to_directory(dst_dir, mets_url, basename=mets_basename)
 
-        workspace = Workspace(self, directory, mets_basename=mets_basename)
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename)
 
         if download_local or download:
             for file_grp in workspace.mets.file_groups:
