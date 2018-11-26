@@ -1,4 +1,5 @@
 import os
+from os.path import dirname
 import sys
 import shutil
 
@@ -23,9 +24,10 @@ class Workspace(object):
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
+        src_dir (string) : Directory containing the source mets.xml, to resolve relative file URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, src_dir=''):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = os.path.join(directory, mets_basename)
@@ -33,6 +35,7 @@ class Workspace(object):
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
         self.automatic_backup = automatic_backup
+        self.src_dir = src_dir
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
             'pil': {},
@@ -65,7 +68,7 @@ class Workspace(object):
             The local filename of the downloaded file
         """
         os.chdir(self.directory)
-        return self.resolver.download_to_directory(self.directory, url, **kwargs)
+        return self.resolver.download_to_directory(self.directory, url, src_dir=self.src_dir, **kwargs)
 
     def download_file(self, f, **kwargs):
         """

@@ -17,7 +17,7 @@ class Resolver(object):
     Handle Uploads, Downloads, Repository access and manage temporary directories
     """
 
-    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None):
+    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None, src_dir=''):
         """
         Download a file to the workspace.
 
@@ -32,6 +32,7 @@ class Resolver(object):
             url (string): URL to download from
             overwrite (boolean): Whether to overwrite existing files with that name
             subdir (string, None): Subdirectory to create within the directory. Think fileGrp.
+            src_dir (string, ''): Directory for resolving relative file names
 
         Returns:
             Local filename
@@ -59,11 +60,19 @@ class Resolver(object):
         if not isdir(outfiledir):
             makedirs(outfiledir)
 
-        log.debug("Downloading <%s> to '%s'", url, outfilename)
-        if isfile(url):
+        log.debug("Downloading <%s> to '%s' (src_dir=%s)", url, outfilename, src_dir)
+
+        # de-scheme file:// URL
+        if url.startswith('file://'):
+            url = url[len('file://'):]
+
+        # Relativize against src_dir
+        if isfile(join(src_dir, url)):
+            url = join(src_dir, url)
+
+        # Copy files or download remote assets
+        if '://' not in url:
             copyfile(url, outfilename)
-        elif url.startswith('file://'):
-            copyfile(url[len('file://'):], outfilename)
         else:
             response = requests.get(url)
             if response.status_code != 200:
@@ -115,6 +124,9 @@ class Resolver(object):
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
                 log.debug("Creating workspace '%s' for METS @ <%s>", dst_dir, mets_url)
 
+        if src_dir is None:
+            src_dir = dirname(mets_url[len('file://'):])
+
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
             mets_basename = mets_url \
@@ -132,7 +144,7 @@ class Resolver(object):
             else:
                 self.download_to_directory(dst_dir, mets_url, basename=mets_basename)
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename)
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, src_dir=src_dir)
 
         if download_local or download:
             for file_grp in workspace.mets.file_groups:
