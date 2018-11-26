@@ -62,15 +62,15 @@ class Resolver(object):
 
         log.debug("Downloading <%s> to '%s' (src_dir=%s)", url, outfilename, src_dir)
 
+        # Relativize to src_dir
+        if '://' not in url:
+            url = '%s/%s' % (src_dir, url)
+
         # de-scheme file:// URL
         if url.startswith('file://'):
             url = url[len('file://'):]
 
-        # Relativize against src_dir
-        if isfile(join(src_dir, url)):
-            url = join(src_dir, url)
-
-        # Copy files or download remote assets
+        # if it's a file
         if '://' not in url:
             copyfile(url, outfilename)
         else:
@@ -124,15 +124,15 @@ class Resolver(object):
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
                 log.debug("Creating workspace '%s' for METS @ <%s>", dst_dir, mets_url)
 
-        if src_dir is None:
-            src_dir = dirname(mets_url[len('file://'):])
-
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
             mets_basename = mets_url \
                 .rsplit('/', 1)[-1] \
                 .split('?')[0] \
                 .split('#')[0]
+
+        if src_dir is None:
+            src_dir = mets_url[0:-len(mets_basename)]
 
         dst_mets = join(dst_dir, mets_basename)
         log.debug("Copying mets url '%s' to '%s'", mets_url, dst_mets)
