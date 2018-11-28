@@ -1,4 +1,5 @@
 import os
+from os.path import join
 from ocrd.constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
 
 from .ocrd_xml_base import ET
@@ -18,6 +19,8 @@ class OcrdFile(object):
         self._el = el
         self.mimetype = mimetype
         self.local_filename = local_filename
+        if workspace and not local_filename and '://' not in self.url:
+            self.local_filename = join(workspace.directory, self.url)
 
         self._instance = instance
         self.workspace = workspace
