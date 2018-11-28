@@ -32,7 +32,7 @@ class Workspace(object):
         self.directory = directory
         self.mets_target = os.path.join(directory, mets_basename)
         if mets is None:
-            mets = OcrdMets(filename=self.mets_target)
+            mets = OcrdMets(filename=self.mets_target, workspace=self)
         self.mets = mets
         self.automatic_backup = automatic_backup
         self.src_dir = src_dir
