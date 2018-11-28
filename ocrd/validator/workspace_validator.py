@@ -67,7 +67,7 @@ class WorkspaceValidator(object):
     def _validate_mets_file_group_names(self):
         for fileGrp in self.mets.file_groups:
             if not fileGrp.startswith(FILE_GROUP_PREFIX):
-                self.report.add_warning("fileGrp USE does not begin with '%s': %s" % (FILE_GROUP_PREFIX, fileGrp))
+                self.report.add_notice("fileGrp USE does not begin with '%s': %s" % (FILE_GROUP_PREFIX, fileGrp))
             else:
                 # OCR-D-FOO-BAR -> ('FOO', 'BAR')
                 # \____/\_/ \_/

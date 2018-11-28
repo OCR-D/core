@@ -13,15 +13,18 @@ class ValidationReport(object):
         self.entries = []
         self.warnings = []
         self.errors = []
+        self.notices = []
 
     def __str__(self):
         ret = 'OK' if self.is_valid else 'INVALID'
-        if not self.is_valid:
+        if not self.is_valid or self.notices:
             ret += '['
             if self.warnings:
                 ret += ' %s warnings' % len(self.warnings)
             if self.errors:
                 ret += ' %s errors' % len(self.errors)
+            if self.notices:
+                ret += ' %s notices' % len(self.notices)
             ret += ' ]'
         return ret
 
@@ -31,7 +34,7 @@ class ValidationReport(object):
 
     def to_xml(self):
         body = ''
-        for k in ['warning', 'error']:
+        for k in ['warning', 'error', 'notice']:
             for msg in self.__dict__[k + 's']:
                 body += '\n  <%s>%s</%s>' % (k, msg, k)
         return '<report valid="%s">%s\n</report>' % ("true" if self.is_valid else "false", body)
@@ -41,3 +44,6 @@ class ValidationReport(object):
 
     def add_error(self, msg):
         self.errors.append(msg)
+
+    def add_notice(self, msg):
+        self.notices.append(msg)
