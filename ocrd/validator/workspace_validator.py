@@ -19,14 +19,15 @@ class WorkspaceValidator(object):
         mets_url (string) : URL of the METS file
     """
 
-    def __init__(self, resolver, mets_url, src_dir=None):
+    def __init__(self, resolver, mets_url, src_dir=None, download=False):
         self.resolver = resolver
         self.mets_url = mets_url
         self.report = ValidationReport()
+        self.download = download
         log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         if mets_url is None and src_dir is not None:
             mets_url = '%s/mets.xml' % src_dir
-        self.workspace = self.resolver.workspace_from_url(mets_url, src_dir=src_dir)
+        self.workspace = self.resolver.workspace_from_url(mets_url, src_dir=src_dir, download=download)
         self.mets = self.workspace.mets
 
     @staticmethod
@@ -58,6 +59,9 @@ class WorkspaceValidator(object):
 
     def _validate_pixel_density(self):
         for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
+            if not f.local_filename and not self.download:
+                self.report.add_notice("Won't download remote image <%s>" % f.url)
+                continue
             exif = self.workspace.resolve_image_exif(f.url)
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)
