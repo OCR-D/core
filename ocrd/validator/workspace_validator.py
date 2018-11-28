@@ -31,7 +31,7 @@ class WorkspaceValidator(object):
         self.mets = self.workspace.mets
 
     @staticmethod
-    def validate_url(resolver, mets_url, src_dir=None):
+    def validate_url(resolver, mets_url, src_dir=None, download=False):
         """
         Validates the workspace of a METS URL against the specs
 
@@ -39,11 +39,12 @@ class WorkspaceValidator(object):
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
+            download (boolean): Whether to download files
 
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        validator = WorkspaceValidator(resolver, mets_url, src_dir=src_dir)
+        validator = WorkspaceValidator(resolver, mets_url, src_dir=src_dir, download=download)
         return validator.validate()
 
     def validate(self):
