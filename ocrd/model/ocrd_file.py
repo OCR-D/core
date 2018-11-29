@@ -13,17 +13,16 @@ class OcrdFile(object):
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, instance=None, local_filename=None, workspace=None):
+    def __init__(self, el, mimetype=None, instance=None, local_filename=None, baseurl=''):
         if el is None:
             el = ET.Element(TAG_METS_FILE)
         self._el = el
         self.mimetype = mimetype
         self.local_filename = local_filename
-        if workspace and not local_filename and '://' not in self.url:
-            self.local_filename = join(workspace.directory, self.url)
+        if baseurl and not local_filename and '://' not in self.url:
+            self.local_filename = '%s/%s' % (baseurl, self.url)
 
         self._instance = instance
-        self.workspace = workspace
 
     def __str__(self):
         #  props = '\n\t'.join([
