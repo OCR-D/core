@@ -3,7 +3,7 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.13.2] - 2018-11-29
 
 Changed:
 
@@ -392,6 +392,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.13.2]: ../../compare/v0.13.2...v0.13.1
 [0.13.1]: ../../compare/v0.13.1...v0.13.0
 [0.13.0]: ../../compare/v0.13.0...v0.12.0
 [0.12.0]: ../../compare/v0.12.0...v0.11.0
