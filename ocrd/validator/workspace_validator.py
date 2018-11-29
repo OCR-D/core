@@ -13,14 +13,11 @@ log = getLogger('ocrd.workspace_validator')
 class WorkspaceValidator(object):
     """
     Validates an OCR-D/METS workspace against the specs.
-
-    Args:
-        resolver (:class:`Resolver`) : Instance of a resolver
-        mets_url (string) : URL of the METS file
     """
 
-    def __init__(self, resolver, mets_url, src_dir=None, download=False):
+    def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False):
         self.report = ValidationReport()
+        self.skip = skip if skip else []
         log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
         self.mets_url = mets_url
@@ -32,7 +29,7 @@ class WorkspaceValidator(object):
         self.mets = None
 
     @staticmethod
-    def validate_url(resolver, mets_url, src_dir=None, download=False):
+    def validate_url(*args, **kwargs):
         """
         Validates the workspace of a METS URL against the specs
 
@@ -40,21 +37,26 @@ class WorkspaceValidator(object):
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
+            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density'
             download (boolean): Whether to download files
 
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        validator = WorkspaceValidator(resolver, mets_url, src_dir=src_dir, download=download)
+        validator = WorkspaceValidator(*args, **kwargs)
         return validator.validate()
 
     def validate(self):
         try:
             self._resolve_workspace()
-            self._validate_mets_unique_identifier()
-            self._validate_mets_file_group_names()
-            self._validate_mets_files()
-            self._validate_pixel_density()
+            if 'mets_unique_identifier' not in self.skip:
+                self._validate_mets_unique_identifier()
+            if 'mets_file_group_names' not in self.skip:
+                self._validate_mets_file_group_names()
+            if 'mets_files' not in self.skip:
+                self._validate_mets_files()
+            if 'pixel_density' not in self.skip:
+                self._validate_pixel_density()
         except Exception as e: # pylint: disable=broad-except
             self.report.add_error("Failed to instantiate workspace: %s" % e)
         return self.report
