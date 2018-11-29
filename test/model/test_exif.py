@@ -25,7 +25,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.photometricInterpretation, 'L')
 
     def test_png2(self):
-        exif = OcrdExif.from_filename(assets.path_to('scribo-test/data/OCR-D-BIN-SAUVOLA/OCR-D-IMG-orig_sauvola_png'))
+        exif = OcrdExif.from_filename(assets.path_to('scribo-test/data/OCR-D-IMG-BIN-SAUVOLA/OCR-D-IMG-orig_sauvola_png'))
         self.assertEqual(exif.width, 2097)
         self.assertEqual(exif.height, 3062)
         self.assertEqual(exif.xResolution, 1)
