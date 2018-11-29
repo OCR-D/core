@@ -1,5 +1,4 @@
 import os
-from os.path import dirname
 import sys
 import shutil
 
@@ -32,7 +31,7 @@ class Workspace(object):
         self.directory = directory
         self.mets_target = os.path.join(directory, mets_basename)
         if mets is None:
-            mets = OcrdMets(filename=self.mets_target)
+            mets = OcrdMets(filename=self.mets_target, baseurl=directory)
         self.mets = mets
         self.automatic_backup = automatic_backup
         self.src_dir = src_dir

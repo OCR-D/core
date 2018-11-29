@@ -24,11 +24,18 @@ class OcrdMets(OcrdXmlDocument):
         tpl = tpl.replace('{{ NOW }}', '%s' % datetime.now())
         return OcrdMets(content=tpl.encode('utf-8'))
 
-    def __init__(self, file_by_id=None, **kwargs):
+    def __init__(self, file_by_id=None, baseurl='', **kwargs):
+        """
+
+        Arguments:
+            file_by_id (dict): Cache mapping file ID to OcrdFile
+            baseurl (string, ''): Base URL to prepend to relative file URL
+        """
         super(OcrdMets, self).__init__(**kwargs)
         if file_by_id is None:
             file_by_id = {}
         self._file_by_id = file_by_id
+        self.baseurl = baseurl
 
     def __str__(self):
         return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.find_files())
@@ -100,7 +107,7 @@ class OcrdMets(OcrdXmlDocument):
         for el in file_els:
             file_id = el.get('ID')
             if file_id not in self._file_by_id:
-                self._file_by_id[file_id] = OcrdFile(el)
+                self._file_by_id[file_id] = OcrdFile(el, baseurl=self.baseurl)
             if local_only:
                 url = el.find('mets:FLocat', NS).get('{%s}href' % NS['xlink'])
                 if not url.startswith('file://'):

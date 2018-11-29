@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * various fixes to workspace and OCRD-ZIP validation, #217
+
 ## [0.13.1] - 2018-11-26
 
 Fixed:

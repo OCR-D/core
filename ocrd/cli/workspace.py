@@ -43,9 +43,11 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 
 ''')
 @pass_workspace
+@click.option('-a', '--download', is_flag=True, help="Download all files")
+@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density']))
 @click.argument('mets_url')
-def validate_workspace(ctx, mets_url=None):
-    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, src_dir=ctx.directory)
+def validate_workspace(ctx, mets_url, download, skip):
+    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, src_dir=ctx.directory, skip=skip, download=download)
     print(report.to_xml())
     if not report.is_valid:
         sys.exit(128)
