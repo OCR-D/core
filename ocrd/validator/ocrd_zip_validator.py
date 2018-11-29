@@ -48,18 +48,18 @@ class OcrdZipValidator(object):
         """
         Validate BagIt (checksums, payload.oxum etc)
         """
-        failed = False
+        failed = None
         try:
             bag.validate(**kwargs)
         except BagValidationError as e:
-            failed = True
+            failed = e
             for d in e.details:
                 if isinstance(d, ChecksumMismatch):
                     log.error("Validation Error: expected %s to have %s checksum of %s but found %s", d.path, d.algorithm, d.expected, d.found)
                 else:
                     log.error("Validation Error: %s", d)
         if failed:
-            raise BagValidationError("bagit validation failed")
+            raise BagValidationError("%s" % failed)
 
     def _validate_workspace(self, bag):
         """
