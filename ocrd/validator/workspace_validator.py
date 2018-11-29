@@ -20,15 +20,16 @@ class WorkspaceValidator(object):
     """
 
     def __init__(self, resolver, mets_url, src_dir=None, download=False):
+        self.report = ValidationReport()
+        log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
         self.mets_url = mets_url
-        self.report = ValidationReport()
         self.download = download
-        log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
+        self.src_dir = src_dir
         if mets_url is None and src_dir is not None:
             mets_url = '%s/mets.xml' % src_dir
-        self.workspace = self.resolver.workspace_from_url(mets_url, src_dir=src_dir, download=download)
-        self.mets = self.workspace.mets
+        self.workspace = None
+        self.mets = None
 
     @staticmethod
     def validate_url(resolver, mets_url, src_dir=None, download=False):
@@ -48,11 +49,20 @@ class WorkspaceValidator(object):
         return validator.validate()
 
     def validate(self):
-        self._validate_mets_unique_identifier()
-        self._validate_mets_file_group_names()
-        self._validate_mets_files()
-        self._validate_pixel_density()
+        try:
+            self._resolve_workspace()
+            self._validate_mets_unique_identifier()
+            self._validate_mets_file_group_names()
+            self._validate_mets_files()
+            self._validate_pixel_density()
+        except Exception as e: # pylint: disable=broad-except
+            self.report.add_error("Failed to instantiate workspace: %s" % e)
         return self.report
+
+    def _resolve_workspace(self):
+        if self.workspace is None:
+            self.workspace = self.resolver.workspace_from_url(self.mets_url, src_dir=self.src_dir, download=self.download)
+            self.mets = self.workspace.mets
 
     def _validate_mets_unique_identifier(self):
         if self.mets.unique_identifier is None:
