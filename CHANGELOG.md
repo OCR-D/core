@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd workspace clone` fixed to have the pre-0.13.1 behavior
+  * Missing metsHdr made adding agents fail, #218
 
 ## [0.13.2] - 2018-11-29
 
