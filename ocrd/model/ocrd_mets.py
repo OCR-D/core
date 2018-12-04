@@ -69,7 +69,8 @@ class OcrdMets(OcrdXmlDocument):
         """
         el_metsHdr = self._tree.getroot().find('.//mets:metsHdr', NS)
         if el_metsHdr is None:
-            el_metsHdr = ET.SubElement(self._tree.getroot(), TAG_METS_METSHDR)
+            el_metsHdr = ET.Element(TAG_METS_METSHDR)
+            self._tree.getroot().insert(0, el_metsHdr)
         #  assert(el_metsHdr is not None)
         el_agent = ET.SubElement(el_metsHdr, TAG_METS_AGENT)
         #  print(ET.tostring(el_metsHdr))
