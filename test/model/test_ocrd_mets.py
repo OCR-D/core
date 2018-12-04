@@ -77,5 +77,14 @@ class TestOcrdMets(TestCase):
         #  print(['%s'%x for x in mets.agents])
         self.assertEqual(len(mets.agents), beforelen + 1)
 
+    def test_metshdr(self):
+        """
+        Test whether metsHdr is created on-demand
+        """
+        mets = OcrdMets(content="<mets></mets>")
+        self.assertFalse(mets._tree.getroot().getchildren())
+        mets.add_agent()
+        self.assertEqual(len(mets._tree.getroot().getchildren()), 1)
+
 if __name__ == '__main__':
     main()
