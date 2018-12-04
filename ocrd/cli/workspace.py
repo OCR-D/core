@@ -1,10 +1,12 @@
 import os
 import sys
+from tempfile import mkdtemp
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd.utils import getLogger
+from ocrd.constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
 
@@ -73,7 +75,7 @@ def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, works
     """
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
-        directory=os.path.abspath(workspace_dir) if workspace_dir else None,
+        dst_dir=os.path.abspath(workspace_dir if workspace_dir else mkdtemp(prefix=TMP_PREFIX)),
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,

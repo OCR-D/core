@@ -3,6 +3,12 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+Fixed:
+
+  * `ocrd workspace clone` fixed to have the pre-0.13.1 behavior
+
 ## [0.13.2] - 2018-11-29
 
 Changed:

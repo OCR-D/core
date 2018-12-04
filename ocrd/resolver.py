@@ -1,4 +1,4 @@
-from os import makedirs
+from os import makedirs, getcwd
 from os.path import exists, isfile, join, isdir, abspath, dirname
 from shutil import copyfile
 import tempfile
@@ -99,10 +99,11 @@ class Resolver(object):
         Returns:
             Workspace
         """
-        if src_dir is not None and not src_dir.startswith('/'):
+        if src_dir and not src_dir.startswith('/'):
             src_dir = abspath(src_dir)
-        if dst_dir is not None and not dst_dir.startswith('/'):
+        if dst_dir and not dst_dir.startswith('/'):
             dst_dir = abspath(dst_dir)
+        log.debug("workspace_from_url\nmets_url='%s'\nsrc_dir='%s'\ndst_dir='%s'" % (mets_url, src_dir, dst_dir))
 
         if mets_url is None:
             if src_dir is None:
