@@ -74,7 +74,7 @@ def run_processor(
     workspace.save_mets()
 
 def run_cli(
-        binary,
+        executable,
         mets_url=None,
         resolver=None,
         workspace=None,
@@ -84,12 +84,12 @@ def run_cli(
         output_file_grp=None,
         parameter=None,
         working_dir=None,
-): # pylint: disable=unused-argument
+):
     """
     Create a workspace for mets_url and run MP CLI through it
     """
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
-    args = [binary, '--working-dir', workspace.directory]
+    args = [executable, '--working-dir', workspace.directory]
     if mets_url:
         args += ['--mets', mets_url]
     if log_level:
@@ -103,7 +103,7 @@ def run_cli(
     if parameter:
         args += ['--parameter', parameter]
     log.debug("Running subprocess '%s'", ' '.join(args))
-    subprocess.call(args)
+    return subprocess.call(args)
 
 class Processor(object):
     """

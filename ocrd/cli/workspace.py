@@ -1,21 +1,22 @@
 import os
 import sys
+from tempfile import mkdtemp
 
 import click
 
-from ocrd import Resolver, WorkspaceValidator, Workspace
+from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd.utils import getLogger
+from ocrd.constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx(object):
 
-    def __init__(self, directory, mets_basename):
+    def __init__(self, directory, mets_basename, automatic_backup):
         self.directory = directory
         self.resolver = Resolver()
         self.mets_basename = mets_basename
-        self.config = {}
-        self.verbose = False
+        self.automatic_backup = automatic_backup
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
@@ -25,18 +26,14 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
 @click.group("workspace")
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
-@click.option('-M', '--mets-basename', default="mets.xml", help='Basename of the METS file.', show_default=True)
-@click.option('-c', '--config', nargs=2, multiple=True, metavar='KEY VALUE', help='Set a config key/value pair.')
-@click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode.')
+@click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename, config, verbose):
+def workspace_cli(ctx, directory, mets_basename, backup):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename)
-    ctx.obj.verbose = verbose
-    for key, value in config:
-        ctx.obj.config[key] = value
+    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, automatic_backup=backup)
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
@@ -48,9 +45,11 @@ def workspace_cli(ctx, directory, mets_basename, config, verbose):
 
 ''')
 @pass_workspace
+@click.option('-a', '--download', is_flag=True, help="Download all files")
+@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density']))
 @click.argument('mets_url')
-def validate_workspace(ctx, mets_url=None):
-    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, directory=ctx.directory)
+def validate_workspace(ctx, mets_url, download, skip):
+    report = WorkspaceValidator.validate_url(ctx.resolver, mets_url, src_dir=ctx.directory, skip=skip, download=download)
     print(report.to_xml())
     if not report.is_valid:
         sys.exit(128)
@@ -76,7 +75,7 @@ def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, works
     """
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
-        directory=os.path.abspath(workspace_dir) if workspace_dir else None,
+        dst_dir=os.path.abspath(workspace_dir if workspace_dir else mkdtemp(prefix=TMP_PREFIX)),
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
@@ -123,7 +122,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_
     """
     Add a file LOCAL_FILENAME to METS in a workspace.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
     if not local_filename.startswith(ctx.directory):
         log.debug("File '%s' is not in workspace, copying", local_filename)
@@ -230,6 +229,56 @@ def get_id(ctx):
 @click.argument('ID')
 @pass_workspace
 def set_id(ctx, ID):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     workspace.mets.unique_identifier = ID
     workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace backup
+# ----------------------------------------------------------------------
+
+@workspace_cli.group('backup')
+@click.pass_context
+def workspace_backup_cli(ctx): # pylint: disable=unused-argument
+    """
+    Backing and restoring workspaces - dev edition
+    """
+
+@workspace_backup_cli.command('add')
+@pass_workspace
+def workspace_backup_add(ctx):
+    """
+    Create a new backup
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager.add()
+
+@workspace_backup_cli.command('list')
+@pass_workspace
+def workspace_backup_list(ctx):
+    """
+    List backups
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    for b in backup_manager.list():
+        print(b)
+
+@workspace_backup_cli.command('restore')
+@click.option('-f', '--choose-first', help="Restore first matching version if more than one", is_flag=True)
+@click.argument('bak') #, type=click.Path(dir_okay=False, readable=True, resolve_path=True))
+@pass_workspace
+def workspace_backup_restore(ctx, choose_first, bak):
+    """
+    Restore backup BAK
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager.restore(bak, choose_first)
+
+@workspace_backup_cli.command('undo')
+@pass_workspace
+def workspace_backup_undo(ctx):
+    """
+    Restore the last backup
+    """
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager.undo()

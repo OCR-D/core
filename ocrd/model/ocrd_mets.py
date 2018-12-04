@@ -4,6 +4,7 @@ from ocrd.constants import (
     NAMESPACES as NS,
     TAG_METS_FILE,
     TAG_METS_FILEGRP,
+    TAG_METS_METSHDR,
     TAG_METS_AGENT,
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
@@ -24,11 +25,18 @@ class OcrdMets(OcrdXmlDocument):
         tpl = tpl.replace('{{ NOW }}', '%s' % datetime.now())
         return OcrdMets(content=tpl.encode('utf-8'))
 
-    def __init__(self, file_by_id=None, **kwargs):
+    def __init__(self, file_by_id=None, baseurl='', **kwargs):
+        """
+
+        Arguments:
+            file_by_id (dict): Cache mapping file ID to OcrdFile
+            baseurl (string, ''): Base URL to prepend to relative file URL
+        """
         super(OcrdMets, self).__init__(**kwargs)
         if file_by_id is None:
             file_by_id = {}
         self._file_by_id = file_by_id
+        self.baseurl = baseurl
 
     def __str__(self):
         return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.find_files())
@@ -60,6 +68,9 @@ class OcrdMets(OcrdXmlDocument):
         Add an agent to the list of agents in the metsHdr.
         """
         el_metsHdr = self._tree.getroot().find('.//mets:metsHdr', NS)
+        if el_metsHdr is None:
+            el_metsHdr = ET.Element(TAG_METS_METSHDR)
+            self._tree.getroot().insert(0, el_metsHdr)
         #  assert(el_metsHdr is not None)
         el_agent = ET.SubElement(el_metsHdr, TAG_METS_AGENT)
         #  print(ET.tostring(el_metsHdr))
@@ -100,7 +111,7 @@ class OcrdMets(OcrdXmlDocument):
         for el in file_els:
             file_id = el.get('ID')
             if file_id not in self._file_by_id:
-                self._file_by_id[file_id] = OcrdFile(el)
+                self._file_by_id[file_id] = OcrdFile(el, baseurl=self.baseurl)
             if local_only:
                 url = el.find('mets:FLocat', NS).get('{%s}href' % NS['xlink'])
                 if not url.startswith('file://'):

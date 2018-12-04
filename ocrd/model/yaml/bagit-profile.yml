@@ -26,7 +26,12 @@ Bag-Info:
 Manifests-Required: ['sha512']
 Tag-Manifests-Required: []
 Tag-Files-Required: []
-Allow-Fetch.txt: false
+Tag-Files-Allowed:
+  - README.md
+  - Makefile
+  - build.sh
+  - sources.csv
+Allow-Fetch.txt: true
 Serialization: required
 Accept-Serialization: application/zip
 Accept-BagIt-Version:

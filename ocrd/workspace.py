@@ -6,8 +6,10 @@ import cv2
 from PIL import Image
 import numpy as np
 
-from ocrd.model import OcrdMets, OcrdExif
-from ocrd.utils import getLogger
+from .model import OcrdMets, OcrdExif
+from .utils import getLogger
+from .workspace_backup import WorkspaceBackupManager
+
 log = getLogger('ocrd.workspace')
 
 class Workspace(object):
@@ -21,15 +23,18 @@ class Workspace(object):
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
+        src_dir (string) : Directory containing the source mets.xml, to resolve relative file URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml'):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, src_dir=''):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = os.path.join(directory, mets_basename)
         if mets is None:
-            mets = OcrdMets(filename=self.mets_target)
+            mets = OcrdMets(filename=self.mets_target, baseurl=directory)
         self.mets = mets
+        self.automatic_backup = automatic_backup
+        self.src_dir = src_dir
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
             'pil': {},
@@ -62,7 +67,7 @@ class Workspace(object):
             The local filename of the downloaded file
         """
         os.chdir(self.directory)
-        return self.resolver.download_to_directory(self.directory, url, **kwargs)
+        return self.resolver.download_to_directory(self.directory, url, src_dir=self.src_dir, **kwargs)
 
     def download_file(self, f, **kwargs):
         """
@@ -123,18 +128,13 @@ class Workspace(object):
         """
         shutil.move(fobj.local_filename, os.path.join(self.directory, dst))
 
-    def persist(self):
-        """
-        Persist the workspace using the resolver. Uploads the files in the
-        OUTPUT group to the data repository, sets their URL accordingly.
-        """
-        self.save_mets()
-        raise Exception("NIH")
-
     def save_mets(self):
         """
         Write out the current state of the METS file.
         """
+        log.info("Saving mets '%s'" % self.mets_target)
+        if self.automatic_backup:
+            WorkspaceBackupManager(self).add()
         with open(self.mets_target, 'wb') as f:
             f.write(self.mets.to_xml(xmllint=True))
 
@@ -175,10 +175,9 @@ class Workspace(object):
             return pil_image
         if image_url not in self.image_cache['cv2']:
             log.debug("Converting PIL to OpenCV: %s", image_url)
-            if pil_image.mode == '1':
-                self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image).astype(np.uint8), cv2.COLOR_GRAY2BGR)
-            else:
-                self.image_cache['cv2'][image_url] = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            color_conversion = cv2.COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  cv2.COLOR_RGB2BGR
+            pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
+            self.image_cache['cv2'][image_url] = cv2.cvtColor(pil_as_np_array, color_conversion)
         cv2_image = self.image_cache['cv2'][image_url]
         poly = np.array(coords, np.int32)
         log.debug("Cutting region %s from %s", coords, image_url)

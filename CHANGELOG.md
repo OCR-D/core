@@ -5,6 +5,54 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace clone` fixed to have the pre-0.13.1 behavior
+  * Missing metsHdr made adding agents fail, #218
+
+## [0.13.2] - 2018-11-29
+
+Changed:
+
+  * various fixes to workspace and OCRD-ZIP validation, #217
+
+## [0.13.1] - 2018-11-26
+
+Fixed:
+
+  * Relative files in workspace were resolved to target, not source dir of METS, #215
+
+## [0.13.0] - 2018-11-23
+
+Changed:
+
+  * Adapt bagit profile to spec v2.6.2: allow fetch.txt
+  * Adapt bagit profile to spec v2.6.3: Tag-Files-Allowed
+
+Removed:
+
+  * Code related to generating Open API / Swagger definitions, #210
+
+## [0.12.0] - 2018-11-22
+
+Changed:
+
+  * Depend on pillow >= 5.3.0 to mitigate https://github.com/python-pillow/Pillow/issues/2926
+
+Added:
+
+  * backup functionality for `ocrd workspace`, #204
+
+## [0.11.0] - 2018-11-21
+
+Changed:
+
+  * `ocrd process` interface change, #205
+
+Fixed:
+
+  * Grayscale images can be handled by workspace correctly now, #211
+
 ## [0.10.0] - 2018-11-15
 
 Added:
@@ -351,6 +399,11 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[0.13.2]: ../../compare/v0.13.2...v0.13.1
+[0.13.1]: ../../compare/v0.13.1...v0.13.0
+[0.13.0]: ../../compare/v0.13.0...v0.12.0
+[0.12.0]: ../../compare/v0.12.0...v0.11.0
+[0.11.0]: ../../compare/v0.11.0...v0.10.0
 [0.10.0]: ../../compare/v0.10.0...v0.9.0
 [0.9.0]: ../../compare/v0.9.0...v0.8.8
 [0.8.8]: ../../compare/v0.8.8...v0.8.7

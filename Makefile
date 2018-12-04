@@ -86,7 +86,6 @@ repo/spec:
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
 spec: repo/spec
-	cp repo/spec/ocrd_api.swagger.yml ocrd/model/yaml/ocrd_oas3.spec.yml
 	cp repo/spec/ocrd_tool.schema.yml ocrd/model/yaml/ocrd_tool.schema.yml
 	cp repo/spec/bagit-profile.yml ocrd/model/yaml/bagit-profile.yml
 
@@ -150,7 +149,7 @@ gh-pages:
 
 pyclean:
 	rm -f **/*.pyc
-	find ocrd -name '__pycache__' -exec rm -rf '{}' \;
+	find . -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 #
@@ -169,3 +168,10 @@ docker:
 # Build bash library
 bashlib:
 	cd bashlib; make lib
+
+# Build wheels in py2 and py3 venv and twine upload them
+pypi:
+	source $(HOME)/env/py3/bin/activate;python setup.py build bdist_wheel
+	source $(HOME)/env/py2/bin/activate;python setup.py build bdist_wheel
+	echo $(PYTHON) setup.py sdist
+	version=`grep version= setup.py|grep -Po "([0-9]+\.?)+"`; twine upload "dist/ocrd-$$version"*
