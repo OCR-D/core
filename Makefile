@@ -173,5 +173,5 @@ bashlib:
 pypi:
 	source $(HOME)/env/py3/bin/activate;python setup.py build bdist_wheel
 	source $(HOME)/env/py2/bin/activate;python setup.py build bdist_wheel
-	echo $(PYTHON) setup.py sdist
+	$(PYTHON) setup.py sdist
 	version=`grep version= setup.py|grep -Po "([0-9]+\.?)+"`; twine upload "dist/ocrd-$$version"*
