@@ -23,12 +23,15 @@ FILE_GROUP_PREFIX = 'OCR-D-'
 FILE_GROUP_CATEGORIES = ['IMG', 'SEG', 'OCR', 'COR', 'GT']
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 
-TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
-TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
-TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
 TAG_METS_AGENT = '{%s}agent' % NAMESPACES['mets']
+TAG_METS_DIV = '{%s}div' % NAMESPACES['mets']
+TAG_METS_FILE = '{%s}file' % NAMESPACES['mets']
+TAG_METS_FILEGRP = '{%s}fileGrp' % NAMESPACES['mets']
+TAG_METS_FPTR = '{%s}fptr' % NAMESPACES['mets']
+TAG_METS_FLOCAT = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_METSHDR = '{%s}metsHdr' % NAMESPACES['mets']
 TAG_METS_NAME = '{%s}name' % NAMESPACES['mets']
+TAG_METS_STRUCTMAP = '{%s}structMap' % NAMESPACES['mets']
 
 TAG_MODS_IDENTIFIER = '{%s}identifier' % NAMESPACES['mods']
 

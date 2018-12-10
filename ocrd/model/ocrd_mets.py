@@ -2,10 +2,13 @@ from datetime import datetime
 
 from ocrd.constants import (
     NAMESPACES as NS,
+    TAG_METS_AGENT,
+    TAG_METS_DIV,
     TAG_METS_FILE,
     TAG_METS_FILEGRP,
+    TAG_METS_FPTR,
     TAG_METS_METSHDR,
-    TAG_METS_AGENT,
+    TAG_METS_STRUCTMAP,
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
     METS_XML_EMPTY,
@@ -61,7 +64,7 @@ class OcrdMets(OcrdXmlDocument):
 
     @property
     def agents(self):
-        return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('.//mets:metsHdr/mets:agent', NS)]
+        return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('mets:metsHdr/mets:agent', NS)]
 
     def add_agent(self, *args, **kwargs):
         """
@@ -80,14 +83,14 @@ class OcrdMets(OcrdXmlDocument):
     def file_groups(self):
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
-    def find_files(self, ID=None, fileGrp=None, groupId=None, mimetype=None, local_only=False):
+    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, local_only=False):
         """
         List files.
 
         Args:
             ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
-            groupId (string) : GROUPID of matching files
+            pageId (string) : ID of physical page manifested by matching files
             mimetype (string) : MIMETYPE of matching files
             local (boolean) : Whether to restrict results to local files, i.e. file://-URL
 
@@ -99,19 +102,24 @@ class OcrdMets(OcrdXmlDocument):
         file_clause = ''
         if ID is not None:
             file_clause += '[@ID="%s"]' % ID
-        if groupId is not None:
-            file_clause += '[@GROUPID="%s"]' % groupId
         if mimetype is not None:
             file_clause += '[@MIMETYPE="%s"]' % mimetype
         # TODO lxml says invalid predicate. I disagree
         #  if local_only:
         #      file_clause += "[mets:FLocat[starts-with(@xlink:href, 'file://')]]"
 
-        file_els = self._tree.getroot().findall(".//mets:fileGrp%s/mets:file%s" % (fileGrp_clause, file_clause), NS)
-        for el in file_els:
-            file_id = el.get('ID')
+        # Search
+        file_ids = self._tree.getroot().xpath("//mets:fileGrp%s/mets:file%s/@ID" % (fileGrp_clause, file_clause), namespaces=NS)
+        if pageId is not None:
+            by_pageid = self._tree.getroot().xpath('//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % pageId, namespaces=NS)
+            if by_pageid:
+                file_ids = [i for i in by_pageid if i in file_ids]
+
+        # instantiate / get from cache
+        for file_id in file_ids:
+            el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % file_id, NS)
             if file_id not in self._file_by_id:
-                self._file_by_id[file_id] = OcrdFile(el, baseurl=self.baseurl)
+                self._file_by_id[file_id] = OcrdFile(el, baseurl=self.baseurl, mets=self)
             if local_only:
                 url = el.find('mets:FLocat', NS).get('{%s}href' % NS['xlink'])
                 if not url.startswith('file://'):
@@ -124,7 +132,9 @@ class OcrdMets(OcrdXmlDocument):
         el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, groupId=None, force=False, local_filename=None):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None):
+        if not ID:
+            raise Exception("Must set ID of the mets:file")
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
@@ -133,10 +143,62 @@ class OcrdMets(OcrdXmlDocument):
                 raise Exception("File with ID='%s' already exists" % ID)
             mets_file = self.find_files(ID=ID)[0]
         else:
-            mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE))
+            mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self)
         mets_file.url = url
-        mets_file.groupId = groupId
         mets_file.mimetype = mimetype
         mets_file.ID = ID
+        mets_file.pageId = pageId
         mets_file.local_filename = local_filename
         return mets_file
+
+    @property
+    def physical_pages(self):
+        """
+        List all page IDs
+        """
+        return self._tree.getroot().findall(
+            '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
+            namespaces=NS)
+
+    def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
+        """
+        Create a new physical page
+        """
+        # delete any page mapping for this file.ID
+        for el_fptr in self._tree.getroot().findall(
+                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' %
+                ocrd_file.ID, namespaces=NS):
+            el_fptr.getparent().remove(el_fptr)
+
+        # find/construct as necessary
+        el_structmap = self._tree.getroot().find('mets:structMap[@TYPE="PHYSICAL"]', NS)
+        if el_structmap is None:
+            el_structmap = ET.SubElement(self._tree.getroot(), TAG_METS_STRUCTMAP)
+            el_structmap.set('TYPE', 'PHYSICAL')
+        el_seqdiv = el_structmap.find('mets:div[@TYPE="physSequence"]', NS)
+        if el_seqdiv is None:
+            el_seqdiv = ET.SubElement(el_structmap, TAG_METS_DIV)
+            el_seqdiv.set('TYPE', 'physSequence')
+        el_pagediv = el_seqdiv.find('mets:div[@ID="%s"]' % pageId, NS)
+        if el_pagediv is None:
+            el_pagediv = ET.SubElement(el_seqdiv, TAG_METS_DIV)
+            el_pagediv.set('TYPE', 'page')
+            el_pagediv.set('ID', pageId)
+            if order:
+                el_pagediv.set('ORDER', order)
+            if orderlabel:
+                el_pagediv.set('ORDERLABEL', orderlabel)
+        el_fptr = el_pagediv.find('mets:fptr[@FILEID="%s"]' % ocrd_file.ID, NS)
+        if not el_fptr:
+            el_fptr = ET.SubElement(el_pagediv, TAG_METS_FPTR)
+            el_fptr.set('FILEID', ocrd_file.ID)
+
+    def get_physical_page_for_file(self, ocrd_file):
+        """
+        Get the pageId for a ocrd_file
+        """
+        ret = self._tree.getroot().xpath(
+            '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@ID' %
+            ocrd_file.ID, namespaces=NS)
+        if ret:
+            return ret[0]

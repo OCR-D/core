@@ -98,8 +98,8 @@ class Workspace(object):
             file_grp,
             basename,
             local_filename,
-            content is not None
-        )
+            content is not None)
+
         if basename is not None:
             if file_grp is not None:
                 basename = os.path.join(file_grp, basename)

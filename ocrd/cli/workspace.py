@@ -148,7 +148,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_
 @workspace_cli.command('find')
 @click.option('-G', '--file-grp', help="fileGrp USE")
 @click.option('-m', '--mimetype', help="Media type to look for")
-@click.option('-g', '--group-id', help="GROUPID")
+@click.option('-g', '--group-id', help="Page ID")
 @click.option('-i', '--file-id', help="ID")
 @click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
 # pylint: disable=bad-continuation
@@ -158,7 +158,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_
         type=click.Choice([
             'url',
             'mimetype',
-            'groupId',
+            'pageId',
             'ID',
             'basename',
             'basename_without_extension',
@@ -170,13 +170,13 @@ def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, outpu
     """
     Find files.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for f in workspace.mets.find_files(
             ID=file_id,
             fileGrp=file_grp,
             local_only=local_only,
             mimetype=mimetype,
-            groupId=group_id,
+            pageId=group_id,
         ):
         if download:
             workspace.download_file(f, subdir=f.fileGrp)

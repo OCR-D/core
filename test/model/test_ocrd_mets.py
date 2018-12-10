@@ -28,7 +28,7 @@ class TestOcrdMets(TestCase):
 
     def test_find_files(self):
         self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
-        self.assertEqual(len(self.mets.find_files(groupId='FILE_0001_IMAGE')), 17, '17 files with GROUPID "FILE_0001_IMAGE"')
+        self.assertEqual(len(self.mets.find_files(pageId='FILE_0001_IMAGE')), 17, '17 files for page "FILE_0001_IMAGE"')
         self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
@@ -41,14 +41,14 @@ class TestOcrdMets(TestCase):
     def test_add_file(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
         self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 0, '0 files in "OUTPUT"')
-        f = self.mets.add_file('OUTPUT', mimetype="bla/quux", groupId="foobar")
-        self.assertEqual(f.groupId, 'foobar', 'GROUPID set')
+        f = self.mets.add_file('OUTPUT', ID="foo123", mimetype="bla/quux", pageId="foobar")
+        self.assertEqual(f.pageId, 'foobar', 'pageId set')
         self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
         self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 1, '1 files in "OUTPUT"')
 
-    def test_add_file_no_groupid(self):
-        f = self.mets.add_file('OUTPUT', mimetype="bla/quux")
-        self.assertEqual(f.groupId, None, 'No GROUPID')
+    def test_add_file_no_pageid(self):
+        f = self.mets.add_file('OUTPUT', mimetype="bla/quux", ID="foo3")
+        self.assertEqual(f.pageId, None, 'No pageId')
 
     def test_add_file_ID_fail(self):
         f = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
@@ -63,11 +63,11 @@ class TestOcrdMets(TestCase):
         f = self.mets.find_files(fileGrp='OCR-D-IMG')[0]
         self.assertEqual(f.fileGrp, 'OCR-D-IMG')
 
-    def test_file_groupid(self):
+    def test_file_pageid(self):
         f = self.mets.find_files()[0]
-        self.assertEqual(f.groupId, 'FILE_0001_IMAGE')
-        f.groupId = 'foo'
-        self.assertEqual(f.groupId, 'foo')
+        self.assertEqual(f.pageId, 'FILE_0001_IMAGE')
+        f.pageId = 'foo'
+        self.assertEqual(f.pageId, 'foo')
 
     def test_agent(self):
         #  Processor(workspace=self.workspace)

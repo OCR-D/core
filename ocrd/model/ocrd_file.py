@@ -12,7 +12,7 @@ class OcrdFile(object):
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, instance=None, local_filename=None, baseurl=''):
+    def __init__(self, el, mimetype=None, instance=None, local_filename=None, baseurl='', mets=None):
         if el is None:
             el = ET.Element(TAG_METS_FILE)
         self._el = el
@@ -22,6 +22,7 @@ class OcrdFile(object):
             self.local_filename = '%s/%s' % (baseurl, self.url)
 
         self._instance = instance
+        self.mets = mets
 
     def __str__(self):
         #  props = '\n\t'.join([
@@ -57,14 +58,19 @@ class OcrdFile(object):
         self._el.set('ID', ID)
 
     @property
-    def groupId(self):
-        return self._el.get('GROUPID')
+    def pageId(self):
+        if self.mets is None:
+            raise Exception("OcrdFile %s has no member mets pointing to parent OcrdMets" % self)
+        return self.mets.get_physical_page_for_file(self)
 
-    @groupId.setter
-    def groupId(self, groupId):
-        if groupId is None:
+    @pageId.setter
+    def pageId(self, pageId):
+        if pageId is None:
             return
-        self._el.set('GROUPID', groupId)
+        if self.mets is None:
+            raise Exception("OcrdFile %s has no member mets pointing to parent OcrdMets" % self)
+        self.mets.set_physical_page_for_file(pageId, self)
+
 
     @property
     def mimetype(self):
