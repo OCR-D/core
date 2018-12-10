@@ -6,6 +6,7 @@ from ocrd.constants import (
     TAG_METS_DIV,
     TAG_METS_FILE,
     TAG_METS_FILEGRP,
+    TAG_METS_FILESEC,
     TAG_METS_FPTR,
     TAG_METS_METSHDR,
     TAG_METS_STRUCTMAP,
@@ -122,14 +123,19 @@ class OcrdMets(OcrdXmlDocument):
                 self._file_by_id[file_id] = OcrdFile(el, baseurl=self.baseurl, mets=self)
             if local_only:
                 url = el.find('mets:FLocat', NS).get('{%s}href' % NS['xlink'])
-                if not url.startswith('file://'):
+                if not (url.startswith('file://') or '://' not in url):
                     continue
             ret.append(self._file_by_id[file_id])
         return ret
 
     def add_file_group(self, fileGrp):
-        el_fileGrp = ET.SubElement(self._tree.getroot().find('.//mets:fileSec', NS), TAG_METS_FILEGRP)
-        el_fileGrp.set('USE', fileGrp)
+        el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
+        if el_fileSec is None:
+            el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)
+        el_fileGrp = el_fileSec.find('mets:fileGrp[USE="%s"]' % fileGrp, NS)
+        if el_fileGrp is None:
+            el_fileGrp = ET.SubElement(el_fileSec, TAG_METS_FILEGRP)
+            el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None):
@@ -156,14 +162,15 @@ class OcrdMets(OcrdXmlDocument):
         """
         List all page IDs
         """
-        return self._tree.getroot().findall(
-            '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
+        return self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
             namespaces=NS)
 
     def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
         """
         Create a new physical page
         """
+        #  print(pageId, ocrd_file)
         # delete any page mapping for this file.ID
         for el_fptr in self._tree.getroot().findall(
                 'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' %

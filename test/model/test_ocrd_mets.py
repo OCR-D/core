@@ -3,7 +3,7 @@ from test.base import TestCase, main, assets
 from ocrd.constants import MIMETYPE_PAGE, VERSION
 from ocrd.model import OcrdMets
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access,deprecated-method
 class TestOcrdMets(TestCase):
 
     def setUp(self):
@@ -33,6 +33,18 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
 
+    def test_find_files_local_only(self):
+        self.assertEqual(len(self.mets.find_files(pageId='FILE_0001_IMAGE', local_only=True)), 3, '3 local files for page "FILE_0001_IMAGE"')
+
+    def test_physical_pages(self):
+        self.assertEqual(len(self.mets.physical_pages), 3, '3 physical pages')
+
+    def test_physical_pages_from_empty_mets(self):
+        mets = OcrdMets(content="<mets></mets>")
+        self.assertEqual(len(mets.physical_pages), 0, 'no physical page')
+        mets.add_file('OUTPUT', ID="foo123", pageId="foobar")
+        self.assertEqual(len(mets.physical_pages), 1, '1 physical page')
+
     def test_add_group(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
         self.mets.add_file_group('TEST')
@@ -45,10 +57,8 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f.pageId, 'foobar', 'pageId set')
         self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
         self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 1, '1 files in "OUTPUT"')
-
-    def test_add_file_no_pageid(self):
-        f = self.mets.add_file('OUTPUT', mimetype="bla/quux", ID="foo3")
-        self.assertEqual(f.pageId, None, 'No pageId')
+        self.mets.set_physical_page_for_file('barfoo', f, order='300', orderlabel="page 300")
+        self.assertEqual(f.pageId, 'barfoo', 'pageId changed')
 
     def test_add_file_ID_fail(self):
         f = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
@@ -62,6 +72,14 @@ class TestOcrdMets(TestCase):
     def test_filegrp_from_file(self):
         f = self.mets.find_files(fileGrp='OCR-D-IMG')[0]
         self.assertEqual(f.fileGrp, 'OCR-D-IMG')
+
+    def test_add_file_no_id(self):
+        with self.assertRaisesRegexp(Exception, "Must set ID of the mets:file"):
+            self.mets.add_file('FOO')
+
+    def test_add_file_no_pageid(self):
+        f = self.mets.add_file('OUTPUT', mimetype="bla/quux", ID="foo3")
+        self.assertEqual(f.pageId, None, 'No pageId')
 
     def test_file_pageid(self):
         f = self.mets.find_files()[0]
