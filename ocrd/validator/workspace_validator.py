@@ -103,3 +103,14 @@ class WorkspaceValidator(object):
     def _validate_mets_files(self):
         if not self.mets.find_files():
             self.report.add_error("No files")
+        for f in self.mets.find_files():
+            if f.el.get('GROUPID'):
+                self.report.add_notice("File '%s' has GROUPID attribute - might need an update" % f.ID)
+            if not f.pageId:
+                self.report.add_error("File '%s' does not manifest any physical page." % f.ID)
+            if ':/' in f.url:
+                if re.match(r'^file:/[^/]', f.url):
+                    self.report.add_warning("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
+                scheme = f.url[0:f.url.index(':')]
+                if scheme not in ('http', 'https', 'file'):
+                    self.report.add_warning("File '%s' has non-HTTP, non-file URL '%s'" % (f.ID, f.url))
