@@ -121,10 +121,12 @@ class OcrdMets(OcrdXmlDocument):
             el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % file_id, NS)
             if file_id not in self._file_by_id:
                 self._file_by_id[file_id] = OcrdFile(el, baseurl=self.baseurl, mets=self)
-            if local_only:
-                url = el.find('mets:FLocat', NS).get('{%s}href' % NS['xlink'])
-                if not (url.startswith('file://') or '://' not in url):
-                    continue
+
+            # If only local resources should be returned and file is neither a
+            # file:// URL nor a file path: skip the file
+            url = self._file_by_id[file_id].url
+            if local_only and not (url.startswith('file://') or '://' not in url):
+                continue
             ret.append(self._file_by_id[file_id])
         return ret
 

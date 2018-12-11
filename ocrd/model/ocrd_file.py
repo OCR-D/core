@@ -60,7 +60,7 @@ class OcrdFile(object):
     @property
     def pageId(self):
         if self.mets is None:
-            raise Exception("OcrdFile %s has no member mets pointing to parent OcrdMets" % self)
+            raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
         return self.mets.get_physical_page_for_file(self)
 
     @pageId.setter
@@ -68,7 +68,7 @@ class OcrdFile(object):
         if pageId is None:
             return
         if self.mets is None:
-            raise Exception("OcrdFile %s has no member mets pointing to parent OcrdMets" % self)
+            raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
         self.mets.set_physical_page_for_file(pageId, self)
 
 

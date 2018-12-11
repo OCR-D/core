@@ -52,9 +52,9 @@ class TestOcrdMets(TestCase):
 
     def test_no_pageid_without_mets(self):
         f = OcrdFile(None)
-        with self.assertRaisesRegexp(Exception, ".*has no member mets pointing.*"):
+        with self.assertRaisesRegexp(Exception, ".*has no member 'mets' pointing.*"):
             print(f.pageId)
-        with self.assertRaisesRegexp(Exception, ".*has no member mets pointing.*"):
+        with self.assertRaisesRegexp(Exception, ".*has no member 'mets' pointing.*"):
             f.pageId = 'foo'
 
     def test_add_file(self):
