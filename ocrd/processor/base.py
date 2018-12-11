@@ -22,7 +22,7 @@ def run_processor(
         mets_url=None,
         resolver=None,
         workspace=None,
-        group_id=None,
+        page_id=None,
         log_level=None,
         input_file_grp=None,
         output_file_grp=None,
@@ -54,7 +54,7 @@ def run_processor(
     processor = processorClass(
         workspace,
         ocrd_tool=ocrd_tool,
-        group_id=group_id,
+        page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
         parameter=parameter
@@ -78,7 +78,7 @@ def run_cli(
         mets_url=None,
         resolver=None,
         workspace=None,
-        group_id=None,
+        page_id=None,
         log_level=None,
         input_file_grp=None,
         output_file_grp=None,
@@ -94,8 +94,8 @@ def run_cli(
         args += ['--mets', mets_url]
     if log_level:
         args += ['--log-level', log_level]
-    if group_id:
-        args += ['--group-id', group_id]
+    if page_id:
+        args += ['--page-id', page_id]
     if input_file_grp:
         args += ['--input-file-grp', input_file_grp]
     if output_file_grp:
@@ -119,7 +119,7 @@ class Processor(object):
             parameter=None,
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
-            group_id=None,
+            page_id=None,
             dump_json=False,
             version=None
     ):
@@ -133,7 +133,7 @@ class Processor(object):
         self.workspace = workspace
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
-        self.group_id = None if group_id == [] or group_id is None else group_id
+        self.page_id = None if page_id == [] or page_id is None else page_id
         parameterValidator = ParameterValidator(ocrd_tool)
         parameterValidator.validate(parameter)
         self.parameter = parameter
@@ -155,7 +155,7 @@ class Processor(object):
         """
         List the input files
         """
-        return self.workspace.mets.find_files(fileGrp=self.input_file_grp, groupId=self.group_id)
+        return self.workspace.mets.find_files(fileGrp=self.input_file_grp, pageId=self.page_id)
 
     @deprecated(version='0.8.0', reason="Use self.workspace.add_file directly. See https://github.com/OCR-D/core/issues/166.")
     def add_output_file(self, basename=None, file_grp=None, ID=None, **kwargs):

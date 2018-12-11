@@ -64,9 +64,9 @@ class ProcessorTask(object):
 @click.command('process')
 @ocrd_loglevel
 @click.option('-m', '--mets', help="METS to process")
-@click.option('-g', '--group-id', help="ID(s) of the pages to process")
+@click.option('-P', '--page-id', help="ID(s) of the pages to process")
 @click.argument('tasks', nargs=-1, required=True)
-def process_cli(log_level, mets, group_id, tasks):
+def process_cli(log_level, mets, page_id, tasks):
     """
     Process a series of tasks
     """
@@ -98,7 +98,7 @@ def process_cli(log_level, mets, group_id, tasks):
             resolver,
             workspace,
             log_level=log_level,
-            group_id=group_id,
+            page_id=page_id,
             input_file_grp=','.join(task.input_file_grps),
             output_file_grp=','.join(task.output_file_grps),
             parameter=task.parameter_path

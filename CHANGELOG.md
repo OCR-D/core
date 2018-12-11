@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * :fire: Use mets:structMap[@TYPE="PHYSICAL"] instead of GROUPID to group by page, #221, OCR-D/spec#81
+  * :fire: Rename group_id -> page_id, throughout, OCR-D/spec#101
 
 ## [0.13.3] - 2018-12-05
 

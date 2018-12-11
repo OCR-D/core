@@ -28,13 +28,13 @@ class TestOcrdMets(TestCase):
 
     def test_find_files(self):
         self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
-        self.assertEqual(len(self.mets.find_files(pageId='FILE_0001_IMAGE')), 17, '17 files for page "FILE_0001_IMAGE"')
+        self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001')), 17, '17 files for page "PHYS_0001"')
         self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
 
     def test_find_files_local_only(self):
-        self.assertEqual(len(self.mets.find_files(pageId='FILE_0001_IMAGE', local_only=True)), 3, '3 local files for page "FILE_0001_IMAGE"')
+        self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001', local_only=True)), 3, '3 local files for page "PHYS_0001"')
 
     def test_physical_pages(self):
         self.assertEqual(len(self.mets.physical_pages), 3, '3 physical pages')
@@ -90,7 +90,7 @@ class TestOcrdMets(TestCase):
 
     def test_file_pageid(self):
         f = self.mets.find_files()[0]
-        self.assertEqual(f.pageId, 'FILE_0001_IMAGE')
+        self.assertEqual(f.pageId, 'PHYS_0001')
         f.pageId = 'foo'
         self.assertEqual(f.pageId, 'foo')
 

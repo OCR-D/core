@@ -114,11 +114,11 @@ def workspace_create(ctx, clobber_mets, directory):
 @click.option('-G', '--file-grp', help="fileGrp USE", required=True)
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
-@click.option('-g', '--group-id', help="GROUPID")
+@click.option('-P', '--page-id', help="ID of the physical page")
 @click.option('--force', help="If file with ID already exists, replace it", default=False, is_flag=True)
 @click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_filename):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_filename):
     """
     Add a file LOCAL_FILENAME to METS in a workspace.
     """
@@ -135,7 +135,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_
         ID=file_id,
         mimetype=mimetype,
         url=url,
-        groupId=group_id,
+        pageId=page_id,
         force=force,
         local_filename=local_filename
     )
@@ -148,7 +148,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_
 @workspace_cli.command('find')
 @click.option('-G', '--file-grp', help="fileGrp USE")
 @click.option('-m', '--mimetype', help="Media type to look for")
-@click.option('-g', '--group-id', help="Page ID")
+@click.option('-P', '--page_id', help="Page ID")
 @click.option('-i', '--file-id', help="ID")
 @click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
 # pylint: disable=bad-continuation
@@ -166,7 +166,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, group_id, force, local_
         ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
 @pass_workspace
-def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, output_field, download):
+def workspace_find(ctx, file_grp, local_only, mimetype, page_id, file_id, output_field, download):
     """
     Find files.
     """
@@ -176,7 +176,7 @@ def workspace_find(ctx, file_grp, local_only, mimetype, group_id, file_id, outpu
             fileGrp=file_grp,
             local_only=local_only,
             mimetype=mimetype,
-            pageId=group_id,
+            pageId=page_id,
         ):
         if download:
             workspace.download_file(f, subdir=f.fileGrp)
