@@ -64,7 +64,7 @@ class ProcessorTask(object):
 @click.command('process')
 @ocrd_loglevel
 @click.option('-m', '--mets', help="METS to process")
-@click.option('-P', '--page-id', help="ID(s) of the pages to process")
+@click.option('-g', '--page-id', help="ID(s) of the pages to process")
 @click.argument('tasks', nargs=-1, required=True)
 def process_cli(log_level, mets, page_id, tasks):
     """

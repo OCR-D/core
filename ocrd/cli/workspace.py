@@ -114,7 +114,7 @@ def workspace_create(ctx, clobber_mets, directory):
 @click.option('-G', '--file-grp', help="fileGrp USE", required=True)
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
-@click.option('-P', '--page-id', help="ID of the physical page")
+@click.option('-g', '--page-id', help="ID of the physical page")
 @click.option('--force', help="If file with ID already exists, replace it", default=False, is_flag=True)
 @click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
 @pass_workspace
@@ -148,7 +148,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
 @workspace_cli.command('find')
 @click.option('-G', '--file-grp', help="fileGrp USE")
 @click.option('-m', '--mimetype', help="Media type to look for")
-@click.option('-P', '--page_id', help="Page ID")
+@click.option('-g', '--page-id', help="Page ID")
 @click.option('-i', '--file-id', help="ID")
 @click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
 # pylint: disable=bad-continuation

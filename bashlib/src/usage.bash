@@ -13,7 +13,7 @@ Options:
                                 Log level
 -J, --dump-json                 Dump tool description as JSON and exit
 -p, --parameter PATH
--P, --page-id TEXT              ID(s) of the physical page
+-g, --page-id TEXT              ID(s) of the physical page
 -O, --output-file-grp TEXT      File group(s) used as output.
 -I, --input-file-grp TEXT       File group(s) used as input.
 -w, --working-dir TEXT          Working Directory
