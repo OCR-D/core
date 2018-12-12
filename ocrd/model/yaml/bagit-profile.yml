@@ -1,5 +1,6 @@
 BagIt-Profile-Info:
   BagIt-Profile-Identifier: https://ocr-d.github.io/bagit-profile.json
+  BagIt-Profile-Version: '1.2.0'
   Source-Organization: OCR-D
   External-Description: BagIt profile for OCR data
   Contact-Name: Konstantin Baierer
