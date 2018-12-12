@@ -104,8 +104,8 @@ class WorkspaceValidator(object):
         if not self.mets.find_files():
             self.report.add_error("No files")
         for f in self.mets.find_files():
-            if f.el.get('GROUPID'):
-                self.report.add_notice("File '%s' has GROUPID attribute - might need an update" % f.ID)
+            if f._el.get('GROUPID'): # pylint: disable=protected-access
+                self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
             if not f.pageId:
                 self.report.add_error("File '%s' does not manifest any physical page." % f.ID)
             if ':/' in f.url:
