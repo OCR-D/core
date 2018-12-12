@@ -6,7 +6,7 @@
         </mets:agent>
     </mets:metsHdr>
     <mets:structMap TYPE="PHYSICAL">
-        <mets:div DMDID="DMDPHYS_0000" ID="PHYS_0000" TYPE="physSequence">
+        <mets:div TYPE="physSequence">
         </mets:div>
     </mets:structMap>
     <mets:dmdSec ID="DMDLOG_0001">
