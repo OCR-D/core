@@ -28,6 +28,7 @@ help:
 	@echo "    docs-clean     Clean docs"
 	@echo "    docker         Build docker image"
 	@echo "    bashlib        Build bash library"
+	@echo "    pypi           Build wheels in py2 and py3 venv and twine upload them"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
