@@ -43,7 +43,7 @@ class PageValidator(object):
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        validator = PageValidator(parse(filename), **kwargs)
+        validator = PageValidator(parse(filename, silence=True), **kwargs)
         return validator.validate()
 
     @staticmethod

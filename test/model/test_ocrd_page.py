@@ -16,7 +16,7 @@ from ocrd.model.ocrd_page import (
 class TestOcrdPage(TestCase):
 
     def setUp(self):
-        with open(assets.path_to('page-with-glyphs.xml'), 'rb') as f:
+        with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), 'rb') as f:
             self.xml_as_str = f.read()
             self.pcgts = ocrd_page.parseString(self.xml_as_str, silence=True)
 
