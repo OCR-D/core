@@ -16,13 +16,15 @@ class WorkspaceValidator(object):
     Validates an OCR-D/METS workspace against the specs.
     """
 
-    def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False):
+    def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False, page_strictness='strict'):
         self.report = ValidationReport()
         self.skip = skip if skip else []
         log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
         self.mets_url = mets_url
         self.download = download
+        self.page_strictness = page_strictness
+
         self.src_dir = src_dir
         if mets_url is None and src_dir is not None:
             mets_url = '%s/mets.xml' % src_dir
@@ -62,6 +64,7 @@ class WorkspaceValidator(object):
                 self._validate_page()
         except Exception as e: # pylint: disable=broad-except
             self.report.add_error("Failed to instantiate workspace: %s" % e)
+            raise e
         return self.report
 
     def _resolve_workspace(self):
@@ -119,6 +122,6 @@ class WorkspaceValidator(object):
                     self.report.add_warning("File '%s' has non-HTTP, non-file URL '%s'" % (f.ID, f.url))
 
     def _validate_page(self):
-        for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            page_report = PageValidator.validate_ocrd_file(page_file)
+        for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
+            page_report = PageValidator.validate_ocrd_file(page_file, strictness=self.page_strictness)
             self.report.merge_report(page_report)

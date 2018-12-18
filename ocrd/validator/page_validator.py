@@ -1,7 +1,7 @@
+import re
+
 from ocrd.utils import getLogger
-from ocrd.model import OcrdFile
 from ocrd.model.ocrd_page import from_file, parse
-from ocrd.constants import MIMETYPE_PAGE
 
 from ocrd.model.ocrd_page_generateds import (
     PcGtsType,
@@ -31,7 +31,7 @@ class ConsistencyError(Exception):
         self.ID = ID
         self.actual = actual
         self.expected = expected
-        super(ConsistencyError, self).__init__("INCONSISTENCY in %s ID '%s': '%s' != '%s'" % (tag, ID, actual, expected))
+        super(ConsistencyError, self).__init__("INCONSISTENCY in %s ID '%s': text results '%s' != concatenated '%s'" % (tag, ID, actual, expected))
 
 class PageValidator(object):
 
@@ -87,8 +87,7 @@ class PageValidator(object):
         """
         if self.strictness == 'off':
             return self.report
-        fix = self.strictness == 'fix'
-        self.find_or_fix_inconsistencies(self.page, fix)
+        self.find_or_fix_inconsistencies(self.page, strictness=self.strictness)
         return self.report
 
     def concatenate_index_1_text(self, node, concatenate_with):
@@ -96,7 +95,9 @@ class PageValidator(object):
         Concatenate children of node according to https://ocr-d.github.io/page#consistency-of-text-results-on-different-levels
         """
         _, _, getter, concatenate_with = [x for x in _HIERARCHY if isinstance(node, x[0])][0]
-        return concatenate_with.join([self.get_index_1_text(x) for x in getattr(node, getter)()]).strip()
+        ret = ''
+        tokens = [self.get_index_1_text(x) for x in getattr(node, getter)()]
+        return concatenate_with.join(tokens).strip()
 
     def get_index_1_text(self, node):
         """
@@ -130,7 +131,7 @@ class PageValidator(object):
             textEquivs[0].set_Unicode(text)
 
 
-    def find_or_fix_inconsistencies(self, node, fix=False):
+    def find_or_fix_inconsistencies(self, node, strictness='strict'):
         """
         Check whether the text results on an element is consistent with its child element text results.
         """
@@ -150,22 +151,24 @@ class PageValidator(object):
         if getter is not None:
             children = getattr(node, getter)()
             for child in children:
-                child_errors = self.find_or_fix_inconsistencies(child, fix)
+                child_errors = self.find_or_fix_inconsistencies(child, strictness)
                 if child_errors:
                     children_are_consistent = False
                     errors += child_errors
         if concatenate_with is not None:
             concatenated_children = self.concatenate_index_1_text(node, concatenate_with)
             text_results = self.get_index_1_text(node)
-            #  print(text_results, concatenated_children)
-            if concatenated_children != text_results:
-                if fix:
+            if concatenated_children and text_results and concatenated_children != text_results:
+                if strictness == 'fix':
                     if children_are_consistent:
                         self.set_index_1_text(node, concatenated_children)
                     else:
                         # TODO fix text results recursively
                         self.report.add_warning("Fixing inconsistencies recursively not implemented")
+                elif strictness == 'lax':
+                    if re.sub('\\s+', '', concatenated_children) != re.sub('\\s+', '', text_results):
+                        errors.append(ConsistencyError(tag, node.id, text_results, concatenated_children))
                 else:
-                    errors.append(ConsistencyError(tag, node.id, concatenate_with, text_results))
+                    errors.append(ConsistencyError(tag, node.id, text_results, concatenated_children))
         self.report.errors += errors
         return errors
