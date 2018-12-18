@@ -1,8 +1,9 @@
 import re
 
-from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
+from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX, MIMETYPE_PAGE
 from ocrd.utils import getLogger
 from .report import ValidationReport
+from .page_validator import PageValidator
 
 log = getLogger('ocrd.workspace_validator')
 
@@ -57,6 +58,8 @@ class WorkspaceValidator(object):
                 self._validate_mets_files()
             if 'pixel_density' not in self.skip:
                 self._validate_pixel_density()
+            if 'page' not in self.skip:
+                self._validate_page()
         except Exception as e: # pylint: disable=broad-except
             self.report.add_error("Failed to instantiate workspace: %s" % e)
         return self.report
@@ -114,3 +117,8 @@ class WorkspaceValidator(object):
                 scheme = f.url[0:f.url.index(':')]
                 if scheme not in ('http', 'https', 'file'):
                     self.report.add_warning("File '%s' has non-HTTP, non-file URL '%s'" % (f.ID, f.url))
+
+    def _validate_page(self):
+        for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+            page_report = PageValidator.validate_ocrd_file(page_file)
+            self.report.merge_report(page_report)
