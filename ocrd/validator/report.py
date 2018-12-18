@@ -10,10 +10,9 @@ class ValidationReport(object):
     """
 
     def __init__(self):
-        self.entries = []
+        self.notices = []
         self.warnings = []
         self.errors = []
-        self.notices = []
 
     def __str__(self):
         ret = 'OK' if self.is_valid else 'INVALID'
@@ -47,3 +46,8 @@ class ValidationReport(object):
 
     def add_notice(self, msg):
         self.notices.append(msg)
+
+    def merge_report(self, otherself):
+        self.notices += otherself.notices
+        self.warnings += otherself.warnings
+        self.errors += otherself.errors
