@@ -129,7 +129,7 @@ class PageValidator(object):
         """
         if ocrd_page is None and ocrd_file is None and filename is None:
             raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
-        if ocrd_page:
+        elif ocrd_page:
             validator = PageValidator(ocrd_page, strictness, strategy)
         elif ocrd_file:
             validator = PageValidator(from_file(ocrd_file), strictness, strategy)

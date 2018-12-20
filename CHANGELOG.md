@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: Change validators to use a single static `validate` method where applicable, #224
+
 ## [0.14.0] - 2018-12-13
 
 Changed:
