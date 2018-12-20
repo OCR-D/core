@@ -33,6 +33,83 @@ class ConsistencyError(Exception):
         self.expected = expected
         super(ConsistencyError, self).__init__("INCONSISTENCY in %s ID '%s': text results '%s' != concatenated '%s'" % (tag, ID, actual, expected))
 
+def compare_without_whitespace(a, b):
+    return re.sub('\\s+', '', a) == re.sub('\\s+', '', b)
+
+def handle_inconsistencies(node, strictness, strategy, report):
+    """
+    Check whether the text results on an element is consistent with its child element text results.
+    """
+    if isinstance(node, PcGtsType):
+        node = node.get_Page()
+    elif isinstance(node, GlyphType):
+        return report
+
+    _, tag, getter, concatenate_with = [x for x in _HIERARCHY if isinstance(node, x[0])][0]
+    children_are_consistent = True
+    if getter is not None:
+        children = getattr(node, getter)()
+        for child in children:
+            errors_before = len(report.errors)
+            handle_inconsistencies(child, strictness, strategy, report)
+            if len(report.errors) > errors_before:
+                children_are_consistent = False
+    if concatenate_with is not None:
+        concatenated_children = concatenate_children(node, concatenate_with, strategy)
+        text_results = get_text(node, strategy)
+        if concatenated_children and text_results and concatenated_children != text_results:
+            if strictness == 'fix':
+                if children_are_consistent:
+                    set_text(node, concatenated_children, strategy)
+                else:
+                    # TODO fix text results recursively
+                    report.add_warning("Fixing inconsistencies recursively not implemented")
+            elif strictness == 'lax':
+                if not compare_without_whitespace(concatenated_children, text_results):
+                    report.add_error(ConsistencyError(tag, node.id, text_results, concatenated_children))
+            else:
+                report.add_error(ConsistencyError(tag, node.id, text_results, concatenated_children))
+    return report
+
+def concatenate_children(node, concatenate_with, strategy):
+    """
+    Concatenate children of node according to https://ocr-d.github.io/page#consistency-of-text-results-on-different-levels
+    """
+    _, _, getter, concatenate_with = [x for x in _HIERARCHY if isinstance(node, x[0])][0]
+    tokens = [get_text(x, strategy) for x in getattr(node, getter)()]
+    return concatenate_with.join(tokens).strip()
+
+def get_text(node, strategy):
+    """
+    Get the most confident text results, either those with @index = 1 or the first text results or empty string.
+    """
+    textEquivs = node.get_TextEquiv()
+    if not textEquivs:
+        log.debug("No text results on %s %s", node, node.id)
+        return ''
+    elif strategy == 'index1':
+        if len(textEquivs) > 1:
+            index1 = [x for x in textEquivs if x.index == 1]
+            if index1:
+                return index1[0].get_Unicode().strip()
+        return textEquivs[0].get_Unicode().strip()
+
+def set_text(node, text, strategy):
+    """
+    Set the most confident text results, either those with @index = 1, the first text results or add new one.
+    """
+    text = text.strip()
+    textEquivs = node.get_TextEquiv()
+    if not textEquivs:
+        node.add_TextEquiv(TextEquivType(Unicode=text))
+    elif strategy == 'index1':
+        if len(textEquivs) > 1:
+            index1 = [x for x in textEquivs if x.index == 1]
+            if index1:
+                index1[0].set_Unicode(text)
+                return
+        textEquivs[0].set_Unicode(text)
+
 class PageValidator(object):
 
     @staticmethod
@@ -69,14 +146,21 @@ class PageValidator(object):
         validator = PageValidator(from_file(ocrd_file), **kwargs)
         return validator.validate()
 
-    def __init__(self, page, strictness='strict'):
+    def __init__(self, page, strictness='strict', strategy='index1'):
         """
         Arguments:
-            strictness (string): 'strict', 'fix' or 'off'
+            page (OcrdPage): The OcrdPage to validate
+            strictness (string): 'strict', 'lax', 'fix' or 'off'
+            strategy (string): Currently only 'index1'
         """
+        if strategy not in ('index1'):
+            raise Exception("Element selection strategy %s not implemented" % strategy)
+        if strictness not in ('strict', 'lax', 'fix', 'off'):
+            raise Exception("Strictness level %s not implemented" % strictness)
         self.report = ValidationReport()
         self.page = page
         self.strictness = strictness
+        self.strategy = strategy
 
     def validate(self):
         """
@@ -87,88 +171,5 @@ class PageValidator(object):
         """
         if self.strictness == 'off':
             return self.report
-        self.find_or_fix_inconsistencies(self.page, strictness=self.strictness)
+        handle_inconsistencies(self.page, self.strictness, self.strategy, self.report)
         return self.report
-
-    def concatenate_index_1_text(self, node, concatenate_with):
-        """
-        Concatenate children of node according to https://ocr-d.github.io/page#consistency-of-text-results-on-different-levels
-        """
-        _, _, getter, concatenate_with = [x for x in _HIERARCHY if isinstance(node, x[0])][0]
-        ret = ''
-        tokens = [self.get_index_1_text(x) for x in getattr(node, getter)()]
-        return concatenate_with.join(tokens).strip()
-
-    def get_index_1_text(self, node):
-        """
-        Get the most confident text results, either those with @index = 1 or the first text results or empty string.
-        """
-        textEquivs = node.get_TextEquiv()
-        if not textEquivs:
-            log.debug("No text results on %s %s", node, node.id)
-            return ''
-        else:
-            if len(textEquivs) > 1:
-                index1 = [x for x in textEquivs if x.index == 1]
-                if index1:
-                    return index1[0].get_Unicode().strip()
-            return textEquivs[0].get_Unicode().strip()
-
-    def set_index_1_text(self, node, text):
-        """
-        Set the most confident text results, either those with @index = 1, the first text results or add new one.
-        """
-        text = text.strip()
-        textEquivs = node.get_TextEquiv()
-        if not textEquivs:
-            node.add_TextEquiv(TextEquivType(Unicode=text))
-        else:
-            if len(textEquivs) > 1:
-                index1 = [x for x in textEquivs if x.index == 1]
-                if index1:
-                    index1[0].set_Unicode(text)
-                    return
-            textEquivs[0].set_Unicode(text)
-
-
-    def find_or_fix_inconsistencies(self, node, strictness='strict'):
-        """
-        Check whether the text results on an element is consistent with its child element text results.
-        """
-        if isinstance(node, PcGtsType):
-            node = node.get_Page()
-        elif isinstance(node, GlyphType):
-            return []
-
-        #  print("Checking %s" % node)
-        #  print(_HIERARCHY)
-        #  print(node)
-        #  print([x for x in _HIERARCHY if isinstance(node, x[0])])
-
-        errors = []
-        _, tag, getter, concatenate_with = [x for x in _HIERARCHY if isinstance(node, x[0])][0]
-        children_are_consistent = True
-        if getter is not None:
-            children = getattr(node, getter)()
-            for child in children:
-                child_errors = self.find_or_fix_inconsistencies(child, strictness)
-                if child_errors:
-                    children_are_consistent = False
-                    errors += child_errors
-        if concatenate_with is not None:
-            concatenated_children = self.concatenate_index_1_text(node, concatenate_with)
-            text_results = self.get_index_1_text(node)
-            if concatenated_children and text_results and concatenated_children != text_results:
-                if strictness == 'fix':
-                    if children_are_consistent:
-                        self.set_index_1_text(node, concatenated_children)
-                    else:
-                        # TODO fix text results recursively
-                        self.report.add_warning("Fixing inconsistencies recursively not implemented")
-                elif strictness == 'lax':
-                    if re.sub('\\s+', '', concatenated_children) != re.sub('\\s+', '', text_results):
-                        errors.append(ConsistencyError(tag, node.id, text_results, concatenated_children))
-                else:
-                    errors.append(ConsistencyError(tag, node.id, text_results, concatenated_children))
-        self.report.errors += errors
-        return errors
