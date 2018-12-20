@@ -32,7 +32,7 @@ class WorkspaceValidator(object):
         self.mets = None
 
     @staticmethod
-    def validate_url(*args, **kwargs):
+    def validate(*args, **kwargs):
         """
         Validates the workspace of a METS URL against the specs
 
@@ -47,9 +47,9 @@ class WorkspaceValidator(object):
             report (:class:`ValidationReport`) Report on the validity
         """
         validator = WorkspaceValidator(*args, **kwargs)
-        return validator.validate()
+        return validator._validate() # pylint: disable=protected-access
 
-    def validate(self):
+    def _validate(self):
         try:
             self._resolve_workspace()
             if 'mets_unique_identifier' not in self.skip:
@@ -122,6 +122,6 @@ class WorkspaceValidator(object):
                     self.report.add_warning("File '%s' has non-HTTP, non-file URL '%s'" % (f.ID, f.url))
 
     def _validate_page(self):
-        for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
-            page_report = PageValidator.validate_ocrd_file(page_file, strictness=self.page_strictness)
+        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
+            page_report = PageValidator.validate(ocrd_file=ocrd_file, strictness=self.page_strictness)
             self.report.merge_report(page_report)

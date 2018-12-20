@@ -8,5 +8,5 @@ from .json_validator import JsonValidator
 class OcrdToolValidator(JsonValidator):
 
     @staticmethod
-    def validate_json(obj, schema=OCRD_TOOL_SCHEMA):
-        return JsonValidator.validate_json(obj, schema)
+    def validate(obj, schema=OCRD_TOOL_SCHEMA):
+        return JsonValidator.validate(obj, schema)

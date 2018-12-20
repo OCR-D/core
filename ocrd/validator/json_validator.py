@@ -16,7 +16,7 @@ def extend_with_default(validator_class):
         for error in validate_properties(validator, properties, instance, schema):
             yield error
 
-    return validators.extend(validator_class, {"properties" : set_defaults})
+    return validators.extend(validator_class, {"properties": set_defaults})
 
 
 DefaultValidatingDraft4Validator = extend_with_default(Draft4Validator)
@@ -28,15 +28,15 @@ DefaultValidatingDraft4Validator = extend_with_default(Draft4Validator)
 class JsonValidator(object):
 
     @staticmethod
-    def validate_json(obj, schema):
+    def validate(obj, schema):
         if isinstance(obj, str):
             obj = json.loads(obj)
-        return JsonValidator(schema).validate(obj)
+        return JsonValidator(schema)._validate(obj) # pylint: disable=protected-access
 
     def __init__(self, schema, validator_class=Draft4Validator):
         self.validator = validator_class(schema)
 
-    def validate(self, obj):
+    def _validate(self, obj):
         report = ValidationReport()
         if not self.validator.is_valid(obj):
             for v in self.validator.iter_errors(obj):

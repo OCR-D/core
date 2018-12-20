@@ -50,7 +50,7 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 @click.option('--page-strictness', help="How strict to check PAGE consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']))
 @click.argument('mets_url')
 def validate_workspace(ctx, mets_url, download, skip, page_strictness):
-    report = WorkspaceValidator.validate_url(
+    report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
         src_dir=ctx.directory,

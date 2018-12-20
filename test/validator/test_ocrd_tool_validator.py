@@ -22,14 +22,14 @@ skeleton = '''
 class TestOcrdToolValidator(TestCase):
 
     def test_something(self):
-        report = OcrdToolValidator.validate_json(json.loads(skeleton))
+        report = OcrdToolValidator.validate(json.loads(skeleton))
         #  print(report.to_xml())
         self.assertEqual(report.is_valid, True)
 
     def test_file_param_ok(self):
         ocrd_tool = json.loads(skeleton)
         ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": 'application/rdf+xml'}}
-        report = OcrdToolValidator.validate_json(ocrd_tool)
+        report = OcrdToolValidator.validate(ocrd_tool)
         self.assertEqual(report.is_valid, True)
 
     def test_file_param_bad_content_types(self):
@@ -42,7 +42,7 @@ class TestOcrdToolValidator(TestCase):
         for case in bad_and_why:
             ocrd_tool = json.loads(skeleton)
             ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": case[0]}}
-            report = OcrdToolValidator.validate_json(ocrd_tool)
+            report = OcrdToolValidator.validate(ocrd_tool)
             print('# %s: %s' % (case[0], case[1]))
             self.assertEqual(report.is_valid, False, case[1])
 

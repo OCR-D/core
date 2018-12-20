@@ -113,45 +113,34 @@ def set_text(node, text, strategy):
 class PageValidator(object):
 
     @staticmethod
-    def validate_filename(filename, **kwargs):
+    def validate(filename=None, ocrd_page=None, ocrd_file=None, strictness='strict', strategy='index1'):
         """
-        Validates a PAGE file for consistency by filename
+        Validates a PAGE file for consistency by filename, OcrdFile or passing OcrdPage directly.
+
+        Arguments:
+            filename (string): Path to PAGE
+            ocrd_page (OcrdPage): OcrdPage instance
+            ocrd_file (OcrdFile): OcrdFile instance wrapping OcrdPage
+            strictness (string): 'strict', 'lax', 'fix' or 'off'
+            strategy (string): Currently only 'index1'
 
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        validator = PageValidator(parse(filename, silence=True), **kwargs)
-        return validator.validate()
+        if ocrd_page is None and ocrd_file is None and filename is None:
+            raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
+        if ocrd_page:
+            validator = PageValidator(ocrd_page, strictness, strategy)
+        elif ocrd_file:
+            validator = PageValidator(from_file(ocrd_file), strictness, strategy)
+        elif filename:
+            validator = PageValidator(parse(filename, silence=True), strictness, strategy)
+        return validator._validate() # pylint: disable=protected-access
 
-    @staticmethod
-    def validate_ocrd_page(page, **kwargs):
-        """
-        Validates an OcrdPage for consistency
-
-        Returns:
-            report (:class:`ValidationReport`) Report on the validity
-        """
-        validator = PageValidator(page, **kwargs)
-        return validator.validate()
-
-
-    @staticmethod
-    def validate_ocrd_file(ocrd_file, **kwargs):
-        """
-        Validates an OcrdFile representing a PAGE doc for consistency
-
-        Returns:
-            report (:class:`ValidationReport`) Report on the validity
-        """
-        validator = PageValidator(from_file(ocrd_file), **kwargs)
-        return validator.validate()
-
-    def __init__(self, page, strictness='strict', strategy='index1'):
+    def __init__(self, page, strictness, strategy):
         """
         Arguments:
             page (OcrdPage): The OcrdPage to validate
-            strictness (string): 'strict', 'lax', 'fix' or 'off'
-            strategy (string): Currently only 'index1'
         """
         if strategy not in ('index1'):
             raise Exception("Element selection strategy %s not implemented" % strategy)
@@ -162,13 +151,7 @@ class PageValidator(object):
         self.strictness = strictness
         self.strategy = strategy
 
-    def validate(self):
-        """
-        Do the validation / fixing.
-
-        Returns:
-            report (:class:`ValidationReport`) Report on the validity
-        """
+    def _validate(self):
         if self.strictness == 'off':
             return self.report
         handle_inconsistencies(self.page, self.strictness, self.strategy, self.report)

@@ -6,6 +6,9 @@ from ocrd.validator.json_validator import JsonValidator, DefaultValidatingDraft4
 
 class ParameterValidator(JsonValidator):
 
+    def validate(self, *args, **kwargs): # pylint: disable=arguments-differ
+        return super(ParameterValidator, self)._validate(*args, **kwargs)
+
     def __init__(self, ocrd_tool):
         required = []
         if ocrd_tool is None:

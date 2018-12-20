@@ -44,7 +44,7 @@ def ocrd_tool_version(ctx):
 @ocrd_tool_cli.command('validate', help='Validate an ocrd-tool.json')
 @pass_ocrd_tool
 def ocrd_tool_validate(ctx):
-    report = OcrdToolValidator.validate_json(ctx.json)
+    report = OcrdToolValidator.validate(ctx.json)
     print(report.to_xml())
     if not report.is_valid:
         return 128
