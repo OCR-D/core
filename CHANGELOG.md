@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * PageValidator: Check consistency of PAGE according to spec 3.0.0, #223
+
 Changed:
 
   * :fire: Change validators to use a single static `validate` method where applicable, #224
