@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.15.0] - 2018-12-20
+
 Added:
 
   * PageValidator: Check consistency of PAGE according to spec 3.0.0, #223
