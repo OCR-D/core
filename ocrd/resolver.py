@@ -1,4 +1,4 @@
-from os import makedirs, getcwd
+from os import makedirs
 from os.path import exists, isfile, join, isdir, abspath, dirname
 from shutil import copyfile
 import tempfile
@@ -115,7 +115,7 @@ class Resolver(object):
             if src_dir is None:
                 raise Exception("Must pass mets_url and/or src_dir to workspace_from_url")
             else:
-                mets_url = 'file://%s/%s' % (src_dir, mets_basename)
+                mets_url = 'file://%s/%s' % (src_dir, mets_basename if mets_basename else 'mets.xml')
 
         # resolve to absolute
         if '://' not in mets_url:
