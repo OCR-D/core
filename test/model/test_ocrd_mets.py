@@ -1,3 +1,4 @@
+from datetime import datetime
 from test.base import TestCase, main, assets
 
 from ocrd.constants import MIMETYPE_PAGE, VERSION
@@ -21,7 +22,7 @@ class TestOcrdMets(TestCase):
         self.assertEqual(mets.unique_identifier, 'foo', 'Right identifier after change')
         as_string = mets.to_xml().decode('utf-8')
         self.assertIn('ocrd/core v%s' % VERSION, as_string)
-        self.assertIn('CREATEDATE="2018-', as_string)
+        self.assertIn('CREATEDATE="%d-' % datetime.now().year, as_string)
 
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
