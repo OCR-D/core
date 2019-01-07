@@ -40,7 +40,7 @@ class WorkspaceValidator(object):
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
-            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density'
+            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'url'
             download (boolean): Whether to download files
 
         Returns:
@@ -114,7 +114,7 @@ class WorkspaceValidator(object):
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
             if not f.pageId:
                 self.report.add_error("File '%s' does not manifest any physical page." % f.ID)
-            if ':/' in f.url:
+            if 'url' not in self.skip and ':/' in f.url:
                 if re.match(r'^file:/[^/]', f.url):
                     self.report.add_warning("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
                 scheme = f.url[0:f.url.index(':')]
