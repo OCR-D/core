@@ -31,11 +31,12 @@ __all__ = [
 
 import re
 import sys
+import logging
 from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
 
-import logging
 from ocrd.logging import getLogger
+from ocrd.utils.xml import xmllint_format
 
 def abspath(url):
     """
@@ -145,10 +146,3 @@ def xywh_from_points(points):
         'w': maxx - minx,
         'h': maxy - miny,
     }
-
-def xmllint_format(xml):
-    from lxml import etree as ET
-    parser = ET.XMLParser(resolve_entities=False, strip_cdata=False, remove_blank_text=True)
-    document = ET.fromstring(xml, parser)
-    return ('%s\n%s' % ('<?xml version="1.0" encoding="UTF-8"?>', ET.tostring(document, pretty_print=True).decode('utf-8'))).encode('utf-8')
-
