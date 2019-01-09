@@ -17,7 +17,9 @@ disable =
     too-many-branches,
     too-many-instance-attributes,
     ungrouped-imports,
-    useless-object-inheritance
+    useless-object-inheritance,
+    useless-import-alias,
+    no-else-return,
 
 [FORMAT]
 no-space-check=empty-line

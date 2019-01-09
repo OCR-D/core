@@ -1,7 +1,8 @@
 import re
 
 from ocrd.utils import getLogger
-from ocrd.model.ocrd_page import from_file, parse
+from ocrd.model.ocrd_page import parse
+from ocrd.model_factory import page_from_file
 
 from ocrd.model.ocrd_page_generateds import (
     PcGtsType,
@@ -132,7 +133,7 @@ class PageValidator(object):
         elif ocrd_page:
             validator = PageValidator(ocrd_page, strictness, strategy)
         elif ocrd_file:
-            validator = PageValidator(from_file(ocrd_file), strictness, strategy)
+            validator = PageValidator(page_from_file(ocrd_file), strictness, strategy)
         elif filename:
             validator = PageValidator(parse(filename, silence=True), strictness, strategy)
         return validator._validate() # pylint: disable=protected-access

@@ -8,8 +8,9 @@ from ocrd.model.ocrd_page import (
     TextRegionType,
     TextLineType,
     WordType,
-    GlyphType
+    GlyphType,
 )
+from ocrd.model_factory import page_from_file
 
 # pylint: disable=protected-access
 
@@ -27,7 +28,7 @@ class TestOcrdPage(TestCase):
             local_filename=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017')
         )
         self.assertEqual(f.mimetype, 'image/tiff')
-        p = ocrd_page.from_file(f)
+        p = page_from_file(f)
         self.assertEqual(p.get_Page().imageWidth, 1457)
 
     def test_pcGtsId(self):

@@ -14,17 +14,19 @@ xywh is what tesserocr expects/produces.
 """
 
 __all__ = [
-    'logging',
-    'getLogger',
-    'points_from_xywh',
-    'xywh_from_points',
-    'polygon_from_points',
-    'is_string',
+    'abspath',
     'concat_padded',
-    'safe_filename',
+    'getLogger',
     'is_local_filename',
+    'is_string',
+    'logging',
+    'points_from_xywh',
+    'points_from_x0y0x1y1',
+    'polygon_from_points',
+    'safe_filename',
     'unzip_file_to_dir',
-    'abspath'
+    'xywh_from_points',
+    'xmllint_format',
 ]
 
 import re
@@ -34,6 +36,42 @@ from zipfile import ZipFile
 
 import logging
 from ocrd.logging import getLogger
+
+def abspath(url):
+    """
+    Get a full path to a file or file URL
+
+    See os.abspath
+    """
+    if url.startswith('file://'):
+        url = url[len('file://'):]
+    return os_abspath(url)
+
+def concat_padded(base, *args):
+    """
+    Concatenate string and zero-padded 4 digit number
+    """
+    ret = base
+    for n in args:
+        if is_string(n):
+            ret = "%s_%s" % (ret, n)
+        else:
+            ret = "%s_%04i"  % (ret, n + 1)
+    return ret
+
+def is_local_filename(url):
+    """
+    Whether a url is a local filename.
+    """
+    if url.startswith('file://'):
+        return True
+    if isfile(url):
+        return True
+    return False
+
+def is_string(val):
+    # pylint: disable=undefined-variable
+    return isinstance(val, (str, unicode)) if sys.version_info < (3, 0) else isinstance(val, str)
 
 def points_from_xywh(box):
     """
@@ -59,6 +97,28 @@ def points_from_x0y0x1y1(xyxy):
         x1, y1,
         x0, y1
     )
+
+def polygon_from_points(points):
+    """
+    Constructs a numpy-compatible polygon from a page representation.
+    """
+    polygon = []
+    for pair in points.split(" "):
+        x_y = pair.split(",")
+        polygon.append([float(x_y[0]), float(x_y[1])])
+    return polygon
+
+def safe_filename(url):
+    ret = re.sub('[^A-Za-z0-9]+', '.', url)
+    return ret
+
+def unzip_file_to_dir(path_to_zip, output_directory):
+    """
+    Extract a ZIP archive to a directory
+    """
+    z = ZipFile(path_to_zip, 'r')
+    z.extractall(output_directory)
+    z.close()
 
 def xywh_from_points(points):
     """
@@ -86,66 +146,9 @@ def xywh_from_points(points):
         'h': maxy - miny,
     }
 
-def polygon_from_points(points):
-    """
-    Constructs a numpy-compatible polygon from a page representation.
-    """
-    polygon = []
-    for pair in points.split(" "):
-        x_y = pair.split(",")
-        polygon.append([float(x_y[0]), float(x_y[1])])
-    return polygon
-
 def xmllint_format(xml):
     from lxml import etree as ET
     parser = ET.XMLParser(resolve_entities=False, strip_cdata=False, remove_blank_text=True)
     document = ET.fromstring(xml, parser)
     return ('%s\n%s' % ('<?xml version="1.0" encoding="UTF-8"?>', ET.tostring(document, pretty_print=True).decode('utf-8'))).encode('utf-8')
 
-def is_string(val):
-    # pylint: disable=undefined-variable
-    return isinstance(val, (str, unicode)) if sys.version_info < (3, 0) else isinstance(val, str)
-
-def concat_padded(base, *args):
-    """
-    Concatenate string and zero-padded 4 digit number
-    """
-    ret = base
-    for n in args:
-        if is_string(n):
-            ret = "%s_%s" % (ret, n)
-        else:
-            ret = "%s_%04i"  % (ret, n + 1)
-    return ret
-
-def safe_filename(url):
-    ret = re.sub('[^A-Za-z0-9]+', '.', url)
-    return ret
-
-def is_local_filename(url):
-    """
-    Whether a url is a local filename.
-    """
-    if url.startswith('file://'):
-        return True
-    if isfile(url):
-        return True
-    return False
-
-def abspath(url):
-    """
-    Get a full path to a file or file URL
-
-    See os.abspath
-    """
-    if url.startswith('file://'):
-        url = url[len('file://'):]
-    return os_abspath(url)
-
-def unzip_file_to_dir(path_to_zip, output_directory):
-    """
-    Extract a ZIP archive to a directory
-    """
-    z = ZipFile(path_to_zip, 'r')
-    z.extractall(output_directory)
-    z.close()

@@ -1,17 +1,13 @@
-import PIL
-
 class OcrdExif(object):
     """
     Represents technical image metadata
     """
 
-    @staticmethod
-    def from_filename(image_filename):
-        if image_filename is None:
-            raise Exception("Must pass 'image_filename' to OcrdExif.from_filename")
-        return OcrdExif(PIL.Image.open(image_filename))
-
     def __init__(self, img):
+        """
+        Arguments:
+            img (PIL.Image): PIL image technical metadata is about.
+        """
         #  print(img.__dict__)
         self.width = img.width
         self.height = img.height
