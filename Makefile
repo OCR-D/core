@@ -63,7 +63,7 @@ generate-page: repo/assets
 		-f \
 		--no-namespace-defs \
 		--root-element='PcGts' \
-		-o ocrd/model/ocrd_page_generateds.py \
+		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
 		repo/assets/data/schema/2018.xsd
 
 #
@@ -87,8 +87,8 @@ repo/spec:
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
 spec: repo/spec
-	cp repo/spec/ocrd_tool.schema.yml ocrd/model/yaml/ocrd_tool.schema.yml
-	cp repo/spec/bagit-profile.yml ocrd/model/yaml/bagit-profile.yml
+	cp repo/spec/ocrd_tool.schema.yml ocrd_models/ocrd_models/yaml/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml ocrd_models/ocrd_models/yaml/bagit-profile.yml
 
 #
 # Assets
