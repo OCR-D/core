@@ -13,7 +13,6 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps           Install python deps via pip"
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
@@ -23,7 +22,7 @@ help:
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
-	@echo "    assets-clean   Remove symlinks in test/assets"
+	@echo "    assets-clean   Remove symlinks in $(TESTDIR)/assets"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
@@ -40,15 +39,9 @@ help:
 # Docker tag.
 DOCKER_TAG = 'ocrd/pyocrd'
 
-# Install python deps via pip
-deps:
-	$(PIP) install -r requirements.txt
-
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	sudo apt install -y \
-		python3 \
-		python3-pip
+	sudo apt install -y python3 python3-pip
 
 # Install test python deps via pip
 deps-test:
@@ -56,7 +49,11 @@ deps-test:
 
 # (Re)install the tool
 install: spec
-	$(PIP) install .
+	(cd ocrd_utils        ; python setup.py install)
+	(cd ocrd_models       ; python setup.py install)
+	(cd ocrd_modelfactory ; python setup.py install)
+	(cd ocrd_validators   ; python setup.py install)
+	(cd ocrd              ; python setup.py install)
 
 # Regenerate python code from PAGE XSD
 generate-page: repo/assets
