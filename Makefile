@@ -49,11 +49,11 @@ deps-test:
 
 # (Re)install the tool
 install: spec
-	(cd ocrd_utils        ; python setup.py install)
-	(cd ocrd_models       ; python setup.py install)
-	(cd ocrd_modelfactory ; python setup.py install)
-	(cd ocrd_validators   ; python setup.py install)
-	(cd ocrd              ; python setup.py install)
+	(cd ocrd_utils        ; pip install .)
+	(cd ocrd_models       ; pip install .)
+	(cd ocrd_modelfactory ; pip install .)
+	(cd ocrd_validators   ; pip install .)
+	(cd ocrd              ; pip install .)
 
 # Regenerate python code from PAGE XSD
 generate-page: repo/assets
@@ -85,8 +85,8 @@ repo/spec:
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
 spec: repo/spec
-	cp repo/spec/ocrd_tool.schema.yml ocrd_models/ocrd_models/yaml-files/ocrd_tool.schema.yml
-	cp repo/spec/bagit-profile.yml ocrd_models/ocrd_models/yaml-files/bagit-profile.yml
+	cp repo/spec/ocrd_tool.schema.yml ocrd_validators/ocrd_validators/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml ocrd_validators/ocrd_validators/bagit-profile.yml
 
 #
 # Assets

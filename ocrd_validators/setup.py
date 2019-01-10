@@ -20,6 +20,7 @@ setup(
     license='Apache License 2.0',
     install_requires=install_requires,
     packages=['ocrd_validators'],
-    package_data={'': ['*.json', '*.yml', '*.xml']},
+    include_package_data=True,
+    package_data={'': ['*.yml']},
     keywords=['OCR', 'OCR-D']
 )
