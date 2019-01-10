@@ -1,7 +1,7 @@
 import logging
 from test.base import TestCase, main
 
-from ocrd.logging import (
+from ocrd_utils.logging import (
     getLevelName,
     setOverrideLogLevel,
     initLogging

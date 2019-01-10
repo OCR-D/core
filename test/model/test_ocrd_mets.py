@@ -1,8 +1,8 @@
 from datetime import datetime
 from test.base import TestCase, main, assets
 
-from ocrd.constants import MIMETYPE_PAGE, VERSION
-from ocrd.model import OcrdMets, OcrdFile
+from ocrd_utils import VERSION, MIMETYPE_PAGE
+from ocrd_models import OcrdMets, OcrdFile
 
 # pylint: disable=protected-access,deprecated-method
 class TestOcrdMets(TestCase):

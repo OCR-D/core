@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from ocrd.constants import (
+from ocrd_utils import VERSION
+
+from .constants import (
     NAMESPACES as NS,
     TAG_METS_AGENT,
     TAG_METS_DIV,
@@ -13,7 +15,6 @@ from ocrd.constants import (
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
     METS_XML_EMPTY,
-    VERSION
 )
 
 from .ocrd_xml_base import OcrdXmlDocument, ET

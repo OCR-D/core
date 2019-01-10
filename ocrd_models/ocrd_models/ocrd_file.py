@@ -1,9 +1,9 @@
 import os
-from ocrd.constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
 
 from .ocrd_xml_base import ET
+from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
 
-class OcrdFile(object):
+class OcrdFile():
     """
     Represents a <mets:file>/<mets:FLocat>
     """

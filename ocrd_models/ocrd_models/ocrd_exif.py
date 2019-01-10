@@ -1,4 +1,4 @@
-class OcrdExif(object):
+class OcrdExif():
     """
     Represents technical image metadata
     """

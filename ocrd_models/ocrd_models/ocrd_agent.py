@@ -1,9 +1,8 @@
 #  import os
-from ocrd.constants import NAMESPACES as NS, TAG_METS_AGENT, TAG_METS_NAME
-
+from .constants import NAMESPACES as NS, TAG_METS_AGENT, TAG_METS_NAME
 from .ocrd_xml_base import ET
 
-class OcrdAgent(object):
+class OcrdAgent():
     """
     Represents a <mets:agent>
     """

@@ -1,13 +1,13 @@
 from test.base import TestCase, main, assets
-from ocrd.utils import (
+from ocrd_utils import (
     points_from_xywh,
     is_string,
     concat_padded,
     points_from_x0y0x1y1,
     xywh_from_points,
     polygon_from_points,
-    xmllint_format
 )
+from ocrd_model.utils import xmllint_format
 
 class TestUtils(TestCase):
 

@@ -1,18 +1,18 @@
 from lxml import etree as ET
 
-from ocrd.constants import NAMESPACES
-from ocrd.utils import xmllint_format
+from .constants import NAMESPACES
+from .utils import xmllint_format
 
 
 for curie in NAMESPACES:
     ET.register_namespace(curie, NAMESPACES[curie])
 
-class OcrdXmlFragment(object):
+class OcrdXmlFragment():
 
     def __init__(self, el):
         self.el = el
 
-class OcrdXmlDocument(object):
+class OcrdXmlDocument():
 
     def __init__(self, filename=None, content=None):
         #  print(self, filename, content)

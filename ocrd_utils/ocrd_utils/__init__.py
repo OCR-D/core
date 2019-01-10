@@ -26,7 +26,10 @@ __all__ = [
     'safe_filename',
     'unzip_file_to_dir',
     'xywh_from_points',
-    'xmllint_format',
+
+    'VERSION',
+    'MIMETYPE_PAGE',
+    'EXT_TO_MIME',
 ]
 
 import re
@@ -35,8 +38,8 @@ import logging
 from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
 
-from ocrd.logging import getLogger
-from ocrd.utils.xml import xmllint_format
+from .logging import getLogger
+from .constants import *  # pylint: disable=wildcard-import
 
 def abspath(url):
     """

@@ -1,8 +1,4 @@
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
+from io import StringIO
 
 __all__ = [
     'parse',
@@ -25,7 +21,7 @@ __all__ = [
     'to_xml'
 ]
 
-from ocrd.model.ocrd_page_generateds import (
+from .ocrd_page_generateds import (
     parse,
     parseString,
 
@@ -43,7 +39,8 @@ from ocrd.model.ocrd_page_generateds import (
     TextLineType,
     WordType,
 )
-from ocrd.constants import NAMESPACES
+
+from .constants import NAMESPACES
 
 def to_xml(el):
     sio = StringIO()
