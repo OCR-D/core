@@ -1,5 +1,5 @@
 import logging
-from test.base import TestCase, main
+from tests.base import TestCase, main
 
 from ocrd_utils.logging import (
     getLevelName,

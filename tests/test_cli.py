@@ -1,4 +1,4 @@
-from test.base import TestCase, main
+from tests.base import TestCase, main
 import click
 from click.testing import CliRunner
 from ocrd.decorators import ocrd_cli_options

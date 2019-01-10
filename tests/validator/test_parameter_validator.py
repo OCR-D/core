@@ -1,4 +1,4 @@
-from test.base import TestCase, main
+from tests.base import TestCase, main
 from ocrd.validator import ParameterValidator
 
 class TestParameterValidator(TestCase):

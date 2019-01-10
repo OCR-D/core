@@ -1,4 +1,4 @@
-from test.base import TestCase, main, assets
+from tests.base import TestCase, main, assets
 
 from PIL import Image
 

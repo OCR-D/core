@@ -5,6 +5,7 @@ PYTHON = python
 PIP = pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
+TESTDIR = tests
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -96,16 +97,16 @@ spec: repo/spec
 
 # Setup test assets
 assets: repo/assets
-	mkdir -p test/assets
-	cp -r -t test/assets repo/assets/data/*
+	mkdir -p $(TESTDIR)/assets
+	cp -r -t $(TESTDIR)/assets repo/assets/data/*
 
 # Start asset server at http://localhost:5001
 assets-server:
 	cd assets && make start
 
-# Remove symlinks in test/assets
+# Remove symlinks in $(TESTDIR)/assets
 assets-clean:
-	rm -rf test/assets
+	rm -rf $(TESTDIR)/assets
 
 #
 # Tests
@@ -114,7 +115,7 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	$(PYTHON) -m pytest --duration=10 --continue-on-collection-errors test
+	$(PYTHON) -m pytest --duration=10 --continue-on-collection-errors $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)

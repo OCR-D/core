@@ -1,4 +1,4 @@
-from test.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
+from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
 from ocrd.validator import OcrdZipValidator
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger

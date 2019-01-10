@@ -1,11 +1,7 @@
-from test.base import TestCase, main # pylint: disable=import-error,no-name-in-module
-from ocrd.resolver import Resolver
-from ocrd.validator import ValidationReport
+from tests.base import TestCase, main # pylint: disable=import-error,no-name-in-module
+from ocrd_validators import ValidationReport
 
 class TestValidationReport(TestCase):
-
-    def setUp(self):
-        self.resolver = Resolver()
 
     def test_toxml(self):
         report = ValidationReport()

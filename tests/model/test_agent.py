@@ -1,4 +1,4 @@
-from test.base import TestCase, assets, main # pylint: disable=unused-import
+from tests.base import TestCase, assets, main # pylint: disable=unused-import
 
 from ocrd_models import OcrdAgent
 

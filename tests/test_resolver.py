@@ -1,10 +1,10 @@
+from tests.base import TestCase, assets, main
+
 import os
 from os.path import join, exists
 from shutil import copytree, rmtree
-from test.base import TestCase, assets, main
 from re import sub
 
-#  from ocrd.model import OcrdExif
 from ocrd.resolver import Resolver
 
 TMP_FOLDER = '/tmp/test-pyocrd-resolver'

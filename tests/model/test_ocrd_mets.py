@@ -1,5 +1,5 @@
 from datetime import datetime
-from test.base import TestCase, main, assets
+from tests.base import TestCase, main, assets
 
 from ocrd_utils import VERSION, MIMETYPE_PAGE
 from ocrd_models import OcrdMets, OcrdFile

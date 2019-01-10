@@ -1,6 +1,6 @@
-from test.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
+from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
 from ocrd.resolver import Resolver
-from ocrd.validator import WorkspaceValidator
+from ocrd_validators import WorkspaceValidator
 
 class TestWorkspaceValidator(TestCase):
 
