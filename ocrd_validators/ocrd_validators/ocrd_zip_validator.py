@@ -2,11 +2,12 @@ from tempfile import mkdtemp
 from shutil import rmtree
 from os.path import join, isfile
 
+from ocrd_utils import getLogger, unzip_file_to_dir
+
 from bagit import Bag, BagValidationError, ChecksumMismatch
 from bagit_profile import Profile, ProfileValidationError # pylint: disable=no-name-in-module
 
-from ..constants import OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
-from ..utils import getLogger, unzip_file_to_dir
+from .constants import OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
 from .report import ValidationReport
 # TODO see below
 #  from .workspace_validator import WorkspaceValidator
@@ -17,7 +18,7 @@ log = getLogger('ocrd.ocrd_zip_validator')
 # -------------------------------------------------
 #
 
-class OcrdZipValidator(object):
+class OcrdZipValidator():
     """
     Validate conformance with BagIt and OCR-D bagit profile.
 

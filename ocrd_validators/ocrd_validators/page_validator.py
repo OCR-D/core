@@ -1,10 +1,10 @@
 import re
 
-from ocrd.utils import getLogger
-from ocrd.model.ocrd_page import parse
-from ocrd.model_factory import page_from_file
+from ocrd_utils import getLogger
+from ocrd_models.ocrd_page import parse
+from ocrd_modelfactory import page_from_file
 
-from ocrd.model.ocrd_page_generateds import (
+from ocrd_models.ocrd_page import (
     PcGtsType,
     PageType,
     TextEquivType,

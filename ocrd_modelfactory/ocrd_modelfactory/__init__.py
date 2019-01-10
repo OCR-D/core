@@ -2,9 +2,9 @@ from datetime import datetime
 
 import PIL
 
-from ocrd.constants import VERSION, MIMETYPE_PAGE
-from ocrd.model.ocrd_exif import OcrdExif
-from ocrd.model.ocrd_page import PcGtsType, PageType, MetadataType, parse
+from ocrd_utils import VERSION, MIMETYPE_PAGE
+from ocrd_models import OcrdExif
+from ocrd_models.ocrd_page import PcGtsType, PageType, MetadataType, parse
 
 __all__ = [
     'exif_from_filename',

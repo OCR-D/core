@@ -1,0 +1,125 @@
+type: object
+description: Schema for tools by OCR-D MP
+required:
+  - version
+  - git_url
+  - tools
+additionalProperties: false
+properties:
+  version:
+    description: "Version of the tool, expressed as MAJOR.MINOR.PATCH."
+    type: string
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+  git_url:
+    description: Github/Gitlab URL
+    type: string
+    format: url
+  dockerhub:
+    description: DockerHub image
+    type: string
+  tools:
+    type: object
+    additionalProperties: false
+    patternProperties:
+      'ocrd-.*':
+        type: object
+        additionalProperties: false
+        required:
+          - description
+          - steps
+          - executable
+          - categories
+          - input_file_grp
+          - output_file_grp
+        properties:
+          executable:
+            description: The name of the CLI executable in $PATH
+            type: string
+          input_file_grp:
+            description: Input fileGrp@USE this tool expects by default
+            type: array
+            items:
+              type: string
+              pattern: '^OCR-D-[A-Z0-9-]+$'
+          output_file_grp:
+            description: Output fileGrp@USE this tool produces by default
+            type: array
+            items:
+              type: string
+              pattern: '^OCR-D-[A-Z0-9-]+$'
+          parameters:
+            description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
+            type: object
+            patternProperties:
+              ".*":
+                type: object
+                additionalProperties: false
+                required:
+                  - description
+                  - type
+                  # also either 'default' or 'required'
+                properties:
+                  type:
+                    type: string
+                    description: Data type of this parameter
+                    enum:
+                      - string
+                      - number
+                      - boolean
+                  format:
+                    description: Subtype, such as `float` for type `number` or `uri` for type `string`.
+                  description:
+                    description: Concise description of syntax and semantics of this parameter
+                  required:
+                    type: boolean
+                    description: Whether this parameter is required
+                  default:
+                    description: Default value when not provided by the user
+                  enum:
+                    type: array
+                    description: List the allowed values if a fixed list.
+                  content-type:
+                    type: string
+                    description: "If parameter is reference to file: Media type of the file"
+                    pattern: '^[a-z0-9\._-]+/[A-Za-z0-9\._\+-]+$'
+                  cacheable:
+                    type: boolean
+                    description: "If parameter is reference to file: Whether the file should be cached, e.g. because it is large and won't change."
+                    default: false
+          description:
+            description: Concise description what the tool does
+          categories:
+            description: Tools belong to this categories, representing modules within the OCR-D project structure
+            type: array
+            items:
+              type: string
+              enum:
+                - Image preprocessing
+                - Layout analysis
+                - Text recognition and optimization
+                - Model training
+                - Long-term preservation
+                - Quality assurance
+          steps:
+            description: This tool can be used at these steps in the OCR-D functional model
+            type: array
+            items:
+              type: string
+              enum:
+                - preprocessing/characterization
+                - preprocessing/optimization
+                - preprocessing/optimization/cropping
+                - preprocessing/optimization/deskewing
+                - preprocessing/optimization/despeckling
+                - preprocessing/optimization/dewarping
+                - preprocessing/optimization/binarization
+                - preprocessing/optimization/grayscale_normalization
+                - recognition/text-recognition
+                - recognition/font-identification
+                - recognition/post-correction
+                - layout/segmentation
+                - layout/segmentation/region
+                - layout/segmentation/line
+                - layout/segmentation/word
+                - layout/segmentation/classification
+                - layout/analysis

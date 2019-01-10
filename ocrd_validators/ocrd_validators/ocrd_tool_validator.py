@@ -1,4 +1,4 @@
-from ..constants import OCRD_TOOL_SCHEMA
+from .constants import OCRD_TOOL_SCHEMA
 from .json_validator import JsonValidator
 
 #

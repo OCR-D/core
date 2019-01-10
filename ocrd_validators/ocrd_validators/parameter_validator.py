@@ -1,4 +1,4 @@
-from ocrd.validator.json_validator import JsonValidator, DefaultValidatingDraft4Validator
+from .json_validator import JsonValidator, DefaultValidatingDraft4Validator
 
 #
 # -------------------------------------------------

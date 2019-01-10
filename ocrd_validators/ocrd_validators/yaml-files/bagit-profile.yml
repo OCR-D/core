@@ -1,0 +1,39 @@
+BagIt-Profile-Info:
+  BagIt-Profile-Identifier: https://ocr-d.github.io/bagit-profile.json
+  BagIt-Profile-Version: '1.2.0'
+  Source-Organization: OCR-D
+  External-Description: BagIt profile for OCR data
+  Contact-Name: Konstantin Baierer
+  Contact-Email: konstantin.baierer@sbb.spk-berlin.de
+  Version: 0.1
+Bag-Info:
+  Bagging-Date:
+    required: false
+  Source-Organization:
+    required: false
+  Ocrd-Mets:
+    required: false
+    default: 'data/mets.xml'
+  Ocrd-Manifestation-Depth:
+    required: false
+    default: partial
+    values: ["partial", "full"]
+  Ocrd-Identifier:
+    required: true
+  Ocrd-Checksum:
+    required: false
+    # echo -n | sha512sum
+    default: 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e'
+Manifests-Required: ['sha512']
+Tag-Manifests-Required: []
+Tag-Files-Required: []
+Tag-Files-Allowed:
+  - README.md
+  - Makefile
+  - build.sh
+  - sources.csv
+Allow-Fetch.txt: true
+Serialization: required
+Accept-Serialization: application/zip
+Accept-BagIt-Version:
+  - '1.0'

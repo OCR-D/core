@@ -1,12 +1,8 @@
 from pkg_resources import resource_string
-import yaml
+
+IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 
 METS_XML_EMPTY = resource_string(__name__, 'mets-empty.xml')
-OCRD_TOOL_SCHEMA = yaml.load(resource_string(__name__, 'yaml-files/ocrd_tool.schema.yml'))
-OCRD_BAGIT_PROFILE = yaml.load(resource_string(__name__, 'yaml-files/bagit-profile.yml'))
-OCRD_BAGIT_PROFILE_URL = 'https://ocr-d.github.io/bagit-profile.json'
-
-BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'
 
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",

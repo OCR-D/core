@@ -25,7 +25,7 @@ DefaultValidatingDraft4Validator = extend_with_default(Draft4Validator)
 # -------------------------------------------------
 #
 
-class JsonValidator(object):
+class JsonValidator():
 
     @staticmethod
     def validate(obj, schema):
