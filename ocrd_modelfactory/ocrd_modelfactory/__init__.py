@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import PIL
+from PIL import Image
 
 from ocrd_utils import VERSION, MIMETYPE_PAGE
 from ocrd_models import OcrdExif
@@ -16,7 +16,7 @@ __all__ = [
 def exif_from_filename(image_filename):
     if image_filename is None:
         raise Exception("Must pass 'image_filename' to 'exif_from_filename'")
-    return OcrdExif(PIL.Image.open(image_filename))
+    return OcrdExif(Image.open(image_filename))
 
 def page_from_image(input_file):
     if input_file.local_filename is None:

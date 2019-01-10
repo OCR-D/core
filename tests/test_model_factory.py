@@ -1,7 +1,7 @@
 from tests.base import TestCase, main, assets
 
 from ocrd_models import OcrdFile
-from ocrd.model_factory import page_from_file
+from ocrd_modelfactory import page_from_file
 
 class TestModelFactory(TestCase):
 

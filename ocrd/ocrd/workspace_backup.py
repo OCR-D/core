@@ -7,14 +7,15 @@ import sys
 from shutil import copy
 import hashlib
 
+from ocrd_models import OcrdMets
+from ocrd_utils import getLogger
+
 from .constants import BACKUP_DIR
-from .model.ocrd_mets import OcrdMets
-from .utils import getLogger
 
 def _chksum(s):
     return hashlib.sha256(s).hexdigest()
 
-class WorkspaceBackup(object):
+class WorkspaceBackup():
 
     @classmethod
     def from_path(cls, d):
@@ -38,7 +39,7 @@ class WorkspaceBackup(object):
             self.mets_xml.file_groups
             )
 
-class WorkspaceBackupManager(object):
+class WorkspaceBackupManager():
     """
     Manages backups of a workspace in a directory BACKUP_DIR
     """

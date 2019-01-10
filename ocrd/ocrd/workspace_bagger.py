@@ -8,11 +8,11 @@ import tempfile
 import sys
 
 from pkg_resources import get_distribution
-from bagit import Bag, make_manifests
+from bagit import Bag, make_manifests  # pylint: disable=no-name-in-module
 
-from .constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL, VERSION
-from .utils import abspath, is_local_filename, unzip_file_to_dir
-from .logging import getLogger
+from ocrd_utils import VERSION, getLogger, abspath, is_local_filename, unzip_file_to_dir
+from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
+
 from .workspace import Workspace
 
 tempfile.tempdir = '/tmp' # TODO hard-coded
@@ -20,7 +20,7 @@ log = getLogger('ocrd.workspace_bagger')
 
 BACKUPDIR = join('/tmp', TMP_BAGIT_PREFIX + 'backup')
 
-class WorkspaceBagger(object):
+class WorkspaceBagger():
     """
     Serialize/De-serialize from OCRD-ZIP to workspace and back.
     """

@@ -6,13 +6,14 @@ import cv2
 from PIL import Image
 import numpy as np
 
-from .model import OcrdMets, OcrdExif
-from .utils import getLogger
+from ocrd_models import OcrdMets, OcrdExif
+from ocrd_utils import getLogger
+
 from .workspace_backup import WorkspaceBackupManager
 
 log = getLogger('ocrd.workspace')
 
-class Workspace(object):
+class Workspace():
     """
     A workspace is a temporary directory set up for a processor. It's the
     interface to the METS/PAGE XML and delegates download and upload to the

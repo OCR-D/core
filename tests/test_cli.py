@@ -1,8 +1,10 @@
-from tests.base import TestCase, main
 import click
 from click.testing import CliRunner
+
+from tests.base import TestCase, main
+
 from ocrd.decorators import ocrd_cli_options
-from ocrd.logging import setOverrideLogLevel, initLogging
+from ocrd_utils.logging import setOverrideLogLevel, initLogging
 
 @click.command()
 @ocrd_cli_options

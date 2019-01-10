@@ -1,4 +1,4 @@
-from tests.base import TestCase, main, assets
+from tests.base import TestCase, main
 from ocrd_utils import (
     points_from_xywh,
     is_string,
@@ -7,7 +7,7 @@ from ocrd_utils import (
     xywh_from_points,
     polygon_from_points,
 )
-from ocrd_model.utils import xmllint_format
+from ocrd_models.utils import xmllint_format
 
 class TestUtils(TestCase):
 

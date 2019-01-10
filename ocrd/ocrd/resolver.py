@@ -6,13 +6,13 @@ import tempfile
 import requests
 
 from ocrd.constants import TMP_PREFIX
-from ocrd.utils import getLogger, safe_filename
+from ocrd_utils import getLogger, safe_filename
 from ocrd.workspace import Workspace
-from ocrd.model import OcrdMets
+from ocrd_models import OcrdMets
 
 log = getLogger('ocrd.resolver')
 
-class Resolver(object):
+class Resolver():
     """
     Handle Uploads, Downloads, Repository access and manage temporary directories
     """
@@ -109,7 +109,7 @@ class Resolver(object):
             src_dir = abspath(src_dir)
         if dst_dir and not dst_dir.startswith('/'):
             dst_dir = abspath(dst_dir)
-        log.debug("workspace_from_url\nmets_url='%s'\nsrc_dir='%s'\ndst_dir='%s'" % (mets_url, src_dir, dst_dir))
+        log.debug("workspace_from_url\nmets_url='%s'\nsrc_dir='%s'\ndst_dir='%s'", mets_url, src_dir, dst_dir)
 
         if mets_url is None:
             if src_dir is None:

@@ -20,6 +20,7 @@ disable =
     useless-object-inheritance,
     useless-import-alias,
     no-else-return,
+    logging-not-lazy
 
 [FORMAT]
 no-space-check=empty-line

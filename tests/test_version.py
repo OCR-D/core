@@ -1,10 +1,10 @@
 from tests.base import TestCase, main
-import ocrd
+from ocrd_utils import VERSION
 
 class TestVersion(TestCase):
 
     def runTest(self):
-        self.assertIsNot(ocrd.VERSION, None)
+        self.assertIsNot(VERSION, None)
 
 if __name__ == '__main__':
     main()
