@@ -1,7 +1,7 @@
 import re
 
-from ocrd.constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX, MIMETYPE_PAGE
-from ocrd.utils import getLogger
+from ocrd_utils import getLogger, MIMETYPE_PAGE
+from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
 from .page_validator import PageValidator
 
@@ -11,7 +11,7 @@ log = getLogger('ocrd.workspace_validator')
 # -------------------------------------------------
 #
 
-class WorkspaceValidator(object):
+class WorkspaceValidator():
     """
     Validates an OCR-D/METS workspace against the specs.
     """

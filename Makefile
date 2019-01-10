@@ -87,8 +87,8 @@ repo/spec:
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
 spec: repo/spec
-	cp repo/spec/ocrd_tool.schema.yml ocrd_models/ocrd_models/yaml/ocrd_tool.schema.yml
-	cp repo/spec/bagit-profile.yml ocrd_models/ocrd_models/yaml/bagit-profile.yml
+	cp repo/spec/ocrd_tool.schema.yml ocrd_models/ocrd_models/yaml-files/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml ocrd_models/ocrd_models/yaml-files/bagit-profile.yml
 
 #
 # Assets

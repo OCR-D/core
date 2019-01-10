@@ -2,8 +2,8 @@ import os
 import json
 import subprocess
 from deprecated.sphinx import deprecated
-from ocrd.utils import getLogger
-from ocrd.validator import ParameterValidator
+from ocrd_utils import getLogger
+from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
 

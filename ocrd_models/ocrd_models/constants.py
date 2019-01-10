@@ -8,10 +8,6 @@ OCRD_BAGIT_PROFILE_URL = 'https://ocr-d.github.io/bagit-profile.json'
 
 BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'
 
-FILE_GROUP_PREFIX = 'OCR-D-'
-FILE_GROUP_CATEGORIES = ['IMG', 'SEG', 'OCR', 'COR', 'GT']
-IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
-
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",
     'mods': "http://www.loc.gov/mods/v3",
