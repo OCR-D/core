@@ -43,6 +43,9 @@ help:
 # Docker tag.
 DOCKER_TAG = 'ocrd/pyocrd'
 
+# pip install command. Default: $(PIP_INSTALL)
+PIP_INSTALL = pip install
+
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	sudo apt install -y python3 python3-pip
@@ -53,7 +56,7 @@ deps-test:
 
 # (Re)install the tool
 install: spec
-	for mod in $(BUILD_ORDER);do (cd $$mod ; pip install .);done
+	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
 # Uninstall the tool
 uninstall:

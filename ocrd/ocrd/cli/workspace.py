@@ -5,8 +5,8 @@ from tempfile import mkdtemp
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd.utils import getLogger
-from ocrd.constants import TMP_PREFIX
+from ocrd_utils import getLogger
+from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
 

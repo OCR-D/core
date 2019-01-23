@@ -4,9 +4,8 @@ import sys
 
 import click
 
-from ocrd import OcrdToolValidator
-from ocrd.constants import VERSION as OCRD_VERSION
-from ocrd.validator import ParameterValidator
+from ocrd_utils import VERSION as OCRD_VERSION
+from ocrd_validators import ParameterValidator, OcrdToolValidator
 
 class OcrdToolCtx(object):
 

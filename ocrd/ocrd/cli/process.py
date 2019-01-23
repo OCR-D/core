@@ -4,8 +4,9 @@ from distutils.spawn import find_executable as which # pylint: disable=import-er
 
 import click
 
+from ocrd_utils import getLogger
+
 from ..processor.base import run_cli
-from ..logging import getLogger
 from ..resolver import Resolver
 from ..decorators import ocrd_loglevel
 
