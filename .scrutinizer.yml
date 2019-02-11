@@ -13,11 +13,9 @@ build:
           -
             command: pylint-run
             use_website_config: false
-
-    tests: true
 filter:
   excluded_paths:
-    - '*/test/*'
+    - 'tests/*'
     - 'ocrd_models/ocrd_models/ocrd_page_generateds.py'
   dependency_paths:
     - 'lib/*'
