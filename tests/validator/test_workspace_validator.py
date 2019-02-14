@@ -8,7 +8,8 @@ class TestWorkspaceValidator(TestCase):
         self.resolver = Resolver()
 
     def runTest(self):
-        report = WorkspaceValidator.validate(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'))
+        report = WorkspaceValidator.validate(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), download=True)
+        #  self.assertTrue(report.is_valid)
         print(report.to_xml())
 
 if __name__ == '__main__':

@@ -152,7 +152,7 @@ class Workspace():
         image_filename = self.download_url(image_url)
 
         if image_url not in self.image_cache['exif']:
-            self.image_cache['exif'][image_url] = OcrdExif.from_filename(image_filename)
+            self.image_cache['exif'][image_url] = OcrdExif(Image.open(image_filename))
         return self.image_cache['exif'][image_url]
 
     def resolve_image_as_pil(self, image_url, coords=None):
