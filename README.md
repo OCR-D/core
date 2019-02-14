@@ -11,15 +11,17 @@
 [![image](https://scrutinizer-ci.com/g/OCR-D/core/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/OCR-D/core)
 [![image](https://img.shields.io/lgtm/alerts/g/OCR-D/core.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OCR-D/core/alerts/)
 
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/OCR-D/Lobby)
+
+
 <!-- BEGIN-MARKDOWN-TOC -->
+* [Introduction](#introduction)
 * [Modules](#modules)
-	* [ocrd](#ocrd)
-	* [ocrd_modelfactory](#ocrd_modelfactory)
-	* [ocrd_models](#ocrd_models)
 	* [ocrd_utils](#ocrd_utils)
+	* [ocrd_models](#ocrd_models)
+	* [ocrd_modelfactory](#ocrd_modelfactory)
 	* [ocrd_validators](#ocrd_validators)
-* [Installation](#installation)
-* [Usage](#usage)
+	* [ocrd](#ocrd)
 * [Testing](#testing)
 * [See Also](#see-also)
 
