@@ -20,7 +20,6 @@ __all__ = [
     'TextLineType',
     'TextStyleType',
     'TextRegionType',
-    'TextEquivType',
     'WordType',
 
     'to_xml'
@@ -46,7 +45,6 @@ from .ocrd_page_generateds import (
     TextLineType,
     TextRegionType,
     TextStyleType,
-    TextEquivType,
     WordType,
 )
 

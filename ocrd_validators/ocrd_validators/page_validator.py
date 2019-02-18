@@ -48,23 +48,22 @@ def handle_inconsistencies(node, strictness, strategy, report):
 
     _, tag, getter, concatenate_with = [x for x in _HIERARCHY if isinstance(node, x[0])][0]
     children_are_consistent = True
-    if getter is not None:
-        children = getattr(node, getter)()
-        for child in children:
-            errors_before = len(report.errors)
-            handle_inconsistencies(child, strictness, strategy, report)
-            if len(report.errors) > errors_before:
-                children_are_consistent = False
+    children = getattr(node, getter)()
+    for child in children:
+        errors_before = len(report.errors)
+        handle_inconsistencies(child, strictness, strategy, report)
+        if len(report.errors) > errors_before:
+            children_are_consistent = False
     if concatenate_with is not None:
         concatenated_children = concatenate_children(node, concatenate_with, strategy)
         text_results = get_text(node, strategy)
         if concatenated_children and text_results and concatenated_children != text_results:
             if strictness == 'fix':
-                if children_are_consistent:
-                    set_text(node, concatenated_children, strategy)
-                else:
-                    # TODO fix text results recursively
-                    report.add_warning("Fixing inconsistencies recursively not implemented")
+                set_text(node, concatenated_children, strategy)
+                #  if children_are_consistent:
+                #  else:
+                #      # TODO fix text results recursively
+                #      report.add_warning("Fixing inconsistencies recursively not implemented")
             elif strictness == 'lax':
                 if not compare_without_whitespace(concatenated_children, text_results):
                     report.add_error(ConsistencyError(tag, node.id, text_results, concatenated_children))
@@ -88,7 +87,8 @@ def get_text(node, strategy):
     if not textEquivs:
         log.debug("No text results on %s %s", node, node.id)
         return ''
-    elif strategy == 'index1':
+    #  elif strategy == 'index1':
+    else:
         if len(textEquivs) > 1:
             index1 = [x for x in textEquivs if x.index == 1]
             if index1:
@@ -103,7 +103,8 @@ def set_text(node, text, strategy):
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
         node.add_TextEquiv(TextEquivType(Unicode=text))
-    elif strategy == 'index1':
+    #  elif strategy == 'index1':
+    else:
         if len(textEquivs) > 1:
             index1 = [x for x in textEquivs if x.index == 1]
             if index1:
@@ -111,7 +112,7 @@ def set_text(node, text, strategy):
                 return
         textEquivs[0].set_Unicode(text)
 
-class PageValidator(object):
+class PageValidator():
 
     @staticmethod
     def validate(filename=None, ocrd_page=None, ocrd_file=None, strictness='strict', strategy='index1'):
