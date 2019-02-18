@@ -24,6 +24,17 @@ class TestOcrdMets(TestCase):
         self.assertIn('ocrd/core v%s' % VERSION, as_string)
         self.assertIn('CREATEDATE="%d-' % datetime.now().year, as_string)
 
+    def test_str(self):
+        mets = OcrdMets(content='<mets/>')
+        self.assertEqual(str(mets), 'OcrdMets[fileGrps=[],files=[]]')
+
+    def test_override_constructor_args(self):
+        id2file = {'foo': {}}
+        baseurl = 'http://foo'
+        mets = OcrdMets(id2file, baseurl, content='<mets/>')
+        self.assertEqual(mets._file_by_id, id2file)
+        self.assertEqual(mets.baseurl, baseurl)
+
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
 
@@ -53,9 +64,9 @@ class TestOcrdMets(TestCase):
 
     def test_no_pageid_without_mets(self):
         f = OcrdFile(None)
-        with self.assertRaisesRegexp(Exception, ".*has no member 'mets' pointing.*"):
+        with self.assertRaisesRegex(Exception, ".*has no member 'mets' pointing.*"):
             print(f.pageId)
-        with self.assertRaisesRegexp(Exception, ".*has no member 'mets' pointing.*"):
+        with self.assertRaisesRegex(Exception, ".*has no member 'mets' pointing.*"):
             f.pageId = 'foo'
 
     def test_add_file(self):

@@ -57,7 +57,8 @@ class OcrdMets(OcrdXmlDocument):
     def unique_identifier(self, purl):
         for t in IDENTIFIER_PRIORITY:
             id_el = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
-            break
+            if id_el is not None:
+                break
         if id_el is None:
             mods = self._tree.getroot().find('.//mods:mods', NS)
             id_el = ET.SubElement(mods, TAG_MODS_IDENTIFIER)
