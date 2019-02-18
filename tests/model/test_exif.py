@@ -1,11 +1,18 @@
-from tests.base import TestCase, main, assets
-
 from PIL import Image
+from tests.base import TestCase, main, assets
 
 from ocrd_models import OcrdExif
 
 # pylint: disable=no-member
 class TestOcrdExif(TestCase):
+
+    def test_str(self):
+        exif = OcrdExif(Image.open(assets.path_to('SBB0000F29300010000/data/OCR-D-IMG/FILE_0001_IMAGE')))
+        self.assertEqual(
+            exif.to_xml(),
+            '<exif><width>2875</width><height>3749</height><photometricInterpretation>RGB</photometricInterpretation><compression>jpeg</compression><photometric_interpretation>None</photometric_interpretation><xResolution>300.0</xResolution><yResolution>300.0</yResolution><resolutionUnit>inches</resolutionUnit></exif>'
+        )
+
 
     def test_tiff(self):
         exif = OcrdExif(Image.open(assets.path_to('SBB0000F29300010000/data/OCR-D-IMG/FILE_0001_IMAGE')))
@@ -20,10 +27,10 @@ class TestOcrdExif(TestCase):
         exif = OcrdExif(Image.open(assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020')))
         self.assertEqual(exif.width, 1457)
         self.assertEqual(exif.height, 2084)
-        self.assertEqual(exif.xResolution, 1)
-        self.assertEqual(exif.yResolution, 1)
+        self.assertEqual(exif.xResolution, 300)
+        self.assertEqual(exif.yResolution, 300)
         self.assertEqual(exif.compression, None)
-        self.assertEqual(exif.photometricInterpretation, 'L')
+        self.assertEqual(exif.photometricInterpretation, '1')
 
     def test_png2(self):
         exif = OcrdExif(Image.open(assets.path_to('scribo-test/data/OCR-D-IMG-BIN-SAUVOLA/OCR-D-IMG-orig_sauvola_png')))

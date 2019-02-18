@@ -12,6 +12,8 @@ class OcrdExif():
         self.width = img.width
         self.height = img.height
         self.photometricInterpretation = img.mode
+        #  if img.format == 'PNG':
+        #      print(img.info)
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
         if img.format == 'TIFF' and 'dpi' in img.info:
@@ -25,6 +27,9 @@ class OcrdExif():
         elif img.format == 'PNG' and 'dpi' in img.info:
             self.xResolution = img.info['dpi'][0]
             self.yResolution = img.info['dpi'][1]
+        elif img.format == 'PNG' and 'aspect' in img.info:
+            self.xResolution = img.info['aspect'][0]
+            self.yResolution = img.info['aspect'][1]
         else:
             #  if img.format == 'JPEG2000':
             #      import sys

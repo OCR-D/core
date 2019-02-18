@@ -17,4 +17,5 @@ exclude_lines =
 ignore_errors = True
 omit =
     ocrd_models/ocrd_models/ocrd_page_generateds.py
+    */setup.py
     tests/*
