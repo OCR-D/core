@@ -18,11 +18,11 @@ class OcrdFile():
         self._el = el
         self.mimetype = mimetype
         self.local_filename = local_filename
-        if baseurl and not local_filename and '://' not in self.url:
-            self.local_filename = '%s/%s' % (baseurl, self.url)
-
         self._instance = instance
         self.mets = mets
+
+        if baseurl and not local_filename and '://' not in self.url:
+            self.local_filename = '%s/%s' % (baseurl, self.url)
 
     def __str__(self):
         #  props = '\n\t'.join([

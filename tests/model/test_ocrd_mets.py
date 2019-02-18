@@ -2,7 +2,7 @@ from datetime import datetime
 from tests.base import TestCase, main, assets
 
 from ocrd_utils import VERSION, MIMETYPE_PAGE
-from ocrd_models import OcrdMets, OcrdFile
+from ocrd_models import OcrdMets
 
 # pylint: disable=protected-access,deprecated-method
 class TestOcrdMets(TestCase):
@@ -66,13 +66,6 @@ class TestOcrdMets(TestCase):
         mets.add_file_group('TEST')
         self.assertEqual(len(mets.file_groups), 1, '1 file groups')
 
-    def test_no_pageid_without_mets(self):
-        f = OcrdFile(None)
-        with self.assertRaisesRegex(Exception, ".*has no member 'mets' pointing.*"):
-            print(f.pageId)
-        with self.assertRaisesRegex(Exception, ".*has no member 'mets' pointing.*"):
-            f.pageId = 'foo'
-
     def test_add_file(self):
         mets = OcrdMets.empty_mets()
         self.assertEqual(len(mets.file_groups), 0, '0 file groups')
@@ -133,6 +126,10 @@ class TestOcrdMets(TestCase):
         self.assertFalse(mets._tree.getroot().getchildren())
         mets.add_agent()
         self.assertEqual(len(mets._tree.getroot().getchildren()), 1)
+
+    def test_nocontent_nofilename(self):
+        with self.assertRaisesRegex(Exception, "Must pass 'filename' or 'content' to"):
+            OcrdMets()
 
 if __name__ == '__main__':
     main()
