@@ -1,4 +1,7 @@
+import os
 import logging
+from tempfile import TemporaryDirectory
+
 from tests.base import TestCase, main
 
 from ocrd_utils.logging import (
@@ -12,11 +15,6 @@ class TestLogging(TestCase):
     def setUp(self):
         initLogging()
 
-    def test_getLevelName(self):
-        self.assertEqual(getLevelName('ERROR'), logging.ERROR)
-        self.assertEqual(getLevelName('FATAL'), logging.ERROR)
-        self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
-
     def test_setOverrideLogLevel(self):
         rootLogger = logging.getLogger('')
         somelogger = logging.getLogger('foo.bar')
@@ -29,6 +27,22 @@ class TestLogging(TestCase):
         notherlogger = logging.getLogger('bar.foo')
         self.assertEqual(notherlogger.getEffectiveLevel(), logging.ERROR)
         setOverrideLogLevel('INFO')
+        somelogger = logging.getLogger('foo.bar')
+        setOverrideLogLevel('INFO')
+
+    def test_getLevelName(self):
+        self.assertEqual(getLevelName('ERROR'), logging.ERROR)
+        self.assertEqual(getLevelName('FATAL'), logging.ERROR)
+        self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
+
+    def test_configfile(self):
+        previous_dir = os.getcwd()
+        with TemporaryDirectory() as tempdir:
+            os.chdir(tempdir)
+            with open('ocrd_logging.py', 'w') as f:
+                f.write('print("this is mighty dangerous")')
+            initLogging()
+        os.chdir(previous_dir)
 
 if __name__ == '__main__':
     main()
