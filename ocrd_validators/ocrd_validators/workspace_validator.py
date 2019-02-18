@@ -64,7 +64,7 @@ class WorkspaceValidator():
                 self._validate_page()
         except Exception as e: # pylint: disable=broad-except
             self.report.add_error("Failed to instantiate workspace: %s" % e)
-            raise e
+            #  raise e
         return self.report
 
     def _resolve_workspace(self):

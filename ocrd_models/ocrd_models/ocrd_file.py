@@ -94,6 +94,7 @@ class OcrdFile():
         el_FLocat = self._el.find(TAG_METS_FLOCAT)
         if el_FLocat is not None:
             return el_FLocat.get("{%s}href" % NS["xlink"])
+        return ''
 
     @url.setter
     def url(self, url):
