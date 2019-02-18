@@ -1,6 +1,12 @@
 [run]
 branch = True
-source = ocrd
+source =
+    ocrd_utils
+    ocrd_models
+    ocrd_validators
+    ocrd_modelfactory
+    ocrd
+
 
 [report]
 exclude_lines =
