@@ -135,7 +135,7 @@ class OcrdMets(OcrdXmlDocument):
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)
-        el_fileGrp = el_fileSec.find('mets:fileGrp[USE="%s"]' % fileGrp, NS)
+        el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % fileGrp, NS)
         if el_fileGrp is None:
             el_fileGrp = ET.SubElement(el_fileSec, TAG_METS_FILEGRP)
             el_fileGrp.set('USE', fileGrp)

@@ -59,9 +59,12 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(mets.physical_pages), 1, '1 physical page')
 
     def test_add_group(self):
-        self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
-        self.mets.add_file_group('TEST')
-        self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
+        mets = OcrdMets.empty_mets()
+        self.assertEqual(len(mets.file_groups), 0, '0 file groups')
+        mets.add_file_group('TEST')
+        self.assertEqual(len(mets.file_groups), 1, '1 file groups')
+        mets.add_file_group('TEST')
+        self.assertEqual(len(mets.file_groups), 1, '1 file groups')
 
     def test_no_pageid_without_mets(self):
         f = OcrdFile(None)
@@ -71,14 +74,21 @@ class TestOcrdMets(TestCase):
             f.pageId = 'foo'
 
     def test_add_file(self):
-        self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
-        self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 0, '0 files in "OUTPUT"')
-        f = self.mets.add_file('OUTPUT', ID="foo123", mimetype="bla/quux", pageId="foobar")
+        mets = OcrdMets.empty_mets()
+        self.assertEqual(len(mets.file_groups), 0, '0 file groups')
+        self.assertEqual(len(mets.find_files(fileGrp='OUTPUT')), 0, '0 files in "OUTPUT"')
+        f = mets.add_file('OUTPUT', ID="foo123", mimetype="bla/quux", pageId="foobar")
+        f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
         self.assertEqual(f.pageId, 'foobar', 'pageId set')
-        self.assertEqual(len(self.mets.file_groups), 18, '18 file groups')
-        self.assertEqual(len(self.mets.find_files(fileGrp='OUTPUT')), 1, '1 files in "OUTPUT"')
-        self.mets.set_physical_page_for_file('barfoo', f, order='300', orderlabel="page 300")
+        self.assertEqual(len(mets.file_groups), 1, '1 file groups')
+        self.assertEqual(len(mets.find_files(fileGrp='OUTPUT')), 2, '2 files in "OUTPUT"')
+        mets.set_physical_page_for_file('barfoo', f, order='300', orderlabel="page 300")
         self.assertEqual(f.pageId, 'barfoo', 'pageId changed')
+        mets.set_physical_page_for_file('quux', f2, order='302', orderlabel="page 302")
+        self.assertEqual(f2.pageId, 'quux', 'pageId changed')
+        mets.set_physical_page_for_file('barfoo', f2, order='301', orderlabel="page 301")
+        self.assertEqual(f2.pageId, 'barfoo', 'pageId changed')
+        self.assertEqual(len(mets.file_groups), 1, '1 file group')
 
     def test_add_file_ID_fail(self):
         f = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
