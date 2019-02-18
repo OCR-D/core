@@ -1,5 +1,7 @@
 from tests.base import TestCase, main
 from ocrd_utils import (
+    abspath,
+    is_local_filename,
     points_from_xywh,
     is_string,
     concat_padded,
@@ -12,6 +14,12 @@ from ocrd_models.utils import xmllint_format
 class TestUtils(TestCase):
 
     #  def runTest(self):
+
+    def test_abspath(self):
+        self.assertEqual(abspath('file:///'), '/')
+
+    def test_is_local_filename(self):
+        self.assertEqual(is_local_filename('file:///'), True)
 
     def test_points_from_xywh(self):
         self.assertEqual(
