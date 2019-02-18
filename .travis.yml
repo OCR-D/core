@@ -7,7 +7,7 @@ before_install:
   - sudo apt-get -qq update
   - make deps-ubuntu
 install:
-  - make deps-test assets install
+  - make deps-test assets install PIP_INSTALL="pip install -e"
 script:
   - make test PYTHON="coverage run"
   - coverage report -m

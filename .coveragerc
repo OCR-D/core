@@ -16,5 +16,5 @@ exclude_lines =
     if __name__ == .__main__.:
 ignore_errors = True
 omit =
-    ocrd/model/ocrd_page_generateds.py
+    ocrd_models/ocrd_models/ocrd_page_generateds.py
     tests/*
