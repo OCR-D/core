@@ -13,6 +13,10 @@ build:
           -
             command: pylint-run
             use_website_config: false
+    tests:
+      tests:
+        override:
+          - true
 filter:
   excluded_paths:
     - 'tests/*'
