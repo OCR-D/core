@@ -129,6 +129,7 @@ coverage:
 	coverage erase
 	make test PYTHON="coverage run"
 	coverage report
+	coverage html
 
 #
 # Documentation

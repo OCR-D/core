@@ -8,6 +8,7 @@ class TestOcrdAgent(TestCase):
     def test_basic1(self):
         ag = OcrdAgent(role='FOO')
         self.assertEqual(ag.role, 'FOO')
+        self.assertEqual(ag.name, None)
 
     def test_basic2(self):
         ag = OcrdAgent(otherrole='BAR')

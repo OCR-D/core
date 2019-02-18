@@ -3,9 +3,6 @@ from ocrd_validators import ParameterValidator
 
 class TestParameterValidator(TestCase):
 
-    def setUp(self):
-        pass
-
     def test_default_assignment(self):
         validator = ParameterValidator({"parameters": {"num-param": {"type": "number", "default": 1}}})
         obj = {}
