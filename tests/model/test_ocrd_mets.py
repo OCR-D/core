@@ -39,11 +39,12 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
 
     def test_find_files(self):
+        self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
         self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001')), 17, '17 files for page "PHYS_0001"')
+        self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001-NOTEXIST')), 0, '0 pages for "PHYS_0001-NOTEXIST"')
         self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
-        self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
 
     def test_find_files_local_only(self):
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001', local_only=True)), 3, '3 local files for page "PHYS_0001"')
@@ -93,7 +94,7 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f.fileGrp, 'OCR-D-IMG')
 
     def test_add_file_no_id(self):
-        with self.assertRaisesRegexp(Exception, "Must set ID of the mets:file"):
+        with self.assertRaisesRegex(Exception, "Must set ID of the mets:file"):
             self.mets.add_file('FOO')
 
     def test_add_file_no_pageid(self):

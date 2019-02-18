@@ -115,8 +115,7 @@ class OcrdMets(OcrdXmlDocument):
         file_ids = self._tree.getroot().xpath("//mets:fileGrp%s/mets:file%s/@ID" % (fileGrp_clause, file_clause), namespaces=NS)
         if pageId is not None:
             by_pageid = self._tree.getroot().xpath('//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % pageId, namespaces=NS)
-            if by_pageid:
-                file_ids = [i for i in by_pageid if i in file_ids]
+            file_ids = [i for i in by_pageid if i in file_ids]
 
         # instantiate / get from cache
         for file_id in file_ids:
