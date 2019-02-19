@@ -123,10 +123,10 @@ class WorkspaceBagger():
         """
         if ocrd_manifestation_depth not in ('full', 'partial'):
             raise Exception("manifestation_depth must be 'full' or 'partial'")
-        if in_place and dest is not None:
+        if in_place and (dest is not None):
             raise Exception("Setting 'dest' and 'in_place' is a contradiction")
         if in_place and not skip_zip:
-            raise Exception("Unsetting 'skip_zip' and 'in_place' is a contradiction")
+            raise Exception("Setting 'skip_zip' and not 'in_place' is a contradiction")
 
         if tag_files is None:
             tag_files = []
