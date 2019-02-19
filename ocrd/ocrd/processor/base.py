@@ -12,7 +12,7 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
             raise Exception("Need to pass a resolver to create a workspace")
         if mets_url is None:
             raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.workspace_from_url(mets_url, directory=working_dir)
+        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir)
     return workspace
 
 def run_processor(
@@ -71,6 +71,7 @@ def run_processor(
         otherrole=otherrole
     )
     workspace.save_mets()
+    return processor
 
 def run_cli(
         executable,
