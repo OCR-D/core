@@ -1,7 +1,5 @@
 from tests.base import TestCase, main, assets
 
-from ocrd_models import OcrdFile
-
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
     PcGtsType,
@@ -11,7 +9,8 @@ from ocrd_models.ocrd_page import (
     WordType,
     GlyphType,
 
-    parseString
+    parseString,
+    to_xml
 )
 #  from ocrd.model_factory import page_from_file
 
@@ -23,6 +22,9 @@ class TestOcrdPage(TestCase):
         with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), 'rb') as f:
             self.xml_as_str = f.read()
             self.pcgts = parseString(self.xml_as_str, silence=True)
+
+    def test_to_xml(self):
+        self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
 
     def test_pcGtsId(self):
         self.assertEqual(self.pcgts.pcGtsId, 'glyph-test')

@@ -22,6 +22,14 @@ class TestResolver(TestCase):
         self.resolver = Resolver()
         self.workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
 
+    def test_no_resolver(self):
+        with self.assertRaisesRegex(Exception, 'pass a resolver to create a workspace'):
+            run_processor(DummyProcessor)
+
+    def test_no_mets_url(self):
+        with self.assertRaisesRegex(Exception, 'pass mets_url to create a workspace'):
+            run_processor(DummyProcessor, resolver=self.resolver)
+
     def test_verify(self):
         proc = DummyProcessor(self.workspace)
         self.assertEqual(proc.verify(), True)
