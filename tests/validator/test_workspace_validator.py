@@ -74,9 +74,51 @@ class TestWorkspaceValidator(TestCase):
             workspace.mets.add_file('OCR-D-GT-PAGE', ID='file1', mimetype='image/png')
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
-            print(report.errors)
             self.assertEqual(len(report.errors), 1)
             self.assertIn("does not manifest any physical page.", report.errors[0])
+
+    def test_validate_weird_urls(self):
+        with TemporaryDirectory() as tempdir:
+            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
+            workspace.mets.unique_identifier = 'foobar'
+            workspace.mets.add_file('OCR-D-GT-PAGE', ID='file1', mimetype='image/png', pageId='page1', url='file:/java-file-url')
+            f = workspace.mets.add_file('OCR-D-GT-PAGE', ID='file2', mimetype='image/png', pageId='page2', url='nothttp://unusual.scheme')
+            f._el.set('GROUPID', 'donotuse') # pylint: disable=protected-access
+            workspace.save_mets()
+            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
+            self.assertEqual(len(report.errors), 0)
+            self.assertEqual(len(report.warnings), 2)
+            self.assertIn("Java-specific", report.warnings[0])
+            self.assertIn("non-HTTP", report.warnings[1])
+            self.assertEqual(len(report.notices), 1)
+            self.assertIn("has GROUPID attribute", report.notices[0])
+
+    def test_validate_pixel_no_download(self):
+        imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020')
+        with TemporaryDirectory() as tempdir:
+            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
+            workspace.mets.unique_identifier = 'foobar'
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url='file://%s' % imgpath)
+            workspace.save_mets()
+            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[])
+            self.assertEqual(len(report.errors), 0)
+            self.assertEqual(len(report.warnings), 0)
+            self.assertEqual(len(report.notices), 1)
+            self.assertIn("Won't download remote image", report.notices[0])
+
+    def test_validate_pixel_density_too_low(self):
+        imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0017')
+        with TemporaryDirectory() as tempdir:
+            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
+            workspace.mets.unique_identifier = 'foobar'
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url='file://%s' % imgpath)
+            workspace.save_mets()
+            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=True)
+            self.assertEqual(len(report.errors), 2)
+            self.assertIn("xResolution", report.errors[0])
+            self.assertIn("yResolution", report.errors[1])
+            self.assertEqual(len(report.warnings), 0)
+            self.assertEqual(len(report.notices), 0)
 
     def test_bad_workspace(self):
         report = WorkspaceValidator.validate(self.resolver, 'non existe')
