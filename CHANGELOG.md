@@ -9,6 +9,8 @@ Changed:
 
   * :fire: Move factory methods from OcrdPage and OcrdExif to new module `ocrd.model_factory`
   * Factor out XML constants to `ocrd.constants.xml`
+  * :fire: BaseProcessor.add_output_file removed
+
 
 ## [0.15.2] - 2019-01-07
 

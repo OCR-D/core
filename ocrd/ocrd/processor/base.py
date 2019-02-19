@@ -1,7 +1,6 @@
 import os
 import json
 import subprocess
-from deprecated.sphinx import deprecated
 from ocrd_utils import getLogger
 from ocrd_validators import ParameterValidator
 
@@ -156,22 +155,3 @@ class Processor(object):
         List the input files
         """
         return self.workspace.mets.find_files(fileGrp=self.input_file_grp, pageId=self.page_id)
-
-    @deprecated(version='0.8.0', reason="Use self.workspace.add_file directly. See https://github.com/OCR-D/core/issues/166.")
-    def add_output_file(self, basename=None, file_grp=None, ID=None, **kwargs):
-        """
-        DEPRECATED
-
-        Add an output file.
-
-        Args:
-            basename (string) : basename of the file
-            file_grp (string) : fileGrp to add this file to. Default: self.output_file_grp
-            ID (string) : file@ID
-        """
-        if basename is None:
-            raise Exception("Must give 'basename' for add_output_file")
-        log.debug("Adding output file %s", basename)
-        if file_grp is None:
-            file_grp = self.output_file_grp
-        self.workspace.add_file(file_grp, basename=basename, ID=ID, **kwargs)
