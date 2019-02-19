@@ -32,7 +32,7 @@ class OcrdAgent():
             '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
             for k in ['type', 'othertype', 'role', 'otherrole', 'name']
         ])
-        return '<OcrdAgent [' + props + ']/> '
+        return '<OcrdAgent [' + props + ']/>'
 
     @property
     def type(self):

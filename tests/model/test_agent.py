@@ -9,11 +9,13 @@ class TestOcrdAgent(TestCase):
         ag = OcrdAgent(role='FOO')
         self.assertEqual(ag.role, 'FOO')
         self.assertEqual(ag.name, None)
+        self.assertEqual(str(ag), '<OcrdAgent [type=---, othertype=---, role=FOO, otherrole=---, name=---]/>')
 
     def test_basic2(self):
-        ag = OcrdAgent(otherrole='BAR')
+        ag = OcrdAgent(otherrole='BAR', othertype='x')
         self.assertEqual(ag.role, 'OTHER')
         self.assertEqual(ag.otherrole, 'BAR')
+        self.assertEqual(ag.othertype, 'x')
 
     def test_basic3(self):
         ag = OcrdAgent(name='foobar')
