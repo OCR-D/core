@@ -7,28 +7,32 @@ from tests.base import TestCase, main
 from ocrd_utils.logging import (
     getLevelName,
     setOverrideLogLevel,
-    initLogging
+    initLogging,
+    getLogger
 )
 
 class TestLogging(TestCase):
 
-    def setUp(self):
-        initLogging()
-
     def test_setOverrideLogLevel(self):
         rootLogger = logging.getLogger('')
-        somelogger = logging.getLogger('foo.bar')
+        somelogger = getLogger('foo.bar')
         somelogger.setLevel(getLevelName('ERROR'))
         self.assertEqual(rootLogger.getEffectiveLevel(), logging.INFO)
         self.assertEqual(somelogger.getEffectiveLevel(), logging.ERROR)
         setOverrideLogLevel('ERROR')
         self.assertEqual(rootLogger.getEffectiveLevel(), logging.ERROR)
         self.assertEqual(somelogger.getEffectiveLevel(), logging.ERROR)
-        notherlogger = logging.getLogger('bar.foo')
+        notherlogger = getLogger('bar.foo')
         self.assertEqual(notherlogger.getEffectiveLevel(), logging.ERROR)
         setOverrideLogLevel('INFO')
-        somelogger = logging.getLogger('foo.bar')
+        somelogger = getLogger('foo.bar')
         setOverrideLogLevel('INFO')
+
+
+class TestLogging2(TestCase):
+
+    def setUp(self):
+        initLogging()
 
     def test_getLevelName(self):
         self.assertEqual(getLevelName('ERROR'), logging.ERROR)
