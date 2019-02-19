@@ -1,9 +1,10 @@
-from tests.base import TestCase, assets, main
-
 import os
 from os.path import join, exists
 from shutil import copytree, rmtree
 from re import sub
+from tempfile import TemporaryDirectory
+
+from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
 
@@ -11,6 +12,7 @@ TMP_FOLDER = '/tmp/test-pyocrd-resolver'
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 TEST_ZIP = assets.path_to('test.ocrd.zip')
+oldpwd = os.getcwd()
 
 # pylint: disable=redundant-unittest-assert, broad-except, deprecated-method
 
@@ -23,6 +25,42 @@ class TestResolver(TestCase):
             rmtree(TMP_FOLDER)
             os.makedirs(TMP_FOLDER)
         copytree(FOLDER_KANT, self.folder)
+
+    def test_workspace_from_url_bad(self):
+        with self.assertRaisesRegex(Exception, "Must pass mets_url and/or src_dir"):
+            self.resolver.workspace_from_url(None)
+
+    def test_workspace_from_url_tempdir(self):
+        self.resolver.workspace_from_url(
+            mets_basename='foo.xml',
+            mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml')
+
+    def test_workspace_from_url_download(self):
+        with TemporaryDirectory() as dst_dir:
+            self.resolver.workspace_from_url(
+                mets_basename='foo.xml',
+                dst_dir=dst_dir,
+                download_local=True,
+                mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml')
+
+    def test_workspace_from_url_no_clobber(self):
+        with self.assertRaisesRegex(Exception, "already exists but clobber_mets is false"):
+            with TemporaryDirectory() as dst_dir:
+                with open(join(dst_dir, 'mets.xml'), 'w') as f:
+                    f.write('CONTENT')
+                self.resolver.workspace_from_url(
+                    dst_dir=dst_dir,
+                    mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml')
+
+    def test_workspace_from_url_404(self):
+        with self.assertRaisesRegex(Exception, "Not found"):
+            self.resolver.workspace_from_url(mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xmlX')
+
+    def test_workspace_from_url_rel_dir(self):
+        with TemporaryDirectory() as dst_dir:
+            os.chdir(FOLDER_KANT)
+            self.resolver.workspace_from_url(None, src_dir='data', dst_dir='../../../../../../../../../../../../../../../../'+dst_dir[1:])
+            os.chdir(oldpwd)
 
     def test_workspace_from_url(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
@@ -74,11 +112,11 @@ class TestResolver(TestCase):
             self.assertTrue('Not clobbering' in str(e))
 
     def test_download_to_directory_badargs_url(self):
-        with self.assertRaisesRegexp(Exception, "'url' must be a string"):
+        with self.assertRaisesRegex(Exception, "'url' must be a string"):
             self.resolver.download_to_directory(None, None)
 
     def test_download_to_directory_badargs_directory(self):
-        with self.assertRaisesRegexp(Exception, "'directory' must be a string"):
+        with self.assertRaisesRegex(Exception, "'directory' must be a string"):
             self.resolver.download_to_directory(None, 'foo')
 
     def test_download_to_directory_default(self):

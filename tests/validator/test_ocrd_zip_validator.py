@@ -1,5 +1,7 @@
 from os import unlink
 from os.path import join
+#  from shutil import move
+#  from tempfile import TemporaryDirectory
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
 
@@ -36,6 +38,7 @@ class TestOcrdZipValidator(TestCase):
         with self.assertRaisesRegex(Exception, "Payload-Oxum validation failed"):
             validator.validate(skip_unzip=True)
         unlink(extrapath)
+
 
 if __name__ == '__main__':
     main()
