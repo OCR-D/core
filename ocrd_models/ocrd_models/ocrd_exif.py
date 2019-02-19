@@ -16,7 +16,7 @@ class OcrdExif():
         #      print(img.info)
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
-        if img.format == 'TIFF' and 'dpi' in img.info:
+        if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
             self.xResolution = img.info['dpi'][0]
             self.yResolution = img.info['dpi'][1]
             self.resolutionUnit = 'cm' if img.tag[296] == 3 else 'inches'
@@ -24,9 +24,6 @@ class OcrdExif():
             self.xResolution = img.info['jfif_density'][0]
             self.yResolution = img.info['jfif_density'][1]
             self.resolutionUnit = img.info['jfif_unit']
-        elif img.format == 'PNG' and 'dpi' in img.info:
-            self.xResolution = img.info['dpi'][0]
-            self.yResolution = img.info['dpi'][1]
         elif img.format == 'PNG' and 'aspect' in img.info:
             self.xResolution = img.info['aspect'][0]
             self.yResolution = img.info['aspect'][1]
