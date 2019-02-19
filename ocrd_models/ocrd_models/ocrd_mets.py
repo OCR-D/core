@@ -198,10 +198,8 @@ class OcrdMets(OcrdXmlDocument):
                 el_pagediv.set('ORDER', order)
             if orderlabel:
                 el_pagediv.set('ORDERLABEL', orderlabel)
-        el_fptr = el_pagediv.find('mets:fptr[@FILEID="%s"]' % ocrd_file.ID, NS)
-        if not el_fptr:
-            el_fptr = ET.SubElement(el_pagediv, TAG_METS_FPTR)
-            el_fptr.set('FILEID', ocrd_file.ID)
+        el_fptr = ET.SubElement(el_pagediv, TAG_METS_FPTR)
+        el_fptr.set('FILEID', ocrd_file.ID)
 
     def get_physical_page_for_file(self, ocrd_file):
         """
