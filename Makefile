@@ -179,4 +179,4 @@ bashlib:
 # Build wheels and source dist and twine upload them
 pypi: uninstall install
 	for mod in $(BUILD_ORDER);do (cd $$mod; $(PYTHON) setup.py sdist bdist_wheel);done
-	version=`$(FIND_VERSION)`; echo twine upload ocrd*/dist/ocrd*$$version*{tar.gz,whl}
+	version=`$(FIND_VERSION)`; twine upload ocrd*/dist/ocrd*$$version*{tar.gz,whl}
