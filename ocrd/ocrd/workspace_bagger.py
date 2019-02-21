@@ -25,8 +25,9 @@ class WorkspaceBagger():
     Serialize/De-serialize from OCRD-ZIP to workspace and back.
     """
 
-    def __init__(self, resolver):
+    def __init__(self, resolver, strict=False):
         self.resolver = resolver
+        self.strict = strict
 
     def _serialize_bag(self, workspace, bagdir, dest, in_place, skip_zip):
         if in_place:
@@ -42,6 +43,13 @@ class WorkspaceBagger():
             # Remove temporary bagdir
             rmtree(bagdir)
 
+    def _log_or_raise(self, msg, oldpwd):
+        if self.strict:
+            chdir(oldpwd)
+            raise(Exception(msg))
+        else:
+            log.info(msg)
+
     def _bag_mets_files(self, workspace, bagdir, ocrd_manifestation_depth, ocrd_mets, processes):
         mets = workspace.mets
 
@@ -49,16 +57,17 @@ class WorkspaceBagger():
         oldpwd = getcwd()
         chdir(workspace.directory)
         for f in mets.find_files():
-            log.info("Resolving %s", f.url)
+            log.info("Resolving %s (%s)", f.url, ocrd_manifestation_depth)
             if is_local_filename(f.url):
                 f.url = abspath(f.url)
-            elif is_local_filename(join(workspace.directory, 'data', f.url)):
-                f.url = abspath(join(workspace.directory, 'data', f.url))
+            # XXX cannot happen because chdir above
+            #  elif is_local_filename(join(workspace.directory, 'data', f.url)):
+            #      f.url = abspath(join(workspace.directory, 'data', f.url))
             elif ocrd_manifestation_depth != 'full':
-                log.info("Not fetching non-local files, skipping %s", f.url)
+                self._log_or_raise("Not fetching non-local files, skipping %s" % f.url, oldpwd)
                 continue
             elif not f.url.startswith('http'):
-                log.error("Not an http URL: %s", f.url)
+                self._log_or_raise("Not an http URL: %s" % f.url, oldpwd)
                 continue
             log.info("Resolved %s", f.url)
 
@@ -180,7 +189,7 @@ class WorkspaceBagger():
             src (string): Path to OCRD-ZIP
             dest (string): Path to directory to unpack data folder to
         """
-        print(dest)
+        #  print(dest)
 
         if exists(dest) and not isdir(dest):
             raise Exception("Not a directory: %s" % dest)
@@ -192,9 +201,6 @@ class WorkspaceBagger():
             if exists(new_dest):
                 raise Exception("Directory exists: %s" % new_dest)
             dest = new_dest
-        if not isdir(dest):
-            makedirs(dest)
-        print(dest)
 
         log.info("Spilling %s to %s", src, dest)
 
