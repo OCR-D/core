@@ -82,6 +82,7 @@ class TestResolver(TestCase):
         self.assertEqual(img_pil1.size, (2875, 3749))
         img_pil2 = workspace.resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
         self.assertEqual(img_pil2.size, (1, 1))
+        img_pil2 = workspace.resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
 
     def test_resolve_image_grayscale(self):
         img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017')
@@ -168,6 +169,14 @@ class TestResolver(TestCase):
     def test_workspace_str(self):
         with TemporaryDirectory() as tempdir:
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws1.save_mets()
+            ws1.reload_mets()
+            self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
+
+    def test_workspace_backup(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws1.automatic_backup = True
             ws1.save_mets()
             ws1.reload_mets()
             self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)

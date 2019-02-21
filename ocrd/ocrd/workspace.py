@@ -1,6 +1,4 @@
 import os
-import sys
-import shutil
 
 import cv2
 from PIL import Image
@@ -117,12 +115,6 @@ class Workspace():
                 f.write(content)
 
         return ret
-
-    def move_file(self, fobj, dst):
-        """
-        Move a fobj within the workspace
-        """
-        shutil.move(fobj.local_filename, os.path.join(self.directory, dst))
 
     def save_mets(self):
         """
