@@ -129,14 +129,14 @@ class PageValidator():
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
-        if ocrd_page is None and ocrd_file is None and filename is None:
-            raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
-        elif ocrd_page:
+        if ocrd_page:
             validator = PageValidator(ocrd_page, strictness, strategy)
         elif ocrd_file:
             validator = PageValidator(page_from_file(ocrd_file), strictness, strategy)
         elif filename:
             validator = PageValidator(parse(filename, silence=True), strictness, strategy)
+        else:
+            raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
         return validator._validate() # pylint: disable=protected-access
 
     def __init__(self, page, strictness, strategy):
