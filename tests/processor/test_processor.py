@@ -3,9 +3,12 @@ from tempfile import TemporaryDirectory
 from os.path import join
 
 from ocrd.resolver import Resolver
-from ocrd.processor.base import Processor, run_processor
+from ocrd.processor.base import Processor, run_processor, run_cli
 
 DUMMY_TOOL = {'executable': 'ocrd-test', 'steps': ['recognition/post-correction']}
+
+class IncompleteProcessor(Processor):
+    pass
 
 class DummyProcessor(Processor):
 
@@ -23,6 +26,11 @@ class TestResolver(TestCase):
     def setUp(self):
         self.resolver = Resolver()
         self.workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+
+    def test_incomplete_processor(self):
+        proc = IncompleteProcessor(None)
+        with self.assertRaisesRegex(Exception, 'Must be implemented'):
+            proc.process()
 
     def test_no_resolver(self):
         with self.assertRaisesRegex(Exception, 'pass a resolver to create a workspace'):
@@ -78,6 +86,26 @@ class TestResolver(TestCase):
         run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace)
         self.assertEqual(len(self.workspace.mets.agents), no_agents_before + 1, 'one more agent')
         #  print(self.workspace.mets.agents[no_agents_before])
+
+    def test_run_cli(self):
+        with TemporaryDirectory() as tempdir:
+            run_cli(
+                'echo',
+                mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'),
+                resolver=Resolver(),
+                workspace=None,
+                page_id='page1',
+                log_level='DEBUG',
+                input_file_grp='INPUT',
+                output_file_grp='OUTPUT',
+                parameter='/path/to/param.json',
+                working_dir=tempdir
+            )
+            run_cli(
+                'echo',
+                mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'),
+                resolver=Resolver(),
+            )
 
 if __name__ == "__main__":
     main()

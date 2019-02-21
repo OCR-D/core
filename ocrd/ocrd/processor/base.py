@@ -90,8 +90,7 @@ def run_cli(
     """
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
     args = [executable, '--working-dir', workspace.directory]
-    if mets_url:
-        args += ['--mets', mets_url]
+    args += ['--mets', mets_url]
     if log_level:
         args += ['--log-level', log_level]
     if page_id:
