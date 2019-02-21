@@ -7,11 +7,16 @@ class TestValidationReport(TestCase):
         report = ValidationReport()
         self.assertEqual(str(report), 'OK')
         report.add_warning('This is not good')
+        self.assertEqual(str(report), 'INVALID[ 1 warnings ]')
         report.add_error('This is bad')
+        self.assertEqual(str(report), 'INVALID[ 1 warnings 1 errors ]')
+        report.add_notice('This is noticeable')
+        self.assertEqual(str(report), 'INVALID[ 1 warnings 1 errors 1 notices ]')
         self.assertEqual(report.to_xml(), '''\
 <report valid="false">
   <warning>This is not good</warning>
   <error>This is bad</error>
+  <notice>This is noticeable</notice>
 </report>''')
 
     def test_merge(self):

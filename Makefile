@@ -125,7 +125,7 @@ test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
-coverage:
+coverage: assets-clean assets
 	coverage erase
 	make test PYTHON="coverage run"
 	coverage report

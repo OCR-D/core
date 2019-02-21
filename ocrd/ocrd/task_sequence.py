@@ -7,6 +7,7 @@ from ocrd.processor.base import run_cli
 from ocrd.resolver import Resolver
 
 class ProcessorTask():
+
     @classmethod
     def parse(cls, argstr):
         tokens = shlex_split(argstr)
@@ -29,10 +30,6 @@ class ProcessorTask():
             else:
                 raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
 
-        if not which(executable):
-            raise Exception("Executable not found in PATH: %s" % executable)
-        if parameter_path and not os.access(parameter_path, os.R_OK):
-            raise Exception("Parameter file not readable: %s" % parameter_path)
         if not input_file_grps:
             raise Exception("Task must have input file group")
         if not output_file_grps:
@@ -44,6 +41,12 @@ class ProcessorTask():
         self.input_file_grps = input_file_grps
         self.output_file_grps = output_file_grps
         self.parameter_path = parameter_path
+
+    def validate(self):
+        if self.parameter_path and not os.access(self.parameter_path, os.R_OK):
+            raise Exception("Parameter file not readable: %s" % self.parameter_path)
+        if not which(self.executable):
+            raise Exception("Executable not found in PATH: %s" % self.executable)
 
     def __str__(self):
         ret = '%s -I %s -O %s' % (
@@ -61,6 +64,8 @@ def run_tasks(mets, log_level, page_id, task_strs):
     tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
     for task in tasks:
+
+        task.validate()
 
         # check input file groups are in mets
         for input_file_grp in task.input_file_grps:
