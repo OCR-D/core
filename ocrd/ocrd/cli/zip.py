@@ -89,7 +89,6 @@ def spill(directory, src):
 @click.option('-Z', '--skip-unzip', help="Treat SRC as a directory not a ZIP", is_flag=True, default=False)
 @click.option('-B', '--skip-bag', help="Whether to skip all checks of manifests and files", is_flag=True, default=False)
 @click.option('-C', '--skip-checksums', help="Whether to omit checksum checks but still check basic BagIt conformance", is_flag=True, default=False)
-@click.option('-W', '--skip-workspace', help="Whether to skip the workspace check of files in /data", is_flag=True, default=False)
 @click.option('-D', '--skip-delete', help="Whether to skip deleting the unpacked OCRD-ZIP dir after valdiation", is_flag=True, default=False)
 @click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
 def validate(src, **kwargs):

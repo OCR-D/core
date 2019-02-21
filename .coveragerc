@@ -19,4 +19,6 @@ omit =
     ocrd_models/ocrd_models/ocrd_page_generateds.py
     */setup.py
     ocrd/ocrd/cli/*
+    ocrd/ocrd/decorators.py
+    ocrd/ocrd/task_sequence.py
     tests/*
