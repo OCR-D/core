@@ -59,7 +59,6 @@ class TestWorkspaceBagger(TestCase):
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), join(self.tempdir, 'out'))
 
     def test_bag_zip_and_spill_wo_dest(self):
-        spill_dest = join(self.tempdir, 'out')
         self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False, skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), self.tempdir)
 

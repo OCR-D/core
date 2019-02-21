@@ -1,9 +1,7 @@
 from datetime import datetime
-import time
 from os import makedirs
-from os.path import join, basename, getsize, isdir, abspath
+from os.path import join, basename, getsize, abspath
 from glob import glob
-import sys
 from shutil import copy
 import hashlib
 
@@ -54,23 +52,20 @@ class WorkspaceBackupManager():
         """
         log = getLogger('ocrd.workspace_backup.restore')
         bak = None
-        if isdir(chksum):
-            bak = abspath(chksum)
-        else:
-            candidates = glob(join(self.backup_directory, '%s*' % chksum))
-            if not candidates:
-                log.error("No backup found: %s" % chksum)
-                return
-            if len(candidates) > 1 and not choose_first:
-                log.error("Not unique, could be\n%s" % '\n'.join(candidates))
-                return
-            bak = candidates[0]
+        candidates = glob(join(self.backup_directory, '%s*' % chksum))
+        if not candidates:
+            log.error("No backup found: %s" % chksum)
+            return
+        if len(candidates) > 1 and not choose_first:
+            raise Exception("Not unique, could be\n%s" % '\n'.join(candidates))
+        bak = candidates[0]
         self.add()
         log.info("Restoring from %s/mets.xml" % bak)
         src = join(bak, 'mets.xml')
         dest = self.workspace.mets_target
         log.debug('cp "%s" "%s"', src, dest)
         copy(src, dest)
+        self.workspace.reload_mets()
 
     def add(self):
         """
@@ -83,16 +78,14 @@ class WorkspaceBackupManager():
         if backups and backups[0].chksum == chksum:
             log.info('No changes since last backup: %s' % backups[0])
         else:
-            if sys.version_info.major == 2:
-                timestamp = time.time()
-            else:
-                timestamp = datetime.now().timestamp()
+            timestamp = datetime.now().timestamp()
             d = join(self.backup_directory, '%s.%s' % (chksum, timestamp))
             mets_file = join(d, 'mets.xml')
             log.info("Backing up to %s" % mets_file)
             makedirs(d)
             with open(mets_file, 'wb') as f:
                 f.write(mets_str)
+        return chksum
 
     def list(self):
         """
