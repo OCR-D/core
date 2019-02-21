@@ -3,6 +3,11 @@ from ocrd_validators import ValidationReport
 
 class TestValidationReport(TestCase):
 
+    def test_str(self):
+        report = ValidationReport()
+        report.add_error('This is bad')
+        self.assertEqual(str(report), 'INVALID[ 1 errors ]')
+
     def test_toxml(self):
         report = ValidationReport()
         self.assertEqual(str(report), 'OK')

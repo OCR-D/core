@@ -165,5 +165,12 @@ class TestResolver(TestCase):
             ws1.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar')
             self.assertTrue(exists(fpath))
 
+    def test_workspace_str(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws1.save_mets()
+            ws1.reload_mets()
+            self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
+
 if __name__ == '__main__':
     main()

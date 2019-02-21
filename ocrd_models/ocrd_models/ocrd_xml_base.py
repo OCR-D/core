@@ -20,9 +20,7 @@ class OcrdXmlDocument():
             self._tree.parse(filename.replace('file://', ''))
 
     def to_xml(self, xmllint=False):
-        root = self._tree
-        if hasattr(root, 'getroot'):
-            root = root.getroot()
+        root = self._tree.getroot()
         ret = ET.tostring(ET.ElementTree(root), pretty_print=True)
         if xmllint:
             ret = xmllint_format(ret)
