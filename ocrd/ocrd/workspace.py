@@ -89,35 +89,30 @@ class Workspace():
         for input_file in self.mets.find_files(fileGrp=file_grp):
             self.download_file(input_file, subdir=file_grp)
 
-    def add_file(self, file_grp, basename=None, content=None, local_filename=None, **kwargs):
+    def add_file(self, file_grp, content=None, **kwargs):
         """
         Add an output file. Creates an :class:`OcrdFile` to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
         log.debug(
-            'outputfile file_grp=%s basename=%s local_filename=%s content=%s',
+            'outputfile file_grp=%s local_filename=%s content=%s',
             file_grp,
-            basename,
-            local_filename,
+            kwargs.get('local_filename'),
             content is not None)
 
-        if basename is not None:
-            if file_grp is not None:
-                basename = os.path.join(file_grp, basename)
-            local_filename = os.path.join(self.directory, basename)
+        if 'local_filename' in kwargs:
+            local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
+            if not os.path.isdir(local_filename_dir):
+                os.makedirs(local_filename_dir)
+            if 'url' not in kwargs:
+                kwargs['url'] = 'file://' + kwargs['local_filename']
 
-        local_filename_dir = local_filename.rsplit('/', 1)[0]
-        if not os.path.isdir(local_filename_dir):
-            os.makedirs(local_filename_dir)
-
-        if 'url' not in kwargs:
-            kwargs['url'] = 'file://' + local_filename
-
-        ret = self.mets.add_file(file_grp, local_filename=local_filename, **kwargs)
+        print(kwargs)
+        ret = self.mets.add_file(file_grp, **kwargs)
 
         if content is not None:
-            with open(local_filename, 'wb') as f:
-                if sys.version_info >= (3, 0) and isinstance(content, str):
+            with open(kwargs['local_filename'], 'wb') as f:
+                if isinstance(content, str):
                     content = bytes(content, 'utf-8')
                 f.write(content)
 

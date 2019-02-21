@@ -134,7 +134,36 @@ class TestResolver(TestCase):
         fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(self.folder, 'data/mets.xml'), subdir='baz')
         self.assertEqual(fn, join(tmp_dir, 'baz', 'mets.xml'))
 
+    def test_workspace_add_file(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            fpath = join(tempdir, 'ID1.tif')
+            ws1.add_file(
+                'GRP',
+                ID='ID1',
+                mimetype='image/tiff',
+                content='CONTENT',
+                local_filename=fpath
+            )
+            f = ws1.mets.find_files()[0]
+            self.assertEqual(f.ID, 'ID1')
+            self.assertEqual(f.mimetype, 'image/tiff')
+            self.assertEqual(f.url, 'file://%s' % fpath)
+            self.assertEqual(f.local_filename, fpath)
+            self.assertTrue(exists(fpath))
 
+    def test_workspace_add_file_basename_no_content(self):
+        ws1 = self.resolver.workspace_from_nothing(None)
+        ws1.add_file('GRP', ID='ID1', mimetype='image/tiff')
+        f = ws1.mets.find_files()[0]
+        self.assertEqual(f.url, '')
+
+    def test_workspace_add_file_binary_content(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            fpath = join(tempdir, 'subdir', 'ID1.tif')
+            ws1.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar')
+            self.assertTrue(exists(fpath))
 
 if __name__ == '__main__':
     main()

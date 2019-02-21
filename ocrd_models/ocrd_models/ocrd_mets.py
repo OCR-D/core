@@ -158,6 +158,9 @@ class OcrdMets(OcrdXmlDocument):
         mets_file.ID = ID
         mets_file.pageId = pageId
         mets_file.local_filename = local_filename
+
+        self._file_by_id[ID] = mets_file
+
         return mets_file
 
     @property
