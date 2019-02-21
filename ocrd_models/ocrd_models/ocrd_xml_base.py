@@ -1,3 +1,4 @@
+from os.path import exists
 from lxml import etree as ET
 
 from .constants import NAMESPACES
@@ -17,7 +18,10 @@ class OcrdXmlDocument():
             self._tree = ET.ElementTree(ET.XML(content, parser=ET.XMLParser(encoding='utf-8')))
         else:
             self._tree = ET.ElementTree()
-            self._tree.parse(filename.replace('file://', ''))
+            filename = filename.replace('file://', '')
+            if not exists(filename):
+                raise Exception('File does not exist: %s' % filename)
+            self._tree.parse(filename)
 
     def to_xml(self, xmllint=False):
         root = self._tree.getroot()
