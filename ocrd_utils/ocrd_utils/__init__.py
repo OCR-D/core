@@ -114,6 +114,7 @@ def polygon_from_points(points):
 
 def safe_filename(url):
     ret = re.sub('[^A-Za-z0-9]+', '.', url)
+    print('safe filename: %s -> %s' % (url, ret))
     return ret
 
 def unzip_file_to_dir(path_to_zip, output_directory):

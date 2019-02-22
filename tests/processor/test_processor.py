@@ -7,9 +7,6 @@ from ocrd.processor.base import Processor, run_processor, run_cli
 
 DUMMY_TOOL = {'executable': 'ocrd-test', 'steps': ['recognition/post-correction']}
 
-class IncompleteProcessor(Processor):
-    pass
-
 class DummyProcessor(Processor):
 
     def __init__(self, *args, **kwargs):
@@ -20,6 +17,9 @@ class DummyProcessor(Processor):
     def process(self):
         #  print('# nope')
         pass
+
+class IncompleteProcessor(Processor):
+    pass
 
 class TestResolver(TestCase):
 
