@@ -152,8 +152,8 @@ docs-clean:
 
 # Calculate docstring coverage
 docs-coverage:
-	for mod in $(BUILD_ORDER);do docstr-coverage $$mod/$$mod -e '.*ocrd_page_generateds.*';done
-	for mod in $(BUILD_ORDER);do echo "# $$mod"; docstr-coverage -v1 $$mod/$$mod -e '.*ocrd_page_generateds.*'|sed 's/^/\t/';done
+	for mod in $(BUILD_ORDER);do docstr-coverage $$mod/$$mod -e '.*(ocrd_page_generateds|/ocrd/cli/).*';done
+	for mod in $(BUILD_ORDER);do echo "# $$mod"; docstr-coverage -v1 $$mod/$$mod -e '.*(ocrd_page_generateds|/ocrd/cli/).*'|sed 's/^/\t/';done
 
 gh-pages:
 	git clone --branch gh-pages https://github.com/OCR-D/pyocrd gh-pages

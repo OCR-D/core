@@ -1,3 +1,6 @@
+"""
+API for validating `OcrdPage <../ocrd_models/ocrd_models.ocrd_page.html>`_.
+"""
 import re
 
 from ocrd_utils import getLogger
@@ -26,8 +29,20 @@ _HIERARCHY = [
 ]
 
 class ConsistencyError(Exception):
+    """
+    Exception representing a consistency error in transcription level of a PAGE-XML.
+    """
 
     def __init__(self, tag, ID, actual, expected):
+        """
+        Construct a new ConsistencyError.
+
+        Arguments:
+            tag (string): Level of the inconsistent element
+            ID (string): ``ID`` of the inconsistent element
+            actual (string):
+            expected (string):
+        """
         self.tag = tag
         self.ID = ID
         self.actual = actual
@@ -35,6 +50,9 @@ class ConsistencyError(Exception):
         super(ConsistencyError, self).__init__("INCONSISTENCY in %s ID '%s': text results '%s' != concatenated '%s'" % (tag, ID, actual, expected))
 
 def compare_without_whitespace(a, b):
+    """
+    Compare two strings, ignoring all whitespace.
+    """
     return re.sub('\\s+', '', a) == re.sub('\\s+', '', b)
 
 def handle_inconsistencies(node, strictness, strategy, report):
@@ -113,6 +131,9 @@ def set_text(node, text, strategy):
         textEquivs[0].set_Unicode(text)
 
 class PageValidator():
+    """
+    Validator for `OcrdPage <../ocrd_models/ocrd_models.ocrd_page.html>`.
+    """
 
     @staticmethod
     def validate(filename=None, ocrd_page=None, ocrd_file=None, strictness='strict', strategy='index1'):
@@ -154,6 +175,9 @@ class PageValidator():
         self.strategy = strategy
 
     def _validate(self):
+        """
+        Do the actual validation
+        """
         if self.strictness == 'off':
             return self.report
         handle_inconsistencies(self.page, self.strictness, self.strategy, self.report)

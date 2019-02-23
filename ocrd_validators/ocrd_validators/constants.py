@@ -1,3 +1,6 @@
+"""
+Constants for ocrd_validators.
+"""
 import yaml
 from pkg_resources import resource_string
 

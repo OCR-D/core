@@ -1,3 +1,6 @@
+"""
+Constants for ocrd_utils.
+"""
 from pkg_resources import get_distribution
 
 __all__ = [

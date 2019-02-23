@@ -65,6 +65,9 @@ def setOverrideLogLevel(lvl):
         logger.setLevel(logging.NOTSET)
 
 def getLogger(*args, **kwargs):
+    """
+    Wrapper around ``logging.getLogger`` that respects `overrideLogLevel <#setOverrideLogLevel>`_.
+    """
     logger = logging.getLogger(*args, **kwargs)
     if _overrideLogLevel is not None:
         logger.setLevel(logging.NOTSET)

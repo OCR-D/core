@@ -1,3 +1,6 @@
+"""
+Validators for various OCR-D related data structures.
+"""
 __all__ = [
     'ParameterValidator',
     'WorkspaceValidator',

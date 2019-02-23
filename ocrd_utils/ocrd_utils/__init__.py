@@ -1,4 +1,6 @@
 """
+Utility methods usable in various circumstances.
+
 * xywh_from_points, points_from_xywh, polygon_from_points
 
 The functions have the syntax X_from_Y, where X/Y can be
@@ -74,7 +76,9 @@ def is_local_filename(url):
     return False
 
 def is_string(val):
-    # pylint: disable=undefined-variable
+    """
+    Return whether a value is a ``str``.
+    """
     return isinstance(val, str)
 
 def points_from_xywh(box):
@@ -116,8 +120,11 @@ def polygon_from_points(points):
     return polygon
 
 def safe_filename(url):
+    """
+    Sanitize input to be safely used as the basename of a local file.
+    """
     ret = re.sub('[^A-Za-z0-9]+', '.', url)
-    print('safe filename: %s -> %s' % (url, ret))
+    #  print('safe filename: %s -> %s' % (url, ret))
     return ret
 
 def unzip_file_to_dir(path_to_zip, output_directory):

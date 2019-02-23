@@ -1,3 +1,6 @@
+"""
+Validating a workspace.
+"""
 import re
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE
@@ -17,6 +20,17 @@ class WorkspaceValidator():
     """
 
     def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False, page_strictness='strict'):
+        """
+        Construct a new WorkspaceValidator.
+
+        Args:
+            resolver (Resolver):
+            mets_url (string):
+            src_dir (string):
+            skip (list):
+            download (boolean):
+            page_strictness ("strict"|"lax"|"fix"|"off"):
+        """
         self.report = ValidationReport()
         self.skip = skip if skip else []
         log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
@@ -50,6 +64,9 @@ class WorkspaceValidator():
         return validator._validate() # pylint: disable=protected-access
 
     def _validate(self):
+        """
+        Actual validation.
+        """
         try:
             self._resolve_workspace()
             if 'mets_unique_identifier' not in self.skip:
@@ -68,15 +85,28 @@ class WorkspaceValidator():
         return self.report
 
     def _resolve_workspace(self):
+        """
+        Clone workspace from mets_url unless workspace was provided.
+        """
         if self.workspace is None:
             self.workspace = self.resolver.workspace_from_url(self.mets_url, src_dir=self.src_dir, download=self.download)
             self.mets = self.workspace.mets
 
     def _validate_mets_unique_identifier(self):
+        """
+        Validate METS unique identifier exists.
+
+        See `spec <https://ocr-d.github.io/mets#unique-id-for-the-document-processed>`_.
+        """
         if self.mets.unique_identifier is None:
             self.report.add_error("METS has no unique identifier")
 
     def _validate_pixel_density(self):
+        """
+        Validate image pixel density
+
+        See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
+        """
         for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
             if not f.local_filename and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
@@ -88,6 +118,11 @@ class WorkspaceValidator():
                     self.report.add_error("Image %s: %s (%s pixels per %s) is too low" % (f.ID, k, v, exif.resolutionUnit))
 
     def _validate_mets_file_group_names(self):
+        """
+        Ensure ``USE`` attributes of ``mets:fileGrp`` conform to OCR-D naming schema..
+
+        See `spec <https://ocr-d.github.io/mets#file-group-use-syntax>`_.
+        """
         for fileGrp in self.mets.file_groups:
             if not fileGrp.startswith(FILE_GROUP_PREFIX):
                 self.report.add_notice("fileGrp USE does not begin with '%s': %s" % (FILE_GROUP_PREFIX, fileGrp))
@@ -107,6 +142,9 @@ class WorkspaceValidator():
                     self.report.add_error("Invalid USE name '%s' in fileGrp '%s'" % (name, fileGrp))
 
     def _validate_mets_files(self):
+        """
+        Validate ``mets:file`` URLs are sane.
+        """
         if not self.mets.find_files():
             self.report.add_error("No files")
         for f in self.mets.find_files():
@@ -122,6 +160,9 @@ class WorkspaceValidator():
                     self.report.add_warning("File '%s' has non-HTTP, non-file URL '%s'" % (f.ID, f.url))
 
     def _validate_page(self):
+        """
+        Run PageValidator on the PAGE-XML documents referenced in the METS.
+        """
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
             page_report = PageValidator.validate(ocrd_file=ocrd_file, strictness=self.page_strictness)
             self.report.merge_report(page_report)

@@ -1,3 +1,8 @@
+"""
+Validating OCRD-ZIP.
+
+See `spec <https://ocr-d.github.io/ocrd_zip>`_.
+"""
 from tempfile import mkdtemp
 from shutil import rmtree
 
