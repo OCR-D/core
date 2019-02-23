@@ -1,3 +1,8 @@
+"""
+
+Factory methods to create models for data, files, URLs.
+
+"""
 from datetime import datetime
 
 from PIL import Image
@@ -14,11 +19,26 @@ __all__ = [
 
 
 def exif_from_filename(image_filename):
+    """
+    Create `OcrdExif </../../ocrd_models/ocrd_models.ocrd_exif.html>`_
+    by opening an image file with PIL and reading its metadata.
+
+    Arguments:
+        * image_filename (string):
+    """
     if image_filename is None:
         raise Exception("Must pass 'image_filename' to 'exif_from_filename'")
     return OcrdExif(Image.open(image_filename))
 
 def page_from_image(input_file):
+    """
+    Create `OcrdPage </../../ocrd_models/ocrd_models.ocrd_page.html>`_
+    from an `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_
+    representing an image (i.e. should have ``mimetype`` starting with ``image/``).
+
+    Arguments:
+        * input_file (OcrdFile):
+    """
     if input_file.local_filename is None:
         raise Exception("input_file must have 'local_filename' property")
     exif = exif_from_filename(input_file.local_filename)
@@ -40,6 +60,9 @@ def page_from_image(input_file):
 def page_from_file(input_file):
     """
     Create a new PAGE-XML from a METS file representing a PAGE-XML or an image.
+
+    Arguments:
+        * input_file (OcrdFile):
     """
     #  print("PARSING PARSING '%s'" % input_file)
     if input_file.mimetype.startswith('image'):

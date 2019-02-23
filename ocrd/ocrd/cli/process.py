@@ -1,3 +1,6 @@
+"""
+CLI for task_sequence
+"""
 import click
 
 from ocrd_utils import getLogger

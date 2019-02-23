@@ -1,3 +1,6 @@
+"""
+API to METS
+"""
 from datetime import datetime
 
 from ocrd_utils import VERSION
@@ -22,9 +25,15 @@ from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
 class OcrdMets(OcrdXmlDocument):
+    """
+    API to a single METS file
+    """
 
     @staticmethod
     def empty_mets():
+        """
+        Create an empty METS file from bundled template.
+        """
         tpl = METS_XML_EMPTY.decode('utf-8')
         tpl = tpl.replace('{{ VERSION }}', VERSION)
         tpl = tpl.replace('{{ NOW }}', '%s' % datetime.now())
@@ -44,10 +53,18 @@ class OcrdMets(OcrdXmlDocument):
         self.baseurl = baseurl
 
     def __str__(self):
+        """
+        String representation
+        """
         return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.find_files())
 
     @property
     def unique_identifier(self):
+        """
+        Get the unique identifier by looking through ``mods:identifier``
+
+        See `specs <https://ocr-d.github.io/mets#unique-id-for-the-document-processed>`_ for details.
+        """
         for t in IDENTIFIER_PRIORITY:
             found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
             if found is not None:
@@ -55,6 +72,11 @@ class OcrdMets(OcrdXmlDocument):
 
     @unique_identifier.setter
     def unique_identifier(self, purl):
+        """
+        Set the unique identifier by looking through ``mods:identifier``
+
+        See `specs <https://ocr-d.github.io/mets#unique-id-for-the-document-processed>`_ for details.
+        """
         id_el = None
         for t in IDENTIFIER_PRIORITY:
             id_el = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
@@ -68,11 +90,14 @@ class OcrdMets(OcrdXmlDocument):
 
     @property
     def agents(self):
+        """
+        List all `OcrdAgent </../../ocrd_models/ocrd_models.ocrd_agent.html>`_
+        """
         return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('mets:metsHdr/mets:agent', NS)]
 
     def add_agent(self, *args, **kwargs):
         """
-        Add an agent to the list of agents in the metsHdr.
+        Add an `OcrdAgent </../../ocrd_models/ocrd_models.ocrd_agent.html>`_ to the list of agents in the metsHdr.
         """
         el_metsHdr = self._tree.getroot().find('.//mets:metsHdr', NS)
         if el_metsHdr is None:
@@ -85,11 +110,14 @@ class OcrdMets(OcrdXmlDocument):
 
     @property
     def file_groups(self):
+        """
+        List the ``USE`` attributes of all ``mets:fileGrp``.
+        """
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, local_only=False):
         """
-        List files.
+        Search ``mets:file`` in this METS document.
 
         Args:
             ID (string) : ID of the file
@@ -133,6 +161,12 @@ class OcrdMets(OcrdXmlDocument):
         return ret
 
     def add_file_group(self, fileGrp):
+        """
+        Add a new ``mets:fileGrp``.
+
+        Arguments:
+            fileGrp (string): ``USE`` attribute of the new filegroup.
+        """
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)
@@ -143,6 +177,19 @@ class OcrdMets(OcrdXmlDocument):
         return el_fileGrp
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None):
+        """
+        Add a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
+
+        Arguments:
+            fileGrp (string): Add file to ``mets:fileGrp`` with this ``USE`` attribute
+            mimetype (string):
+            url (string):
+            ID (string):
+            pageId (string):
+            force (boolean): Whether to add the file even if a ``mets:file`` with the same ``ID`` already exists.
+            local_filename (string):
+            mimetype (string):
+        """
         if not ID:
             raise Exception("Must set ID of the mets:file")
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)

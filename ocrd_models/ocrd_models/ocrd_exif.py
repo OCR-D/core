@@ -1,3 +1,7 @@
+"""
+Technical image metadata
+"""
+
 class OcrdExif():
     """
     Represents technical image metadata
@@ -36,6 +40,9 @@ class OcrdExif():
             self.resolutionUnit = 'inches'
 
     def to_xml(self):
+        """
+        Serialize all properties as XML
+        """
         ret = '<exif>'
         for k in self.__dict__:
             ret += '<%s>%s</%s>' % (k, self.__dict__[k], k)

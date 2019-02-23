@@ -1,3 +1,6 @@
+"""
+Constants for ocrd.
+"""
 from pkg_resources import resource_filename
 
 TMP_PREFIX = 'pyocrd-'

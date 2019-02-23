@@ -1,3 +1,6 @@
+"""
+Constants for ocrd_models.
+"""
 from pkg_resources import resource_string
 
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']

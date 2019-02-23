@@ -7,6 +7,8 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
+SPHINX_APIDOC = 
+
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
 
 FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
@@ -138,14 +140,20 @@ coverage: assets-clean assets
 .PHONY: docs
 # Build documentation
 docs: gh-pages
-	sphinx-apidoc -f -o docs/api ocrd
+	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e -o docs/api/$$mod $$mod/$$mod 'ocrd_models/ocrd_models/ocrd_page_generateds.py';done
 	cd docs ; $(MAKE) html
 	cp -r docs/build/html/* gh-pages
-	cd gh-pages; git add . && git commit -m 'Updated docs $$(date)' && git push
+	# cd gh-pages; git add . && git commit -m 'Updated docs $$(date)' && git push
 
 # Clean docs
 docs-clean:
-	cd docs ; rm -rf _build api
+	cd gh-pages ; rm -rf *
+	cd docs ; rm -rf _build api/ocrd api/ocrd_*
+
+# Calculate docstring coverage
+docs-coverage:
+	for mod in $(BUILD_ORDER);do docstr-coverage $$mod/$$mod -e '.*ocrd_page_generateds.*';done
+	for mod in $(BUILD_ORDER);do echo "# $$mod"; docstr-coverage -v1 $$mod/$$mod -e '.*ocrd_page_generateds.*'|sed 's/^/\t/';done
 
 gh-pages:
 	git clone --branch gh-pages https://github.com/OCR-D/pyocrd gh-pages

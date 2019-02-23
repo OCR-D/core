@@ -1,3 +1,6 @@
+"""
+API to PAGE-XML, generated with generateDS from XML schema.
+"""
 from io import StringIO
 
 __all__ = [
@@ -51,6 +54,9 @@ from .ocrd_page_generateds import (
 from .constants import NAMESPACES
 
 def to_xml(el):
+    """
+    Serialize ``pc:PcGts`` document
+    """
     sio = StringIO()
     el.export(sio, 0, name_='PcGts', namespacedef_='xmlns:pc="%s"' % NAMESPACES['page'])
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + sio.getvalue()
