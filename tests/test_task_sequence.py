@@ -8,12 +8,14 @@ from ocrd.task_sequence import ProcessorTask
 class TestTaskSequence(TestCase):
 
     def test_parse_no_in(self):
+        task = ProcessorTask.parse('sample-processor1')
         with self.assertRaisesRegex(Exception, 'must have input file group'):
-            ProcessorTask.parse('sample-processor1')
+            task.validate()
 
     def test_parse_no_out(self):
+        task = ProcessorTask.parse('sample-processor1 -I IN')
         with self.assertRaisesRegex(Exception, 'must have output file group'):
-            ProcessorTask.parse('sample-processor1 -I IN')
+            task.validate()
 
     def test_parse_unknown(self):
         with self.assertRaisesRegex(Exception, 'Failed parsing task description'):

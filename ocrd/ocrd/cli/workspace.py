@@ -10,7 +10,7 @@ from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
 
-class WorkspaceCtx(object):
+class WorkspaceCtx():
 
     def __init__(self, directory, mets_basename, automatic_backup):
         self.directory = directory

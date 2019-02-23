@@ -75,7 +75,7 @@ def is_local_filename(url):
 
 def is_string(val):
     # pylint: disable=undefined-variable
-    return isinstance(val, (str, unicode)) if sys.version_info < (3, 0) else isinstance(val, str)
+    return isinstance(val, str)
 
 def points_from_xywh(box):
     """
@@ -94,7 +94,10 @@ def points_from_x0y0x1y1(xyxy):
     """
     Constructs a polygon representation from a rectangle described as a list [x0, y0, x1, y1]
     """
-    [x0, y0, x1, y1] = xyxy
+    x0 = xyxy[0]
+    y0 = xyxy[1]
+    x1 = xyxy[2]
+    y1 = xyxy[3]
     return "%s,%s %s,%s %s,%s %s,%s" % (
         x0, y0,
         x1, y0,

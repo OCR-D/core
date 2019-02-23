@@ -29,11 +29,6 @@ class ProcessorTask():
                 tokens = tokens[2:]
             else:
                 raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
-
-        if not input_file_grps:
-            raise Exception("Task must have input file group")
-        if not output_file_grps:
-            raise Exception("Task must have output file group")
         return ProcessorTask(executable, input_file_grps, output_file_grps, parameter_path)
 
     def __init__(self, executable, input_file_grps, output_file_grps, parameter_path=None):
@@ -45,6 +40,10 @@ class ProcessorTask():
     def validate(self):
         if self.parameter_path and not os.access(self.parameter_path, os.R_OK):
             raise Exception("Parameter file not readable: %s" % self.parameter_path)
+        if not self.input_file_grps:
+            raise Exception("Task must have input file group")
+        if not self.output_file_grps:
+            raise Exception("Task must have output file group")
         if not which(self.executable):
             raise Exception("Executable not found in PATH: %s" % self.executable)
 

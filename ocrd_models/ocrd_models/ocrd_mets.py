@@ -55,6 +55,7 @@ class OcrdMets(OcrdXmlDocument):
 
     @unique_identifier.setter
     def unique_identifier(self, purl):
+        id_el = None
         for t in IDENTIFIER_PRIORITY:
             id_el = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
             if id_el is not None:
