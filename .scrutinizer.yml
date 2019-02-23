@@ -6,18 +6,20 @@ build:
     analysis:
       dependencies:
         override:
-          - pip install -r requirements.txt
+          - make install
       tests:
         override:
           - py-scrutinizer-run
           -
             command: pylint-run
             use_website_config: false
-
-    tests: true
+    tests:
+      tests:
+        override:
+          - true
 filter:
   excluded_paths:
-    - '*/test/*'
-    - 'ocrd/model/ocrd_page_generateds.py'
+    - 'tests/*'
+    - 'ocrd_models/ocrd_models/ocrd_page_generateds.py'
   dependency_paths:
     - 'lib/*'

@@ -6,6 +6,7 @@ ignored-modules=cv2,tesserocr,ocrd.model
 ignore-patterns='.*generateds.*'
 disable =
     fixme,
+    logging-not-lazy,
     inconsistent-return-statements,
     invalid-name,
     line-too-long,
@@ -17,7 +18,10 @@ disable =
     too-many-branches,
     too-many-instance-attributes,
     ungrouped-imports,
-    useless-object-inheritance
+    useless-object-inheritance,
+    useless-import-alias,
+    no-else-return,
+    logging-not-lazy
 
 [FORMAT]
 no-space-check=empty-line

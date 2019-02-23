@@ -5,6 +5,11 @@ PYTHON = python
 PIP = pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
+TESTDIR = tests
+
+BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
+
+FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -12,7 +17,6 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps           Install python deps via pip"
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
@@ -22,7 +26,7 @@ help:
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
-	@echo "    assets-clean   Remove symlinks in test/assets"
+	@echo "    assets-clean   Remove symlinks in $(TESTDIR)/assets"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
@@ -39,15 +43,12 @@ help:
 # Docker tag.
 DOCKER_TAG = 'ocrd/pyocrd'
 
-# Install python deps via pip
-deps:
-	$(PIP) install -r requirements.txt
+# pip install command. Default: $(PIP_INSTALL)
+PIP_INSTALL = pip install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	sudo apt install -y \
-		python3 \
-		python3-pip
+	sudo apt install -y python3 python3-pip
 
 # Install test python deps via pip
 deps-test:
@@ -55,7 +56,11 @@ deps-test:
 
 # (Re)install the tool
 install: spec
-	$(PIP) install .
+	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+
+# Uninstall the tool
+uninstall:
+	for mod in $(BUILD_ORDER);do pip uninstall -y $$mod;done
 
 # Regenerate python code from PAGE XSD
 generate-page: repo/assets
@@ -63,7 +68,7 @@ generate-page: repo/assets
 		-f \
 		--no-namespace-defs \
 		--root-element='PcGts' \
-		-o ocrd/model/ocrd_page_generateds.py \
+		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
 		repo/assets/data/schema/2018.xsd
 
 #
@@ -87,8 +92,8 @@ repo/spec:
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
 spec: repo/spec
-	cp repo/spec/ocrd_tool.schema.yml ocrd/model/yaml/ocrd_tool.schema.yml
-	cp repo/spec/bagit-profile.yml ocrd/model/yaml/bagit-profile.yml
+	cp repo/spec/ocrd_tool.schema.yml ocrd_validators/ocrd_validators/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml ocrd_validators/ocrd_validators/bagit-profile.yml
 
 #
 # Assets
@@ -96,16 +101,16 @@ spec: repo/spec
 
 # Setup test assets
 assets: repo/assets
-	mkdir -p test/assets
-	cp -r -t test/assets repo/assets/data/*
+	mkdir -p $(TESTDIR)/assets
+	cp -r -t $(TESTDIR)/assets repo/assets/data/*
 
 # Start asset server at http://localhost:5001
 assets-server:
 	cd assets && make start
 
-# Remove symlinks in test/assets
+# Remove symlinks in $(TESTDIR)/assets
 assets-clean:
-	rm -rf test/assets
+	rm -rf $(TESTDIR)/assets
 
 #
 # Tests
@@ -114,16 +119,17 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	$(PYTHON) -m pytest --duration=10 --continue-on-collection-errors test
+	$(PYTHON) -m pytest --duration=10 --continue-on-collection-errors $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
-coverage:
+coverage: assets-clean assets
 	coverage erase
 	make test PYTHON="coverage run"
 	coverage report
+	coverage html
 
 #
 # Documentation
@@ -170,9 +176,7 @@ docker:
 bashlib:
 	cd bashlib; make lib
 
-# Build wheels in py2 and py3 venv and twine upload them
-pypi:
-	source $(HOME)/env/py3/bin/activate;python setup.py build bdist_wheel
-	source $(HOME)/env/py2/bin/activate;python setup.py build bdist_wheel
-	$(PYTHON) setup.py sdist
-	version=`grep version= setup.py|grep -Po "([0-9]+\.?)+"`; twine upload "dist/ocrd-$$version"*
+# Build wheels and source dist and twine upload them
+pypi: uninstall install
+	for mod in $(BUILD_ORDER);do (cd $$mod; $(PYTHON) setup.py sdist bdist_wheel);done
+	version=`$(FIND_VERSION)`; twine upload ocrd*/dist/ocrd*$$version*{tar.gz,whl}

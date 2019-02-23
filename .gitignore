@@ -114,13 +114,13 @@ ocrd.egg-info
 .pynative
 venv3
 gh-pages
-test/assets
+tests/assets
 OLD.*
 
-test/assets/SBB0000F29300010000
-test/assets/kant_aufklaerung_1784
-test/assets/00000001.jpg
-test/assets/test.ocrd.zip
+tests/assets/SBB0000F29300010000
+tests/assets/kant_aufklaerung_1784
+tests/assets/00000001.jpg
+tests/assets/test.ocrd.zip
 /foo
 sanders*
 ws1

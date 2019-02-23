@@ -1,6 +1,5 @@
 language: python
 python:
-  - 2.7
   - 3.4
   - 3.6
   - 3.7-dev
@@ -8,7 +7,7 @@ before_install:
   - sudo apt-get -qq update
   - make deps-ubuntu
 install:
-  - make deps deps-test assets install
+  - make deps-test assets install PIP_INSTALL="pip install -e"
 script:
   - make test PYTHON="coverage run"
   - coverage report -m
