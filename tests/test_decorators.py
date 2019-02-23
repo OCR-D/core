@@ -1,7 +1,11 @@
+from os.path import join
+from shutil import copyfile
+from tempfile import TemporaryDirectory
+
 import click
 from click.testing import CliRunner
 
-from tests.base import TestCase, main
+from tests.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
 
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_loglevel, ocrd_cli_wrap_processor
@@ -58,11 +62,31 @@ class TestDecorators(TestCase):
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.DEBUG)
         setOverrideLogLevel('INFO')
 
-    def test_processor(self):
+    def test_processor_dump_json(self):
         result = self.runner.invoke(cli_dummy_processor, ['--dump-json'])
         self.assertEqual(result.exit_code, 0)
+
+    def test_processor_version(self):
         result = self.runner.invoke(cli_dummy_processor, ['--version'])
         self.assertEqual(result.exit_code, 0)
+
+    def test_processor_no_mets(self):
+        result = self.runner.invoke(cli_dummy_processor)
+        self.assertIn('Error: Missing option "-m" / "--mets".', result.output)
+        self.assertEqual(result.exit_code, 1)
+
+    def test_processor_non_existing_mets(self):
+        result = self.runner.invoke(cli_dummy_processor, ['--mets', 'file:///does/not/exist.xml'])
+        self.assertIn('File does not exist: file:///does/not/exist.xml', result.output)
+        self.assertEqual(result.exit_code, 1)
+
+    def test_processor_run(self):
+        with TemporaryDirectory() as tempdir:
+            mets_path = join(tempdir, 'mets.xml')
+            copyfile(assets.path_to('SBB0000F29300010000/data/mets.xml'), mets_path)
+            result = self.runner.invoke(cli_dummy_processor, ['--mets', mets_path])
+            self.assertEqual(result.exit_code, 0)
+
 
 if __name__ == '__main__':
     main()

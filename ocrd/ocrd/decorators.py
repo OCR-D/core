@@ -23,12 +23,16 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
         p = processorClass(workspace=None)
         print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:
-        raise Exception('Error: Missing option "-m" / "--mets".')
+        msg = 'Error: Missing option "-m" / "--mets".'
+        print(msg)
+        raise Exception(msg)
     else:
         if mets.find('://') == -1:
             mets = 'file://' + os.path.abspath(mets)
         if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
-            raise Exception("File does not exist: %s" % mets)
+            msg = "File does not exist: %s" % mets
+            print(msg)
+            raise Exception(msg)
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
