@@ -164,5 +164,6 @@ class WorkspaceValidator():
         Run PageValidator on the PAGE-XML documents referenced in the METS.
         """
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
+            self.workspace.download_file(ocrd_file)
             page_report = PageValidator.validate(ocrd_file=ocrd_file, strictness=self.page_strictness)
             self.report.merge_report(page_report)
