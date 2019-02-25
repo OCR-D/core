@@ -1,4 +1,5 @@
 import os
+from glob import glob
 from os.path import join, exists
 from shutil import copytree, rmtree
 from re import sub
@@ -7,6 +8,10 @@ from tempfile import TemporaryDirectory
 from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
+from ocrd.workspace import Workspace
+from ocrd_utils.logging import setOverrideLogLevel
+setOverrideLogLevel('DEBUG')
+
 
 TMP_FOLDER = '/tmp/test-pyocrd-resolver'
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
@@ -14,7 +19,7 @@ FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 TEST_ZIP = assets.path_to('test.ocrd.zip')
 oldpwd = os.getcwd()
 
-# pylint: disable=redundant-unittest-assert, broad-except, deprecated-method
+# pylint: disable=redundant-unittest-assert, broad-except, deprecated-method, too-many-public-methods
 
 class TestResolver(TestCase):
 
@@ -27,7 +32,7 @@ class TestResolver(TestCase):
         copytree(FOLDER_KANT, self.folder)
 
     def test_workspace_from_url_bad(self):
-        with self.assertRaisesRegex(Exception, "Must pass mets_url and/or src_dir"):
+        with self.assertRaisesRegex(Exception, "Must pass mets_url and/or baseurl"):
             self.resolver.workspace_from_url(None)
 
     def test_workspace_from_url_tempdir(self):
@@ -40,7 +45,7 @@ class TestResolver(TestCase):
             self.resolver.workspace_from_url(
                 mets_basename='foo.xml',
                 dst_dir=dst_dir,
-                download_local=True,
+                download=True,
                 mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml')
 
     def test_workspace_from_url_no_clobber(self):
@@ -59,7 +64,7 @@ class TestResolver(TestCase):
     def test_workspace_from_url_rel_dir(self):
         with TemporaryDirectory() as dst_dir:
             os.chdir(FOLDER_KANT)
-            self.resolver.workspace_from_url(None, src_dir='data', dst_dir='../../../../../../../../../../../../../../../../'+dst_dir[1:])
+            self.resolver.workspace_from_url(None, baseurl='data', dst_dir='../../../../../../../../../../../../../../../../'+dst_dir[1:])
             os.chdir(oldpwd)
 
     def test_workspace_from_url(self):
@@ -78,6 +83,7 @@ class TestResolver(TestCase):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
         input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
         f = input_files[0]
+        print(f.url)
         img_pil1 = workspace.resolve_image_as_pil(f.url)
         self.assertEqual(img_pil1.size, (2875, 3749))
         img_pil2 = workspace.resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
@@ -149,15 +155,16 @@ class TestResolver(TestCase):
             f = ws1.mets.find_files()[0]
             self.assertEqual(f.ID, 'ID1')
             self.assertEqual(f.mimetype, 'image/tiff')
-            self.assertEqual(f.url, 'file://%s' % fpath)
+            self.assertEqual(f.url, fpath)
             self.assertEqual(f.local_filename, fpath)
             self.assertTrue(exists(fpath))
 
     def test_workspace_add_file_basename_no_content(self):
-        ws1 = self.resolver.workspace_from_nothing(None)
-        ws1.add_file('GRP', ID='ID1', mimetype='image/tiff')
-        f = ws1.mets.find_files()[0]
-        self.assertEqual(f.url, '')
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws1.add_file('GRP', ID='ID1', mimetype='image/tiff')
+            f = ws1.mets.find_files()[0]
+            self.assertEqual(f.url, '')
 
     def test_workspace_add_file_binary_content(self):
         with TemporaryDirectory() as tempdir:
@@ -165,6 +172,13 @@ class TestResolver(TestCase):
             fpath = join(tempdir, 'subdir', 'ID1.tif')
             ws1.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar')
             self.assertTrue(exists(fpath))
+
+    def test_workspacec_add_file_content_wo_local_filename(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            with self.assertRaisesRegex(Exception, "'content' was set but no 'local_filename'"):
+                ws1.add_file('GRP', ID='ID1', content=b'CONTENT')
+
 
     def test_workspace_str(self):
         with TemporaryDirectory() as tempdir:
@@ -180,6 +194,19 @@ class TestResolver(TestCase):
             ws1.save_mets()
             ws1.reload_mets()
             self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
+
+    def test_227_1(self):
+        with TemporaryDirectory() as wsdir:
+            with open(assets.path_to('SBB0000F29300010000/data/mets_one_file.xml'), 'r') as f_in:
+                with open(join(wsdir, 'mets.xml'), 'w') as f_out:
+                    f_out.write(f_in.read())
+            self.assertEqual(len(glob(join(wsdir, '**'), recursive=True)), 2)
+            ws1 = Workspace(self.resolver, wsdir)
+            for file in ws1.mets.find_files():
+                ws1.download_file(file)
+                print(file)
+            self.assertEqual(len(glob(join(wsdir, '**'), recursive=True)), 4)
+            self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE')))
 
 if __name__ == '__main__':
     main()

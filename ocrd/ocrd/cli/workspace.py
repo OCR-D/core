@@ -69,11 +69,10 @@ def validate_workspace(ctx, mets_url, download, skip, page_strictness):
 @workspace_cli.command('clone')
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
-@click.option('-l', '--download-local', is_flag=True, help="Copy all local files to workspace and change location in METS file after cloning")
 @click.argument('mets_url')
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
-def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, workspace_dir):
+def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     """
     Create a workspace from a METS_URL and return the directory
 
@@ -87,7 +86,6 @@ def workspace_clone(ctx, clobber_mets, download, download_local, mets_url, works
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
-        download_local=download_local,
     )
     workspace.save_mets()
     print(workspace.directory)
@@ -158,7 +156,6 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
 @click.option('-m', '--mimetype', help="Media type to look for")
 @click.option('-g', '--page-id', help="Page ID")
 @click.option('-i', '--file-id', help="ID")
-@click.option('-L', '--local-only', help="Find only file://-URL files", is_flag=True)
 # pylint: disable=bad-continuation
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
         default=['url'],
@@ -174,7 +171,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
         ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
 @pass_workspace
-def workspace_find(ctx, file_grp, local_only, mimetype, page_id, file_id, output_field, download):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download):
     """
     Find files.
     """
@@ -182,12 +179,11 @@ def workspace_find(ctx, file_grp, local_only, mimetype, page_id, file_id, output
     for f in workspace.mets.find_files(
             ID=file_id,
             fileGrp=file_grp,
-            local_only=local_only,
             mimetype=mimetype,
             pageId=page_id,
         ):
         if download:
-            workspace.download_file(f, subdir=f.fileGrp)
+            workspace.download_file(f)
             workspace.save_mets()
         ret = '\t'.join([getattr(f, field) or '' for field in output_field])
         print(ret)

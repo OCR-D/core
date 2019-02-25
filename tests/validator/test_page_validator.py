@@ -30,6 +30,8 @@ class TestPageValidator(TestCase):
         resolver = Resolver()
         workspace = resolver.workspace_from_url(assets.url_of('glyph-consistency/data/mets.xml'))
         ocrd_file = workspace.mets.find_files(ID="FAULTY_GLYPHS_FILE")[0]
+        if not ocrd_file.local_filename:
+            workspace.download_file(ocrd_file)
         report = PageValidator.validate(ocrd_file=ocrd_file)
         self.assertEqual(len(report.errors), 17, 'errors')
 

@@ -39,18 +39,16 @@ class OcrdMets(OcrdXmlDocument):
         tpl = tpl.replace('{{ NOW }}', '%s' % datetime.now())
         return OcrdMets(content=tpl.encode('utf-8'))
 
-    def __init__(self, file_by_id=None, baseurl='', **kwargs):
+    def __init__(self, file_by_id=None, **kwargs):
         """
 
         Arguments:
             file_by_id (dict): Cache mapping file ID to OcrdFile
-            baseurl (string, ''): Base URL to prepend to relative file URL
         """
         super(OcrdMets, self).__init__(**kwargs)
         if file_by_id is None:
             file_by_id = {}
         self._file_by_id = file_by_id
-        self.baseurl = baseurl
 
     def __str__(self):
         """
@@ -115,7 +113,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
-    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, local_only=False):
+    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
 
@@ -123,6 +121,7 @@ class OcrdMets(OcrdXmlDocument):
             ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
             pageId (string) : ID of physical page manifested by matching files
+            url (string) : @xlink:href of mets:Flocat of mets:file
             mimetype (string) : MIMETYPE of matching files
             local (boolean) : Whether to restrict results to local files, i.e. file://-URL
 
@@ -136,6 +135,8 @@ class OcrdMets(OcrdXmlDocument):
             file_clause += '[@ID="%s"]' % ID
         if mimetype is not None:
             file_clause += '[@MIMETYPE="%s"]' % mimetype
+        if url is not None:
+            file_clause += '[mets:FLocat[@xlink:href = "%s"]]' % url
         # TODO lxml says invalid predicate. I disagree
         #  if local_only:
         #      file_clause += "[mets:FLocat[starts-with(@xlink:href, 'file://')]]"
@@ -150,7 +151,7 @@ class OcrdMets(OcrdXmlDocument):
         for file_id in file_ids:
             el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % file_id, NS)
             if file_id not in self._file_by_id:
-                self._file_by_id[file_id] = OcrdFile(el, baseurl=self.baseurl, mets=self)
+                self._file_by_id[file_id] = OcrdFile(el, mets=self)
 
             # If only local resources should be returned and file is neither a
             # file:// URL nor a file path: skip the file
@@ -176,7 +177,7 @@ class OcrdMets(OcrdXmlDocument):
             el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
         """
         Add a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
 

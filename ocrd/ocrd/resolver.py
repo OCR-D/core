@@ -6,7 +6,7 @@ import tempfile
 import requests
 
 from ocrd.constants import TMP_PREFIX
-from ocrd_utils import getLogger, safe_filename
+from ocrd_utils import getLogger, safe_filename, is_local_filename
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
 
@@ -17,7 +17,7 @@ class Resolver():
     Handle Uploads, Downloads, Repository access and manage temporary directories
     """
 
-    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None, src_dir=''):
+    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None):
         """
         Download a file to the workspace.
 
@@ -32,7 +32,6 @@ class Resolver():
             url (string): URL to download from
             overwrite (boolean): Whether to overwrite existing files with that name
             subdir (string, None): Subdirectory to create within the directory. Think fileGrp.
-            src_dir (string, ''): Directory for resolving relative file names
 
         Returns:
             Local filename
@@ -66,15 +65,11 @@ class Resolver():
         if not isdir(outfiledir):
             makedirs(outfiledir)
 
-        log.debug("Downloading <%s> to '%s' (src_dir=%s)", url, outfilename, src_dir)
+        log.debug("Downloading <%s> to '%s'", url, outfilename)
 
         # de-scheme file:// URL
         if url.startswith('file://'):
             url = url[len('file://'):]
-
-        # Relativize against src_dir
-        if isfile(join(src_dir, url)):
-            url = join(src_dir, url)
 
         # Copy files or download remote assets
         if '://' not in url:
@@ -88,7 +83,7 @@ class Resolver():
 
         return outfilename
 
-    def workspace_from_url(self, mets_url, src_dir=None, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, download_local=False):
+    def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, baseurl=None):
         """
         Create a workspace from a METS by URL.
 
@@ -96,26 +91,25 @@ class Resolver():
 
         Arguments:
             mets_url (string): Source mets URL
-            src_dir (string, None): Source directory containing the mets.xml
             dst_dir (string, None): Target directory for the workspace
             clobber_mets (boolean, False): Whether to overwrite existing mets.xml. By default existing mets.xml will raise an exception.
             download (boolean, False): Whether to download all the files
-            download_local (boolean, False): Whether to download the file://-URL to the new location
+            baseurl (string, None): Base URL for resolving relative file locations
 
         Returns:
             Workspace
         """
-        if src_dir and not src_dir.startswith('/'):
-            src_dir = abspath(src_dir)
         if dst_dir and not dst_dir.startswith('/'):
             dst_dir = abspath(dst_dir)
-        log.debug("workspace_from_url\nmets_url='%s'\nsrc_dir='%s'\ndst_dir='%s'", mets_url, src_dir, dst_dir)
 
         if mets_url is None:
-            if src_dir is None:
-                raise Exception("Must pass mets_url and/or src_dir to workspace_from_url")
+            if baseurl is None:
+                raise Exception("Must pass mets_url and/or baseurl to workspace_from_url")
             else:
-                mets_url = 'file://%s/%s' % (src_dir, mets_basename if mets_basename else 'mets.xml')
+                mets_url = 'file://%s/%s' % (baseurl, mets_basename if mets_basename else 'mets.xml')
+        if baseurl is None:
+            baseurl = mets_url.rsplit('/', 1)[0]
+        log.debug("workspace_from_url\nmets_url='%s'\nbaseurl='%s'\ndst_dir='%s'", mets_url, baseurl, dst_dir)
 
         # resolve to absolute
         if '://' not in mets_url:
@@ -130,9 +124,6 @@ class Resolver():
             else:
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
                 log.debug("Creating workspace '%s' for METS @ <%s>", dst_dir, mets_url)
-
-        if src_dir is None:
-            src_dir = dirname(mets_url[len('file://'):])
 
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
@@ -151,15 +142,11 @@ class Resolver():
             else:
                 self.download_to_directory(dst_dir, mets_url, basename=mets_basename)
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, src_dir=src_dir)
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=baseurl)
 
-        if download_local or download:
-            for file_grp in workspace.mets.file_groups:
-                if download_local:
-                    for f in workspace.mets.find_files(fileGrp=file_grp, local_only=True):
-                        workspace.download_file(f, subdir=file_grp)
-                else:
-                    workspace.download_files_in_group(file_grp)
+        if download:
+            for f in workspace.mets.find_files():
+                workspace.download_file(f)
 
         return workspace
 

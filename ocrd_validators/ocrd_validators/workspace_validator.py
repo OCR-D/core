@@ -89,7 +89,7 @@ class WorkspaceValidator():
         Clone workspace from mets_url unless workspace was provided.
         """
         if self.workspace is None:
-            self.workspace = self.resolver.workspace_from_url(self.mets_url, src_dir=self.src_dir, download=self.download)
+            self.workspace = self.resolver.workspace_from_url(self.mets_url, baseurl=self.src_dir, download=self.download)
             self.mets = self.workspace.mets
 
     def _validate_mets_unique_identifier(self):

@@ -1,4 +1,5 @@
 import os
+from os.path import join
 
 import cv2
 from PIL import Image
@@ -22,18 +23,18 @@ class Workspace():
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
-        src_dir (string) : Directory containing the source mets.xml, to resolve relative file URL.
+        baseurl (string) : Base URL to prefix to relative URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, src_dir=''):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = os.path.join(directory, mets_basename)
         if mets is None:
-            mets = OcrdMets(filename=self.mets_target, baseurl=directory)
+            mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
         self.automatic_backup = automatic_backup
-        self.src_dir = src_dir
+        self.baseurl = baseurl
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
         self.image_cache = {
             'pil': {},
@@ -65,27 +66,23 @@ class Workspace():
         Returns:
             The local filename of the downloaded file
         """
-        os.chdir(self.directory)
-        return self.resolver.download_to_directory(self.directory, url, src_dir=self.src_dir, **kwargs)
+        if self.baseurl and '://' not in url:
+            url = join(self.baseurl, url)
+        return self.resolver.download_to_directory(self.directory, url, **kwargs)
 
-    def download_file(self, f, **kwargs):
+    def download_file(self, f):
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
-        os.chdir(self.directory)
+        #  os.chdir(self.directory)
+        #  log.info('f=%s' % f)
+        #  if not f.local_filename and is_local_filename(f.url):
+        #      f.local_filename = abspath(f.url)
         if f.local_filename:
             log.debug("Already downloaded: %s", f.local_filename)
         else:
-            f.local_filename = self.download_url(f.url, **kwargs)
-        f.url = 'file://' + f.local_filename
+            f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
         return f
-
-    def download_files_in_group(self, file_grp):
-        """
-        Download all  the :py:mod:`ocrd.model.ocrd_file.OcrdFile` in the file group given.
-        """
-        for input_file in self.mets.find_files(fileGrp=file_grp):
-            self.download_file(input_file, subdir=file_grp)
 
     def add_file(self, file_grp, content=None, **kwargs):
         """
@@ -97,15 +94,17 @@ class Workspace():
             file_grp,
             kwargs.get('local_filename'),
             content is not None)
+        if content is not None and 'local_filename' not in kwargs:
+            raise Exception("'content' was set but no 'local_filename'")
 
         if 'local_filename' in kwargs:
             local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
             if not os.path.isdir(local_filename_dir):
                 os.makedirs(local_filename_dir)
             if 'url' not in kwargs:
-                kwargs['url'] = 'file://' + kwargs['local_filename']
+                kwargs['url'] = kwargs['local_filename']
 
-        print(kwargs)
+        #  print(kwargs)
         ret = self.mets.add_file(file_grp, **kwargs)
 
         if content is not None:
@@ -136,7 +135,11 @@ class Workspace():
         Return
             :class:`OcrdExif`
         """
-        image_filename = self.download_url(image_url)
+        files = self.mets.find_files(url=image_url)
+        if files:
+            image_filename = self.download_file(files[0]).local_filename
+        else:
+            image_filename = self.download_url(image_url)
 
         if image_url not in self.image_cache['exif']:
             self.image_cache['exif'][image_url] = OcrdExif(Image.open(image_filename))
@@ -152,7 +155,11 @@ class Workspace():
         Returns:
             Image or region in image as PIL.Image
         """
-        image_filename = self.download_url(image_url)
+        files = self.mets.find_files(url=image_url)
+        if files:
+            image_filename = self.download_file(files[0]).local_filename
+        else:
+            image_filename = self.download_url(image_url)
 
         if image_url not in self.image_cache['pil']:
             self.image_cache['pil'][image_url] = Image.open(image_filename)

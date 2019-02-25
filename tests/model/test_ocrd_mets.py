@@ -30,10 +30,8 @@ class TestOcrdMets(TestCase):
 
     def test_override_constructor_args(self):
         id2file = {'foo': {}}
-        baseurl = 'http://foo'
-        mets = OcrdMets(id2file, baseurl, content='<mets/>')
+        mets = OcrdMets(id2file, content='<mets/>')
         self.assertEqual(mets._file_by_id, id2file)
-        self.assertEqual(mets.baseurl, baseurl)
 
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')

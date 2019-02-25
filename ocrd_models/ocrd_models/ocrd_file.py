@@ -15,14 +15,13 @@ class OcrdFile():
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, instance=None, local_filename=None, baseurl='', mets=None):
+    def __init__(self, el, mimetype=None, instance=None, local_filename=None, mets=None):
         """
         Args:
             el (LxmlElement):
             mimetype (string):
             instance (OcrdFile):
             local_filename (string):
-            baseurl (string):
             mets (OcrdMets):
         """
         if el is None:
@@ -33,8 +32,8 @@ class OcrdFile():
         self._instance = instance
         self.mets = mets
 
-        if baseurl and not local_filename and '://' not in self.url:
-            self.local_filename = '%s/%s' % (baseurl, self.url)
+        #  if baseurl and not local_filename and '://' not in self.url:
+        #      self.local_filename = '%s/%s' % (baseurl, self.url)
 
     def __str__(self):
         """
