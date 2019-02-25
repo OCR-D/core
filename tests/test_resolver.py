@@ -1,5 +1,4 @@
 import os
-from glob import glob
 from os.path import join, exists
 from shutil import copytree, rmtree
 from re import sub
@@ -9,8 +8,8 @@ from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
-from ocrd_utils.logging import setOverrideLogLevel
-setOverrideLogLevel('DEBUG')
+#  from ocrd_utils.logging import setOverrideLogLevel
+#  setOverrideLogLevel('DEBUG')
 
 
 TMP_FOLDER = '/tmp/test-pyocrd-resolver'
@@ -196,16 +195,21 @@ class TestResolver(TestCase):
             self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
 
     def test_227_1(self):
+        def find_recursive(root):
+            ret = []
+            for _, _, f in os.walk(root):
+                for file in f:
+                    ret.append(file)
+            return ret
         with TemporaryDirectory() as wsdir:
             with open(assets.path_to('SBB0000F29300010000/data/mets_one_file.xml'), 'r') as f_in:
                 with open(join(wsdir, 'mets.xml'), 'w') as f_out:
                     f_out.write(f_in.read())
-            self.assertEqual(len(glob(join(wsdir, '**'), recursive=True)), 2)
+            self.assertEqual(len(find_recursive(wsdir)), 1)
             ws1 = Workspace(self.resolver, wsdir)
             for file in ws1.mets.find_files():
                 ws1.download_file(file)
-                print(file)
-            self.assertEqual(len(glob(join(wsdir, '**'), recursive=True)), 4)
+            self.assertEqual(len(find_recursive(wsdir)), 2)
             self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE')))
 
 if __name__ == '__main__':
