@@ -139,11 +139,13 @@ coverage: assets-clean assets
 
 .PHONY: docs
 # Build documentation
-docs: gh-pages
+docs:
 	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e -o docs/api/$$mod $$mod/$$mod 'ocrd_models/ocrd_models/ocrd_page_generateds.py';done
 	cd docs ; $(MAKE) html
+
+docs-push: gh-pages docs
 	cp -r docs/build/html/* gh-pages
-	# cd gh-pages; git add . && git commit -m 'Updated docs $$(date)' && git push
+	cd gh-pages; git add . && git commit -m 'Updated docs $$(date)' && git push
 
 # Clean docs
 docs-clean:
