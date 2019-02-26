@@ -97,21 +97,26 @@ class Workspace():
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
 
-        if 'local_filename' in kwargs:
-            local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-            if not os.path.isdir(local_filename_dir):
-                os.makedirs(local_filename_dir)
-            if 'url' not in kwargs:
-                kwargs['url'] = kwargs['local_filename']
+        oldpwd = os.getcwd()
+        try:
+            os.chdir(self.directory)
+            if 'local_filename' in kwargs:
+                local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
+                if not os.path.isdir(local_filename_dir):
+                    os.makedirs(local_filename_dir)
+                if 'url' not in kwargs:
+                    kwargs['url'] = kwargs['local_filename']
 
-        #  print(kwargs)
-        ret = self.mets.add_file(file_grp, **kwargs)
+            #  print(kwargs)
+            ret = self.mets.add_file(file_grp, **kwargs)
 
-        if content is not None:
-            with open(kwargs['local_filename'], 'wb') as f:
-                if isinstance(content, str):
-                    content = bytes(content, 'utf-8')
-                f.write(content)
+            if content is not None:
+                with open(kwargs['local_filename'], 'wb') as f:
+                    if isinstance(content, str):
+                        content = bytes(content, 'utf-8')
+                    f.write(content)
+        finally:
+            os.chdir(oldpwd)
 
         return ret
 
