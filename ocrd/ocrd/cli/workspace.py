@@ -232,9 +232,9 @@ def get_id(ctx):
 """)
 @click.argument('ID')
 @pass_workspace
-def set_id(ctx, ID):
+def set_id(ctx, id):
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
-    workspace.mets.unique_identifier = ID
+    workspace.mets.unique_identifier = id
     workspace.save_mets()
 
 # ----------------------------------------------------------------------

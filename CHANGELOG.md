@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace set-id` case in argument error
+
 ## [1.0.0b1] - 2019-02-27
 
 First beta of 1.0.0
