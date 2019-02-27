@@ -5,7 +5,17 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b1] - 2019-02-27
+
+First beta of 1.0.0
+
 Changed:
+
+  * :fire: Drop Python2 support
+  * :fire: Refactored project into 5 modules with little dependencies each
+  * Implement 3.2.0 of the spec
+
+Removed:
 
   * :fire: Move factory methods from OcrdPage and OcrdExif to new module `ocrd.model_factory`
   * Factor out XML constants to `ocrd.constants.xml`
@@ -438,6 +448,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0b1]: ../../compare/v1.0.0b1...v0.15.2
 [0.15.2]: ../../compare/v0.15.2...v0.15.1
 [0.15.1]: ../../compare/v0.15.1...v0.15.0
 [0.14.0]: ../../compare/v0.14.0...v0.13.3
