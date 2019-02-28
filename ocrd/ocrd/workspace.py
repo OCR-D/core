@@ -6,7 +6,7 @@ from PIL import Image
 import numpy as np
 
 from ocrd_models import OcrdMets, OcrdExif
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, is_local_filename, abspath
 
 from .workspace_backup import WorkspaceBackupManager
 
@@ -76,12 +76,20 @@ class Workspace():
         """
         #  os.chdir(self.directory)
         #  log.info('f=%s' % f)
-        #  if not f.local_filename and is_local_filename(f.url):
-        #      f.local_filename = abspath(f.url)
-        if f.local_filename:
-            log.debug("Already downloaded: %s", f.local_filename)
-        else:
-            f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
+        oldpwd = os.getcwd()
+        try:
+            os.chdir(self.directory)
+            if is_local_filename(f.url):
+                f.local_filename = abspath(f.url)
+            else:
+                if f.local_filename:
+                    log.debug("Already downloaded: %s", f.local_filename)
+                else:
+                    f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
+        finally:
+            os.chdir(oldpwd)
+
+        #  print(f)
         return f
 
     def add_file(self, file_grp, content=None, **kwargs):
