@@ -5,7 +5,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-Fixed:
+## [1.0.0b6] - 2019-03-19
 
   * `ocrd workspace set-id` case in argument error
   * fix DeprecationWarning for PyYAML 5.1+
@@ -454,6 +454,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0b6]: ../../compare/v1.0.0b6...v1.0.0b1
 [1.0.0b1]: ../../compare/v1.0.0b1...v0.15.2
 [0.15.2]: ../../compare/v0.15.2...v0.15.1
 [0.15.1]: ../../compare/v0.15.1...v0.15.0
