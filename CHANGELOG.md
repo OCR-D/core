@@ -8,6 +8,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd workspace set-id` case in argument error
+  * fix DeprecationWarning for PyYAML 5.1+
+  * use headless opencv
 
 ## [1.0.0b1] - 2019-02-27
 
