@@ -5,7 +5,7 @@ requests
 lxml
 Pillow >= 5.3.0
 numpy
-opencv-python
+opencv-python-headless
 Flask
 jsonschema
 pyyaml
