@@ -24,6 +24,7 @@ __all__ = [
     'logging',
     'points_from_xywh',
     'points_from_x0y0x1y1',
+    'points_from_y0x0y1x1',
     'polygon_from_points',
     'safe_filename',
     'unzip_file_to_dir',
@@ -92,6 +93,21 @@ def points_from_xywh(box):
         x + w, y,
         x + w, y + h,
         x, y + h
+    )
+
+def points_from_y0x0y1x1(yxyx):
+    """
+    Constructs a polygon representation from a rectangle described as a list [y0, x0, y1, x1]
+    """
+    y0 = yxyx[0]
+    x0 = yxyx[1]
+    y1 = yxyx[2]
+    x1 = yxyx[3]
+    return "%s,%s %s,%s %s,%s %s,%s" % (
+        x0, y0,
+        x1, y0,
+        x1, y1,
+        x0, y1
     )
 
 def points_from_x0y0x1y1(xyxy):

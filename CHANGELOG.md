@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b8] - 2019-03-24
+
+Added:
+
+  * `points_from_y0x0y1x1` for inverted x/y pairs
+
+## [1.0.0b7] - 2019-03-24
+
 Added:
 
   * `ocrd workspace list-page` to list all page IDs
