@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd workspace list-page` to list all page IDs
+
 ## [1.0.0b6] - 2019-03-19
 
   * `ocrd workspace set-id` case in argument error
