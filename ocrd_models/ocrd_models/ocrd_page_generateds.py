@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Tue May  8 12:14:28 2018 by generateDS.py version 2.29.11.
-# Python 3.6.3 (default, Oct  3 2017, 21:45:48)  [GCC 7.2.0]
+# Generated Sun Mar 24 17:26:42 2019 by generateDS.py version 2.30.11.
+# Python 3.6.5 (default, Apr  1 2018, 05:46:30)  [GCC 7.3.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--no-namespace-defs', '')
 #   ('--root-element', 'PcGts')
-#   ('-o', 'ocrd/model/ocrd_page_generateds.py')
+#   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
 #
 # Command line arguments:
-#   repo/assets/data/schema/2018.xsd
+#   repo/assets/data/schema/data/2018.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/venv3/bin/generateDS -f --no-namespace-defs --root-element="PcGts" -o "ocrd/model/ocrd_page_generateds.py" repo/assets/data/schema/2018.xsd
+#   /home/kba/env/py3.6.5/bin/generateDS -f --no-namespace-defs --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" repo/assets/data/schema/data/2018.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -241,7 +241,8 @@ except ImportError as exp:
             time_parts = input_data.split('.')
             if len(time_parts) > 1:
                 micro_seconds = int(float('0.' + time_parts[1]) * 1000000)
-                input_data = '%s.%s' % (time_parts[0], micro_seconds, )
+                input_data = '%s.%s' % (
+                    time_parts[0], "{}".format(micro_seconds).rjust(6, "0"), )
                 dt = datetime_.datetime.strptime(
                     input_data, '%Y-%m-%dT%H:%M:%S.%f')
             else:
@@ -329,14 +330,15 @@ except ImportError as exp:
                         _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
             return _svalue
         def gds_validate_simple_patterns(self, patterns, target):
-            # pat is a list of lists of strings/patterns.  We should:
-            # - AND the outer elements
-            # - OR the inner elements
+            # pat is a list of lists of strings/patterns.
+            # The target value must match at least one of the patterns
+            # in order for the test to succeed.
             found1 = True
             for patterns1 in patterns:
                 found2 = False
                 for patterns2 in patterns1:
-                    if re_.search(patterns2, target) is not None:
+                    mo = re_.search(patterns2, target)
+                    if mo is not None and len(mo.group(0)) == len(target):
                         found2 = True
                         break
                 if not found2:
@@ -397,11 +399,15 @@ except ImportError as exp:
             return None
         @classmethod
         def gds_reverse_node_mapping(cls, mapping):
-            return dict(((v, k) for k, v in mapping.iteritems()))
+            return dict(((v, k) for k, v in mapping.items()))
         @staticmethod
         def gds_encode(instring):
             if sys.version_info.major == 2:
-                return instring.encode(ExternalEncoding)
+                if ExternalEncoding:
+                    encoding = ExternalEncoding
+                else:
+                    encoding = 'utf-8'
+                return instring.encode(encoding)
             else:
                 return instring
         @staticmethod
@@ -448,7 +454,7 @@ except ImportError as exp:
 # Globals
 #
 
-ExternalEncoding = 'utf-8'
+ExternalEncoding = ''
 Tag_pattern_ = re_.compile(r'({.*})?(.*)')
 String_cleanup_pat_ = re_.compile(r"[\n\r\s]+")
 Namespace_extract_pat_ = re_.compile(r'{(.*)}(.*)')
@@ -598,7 +604,7 @@ class MixedContainer:
             self.exportSimple(outfile, level, name)
         else:    # category == MixedContainer.CategoryComplex
             self.value.export(
-                outfile, level, namespace, name,
+                outfile, level, namespace, name_=name,
                 pretty_print=pretty_print)
     def exportSimple(self, outfile, level, name):
         if self.content_type == MixedContainer.TypeString:
@@ -718,11 +724,145 @@ def _cast(typ, value):
 #
 
 
+class AlignSimpleType(object):
+    LEFT='left'
+    CENTRE='centre'
+    RIGHT='right'
+    JUSTIFY='justify'
+
+
+class ChartTypeSimpleType(object):
+    BAR='bar'
+    LINE='line'
+    PIE='pie'
+    SCATTER='scatter'
+    SURFACE='surface'
+    OTHER='other'
+
+
+class ColourDepthSimpleType(object):
+    BILEVEL='bilevel'
+    GREYSCALE='greyscale'
+    COLOUR='colour'
+    OTHER='other'
+
+
+class ColourSimpleType(object):
+    BLACK='black'
+    BLUE='blue'
+    BROWN='brown'
+    CYAN='cyan'
+    GREEN='green'
+    GREY='grey'
+    INDIGO='indigo'
+    MAGENTA='magenta'
+    ORANGE='orange'
+    PINK='pink'
+    RED='red'
+    TURQUOISE='turquoise'
+    VIOLET='violet'
+    WHITE='white'
+    YELLOW='yellow'
+    OTHER='other'
+
+
+class GraphicsTypeSimpleType(object):
+    LOGO='logo'
+    LETTERHEAD='letterhead'
+    DECORATION='decoration'
+    FRAME='frame'
+    HANDWRITTENANNOTATION='handwritten-annotation'
+    STAMP='stamp'
+    SIGNATURE='signature'
+    BARCODE='barcode'
+    PAPERGROW='paper-grow'
+    PUNCHHOLE='punch-hole'
+    OTHER='other'
+
+
+class GroupTypeSimpleType(object):
+    PARAGRAPH='paragraph'
+    LIST='list'
+    LISTITEM='list-item'
+    FIGURE='figure'
+    ARTICLE='article'
+    DIV='div'
+    OTHER='other'
+
+
+class PageTypeSimpleType(object):
+    FRONTCOVER='front-cover'
+    BACKCOVER='back-cover'
+    TITLE='title'
+    TABLEOFCONTENTS='table-of-contents'
+    INDEX='index'
+    CONTENT='content'
+    BLANK='blank'
+    OTHER='other'
+
+
+class ProductionSimpleType(object):
+    PRINTED='printed'
+    TYPEWRITTEN='typewritten'
+    HANDWRITTENCURSIVE='handwritten-cursive'
+    HANDWRITTENPRINTSCRIPT='handwritten-printscript'
+    MEDIEVALMANUSCRIPT='medieval-manuscript'
+    OTHER='other'
+
+
+class ReadingDirectionSimpleType(object):
+    LEFTTORIGHT='left-to-right'
+    RIGHTTOLEFT='right-to-left'
+    TOPTOBOTTOM='top-to-bottom'
+    BOTTOMTOTOP='bottom-to-top'
+
+
+class TextDataTypeSimpleType(object):
+    XSDDECIMAL='xsd:decimal'
+    XSDFLOAT='xsd:float'
+    XSDINTEGER='xsd:integer'
+    XSDBOOLEAN='xsd:boolean'
+    XSDDATE='xsd:date'
+    XSDTIME='xsd:time'
+    XSDDATE_TIME='xsd:dateTime'
+    XSDSTRING='xsd:string'
+    OTHER='other'
+
+
+class TextLineOrderSimpleType(object):
+    TOPTOBOTTOM='top-to-bottom'
+    BOTTOMTOTOP='bottom-to-top'
+    LEFTTORIGHT='left-to-right'
+    RIGHTTOLEFT='right-to-left'
+
+
+class TextTypeSimpleType(object):
+    PARAGRAPH='paragraph'
+    HEADING='heading'
+    CAPTION='caption'
+    HEADER='header'
+    FOOTER='footer'
+    PAGENUMBER='page-number'
+    DROPCAPITAL='drop-capital'
+    CREDIT='credit'
+    FLOATING='floating'
+    SIGNATUREMARK='signature-mark'
+    CATCHWORD='catch-word'
+    MARGINALIA='marginalia'
+    FOOTNOTE='footnote'
+    FOOTNOTECONTINUED='footnote-continued'
+    ENDNOTE='endnote'
+    TOCENTRY='TOC-entry'
+    LISTLABEL='list-label'
+    OTHER='other'
+
+
 class PcGtsType(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, pcGtsId=None, Metadata=None, Page=None):
+    def __init__(self, pcGtsId=None, Metadata=None, Page=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.pcGtsId = _cast(None, pcGtsId)
         self.Metadata = Metadata
         self.Page = Page
@@ -737,12 +877,18 @@ class PcGtsType(GeneratedsSuper):
         else:
             return PcGtsType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Metadata(self): return self.Metadata
-    def set_Metadata(self, Metadata): self.Metadata = Metadata
-    def get_Page(self): return self.Page
-    def set_Page(self, Page): self.Page = Page
-    def get_pcGtsId(self): return self.pcGtsId
-    def set_pcGtsId(self, pcGtsId): self.pcGtsId = pcGtsId
+    def get_Metadata(self):
+        return self.Metadata
+    def set_Metadata(self, Metadata):
+        self.Metadata = Metadata
+    def get_Page(self):
+        return self.Page
+    def set_Page(self, Page):
+        self.Page = Page
+    def get_pcGtsId(self):
+        return self.pcGtsId
+    def set_pcGtsId(self, pcGtsId):
+        self.pcGtsId = pcGtsId
     def hasContent_(self):
         if (
             self.Metadata is not None or
@@ -751,7 +897,7 @@ class PcGtsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='PcGtsType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='PcGtsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('PcGtsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -762,29 +908,29 @@ class PcGtsType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='PcGtsType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PcGtsType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='PcGtsType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PcGtsType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='PcGtsType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='PcGtsType'):
         if self.pcGtsId is not None and 'pcGtsId' not in already_processed:
             already_processed.add('pcGtsId')
             outfile.write(' pcGtsId=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.pcGtsId), input_name='pcGtsId')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='PcGtsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='PcGtsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.Metadata is not None:
-            self.Metadata.export(outfile, level, namespace_, name_='Metadata', pretty_print=pretty_print)
+            self.Metadata.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Metadata', pretty_print=pretty_print)
         if self.Page is not None:
-            self.Page.export(outfile, level, namespace_, name_='Page', pretty_print=pretty_print)
+            self.Page.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Page', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -799,12 +945,12 @@ class PcGtsType(GeneratedsSuper):
             self.pcGtsId = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Metadata':
-            obj_ = MetadataType.factory()
+            obj_ = MetadataType.factory(parent_object_=self)
             obj_.build(child_)
             self.Metadata = obj_
             obj_.original_tagname_ = 'Metadata'
         elif nodeName_ == 'Page':
-            obj_ = PageType.factory()
+            obj_ = PageType.factory(parent_object_=self)
             obj_.build(child_)
             self.Page = obj_
             obj_.original_tagname_ = 'Page'
@@ -815,8 +961,9 @@ class MetadataType(GeneratedsSuper):
     """External reference of any kind"""
     subclass = None
     superclass = None
-    def __init__(self, externalRef=None, Creator=None, Created=None, LastChange=None, Comments=None, UserDefined=None, MetadataItem=None):
+    def __init__(self, externalRef=None, Creator=None, Created=None, LastChange=None, Comments=None, UserDefined=None, MetadataItem=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.externalRef = _cast(None, externalRef)
         self.Creator = Creator
         if isinstance(Created, BaseStrType_):
@@ -846,23 +993,42 @@ class MetadataType(GeneratedsSuper):
         else:
             return MetadataType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Creator(self): return self.Creator
-    def set_Creator(self, Creator): self.Creator = Creator
-    def get_Created(self): return self.Created
-    def set_Created(self, Created): self.Created = Created
-    def get_LastChange(self): return self.LastChange
-    def set_LastChange(self, LastChange): self.LastChange = LastChange
-    def get_Comments(self): return self.Comments
-    def set_Comments(self, Comments): self.Comments = Comments
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_MetadataItem(self): return self.MetadataItem
-    def set_MetadataItem(self, MetadataItem): self.MetadataItem = MetadataItem
-    def add_MetadataItem(self, value): self.MetadataItem.append(value)
-    def insert_MetadataItem_at(self, index, value): self.MetadataItem.insert(index, value)
-    def replace_MetadataItem_at(self, index, value): self.MetadataItem[index] = value
-    def get_externalRef(self): return self.externalRef
-    def set_externalRef(self, externalRef): self.externalRef = externalRef
+    def get_Creator(self):
+        return self.Creator
+    def set_Creator(self, Creator):
+        self.Creator = Creator
+    def get_Created(self):
+        return self.Created
+    def set_Created(self, Created):
+        self.Created = Created
+    def get_LastChange(self):
+        return self.LastChange
+    def set_LastChange(self, LastChange):
+        self.LastChange = LastChange
+    def get_Comments(self):
+        return self.Comments
+    def set_Comments(self, Comments):
+        self.Comments = Comments
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_MetadataItem(self):
+        return self.MetadataItem
+    def set_MetadataItem(self, MetadataItem):
+        self.MetadataItem = MetadataItem
+    def add_MetadataItem(self, value):
+        self.MetadataItem.append(value)
+    def add_MetadataItem(self, value):
+        self.MetadataItem.append(value)
+    def insert_MetadataItem_at(self, index, value):
+        self.MetadataItem.insert(index, value)
+    def replace_MetadataItem_at(self, index, value):
+        self.MetadataItem[index] = value
+    def get_externalRef(self):
+        return self.externalRef
+    def set_externalRef(self, externalRef):
+        self.externalRef = externalRef
     def hasContent_(self):
         if (
             self.Creator is not None or
@@ -875,7 +1041,7 @@ class MetadataType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='MetadataType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MetadataType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MetadataType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -886,41 +1052,41 @@ class MetadataType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='MetadataType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='MetadataType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='MetadataType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='MetadataType'):
         if self.externalRef is not None and 'externalRef' not in already_processed:
             already_processed.add('externalRef')
             outfile.write(' externalRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalRef), input_name='externalRef')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='MetadataType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MetadataType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.Creator is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<pc:Creator>%s</pc:Creator>%s' % (self.gds_encode(self.gds_format_string(quote_xml(self.Creator), input_name='Creator')), eol_))
+            outfile.write('<%sCreator>%s</%sCreator>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Creator), input_name='Creator')), namespaceprefix_ , eol_))
         if self.Created is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<pc:Created>%s</pc:Created>%s' % (self.gds_format_datetime(self.Created, input_name='Created'), eol_))
+            outfile.write('<%sCreated>%s</%sCreated>%s' % (namespaceprefix_ , self.gds_format_datetime(self.Created, input_name='Created'), namespaceprefix_ , eol_))
         if self.LastChange is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<pc:LastChange>%s</pc:LastChange>%s' % (self.gds_format_datetime(self.LastChange, input_name='LastChange'), eol_))
+            outfile.write('<%sLastChange>%s</%sLastChange>%s' % (namespaceprefix_ , self.gds_format_datetime(self.LastChange, input_name='LastChange'), namespaceprefix_ , eol_))
         if self.Comments is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<pc:Comments>%s</pc:Comments>%s' % (self.gds_encode(self.gds_format_string(quote_xml(self.Comments), input_name='Comments')), eol_))
+            outfile.write('<%sComments>%s</%sComments>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Comments), input_name='Comments')), namespaceprefix_ , eol_))
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for MetadataItem_ in self.MetadataItem:
-            MetadataItem_.export(outfile, level, namespace_, name_='MetadataItem', pretty_print=pretty_print)
+            MetadataItem_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MetadataItem', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -951,12 +1117,12 @@ class MetadataType(GeneratedsSuper):
             Comments_ = self.gds_validate_string(Comments_, node, 'Comments')
             self.Comments = Comments_
         elif nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'MetadataItem':
-            obj_ = MetadataItemType.factory()
+            obj_ = MetadataItemType.factory(parent_object_=self)
             obj_.build(child_)
             self.MetadataItem.append(obj_)
             obj_.original_tagname_ = 'MetadataItem'
@@ -968,8 +1134,9 @@ class MetadataItemType(GeneratedsSuper):
     E.g. RGB"""
     subclass = None
     superclass = None
-    def __init__(self, type_=None, name=None, value=None, date=None, Labels=None):
+    def __init__(self, type_=None, name=None, value=None, date=None, Labels=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.type_ = _cast(None, type_)
         self.name = _cast(None, name)
         self.value = _cast(None, value)
@@ -993,19 +1160,34 @@ class MetadataItemType(GeneratedsSuper):
         else:
             return MetadataItemType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_name(self): return self.name
-    def set_name(self, name): self.name = name
-    def get_value(self): return self.value
-    def set_value(self, value): self.value = value
-    def get_date(self): return self.date
-    def set_date(self, date): self.date = date
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_name(self):
+        return self.name
+    def set_name(self, name):
+        self.name = name
+    def get_value(self):
+        return self.value
+    def set_value(self, value):
+        self.value = value
+    def get_date(self):
+        return self.date
+    def set_date(self, date):
+        self.date = date
     def hasContent_(self):
         if (
             self.Labels
@@ -1013,7 +1195,7 @@ class MetadataItemType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='MetadataItemType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MetadataItemType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MetadataItemType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1024,17 +1206,17 @@ class MetadataItemType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='MetadataItemType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataItemType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='MetadataItemType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataItemType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='MetadataItemType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='MetadataItemType'):
         if self.type_ is not None and 'type_' not in already_processed:
             already_processed.add('type_')
             outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
@@ -1047,13 +1229,13 @@ class MetadataItemType(GeneratedsSuper):
         if self.date is not None and 'date' not in already_processed:
             already_processed.add('date')
             outfile.write(' date="%s"' % self.gds_format_datetime(self.date, input_name='date'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1083,7 +1265,7 @@ class MetadataItemType(GeneratedsSuper):
                 raise ValueError('Bad date-time attribute (date): %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
@@ -1095,8 +1277,9 @@ class LabelsType(GeneratedsSuper):
     first part of an URI)"""
     subclass = None
     superclass = None
-    def __init__(self, externalRef=None, prefix=None, comments=None, Label=None):
+    def __init__(self, externalRef=None, prefix=None, comments=None, Label=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.externalRef = _cast(None, externalRef)
         self.prefix = _cast(None, prefix)
         self.comments = _cast(None, comments)
@@ -1115,17 +1298,30 @@ class LabelsType(GeneratedsSuper):
         else:
             return LabelsType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Label(self): return self.Label
-    def set_Label(self, Label): self.Label = Label
-    def add_Label(self, value): self.Label.append(value)
-    def insert_Label_at(self, index, value): self.Label.insert(index, value)
-    def replace_Label_at(self, index, value): self.Label[index] = value
-    def get_externalRef(self): return self.externalRef
-    def set_externalRef(self, externalRef): self.externalRef = externalRef
-    def get_prefix(self): return self.prefix
-    def set_prefix(self, prefix): self.prefix = prefix
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_Label(self):
+        return self.Label
+    def set_Label(self, Label):
+        self.Label = Label
+    def add_Label(self, value):
+        self.Label.append(value)
+    def add_Label(self, value):
+        self.Label.append(value)
+    def insert_Label_at(self, index, value):
+        self.Label.insert(index, value)
+    def replace_Label_at(self, index, value):
+        self.Label[index] = value
+    def get_externalRef(self):
+        return self.externalRef
+    def set_externalRef(self, externalRef):
+        self.externalRef = externalRef
+    def get_prefix(self):
+        return self.prefix
+    def set_prefix(self, prefix):
+        self.prefix = prefix
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.Label
@@ -1133,7 +1329,7 @@ class LabelsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='LabelsType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LabelsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1144,17 +1340,17 @@ class LabelsType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='LabelsType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelsType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='LabelsType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelsType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='LabelsType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='LabelsType'):
         if self.externalRef is not None and 'externalRef' not in already_processed:
             already_processed.add('externalRef')
             outfile.write(' externalRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalRef), input_name='externalRef')), ))
@@ -1164,13 +1360,13 @@ class LabelsType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='LabelsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LabelsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for Label_ in self.Label:
-            Label_.export(outfile, level, namespace_, name_='Label', pretty_print=pretty_print)
+            Label_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Label', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1193,7 +1389,7 @@ class LabelsType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Label':
-            obj_ = LabelType.factory()
+            obj_ = LabelType.factory(parent_object_=self)
             obj_.build(child_)
             self.Label.append(obj_)
             obj_.original_tagname_ = 'Label'
@@ -1205,8 +1401,9 @@ class LabelType(GeneratedsSuper):
     information on the label (e.g. 'YYYY-mm-dd' for a date label)"""
     subclass = None
     superclass = None
-    def __init__(self, value=None, type_=None, comments=None):
+    def __init__(self, value=None, type_=None, comments=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.value = _cast(None, value)
         self.type_ = _cast(None, type_)
         self.comments = _cast(None, comments)
@@ -1221,12 +1418,18 @@ class LabelType(GeneratedsSuper):
         else:
             return LabelType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_value(self): return self.value
-    def set_value(self, value): self.value = value
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_value(self):
+        return self.value
+    def set_value(self, value):
+        self.value = value
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
 
@@ -1234,7 +1437,7 @@ class LabelType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='LabelType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LabelType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1245,16 +1448,16 @@ class LabelType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='LabelType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='LabelType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='LabelType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='LabelType'):
         if self.value is not None and 'value' not in already_processed:
             already_processed.add('value')
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
@@ -1264,7 +1467,7 @@ class LabelType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='LabelType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LabelType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -1313,8 +1516,9 @@ class PageType(GeneratedsSuper):
     for whole page (between 0 and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, imageFilename=None, imageWidth=None, imageHeight=None, imageXResolution=None, imageYResolution=None, imageResolutionUnit=None, custom=None, type_=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, textLineOrder=None, conf=None, AlternativeImage=None, Border=None, PrintSpace=None, ReadingOrder=None, Layers=None, Relations=None, UserDefined=None, Labels=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, MapRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, imageFilename=None, imageWidth=None, imageHeight=None, imageXResolution=None, imageYResolution=None, imageResolutionUnit=None, custom=None, type_=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, textLineOrder=None, conf=None, AlternativeImage=None, Border=None, PrintSpace=None, ReadingOrder=None, Layers=None, Relations=None, TextStyle=None, UserDefined=None, Labels=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, MapRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.imageFilename = _cast(None, imageFilename)
         self.imageWidth = _cast(int, imageWidth)
         self.imageHeight = _cast(int, imageHeight)
@@ -1339,6 +1543,7 @@ class PageType(GeneratedsSuper):
         self.ReadingOrder = ReadingOrder
         self.Layers = Layers
         self.Relations = Relations
+        self.TextStyle = TextStyle
         self.UserDefined = UserDefined
         if Labels is None:
             self.Labels = []
@@ -1411,128 +1616,286 @@ class PageType(GeneratedsSuper):
         else:
             return PageType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_AlternativeImage(self): return self.AlternativeImage
-    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
-    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
-    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
-    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
-    def get_Border(self): return self.Border
-    def set_Border(self, Border): self.Border = Border
-    def get_PrintSpace(self): return self.PrintSpace
-    def set_PrintSpace(self, PrintSpace): self.PrintSpace = PrintSpace
-    def get_ReadingOrder(self): return self.ReadingOrder
-    def set_ReadingOrder(self, ReadingOrder): self.ReadingOrder = ReadingOrder
-    def get_Layers(self): return self.Layers
-    def set_Layers(self, Layers): self.Layers = Layers
-    def get_Relations(self): return self.Relations
-    def set_Relations(self, Relations): self.Relations = Relations
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_TextRegion(self): return self.TextRegion
-    def set_TextRegion(self, TextRegion): self.TextRegion = TextRegion
-    def add_TextRegion(self, value): self.TextRegion.append(value)
-    def insert_TextRegion_at(self, index, value): self.TextRegion.insert(index, value)
-    def replace_TextRegion_at(self, index, value): self.TextRegion[index] = value
-    def get_ImageRegion(self): return self.ImageRegion
-    def set_ImageRegion(self, ImageRegion): self.ImageRegion = ImageRegion
-    def add_ImageRegion(self, value): self.ImageRegion.append(value)
-    def insert_ImageRegion_at(self, index, value): self.ImageRegion.insert(index, value)
-    def replace_ImageRegion_at(self, index, value): self.ImageRegion[index] = value
-    def get_LineDrawingRegion(self): return self.LineDrawingRegion
-    def set_LineDrawingRegion(self, LineDrawingRegion): self.LineDrawingRegion = LineDrawingRegion
-    def add_LineDrawingRegion(self, value): self.LineDrawingRegion.append(value)
-    def insert_LineDrawingRegion_at(self, index, value): self.LineDrawingRegion.insert(index, value)
-    def replace_LineDrawingRegion_at(self, index, value): self.LineDrawingRegion[index] = value
-    def get_GraphicRegion(self): return self.GraphicRegion
-    def set_GraphicRegion(self, GraphicRegion): self.GraphicRegion = GraphicRegion
-    def add_GraphicRegion(self, value): self.GraphicRegion.append(value)
-    def insert_GraphicRegion_at(self, index, value): self.GraphicRegion.insert(index, value)
-    def replace_GraphicRegion_at(self, index, value): self.GraphicRegion[index] = value
-    def get_TableRegion(self): return self.TableRegion
-    def set_TableRegion(self, TableRegion): self.TableRegion = TableRegion
-    def add_TableRegion(self, value): self.TableRegion.append(value)
-    def insert_TableRegion_at(self, index, value): self.TableRegion.insert(index, value)
-    def replace_TableRegion_at(self, index, value): self.TableRegion[index] = value
-    def get_ChartRegion(self): return self.ChartRegion
-    def set_ChartRegion(self, ChartRegion): self.ChartRegion = ChartRegion
-    def add_ChartRegion(self, value): self.ChartRegion.append(value)
-    def insert_ChartRegion_at(self, index, value): self.ChartRegion.insert(index, value)
-    def replace_ChartRegion_at(self, index, value): self.ChartRegion[index] = value
-    def get_MapRegion(self): return self.MapRegion
-    def set_MapRegion(self, MapRegion): self.MapRegion = MapRegion
-    def add_MapRegion(self, value): self.MapRegion.append(value)
-    def insert_MapRegion_at(self, index, value): self.MapRegion.insert(index, value)
-    def replace_MapRegion_at(self, index, value): self.MapRegion[index] = value
-    def get_SeparatorRegion(self): return self.SeparatorRegion
-    def set_SeparatorRegion(self, SeparatorRegion): self.SeparatorRegion = SeparatorRegion
-    def add_SeparatorRegion(self, value): self.SeparatorRegion.append(value)
-    def insert_SeparatorRegion_at(self, index, value): self.SeparatorRegion.insert(index, value)
-    def replace_SeparatorRegion_at(self, index, value): self.SeparatorRegion[index] = value
-    def get_MathsRegion(self): return self.MathsRegion
-    def set_MathsRegion(self, MathsRegion): self.MathsRegion = MathsRegion
-    def add_MathsRegion(self, value): self.MathsRegion.append(value)
-    def insert_MathsRegion_at(self, index, value): self.MathsRegion.insert(index, value)
-    def replace_MathsRegion_at(self, index, value): self.MathsRegion[index] = value
-    def get_ChemRegion(self): return self.ChemRegion
-    def set_ChemRegion(self, ChemRegion): self.ChemRegion = ChemRegion
-    def add_ChemRegion(self, value): self.ChemRegion.append(value)
-    def insert_ChemRegion_at(self, index, value): self.ChemRegion.insert(index, value)
-    def replace_ChemRegion_at(self, index, value): self.ChemRegion[index] = value
-    def get_MusicRegion(self): return self.MusicRegion
-    def set_MusicRegion(self, MusicRegion): self.MusicRegion = MusicRegion
-    def add_MusicRegion(self, value): self.MusicRegion.append(value)
-    def insert_MusicRegion_at(self, index, value): self.MusicRegion.insert(index, value)
-    def replace_MusicRegion_at(self, index, value): self.MusicRegion[index] = value
-    def get_AdvertRegion(self): return self.AdvertRegion
-    def set_AdvertRegion(self, AdvertRegion): self.AdvertRegion = AdvertRegion
-    def add_AdvertRegion(self, value): self.AdvertRegion.append(value)
-    def insert_AdvertRegion_at(self, index, value): self.AdvertRegion.insert(index, value)
-    def replace_AdvertRegion_at(self, index, value): self.AdvertRegion[index] = value
-    def get_NoiseRegion(self): return self.NoiseRegion
-    def set_NoiseRegion(self, NoiseRegion): self.NoiseRegion = NoiseRegion
-    def add_NoiseRegion(self, value): self.NoiseRegion.append(value)
-    def insert_NoiseRegion_at(self, index, value): self.NoiseRegion.insert(index, value)
-    def replace_NoiseRegion_at(self, index, value): self.NoiseRegion[index] = value
-    def get_UnknownRegion(self): return self.UnknownRegion
-    def set_UnknownRegion(self, UnknownRegion): self.UnknownRegion = UnknownRegion
-    def add_UnknownRegion(self, value): self.UnknownRegion.append(value)
-    def insert_UnknownRegion_at(self, index, value): self.UnknownRegion.insert(index, value)
-    def replace_UnknownRegion_at(self, index, value): self.UnknownRegion[index] = value
-    def get_imageFilename(self): return self.imageFilename
-    def set_imageFilename(self, imageFilename): self.imageFilename = imageFilename
-    def get_imageWidth(self): return self.imageWidth
-    def set_imageWidth(self, imageWidth): self.imageWidth = imageWidth
-    def get_imageHeight(self): return self.imageHeight
-    def set_imageHeight(self, imageHeight): self.imageHeight = imageHeight
-    def get_imageXResolution(self): return self.imageXResolution
-    def set_imageXResolution(self, imageXResolution): self.imageXResolution = imageXResolution
-    def get_imageYResolution(self): return self.imageYResolution
-    def set_imageYResolution(self, imageYResolution): self.imageYResolution = imageYResolution
-    def get_imageResolutionUnit(self): return self.imageResolutionUnit
-    def set_imageResolutionUnit(self, imageResolutionUnit): self.imageResolutionUnit = imageResolutionUnit
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_primaryLanguage(self): return self.primaryLanguage
-    def set_primaryLanguage(self, primaryLanguage): self.primaryLanguage = primaryLanguage
-    def get_secondaryLanguage(self): return self.secondaryLanguage
-    def set_secondaryLanguage(self, secondaryLanguage): self.secondaryLanguage = secondaryLanguage
-    def get_primaryScript(self): return self.primaryScript
-    def set_primaryScript(self, primaryScript): self.primaryScript = primaryScript
-    def get_secondaryScript(self): return self.secondaryScript
-    def set_secondaryScript(self, secondaryScript): self.secondaryScript = secondaryScript
-    def get_readingDirection(self): return self.readingDirection
-    def set_readingDirection(self, readingDirection): self.readingDirection = readingDirection
-    def get_textLineOrder(self): return self.textLineOrder
-    def set_textLineOrder(self, textLineOrder): self.textLineOrder = textLineOrder
-    def get_conf(self): return self.conf
-    def set_conf(self, conf): self.conf = conf
+    def get_AlternativeImage(self):
+        return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage):
+        self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value):
+        self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value):
+        self.AlternativeImage[index] = value
+    def get_Border(self):
+        return self.Border
+    def set_Border(self, Border):
+        self.Border = Border
+    def get_PrintSpace(self):
+        return self.PrintSpace
+    def set_PrintSpace(self, PrintSpace):
+        self.PrintSpace = PrintSpace
+    def get_ReadingOrder(self):
+        return self.ReadingOrder
+    def set_ReadingOrder(self, ReadingOrder):
+        self.ReadingOrder = ReadingOrder
+    def get_Layers(self):
+        return self.Layers
+    def set_Layers(self, Layers):
+        self.Layers = Layers
+    def get_Relations(self):
+        return self.Relations
+    def set_Relations(self, Relations):
+        self.Relations = Relations
+    def get_TextStyle(self):
+        return self.TextStyle
+    def set_TextStyle(self, TextStyle):
+        self.TextStyle = TextStyle
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_TextRegion(self):
+        return self.TextRegion
+    def set_TextRegion(self, TextRegion):
+        self.TextRegion = TextRegion
+    def add_TextRegion(self, value):
+        self.TextRegion.append(value)
+    def add_TextRegion(self, value):
+        self.TextRegion.append(value)
+    def insert_TextRegion_at(self, index, value):
+        self.TextRegion.insert(index, value)
+    def replace_TextRegion_at(self, index, value):
+        self.TextRegion[index] = value
+    def get_ImageRegion(self):
+        return self.ImageRegion
+    def set_ImageRegion(self, ImageRegion):
+        self.ImageRegion = ImageRegion
+    def add_ImageRegion(self, value):
+        self.ImageRegion.append(value)
+    def add_ImageRegion(self, value):
+        self.ImageRegion.append(value)
+    def insert_ImageRegion_at(self, index, value):
+        self.ImageRegion.insert(index, value)
+    def replace_ImageRegion_at(self, index, value):
+        self.ImageRegion[index] = value
+    def get_LineDrawingRegion(self):
+        return self.LineDrawingRegion
+    def set_LineDrawingRegion(self, LineDrawingRegion):
+        self.LineDrawingRegion = LineDrawingRegion
+    def add_LineDrawingRegion(self, value):
+        self.LineDrawingRegion.append(value)
+    def add_LineDrawingRegion(self, value):
+        self.LineDrawingRegion.append(value)
+    def insert_LineDrawingRegion_at(self, index, value):
+        self.LineDrawingRegion.insert(index, value)
+    def replace_LineDrawingRegion_at(self, index, value):
+        self.LineDrawingRegion[index] = value
+    def get_GraphicRegion(self):
+        return self.GraphicRegion
+    def set_GraphicRegion(self, GraphicRegion):
+        self.GraphicRegion = GraphicRegion
+    def add_GraphicRegion(self, value):
+        self.GraphicRegion.append(value)
+    def add_GraphicRegion(self, value):
+        self.GraphicRegion.append(value)
+    def insert_GraphicRegion_at(self, index, value):
+        self.GraphicRegion.insert(index, value)
+    def replace_GraphicRegion_at(self, index, value):
+        self.GraphicRegion[index] = value
+    def get_TableRegion(self):
+        return self.TableRegion
+    def set_TableRegion(self, TableRegion):
+        self.TableRegion = TableRegion
+    def add_TableRegion(self, value):
+        self.TableRegion.append(value)
+    def add_TableRegion(self, value):
+        self.TableRegion.append(value)
+    def insert_TableRegion_at(self, index, value):
+        self.TableRegion.insert(index, value)
+    def replace_TableRegion_at(self, index, value):
+        self.TableRegion[index] = value
+    def get_ChartRegion(self):
+        return self.ChartRegion
+    def set_ChartRegion(self, ChartRegion):
+        self.ChartRegion = ChartRegion
+    def add_ChartRegion(self, value):
+        self.ChartRegion.append(value)
+    def add_ChartRegion(self, value):
+        self.ChartRegion.append(value)
+    def insert_ChartRegion_at(self, index, value):
+        self.ChartRegion.insert(index, value)
+    def replace_ChartRegion_at(self, index, value):
+        self.ChartRegion[index] = value
+    def get_MapRegion(self):
+        return self.MapRegion
+    def set_MapRegion(self, MapRegion):
+        self.MapRegion = MapRegion
+    def add_MapRegion(self, value):
+        self.MapRegion.append(value)
+    def add_MapRegion(self, value):
+        self.MapRegion.append(value)
+    def insert_MapRegion_at(self, index, value):
+        self.MapRegion.insert(index, value)
+    def replace_MapRegion_at(self, index, value):
+        self.MapRegion[index] = value
+    def get_SeparatorRegion(self):
+        return self.SeparatorRegion
+    def set_SeparatorRegion(self, SeparatorRegion):
+        self.SeparatorRegion = SeparatorRegion
+    def add_SeparatorRegion(self, value):
+        self.SeparatorRegion.append(value)
+    def add_SeparatorRegion(self, value):
+        self.SeparatorRegion.append(value)
+    def insert_SeparatorRegion_at(self, index, value):
+        self.SeparatorRegion.insert(index, value)
+    def replace_SeparatorRegion_at(self, index, value):
+        self.SeparatorRegion[index] = value
+    def get_MathsRegion(self):
+        return self.MathsRegion
+    def set_MathsRegion(self, MathsRegion):
+        self.MathsRegion = MathsRegion
+    def add_MathsRegion(self, value):
+        self.MathsRegion.append(value)
+    def add_MathsRegion(self, value):
+        self.MathsRegion.append(value)
+    def insert_MathsRegion_at(self, index, value):
+        self.MathsRegion.insert(index, value)
+    def replace_MathsRegion_at(self, index, value):
+        self.MathsRegion[index] = value
+    def get_ChemRegion(self):
+        return self.ChemRegion
+    def set_ChemRegion(self, ChemRegion):
+        self.ChemRegion = ChemRegion
+    def add_ChemRegion(self, value):
+        self.ChemRegion.append(value)
+    def add_ChemRegion(self, value):
+        self.ChemRegion.append(value)
+    def insert_ChemRegion_at(self, index, value):
+        self.ChemRegion.insert(index, value)
+    def replace_ChemRegion_at(self, index, value):
+        self.ChemRegion[index] = value
+    def get_MusicRegion(self):
+        return self.MusicRegion
+    def set_MusicRegion(self, MusicRegion):
+        self.MusicRegion = MusicRegion
+    def add_MusicRegion(self, value):
+        self.MusicRegion.append(value)
+    def add_MusicRegion(self, value):
+        self.MusicRegion.append(value)
+    def insert_MusicRegion_at(self, index, value):
+        self.MusicRegion.insert(index, value)
+    def replace_MusicRegion_at(self, index, value):
+        self.MusicRegion[index] = value
+    def get_AdvertRegion(self):
+        return self.AdvertRegion
+    def set_AdvertRegion(self, AdvertRegion):
+        self.AdvertRegion = AdvertRegion
+    def add_AdvertRegion(self, value):
+        self.AdvertRegion.append(value)
+    def add_AdvertRegion(self, value):
+        self.AdvertRegion.append(value)
+    def insert_AdvertRegion_at(self, index, value):
+        self.AdvertRegion.insert(index, value)
+    def replace_AdvertRegion_at(self, index, value):
+        self.AdvertRegion[index] = value
+    def get_NoiseRegion(self):
+        return self.NoiseRegion
+    def set_NoiseRegion(self, NoiseRegion):
+        self.NoiseRegion = NoiseRegion
+    def add_NoiseRegion(self, value):
+        self.NoiseRegion.append(value)
+    def add_NoiseRegion(self, value):
+        self.NoiseRegion.append(value)
+    def insert_NoiseRegion_at(self, index, value):
+        self.NoiseRegion.insert(index, value)
+    def replace_NoiseRegion_at(self, index, value):
+        self.NoiseRegion[index] = value
+    def get_UnknownRegion(self):
+        return self.UnknownRegion
+    def set_UnknownRegion(self, UnknownRegion):
+        self.UnknownRegion = UnknownRegion
+    def add_UnknownRegion(self, value):
+        self.UnknownRegion.append(value)
+    def add_UnknownRegion(self, value):
+        self.UnknownRegion.append(value)
+    def insert_UnknownRegion_at(self, index, value):
+        self.UnknownRegion.insert(index, value)
+    def replace_UnknownRegion_at(self, index, value):
+        self.UnknownRegion[index] = value
+    def get_imageFilename(self):
+        return self.imageFilename
+    def set_imageFilename(self, imageFilename):
+        self.imageFilename = imageFilename
+    def get_imageWidth(self):
+        return self.imageWidth
+    def set_imageWidth(self, imageWidth):
+        self.imageWidth = imageWidth
+    def get_imageHeight(self):
+        return self.imageHeight
+    def set_imageHeight(self, imageHeight):
+        self.imageHeight = imageHeight
+    def get_imageXResolution(self):
+        return self.imageXResolution
+    def set_imageXResolution(self, imageXResolution):
+        self.imageXResolution = imageXResolution
+    def get_imageYResolution(self):
+        return self.imageYResolution
+    def set_imageYResolution(self, imageYResolution):
+        self.imageYResolution = imageYResolution
+    def get_imageResolutionUnit(self):
+        return self.imageResolutionUnit
+    def set_imageResolutionUnit(self, imageResolutionUnit):
+        self.imageResolutionUnit = imageResolutionUnit
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_primaryLanguage(self):
+        return self.primaryLanguage
+    def set_primaryLanguage(self, primaryLanguage):
+        self.primaryLanguage = primaryLanguage
+    def get_secondaryLanguage(self):
+        return self.secondaryLanguage
+    def set_secondaryLanguage(self, secondaryLanguage):
+        self.secondaryLanguage = secondaryLanguage
+    def get_primaryScript(self):
+        return self.primaryScript
+    def set_primaryScript(self, primaryScript):
+        self.primaryScript = primaryScript
+    def get_secondaryScript(self):
+        return self.secondaryScript
+    def set_secondaryScript(self, secondaryScript):
+        self.secondaryScript = secondaryScript
+    def get_readingDirection(self):
+        return self.readingDirection
+    def set_readingDirection(self, readingDirection):
+        self.readingDirection = readingDirection
+    def get_textLineOrder(self):
+        return self.textLineOrder
+    def set_textLineOrder(self, textLineOrder):
+        self.textLineOrder = textLineOrder
+    def get_conf(self):
+        return self.conf
+    def set_conf(self, conf):
+        self.conf = conf
     def hasContent_(self):
         if (
             self.AlternativeImage or
@@ -1541,6 +1904,7 @@ class PageType(GeneratedsSuper):
             self.ReadingOrder is not None or
             self.Layers is not None or
             self.Relations is not None or
+            self.TextStyle is not None or
             self.UserDefined is not None or
             self.Labels or
             self.TextRegion or
@@ -1561,7 +1925,7 @@ class PageType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='PageType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='PageType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('PageType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1572,17 +1936,17 @@ class PageType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='PageType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PageType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='PageType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PageType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='PageType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='PageType'):
         if self.imageFilename is not None and 'imageFilename' not in already_processed:
             already_processed.add('imageFilename')
             outfile.write(' imageFilename=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.imageFilename), input_name='imageFilename')), ))
@@ -1628,55 +1992,57 @@ class PageType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='PageType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='PageType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
         if self.Border is not None:
-            self.Border.export(outfile, level, namespace_, name_='Border', pretty_print=pretty_print)
+            self.Border.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Border', pretty_print=pretty_print)
         if self.PrintSpace is not None:
-            self.PrintSpace.export(outfile, level, namespace_, name_='PrintSpace', pretty_print=pretty_print)
+            self.PrintSpace.export(outfile, level, namespaceprefix_, namespacedef_='', name_='PrintSpace', pretty_print=pretty_print)
         if self.ReadingOrder is not None:
-            self.ReadingOrder.export(outfile, level, namespace_, name_='ReadingOrder', pretty_print=pretty_print)
+            self.ReadingOrder.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ReadingOrder', pretty_print=pretty_print)
         if self.Layers is not None:
-            self.Layers.export(outfile, level, namespace_, name_='Layers', pretty_print=pretty_print)
+            self.Layers.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layers', pretty_print=pretty_print)
         if self.Relations is not None:
-            self.Relations.export(outfile, level, namespace_, name_='Relations', pretty_print=pretty_print)
+            self.Relations.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relations', pretty_print=pretty_print)
+        if self.TextStyle is not None:
+            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         for TextRegion_ in self.TextRegion:
-            TextRegion_.export(outfile, level, namespace_, name_='TextRegion', pretty_print=pretty_print)
+            TextRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextRegion', pretty_print=pretty_print)
         for ImageRegion_ in self.ImageRegion:
-            ImageRegion_.export(outfile, level, namespace_, name_='ImageRegion', pretty_print=pretty_print)
+            ImageRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ImageRegion', pretty_print=pretty_print)
         for LineDrawingRegion_ in self.LineDrawingRegion:
-            LineDrawingRegion_.export(outfile, level, namespace_, name_='LineDrawingRegion', pretty_print=pretty_print)
+            LineDrawingRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='LineDrawingRegion', pretty_print=pretty_print)
         for GraphicRegion_ in self.GraphicRegion:
-            GraphicRegion_.export(outfile, level, namespace_, name_='GraphicRegion', pretty_print=pretty_print)
+            GraphicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphicRegion', pretty_print=pretty_print)
         for TableRegion_ in self.TableRegion:
-            TableRegion_.export(outfile, level, namespace_, name_='TableRegion', pretty_print=pretty_print)
+            TableRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableRegion', pretty_print=pretty_print)
         for ChartRegion_ in self.ChartRegion:
-            ChartRegion_.export(outfile, level, namespace_, name_='ChartRegion', pretty_print=pretty_print)
+            ChartRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChartRegion', pretty_print=pretty_print)
         for MapRegion_ in self.MapRegion:
-            MapRegion_.export(outfile, level, namespace_, name_='MapRegion', pretty_print=pretty_print)
+            MapRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MapRegion', pretty_print=pretty_print)
         for SeparatorRegion_ in self.SeparatorRegion:
-            SeparatorRegion_.export(outfile, level, namespace_, name_='SeparatorRegion', pretty_print=pretty_print)
+            SeparatorRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SeparatorRegion', pretty_print=pretty_print)
         for MathsRegion_ in self.MathsRegion:
-            MathsRegion_.export(outfile, level, namespace_, name_='MathsRegion', pretty_print=pretty_print)
+            MathsRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MathsRegion', pretty_print=pretty_print)
         for ChemRegion_ in self.ChemRegion:
-            ChemRegion_.export(outfile, level, namespace_, name_='ChemRegion', pretty_print=pretty_print)
+            ChemRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChemRegion', pretty_print=pretty_print)
         for MusicRegion_ in self.MusicRegion:
-            MusicRegion_.export(outfile, level, namespace_, name_='MusicRegion', pretty_print=pretty_print)
+            MusicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MusicRegion', pretty_print=pretty_print)
         for AdvertRegion_ in self.AdvertRegion:
-            AdvertRegion_.export(outfile, level, namespace_, name_='AdvertRegion', pretty_print=pretty_print)
+            AdvertRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AdvertRegion', pretty_print=pretty_print)
         for NoiseRegion_ in self.NoiseRegion:
-            NoiseRegion_.export(outfile, level, namespace_, name_='NoiseRegion', pretty_print=pretty_print)
+            NoiseRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NoiseRegion', pretty_print=pretty_print)
         for UnknownRegion_ in self.UnknownRegion:
-            UnknownRegion_.export(outfile, level, namespace_, name_='UnknownRegion', pretty_print=pretty_print)
+            UnknownRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnknownRegion', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1762,112 +2128,117 @@ class PageType(GeneratedsSuper):
                 raise ValueError('Bad float/double attribute (conf): %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'AlternativeImage':
-            obj_ = AlternativeImageType.factory()
+            obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_)
             self.AlternativeImage.append(obj_)
             obj_.original_tagname_ = 'AlternativeImage'
         elif nodeName_ == 'Border':
-            obj_ = BorderType.factory()
+            obj_ = BorderType.factory(parent_object_=self)
             obj_.build(child_)
             self.Border = obj_
             obj_.original_tagname_ = 'Border'
         elif nodeName_ == 'PrintSpace':
-            obj_ = PrintSpaceType.factory()
+            obj_ = PrintSpaceType.factory(parent_object_=self)
             obj_.build(child_)
             self.PrintSpace = obj_
             obj_.original_tagname_ = 'PrintSpace'
         elif nodeName_ == 'ReadingOrder':
-            obj_ = ReadingOrderType.factory()
+            obj_ = ReadingOrderType.factory(parent_object_=self)
             obj_.build(child_)
             self.ReadingOrder = obj_
             obj_.original_tagname_ = 'ReadingOrder'
         elif nodeName_ == 'Layers':
-            obj_ = LayersType.factory()
+            obj_ = LayersType.factory(parent_object_=self)
             obj_.build(child_)
             self.Layers = obj_
             obj_.original_tagname_ = 'Layers'
         elif nodeName_ == 'Relations':
-            obj_ = RelationsType.factory()
+            obj_ = RelationsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Relations = obj_
             obj_.original_tagname_ = 'Relations'
+        elif nodeName_ == 'TextStyle':
+            obj_ = TextStyleType.factory(parent_object_=self)
+            obj_.build(child_)
+            self.TextStyle = obj_
+            obj_.original_tagname_ = 'TextStyle'
         elif nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'TextRegion':
-            obj_ = TextRegionType.factory()
+            obj_ = TextRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextRegion.append(obj_)
             obj_.original_tagname_ = 'TextRegion'
         elif nodeName_ == 'ImageRegion':
-            obj_ = ImageRegionType.factory()
+            obj_ = ImageRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.ImageRegion.append(obj_)
             obj_.original_tagname_ = 'ImageRegion'
         elif nodeName_ == 'LineDrawingRegion':
-            obj_ = LineDrawingRegionType.factory()
+            obj_ = LineDrawingRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.LineDrawingRegion.append(obj_)
             obj_.original_tagname_ = 'LineDrawingRegion'
         elif nodeName_ == 'GraphicRegion':
-            obj_ = GraphicRegionType.factory()
+            obj_ = GraphicRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.GraphicRegion.append(obj_)
             obj_.original_tagname_ = 'GraphicRegion'
         elif nodeName_ == 'TableRegion':
-            obj_ = TableRegionType.factory()
+            obj_ = TableRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.TableRegion.append(obj_)
             obj_.original_tagname_ = 'TableRegion'
         elif nodeName_ == 'ChartRegion':
-            obj_ = ChartRegionType.factory()
+            obj_ = ChartRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.ChartRegion.append(obj_)
             obj_.original_tagname_ = 'ChartRegion'
         elif nodeName_ == 'MapRegion':
-            obj_ = MapRegionType.factory()
+            obj_ = MapRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.MapRegion.append(obj_)
             obj_.original_tagname_ = 'MapRegion'
         elif nodeName_ == 'SeparatorRegion':
-            obj_ = SeparatorRegionType.factory()
+            obj_ = SeparatorRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.SeparatorRegion.append(obj_)
             obj_.original_tagname_ = 'SeparatorRegion'
         elif nodeName_ == 'MathsRegion':
-            obj_ = MathsRegionType.factory()
+            obj_ = MathsRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.MathsRegion.append(obj_)
             obj_.original_tagname_ = 'MathsRegion'
         elif nodeName_ == 'ChemRegion':
-            obj_ = ChemRegionType.factory()
+            obj_ = ChemRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.ChemRegion.append(obj_)
             obj_.original_tagname_ = 'ChemRegion'
         elif nodeName_ == 'MusicRegion':
-            obj_ = MusicRegionType.factory()
+            obj_ = MusicRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.MusicRegion.append(obj_)
             obj_.original_tagname_ = 'MusicRegion'
         elif nodeName_ == 'AdvertRegion':
-            obj_ = AdvertRegionType.factory()
+            obj_ = AdvertRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.AdvertRegion.append(obj_)
             obj_.original_tagname_ = 'AdvertRegion'
         elif nodeName_ == 'NoiseRegion':
-            obj_ = NoiseRegionType.factory()
+            obj_ = NoiseRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.NoiseRegion.append(obj_)
             obj_.original_tagname_ = 'NoiseRegion'
         elif nodeName_ == 'UnknownRegion':
-            obj_ = UnknownRegionType.factory()
+            obj_ = UnknownRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.UnknownRegion.append(obj_)
             obj_.original_tagname_ = 'UnknownRegion'
@@ -1879,8 +2250,9 @@ class CoordsType(GeneratedsSuper):
     and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, points=None, conf=None):
+    def __init__(self, points=None, conf=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.points = _cast(None, points)
         self.conf = _cast(float, conf)
     def factory(*args_, **kwargs_):
@@ -1894,10 +2266,14 @@ class CoordsType(GeneratedsSuper):
         else:
             return CoordsType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_points(self): return self.points
-    def set_points(self, points): self.points = points
-    def get_conf(self): return self.conf
-    def set_conf(self, conf): self.conf = conf
+    def get_points(self):
+        return self.points
+    def set_points(self, points):
+        self.points = points
+    def get_conf(self):
+        return self.conf
+    def set_conf(self, conf):
+        self.conf = conf
     def hasContent_(self):
         if (
 
@@ -1905,7 +2281,7 @@ class CoordsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='CoordsType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='CoordsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('CoordsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1916,23 +2292,23 @@ class CoordsType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='CoordsType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CoordsType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='CoordsType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='CoordsType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='CoordsType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='CoordsType'):
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (quote_attrib(self.points), ))
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='CoordsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='CoordsType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -1967,8 +2343,9 @@ class TextLineType(GeneratedsSuper):
     line within the parent text region."""
     subclass = None
     superclass = None
-    def __init__(self, id=None, primaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, index=None, AlternativeImage=None, Coords=None, Baseline=None, Word=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
+    def __init__(self, id=None, primaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, index=None, AlternativeImage=None, Coords=None, Baseline=None, Word=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.primaryLanguage = _cast(None, primaryLanguage)
         self.primaryScript = _cast(None, primaryScript)
@@ -2009,52 +2386,106 @@ class TextLineType(GeneratedsSuper):
         else:
             return TextLineType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_AlternativeImage(self): return self.AlternativeImage
-    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
-    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
-    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
-    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
-    def get_Coords(self): return self.Coords
-    def set_Coords(self, Coords): self.Coords = Coords
-    def get_Baseline(self): return self.Baseline
-    def set_Baseline(self, Baseline): self.Baseline = Baseline
-    def get_Word(self): return self.Word
-    def set_Word(self, Word): self.Word = Word
-    def add_Word(self, value): self.Word.append(value)
-    def insert_Word_at(self, index, value): self.Word.insert(index, value)
-    def replace_Word_at(self, index, value): self.Word[index] = value
-    def get_TextEquiv(self): return self.TextEquiv
-    def set_TextEquiv(self, TextEquiv): self.TextEquiv = TextEquiv
-    def add_TextEquiv(self, value): self.TextEquiv.append(value)
-    def insert_TextEquiv_at(self, index, value): self.TextEquiv.insert(index, value)
-    def replace_TextEquiv_at(self, index, value): self.TextEquiv[index] = value
-    def get_TextStyle(self): return self.TextStyle
-    def set_TextStyle(self, TextStyle): self.TextStyle = TextStyle
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_primaryLanguage(self): return self.primaryLanguage
-    def set_primaryLanguage(self, primaryLanguage): self.primaryLanguage = primaryLanguage
-    def get_primaryScript(self): return self.primaryScript
-    def set_primaryScript(self, primaryScript): self.primaryScript = primaryScript
-    def get_secondaryScript(self): return self.secondaryScript
-    def set_secondaryScript(self, secondaryScript): self.secondaryScript = secondaryScript
-    def get_readingDirection(self): return self.readingDirection
-    def set_readingDirection(self, readingDirection): self.readingDirection = readingDirection
-    def get_production(self): return self.production
-    def set_production(self, production): self.production = production
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
-    def get_index(self): return self.index
-    def set_index(self, index): self.index = index
+    def get_AlternativeImage(self):
+        return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage):
+        self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value):
+        self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value):
+        self.AlternativeImage[index] = value
+    def get_Coords(self):
+        return self.Coords
+    def set_Coords(self, Coords):
+        self.Coords = Coords
+    def get_Baseline(self):
+        return self.Baseline
+    def set_Baseline(self, Baseline):
+        self.Baseline = Baseline
+    def get_Word(self):
+        return self.Word
+    def set_Word(self, Word):
+        self.Word = Word
+    def add_Word(self, value):
+        self.Word.append(value)
+    def add_Word(self, value):
+        self.Word.append(value)
+    def insert_Word_at(self, index, value):
+        self.Word.insert(index, value)
+    def replace_Word_at(self, index, value):
+        self.Word[index] = value
+    def get_TextEquiv(self):
+        return self.TextEquiv
+    def set_TextEquiv(self, TextEquiv):
+        self.TextEquiv = TextEquiv
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def insert_TextEquiv_at(self, index, value):
+        self.TextEquiv.insert(index, value)
+    def replace_TextEquiv_at(self, index, value):
+        self.TextEquiv[index] = value
+    def get_TextStyle(self):
+        return self.TextStyle
+    def set_TextStyle(self, TextStyle):
+        self.TextStyle = TextStyle
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_primaryLanguage(self):
+        return self.primaryLanguage
+    def set_primaryLanguage(self, primaryLanguage):
+        self.primaryLanguage = primaryLanguage
+    def get_primaryScript(self):
+        return self.primaryScript
+    def set_primaryScript(self, primaryScript):
+        self.primaryScript = primaryScript
+    def get_secondaryScript(self):
+        return self.secondaryScript
+    def set_secondaryScript(self, secondaryScript):
+        self.secondaryScript = secondaryScript
+    def get_readingDirection(self):
+        return self.readingDirection
+    def set_readingDirection(self, readingDirection):
+        self.readingDirection = readingDirection
+    def get_production(self):
+        return self.production
+    def set_production(self, production):
+        self.production = production
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
+    def get_index(self):
+        return self.index
+    def set_index(self, index):
+        self.index = index
     def hasContent_(self):
         if (
             self.AlternativeImage or
@@ -2069,7 +2500,7 @@ class TextLineType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='TextLineType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextLineType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextLineType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2080,17 +2511,17 @@ class TextLineType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='TextLineType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextLineType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='TextLineType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextLineType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='TextLineType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='TextLineType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -2118,27 +2549,27 @@ class TextLineType(GeneratedsSuper):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='TextLineType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextLineType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
-            self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
+            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
         if self.Baseline is not None:
-            self.Baseline.export(outfile, level, namespace_, name_='Baseline', pretty_print=pretty_print)
+            self.Baseline.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Baseline', pretty_print=pretty_print)
         for Word_ in self.Word:
-            Word_.export(outfile, level, namespace_, name_='Word', pretty_print=pretty_print)
+            Word_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Word', pretty_print=pretty_print)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.export(outfile, level, namespace_, name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
         if self.TextStyle is not None:
-            self.TextStyle.export(outfile, level, namespace_, name_='TextStyle', pretty_print=pretty_print)
+            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2188,42 +2619,42 @@ class TextLineType(GeneratedsSuper):
                 raise_parse_error(node, 'Bad integer attribute: %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'AlternativeImage':
-            obj_ = AlternativeImageType.factory()
+            obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_)
             self.AlternativeImage.append(obj_)
             obj_.original_tagname_ = 'AlternativeImage'
         elif nodeName_ == 'Coords':
-            obj_ = CoordsType.factory()
+            obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
         elif nodeName_ == 'Baseline':
-            obj_ = BaselineType.factory()
+            obj_ = BaselineType.factory(parent_object_=self)
             obj_.build(child_)
             self.Baseline = obj_
             obj_.original_tagname_ = 'Baseline'
         elif nodeName_ == 'Word':
-            obj_ = WordType.factory()
+            obj_ = WordType.factory(parent_object_=self)
             obj_.build(child_)
             self.Word.append(obj_)
             obj_.original_tagname_ = 'Word'
         elif nodeName_ == 'TextEquiv':
-            obj_ = TextEquivType.factory()
+            obj_ = TextEquivType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
         elif nodeName_ == 'TextStyle':
-            obj_ = TextStyleType.factory()
+            obj_ = TextStyleType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextStyle = obj_
             obj_.original_tagname_ = 'TextStyle'
         elif nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
@@ -2238,8 +2669,9 @@ class WordType(GeneratedsSuper):
     text line and/or text region. For generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, language=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Glyph=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
+    def __init__(self, id=None, language=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Glyph=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.language = _cast(None, language)
         self.primaryScript = _cast(None, primaryScript)
@@ -2278,48 +2710,98 @@ class WordType(GeneratedsSuper):
         else:
             return WordType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_AlternativeImage(self): return self.AlternativeImage
-    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
-    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
-    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
-    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
-    def get_Coords(self): return self.Coords
-    def set_Coords(self, Coords): self.Coords = Coords
-    def get_Glyph(self): return self.Glyph
-    def set_Glyph(self, Glyph): self.Glyph = Glyph
-    def add_Glyph(self, value): self.Glyph.append(value)
-    def insert_Glyph_at(self, index, value): self.Glyph.insert(index, value)
-    def replace_Glyph_at(self, index, value): self.Glyph[index] = value
-    def get_TextEquiv(self): return self.TextEquiv
-    def set_TextEquiv(self, TextEquiv): self.TextEquiv = TextEquiv
-    def add_TextEquiv(self, value): self.TextEquiv.append(value)
-    def insert_TextEquiv_at(self, index, value): self.TextEquiv.insert(index, value)
-    def replace_TextEquiv_at(self, index, value): self.TextEquiv[index] = value
-    def get_TextStyle(self): return self.TextStyle
-    def set_TextStyle(self, TextStyle): self.TextStyle = TextStyle
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_language(self): return self.language
-    def set_language(self, language): self.language = language
-    def get_primaryScript(self): return self.primaryScript
-    def set_primaryScript(self, primaryScript): self.primaryScript = primaryScript
-    def get_secondaryScript(self): return self.secondaryScript
-    def set_secondaryScript(self, secondaryScript): self.secondaryScript = secondaryScript
-    def get_readingDirection(self): return self.readingDirection
-    def set_readingDirection(self, readingDirection): self.readingDirection = readingDirection
-    def get_production(self): return self.production
-    def set_production(self, production): self.production = production
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_AlternativeImage(self):
+        return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage):
+        self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value):
+        self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value):
+        self.AlternativeImage[index] = value
+    def get_Coords(self):
+        return self.Coords
+    def set_Coords(self, Coords):
+        self.Coords = Coords
+    def get_Glyph(self):
+        return self.Glyph
+    def set_Glyph(self, Glyph):
+        self.Glyph = Glyph
+    def add_Glyph(self, value):
+        self.Glyph.append(value)
+    def add_Glyph(self, value):
+        self.Glyph.append(value)
+    def insert_Glyph_at(self, index, value):
+        self.Glyph.insert(index, value)
+    def replace_Glyph_at(self, index, value):
+        self.Glyph[index] = value
+    def get_TextEquiv(self):
+        return self.TextEquiv
+    def set_TextEquiv(self, TextEquiv):
+        self.TextEquiv = TextEquiv
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def insert_TextEquiv_at(self, index, value):
+        self.TextEquiv.insert(index, value)
+    def replace_TextEquiv_at(self, index, value):
+        self.TextEquiv[index] = value
+    def get_TextStyle(self):
+        return self.TextStyle
+    def set_TextStyle(self, TextStyle):
+        self.TextStyle = TextStyle
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_language(self):
+        return self.language
+    def set_language(self, language):
+        self.language = language
+    def get_primaryScript(self):
+        return self.primaryScript
+    def set_primaryScript(self, primaryScript):
+        self.primaryScript = primaryScript
+    def get_secondaryScript(self):
+        return self.secondaryScript
+    def set_secondaryScript(self, secondaryScript):
+        self.secondaryScript = secondaryScript
+    def get_readingDirection(self):
+        return self.readingDirection
+    def set_readingDirection(self, readingDirection):
+        self.readingDirection = readingDirection
+    def get_production(self):
+        return self.production
+    def set_production(self, production):
+        self.production = production
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.AlternativeImage or
@@ -2333,7 +2815,7 @@ class WordType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='WordType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='WordType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('WordType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2344,17 +2826,17 @@ class WordType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='WordType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='WordType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='WordType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='WordType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='WordType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='WordType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -2379,25 +2861,25 @@ class WordType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='WordType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='WordType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
-            self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
+            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
         for Glyph_ in self.Glyph:
-            Glyph_.export(outfile, level, namespace_, name_='Glyph', pretty_print=pretty_print)
+            Glyph_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Glyph', pretty_print=pretty_print)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.export(outfile, level, namespace_, name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
         if self.TextStyle is not None:
-            self.TextStyle.export(outfile, level, namespace_, name_='TextStyle', pretty_print=pretty_print)
+            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2440,37 +2922,37 @@ class WordType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'AlternativeImage':
-            obj_ = AlternativeImageType.factory()
+            obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_)
             self.AlternativeImage.append(obj_)
             obj_.original_tagname_ = 'AlternativeImage'
         elif nodeName_ == 'Coords':
-            obj_ = CoordsType.factory()
+            obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
         elif nodeName_ == 'Glyph':
-            obj_ = GlyphType.factory()
+            obj_ = GlyphType.factory(parent_object_=self)
             obj_.build(child_)
             self.Glyph.append(obj_)
             obj_.original_tagname_ = 'Glyph'
         elif nodeName_ == 'TextEquiv':
-            obj_ = TextEquivType.factory()
+            obj_ = TextEquivType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
         elif nodeName_ == 'TextStyle':
-            obj_ = TextStyleType.factory()
+            obj_ = TextStyleType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextStyle = obj_
             obj_.original_tagname_ = 'TextStyle'
         elif nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
@@ -2482,8 +2964,9 @@ class GlyphType(GeneratedsSuper):
     the parent word / text line / text region. For generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, ligature=None, symbol=None, script=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Graphemes=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None):
+    def __init__(self, id=None, ligature=None, symbol=None, script=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Graphemes=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.ligature = _cast(bool, ligature)
         self.symbol = _cast(bool, symbol)
@@ -2518,43 +3001,86 @@ class GlyphType(GeneratedsSuper):
         else:
             return GlyphType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_AlternativeImage(self): return self.AlternativeImage
-    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
-    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
-    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
-    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
-    def get_Coords(self): return self.Coords
-    def set_Coords(self, Coords): self.Coords = Coords
-    def get_Graphemes(self): return self.Graphemes
-    def set_Graphemes(self, Graphemes): self.Graphemes = Graphemes
-    def get_TextEquiv(self): return self.TextEquiv
-    def set_TextEquiv(self, TextEquiv): self.TextEquiv = TextEquiv
-    def add_TextEquiv(self, value): self.TextEquiv.append(value)
-    def insert_TextEquiv_at(self, index, value): self.TextEquiv.insert(index, value)
-    def replace_TextEquiv_at(self, index, value): self.TextEquiv[index] = value
-    def get_TextStyle(self): return self.TextStyle
-    def set_TextStyle(self, TextStyle): self.TextStyle = TextStyle
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_ligature(self): return self.ligature
-    def set_ligature(self, ligature): self.ligature = ligature
-    def get_symbol(self): return self.symbol
-    def set_symbol(self, symbol): self.symbol = symbol
-    def get_script(self): return self.script
-    def set_script(self, script): self.script = script
-    def get_production(self): return self.production
-    def set_production(self, production): self.production = production
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_AlternativeImage(self):
+        return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage):
+        self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value):
+        self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value):
+        self.AlternativeImage[index] = value
+    def get_Coords(self):
+        return self.Coords
+    def set_Coords(self, Coords):
+        self.Coords = Coords
+    def get_Graphemes(self):
+        return self.Graphemes
+    def set_Graphemes(self, Graphemes):
+        self.Graphemes = Graphemes
+    def get_TextEquiv(self):
+        return self.TextEquiv
+    def set_TextEquiv(self, TextEquiv):
+        self.TextEquiv = TextEquiv
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def insert_TextEquiv_at(self, index, value):
+        self.TextEquiv.insert(index, value)
+    def replace_TextEquiv_at(self, index, value):
+        self.TextEquiv[index] = value
+    def get_TextStyle(self):
+        return self.TextStyle
+    def set_TextStyle(self, TextStyle):
+        self.TextStyle = TextStyle
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_ligature(self):
+        return self.ligature
+    def set_ligature(self, ligature):
+        self.ligature = ligature
+    def get_symbol(self):
+        return self.symbol
+    def set_symbol(self, symbol):
+        self.symbol = symbol
+    def get_script(self):
+        return self.script
+    def set_script(self, script):
+        self.script = script
+    def get_production(self):
+        return self.production
+    def set_production(self, production):
+        self.production = production
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.AlternativeImage or
@@ -2568,7 +3094,7 @@ class GlyphType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GlyphType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GlyphType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GlyphType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2579,17 +3105,17 @@ class GlyphType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GlyphType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GlyphType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GlyphType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GlyphType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GlyphType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GlyphType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -2611,25 +3137,25 @@ class GlyphType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GlyphType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GlyphType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
-            self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
+            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
         if self.Graphemes is not None:
-            self.Graphemes.export(outfile, level, namespace_, name_='Graphemes', pretty_print=pretty_print)
+            self.Graphemes.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Graphemes', pretty_print=pretty_print)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.export(outfile, level, namespace_, name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
         if self.TextStyle is not None:
-            self.TextStyle.export(outfile, level, namespace_, name_='TextStyle', pretty_print=pretty_print)
+            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2678,37 +3204,37 @@ class GlyphType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'AlternativeImage':
-            obj_ = AlternativeImageType.factory()
+            obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_)
             self.AlternativeImage.append(obj_)
             obj_.original_tagname_ = 'AlternativeImage'
         elif nodeName_ == 'Coords':
-            obj_ = CoordsType.factory()
+            obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
         elif nodeName_ == 'Graphemes':
-            obj_ = GraphemesType.factory()
+            obj_ = GraphemesType.factory(parent_object_=self)
             obj_.build(child_)
             self.Graphemes = obj_
             obj_.original_tagname_ = 'Graphemes'
         elif nodeName_ == 'TextEquiv':
-            obj_ = TextEquivType.factory()
+            obj_ = TextEquivType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
         elif nodeName_ == 'TextStyle':
-            obj_ = TextStyleType.factory()
+            obj_ = TextStyleType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextStyle = obj_
             obj_.original_tagname_ = 'TextStyle'
         elif nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
@@ -2725,8 +3251,9 @@ class TextEquivType(GeneratedsSuper):
     regular expression, for instance."""
     subclass = None
     superclass = None
-    def __init__(self, index=None, conf=None, dataType=None, dataTypeDetails=None, comments=None, PlainText=None, Unicode=None):
+    def __init__(self, index=None, conf=None, dataType=None, dataTypeDetails=None, comments=None, PlainText=None, Unicode=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.index = _cast(int, index)
         self.conf = _cast(float, conf)
         self.dataType = _cast(None, dataType)
@@ -2745,20 +3272,34 @@ class TextEquivType(GeneratedsSuper):
         else:
             return TextEquivType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_PlainText(self): return self.PlainText
-    def set_PlainText(self, PlainText): self.PlainText = PlainText
-    def get_Unicode(self): return self.Unicode
-    def set_Unicode(self, Unicode): self.Unicode = Unicode
-    def get_index(self): return self.index
-    def set_index(self, index): self.index = index
-    def get_conf(self): return self.conf
-    def set_conf(self, conf): self.conf = conf
-    def get_dataType(self): return self.dataType
-    def set_dataType(self, dataType): self.dataType = dataType
-    def get_dataTypeDetails(self): return self.dataTypeDetails
-    def set_dataTypeDetails(self, dataTypeDetails): self.dataTypeDetails = dataTypeDetails
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_PlainText(self):
+        return self.PlainText
+    def set_PlainText(self, PlainText):
+        self.PlainText = PlainText
+    def get_Unicode(self):
+        return self.Unicode
+    def set_Unicode(self, Unicode):
+        self.Unicode = Unicode
+    def get_index(self):
+        return self.index
+    def set_index(self, index):
+        self.index = index
+    def get_conf(self):
+        return self.conf
+    def set_conf(self, conf):
+        self.conf = conf
+    def get_dataType(self):
+        return self.dataType
+    def set_dataType(self, dataType):
+        self.dataType = dataType
+    def get_dataTypeDetails(self):
+        return self.dataTypeDetails
+    def set_dataTypeDetails(self, dataTypeDetails):
+        self.dataTypeDetails = dataTypeDetails
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.PlainText is not None or
@@ -2767,7 +3308,7 @@ class TextEquivType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='TextEquivType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextEquivType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextEquivType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2778,17 +3319,17 @@ class TextEquivType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='TextEquivType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextEquivType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='TextEquivType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextEquivType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='TextEquivType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='TextEquivType'):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
@@ -2804,17 +3345,17 @@ class TextEquivType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='TextEquivType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextEquivType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.PlainText is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<pc:PlainText>%s</pc:PlainText>%s' % (self.gds_encode(self.gds_format_string(quote_xml(self.PlainText), input_name='PlainText')), eol_))
+            outfile.write('<%sPlainText>%s</%sPlainText>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.PlainText), input_name='PlainText')), namespaceprefix_ , eol_))
         if self.Unicode is not None:
             showIndent(outfile, level, pretty_print)
-            outfile.write('<pc:Unicode>%s</pc:Unicode>%s' % (self.gds_encode(self.gds_format_string(quote_xml(self.Unicode), input_name='Unicode')), eol_))
+            outfile.write('<%sUnicode>%s</%sUnicode>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Unicode), input_name='Unicode')), namespaceprefix_ , eol_))
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2865,8 +3406,9 @@ class GridType(GeneratedsSuper):
     """Matrix of grid points defining the table grid on the page"""
     subclass = None
     superclass = None
-    def __init__(self, GridPoints=None):
+    def __init__(self, GridPoints=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         if GridPoints is None:
             self.GridPoints = []
         else:
@@ -2882,11 +3424,18 @@ class GridType(GeneratedsSuper):
         else:
             return GridType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_GridPoints(self): return self.GridPoints
-    def set_GridPoints(self, GridPoints): self.GridPoints = GridPoints
-    def add_GridPoints(self, value): self.GridPoints.append(value)
-    def insert_GridPoints_at(self, index, value): self.GridPoints.insert(index, value)
-    def replace_GridPoints_at(self, index, value): self.GridPoints[index] = value
+    def get_GridPoints(self):
+        return self.GridPoints
+    def set_GridPoints(self, GridPoints):
+        self.GridPoints = GridPoints
+    def add_GridPoints(self, value):
+        self.GridPoints.append(value)
+    def add_GridPoints(self, value):
+        self.GridPoints.append(value)
+    def insert_GridPoints_at(self, index, value):
+        self.GridPoints.insert(index, value)
+    def replace_GridPoints_at(self, index, value):
+        self.GridPoints[index] = value
     def hasContent_(self):
         if (
             self.GridPoints
@@ -2894,7 +3443,7 @@ class GridType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GridType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GridType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2905,25 +3454,25 @@ class GridType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GridType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GridType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GridType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GridType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GridType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GridType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for GridPoints_ in self.GridPoints:
-            GridPoints_.export(outfile, level, namespace_, name_='GridPoints', pretty_print=pretty_print)
+            GridPoints_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GridPoints', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2935,7 +3484,7 @@ class GridType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'GridPoints':
-            obj_ = GridPointsType.factory()
+            obj_ = GridPointsType.factory(parent_object_=self)
             obj_.build(child_)
             self.GridPoints.append(obj_)
             obj_.original_tagname_ = 'GridPoints'
@@ -2946,8 +3495,9 @@ class GridPointsType(GeneratedsSuper):
     """Points with x,y coordinates. The grid row index"""
     subclass = None
     superclass = None
-    def __init__(self, index=None, points=None):
+    def __init__(self, index=None, points=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.index = _cast(int, index)
         self.points = _cast(None, points)
     def factory(*args_, **kwargs_):
@@ -2961,10 +3511,14 @@ class GridPointsType(GeneratedsSuper):
         else:
             return GridPointsType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_index(self): return self.index
-    def set_index(self, index): self.index = index
-    def get_points(self): return self.points
-    def set_points(self, points): self.points = points
+    def get_index(self):
+        return self.index
+    def set_index(self, index):
+        self.index = index
+    def get_points(self):
+        return self.points
+    def set_points(self, points):
+        self.points = points
     def hasContent_(self):
         if (
 
@@ -2972,7 +3526,7 @@ class GridPointsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GridPointsType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GridPointsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridPointsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2983,23 +3537,23 @@ class GridPointsType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GridPointsType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridPointsType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GridPointsType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridPointsType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GridPointsType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GridPointsType'):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (quote_attrib(self.points), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -3034,8 +3588,9 @@ class PrintSpaceType(GeneratedsSuper):
     marginals, signature mark, preview words."""
     subclass = None
     superclass = None
-    def __init__(self, Coords=None):
+    def __init__(self, Coords=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.Coords = Coords
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -3048,8 +3603,10 @@ class PrintSpaceType(GeneratedsSuper):
         else:
             return PrintSpaceType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Coords(self): return self.Coords
-    def set_Coords(self, Coords): self.Coords = Coords
+    def get_Coords(self):
+        return self.Coords
+    def set_Coords(self, Coords):
+        self.Coords = Coords
     def hasContent_(self):
         if (
             self.Coords is not None
@@ -3057,7 +3614,7 @@ class PrintSpaceType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='PrintSpaceType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='PrintSpaceType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('PrintSpaceType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3068,25 +3625,25 @@ class PrintSpaceType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='PrintSpaceType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PrintSpaceType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='PrintSpaceType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PrintSpaceType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='PrintSpaceType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='PrintSpaceType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='PrintSpaceType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='PrintSpaceType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.Coords is not None:
-            self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
+            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3098,7 +3655,7 @@ class PrintSpaceType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Coords':
-            obj_ = CoordsType.factory()
+            obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
@@ -3112,8 +3669,9 @@ class ReadingOrderType(GeneratedsSuper):
     (between 0 and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, conf=None, OrderedGroup=None, UnorderedGroup=None):
+    def __init__(self, conf=None, OrderedGroup=None, UnorderedGroup=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.conf = _cast(float, conf)
         self.OrderedGroup = OrderedGroup
         self.UnorderedGroup = UnorderedGroup
@@ -3128,12 +3686,18 @@ class ReadingOrderType(GeneratedsSuper):
         else:
             return ReadingOrderType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_OrderedGroup(self): return self.OrderedGroup
-    def set_OrderedGroup(self, OrderedGroup): self.OrderedGroup = OrderedGroup
-    def get_UnorderedGroup(self): return self.UnorderedGroup
-    def set_UnorderedGroup(self, UnorderedGroup): self.UnorderedGroup = UnorderedGroup
-    def get_conf(self): return self.conf
-    def set_conf(self, conf): self.conf = conf
+    def get_OrderedGroup(self):
+        return self.OrderedGroup
+    def set_OrderedGroup(self, OrderedGroup):
+        self.OrderedGroup = OrderedGroup
+    def get_UnorderedGroup(self):
+        return self.UnorderedGroup
+    def set_UnorderedGroup(self, UnorderedGroup):
+        self.UnorderedGroup = UnorderedGroup
+    def get_conf(self):
+        return self.conf
+    def set_conf(self, conf):
+        self.conf = conf
     def hasContent_(self):
         if (
             self.OrderedGroup is not None or
@@ -3142,7 +3706,7 @@ class ReadingOrderType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='ReadingOrderType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ReadingOrderType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ReadingOrderType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3153,29 +3717,29 @@ class ReadingOrderType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='ReadingOrderType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ReadingOrderType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='ReadingOrderType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ReadingOrderType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='ReadingOrderType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='ReadingOrderType'):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.OrderedGroup is not None:
-            self.OrderedGroup.export(outfile, level, namespace_, name_='OrderedGroup', pretty_print=pretty_print)
+            self.OrderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
         if self.UnorderedGroup is not None:
-            self.UnorderedGroup.export(outfile, level, namespace_, name_='UnorderedGroup', pretty_print=pretty_print)
+            self.UnorderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3193,12 +3757,12 @@ class ReadingOrderType(GeneratedsSuper):
                 raise ValueError('Bad float/double attribute (conf): %s' % exp)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'OrderedGroup':
-            obj_ = OrderedGroupType.factory()
+            obj_ = OrderedGroupType.factory(parent_object_=self)
             obj_.build(child_)
             self.OrderedGroup = obj_
             obj_.original_tagname_ = 'OrderedGroup'
         elif nodeName_ == 'UnorderedGroup':
-            obj_ = UnorderedGroupType.factory()
+            obj_ = UnorderedGroupType.factory(parent_object_=self)
             obj_.build(child_)
             self.UnorderedGroup = obj_
             obj_.original_tagname_ = 'UnorderedGroup'
@@ -3210,8 +3774,9 @@ class RegionRefIndexedType(GeneratedsSuper):
     current hierarchy level."""
     subclass = None
     superclass = None
-    def __init__(self, index=None, regionRef=None):
+    def __init__(self, index=None, regionRef=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.index = _cast(int, index)
         self.regionRef = _cast(None, regionRef)
     def factory(*args_, **kwargs_):
@@ -3225,10 +3790,14 @@ class RegionRefIndexedType(GeneratedsSuper):
         else:
             return RegionRefIndexedType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_index(self): return self.index
-    def set_index(self, index): self.index = index
-    def get_regionRef(self): return self.regionRef
-    def set_regionRef(self, regionRef): self.regionRef = regionRef
+    def get_index(self):
+        return self.index
+    def set_index(self, index):
+        self.index = index
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
     def hasContent_(self):
         if (
 
@@ -3236,7 +3805,7 @@ class RegionRefIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='RegionRefIndexedType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RegionRefIndexedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefIndexedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3247,23 +3816,23 @@ class RegionRefIndexedType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='RegionRefIndexedType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefIndexedType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='RegionRefIndexedType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefIndexedType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='RegionRefIndexedType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='RegionRefIndexedType'):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
         if self.regionRef is not None and 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -3298,8 +3867,9 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     (from previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None):
+    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
         self.index = _cast(int, index)
@@ -3336,44 +3906,90 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         else:
             return OrderedGroupIndexedType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_RegionRefIndexed(self): return self.RegionRefIndexed
-    def set_RegionRefIndexed(self, RegionRefIndexed): self.RegionRefIndexed = RegionRefIndexed
-    def add_RegionRefIndexed(self, value): self.RegionRefIndexed.append(value)
-    def insert_RegionRefIndexed_at(self, index, value): self.RegionRefIndexed.insert(index, value)
-    def replace_RegionRefIndexed_at(self, index, value): self.RegionRefIndexed[index] = value
-    def get_OrderedGroupIndexed(self): return self.OrderedGroupIndexed
-    def set_OrderedGroupIndexed(self, OrderedGroupIndexed): self.OrderedGroupIndexed = OrderedGroupIndexed
-    def add_OrderedGroupIndexed(self, value): self.OrderedGroupIndexed.append(value)
-    def insert_OrderedGroupIndexed_at(self, index, value): self.OrderedGroupIndexed.insert(index, value)
-    def replace_OrderedGroupIndexed_at(self, index, value): self.OrderedGroupIndexed[index] = value
-    def get_UnorderedGroupIndexed(self): return self.UnorderedGroupIndexed
-    def set_UnorderedGroupIndexed(self, UnorderedGroupIndexed): self.UnorderedGroupIndexed = UnorderedGroupIndexed
-    def add_UnorderedGroupIndexed(self, value): self.UnorderedGroupIndexed.append(value)
-    def insert_UnorderedGroupIndexed_at(self, index, value): self.UnorderedGroupIndexed.insert(index, value)
-    def replace_UnorderedGroupIndexed_at(self, index, value): self.UnorderedGroupIndexed[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_regionRef(self): return self.regionRef
-    def set_regionRef(self, regionRef): self.regionRef = regionRef
-    def get_index(self): return self.index
-    def set_index(self, index): self.index = index
-    def get_caption(self): return self.caption
-    def set_caption(self, caption): self.caption = caption
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_continuation(self): return self.continuation
-    def set_continuation(self, continuation): self.continuation = continuation
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_RegionRefIndexed(self):
+        return self.RegionRefIndexed
+    def set_RegionRefIndexed(self, RegionRefIndexed):
+        self.RegionRefIndexed = RegionRefIndexed
+    def add_RegionRefIndexed(self, value):
+        self.RegionRefIndexed.append(value)
+    def add_RegionRefIndexed(self, value):
+        self.RegionRefIndexed.append(value)
+    def insert_RegionRefIndexed_at(self, index, value):
+        self.RegionRefIndexed.insert(index, value)
+    def replace_RegionRefIndexed_at(self, index, value):
+        self.RegionRefIndexed[index] = value
+    def get_OrderedGroupIndexed(self):
+        return self.OrderedGroupIndexed
+    def set_OrderedGroupIndexed(self, OrderedGroupIndexed):
+        self.OrderedGroupIndexed = OrderedGroupIndexed
+    def add_OrderedGroupIndexed(self, value):
+        self.OrderedGroupIndexed.append(value)
+    def add_OrderedGroupIndexed(self, value):
+        self.OrderedGroupIndexed.append(value)
+    def insert_OrderedGroupIndexed_at(self, index, value):
+        self.OrderedGroupIndexed.insert(index, value)
+    def replace_OrderedGroupIndexed_at(self, index, value):
+        self.OrderedGroupIndexed[index] = value
+    def get_UnorderedGroupIndexed(self):
+        return self.UnorderedGroupIndexed
+    def set_UnorderedGroupIndexed(self, UnorderedGroupIndexed):
+        self.UnorderedGroupIndexed = UnorderedGroupIndexed
+    def add_UnorderedGroupIndexed(self, value):
+        self.UnorderedGroupIndexed.append(value)
+    def add_UnorderedGroupIndexed(self, value):
+        self.UnorderedGroupIndexed.append(value)
+    def insert_UnorderedGroupIndexed_at(self, index, value):
+        self.UnorderedGroupIndexed.insert(index, value)
+    def replace_UnorderedGroupIndexed_at(self, index, value):
+        self.UnorderedGroupIndexed[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
+    def get_index(self):
+        return self.index
+    def set_index(self, index):
+        self.index = index
+    def get_caption(self):
+        return self.caption
+    def set_caption(self, caption):
+        self.caption = caption
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_continuation(self):
+        return self.continuation
+    def set_continuation(self, continuation):
+        self.continuation = continuation
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.UserDefined is not None or
@@ -3385,7 +4001,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='OrderedGroupIndexedType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='OrderedGroupIndexedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupIndexedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3396,17 +4012,17 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='OrderedGroupIndexedType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupIndexedType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='OrderedGroupIndexedType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupIndexedType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='OrderedGroupIndexedType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='OrderedGroupIndexedType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -3431,21 +4047,21 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='OrderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='OrderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         for RegionRefIndexed_ in self.RegionRefIndexed:
-            RegionRefIndexed_.export(outfile, level, namespace_, name_='RegionRefIndexed', pretty_print=pretty_print)
+            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            OrderedGroupIndexed_.export(outfile, level, namespace_, name_='OrderedGroupIndexed', pretty_print=pretty_print)
+            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            UnorderedGroupIndexed_.export(outfile, level, namespace_, name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3496,27 +4112,27 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRefIndexed':
-            obj_ = RegionRefIndexedType.factory()
+            obj_ = RegionRefIndexedType.factory(parent_object_=self)
             obj_.build(child_)
             self.RegionRefIndexed.append(obj_)
             obj_.original_tagname_ = 'RegionRefIndexed'
         elif nodeName_ == 'OrderedGroupIndexed':
-            obj_ = OrderedGroupIndexedType.factory()
+            obj_ = OrderedGroupIndexedType.factory(parent_object_=self)
             obj_.build(child_)
             self.OrderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'OrderedGroupIndexed'
         elif nodeName_ == 'UnorderedGroupIndexed':
-            obj_ = UnorderedGroupIndexedType.factory()
+            obj_ = UnorderedGroupIndexedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
@@ -3532,8 +4148,9 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
     another group (from previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None):
+    def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
         self.index = _cast(int, index)
@@ -3570,44 +4187,90 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         else:
             return UnorderedGroupIndexedType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_RegionRef(self): return self.RegionRef
-    def set_RegionRef(self, RegionRef): self.RegionRef = RegionRef
-    def add_RegionRef(self, value): self.RegionRef.append(value)
-    def insert_RegionRef_at(self, index, value): self.RegionRef.insert(index, value)
-    def replace_RegionRef_at(self, index, value): self.RegionRef[index] = value
-    def get_OrderedGroup(self): return self.OrderedGroup
-    def set_OrderedGroup(self, OrderedGroup): self.OrderedGroup = OrderedGroup
-    def add_OrderedGroup(self, value): self.OrderedGroup.append(value)
-    def insert_OrderedGroup_at(self, index, value): self.OrderedGroup.insert(index, value)
-    def replace_OrderedGroup_at(self, index, value): self.OrderedGroup[index] = value
-    def get_UnorderedGroup(self): return self.UnorderedGroup
-    def set_UnorderedGroup(self, UnorderedGroup): self.UnorderedGroup = UnorderedGroup
-    def add_UnorderedGroup(self, value): self.UnorderedGroup.append(value)
-    def insert_UnorderedGroup_at(self, index, value): self.UnorderedGroup.insert(index, value)
-    def replace_UnorderedGroup_at(self, index, value): self.UnorderedGroup[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_regionRef(self): return self.regionRef
-    def set_regionRef(self, regionRef): self.regionRef = regionRef
-    def get_index(self): return self.index
-    def set_index(self, index): self.index = index
-    def get_caption(self): return self.caption
-    def set_caption(self, caption): self.caption = caption
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_continuation(self): return self.continuation
-    def set_continuation(self, continuation): self.continuation = continuation
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_RegionRef(self):
+        return self.RegionRef
+    def set_RegionRef(self, RegionRef):
+        self.RegionRef = RegionRef
+    def add_RegionRef(self, value):
+        self.RegionRef.append(value)
+    def add_RegionRef(self, value):
+        self.RegionRef.append(value)
+    def insert_RegionRef_at(self, index, value):
+        self.RegionRef.insert(index, value)
+    def replace_RegionRef_at(self, index, value):
+        self.RegionRef[index] = value
+    def get_OrderedGroup(self):
+        return self.OrderedGroup
+    def set_OrderedGroup(self, OrderedGroup):
+        self.OrderedGroup = OrderedGroup
+    def add_OrderedGroup(self, value):
+        self.OrderedGroup.append(value)
+    def add_OrderedGroup(self, value):
+        self.OrderedGroup.append(value)
+    def insert_OrderedGroup_at(self, index, value):
+        self.OrderedGroup.insert(index, value)
+    def replace_OrderedGroup_at(self, index, value):
+        self.OrderedGroup[index] = value
+    def get_UnorderedGroup(self):
+        return self.UnorderedGroup
+    def set_UnorderedGroup(self, UnorderedGroup):
+        self.UnorderedGroup = UnorderedGroup
+    def add_UnorderedGroup(self, value):
+        self.UnorderedGroup.append(value)
+    def add_UnorderedGroup(self, value):
+        self.UnorderedGroup.append(value)
+    def insert_UnorderedGroup_at(self, index, value):
+        self.UnorderedGroup.insert(index, value)
+    def replace_UnorderedGroup_at(self, index, value):
+        self.UnorderedGroup[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
+    def get_index(self):
+        return self.index
+    def set_index(self, index):
+        self.index = index
+    def get_caption(self):
+        return self.caption
+    def set_caption(self, caption):
+        self.caption = caption
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_continuation(self):
+        return self.continuation
+    def set_continuation(self, continuation):
+        self.continuation = continuation
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.UserDefined is not None or
@@ -3619,7 +4282,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='UnorderedGroupIndexedType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UnorderedGroupIndexedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupIndexedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3630,17 +4293,17 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='UnorderedGroupIndexedType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupIndexedType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='UnorderedGroupIndexedType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupIndexedType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='UnorderedGroupIndexedType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='UnorderedGroupIndexedType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -3665,21 +4328,21 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='UnorderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UnorderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         for RegionRef_ in self.RegionRef:
-            RegionRef_.export(outfile, level, namespace_, name_='RegionRef', pretty_print=pretty_print)
+            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
         for OrderedGroup_ in self.OrderedGroup:
-            OrderedGroup_.export(outfile, level, namespace_, name_='OrderedGroup', pretty_print=pretty_print)
+            OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
         for UnorderedGroup_ in self.UnorderedGroup:
-            UnorderedGroup_.export(outfile, level, namespace_, name_='UnorderedGroup', pretty_print=pretty_print)
+            UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3730,27 +4393,27 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRef':
-            obj_ = RegionRefType.factory()
+            obj_ = RegionRefType.factory(parent_object_=self)
             obj_.build(child_)
             self.RegionRef.append(obj_)
             obj_.original_tagname_ = 'RegionRef'
         elif nodeName_ == 'OrderedGroup':
-            obj_ = OrderedGroupType.factory()
+            obj_ = OrderedGroupType.factory(parent_object_=self)
             obj_.build(child_)
             self.OrderedGroup.append(obj_)
             obj_.original_tagname_ = 'OrderedGroup'
         elif nodeName_ == 'UnorderedGroup':
-            obj_ = UnorderedGroupType.factory()
+            obj_ = UnorderedGroupType.factory(parent_object_=self)
             obj_.build(child_)
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
@@ -3760,8 +4423,9 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
 class RegionRefType(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, regionRef=None):
+    def __init__(self, regionRef=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.regionRef = _cast(None, regionRef)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -3774,8 +4438,10 @@ class RegionRefType(GeneratedsSuper):
         else:
             return RegionRefType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_regionRef(self): return self.regionRef
-    def set_regionRef(self, regionRef): self.regionRef = regionRef
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
     def hasContent_(self):
         if (
 
@@ -3783,7 +4449,7 @@ class RegionRefType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='RegionRefType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RegionRefType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3794,20 +4460,20 @@ class RegionRefType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='RegionRefType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='RegionRefType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='RegionRefType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='RegionRefType'):
         if self.regionRef is not None and 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -3834,8 +4500,9 @@ class OrderedGroupType(GeneratedsSuper):
     previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None):
+    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
         self.caption = _cast(None, caption)
@@ -3871,42 +4538,86 @@ class OrderedGroupType(GeneratedsSuper):
         else:
             return OrderedGroupType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_RegionRefIndexed(self): return self.RegionRefIndexed
-    def set_RegionRefIndexed(self, RegionRefIndexed): self.RegionRefIndexed = RegionRefIndexed
-    def add_RegionRefIndexed(self, value): self.RegionRefIndexed.append(value)
-    def insert_RegionRefIndexed_at(self, index, value): self.RegionRefIndexed.insert(index, value)
-    def replace_RegionRefIndexed_at(self, index, value): self.RegionRefIndexed[index] = value
-    def get_OrderedGroupIndexed(self): return self.OrderedGroupIndexed
-    def set_OrderedGroupIndexed(self, OrderedGroupIndexed): self.OrderedGroupIndexed = OrderedGroupIndexed
-    def add_OrderedGroupIndexed(self, value): self.OrderedGroupIndexed.append(value)
-    def insert_OrderedGroupIndexed_at(self, index, value): self.OrderedGroupIndexed.insert(index, value)
-    def replace_OrderedGroupIndexed_at(self, index, value): self.OrderedGroupIndexed[index] = value
-    def get_UnorderedGroupIndexed(self): return self.UnorderedGroupIndexed
-    def set_UnorderedGroupIndexed(self, UnorderedGroupIndexed): self.UnorderedGroupIndexed = UnorderedGroupIndexed
-    def add_UnorderedGroupIndexed(self, value): self.UnorderedGroupIndexed.append(value)
-    def insert_UnorderedGroupIndexed_at(self, index, value): self.UnorderedGroupIndexed.insert(index, value)
-    def replace_UnorderedGroupIndexed_at(self, index, value): self.UnorderedGroupIndexed[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_regionRef(self): return self.regionRef
-    def set_regionRef(self, regionRef): self.regionRef = regionRef
-    def get_caption(self): return self.caption
-    def set_caption(self, caption): self.caption = caption
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_continuation(self): return self.continuation
-    def set_continuation(self, continuation): self.continuation = continuation
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_RegionRefIndexed(self):
+        return self.RegionRefIndexed
+    def set_RegionRefIndexed(self, RegionRefIndexed):
+        self.RegionRefIndexed = RegionRefIndexed
+    def add_RegionRefIndexed(self, value):
+        self.RegionRefIndexed.append(value)
+    def add_RegionRefIndexed(self, value):
+        self.RegionRefIndexed.append(value)
+    def insert_RegionRefIndexed_at(self, index, value):
+        self.RegionRefIndexed.insert(index, value)
+    def replace_RegionRefIndexed_at(self, index, value):
+        self.RegionRefIndexed[index] = value
+    def get_OrderedGroupIndexed(self):
+        return self.OrderedGroupIndexed
+    def set_OrderedGroupIndexed(self, OrderedGroupIndexed):
+        self.OrderedGroupIndexed = OrderedGroupIndexed
+    def add_OrderedGroupIndexed(self, value):
+        self.OrderedGroupIndexed.append(value)
+    def add_OrderedGroupIndexed(self, value):
+        self.OrderedGroupIndexed.append(value)
+    def insert_OrderedGroupIndexed_at(self, index, value):
+        self.OrderedGroupIndexed.insert(index, value)
+    def replace_OrderedGroupIndexed_at(self, index, value):
+        self.OrderedGroupIndexed[index] = value
+    def get_UnorderedGroupIndexed(self):
+        return self.UnorderedGroupIndexed
+    def set_UnorderedGroupIndexed(self, UnorderedGroupIndexed):
+        self.UnorderedGroupIndexed = UnorderedGroupIndexed
+    def add_UnorderedGroupIndexed(self, value):
+        self.UnorderedGroupIndexed.append(value)
+    def add_UnorderedGroupIndexed(self, value):
+        self.UnorderedGroupIndexed.append(value)
+    def insert_UnorderedGroupIndexed_at(self, index, value):
+        self.UnorderedGroupIndexed.insert(index, value)
+    def replace_UnorderedGroupIndexed_at(self, index, value):
+        self.UnorderedGroupIndexed[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
+    def get_caption(self):
+        return self.caption
+    def set_caption(self, caption):
+        self.caption = caption
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_continuation(self):
+        return self.continuation
+    def set_continuation(self, continuation):
+        self.continuation = continuation
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.UserDefined is not None or
@@ -3918,7 +4629,7 @@ class OrderedGroupType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='OrderedGroupType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='OrderedGroupType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3929,17 +4640,17 @@ class OrderedGroupType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='OrderedGroupType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='OrderedGroupType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='OrderedGroupType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='OrderedGroupType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -3961,21 +4672,21 @@ class OrderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         for RegionRefIndexed_ in self.RegionRefIndexed:
-            RegionRefIndexed_.export(outfile, level, namespace_, name_='RegionRefIndexed', pretty_print=pretty_print)
+            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            OrderedGroupIndexed_.export(outfile, level, namespace_, name_='OrderedGroupIndexed', pretty_print=pretty_print)
+            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            UnorderedGroupIndexed_.export(outfile, level, namespace_, name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4019,27 +4730,27 @@ class OrderedGroupType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRefIndexed':
-            obj_ = RegionRefIndexedType.factory()
+            obj_ = RegionRefIndexedType.factory(parent_object_=self)
             obj_.build(child_)
             self.RegionRefIndexed.append(obj_)
             obj_.original_tagname_ = 'RegionRefIndexed'
         elif nodeName_ == 'OrderedGroupIndexed':
-            obj_ = OrderedGroupIndexedType.factory()
+            obj_ = OrderedGroupIndexedType.factory(parent_object_=self)
             obj_.build(child_)
             self.OrderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'OrderedGroupIndexed'
         elif nodeName_ == 'UnorderedGroupIndexed':
-            obj_ = UnorderedGroupIndexedType.factory()
+            obj_ = UnorderedGroupIndexedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
@@ -4054,8 +4765,9 @@ class UnorderedGroupType(GeneratedsSuper):
     (from previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None):
+    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.regionRef = _cast(None, regionRef)
         self.caption = _cast(None, caption)
@@ -4091,42 +4803,86 @@ class UnorderedGroupType(GeneratedsSuper):
         else:
             return UnorderedGroupType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_RegionRef(self): return self.RegionRef
-    def set_RegionRef(self, RegionRef): self.RegionRef = RegionRef
-    def add_RegionRef(self, value): self.RegionRef.append(value)
-    def insert_RegionRef_at(self, index, value): self.RegionRef.insert(index, value)
-    def replace_RegionRef_at(self, index, value): self.RegionRef[index] = value
-    def get_OrderedGroup(self): return self.OrderedGroup
-    def set_OrderedGroup(self, OrderedGroup): self.OrderedGroup = OrderedGroup
-    def add_OrderedGroup(self, value): self.OrderedGroup.append(value)
-    def insert_OrderedGroup_at(self, index, value): self.OrderedGroup.insert(index, value)
-    def replace_OrderedGroup_at(self, index, value): self.OrderedGroup[index] = value
-    def get_UnorderedGroup(self): return self.UnorderedGroup
-    def set_UnorderedGroup(self, UnorderedGroup): self.UnorderedGroup = UnorderedGroup
-    def add_UnorderedGroup(self, value): self.UnorderedGroup.append(value)
-    def insert_UnorderedGroup_at(self, index, value): self.UnorderedGroup.insert(index, value)
-    def replace_UnorderedGroup_at(self, index, value): self.UnorderedGroup[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_regionRef(self): return self.regionRef
-    def set_regionRef(self, regionRef): self.regionRef = regionRef
-    def get_caption(self): return self.caption
-    def set_caption(self, caption): self.caption = caption
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_continuation(self): return self.continuation
-    def set_continuation(self, continuation): self.continuation = continuation
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_RegionRef(self):
+        return self.RegionRef
+    def set_RegionRef(self, RegionRef):
+        self.RegionRef = RegionRef
+    def add_RegionRef(self, value):
+        self.RegionRef.append(value)
+    def add_RegionRef(self, value):
+        self.RegionRef.append(value)
+    def insert_RegionRef_at(self, index, value):
+        self.RegionRef.insert(index, value)
+    def replace_RegionRef_at(self, index, value):
+        self.RegionRef[index] = value
+    def get_OrderedGroup(self):
+        return self.OrderedGroup
+    def set_OrderedGroup(self, OrderedGroup):
+        self.OrderedGroup = OrderedGroup
+    def add_OrderedGroup(self, value):
+        self.OrderedGroup.append(value)
+    def add_OrderedGroup(self, value):
+        self.OrderedGroup.append(value)
+    def insert_OrderedGroup_at(self, index, value):
+        self.OrderedGroup.insert(index, value)
+    def replace_OrderedGroup_at(self, index, value):
+        self.OrderedGroup[index] = value
+    def get_UnorderedGroup(self):
+        return self.UnorderedGroup
+    def set_UnorderedGroup(self, UnorderedGroup):
+        self.UnorderedGroup = UnorderedGroup
+    def add_UnorderedGroup(self, value):
+        self.UnorderedGroup.append(value)
+    def add_UnorderedGroup(self, value):
+        self.UnorderedGroup.append(value)
+    def insert_UnorderedGroup_at(self, index, value):
+        self.UnorderedGroup.insert(index, value)
+    def replace_UnorderedGroup_at(self, index, value):
+        self.UnorderedGroup[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
+    def get_caption(self):
+        return self.caption
+    def set_caption(self, caption):
+        self.caption = caption
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_continuation(self):
+        return self.continuation
+    def set_continuation(self, continuation):
+        self.continuation = continuation
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.UserDefined is not None or
@@ -4138,7 +4894,7 @@ class UnorderedGroupType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='UnorderedGroupType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UnorderedGroupType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4149,17 +4905,17 @@ class UnorderedGroupType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='UnorderedGroupType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='UnorderedGroupType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='UnorderedGroupType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='UnorderedGroupType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -4181,21 +4937,21 @@ class UnorderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         for RegionRef_ in self.RegionRef:
-            RegionRef_.export(outfile, level, namespace_, name_='RegionRef', pretty_print=pretty_print)
+            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
         for OrderedGroup_ in self.OrderedGroup:
-            OrderedGroup_.export(outfile, level, namespace_, name_='OrderedGroup', pretty_print=pretty_print)
+            OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
         for UnorderedGroup_ in self.UnorderedGroup:
-            UnorderedGroup_.export(outfile, level, namespace_, name_='UnorderedGroup', pretty_print=pretty_print)
+            UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4239,27 +4995,27 @@ class UnorderedGroupType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'RegionRef':
-            obj_ = RegionRefType.factory()
+            obj_ = RegionRefType.factory(parent_object_=self)
             obj_.build(child_)
             self.RegionRef.append(obj_)
             obj_.original_tagname_ = 'RegionRef'
         elif nodeName_ == 'OrderedGroup':
-            obj_ = OrderedGroupType.factory()
+            obj_ = OrderedGroupType.factory(parent_object_=self)
             obj_.build(child_)
             self.OrderedGroup.append(obj_)
             obj_.original_tagname_ = 'OrderedGroup'
         elif nodeName_ == 'UnorderedGroup':
-            obj_ = UnorderedGroupType.factory()
+            obj_ = UnorderedGroupType.factory(parent_object_=self)
             obj_.build(child_)
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
@@ -4271,8 +5027,9 @@ class BorderType(GeneratedsSuper):
     belonging to the page)."""
     subclass = None
     superclass = None
-    def __init__(self, Coords=None):
+    def __init__(self, Coords=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.Coords = Coords
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -4285,8 +5042,10 @@ class BorderType(GeneratedsSuper):
         else:
             return BorderType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Coords(self): return self.Coords
-    def set_Coords(self, Coords): self.Coords = Coords
+    def get_Coords(self):
+        return self.Coords
+    def set_Coords(self, Coords):
+        self.Coords = Coords
     def hasContent_(self):
         if (
             self.Coords is not None
@@ -4294,7 +5053,7 @@ class BorderType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='BorderType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='BorderType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('BorderType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4305,25 +5064,25 @@ class BorderType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='BorderType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BorderType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='BorderType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BorderType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='BorderType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='BorderType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='BorderType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='BorderType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.Coords is not None:
-            self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
+            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4335,7 +5094,7 @@ class BorderType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Coords':
-            obj_ = CoordsType.factory()
+            obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
@@ -4348,8 +5107,9 @@ class LayersType(GeneratedsSuper):
     element with lower z-index."""
     subclass = None
     superclass = None
-    def __init__(self, Layer=None):
+    def __init__(self, Layer=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         if Layer is None:
             self.Layer = []
         else:
@@ -4365,11 +5125,18 @@ class LayersType(GeneratedsSuper):
         else:
             return LayersType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Layer(self): return self.Layer
-    def set_Layer(self, Layer): self.Layer = Layer
-    def add_Layer(self, value): self.Layer.append(value)
-    def insert_Layer_at(self, index, value): self.Layer.insert(index, value)
-    def replace_Layer_at(self, index, value): self.Layer[index] = value
+    def get_Layer(self):
+        return self.Layer
+    def set_Layer(self, Layer):
+        self.Layer = Layer
+    def add_Layer(self, value):
+        self.Layer.append(value)
+    def add_Layer(self, value):
+        self.Layer.append(value)
+    def insert_Layer_at(self, index, value):
+        self.Layer.insert(index, value)
+    def replace_Layer_at(self, index, value):
+        self.Layer[index] = value
     def hasContent_(self):
         if (
             self.Layer
@@ -4377,7 +5144,7 @@ class LayersType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='LayersType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LayersType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LayersType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4388,25 +5155,25 @@ class LayersType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='LayersType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayersType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='LayersType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayersType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='LayersType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='LayersType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='LayersType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LayersType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for Layer_ in self.Layer:
-            Layer_.export(outfile, level, namespace_, name_='Layer', pretty_print=pretty_print)
+            Layer_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layer', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4418,7 +5185,7 @@ class LayersType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Layer':
-            obj_ = LayerType.factory()
+            obj_ = LayerType.factory(parent_object_=self)
             obj_.build(child_)
             self.Layer.append(obj_)
             obj_.original_tagname_ = 'Layer'
@@ -4428,8 +5195,9 @@ class LayersType(GeneratedsSuper):
 class LayerType(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, id=None, zIndex=None, caption=None, RegionRef=None):
+    def __init__(self, id=None, zIndex=None, caption=None, RegionRef=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.zIndex = _cast(int, zIndex)
         self.caption = _cast(None, caption)
@@ -4448,17 +5216,30 @@ class LayerType(GeneratedsSuper):
         else:
             return LayerType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_RegionRef(self): return self.RegionRef
-    def set_RegionRef(self, RegionRef): self.RegionRef = RegionRef
-    def add_RegionRef(self, value): self.RegionRef.append(value)
-    def insert_RegionRef_at(self, index, value): self.RegionRef.insert(index, value)
-    def replace_RegionRef_at(self, index, value): self.RegionRef[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_zIndex(self): return self.zIndex
-    def set_zIndex(self, zIndex): self.zIndex = zIndex
-    def get_caption(self): return self.caption
-    def set_caption(self, caption): self.caption = caption
+    def get_RegionRef(self):
+        return self.RegionRef
+    def set_RegionRef(self, RegionRef):
+        self.RegionRef = RegionRef
+    def add_RegionRef(self, value):
+        self.RegionRef.append(value)
+    def add_RegionRef(self, value):
+        self.RegionRef.append(value)
+    def insert_RegionRef_at(self, index, value):
+        self.RegionRef.insert(index, value)
+    def replace_RegionRef_at(self, index, value):
+        self.RegionRef[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_zIndex(self):
+        return self.zIndex
+    def set_zIndex(self, zIndex):
+        self.zIndex = zIndex
+    def get_caption(self):
+        return self.caption
+    def set_caption(self, caption):
+        self.caption = caption
     def hasContent_(self):
         if (
             self.RegionRef
@@ -4466,7 +5247,7 @@ class LayerType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='LayerType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LayerType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LayerType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4477,17 +5258,17 @@ class LayerType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='LayerType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayerType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='LayerType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayerType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='LayerType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='LayerType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -4497,13 +5278,13 @@ class LayerType(GeneratedsSuper):
         if self.caption is not None and 'caption' not in already_processed:
             already_processed.add('caption')
             outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='LayerType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LayerType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for RegionRef_ in self.RegionRef:
-            RegionRef_.export(outfile, level, namespace_, name_='RegionRef', pretty_print=pretty_print)
+            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4529,7 +5310,7 @@ class LayerType(GeneratedsSuper):
             self.caption = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'RegionRef':
-            obj_ = RegionRefType.factory()
+            obj_ = RegionRefType.factory(parent_object_=self)
             obj_.build(child_)
             self.RegionRef.append(obj_)
             obj_.original_tagname_ = 'RegionRef'
@@ -4540,8 +5321,9 @@ class BaselineType(GeneratedsSuper):
     """Confidence value (between 0 and 1)"""
     subclass = None
     superclass = None
-    def __init__(self, points=None, conf=None):
+    def __init__(self, points=None, conf=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.points = _cast(None, points)
         self.conf = _cast(float, conf)
     def factory(*args_, **kwargs_):
@@ -4555,10 +5337,14 @@ class BaselineType(GeneratedsSuper):
         else:
             return BaselineType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_points(self): return self.points
-    def set_points(self, points): self.points = points
-    def get_conf(self): return self.conf
-    def set_conf(self, conf): self.conf = conf
+    def get_points(self):
+        return self.points
+    def set_points(self, points):
+        self.points = points
+    def get_conf(self):
+        return self.conf
+    def set_conf(self, conf):
+        self.conf = conf
     def hasContent_(self):
         if (
 
@@ -4566,7 +5352,7 @@ class BaselineType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='BaselineType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='BaselineType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('BaselineType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4577,23 +5363,23 @@ class BaselineType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='BaselineType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BaselineType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='BaselineType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BaselineType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='BaselineType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='BaselineType'):
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (quote_attrib(self.points), ))
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='BaselineType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='BaselineType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -4624,8 +5410,9 @@ class RelationsType(GeneratedsSuper):
     example: DropCap - paragraph, caption - image)"""
     subclass = None
     superclass = None
-    def __init__(self, Relation=None):
+    def __init__(self, Relation=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         if Relation is None:
             self.Relation = []
         else:
@@ -4641,11 +5428,18 @@ class RelationsType(GeneratedsSuper):
         else:
             return RelationsType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Relation(self): return self.Relation
-    def set_Relation(self, Relation): self.Relation = Relation
-    def add_Relation(self, value): self.Relation.append(value)
-    def insert_Relation_at(self, index, value): self.Relation.insert(index, value)
-    def replace_Relation_at(self, index, value): self.Relation[index] = value
+    def get_Relation(self):
+        return self.Relation
+    def set_Relation(self, Relation):
+        self.Relation = Relation
+    def add_Relation(self, value):
+        self.Relation.append(value)
+    def add_Relation(self, value):
+        self.Relation.append(value)
+    def insert_Relation_at(self, index, value):
+        self.Relation.insert(index, value)
+    def replace_Relation_at(self, index, value):
+        self.Relation[index] = value
     def hasContent_(self):
         if (
             self.Relation
@@ -4653,7 +5447,7 @@ class RelationsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='RelationsType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RelationsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RelationsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4664,25 +5458,25 @@ class RelationsType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='RelationsType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationsType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='RelationsType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationsType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='RelationsType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='RelationsType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='RelationsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RelationsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for Relation_ in self.Relation:
-            Relation_.export(outfile, level, namespace_, name_='Relation', pretty_print=pretty_print)
+            Relation_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relation', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4694,7 +5488,7 @@ class RelationsType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Relation':
-            obj_ = RelationType.factory()
+            obj_ = RelationType.factory(parent_object_=self)
             obj_.build(child_)
             self.Relation.append(obj_)
             obj_.original_tagname_ = 'Relation'
@@ -4716,8 +5510,9 @@ class RelationType(GeneratedsSuper):
     generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, type_=None, custom=None, comments=None, Labels=None, SourceRegionRef=None, TargetRegionRef=None):
+    def __init__(self, id=None, type_=None, custom=None, comments=None, Labels=None, SourceRegionRef=None, TargetRegionRef=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.type_ = _cast(None, type_)
         self.custom = _cast(None, custom)
@@ -4739,23 +5534,42 @@ class RelationType(GeneratedsSuper):
         else:
             return RelationType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_SourceRegionRef(self): return self.SourceRegionRef
-    def set_SourceRegionRef(self, SourceRegionRef): self.SourceRegionRef = SourceRegionRef
-    def get_TargetRegionRef(self): return self.TargetRegionRef
-    def set_TargetRegionRef(self, TargetRegionRef): self.TargetRegionRef = TargetRegionRef
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_SourceRegionRef(self):
+        return self.SourceRegionRef
+    def set_SourceRegionRef(self, SourceRegionRef):
+        self.SourceRegionRef = SourceRegionRef
+    def get_TargetRegionRef(self):
+        return self.TargetRegionRef
+    def set_TargetRegionRef(self, TargetRegionRef):
+        self.TargetRegionRef = TargetRegionRef
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
             self.Labels or
@@ -4765,7 +5579,7 @@ class RelationType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='RelationType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RelationType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RelationType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4776,17 +5590,17 @@ class RelationType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='RelationType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='RelationType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='RelationType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='RelationType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -4799,17 +5613,17 @@ class RelationType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='RelationType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RelationType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         if self.SourceRegionRef is not None:
-            self.SourceRegionRef.export(outfile, level, namespace_, name_='SourceRegionRef', pretty_print=pretty_print)
+            self.SourceRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SourceRegionRef', pretty_print=pretty_print)
         if self.TargetRegionRef is not None:
-            self.TargetRegionRef.export(outfile, level, namespace_, name_='TargetRegionRef', pretty_print=pretty_print)
+            self.TargetRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TargetRegionRef', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4836,17 +5650,17 @@ class RelationType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'SourceRegionRef':
-            obj_ = RegionRefType.factory()
+            obj_ = RegionRefType.factory(parent_object_=self)
             obj_.build(child_)
             self.SourceRegionRef = obj_
             obj_.original_tagname_ = 'SourceRegionRef'
         elif nodeName_ == 'TargetRegionRef':
-            obj_ = RegionRefType.factory()
+            obj_ = RegionRefType.factory(parent_object_=self)
             obj_.build(child_)
             self.TargetRegionRef = obj_
             obj_.original_tagname_ = 'TargetRegionRef'
@@ -4869,8 +5683,9 @@ class TextStyleType(GeneratedsSuper):
     against a background colour"""
     subclass = None
     superclass = None
-    def __init__(self, fontFamily=None, serif=None, monospace=None, fontSize=None, xHeight=None, kerning=None, textColour=None, textColourRgb=None, bgColour=None, bgColourRgb=None, reverseVideo=None, bold=None, italic=None, underlined=None, subscript=None, superscript=None, strikethrough=None, smallCaps=None, letterSpaced=None):
+    def __init__(self, fontFamily=None, serif=None, monospace=None, fontSize=None, xHeight=None, kerning=None, textColour=None, textColourRgb=None, bgColour=None, bgColourRgb=None, reverseVideo=None, bold=None, italic=None, underlined=None, subscript=None, superscript=None, strikethrough=None, smallCaps=None, letterSpaced=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.fontFamily = _cast(None, fontFamily)
         self.serif = _cast(bool, serif)
         self.monospace = _cast(bool, monospace)
@@ -4901,44 +5716,82 @@ class TextStyleType(GeneratedsSuper):
         else:
             return TextStyleType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_fontFamily(self): return self.fontFamily
-    def set_fontFamily(self, fontFamily): self.fontFamily = fontFamily
-    def get_serif(self): return self.serif
-    def set_serif(self, serif): self.serif = serif
-    def get_monospace(self): return self.monospace
-    def set_monospace(self, monospace): self.monospace = monospace
-    def get_fontSize(self): return self.fontSize
-    def set_fontSize(self, fontSize): self.fontSize = fontSize
-    def get_xHeight(self): return self.xHeight
-    def set_xHeight(self, xHeight): self.xHeight = xHeight
-    def get_kerning(self): return self.kerning
-    def set_kerning(self, kerning): self.kerning = kerning
-    def get_textColour(self): return self.textColour
-    def set_textColour(self, textColour): self.textColour = textColour
-    def get_textColourRgb(self): return self.textColourRgb
-    def set_textColourRgb(self, textColourRgb): self.textColourRgb = textColourRgb
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
-    def get_bgColourRgb(self): return self.bgColourRgb
-    def set_bgColourRgb(self, bgColourRgb): self.bgColourRgb = bgColourRgb
-    def get_reverseVideo(self): return self.reverseVideo
-    def set_reverseVideo(self, reverseVideo): self.reverseVideo = reverseVideo
-    def get_bold(self): return self.bold
-    def set_bold(self, bold): self.bold = bold
-    def get_italic(self): return self.italic
-    def set_italic(self, italic): self.italic = italic
-    def get_underlined(self): return self.underlined
-    def set_underlined(self, underlined): self.underlined = underlined
-    def get_subscript(self): return self.subscript
-    def set_subscript(self, subscript): self.subscript = subscript
-    def get_superscript(self): return self.superscript
-    def set_superscript(self, superscript): self.superscript = superscript
-    def get_strikethrough(self): return self.strikethrough
-    def set_strikethrough(self, strikethrough): self.strikethrough = strikethrough
-    def get_smallCaps(self): return self.smallCaps
-    def set_smallCaps(self, smallCaps): self.smallCaps = smallCaps
-    def get_letterSpaced(self): return self.letterSpaced
-    def set_letterSpaced(self, letterSpaced): self.letterSpaced = letterSpaced
+    def get_fontFamily(self):
+        return self.fontFamily
+    def set_fontFamily(self, fontFamily):
+        self.fontFamily = fontFamily
+    def get_serif(self):
+        return self.serif
+    def set_serif(self, serif):
+        self.serif = serif
+    def get_monospace(self):
+        return self.monospace
+    def set_monospace(self, monospace):
+        self.monospace = monospace
+    def get_fontSize(self):
+        return self.fontSize
+    def set_fontSize(self, fontSize):
+        self.fontSize = fontSize
+    def get_xHeight(self):
+        return self.xHeight
+    def set_xHeight(self, xHeight):
+        self.xHeight = xHeight
+    def get_kerning(self):
+        return self.kerning
+    def set_kerning(self, kerning):
+        self.kerning = kerning
+    def get_textColour(self):
+        return self.textColour
+    def set_textColour(self, textColour):
+        self.textColour = textColour
+    def get_textColourRgb(self):
+        return self.textColourRgb
+    def set_textColourRgb(self, textColourRgb):
+        self.textColourRgb = textColourRgb
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
+    def get_bgColourRgb(self):
+        return self.bgColourRgb
+    def set_bgColourRgb(self, bgColourRgb):
+        self.bgColourRgb = bgColourRgb
+    def get_reverseVideo(self):
+        return self.reverseVideo
+    def set_reverseVideo(self, reverseVideo):
+        self.reverseVideo = reverseVideo
+    def get_bold(self):
+        return self.bold
+    def set_bold(self, bold):
+        self.bold = bold
+    def get_italic(self):
+        return self.italic
+    def set_italic(self, italic):
+        self.italic = italic
+    def get_underlined(self):
+        return self.underlined
+    def set_underlined(self, underlined):
+        self.underlined = underlined
+    def get_subscript(self):
+        return self.subscript
+    def set_subscript(self, subscript):
+        self.subscript = subscript
+    def get_superscript(self):
+        return self.superscript
+    def set_superscript(self, superscript):
+        self.superscript = superscript
+    def get_strikethrough(self):
+        return self.strikethrough
+    def set_strikethrough(self, strikethrough):
+        self.strikethrough = strikethrough
+    def get_smallCaps(self):
+        return self.smallCaps
+    def set_smallCaps(self, smallCaps):
+        self.smallCaps = smallCaps
+    def get_letterSpaced(self):
+        return self.letterSpaced
+    def set_letterSpaced(self, letterSpaced):
+        self.letterSpaced = letterSpaced
     def hasContent_(self):
         if (
 
@@ -4946,7 +5799,7 @@ class TextStyleType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='TextStyleType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextStyleType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextStyleType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4957,16 +5810,16 @@ class TextStyleType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='TextStyleType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextStyleType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='TextStyleType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextStyleType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='TextStyleType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='TextStyleType'):
         if self.fontFamily is not None and 'fontFamily' not in already_processed:
             already_processed.add('fontFamily')
             outfile.write(' fontFamily=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.fontFamily), input_name='fontFamily')), ))
@@ -5024,7 +5877,7 @@ class TextStyleType(GeneratedsSuper):
         if self.letterSpaced is not None and 'letterSpaced' not in already_processed:
             already_processed.add('letterSpaced')
             outfile.write(' letterSpaced="%s"' % self.gds_format_boolean(self.letterSpaced, input_name='letterSpaced'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -5190,8 +6043,9 @@ class RegionType(GeneratedsSuper):
     previous column or page, for example)?"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, extensiontype_=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, extensiontype_=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.custom = _cast(None, custom)
         self.comments = _cast(None, comments)
@@ -5271,95 +6125,214 @@ class RegionType(GeneratedsSuper):
         else:
             return RegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_AlternativeImage(self): return self.AlternativeImage
-    def set_AlternativeImage(self, AlternativeImage): self.AlternativeImage = AlternativeImage
-    def add_AlternativeImage(self, value): self.AlternativeImage.append(value)
-    def insert_AlternativeImage_at(self, index, value): self.AlternativeImage.insert(index, value)
-    def replace_AlternativeImage_at(self, index, value): self.AlternativeImage[index] = value
-    def get_Coords(self): return self.Coords
-    def set_Coords(self, Coords): self.Coords = Coords
-    def get_UserDefined(self): return self.UserDefined
-    def set_UserDefined(self, UserDefined): self.UserDefined = UserDefined
-    def get_Labels(self): return self.Labels
-    def set_Labels(self, Labels): self.Labels = Labels
-    def add_Labels(self, value): self.Labels.append(value)
-    def insert_Labels_at(self, index, value): self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value): self.Labels[index] = value
-    def get_Roles(self): return self.Roles
-    def set_Roles(self, Roles): self.Roles = Roles
-    def get_TextRegion(self): return self.TextRegion
-    def set_TextRegion(self, TextRegion): self.TextRegion = TextRegion
-    def add_TextRegion(self, value): self.TextRegion.append(value)
-    def insert_TextRegion_at(self, index, value): self.TextRegion.insert(index, value)
-    def replace_TextRegion_at(self, index, value): self.TextRegion[index] = value
-    def get_ImageRegion(self): return self.ImageRegion
-    def set_ImageRegion(self, ImageRegion): self.ImageRegion = ImageRegion
-    def add_ImageRegion(self, value): self.ImageRegion.append(value)
-    def insert_ImageRegion_at(self, index, value): self.ImageRegion.insert(index, value)
-    def replace_ImageRegion_at(self, index, value): self.ImageRegion[index] = value
-    def get_LineDrawingRegion(self): return self.LineDrawingRegion
-    def set_LineDrawingRegion(self, LineDrawingRegion): self.LineDrawingRegion = LineDrawingRegion
-    def add_LineDrawingRegion(self, value): self.LineDrawingRegion.append(value)
-    def insert_LineDrawingRegion_at(self, index, value): self.LineDrawingRegion.insert(index, value)
-    def replace_LineDrawingRegion_at(self, index, value): self.LineDrawingRegion[index] = value
-    def get_GraphicRegion(self): return self.GraphicRegion
-    def set_GraphicRegion(self, GraphicRegion): self.GraphicRegion = GraphicRegion
-    def add_GraphicRegion(self, value): self.GraphicRegion.append(value)
-    def insert_GraphicRegion_at(self, index, value): self.GraphicRegion.insert(index, value)
-    def replace_GraphicRegion_at(self, index, value): self.GraphicRegion[index] = value
-    def get_TableRegion(self): return self.TableRegion
-    def set_TableRegion(self, TableRegion): self.TableRegion = TableRegion
-    def add_TableRegion(self, value): self.TableRegion.append(value)
-    def insert_TableRegion_at(self, index, value): self.TableRegion.insert(index, value)
-    def replace_TableRegion_at(self, index, value): self.TableRegion[index] = value
-    def get_ChartRegion(self): return self.ChartRegion
-    def set_ChartRegion(self, ChartRegion): self.ChartRegion = ChartRegion
-    def add_ChartRegion(self, value): self.ChartRegion.append(value)
-    def insert_ChartRegion_at(self, index, value): self.ChartRegion.insert(index, value)
-    def replace_ChartRegion_at(self, index, value): self.ChartRegion[index] = value
-    def get_SeparatorRegion(self): return self.SeparatorRegion
-    def set_SeparatorRegion(self, SeparatorRegion): self.SeparatorRegion = SeparatorRegion
-    def add_SeparatorRegion(self, value): self.SeparatorRegion.append(value)
-    def insert_SeparatorRegion_at(self, index, value): self.SeparatorRegion.insert(index, value)
-    def replace_SeparatorRegion_at(self, index, value): self.SeparatorRegion[index] = value
-    def get_MathsRegion(self): return self.MathsRegion
-    def set_MathsRegion(self, MathsRegion): self.MathsRegion = MathsRegion
-    def add_MathsRegion(self, value): self.MathsRegion.append(value)
-    def insert_MathsRegion_at(self, index, value): self.MathsRegion.insert(index, value)
-    def replace_MathsRegion_at(self, index, value): self.MathsRegion[index] = value
-    def get_ChemRegion(self): return self.ChemRegion
-    def set_ChemRegion(self, ChemRegion): self.ChemRegion = ChemRegion
-    def add_ChemRegion(self, value): self.ChemRegion.append(value)
-    def insert_ChemRegion_at(self, index, value): self.ChemRegion.insert(index, value)
-    def replace_ChemRegion_at(self, index, value): self.ChemRegion[index] = value
-    def get_MusicRegion(self): return self.MusicRegion
-    def set_MusicRegion(self, MusicRegion): self.MusicRegion = MusicRegion
-    def add_MusicRegion(self, value): self.MusicRegion.append(value)
-    def insert_MusicRegion_at(self, index, value): self.MusicRegion.insert(index, value)
-    def replace_MusicRegion_at(self, index, value): self.MusicRegion[index] = value
-    def get_AdvertRegion(self): return self.AdvertRegion
-    def set_AdvertRegion(self, AdvertRegion): self.AdvertRegion = AdvertRegion
-    def add_AdvertRegion(self, value): self.AdvertRegion.append(value)
-    def insert_AdvertRegion_at(self, index, value): self.AdvertRegion.insert(index, value)
-    def replace_AdvertRegion_at(self, index, value): self.AdvertRegion[index] = value
-    def get_NoiseRegion(self): return self.NoiseRegion
-    def set_NoiseRegion(self, NoiseRegion): self.NoiseRegion = NoiseRegion
-    def add_NoiseRegion(self, value): self.NoiseRegion.append(value)
-    def insert_NoiseRegion_at(self, index, value): self.NoiseRegion.insert(index, value)
-    def replace_NoiseRegion_at(self, index, value): self.NoiseRegion[index] = value
-    def get_UnknownRegion(self): return self.UnknownRegion
-    def set_UnknownRegion(self, UnknownRegion): self.UnknownRegion = UnknownRegion
-    def add_UnknownRegion(self, value): self.UnknownRegion.append(value)
-    def insert_UnknownRegion_at(self, index, value): self.UnknownRegion.insert(index, value)
-    def replace_UnknownRegion_at(self, index, value): self.UnknownRegion[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
-    def get_continuation(self): return self.continuation
-    def set_continuation(self, continuation): self.continuation = continuation
+    def get_AlternativeImage(self):
+        return self.AlternativeImage
+    def set_AlternativeImage(self, AlternativeImage):
+        self.AlternativeImage = AlternativeImage
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def add_AlternativeImage(self, value):
+        self.AlternativeImage.append(value)
+    def insert_AlternativeImage_at(self, index, value):
+        self.AlternativeImage.insert(index, value)
+    def replace_AlternativeImage_at(self, index, value):
+        self.AlternativeImage[index] = value
+    def get_Coords(self):
+        return self.Coords
+    def set_Coords(self, Coords):
+        self.Coords = Coords
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_Roles(self):
+        return self.Roles
+    def set_Roles(self, Roles):
+        self.Roles = Roles
+    def get_TextRegion(self):
+        return self.TextRegion
+    def set_TextRegion(self, TextRegion):
+        self.TextRegion = TextRegion
+    def add_TextRegion(self, value):
+        self.TextRegion.append(value)
+    def add_TextRegion(self, value):
+        self.TextRegion.append(value)
+    def insert_TextRegion_at(self, index, value):
+        self.TextRegion.insert(index, value)
+    def replace_TextRegion_at(self, index, value):
+        self.TextRegion[index] = value
+    def get_ImageRegion(self):
+        return self.ImageRegion
+    def set_ImageRegion(self, ImageRegion):
+        self.ImageRegion = ImageRegion
+    def add_ImageRegion(self, value):
+        self.ImageRegion.append(value)
+    def add_ImageRegion(self, value):
+        self.ImageRegion.append(value)
+    def insert_ImageRegion_at(self, index, value):
+        self.ImageRegion.insert(index, value)
+    def replace_ImageRegion_at(self, index, value):
+        self.ImageRegion[index] = value
+    def get_LineDrawingRegion(self):
+        return self.LineDrawingRegion
+    def set_LineDrawingRegion(self, LineDrawingRegion):
+        self.LineDrawingRegion = LineDrawingRegion
+    def add_LineDrawingRegion(self, value):
+        self.LineDrawingRegion.append(value)
+    def add_LineDrawingRegion(self, value):
+        self.LineDrawingRegion.append(value)
+    def insert_LineDrawingRegion_at(self, index, value):
+        self.LineDrawingRegion.insert(index, value)
+    def replace_LineDrawingRegion_at(self, index, value):
+        self.LineDrawingRegion[index] = value
+    def get_GraphicRegion(self):
+        return self.GraphicRegion
+    def set_GraphicRegion(self, GraphicRegion):
+        self.GraphicRegion = GraphicRegion
+    def add_GraphicRegion(self, value):
+        self.GraphicRegion.append(value)
+    def add_GraphicRegion(self, value):
+        self.GraphicRegion.append(value)
+    def insert_GraphicRegion_at(self, index, value):
+        self.GraphicRegion.insert(index, value)
+    def replace_GraphicRegion_at(self, index, value):
+        self.GraphicRegion[index] = value
+    def get_TableRegion(self):
+        return self.TableRegion
+    def set_TableRegion(self, TableRegion):
+        self.TableRegion = TableRegion
+    def add_TableRegion(self, value):
+        self.TableRegion.append(value)
+    def add_TableRegion(self, value):
+        self.TableRegion.append(value)
+    def insert_TableRegion_at(self, index, value):
+        self.TableRegion.insert(index, value)
+    def replace_TableRegion_at(self, index, value):
+        self.TableRegion[index] = value
+    def get_ChartRegion(self):
+        return self.ChartRegion
+    def set_ChartRegion(self, ChartRegion):
+        self.ChartRegion = ChartRegion
+    def add_ChartRegion(self, value):
+        self.ChartRegion.append(value)
+    def add_ChartRegion(self, value):
+        self.ChartRegion.append(value)
+    def insert_ChartRegion_at(self, index, value):
+        self.ChartRegion.insert(index, value)
+    def replace_ChartRegion_at(self, index, value):
+        self.ChartRegion[index] = value
+    def get_SeparatorRegion(self):
+        return self.SeparatorRegion
+    def set_SeparatorRegion(self, SeparatorRegion):
+        self.SeparatorRegion = SeparatorRegion
+    def add_SeparatorRegion(self, value):
+        self.SeparatorRegion.append(value)
+    def add_SeparatorRegion(self, value):
+        self.SeparatorRegion.append(value)
+    def insert_SeparatorRegion_at(self, index, value):
+        self.SeparatorRegion.insert(index, value)
+    def replace_SeparatorRegion_at(self, index, value):
+        self.SeparatorRegion[index] = value
+    def get_MathsRegion(self):
+        return self.MathsRegion
+    def set_MathsRegion(self, MathsRegion):
+        self.MathsRegion = MathsRegion
+    def add_MathsRegion(self, value):
+        self.MathsRegion.append(value)
+    def add_MathsRegion(self, value):
+        self.MathsRegion.append(value)
+    def insert_MathsRegion_at(self, index, value):
+        self.MathsRegion.insert(index, value)
+    def replace_MathsRegion_at(self, index, value):
+        self.MathsRegion[index] = value
+    def get_ChemRegion(self):
+        return self.ChemRegion
+    def set_ChemRegion(self, ChemRegion):
+        self.ChemRegion = ChemRegion
+    def add_ChemRegion(self, value):
+        self.ChemRegion.append(value)
+    def add_ChemRegion(self, value):
+        self.ChemRegion.append(value)
+    def insert_ChemRegion_at(self, index, value):
+        self.ChemRegion.insert(index, value)
+    def replace_ChemRegion_at(self, index, value):
+        self.ChemRegion[index] = value
+    def get_MusicRegion(self):
+        return self.MusicRegion
+    def set_MusicRegion(self, MusicRegion):
+        self.MusicRegion = MusicRegion
+    def add_MusicRegion(self, value):
+        self.MusicRegion.append(value)
+    def add_MusicRegion(self, value):
+        self.MusicRegion.append(value)
+    def insert_MusicRegion_at(self, index, value):
+        self.MusicRegion.insert(index, value)
+    def replace_MusicRegion_at(self, index, value):
+        self.MusicRegion[index] = value
+    def get_AdvertRegion(self):
+        return self.AdvertRegion
+    def set_AdvertRegion(self, AdvertRegion):
+        self.AdvertRegion = AdvertRegion
+    def add_AdvertRegion(self, value):
+        self.AdvertRegion.append(value)
+    def add_AdvertRegion(self, value):
+        self.AdvertRegion.append(value)
+    def insert_AdvertRegion_at(self, index, value):
+        self.AdvertRegion.insert(index, value)
+    def replace_AdvertRegion_at(self, index, value):
+        self.AdvertRegion[index] = value
+    def get_NoiseRegion(self):
+        return self.NoiseRegion
+    def set_NoiseRegion(self, NoiseRegion):
+        self.NoiseRegion = NoiseRegion
+    def add_NoiseRegion(self, value):
+        self.NoiseRegion.append(value)
+    def add_NoiseRegion(self, value):
+        self.NoiseRegion.append(value)
+    def insert_NoiseRegion_at(self, index, value):
+        self.NoiseRegion.insert(index, value)
+    def replace_NoiseRegion_at(self, index, value):
+        self.NoiseRegion[index] = value
+    def get_UnknownRegion(self):
+        return self.UnknownRegion
+    def set_UnknownRegion(self, UnknownRegion):
+        self.UnknownRegion = UnknownRegion
+    def add_UnknownRegion(self, value):
+        self.UnknownRegion.append(value)
+    def add_UnknownRegion(self, value):
+        self.UnknownRegion.append(value)
+    def insert_UnknownRegion_at(self, index, value):
+        self.UnknownRegion.insert(index, value)
+    def replace_UnknownRegion_at(self, index, value):
+        self.UnknownRegion[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
+    def get_continuation(self):
+        return self.continuation
+    def set_continuation(self, continuation):
+        self.continuation = continuation
     def get_extensiontype_(self): return self.extensiontype_
     def set_extensiontype_(self, extensiontype_): self.extensiontype_ = extensiontype_
     def hasContent_(self):
@@ -5386,7 +6359,7 @@ class RegionType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='RegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5397,17 +6370,17 @@ class RegionType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='RegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='RegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='RegionType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='RegionType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -5424,47 +6397,47 @@ class RegionType(GeneratedsSuper):
             already_processed.add('xsi:type')
             outfile.write(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
             outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='RegionType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RegionType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.export(outfile, level, namespace_, name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
         if self.Coords is not None:
-            self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
+            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
         if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespace_, name_='UserDefined', pretty_print=pretty_print)
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespace_, name_='Labels', pretty_print=pretty_print)
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         if self.Roles is not None:
-            self.Roles.export(outfile, level, namespace_, name_='Roles', pretty_print=pretty_print)
+            self.Roles.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Roles', pretty_print=pretty_print)
         for TextRegion_ in self.TextRegion:
-            TextRegion_.export(outfile, level, namespace_, name_='TextRegion', pretty_print=pretty_print)
+            TextRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextRegion', pretty_print=pretty_print)
         for ImageRegion_ in self.ImageRegion:
-            ImageRegion_.export(outfile, level, namespace_, name_='ImageRegion', pretty_print=pretty_print)
+            ImageRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ImageRegion', pretty_print=pretty_print)
         for LineDrawingRegion_ in self.LineDrawingRegion:
-            LineDrawingRegion_.export(outfile, level, namespace_, name_='LineDrawingRegion', pretty_print=pretty_print)
+            LineDrawingRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='LineDrawingRegion', pretty_print=pretty_print)
         for GraphicRegion_ in self.GraphicRegion:
-            GraphicRegion_.export(outfile, level, namespace_, name_='GraphicRegion', pretty_print=pretty_print)
+            GraphicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphicRegion', pretty_print=pretty_print)
         for TableRegion_ in self.TableRegion:
-            TableRegion_.export(outfile, level, namespace_, name_='TableRegion', pretty_print=pretty_print)
+            TableRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableRegion', pretty_print=pretty_print)
         for ChartRegion_ in self.ChartRegion:
-            ChartRegion_.export(outfile, level, namespace_, name_='ChartRegion', pretty_print=pretty_print)
+            ChartRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChartRegion', pretty_print=pretty_print)
         for SeparatorRegion_ in self.SeparatorRegion:
-            SeparatorRegion_.export(outfile, level, namespace_, name_='SeparatorRegion', pretty_print=pretty_print)
+            SeparatorRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SeparatorRegion', pretty_print=pretty_print)
         for MathsRegion_ in self.MathsRegion:
-            MathsRegion_.export(outfile, level, namespace_, name_='MathsRegion', pretty_print=pretty_print)
+            MathsRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MathsRegion', pretty_print=pretty_print)
         for ChemRegion_ in self.ChemRegion:
-            ChemRegion_.export(outfile, level, namespace_, name_='ChemRegion', pretty_print=pretty_print)
+            ChemRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChemRegion', pretty_print=pretty_print)
         for MusicRegion_ in self.MusicRegion:
-            MusicRegion_.export(outfile, level, namespace_, name_='MusicRegion', pretty_print=pretty_print)
+            MusicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MusicRegion', pretty_print=pretty_print)
         for AdvertRegion_ in self.AdvertRegion:
-            AdvertRegion_.export(outfile, level, namespace_, name_='AdvertRegion', pretty_print=pretty_print)
+            AdvertRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AdvertRegion', pretty_print=pretty_print)
         for NoiseRegion_ in self.NoiseRegion:
-            NoiseRegion_.export(outfile, level, namespace_, name_='NoiseRegion', pretty_print=pretty_print)
+            NoiseRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NoiseRegion', pretty_print=pretty_print)
         for UnknownRegion_ in self.UnknownRegion:
-            UnknownRegion_.export(outfile, level, namespace_, name_='UnknownRegion', pretty_print=pretty_print)
+            UnknownRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnknownRegion', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5500,92 +6473,92 @@ class RegionType(GeneratedsSuper):
             self.extensiontype_ = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'AlternativeImage':
-            obj_ = AlternativeImageType.factory()
+            obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_)
             self.AlternativeImage.append(obj_)
             obj_.original_tagname_ = 'AlternativeImage'
         elif nodeName_ == 'Coords':
-            obj_ = CoordsType.factory()
+            obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
         elif nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory()
+            obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserDefined = obj_
             obj_.original_tagname_ = 'UserDefined'
         elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory()
+            obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
         elif nodeName_ == 'Roles':
-            obj_ = RolesType.factory()
+            obj_ = RolesType.factory(parent_object_=self)
             obj_.build(child_)
             self.Roles = obj_
             obj_.original_tagname_ = 'Roles'
         elif nodeName_ == 'TextRegion':
-            obj_ = TextRegionType.factory()
+            obj_ = TextRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextRegion.append(obj_)
             obj_.original_tagname_ = 'TextRegion'
         elif nodeName_ == 'ImageRegion':
-            obj_ = ImageRegionType.factory()
+            obj_ = ImageRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.ImageRegion.append(obj_)
             obj_.original_tagname_ = 'ImageRegion'
         elif nodeName_ == 'LineDrawingRegion':
-            obj_ = LineDrawingRegionType.factory()
+            obj_ = LineDrawingRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.LineDrawingRegion.append(obj_)
             obj_.original_tagname_ = 'LineDrawingRegion'
         elif nodeName_ == 'GraphicRegion':
-            obj_ = GraphicRegionType.factory()
+            obj_ = GraphicRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.GraphicRegion.append(obj_)
             obj_.original_tagname_ = 'GraphicRegion'
         elif nodeName_ == 'TableRegion':
-            obj_ = TableRegionType.factory()
+            obj_ = TableRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.TableRegion.append(obj_)
             obj_.original_tagname_ = 'TableRegion'
         elif nodeName_ == 'ChartRegion':
-            obj_ = ChartRegionType.factory()
+            obj_ = ChartRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.ChartRegion.append(obj_)
             obj_.original_tagname_ = 'ChartRegion'
         elif nodeName_ == 'SeparatorRegion':
-            obj_ = SeparatorRegionType.factory()
+            obj_ = SeparatorRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.SeparatorRegion.append(obj_)
             obj_.original_tagname_ = 'SeparatorRegion'
         elif nodeName_ == 'MathsRegion':
-            obj_ = MathsRegionType.factory()
+            obj_ = MathsRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.MathsRegion.append(obj_)
             obj_.original_tagname_ = 'MathsRegion'
         elif nodeName_ == 'ChemRegion':
-            obj_ = ChemRegionType.factory()
+            obj_ = ChemRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.ChemRegion.append(obj_)
             obj_.original_tagname_ = 'ChemRegion'
         elif nodeName_ == 'MusicRegion':
-            obj_ = MusicRegionType.factory()
+            obj_ = MusicRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.MusicRegion.append(obj_)
             obj_.original_tagname_ = 'MusicRegion'
         elif nodeName_ == 'AdvertRegion':
-            obj_ = AdvertRegionType.factory()
+            obj_ = AdvertRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.AdvertRegion.append(obj_)
             obj_.original_tagname_ = 'AdvertRegion'
         elif nodeName_ == 'NoiseRegion':
-            obj_ = NoiseRegionType.factory()
+            obj_ = NoiseRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.NoiseRegion.append(obj_)
             obj_.original_tagname_ = 'NoiseRegion'
         elif nodeName_ == 'UnknownRegion':
-            obj_ = UnknownRegionType.factory()
+            obj_ = UnknownRegionType.factory(parent_object_=self)
             obj_.build(child_)
             self.UnknownRegion.append(obj_)
             obj_.original_tagname_ = 'UnknownRegion'
@@ -5595,8 +6568,9 @@ class RegionType(GeneratedsSuper):
 class AlternativeImageType(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, filename=None, comments=None):
+    def __init__(self, filename=None, comments=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.filename = _cast(None, filename)
         self.comments = _cast(None, comments)
     def factory(*args_, **kwargs_):
@@ -5610,10 +6584,14 @@ class AlternativeImageType(GeneratedsSuper):
         else:
             return AlternativeImageType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_filename(self): return self.filename
-    def set_filename(self, filename): self.filename = filename
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_filename(self):
+        return self.filename
+    def set_filename(self, filename):
+        self.filename = filename
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def hasContent_(self):
         if (
 
@@ -5621,7 +6599,7 @@ class AlternativeImageType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='AlternativeImageType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='AlternativeImageType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('AlternativeImageType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5632,23 +6610,23 @@ class AlternativeImageType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='AlternativeImageType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AlternativeImageType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='AlternativeImageType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AlternativeImageType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='AlternativeImageType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='AlternativeImageType'):
         if self.filename is not None and 'filename' not in already_processed:
             already_processed.add('filename')
             outfile.write(' filename=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.filename), input_name='filename')), ))
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -5675,8 +6653,9 @@ class GraphemesType(GeneratedsSuper):
     """Container for graphemes, grapheme groups and non-printing characters"""
     subclass = None
     superclass = None
-    def __init__(self, Grapheme=None, NonPrintingChar=None, GraphemeGroup=None):
+    def __init__(self, Grapheme=None, NonPrintingChar=None, GraphemeGroup=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         if Grapheme is None:
             self.Grapheme = []
         else:
@@ -5700,21 +6679,42 @@ class GraphemesType(GeneratedsSuper):
         else:
             return GraphemesType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Grapheme(self): return self.Grapheme
-    def set_Grapheme(self, Grapheme): self.Grapheme = Grapheme
-    def add_Grapheme(self, value): self.Grapheme.append(value)
-    def insert_Grapheme_at(self, index, value): self.Grapheme.insert(index, value)
-    def replace_Grapheme_at(self, index, value): self.Grapheme[index] = value
-    def get_NonPrintingChar(self): return self.NonPrintingChar
-    def set_NonPrintingChar(self, NonPrintingChar): self.NonPrintingChar = NonPrintingChar
-    def add_NonPrintingChar(self, value): self.NonPrintingChar.append(value)
-    def insert_NonPrintingChar_at(self, index, value): self.NonPrintingChar.insert(index, value)
-    def replace_NonPrintingChar_at(self, index, value): self.NonPrintingChar[index] = value
-    def get_GraphemeGroup(self): return self.GraphemeGroup
-    def set_GraphemeGroup(self, GraphemeGroup): self.GraphemeGroup = GraphemeGroup
-    def add_GraphemeGroup(self, value): self.GraphemeGroup.append(value)
-    def insert_GraphemeGroup_at(self, index, value): self.GraphemeGroup.insert(index, value)
-    def replace_GraphemeGroup_at(self, index, value): self.GraphemeGroup[index] = value
+    def get_Grapheme(self):
+        return self.Grapheme
+    def set_Grapheme(self, Grapheme):
+        self.Grapheme = Grapheme
+    def add_Grapheme(self, value):
+        self.Grapheme.append(value)
+    def add_Grapheme(self, value):
+        self.Grapheme.append(value)
+    def insert_Grapheme_at(self, index, value):
+        self.Grapheme.insert(index, value)
+    def replace_Grapheme_at(self, index, value):
+        self.Grapheme[index] = value
+    def get_NonPrintingChar(self):
+        return self.NonPrintingChar
+    def set_NonPrintingChar(self, NonPrintingChar):
+        self.NonPrintingChar = NonPrintingChar
+    def add_NonPrintingChar(self, value):
+        self.NonPrintingChar.append(value)
+    def add_NonPrintingChar(self, value):
+        self.NonPrintingChar.append(value)
+    def insert_NonPrintingChar_at(self, index, value):
+        self.NonPrintingChar.insert(index, value)
+    def replace_NonPrintingChar_at(self, index, value):
+        self.NonPrintingChar[index] = value
+    def get_GraphemeGroup(self):
+        return self.GraphemeGroup
+    def set_GraphemeGroup(self, GraphemeGroup):
+        self.GraphemeGroup = GraphemeGroup
+    def add_GraphemeGroup(self, value):
+        self.GraphemeGroup.append(value)
+    def add_GraphemeGroup(self, value):
+        self.GraphemeGroup.append(value)
+    def insert_GraphemeGroup_at(self, index, value):
+        self.GraphemeGroup.insert(index, value)
+    def replace_GraphemeGroup_at(self, index, value):
+        self.GraphemeGroup[index] = value
     def hasContent_(self):
         if (
             self.Grapheme or
@@ -5724,7 +6724,7 @@ class GraphemesType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GraphemesType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemesType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemesType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5735,29 +6735,29 @@ class GraphemesType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GraphemesType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemesType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GraphemesType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemesType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GraphemesType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GraphemesType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GraphemesType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemesType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for Grapheme_ in self.Grapheme:
-            Grapheme_.export(outfile, level, namespace_, name_='Grapheme', pretty_print=pretty_print)
+            Grapheme_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grapheme', pretty_print=pretty_print)
         for NonPrintingChar_ in self.NonPrintingChar:
-            NonPrintingChar_.export(outfile, level, namespace_, name_='NonPrintingChar', pretty_print=pretty_print)
+            NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
         for GraphemeGroup_ in self.GraphemeGroup:
-            GraphemeGroup_.export(outfile, level, namespace_, name_='GraphemeGroup', pretty_print=pretty_print)
+            GraphemeGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphemeGroup', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5769,17 +6769,17 @@ class GraphemesType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Grapheme':
-            obj_ = GraphemeType.factory()
+            obj_ = GraphemeType.factory(parent_object_=self)
             obj_.build(child_)
             self.Grapheme.append(obj_)
             obj_.original_tagname_ = 'Grapheme'
         elif nodeName_ == 'NonPrintingChar':
-            obj_ = NonPrintingCharType.factory()
+            obj_ = NonPrintingCharType.factory(parent_object_=self)
             obj_.build(child_)
             self.NonPrintingChar.append(obj_)
             obj_.original_tagname_ = 'NonPrintingChar'
         elif nodeName_ == 'GraphemeGroup':
-            obj_ = GraphemeGroupType.factory()
+            obj_ = GraphemeGroupType.factory(parent_object_=self)
             obj_.build(child_)
             self.GraphemeGroup.append(obj_)
             obj_.original_tagname_ = 'GraphemeGroup'
@@ -5795,8 +6795,9 @@ class GraphemeBaseType(GeneratedsSuper):
     generic use"""
     subclass = None
     superclass = None
-    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, extensiontype_=None):
+    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, extensiontype_=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.id = _cast(None, id)
         self.index = _cast(int, index)
         self.ligature = _cast(bool, ligature)
@@ -5819,23 +6820,42 @@ class GraphemeBaseType(GeneratedsSuper):
         else:
             return GraphemeBaseType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_TextEquiv(self): return self.TextEquiv
-    def set_TextEquiv(self, TextEquiv): self.TextEquiv = TextEquiv
-    def add_TextEquiv(self, value): self.TextEquiv.append(value)
-    def insert_TextEquiv_at(self, index, value): self.TextEquiv.insert(index, value)
-    def replace_TextEquiv_at(self, index, value): self.TextEquiv[index] = value
-    def get_id(self): return self.id
-    def set_id(self, id): self.id = id
-    def get_index(self): return self.index
-    def set_index(self, index): self.index = index
-    def get_ligature(self): return self.ligature
-    def set_ligature(self, ligature): self.ligature = ligature
-    def get_charType(self): return self.charType
-    def set_charType(self, charType): self.charType = charType
-    def get_custom(self): return self.custom
-    def set_custom(self, custom): self.custom = custom
-    def get_comments(self): return self.comments
-    def set_comments(self, comments): self.comments = comments
+    def get_TextEquiv(self):
+        return self.TextEquiv
+    def set_TextEquiv(self, TextEquiv):
+        self.TextEquiv = TextEquiv
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def insert_TextEquiv_at(self, index, value):
+        self.TextEquiv.insert(index, value)
+    def replace_TextEquiv_at(self, index, value):
+        self.TextEquiv[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_index(self):
+        return self.index
+    def set_index(self, index):
+        self.index = index
+    def get_ligature(self):
+        return self.ligature
+    def set_ligature(self, ligature):
+        self.ligature = ligature
+    def get_charType(self):
+        return self.charType
+    def set_charType(self, charType):
+        self.charType = charType
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
     def get_extensiontype_(self): return self.extensiontype_
     def set_extensiontype_(self, extensiontype_): self.extensiontype_ = extensiontype_
     def hasContent_(self):
@@ -5845,7 +6865,7 @@ class GraphemeBaseType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GraphemeBaseType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemeBaseType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeBaseType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5856,17 +6876,17 @@ class GraphemeBaseType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GraphemeBaseType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeBaseType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GraphemeBaseType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeBaseType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GraphemeBaseType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GraphemeBaseType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -5889,13 +6909,13 @@ class GraphemeBaseType(GeneratedsSuper):
             already_processed.add('xsi:type')
             outfile.write(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
             outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GraphemeBaseType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemeBaseType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.export(outfile, level, namespace_, name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5942,7 +6962,7 @@ class GraphemeBaseType(GeneratedsSuper):
             self.extensiontype_ = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'TextEquiv':
-            obj_ = TextEquivType.factory()
+            obj_ = TextEquivType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
@@ -5954,9 +6974,10 @@ class GraphemeType(GraphemeBaseType):
     can be assigned a Unicode code point"""
     subclass = None
     superclass = GraphemeBaseType
-    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, Coords=None):
+    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, Coords=None, **kwargs_):
         self.original_tagname_ = None
-        super(GraphemeType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(GraphemeType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
         self.Coords = Coords
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -5969,8 +6990,10 @@ class GraphemeType(GraphemeBaseType):
         else:
             return GraphemeType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Coords(self): return self.Coords
-    def set_Coords(self, Coords): self.Coords = Coords
+    def get_Coords(self):
+        return self.Coords
+    def set_Coords(self, Coords):
+        self.Coords = Coords
     def hasContent_(self):
         if (
             self.Coords is not None or
@@ -5979,7 +7002,7 @@ class GraphemeType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GraphemeType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemeType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5990,26 +7013,26 @@ class GraphemeType(GraphemeBaseType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GraphemeType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GraphemeType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GraphemeType'):
-        super(GraphemeType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='GraphemeType')
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GraphemeType', fromsubclass_=False, pretty_print=True):
-        super(GraphemeType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GraphemeType'):
+        super(GraphemeType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemeType', fromsubclass_=False, pretty_print=True):
+        super(GraphemeType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.Coords is not None:
-            self.Coords.export(outfile, level, namespace_, name_='Coords', pretty_print=pretty_print)
+            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6021,7 +7044,7 @@ class GraphemeType(GraphemeBaseType):
         super(GraphemeType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Coords':
-            obj_ = CoordsType.factory()
+            obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
@@ -6035,9 +7058,10 @@ class NonPrintingCharType(GraphemeBaseType):
     of grapheme container (of glyph) or grapheme sub group."""
     subclass = None
     superclass = GraphemeBaseType
-    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None):
+    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, **kwargs_):
         self.original_tagname_ = None
-        super(NonPrintingCharType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(NonPrintingCharType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6056,7 +7080,7 @@ class NonPrintingCharType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='NonPrintingCharType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='NonPrintingCharType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('NonPrintingCharType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6067,20 +7091,20 @@ class NonPrintingCharType(GraphemeBaseType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='NonPrintingCharType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='NonPrintingCharType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NonPrintingCharType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='NonPrintingCharType'):
-        super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='NonPrintingCharType')
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
-        super(NonPrintingCharType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='NonPrintingCharType'):
+        super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
+        super(NonPrintingCharType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6099,9 +7123,10 @@ class NonPrintingCharType(GraphemeBaseType):
 class GraphemeGroupType(GraphemeBaseType):
     subclass = None
     superclass = GraphemeBaseType
-    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, Grapheme=None, NonPrintingChar=None):
+    def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, Grapheme=None, NonPrintingChar=None, **kwargs_):
         self.original_tagname_ = None
-        super(GraphemeGroupType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(GraphemeGroupType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
         if Grapheme is None:
             self.Grapheme = []
         else:
@@ -6121,16 +7146,30 @@ class GraphemeGroupType(GraphemeBaseType):
         else:
             return GraphemeGroupType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Grapheme(self): return self.Grapheme
-    def set_Grapheme(self, Grapheme): self.Grapheme = Grapheme
-    def add_Grapheme(self, value): self.Grapheme.append(value)
-    def insert_Grapheme_at(self, index, value): self.Grapheme.insert(index, value)
-    def replace_Grapheme_at(self, index, value): self.Grapheme[index] = value
-    def get_NonPrintingChar(self): return self.NonPrintingChar
-    def set_NonPrintingChar(self, NonPrintingChar): self.NonPrintingChar = NonPrintingChar
-    def add_NonPrintingChar(self, value): self.NonPrintingChar.append(value)
-    def insert_NonPrintingChar_at(self, index, value): self.NonPrintingChar.insert(index, value)
-    def replace_NonPrintingChar_at(self, index, value): self.NonPrintingChar[index] = value
+    def get_Grapheme(self):
+        return self.Grapheme
+    def set_Grapheme(self, Grapheme):
+        self.Grapheme = Grapheme
+    def add_Grapheme(self, value):
+        self.Grapheme.append(value)
+    def add_Grapheme(self, value):
+        self.Grapheme.append(value)
+    def insert_Grapheme_at(self, index, value):
+        self.Grapheme.insert(index, value)
+    def replace_Grapheme_at(self, index, value):
+        self.Grapheme[index] = value
+    def get_NonPrintingChar(self):
+        return self.NonPrintingChar
+    def set_NonPrintingChar(self, NonPrintingChar):
+        self.NonPrintingChar = NonPrintingChar
+    def add_NonPrintingChar(self, value):
+        self.NonPrintingChar.append(value)
+    def add_NonPrintingChar(self, value):
+        self.NonPrintingChar.append(value)
+    def insert_NonPrintingChar_at(self, index, value):
+        self.NonPrintingChar.insert(index, value)
+    def replace_NonPrintingChar_at(self, index, value):
+        self.NonPrintingChar[index] = value
     def hasContent_(self):
         if (
             self.Grapheme or
@@ -6140,7 +7179,7 @@ class GraphemeGroupType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GraphemeGroupType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemeGroupType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeGroupType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6151,28 +7190,28 @@ class GraphemeGroupType(GraphemeBaseType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GraphemeGroupType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GraphemeGroupType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeGroupType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GraphemeGroupType'):
-        super(GraphemeGroupType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='GraphemeGroupType')
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GraphemeGroupType', fromsubclass_=False, pretty_print=True):
-        super(GraphemeGroupType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GraphemeGroupType'):
+        super(GraphemeGroupType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphemeGroupType', fromsubclass_=False, pretty_print=True):
+        super(GraphemeGroupType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for Grapheme_ in self.Grapheme:
-            Grapheme_.export(outfile, level, namespace_, name_='Grapheme', pretty_print=pretty_print)
+            Grapheme_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grapheme', pretty_print=pretty_print)
         for NonPrintingChar_ in self.NonPrintingChar:
-            NonPrintingChar_.export(outfile, level, namespace_, name_='NonPrintingChar', pretty_print=pretty_print)
+            NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6184,12 +7223,12 @@ class GraphemeGroupType(GraphemeBaseType):
         super(GraphemeGroupType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Grapheme':
-            obj_ = GraphemeType.factory()
+            obj_ = GraphemeType.factory(parent_object_=self)
             obj_.build(child_)
             self.Grapheme.append(obj_)
             obj_.original_tagname_ = 'Grapheme'
         elif nodeName_ == 'NonPrintingChar':
-            obj_ = NonPrintingCharType.factory()
+            obj_ = NonPrintingCharType.factory(parent_object_=self)
             obj_.build(child_)
             self.NonPrintingChar.append(obj_)
             obj_.original_tagname_ = 'NonPrintingChar'
@@ -6201,8 +7240,9 @@ class UserDefinedType(GeneratedsSuper):
     """Container for user-defined attributes"""
     subclass = None
     superclass = None
-    def __init__(self, UserAttribute=None):
+    def __init__(self, UserAttribute=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         if UserAttribute is None:
             self.UserAttribute = []
         else:
@@ -6218,11 +7258,18 @@ class UserDefinedType(GeneratedsSuper):
         else:
             return UserDefinedType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_UserAttribute(self): return self.UserAttribute
-    def set_UserAttribute(self, UserAttribute): self.UserAttribute = UserAttribute
-    def add_UserAttribute(self, value): self.UserAttribute.append(value)
-    def insert_UserAttribute_at(self, index, value): self.UserAttribute.insert(index, value)
-    def replace_UserAttribute_at(self, index, value): self.UserAttribute[index] = value
+    def get_UserAttribute(self):
+        return self.UserAttribute
+    def set_UserAttribute(self, UserAttribute):
+        self.UserAttribute = UserAttribute
+    def add_UserAttribute(self, value):
+        self.UserAttribute.append(value)
+    def add_UserAttribute(self, value):
+        self.UserAttribute.append(value)
+    def insert_UserAttribute_at(self, index, value):
+        self.UserAttribute.insert(index, value)
+    def replace_UserAttribute_at(self, index, value):
+        self.UserAttribute[index] = value
     def hasContent_(self):
         if (
             self.UserAttribute
@@ -6230,7 +7277,7 @@ class UserDefinedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='UserDefinedType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UserDefinedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UserDefinedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6241,25 +7288,25 @@ class UserDefinedType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='UserDefinedType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserDefinedType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='UserDefinedType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserDefinedType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='UserDefinedType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='UserDefinedType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='UserDefinedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UserDefinedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for UserAttribute_ in self.UserAttribute:
-            UserAttribute_.export(outfile, level, namespace_, name_='UserAttribute', pretty_print=pretty_print)
+            UserAttribute_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserAttribute', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6271,7 +7318,7 @@ class UserDefinedType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'UserAttribute':
-            obj_ = UserAttributeType.factory()
+            obj_ = UserAttributeType.factory(parent_object_=self)
             obj_.build(child_)
             self.UserAttribute.append(obj_)
             obj_.original_tagname_ = 'UserAttribute'
@@ -6282,8 +7329,9 @@ class UserAttributeType(GeneratedsSuper):
     """Structured custom data defined by name, type and value."""
     subclass = None
     superclass = None
-    def __init__(self, name=None, description=None, type_=None, value=None):
+    def __init__(self, name=None, description=None, type_=None, value=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.name = _cast(None, name)
         self.description = _cast(None, description)
         self.type_ = _cast(None, type_)
@@ -6299,14 +7347,22 @@ class UserAttributeType(GeneratedsSuper):
         else:
             return UserAttributeType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_name(self): return self.name
-    def set_name(self, name): self.name = name
-    def get_description(self): return self.description
-    def set_description(self, description): self.description = description
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_value(self): return self.value
-    def set_value(self, value): self.value = value
+    def get_name(self):
+        return self.name
+    def set_name(self, name):
+        self.name = name
+    def get_description(self):
+        return self.description
+    def set_description(self, description):
+        self.description = description
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_value(self):
+        return self.value
+    def set_value(self, value):
+        self.value = value
     def hasContent_(self):
         if (
 
@@ -6314,7 +7370,7 @@ class UserAttributeType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='UserAttributeType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UserAttributeType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UserAttributeType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6325,16 +7381,16 @@ class UserAttributeType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='UserAttributeType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserAttributeType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='UserAttributeType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserAttributeType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='UserAttributeType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='UserAttributeType'):
         if self.name is not None and 'name' not in already_processed:
             already_processed.add('name')
             outfile.write(' name=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.name), input_name='name')), ))
@@ -6347,7 +7403,7 @@ class UserAttributeType(GeneratedsSuper):
         if self.value is not None and 'value' not in already_processed:
             already_processed.add('value')
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -6385,8 +7441,9 @@ class TableCellRoleType(GeneratedsSuper):
     is 1) Is the cell a column or row header?"""
     subclass = None
     superclass = None
-    def __init__(self, rowIndex=None, columnIndex=None, rowSpan=None, colSpan=None, header=None):
+    def __init__(self, rowIndex=None, columnIndex=None, rowSpan=None, colSpan=None, header=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.rowIndex = _cast(int, rowIndex)
         self.columnIndex = _cast(int, columnIndex)
         self.rowSpan = _cast(int, rowSpan)
@@ -6403,16 +7460,26 @@ class TableCellRoleType(GeneratedsSuper):
         else:
             return TableCellRoleType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_rowIndex(self): return self.rowIndex
-    def set_rowIndex(self, rowIndex): self.rowIndex = rowIndex
-    def get_columnIndex(self): return self.columnIndex
-    def set_columnIndex(self, columnIndex): self.columnIndex = columnIndex
-    def get_rowSpan(self): return self.rowSpan
-    def set_rowSpan(self, rowSpan): self.rowSpan = rowSpan
-    def get_colSpan(self): return self.colSpan
-    def set_colSpan(self, colSpan): self.colSpan = colSpan
-    def get_header(self): return self.header
-    def set_header(self, header): self.header = header
+    def get_rowIndex(self):
+        return self.rowIndex
+    def set_rowIndex(self, rowIndex):
+        self.rowIndex = rowIndex
+    def get_columnIndex(self):
+        return self.columnIndex
+    def set_columnIndex(self, columnIndex):
+        self.columnIndex = columnIndex
+    def get_rowSpan(self):
+        return self.rowSpan
+    def set_rowSpan(self, rowSpan):
+        self.rowSpan = rowSpan
+    def get_colSpan(self):
+        return self.colSpan
+    def set_colSpan(self, colSpan):
+        self.colSpan = colSpan
+    def get_header(self):
+        return self.header
+    def set_header(self, header):
+        self.header = header
     def hasContent_(self):
         if (
 
@@ -6420,7 +7487,7 @@ class TableCellRoleType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='TableCellRoleType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TableCellRoleType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TableCellRoleType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6431,16 +7498,16 @@ class TableCellRoleType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='TableCellRoleType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableCellRoleType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='TableCellRoleType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableCellRoleType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='TableCellRoleType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='TableCellRoleType'):
         if self.rowIndex is not None and 'rowIndex' not in already_processed:
             already_processed.add('rowIndex')
             outfile.write(' rowIndex="%s"' % self.gds_format_integer(self.rowIndex, input_name='rowIndex'))
@@ -6456,7 +7523,7 @@ class TableCellRoleType(GeneratedsSuper):
         if self.header is not None and 'header' not in already_processed:
             already_processed.add('header')
             outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -6511,8 +7578,9 @@ class TableCellRoleType(GeneratedsSuper):
 class RolesType(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, TableCellRole=None):
+    def __init__(self, TableCellRole=None, **kwargs_):
         self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
         self.TableCellRole = TableCellRole
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -6525,8 +7593,10 @@ class RolesType(GeneratedsSuper):
         else:
             return RolesType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_TableCellRole(self): return self.TableCellRole
-    def set_TableCellRole(self, TableCellRole): self.TableCellRole = TableCellRole
+    def get_TableCellRole(self):
+        return self.TableCellRole
+    def set_TableCellRole(self, TableCellRole):
+        self.TableCellRole = TableCellRole
     def hasContent_(self):
         if (
             self.TableCellRole is not None
@@ -6534,7 +7604,7 @@ class RolesType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='RolesType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RolesType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RolesType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6545,25 +7615,25 @@ class RolesType(GeneratedsSuper):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='RolesType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RolesType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='RolesType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RolesType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='RolesType'):
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='RolesType'):
         pass
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='RolesType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='RolesType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.TableCellRole is not None:
-            self.TableCellRole.export(outfile, level, namespace_, name_='TableCellRole', pretty_print=pretty_print)
+            self.TableCellRole.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableCellRole', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6575,7 +7645,7 @@ class RolesType(GeneratedsSuper):
         pass
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'TableCellRole':
-            obj_ = TableCellRoleType.factory()
+            obj_ = TableCellRoleType.factory(parent_object_=self)
             obj_.build(child_)
             self.TableCellRole = obj_
             obj_.original_tagname_ = 'TableCellRole'
@@ -6586,9 +7656,10 @@ class UnknownRegionType(RegionType):
     """To be used if the region type cannot be ascertained."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, **kwargs_):
         self.original_tagname_ = None
-        super(UnknownRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(UnknownRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6607,7 +7678,7 @@ class UnknownRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='UnknownRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UnknownRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnknownRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6618,20 +7689,20 @@ class UnknownRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='UnknownRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='UnknownRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnknownRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='UnknownRegionType'):
-        super(UnknownRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='UnknownRegionType')
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
-        super(UnknownRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='UnknownRegionType'):
+        super(UnknownRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
+        super(UnknownRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6652,9 +7723,10 @@ class NoiseRegionType(RegionType):
     created by artifacts on the document or scanner noise."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, **kwargs_):
         self.original_tagname_ = None
-        super(NoiseRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(NoiseRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6673,7 +7745,7 @@ class NoiseRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='NoiseRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='NoiseRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('NoiseRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6684,20 +7756,20 @@ class NoiseRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='NoiseRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='NoiseRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NoiseRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='NoiseRegionType'):
-        super(NoiseRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='NoiseRegionType')
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
-        super(NoiseRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='NoiseRegionType'):
+        super(NoiseRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
+        super(NoiseRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6721,9 +7793,10 @@ class AdvertRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None, **kwargs_):
         self.original_tagname_ = None
-        super(AdvertRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(AdvertRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -6737,10 +7810,14 @@ class AdvertRegionType(RegionType):
         else:
             return AdvertRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
     def hasContent_(self):
         if (
             super(AdvertRegionType, self).hasContent_()
@@ -6748,7 +7825,7 @@ class AdvertRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='AdvertRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='AdvertRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('AdvertRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6759,26 +7836,26 @@ class AdvertRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='AdvertRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='AdvertRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AdvertRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='AdvertRegionType'):
-        super(AdvertRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='AdvertRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='AdvertRegionType'):
+        super(AdvertRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
-        super(AdvertRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
+        super(AdvertRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6813,9 +7890,10 @@ class MusicRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None, **kwargs_):
         self.original_tagname_ = None
-        super(MusicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(MusicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -6829,10 +7907,14 @@ class MusicRegionType(RegionType):
         else:
             return MusicRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
     def hasContent_(self):
         if (
             super(MusicRegionType, self).hasContent_()
@@ -6840,7 +7922,7 @@ class MusicRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='MusicRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MusicRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MusicRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6851,26 +7933,26 @@ class MusicRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='MusicRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='MusicRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MusicRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='MusicRegionType'):
-        super(MusicRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='MusicRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='MusicRegionType'):
+        super(MusicRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
-        super(MusicRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
+        super(MusicRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6904,9 +7986,10 @@ class MapRegionType(RegionType):
     clockwise rotation). Range: -179.999,180"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, **kwargs_):
         self.original_tagname_ = None
-        super(MapRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(MapRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -6919,8 +8002,10 @@ class MapRegionType(RegionType):
         else:
             return MapRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
     def hasContent_(self):
         if (
             super(MapRegionType, self).hasContent_()
@@ -6928,7 +8013,7 @@ class MapRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='MapRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MapRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MapRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6939,23 +8024,23 @@ class MapRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='MapRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='MapRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MapRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='MapRegionType'):
-        super(MapRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='MapRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='MapRegionType'):
+        super(MapRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
-        super(MapRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
+        super(MapRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6986,9 +8071,10 @@ class ChemRegionType(RegionType):
     colour of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None, **kwargs_):
         self.original_tagname_ = None
-        super(ChemRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(ChemRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -7002,10 +8088,14 @@ class ChemRegionType(RegionType):
         else:
             return ChemRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
     def hasContent_(self):
         if (
             super(ChemRegionType, self).hasContent_()
@@ -7013,7 +8103,7 @@ class ChemRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='ChemRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ChemRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ChemRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7024,26 +8114,26 @@ class ChemRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='ChemRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='ChemRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChemRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='ChemRegionType'):
-        super(ChemRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='ChemRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='ChemRegionType'):
+        super(ChemRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
-        super(ChemRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
+        super(ChemRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7079,9 +8169,10 @@ class MathsRegionType(RegionType):
     of the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, bgColour=None, **kwargs_):
         self.original_tagname_ = None
-        super(MathsRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(MathsRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.bgColour = _cast(None, bgColour)
     def factory(*args_, **kwargs_):
@@ -7095,10 +8186,14 @@ class MathsRegionType(RegionType):
         else:
             return MathsRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
     def hasContent_(self):
         if (
             super(MathsRegionType, self).hasContent_()
@@ -7106,7 +8201,7 @@ class MathsRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='MathsRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MathsRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MathsRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7117,26 +8212,26 @@ class MathsRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='MathsRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='MathsRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MathsRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='MathsRegionType'):
-        super(MathsRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='MathsRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='MathsRegionType'):
+        super(MathsRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
-        super(MathsRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
+        super(MathsRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7172,9 +8267,10 @@ class SeparatorRegionType(RegionType):
     -179.999,180 The colour of the separator"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colour=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colour=None, **kwargs_):
         self.original_tagname_ = None
-        super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.colour = _cast(None, colour)
     def factory(*args_, **kwargs_):
@@ -7188,10 +8284,14 @@ class SeparatorRegionType(RegionType):
         else:
             return SeparatorRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_colour(self): return self.colour
-    def set_colour(self, colour): self.colour = colour
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_colour(self):
+        return self.colour
+    def set_colour(self, colour):
+        self.colour = colour
     def hasContent_(self):
         if (
             super(SeparatorRegionType, self).hasContent_()
@@ -7199,7 +8299,7 @@ class SeparatorRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='SeparatorRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='SeparatorRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('SeparatorRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7210,26 +8310,26 @@ class SeparatorRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='SeparatorRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='SeparatorRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='SeparatorRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='SeparatorRegionType'):
-        super(SeparatorRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='SeparatorRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='SeparatorRegionType'):
+        super(SeparatorRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.colour is not None and 'colour' not in already_processed:
             already_processed.add('colour')
             outfile.write(' colour=%s' % (quote_attrib(self.colour), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
-        super(SeparatorRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
+        super(SeparatorRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7267,9 +8367,10 @@ class ChartRegionType(RegionType):
     also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None, **kwargs_):
         self.original_tagname_ = None
-        super(ChartRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(ChartRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.numColours = _cast(int, numColours)
@@ -7286,16 +8387,26 @@ class ChartRegionType(RegionType):
         else:
             return ChartRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_numColours(self): return self.numColours
-    def set_numColours(self, numColours): self.numColours = numColours
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
-    def get_embText(self): return self.embText
-    def set_embText(self, embText): self.embText = embText
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_numColours(self):
+        return self.numColours
+    def set_numColours(self, numColours):
+        self.numColours = numColours
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
+    def get_embText(self):
+        return self.embText
+    def set_embText(self, embText):
+        self.embText = embText
     def hasContent_(self):
         if (
             super(ChartRegionType, self).hasContent_()
@@ -7303,7 +8414,7 @@ class ChartRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='ChartRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ChartRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ChartRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7314,18 +8425,18 @@ class ChartRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='ChartRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='ChartRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChartRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='ChartRegionType'):
-        super(ChartRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='ChartRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='ChartRegionType'):
+        super(ChartRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -7341,8 +8452,8 @@ class ChartRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
-        super(ChartRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
+        super(ChartRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7402,9 +8513,10 @@ class TableRegionType(RegionType):
     Specifies whether the region also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None, **kwargs_):
         self.original_tagname_ = None
-        super(TableRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(TableRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.rows = _cast(int, rows)
         self.columns = _cast(int, columns)
@@ -7424,22 +8536,38 @@ class TableRegionType(RegionType):
         else:
             return TableRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_Grid(self): return self.Grid
-    def set_Grid(self, Grid): self.Grid = Grid
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_rows(self): return self.rows
-    def set_rows(self, rows): self.rows = rows
-    def get_columns(self): return self.columns
-    def set_columns(self, columns): self.columns = columns
-    def get_lineColour(self): return self.lineColour
-    def set_lineColour(self, lineColour): self.lineColour = lineColour
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
-    def get_lineSeparators(self): return self.lineSeparators
-    def set_lineSeparators(self, lineSeparators): self.lineSeparators = lineSeparators
-    def get_embText(self): return self.embText
-    def set_embText(self, embText): self.embText = embText
+    def get_Grid(self):
+        return self.Grid
+    def set_Grid(self, Grid):
+        self.Grid = Grid
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_rows(self):
+        return self.rows
+    def set_rows(self, rows):
+        self.rows = rows
+    def get_columns(self):
+        return self.columns
+    def set_columns(self, columns):
+        self.columns = columns
+    def get_lineColour(self):
+        return self.lineColour
+    def set_lineColour(self, lineColour):
+        self.lineColour = lineColour
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
+    def get_lineSeparators(self):
+        return self.lineSeparators
+    def set_lineSeparators(self, lineSeparators):
+        self.lineSeparators = lineSeparators
+    def get_embText(self):
+        return self.embText
+    def set_embText(self, embText):
+        self.embText = embText
     def hasContent_(self):
         if (
             self.Grid is not None or
@@ -7448,7 +8576,7 @@ class TableRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='TableRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TableRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TableRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7459,18 +8587,18 @@ class TableRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='TableRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='TableRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='TableRegionType'):
-        super(TableRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='TableRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='TableRegionType'):
+        super(TableRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -7492,14 +8620,14 @@ class TableRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='TableRegionType', fromsubclass_=False, pretty_print=True):
-        super(TableRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TableRegionType', fromsubclass_=False, pretty_print=True):
+        super(TableRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         if self.Grid is not None:
-            self.Grid.export(outfile, level, namespace_, name_='Grid', pretty_print=pretty_print)
+            self.Grid.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grid', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7558,7 +8686,7 @@ class TableRegionType(RegionType):
         super(TableRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'Grid':
-            obj_ = GridType.factory()
+            obj_ = GridType.factory(parent_object_=self)
             obj_.build(child_)
             self.Grid = obj_
             obj_.original_tagname_ = 'Grid'
@@ -7577,9 +8705,10 @@ class GraphicRegionType(RegionType):
     text."""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, numColours=None, embText=None, **kwargs_):
         self.original_tagname_ = None
-        super(GraphicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(GraphicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.numColours = _cast(int, numColours)
@@ -7595,14 +8724,22 @@ class GraphicRegionType(RegionType):
         else:
             return GraphicRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_numColours(self): return self.numColours
-    def set_numColours(self, numColours): self.numColours = numColours
-    def get_embText(self): return self.embText
-    def set_embText(self, embText): self.embText = embText
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_numColours(self):
+        return self.numColours
+    def set_numColours(self, numColours):
+        self.numColours = numColours
+    def get_embText(self):
+        return self.embText
+    def set_embText(self, embText):
+        self.embText = embText
     def hasContent_(self):
         if (
             super(GraphicRegionType, self).hasContent_()
@@ -7610,7 +8747,7 @@ class GraphicRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='GraphicRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphicRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphicRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7621,18 +8758,18 @@ class GraphicRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='GraphicRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='GraphicRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphicRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='GraphicRegionType'):
-        super(GraphicRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='GraphicRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='GraphicRegionType'):
+        super(GraphicRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -7645,8 +8782,8 @@ class GraphicRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
-        super(GraphicRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
+        super(GraphicRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7699,9 +8836,10 @@ class LineDrawingRegionType(RegionType):
     also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, penColour=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, penColour=None, bgColour=None, embText=None, **kwargs_):
         self.original_tagname_ = None
-        super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.penColour = _cast(None, penColour)
         self.bgColour = _cast(None, bgColour)
@@ -7717,14 +8855,22 @@ class LineDrawingRegionType(RegionType):
         else:
             return LineDrawingRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_penColour(self): return self.penColour
-    def set_penColour(self, penColour): self.penColour = penColour
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
-    def get_embText(self): return self.embText
-    def set_embText(self, embText): self.embText = embText
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_penColour(self):
+        return self.penColour
+    def set_penColour(self, penColour):
+        self.penColour = penColour
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
+    def get_embText(self):
+        return self.embText
+    def set_embText(self, embText):
+        self.embText = embText
     def hasContent_(self):
         if (
             super(LineDrawingRegionType, self).hasContent_()
@@ -7732,7 +8878,7 @@ class LineDrawingRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='LineDrawingRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LineDrawingRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LineDrawingRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7743,18 +8889,18 @@ class LineDrawingRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='LineDrawingRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='LineDrawingRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LineDrawingRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='LineDrawingRegionType'):
-        super(LineDrawingRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='LineDrawingRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='LineDrawingRegionType'):
+        super(LineDrawingRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -7767,8 +8913,8 @@ class LineDrawingRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
-        super(LineDrawingRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
+        super(LineDrawingRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7818,9 +8964,10 @@ class ImageRegionType(RegionType):
     of the region Specifies whether the region also contains text"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None, **kwargs_):
         self.original_tagname_ = None
-        super(ImageRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(ImageRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.colourDepth = _cast(None, colourDepth)
         self.bgColour = _cast(None, bgColour)
@@ -7836,14 +8983,22 @@ class ImageRegionType(RegionType):
         else:
             return ImageRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_colourDepth(self): return self.colourDepth
-    def set_colourDepth(self, colourDepth): self.colourDepth = colourDepth
-    def get_bgColour(self): return self.bgColour
-    def set_bgColour(self, bgColour): self.bgColour = bgColour
-    def get_embText(self): return self.embText
-    def set_embText(self, embText): self.embText = embText
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_colourDepth(self):
+        return self.colourDepth
+    def set_colourDepth(self, colourDepth):
+        self.colourDepth = colourDepth
+    def get_bgColour(self):
+        return self.bgColour
+    def set_bgColour(self, bgColour):
+        self.bgColour = bgColour
+    def get_embText(self):
+        return self.embText
+    def set_embText(self, embText):
+        self.embText = embText
     def hasContent_(self):
         if (
             super(ImageRegionType, self).hasContent_()
@@ -7851,7 +9006,7 @@ class ImageRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='ImageRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ImageRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ImageRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7862,18 +9017,18 @@ class ImageRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='ImageRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='ImageRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ImageRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='ImageRegionType'):
-        super(ImageRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='ImageRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='ImageRegionType'):
+        super(ImageRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -7886,8 +9041,8 @@ class ImageRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
-        super(ImageRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
+        super(ImageRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7948,9 +9103,10 @@ class TextRegionType(RegionType):
     region The secondary script used in the region"""
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None, **kwargs_):
         self.original_tagname_ = None
-        super(TextRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, )
+        self.parent_object_ = kwargs_.get('parent_object_')
+        super(TextRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.type_ = _cast(None, type_)
         self.leading = _cast(int, leading)
@@ -7984,44 +9140,86 @@ class TextRegionType(RegionType):
         else:
             return TextRegionType(*args_, **kwargs_)
     factory = staticmethod(factory)
-    def get_TextLine(self): return self.TextLine
-    def set_TextLine(self, TextLine): self.TextLine = TextLine
-    def add_TextLine(self, value): self.TextLine.append(value)
-    def insert_TextLine_at(self, index, value): self.TextLine.insert(index, value)
-    def replace_TextLine_at(self, index, value): self.TextLine[index] = value
-    def get_TextEquiv(self): return self.TextEquiv
-    def set_TextEquiv(self, TextEquiv): self.TextEquiv = TextEquiv
-    def add_TextEquiv(self, value): self.TextEquiv.append(value)
-    def insert_TextEquiv_at(self, index, value): self.TextEquiv.insert(index, value)
-    def replace_TextEquiv_at(self, index, value): self.TextEquiv[index] = value
-    def get_TextStyle(self): return self.TextStyle
-    def set_TextStyle(self, TextStyle): self.TextStyle = TextStyle
-    def get_orientation(self): return self.orientation
-    def set_orientation(self, orientation): self.orientation = orientation
-    def get_type(self): return self.type_
-    def set_type(self, type_): self.type_ = type_
-    def get_leading(self): return self.leading
-    def set_leading(self, leading): self.leading = leading
-    def get_readingDirection(self): return self.readingDirection
-    def set_readingDirection(self, readingDirection): self.readingDirection = readingDirection
-    def get_textLineOrder(self): return self.textLineOrder
-    def set_textLineOrder(self, textLineOrder): self.textLineOrder = textLineOrder
-    def get_readingOrientation(self): return self.readingOrientation
-    def set_readingOrientation(self, readingOrientation): self.readingOrientation = readingOrientation
-    def get_indented(self): return self.indented
-    def set_indented(self, indented): self.indented = indented
-    def get_align(self): return self.align
-    def set_align(self, align): self.align = align
-    def get_primaryLanguage(self): return self.primaryLanguage
-    def set_primaryLanguage(self, primaryLanguage): self.primaryLanguage = primaryLanguage
-    def get_secondaryLanguage(self): return self.secondaryLanguage
-    def set_secondaryLanguage(self, secondaryLanguage): self.secondaryLanguage = secondaryLanguage
-    def get_primaryScript(self): return self.primaryScript
-    def set_primaryScript(self, primaryScript): self.primaryScript = primaryScript
-    def get_secondaryScript(self): return self.secondaryScript
-    def set_secondaryScript(self, secondaryScript): self.secondaryScript = secondaryScript
-    def get_production(self): return self.production
-    def set_production(self, production): self.production = production
+    def get_TextLine(self):
+        return self.TextLine
+    def set_TextLine(self, TextLine):
+        self.TextLine = TextLine
+    def add_TextLine(self, value):
+        self.TextLine.append(value)
+    def add_TextLine(self, value):
+        self.TextLine.append(value)
+    def insert_TextLine_at(self, index, value):
+        self.TextLine.insert(index, value)
+    def replace_TextLine_at(self, index, value):
+        self.TextLine[index] = value
+    def get_TextEquiv(self):
+        return self.TextEquiv
+    def set_TextEquiv(self, TextEquiv):
+        self.TextEquiv = TextEquiv
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def add_TextEquiv(self, value):
+        self.TextEquiv.append(value)
+    def insert_TextEquiv_at(self, index, value):
+        self.TextEquiv.insert(index, value)
+    def replace_TextEquiv_at(self, index, value):
+        self.TextEquiv[index] = value
+    def get_TextStyle(self):
+        return self.TextStyle
+    def set_TextStyle(self, TextStyle):
+        self.TextStyle = TextStyle
+    def get_orientation(self):
+        return self.orientation
+    def set_orientation(self, orientation):
+        self.orientation = orientation
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_leading(self):
+        return self.leading
+    def set_leading(self, leading):
+        self.leading = leading
+    def get_readingDirection(self):
+        return self.readingDirection
+    def set_readingDirection(self, readingDirection):
+        self.readingDirection = readingDirection
+    def get_textLineOrder(self):
+        return self.textLineOrder
+    def set_textLineOrder(self, textLineOrder):
+        self.textLineOrder = textLineOrder
+    def get_readingOrientation(self):
+        return self.readingOrientation
+    def set_readingOrientation(self, readingOrientation):
+        self.readingOrientation = readingOrientation
+    def get_indented(self):
+        return self.indented
+    def set_indented(self, indented):
+        self.indented = indented
+    def get_align(self):
+        return self.align
+    def set_align(self, align):
+        self.align = align
+    def get_primaryLanguage(self):
+        return self.primaryLanguage
+    def set_primaryLanguage(self, primaryLanguage):
+        self.primaryLanguage = primaryLanguage
+    def get_secondaryLanguage(self):
+        return self.secondaryLanguage
+    def set_secondaryLanguage(self, secondaryLanguage):
+        self.secondaryLanguage = secondaryLanguage
+    def get_primaryScript(self):
+        return self.primaryScript
+    def set_primaryScript(self, primaryScript):
+        self.primaryScript = primaryScript
+    def get_secondaryScript(self):
+        return self.secondaryScript
+    def set_secondaryScript(self, secondaryScript):
+        self.secondaryScript = secondaryScript
+    def get_production(self):
+        return self.production
+    def set_production(self, production):
+        self.production = production
     def hasContent_(self):
         if (
             self.TextLine or
@@ -8032,7 +9230,7 @@ class TextRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespace_='pc:', name_='TextRegionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8043,18 +9241,18 @@ class TextRegionType(RegionType):
         if self.original_tagname_ is not None:
             name_ = self.original_tagname_
         showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespace_, name_='TextRegionType')
+        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_='pc:', name_='TextRegionType', pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespace_='pc:', name_='TextRegionType'):
-        super(TextRegionType, self).exportAttributes(outfile, level, already_processed, namespace_, name_='TextRegionType')
+    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='pc:', name_='TextRegionType'):
+        super(TextRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -8094,18 +9292,18 @@ class TextRegionType(RegionType):
         if self.production is not None and 'production' not in already_processed:
             already_processed.add('production')
             outfile.write(' production=%s' % (quote_attrib(self.production), ))
-    def exportChildren(self, outfile, level, namespace_='pc:', name_='TextRegionType', fromsubclass_=False, pretty_print=True):
-        super(TextRegionType, self).exportChildren(outfile, level, namespace_, name_, True, pretty_print=pretty_print)
+    def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='TextRegionType', fromsubclass_=False, pretty_print=True):
+        super(TextRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
             eol_ = ''
         for TextLine_ in self.TextLine:
-            TextLine_.export(outfile, level, namespace_, name_='TextLine', pretty_print=pretty_print)
+            TextLine_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextLine', pretty_print=pretty_print)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.export(outfile, level, namespace_, name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
         if self.TextStyle is not None:
-            self.TextStyle.export(outfile, level, namespace_, name_='TextStyle', pretty_print=pretty_print)
+            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8183,17 +9381,17 @@ class TextRegionType(RegionType):
         super(TextRegionType, self).buildAttributes(node, attrs, already_processed)
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
         if nodeName_ == 'TextLine':
-            obj_ = TextLineType.factory()
+            obj_ = TextLineType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextLine.append(obj_)
             obj_.original_tagname_ = 'TextLine'
         elif nodeName_ == 'TextEquiv':
-            obj_ = TextEquivType.factory()
+            obj_ = TextEquivType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
         elif nodeName_ == 'TextStyle':
-            obj_ = TextStyleType.factory()
+            obj_ = TextStyleType.factory(parent_object_=self)
             obj_.build(child_)
             self.TextStyle = obj_
             obj_.original_tagname_ = 'TextStyle'

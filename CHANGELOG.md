@@ -9,6 +9,9 @@ Added:
 
   * `ocrd workspace list-page` to list all page IDs
 
+Changed:
+  * Extended page with TextStyle for Page, , PRImA-Research-Lab/PAGE-XML#8
+
 ## [1.0.0b6] - 2019-03-19
 
   * `ocrd workspace set-id` case in argument error
