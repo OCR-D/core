@@ -203,6 +203,20 @@ def list_groups(ctx):
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
+# ocrd workspace list-pages
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('list-page', help="""
+
+    List page IDs
+
+""")
+@pass_workspace
+def list_pages(ctx):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    print("\n".join(workspace.mets.physical_pages))
+
+# ----------------------------------------------------------------------
 # ocrd workspace get-id
 # ----------------------------------------------------------------------
 
