@@ -34,7 +34,7 @@ This repository contains the python modules that form the base for tools within 
 
 All modules are also published to [PyPI](https://pypi.org/search/?q=ocrd).
 
-The easiest way install is via `pip`:
+The easiest way to install is via `pip`:
 
 ```sh
 pip install ocrd
