@@ -93,4 +93,5 @@ Test with local files: `make test`
 
 ## See Also
 
-  - [OCR-D Specifications](https://github.com/ocr-d/spec)
+  - [OCR-D Specifications](https://ocr-d.github.io) ([Repo](https://github.com/ocr-d/spec))
+  - [OCR-D Documentation](https://ocr-d.github.io/docs) ([Repo](https://github.com/ocr-d/docs))
