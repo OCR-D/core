@@ -1,6 +1,6 @@
-from tests.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
 from tempfile import TemporaryDirectory
 from os.path import join
+from tests.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
 
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
@@ -9,14 +9,13 @@ DUMMY_TOOL = {'executable': 'ocrd-test', 'steps': ['recognition/post-correction'
 
 class DummyProcessor(Processor):
 
+    def process(self):
+        pass
+
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = DUMMY_TOOL
         kwargs['version'] = '0.0.1'
         super(DummyProcessor, self).__init__(*args, **kwargs)
-
-    def process(self):
-        #  print('# nope')
-        pass
 
 class IncompleteProcessor(Processor):
     pass
@@ -76,6 +75,22 @@ class TestResolver(TestCase):
 
     def test_json(self):
         DummyProcessor(self.workspace, dump_json=True)
+
+    def test_params_missing_required(self):
+        class DummyProcessorWithRequiredParameters(Processor):
+            def process(self): pass
+            def __init__(self, *args, **kwargs):
+                kwargs['version'] = '0.0.1'
+                kwargs['ocrd_tool'] = {
+                    'executable': 'ocrd-test',
+                    'steps': ['recognition/post-correction'],
+                    'parameters': {
+                        'i-am-required': {'required': True}
+                    }
+                }
+                super(DummyProcessorWithRequiredParameters, self).__init__(*args, **kwargs)
+        with self.assertRaisesRegex(Exception, 'is a required property'):
+            DummyProcessorWithRequiredParameters(workspace=self.workspace)
 
     def test_params(self):
         proc = Processor(workspace=self.workspace)
