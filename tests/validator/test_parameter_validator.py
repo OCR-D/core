@@ -3,6 +3,20 @@ from ocrd_validators import ParameterValidator
 
 class TestParameterValidator(TestCase):
 
+    def test_missing_required(self):
+        validator = ParameterValidator({
+            "parameters": {
+                "i-am-required": {
+                    "type": "number",
+                    "required": True
+                },
+            }
+        })
+        obj = {}
+        report = validator.validate(obj)
+        self.assertFalse(report.is_valid)
+        self.assertIn('is a required property', report.errors[0])
+
     def test_default_assignment(self):
         validator = ParameterValidator({
             "parameters": {

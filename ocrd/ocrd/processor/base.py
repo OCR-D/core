@@ -134,7 +134,9 @@ class Processor(object):
         self.output_file_grp = output_file_grp
         self.page_id = None if page_id == [] or page_id is None else page_id
         parameterValidator = ParameterValidator(ocrd_tool)
-        parameterValidator.validate(parameter)
+        report = parameterValidator.validate(parameter)
+        if not report.is_valid:
+            raise Exception("Invalid parameters %s" % report.errors)
         self.parameter = parameter
 
     def verify(self):
