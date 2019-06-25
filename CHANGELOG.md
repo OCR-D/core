@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b10] - 2019-06-25
+
+Fixed:
+
+  * Handle TIFF ResolutionUnit not being set #250
+
+Changed:
+
+  * missing required parameters should raise exception, fix #244 #247
+
 ## [1.0.0b9] - 2019-05-20
 
 Changed:
@@ -475,6 +485,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0b10]: ../../compare/v1.0.0b10...v1.0.0b9
 [1.0.0b9]: ../../compare/v1.0.0b9...v1.0.0b6
 [1.0.0b6]: ../../compare/v1.0.0b6...v1.0.0b1
 [1.0.0b1]: ../../compare/v1.0.0b1...v0.15.2
