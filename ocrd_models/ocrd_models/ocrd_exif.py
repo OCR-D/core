@@ -23,7 +23,7 @@ class OcrdExif():
         if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
             self.xResolution = img.info['dpi'][0]
             self.yResolution = img.info['dpi'][1]
-            self.resolutionUnit = 'cm' if img.tag[296] == 3 else 'inches'
+            self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
         elif img.format == 'JPEG':
             self.xResolution = img.info['jfif_density'][0]
             self.yResolution = img.info['jfif_density'][1]
