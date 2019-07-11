@@ -22,6 +22,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.height, 3749)
         self.assertEqual(exif.xResolution, 300)
         self.assertEqual(exif.yResolution, 300)
+        self.assertEqual(exif.resolution, 300)
         self.assertEqual(exif.compression, 'jpeg')
         self.assertEqual(exif.photometricInterpretation, 'RGB')
 
@@ -31,6 +32,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.height, 2084)
         self.assertEqual(exif.xResolution, 300)
         self.assertEqual(exif.yResolution, 300)
+        self.assertEqual(exif.resolution, 300)
         self.assertEqual(exif.compression, None)
         self.assertEqual(exif.photometricInterpretation, '1')
 
@@ -40,6 +42,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.height, 3062)
         self.assertEqual(exif.xResolution, 1)
         self.assertEqual(exif.yResolution, 1)
+        self.assertEqual(exif.resolution, 1)
         self.assertEqual(exif.photometricInterpretation, '1')
 
     def test_jpg(self):
@@ -48,6 +51,8 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.height, 1472)
         self.assertEqual(exif.xResolution, 1)
         self.assertEqual(exif.yResolution, 1)
+        self.assertEqual(exif.resolution, 1)
+        self.assertEqual(exif.resolutionUnit, 'inches')
         self.assertEqual(exif.photometricInterpretation, 'RGB')
 
     def test_jp2(self):
@@ -56,6 +61,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.height, 2084)
         self.assertEqual(exif.xResolution, 1)
         self.assertEqual(exif.yResolution, 1)
+        self.assertEqual(exif.resolution, 1)
         self.assertEqual(exif.photometricInterpretation, 'RGB')
 
 if __name__ == '__main__':
