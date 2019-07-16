@@ -44,6 +44,8 @@ pip install ocrd
 pip install ocrd_modelfactory
 ```
 
+All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.5 or higher.
+
 ## Modules
 
 ### ocrd_utils
