@@ -2,9 +2,22 @@
 Technical image metadata
 """
 
+from math import sqrt
+
 class OcrdExif():
-    """
-    Represents technical image metadata
+    """Represents technical image metadata.
+    
+    Members:
+    - `width` / `height`: pixel dimensions
+    - `photometricInterpretation`: pixel type/depth, e.g.
+      '1' for b/w,
+      'L' for 8-bit grayscale,
+      'RGB' for 24-bit truecolor,
+      'I' for 32-bit signed integer grayscale,
+      'F' for floating-point grayscale
+      (see PIL concept `mode`)
+    - `resolution` / `xResolution` / `yResolution`: pixel density
+    - `resolutionUnits`: unit of measurement (either `inches` or `cm`)
     """
 
     def __init__(self, img):
@@ -27,7 +40,7 @@ class OcrdExif():
         elif img.format == 'JPEG':
             self.xResolution = img.info['jfif_density'][0]
             self.yResolution = img.info['jfif_density'][1]
-            self.resolutionUnit = img.info['jfif_unit']
+            self.resolutionUnit = 'cm' if img.info['jfif_unit'] == 2 else 'inches'
         elif img.format == 'PNG' and 'aspect' in img.info:
             self.xResolution = img.info['aspect'][0]
             self.yResolution = img.info['aspect'][1]
@@ -38,6 +51,7 @@ class OcrdExif():
             self.xResolution = 1
             self.yResolution = 1
             self.resolutionUnit = 'inches'
+        self.resolution = round(sqrt(self.xResolution * self.yResolution))
 
     def to_xml(self):
         """
