@@ -182,7 +182,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
             mimetype=mimetype,
             pageId=page_id,
         ):
-        if download:
+        if download and not f.local_filename:
             workspace.download_file(f)
             workspace.save_mets()
         ret = '\t'.join([getattr(f, field) or '' for field in output_field])
