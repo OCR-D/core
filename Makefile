@@ -184,7 +184,7 @@ docker:
 
 # Build bash library
 bashlib:
-	cd bashlib; make lib
+	cd ocrd/bashlib; make lib
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install

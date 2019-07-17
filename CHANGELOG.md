@@ -14,6 +14,7 @@ Changed:
 Fixed:
 
   * Handle TIFF ResolutionUnit not being set #250
+  * bashlib: `--mets-file` should be `--mets`
 
 Changed:
 
