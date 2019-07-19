@@ -146,7 +146,7 @@ class Resolver():
 
         if download:
             for f in workspace.mets.find_files():
-                workspace.download_file(f)
+                workspace.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
 
         return workspace
 
