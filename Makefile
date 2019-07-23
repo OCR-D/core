@@ -75,7 +75,6 @@ uninstall:
 generate-page: repo/assets
 	generateDS \
 		-f \
-		--no-namespace-defs \
 		--root-element='PcGts' \
 		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd

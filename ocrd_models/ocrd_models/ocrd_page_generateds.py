@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Jul 22 19:42:32 2019 by generateDS.py version 2.33.1.
+# Generated Tue Jul 23 19:04:15 2019 by generateDS.py version 2.33.1.
 # Python 3.6.6 (default, Jul 24 2018, 16:39:20)  [GCC 4.9.2]
 #
 # Command line options:
 #   ('-f', '')
-#   ('--no-namespace-defs', '')
 #   ('--root-element', 'PcGts')
 #   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
 #
@@ -15,7 +14,7 @@
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /data/monorepo/venv3.6/bin/generateDS -f --no-namespace-defs --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" repo/assets/data/schema/data/2019.xsd
+#   /data/monorepo/venv3.6/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1023,7 +1022,7 @@ class PcGtsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='PcGtsType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PcGtsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('PcGtsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1050,7 +1049,7 @@ class PcGtsType(GeneratedsSuper):
         if self.pcGtsId is not None and 'pcGtsId' not in already_processed:
             already_processed.add('pcGtsId')
             outfile.write(' pcGtsId=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.pcGtsId), input_name='pcGtsId')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='PcGtsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PcGtsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1182,7 +1181,7 @@ class MetadataType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MetadataType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='MetadataType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MetadataType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1209,7 +1208,7 @@ class MetadataType(GeneratedsSuper):
         if self.externalRef is not None and 'externalRef' not in already_processed:
             already_processed.add('externalRef')
             outfile.write(' externalRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalRef), input_name='externalRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MetadataType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='MetadataType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1359,7 +1358,7 @@ class MetadataItemType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MetadataItemType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MetadataItemType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MetadataItemType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1395,7 +1394,7 @@ class MetadataItemType(GeneratedsSuper):
         if self.date is not None and 'date' not in already_processed:
             already_processed.add('date')
             outfile.write(' date="%s"' % self.gds_format_datetime(self.date, input_name='date'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1512,7 +1511,7 @@ class LabelsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LabelsType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1548,7 +1547,7 @@ class LabelsType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LabelsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1644,7 +1643,7 @@ class LabelType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LabelType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -1676,7 +1675,7 @@ class LabelType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LabelType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -2249,7 +2248,7 @@ class PageType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='PageType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PageType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('PageType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2321,7 +2320,7 @@ class PageType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='PageType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PageType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -2681,7 +2680,7 @@ class CoordsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CoordsType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('CoordsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -2710,7 +2709,7 @@ class CoordsType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CoordsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -2969,7 +2968,7 @@ class TextLineType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextLineType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextLineType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextLineType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3020,7 +3019,7 @@ class TextLineType(GeneratedsSuper):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextLineType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextLineType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -3364,7 +3363,7 @@ class WordType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='WordType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='WordType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('WordType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3412,7 +3411,7 @@ class WordType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='WordType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='WordType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -3697,7 +3696,7 @@ class GlyphType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GlyphType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GlyphType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GlyphType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3742,7 +3741,7 @@ class GlyphType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GlyphType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GlyphType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -3956,7 +3955,7 @@ class TextEquivType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextEquivType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='TextEquivType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextEquivType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -3995,7 +3994,7 @@ class TextEquivType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextEquivType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='TextEquivType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -4103,7 +4102,7 @@ class GridType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GridType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4128,7 +4127,7 @@ class GridType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GridType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GridType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -4205,7 +4204,7 @@ class GridPointsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GridPointsType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridPointsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4234,7 +4233,7 @@ class GridPointsType(GeneratedsSuper):
         if 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -4304,7 +4303,7 @@ class PrintSpaceType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='PrintSpaceType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PrintSpaceType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('PrintSpaceType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4329,7 +4328,7 @@ class PrintSpaceType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PrintSpaceType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='PrintSpaceType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PrintSpaceType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -4416,7 +4415,7 @@ class ReadingOrderType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ReadingOrderType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ReadingOrderType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ReadingOrderType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4443,7 +4442,7 @@ class ReadingOrderType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -4525,7 +4524,7 @@ class RegionRefIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RegionRefIndexedType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefIndexedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4554,7 +4553,7 @@ class RegionRefIndexedType(GeneratedsSuper):
         if 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -4749,7 +4748,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='OrderedGroupIndexedType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupIndexedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupIndexedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -4797,7 +4796,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='OrderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5064,7 +5063,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnorderedGroupIndexedType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupIndexedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupIndexedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5112,7 +5111,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnorderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5246,7 +5245,7 @@ class RegionRefType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RegionRefType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5272,7 +5271,7 @@ class RegionRefType(GeneratedsSuper):
         if 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -5452,7 +5451,7 @@ class OrderedGroupType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='OrderedGroupType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5497,7 +5496,7 @@ class OrderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5749,7 +5748,7 @@ class UnorderedGroupType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnorderedGroupType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5794,7 +5793,7 @@ class UnorderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5923,7 +5922,7 @@ class BorderType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='BorderType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BorderType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('BorderType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -5948,7 +5947,7 @@ class BorderType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='BorderType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='BorderType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BorderType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -6022,7 +6021,7 @@ class LayersType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LayersType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayersType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LayersType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6047,7 +6046,7 @@ class LayersType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LayersType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LayersType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayersType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -6136,7 +6135,7 @@ class LayerType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LayerType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayerType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LayerType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6169,7 +6168,7 @@ class LayerType(GeneratedsSuper):
         if self.caption is not None and 'caption' not in already_processed:
             already_processed.add('caption')
             outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LayerType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayerType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -6266,7 +6265,7 @@ class BaselineType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='BaselineType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('BaselineType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6295,7 +6294,7 @@ class BaselineType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='BaselineType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -6368,7 +6367,7 @@ class RelationsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RelationsType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationsType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RelationsType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6393,7 +6392,7 @@ class RelationsType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RelationsType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RelationsType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -6517,7 +6516,7 @@ class RelationType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RelationType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RelationType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6553,7 +6552,7 @@ class RelationType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RelationType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -6811,7 +6810,7 @@ class TextStyleType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextStyleType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextStyleType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -6897,7 +6896,7 @@ class TextStyleType(GeneratedsSuper):
         if self.letterSpaced is not None and 'letterSpaced' not in already_processed:
             already_processed.add('letterSpaced')
             outfile.write(' letterSpaced="%s"' % self.gds_format_boolean(self.letterSpaced, input_name='letterSpaced'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -7410,7 +7409,7 @@ class RegionType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7454,7 +7453,7 @@ class RegionType(GeneratedsSuper):
                 outfile.write(' xsi:type="%s%s"' % (imported_ns_type_prefix_, self.extensiontype_))
             else:
                 outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RegionType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -7704,7 +7703,7 @@ class AlternativeImageType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AlternativeImageType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('AlternativeImageType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7736,7 +7735,7 @@ class AlternativeImageType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -7843,7 +7842,7 @@ class GraphemesType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemesType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemesType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemesType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -7868,7 +7867,7 @@ class GraphemesType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemesType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemesType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemesType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -8000,7 +7999,7 @@ class GraphemeBaseType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemeBaseType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeBaseType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeBaseType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8050,7 +8049,7 @@ class GraphemeBaseType(GeneratedsSuper):
                 outfile.write(' xsi:type="%s%s"' % (imported_ns_type_prefix_, self.extensiontype_))
             else:
                 outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemeBaseType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeBaseType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -8152,7 +8151,7 @@ class GraphemeType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemeType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8177,7 +8176,7 @@ class GraphemeType(GraphemeBaseType):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeType'):
         super(GraphemeType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemeType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeType', fromsubclass_=False, pretty_print=True):
         super(GraphemeType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
@@ -8240,7 +8239,7 @@ class NonPrintingCharType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NonPrintingCharType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('NonPrintingCharType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8265,7 +8264,7 @@ class NonPrintingCharType(GraphemeBaseType):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='NonPrintingCharType'):
         super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
         super(NonPrintingCharType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
     def build(self, node):
         already_processed = set()
@@ -8345,7 +8344,7 @@ class GraphemeGroupType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemeGroupType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeGroupType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeGroupType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8370,7 +8369,7 @@ class GraphemeGroupType(GraphemeBaseType):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeGroupType'):
         super(GraphemeGroupType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphemeGroupType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeGroupType', fromsubclass_=False, pretty_print=True):
         super(GraphemeGroupType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
@@ -8452,7 +8451,7 @@ class UserDefinedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UserDefinedType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserDefinedType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UserDefinedType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8477,7 +8476,7 @@ class UserDefinedType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UserDefinedType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UserDefinedType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserDefinedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -8558,7 +8557,7 @@ class UserAttributeType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UserAttributeType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UserAttributeType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8593,7 +8592,7 @@ class UserAttributeType(GeneratedsSuper):
         if self.value is not None and 'value' not in already_processed:
             already_processed.add('value')
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -8688,7 +8687,7 @@ class TableCellRoleType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TableCellRoleType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TableCellRoleType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8726,7 +8725,7 @@ class TableCellRoleType(GeneratedsSuper):
         if self.header is not None and 'header' not in already_processed:
             already_processed.add('header')
             outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
         pass
     def build(self, node):
         already_processed = set()
@@ -8814,7 +8813,7 @@ class RolesType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RolesType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RolesType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('RolesType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -8839,7 +8838,7 @@ class RolesType(GeneratedsSuper):
             outfile.write('/>%s' % (eol_, ))
     def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RolesType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='RolesType', fromsubclass_=False, pretty_print=True):
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RolesType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:

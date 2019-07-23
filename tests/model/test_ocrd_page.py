@@ -24,7 +24,9 @@ class TestOcrdPage(TestCase):
             self.pcgts = parseString(self.xml_as_str, silence=True)
 
     def test_to_xml(self):
-        self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
+        #  with open('/tmp/test.xml', 'w') as f:
+        #      f.write(to_xml(self.pcgts))
+        self.assertIn('</TextRegion', to_xml(self.pcgts))
 
     def test_pcGtsId(self):
         self.assertEqual(self.pcgts.pcGtsId, 'glyph-test')
