@@ -7,6 +7,9 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
+# PAGE schema version to use. Default: '$(PAGE_VERSION)'
+PAGE_VERSION = 2019
+
 SPHINX_APIDOC = 
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
@@ -22,6 +25,7 @@ help:
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
+	@echo "    uninstall      Uninstall the tool"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
 	@echo "    repo/spec      Clone OCR-D/spec to ./repo/spec"
@@ -32,13 +36,16 @@ help:
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
+	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
 	@echo "    bashlib        Build bash library"
-	@echo "    pypi           Build wheels in py2 and py3 venv and twine upload them"
+	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
-	@echo "    DOCKER_TAG  Docker tag."
+	@echo "    PAGE_VERSION  PAGE schema version to use. Default: '$(PAGE_VERSION)'"
+	@echo "    DOCKER_TAG    Docker tag."
+	@echo "    PIP_INSTALL   pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
 
@@ -68,10 +75,9 @@ uninstall:
 generate-page: repo/assets
 	generateDS \
 		-f \
-		--no-namespace-defs \
 		--root-element='PcGts' \
 		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
-		repo/assets/data/schema/data/2018.xsd
+		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
 
 #
 # Repos
