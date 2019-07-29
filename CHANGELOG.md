@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b11] - 2019-07-29
+
 Changed:
 
   * Improve pixel density logic in OcrdExif, #256, #37, OCR-D/ocrd_tesserocr#54
