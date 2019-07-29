@@ -8,6 +8,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * Improve pixel density logic in OcrdExif, #256, #37, OCR-D/ocrd_tesserocr#54
+  * :fire: stop supporting python `<= 3.4`
+  * Support only 2019-07-15 PAGE version
 
 ## [1.0.0b10] - 2019-06-25
 
