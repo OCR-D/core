@@ -1,2 +1,2 @@
 Pillow >= 5.3.0
-numpy >= 1.18
+numpy >= 1.17.0
