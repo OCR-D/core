@@ -2,6 +2,7 @@ from tests.base import TestCase, main
 from ocrd_utils import (
     abspath,
     bbox_from_points,
+    bbox_from_xywh,
     concat_padded,
     is_local_filename,
     is_string,
@@ -9,6 +10,7 @@ from ocrd_utils import (
     points_from_xywh,
     polygon_from_points,
     xywh_from_points,
+    xywh_from_polygon,
 )
 from ocrd_models.utils import xmllint_format
 
@@ -35,6 +37,16 @@ class TestUtils(TestCase):
     def test_bbox_from_points(self):
         self.assertEqual(
             bbox_from_points('100,100 200,100 200,200 100,200'), (100, 100, 200, 200))
+
+    def test_bbox_from_xywh(self):
+        self.assertEqual(
+            bbox_from_xywh({'x': 100, 'y': 100, 'w': 100, 'h': 100}),
+            (100, 100, 200, 200))
+
+    def test_xywh_from_polygon(self):
+        self.assertEqual(
+            xywh_from_polygon([[100, 100], [200, 100], [200, 200], [100, 200]]),
+            {'x': 100, 'y': 100, 'w': 100, 'h': 100})
 
     def test_xywh_from_points(self):
         self.assertEqual(
