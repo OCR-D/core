@@ -27,8 +27,7 @@ class TestOcrdPage(TestCase):
     def test_to_xml(self):
         #  with open('/tmp/test.xml', 'w') as f:
             #  f.write(to_xml(self.pcgts))
-        #  self.assertIn('</TextRegion', to_xml(self.pcgts))
-        pass
+        self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
     
     def test_issue_269(self):
         """
