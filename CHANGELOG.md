@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Regression with ocrd_page data types, #269
+
 ## [1.0.0b11] - 2019-07-29
 
 Changed:
