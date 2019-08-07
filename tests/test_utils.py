@@ -5,9 +5,6 @@ from ocrd_utils import (
     bbox_from_points,
     bbox_from_xywh,
 
-    coordinates_of_segment,
-    coordinates_for_segment,
-
     concat_padded,
     is_local_filename,
     is_string,

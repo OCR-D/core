@@ -29,11 +29,6 @@ bbox is what PIL.Image uses.
 * MIMETYPE_PAGE, EXT_TO_MIME, VERSION
 """
 
-import sys
-import numpy as np
-
-from PIL import Image, ImageStat, ImageDraw
-
 __all__ = [
     'abspath',
     'bbox_from_points',
@@ -45,9 +40,13 @@ __all__ = [
     'crop_image',
     'getLogger',
     'is_local_filename',
+    'image_from_segment',
     'is_string',
     'logging',
     'membername',
+    'image_from_page',
+    'image_from_segment',
+    'image_from_polygon',
     'points_from_bbox',
     'points_from_polygon',
     'points_from_x0y0x1y1',
@@ -69,14 +68,22 @@ __all__ = [
     'EXT_TO_MIME',
 ]
 
+import io
+import os
+from os.path import isfile, abspath as os_abspath
 import re
 import sys
-import logging
-from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
 
+import numpy as np
+from PIL import Image, ImageStat, ImageDraw
+
+import logging
 from .logging import getLogger
 from .constants import *  # pylint: disable=wildcard-import
+
+LOG = getLogger('ocrd_utils')
+
 
 def abspath(url):
     """
