@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * many utility methods for image manipulation and coordinate handling, #268
+
 Fixed:
 
   * Regression with ocrd_page data types, #269
