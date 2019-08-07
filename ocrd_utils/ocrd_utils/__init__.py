@@ -39,6 +39,7 @@ __all__ = [
     'bbox_from_points',
     'bbox_from_xywh',
     'bbox_from_polygon',
+    'coordinates_for_segment',
     'coordinates_of_segment',
     'concat_padded',
     'crop_image',
