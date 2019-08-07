@@ -122,6 +122,28 @@ def xywh_from_polygon(polygon):
     """Construct a numeric dict representing a bounding box from polygon coordinates in numeric list representation."""
     return xywh_from_bbox(*bbox_from_polygon(polygon))
 
+def coordinates_for_segment(polygon, parent_image, parent_xywh):
+    """Convert a relative coordinates polygon to absolute.
+
+    Given a numpy array `polygon` of points, and a parent PIL.Image
+    along with its bounding box to which the coordinates are relative,
+    calculate the absolute coordinates within the page.
+    That is, (in case the parent was rotated,) rotate all points in
+    opposite direction with the center of the image as origin, then
+    shift all points to the offset of the parent.
+
+    Return the rounded numpy array of the resulting polygon.
+    """
+    # angle correction (unrotate coordinates if image has been rotated):
+    if 'angle' in parent_xywh:
+        polygon = rotate_coordinates(
+            polygon, -parent_xywh['angle'],
+            orig=np.array([0.5 * parent_image.width,
+                           0.5 * parent_image.height]))
+    # offset correction (shift coordinates from base of segment):
+    polygon += np.array([parent_xywh['x'], parent_xywh['y']])
+    return np.round(polygon).astype(np.int32)
+
 def coordinates_of_segment(segment, parent_image, parent_xywh):
     """Extract the relative coordinates polygon of a PAGE segment element.
 
