@@ -2,17 +2,31 @@
 Utility methods usable in various circumstances.
 
 * xywh_from_points, points_from_xywh, polygon_from_points
+* coordinates_of_segment, coordinates_for_segment, rotate_coordinates
 
+These functions convert polygon outlines for PAGE elements on all hierarchy levels (page, region, line, word, glyph) between relative coordinates w.r.t. parent segment and absolute coordinates w.r.t. the top-level (source) image. This includes rotation and offset correction.
+
+* polygon_mask, image_from_polygon, crop_image
+
+These functions combine PIL.Image with polygons or bboxes.
 The functions have the syntax X_from_Y, where X/Y can be
 
-* bbox is a 4-tuple of x0, y0, x1, y1 of the bounding box
-* points a string encoding a polygon: "0,0 100,0 100,100, 0,100". points is for PAGE
-* polygon an array of x-y-tuples of a polygon: [[0,0], [100,0], [100,100], [0,100]]
+    * `x0y0x1y1` is a 4-list of strings x0, y0, x1, y1 of the bounding box (rectangle)
+    * `bbox` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
+* points a string encoding a polygon: "0,0 100,0 100,100, 0,100"
+    * `polygon` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: [[0,0], [100,0], [100,100], [0,100]]
 * xywh a dict with keys for x, y, width and height: {'x': 0, 'y': 0, 'w': 100, 'h': 100}
 
-polygon is what opencv2 expects
+polygon is what opencv2 and higher-level coordinate functions in ocrd_utils expect
 
-xywh is what tesserocr expects/produces.
+xywh and x0y0x1y1 are what tesserocr expects/produces.
+points is what PAGE-XML uses.
+bbox is what PIL.Image uses.
+* is_local_filename, safe_filename, abspath
+
+* is_string, membername, concat_padded
+
+* MIMETYPE_PAGE, EXT_TO_MIME, VERSION
 """
 
 import sys
@@ -222,7 +236,7 @@ def points_from_polygon(polygon):
 
 def points_from_xywh(box):
     """
-    Constructs a polygon representation from a rectangle described as a dict with keys x, y, w, h.
+    Construct polygon coordinates in page representation from numeric dict representing a bounding box.
     """
     x, y, w, h = box['x'], box['y'], box['w'], box['h']
     # tesseract uses a different region representation format
@@ -269,7 +283,7 @@ def polygon_from_bbox(minx, miny, maxx, maxy):
 
 def polygon_from_points(points):
     """
-    Constructs a numpy-compatible polygon from a page representation.
+    Convert polygon coordinates in page representation to polygon coordinates in numeric list representation.
     """
     polygon = []
     for pair in points.split(" "):
@@ -351,7 +365,7 @@ def xywh_from_bbox(minx, miny, maxx, maxy):
 
 def xywh_from_points(points):
     """
-    Constructs an dict representing a rectangle with keys x, y, w, h
+    Construct a numeric dict representing a bounding box from polygon coordinates in page representation.
     """
     xys = [[int(p) for p in pair.split(',')] for pair in points.split(' ')]
     minx = sys.maxsize
