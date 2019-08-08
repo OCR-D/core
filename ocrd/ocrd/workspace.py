@@ -77,8 +77,7 @@ class Workspace():
         """
         #  os.chdir(self.directory)
         #  log.info('f=%s' % f)
-        oldpwd = getcwd()
-        try:
+        with pushd_popd():
             chdir(self.directory)
             if is_local_filename(f.url):
                 f.local_filename = abspath(f.url)
@@ -87,8 +86,6 @@ class Workspace():
                     log.debug("Already downloaded: %s", f.local_filename)
                 else:
                     f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
-        finally:
-            chdir(oldpwd)
 
         #  print(f)
         return f
