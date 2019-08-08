@@ -1,12 +1,13 @@
-import os
-from os.path import join
+#  import os
+from os import makedirs, chdir, getcwd, unlink
+from os.path import join as pjoin, isdir
 
 import cv2
 from PIL import Image
 import numpy as np
 
 from ocrd_models import OcrdMets, OcrdExif
-from ocrd_utils import getLogger, is_local_filename, abspath
+from ocrd_utils import getLogger, is_local_filename, abspath, pushd_popd
 
 from .workspace_backup import WorkspaceBackupManager
 
@@ -29,7 +30,7 @@ class Workspace():
     def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None):
         self.resolver = resolver
         self.directory = directory
-        self.mets_target = os.path.join(directory, mets_basename)
+        self.mets_target = pjoin(directory, mets_basename)
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -67,7 +68,7 @@ class Workspace():
             The local filename of the downloaded file
         """
         if self.baseurl and '://' not in url:
-            url = join(self.baseurl, url)
+            url = pjoin(self.baseurl, url)
         return self.resolver.download_to_directory(self.directory, url, **kwargs)
 
     def download_file(self, f):
@@ -76,9 +77,9 @@ class Workspace():
         """
         #  os.chdir(self.directory)
         #  log.info('f=%s' % f)
-        oldpwd = os.getcwd()
+        oldpwd = getcwd()
         try:
-            os.chdir(self.directory)
+            chdir(self.directory)
             if is_local_filename(f.url):
                 f.local_filename = abspath(f.url)
             else:
@@ -87,7 +88,7 @@ class Workspace():
                 else:
                     f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
         finally:
-            os.chdir(oldpwd)
+            chdir(oldpwd)
 
         #  print(f)
         return f
@@ -105,13 +106,13 @@ class Workspace():
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
 
-        oldpwd = os.getcwd()
+        oldpwd = getcwd()
         try:
-            os.chdir(self.directory)
+            chdir(self.directory)
             if 'local_filename' in kwargs:
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-                if not os.path.isdir(local_filename_dir):
-                    os.makedirs(local_filename_dir)
+                if not isdir(local_filename_dir):
+                    makedirs(local_filename_dir)
                 if 'url' not in kwargs:
                     kwargs['url'] = kwargs['local_filename']
 
@@ -124,7 +125,7 @@ class Workspace():
                         content = bytes(content, 'utf-8')
                     f.write(content)
         finally:
-            os.chdir(oldpwd)
+            chdir(oldpwd)
 
         return ret
 
