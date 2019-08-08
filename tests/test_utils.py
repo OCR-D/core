@@ -1,3 +1,4 @@
+from os import getcwd, chdir
 from tests.base import TestCase, main, assets
 from ocrd_utils import (
     abspath,
@@ -6,8 +7,9 @@ from ocrd_utils import (
     is_string,
     concat_padded,
     points_from_x0y0x1y1,
-    xywh_from_points,
+    pushd_popd,
     polygon_from_points,
+    xywh_from_points,
 )
 from ocrd_models.utils import xmllint_format
 
@@ -80,6 +82,14 @@ class TestUtils(TestCase):
         for _ in range(0, 10):
             pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470'))
             pil_image.crop(box=[1539, 202, 1626, 271])
+
+    def test_pushd_popd(self):
+        cwd = getcwd()
+        with pushd_popd():
+            chdir('/tmp')
+            self.assertEqual(getcwd(), '/tmp')
+        self.assertEqual(getcwd(), cwd)
+
 
 if __name__ == '__main__':
     main()
