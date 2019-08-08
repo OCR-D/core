@@ -85,8 +85,7 @@ class TestUtils(TestCase):
 
     def test_pushd_popd(self):
         cwd = getcwd()
-        with pushd_popd():
-            chdir('/tmp')
+        with pushd_popd('/tmp'):
             self.assertEqual(getcwd(), '/tmp')
         self.assertEqual(getcwd(), cwd)
 

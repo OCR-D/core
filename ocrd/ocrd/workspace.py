@@ -77,8 +77,7 @@ class Workspace():
         """
         #  os.chdir(self.directory)
         #  log.info('f=%s' % f)
-        with pushd_popd():
-            chdir(self.directory)
+        with pushd_popd(self.directory):
             if is_local_filename(f.url):
                 f.local_filename = abspath(f.url)
             else:
@@ -105,8 +104,7 @@ class Workspace():
                 raise Exception("File '%s' not found" % ID)
             if not mets_file.local_filename:
                 raise Exception("File not locally available %s" % mets_file)
-            with pushd_popd():
-                chdir(self.directory)
+            with pushd_popd(self.directory):
                 log.info("rm %s", mets_file.local_filename)
                 unlink(mets_file.local_filename)
         return mets_file

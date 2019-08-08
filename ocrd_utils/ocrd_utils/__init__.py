@@ -57,12 +57,14 @@ def abspath(url):
     return os_abspath(url)
 
 @contextlib.contextmanager
-def pushd_popd():
-    curdir = getcwd()
+def pushd_popd(newcwd=None):
+    oldcwd = getcwd()
     try:
+        if newcwd:
+            chdir(newcwd)
         yield
     finally:
-        chdir(curdir)
+        chdir(oldcwd)
 
 def concat_padded(base, *args):
     """
