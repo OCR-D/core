@@ -9,9 +9,12 @@ Added:
 
   * many utility methods for image manipulation and coordinate handling, #268
 
+## [1.0.0b11] - 2019-08-08
+
 Fixed:
 
   * Regression with ocrd_page data types, #269
+  * Segfault issue with Pillow >= 6.0.0, #270
 
 ## [1.0.0b11] - 2019-07-29
 
@@ -502,6 +505,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0b12]: ../../compare/v1.0.0b12...v1.0.0b11
+[1.0.0b11]: ../../compare/v1.0.0b11...v1.0.0b10
 [1.0.0b10]: ../../compare/v1.0.0b10...v1.0.0b9
 [1.0.0b9]: ../../compare/v1.0.0b9...v1.0.0b6
 [1.0.0b6]: ../../compare/v1.0.0b6...v1.0.0b1
