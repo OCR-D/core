@@ -34,8 +34,8 @@ class OcrdExif():
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
         if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
-            self.xResolution = img.info['dpi'][0]
-            self.yResolution = img.info['dpi'][1]
+            self.xResolution = int(img.info['dpi'][0])
+            self.yResolution = int(img.info['dpi'][1])
             self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
         elif img.format == 'JPEG':
             self.xResolution = img.info['jfif_density'][0]
@@ -51,6 +51,7 @@ class OcrdExif():
             self.xResolution = 1
             self.yResolution = 1
             self.resolutionUnit = 'inches'
+        #  print('format=%s type=%s' % (img.format, type(self.xResolution))
         self.resolution = round(sqrt(self.xResolution * self.yResolution))
 
     def to_xml(self):

@@ -1,2 +1,2 @@
 lxml
-Pillow >= 5.3.0
+Pillow == 5.4.1

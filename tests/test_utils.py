@@ -1,4 +1,4 @@
-from tests.base import TestCase, main
+from tests.base import TestCase, main, assets
 from ocrd_utils import (
     abspath,
     is_local_filename,
@@ -10,6 +10,8 @@ from ocrd_utils import (
     polygon_from_points,
 )
 from ocrd_models.utils import xmllint_format
+
+from PIL import Image
 
 class TestUtils(TestCase):
 
@@ -63,6 +65,21 @@ class TestUtils(TestCase):
         pretty_xml = xmllint_format(xml_str).decode('utf-8')
         self.assertEqual(pretty_xml, '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str)
 
+    def test_pil_version(self):
+        """
+        Test segfault issue in PIL TiffImagePlugin
+
+        Run the same code multiple times to make segfaults more probable
+
+        Should fail persistently:
+            5.3.1 no
+            5.4.1 no
+            6.0.0 yes
+            6.1.0 yes
+        """
+        for _ in range(0, 10):
+            pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470'))
+            pil_image.crop(box=[1539, 202, 1626, 271])
 
 if __name__ == '__main__':
     main()
