@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='ocrd_utils',
-    version='1.0.0b11',
+    version='1.0.0b12',
     description='OCR-D framework - shared code, helpers, constants',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

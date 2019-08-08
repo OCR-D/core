@@ -5,9 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b11] - 2019-08-08
+
 Fixed:
 
   * Regression with ocrd_page data types, #269
+  * Segfault issue with Pillow >= 6.0.0, #270
 
 ## [1.0.0b11] - 2019-07-29
 
