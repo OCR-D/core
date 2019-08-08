@@ -103,8 +103,7 @@ class TestWorkspaceValidator(TestCase):
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[])
             self.assertEqual(len(report.errors), 0)
             self.assertEqual(len(report.warnings), 0)
-            self.assertEqual(len(report.notices), 1)
-            self.assertIn("Won't download remote image", report.notices[0])
+            self.assertEqual(len(report.notices), 0)
 
     def test_validate_pixel_density_too_low(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0017')

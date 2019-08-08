@@ -1,9 +1,11 @@
+from os import chdir
+
 from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
 from ocrd.resolver import Resolver
 from ocrd_validators import PageValidator
 from ocrd_validators.page_validator import get_text, set_text
 from ocrd_models.ocrd_page import parse, TextEquivType
-#  from ocrd_modelfactory import page_from_file
+from ocrd_utils import pushd_popd
 
 class TestPageValidator(TestCase):
 
@@ -29,11 +31,10 @@ class TestPageValidator(TestCase):
     def test_validate_ocrd_file(self):
         resolver = Resolver()
         workspace = resolver.workspace_from_url(assets.url_of('glyph-consistency/data/mets.xml'))
-        ocrd_file = workspace.mets.find_files(ID="FAULTY_GLYPHS_FILE")[0]
-        if not ocrd_file.local_filename:
-            workspace.download_file(ocrd_file)
-        report = PageValidator.validate(ocrd_file=ocrd_file)
-        self.assertEqual(len(report.errors), 17, 'errors')
+        with pushd_popd(workspace.directory):
+            ocrd_file = workspace.mets.find_files(ID="FAULTY_GLYPHS_FILE")[0]
+            report = PageValidator.validate(ocrd_file=ocrd_file)
+            self.assertEqual(len(report.errors), 17, 'errors')
 
     def test_validate_lax(self):
         ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE'), silence=True)
