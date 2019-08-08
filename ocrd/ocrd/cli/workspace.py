@@ -193,6 +193,23 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         print(ret)
 
 # ----------------------------------------------------------------------
+# ocrd workspace remove
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('remove')
+@click.option('--force', help="Also delete file in storage if applicable", default=False, is_flag=True)
+@click.argument('ID')
+@pass_workspace
+def workspace_remove_file(ctx, id, force):
+    """
+    Delete file by ID from mets.xml
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace.remove_file(id, force=force)
+    workspace.save_mets()
+
+
+# ----------------------------------------------------------------------
 # ocrd workspace list-group
 # ----------------------------------------------------------------------
 

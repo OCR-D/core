@@ -3,7 +3,7 @@ API to METS
 """
 from datetime import datetime
 
-from ocrd_utils import VERSION
+from ocrd_utils import getLogger, VERSION
 
 from .constants import (
     NAMESPACES as NS,
@@ -23,6 +23,8 @@ from .constants import (
 from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
+
+log = getLogger('ocrd_models.ocrd_mets')
 
 class OcrdMets(OcrdXmlDocument):
     """
@@ -116,7 +118,6 @@ class OcrdMets(OcrdXmlDocument):
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
-
         Args:
             ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
@@ -211,6 +212,34 @@ class OcrdMets(OcrdXmlDocument):
         self._file_by_id[ID] = mets_file
 
         return mets_file
+
+    def remove_file(self, ID):
+        """
+        Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
+        """
+        # Ensure cached
+        if ID not in self._file_by_id:
+            el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % ID, NS)
+            self._file_by_id[ID] = OcrdFile(el, mets=self)
+        ocrd_file = self._file_by_id[ID]
+
+        # Delete the physical page ref
+        for fptr in self._tree.getroot().xpath('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
+            log.info("Delete fptr element %s for page '%s'", fptr, ID)
+            page_div = fptr.getparent()
+            page_div.remove(fptr)
+            # delete empty pages
+            if not page_div.getchildren():
+                log.info("Delete empty page %s", page_div)
+                page_div.getparent().remove(page_div)
+
+        # Delete the file reference
+        el.getparent().remove(el)
+
+        # Uncache
+        del self._file_by_id[ID]
+        return ocrd_file
+
 
     @property
     def physical_pages(self):

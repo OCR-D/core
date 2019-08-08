@@ -93,6 +93,27 @@ class Workspace():
         #  print(f)
         return f
 
+    def remove_file(self, ID, force=False):
+        """
+        Remove a file from the workspace.
+
+        Arguments:
+            ID (string): ID of the file to delete
+            force (boolean): Whether to delete from disk as well
+        """
+        log.debug('Deleting mets:file %s', ID)
+        mets_file = self.mets.remove_file(ID)
+        if force:
+            if not mets_file:
+                raise Exception("File '%s' not found" % ID)
+            if not mets_file.local_filename:
+                raise Exception("File not locally available %s" % mets_file)
+            with pushd_popd():
+                chdir(self.directory)
+                log.info("rm %s", mets_file.local_filename)
+                unlink(mets_file.local_filename)
+        return mets_file
+
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add an output file. Creates an :class:`OcrdFile` to pass around and adds that to the
