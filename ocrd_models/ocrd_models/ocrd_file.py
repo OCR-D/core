@@ -65,6 +65,13 @@ class OcrdFile():
         return os.path.basename(self.local_filename)
 
     @property
+    def extension(self):
+        basename, ext = os.path.splitext(self.basename)
+        if basename.endswith('.tar'):
+            ext = ".tar" + ext
+        return ext
+
+    @property
     def basename_without_extension(self):
         """
         Get the ``os.path.basename`` of the local file, if any, with extension removed.
