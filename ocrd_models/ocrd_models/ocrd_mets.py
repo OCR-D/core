@@ -3,7 +3,7 @@ API to METS
 """
 from datetime import datetime
 
-from ocrd_utils import VERSION
+from ocrd_utils import getLogger, VERSION
 
 from .constants import (
     NAMESPACES as NS,
@@ -23,6 +23,8 @@ from .constants import (
 from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
+
+log = getLogger('ocrd_models.ocrd_mets')
 
 class OcrdMets(OcrdXmlDocument):
     """
@@ -116,7 +118,6 @@ class OcrdMets(OcrdXmlDocument):
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
-
         Args:
             ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
@@ -177,6 +178,28 @@ class OcrdMets(OcrdXmlDocument):
             el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
+    def remove_file_group(self, USE, recursive=False):
+        """
+        Remove a fileGrp.
+
+        Arguments:
+            USE (string): USE attribute of the fileGrp to delete
+            recursive (boolean): Whether to recursively delete all files in the group
+        """
+        el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
+        if el_fileSec is None:
+            raise Exception("No fileSec!")
+        el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        if el_fileGrp is None:   # pylint: disable=len-as-condition
+            raise Exception("No such fileGrp: %s" % USE)
+        files = el_fileGrp.findall('mets:file', NS)
+        if len(files) > 0:  # pylint: disable=len-as-condition
+            if not recursive:
+                raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
+            for f in files:
+                self.remove_file(f.get('ID'))
+        el_fileGrp.getparent().remove(el_fileGrp)
+
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
         """
         Add a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
@@ -211,6 +234,35 @@ class OcrdMets(OcrdXmlDocument):
         self._file_by_id[ID] = mets_file
 
         return mets_file
+
+    def remove_file(self, ID):
+        """
+        Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
+        """
+        log.info("remove_file(%s)" % ID)
+        ocrd_file = self.find_files(ID)
+        if not ocrd_file:
+            raise Exception("File not found: %s" % ID)
+        ocrd_file = ocrd_file[0]
+
+        # Delete the physical page ref
+        for fptr in self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
+            log.info("Delete fptr element %s for page '%s'", fptr, ID)
+            page_div = fptr.getparent()
+            page_div.remove(fptr)
+            # TODO delete empty pages
+            #  if not page_div.getchildren():
+            #      log.info("Delete empty page %s", page_div)
+            #      page_div.getparent().remove(page_div)
+
+        # Delete the file reference
+        # pylint: disable=protected-access
+        ocrd_file._el.getparent().remove(ocrd_file._el)
+
+        # Uncache
+        if ID in self._file_by_id:
+            del self._file_by_id[ID]
+        return ocrd_file
 
     @property
     def physical_pages(self):

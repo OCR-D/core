@@ -38,8 +38,10 @@ __all__ = [
 import re
 import sys
 import logging
+from os import getcwd, chdir
 from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
+import contextlib
 
 from .logging import getLogger
 from .constants import *  # pylint: disable=wildcard-import
@@ -53,6 +55,16 @@ def abspath(url):
     if url.startswith('file://'):
         url = url[len('file://'):]
     return os_abspath(url)
+
+@contextlib.contextmanager
+def pushd_popd(newcwd=None):
+    oldcwd = getcwd()
+    try:
+        if newcwd:
+            chdir(newcwd)
+        yield
+    finally:
+        chdir(oldcwd)
 
 def concat_padded(base, *args):
     """

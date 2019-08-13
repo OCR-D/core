@@ -32,6 +32,13 @@ class OcrdFile():
         self._instance = instance
         self.mets = mets
 
+        if self.url:
+            if not self.url.startswith('http://') and \
+                not self.url.startswith('https://'):
+                self.local_filename = self.url
+            if self.url.startswith('file://'):
+                self.local_filename = self.url[len('file://'):]
+
         #  if baseurl and not local_filename and '://' not in self.url:
         #      self.local_filename = '%s/%s' % (baseurl, self.url)
 
