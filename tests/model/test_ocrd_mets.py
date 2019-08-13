@@ -1,7 +1,11 @@
 from datetime import datetime
+from tempfile import TemporaryDirectory
+from shutil import copytree
+from os.path import join
 from tests.base import TestCase, main, assets
 
 from ocrd_utils import VERSION, MIMETYPE_PAGE
+from ocrd_utils.logging import initLogging
 from ocrd_models import OcrdMets
 
 # pylint: disable=protected-access,deprecated-method,too-many-public-methods
@@ -9,6 +13,7 @@ class TestOcrdMets(TestCase):
 
     def setUp(self):
         self.mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        initLogging()
 
     def test_unique_identifier(self):
         self.assertEqual(self.mets.unique_identifier, 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier')
@@ -133,13 +138,19 @@ class TestOcrdMets(TestCase):
         """
         Test removal of filegrp
         """
-        self.assertEqual(len(self.mets.file_groups), 17)
-        self.assertEqual(len(self.mets.find_files()), 35)
-        with self.assertRaisesRegex(Exception, "not empty"):
-            self.mets.remove_file_group('OCR-D-GT-ALTO')
-        self.mets.remove_file_group('OCR-D-GT-ALTO', recursive=True)
-        self.assertEqual(len(self.mets.file_groups), 16)
-        self.assertEqual(len(self.mets.find_files()), 33)
+        with TemporaryDirectory() as tempdir:
+            copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
+            mets = OcrdMets(filename=join(tempdir, 'ws', 'mets.xml'))
+            self.assertEqual(len(mets.file_groups), 17)
+            self.assertEqual(len(mets.find_files()), 35)
+            print()
+            before = sorted([x.ID for x in mets.find_files()])
+            with self.assertRaisesRegex(Exception, "not empty"):
+                mets.remove_file_group('OCR-D-GT-ALTO')
+            mets.remove_file_group('OCR-D-GT-PAGE', recursive=True)
+            print([x for x in before if x not in sorted([x.ID for x in mets.find_files()])])
+            self.assertEqual(len(mets.file_groups), 16)
+            self.assertEqual(len(mets.find_files()), 33)
 
 if __name__ == '__main__':
     main()

@@ -197,7 +197,7 @@ class OcrdMets(OcrdXmlDocument):
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
-                self.remove_file(f.getparent().get('ID'))
+                self.remove_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
@@ -239,28 +239,29 @@ class OcrdMets(OcrdXmlDocument):
         """
         Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
         """
-        # Ensure cached
-        if ID not in self._file_by_id:
-            self._file_by_id[ID] = OcrdFile(self._tree.getroot().find(
-                './/mets:file[@ID="%s"]' % ID, NS), mets=self)
-        ocrd_file = self._file_by_id[ID]
-        el = ocrd_file._el # pylint: disable=protected-access
+        log.info("remove_file(%s)" % ID)
+        ocrd_file = self.find_files(ID)
+        if not ocrd_file:
+            raise Exception("File not found: %s" % ID)
+        ocrd_file = ocrd_file[0]
 
         # Delete the physical page ref
-        for fptr in self._tree.getroot().xpath('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
+        for fptr in self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
             log.info("Delete fptr element %s for page '%s'", fptr, ID)
             page_div = fptr.getparent()
             page_div.remove(fptr)
-            # delete empty pages
-            if not page_div.getchildren():
-                log.info("Delete empty page %s", page_div)
-                page_div.getparent().remove(page_div)
+            # TODO delete empty pages
+            #  if not page_div.getchildren():
+            #      log.info("Delete empty page %s", page_div)
+            #      page_div.getparent().remove(page_div)
 
         # Delete the file reference
-        el.getparent().remove(el)
+        # pylint: disable=protected-access
+        ocrd_file._el.getparent().remove(ocrd_file._el)
 
         # Uncache
-        del self._file_by_id[ID]
+        if ID in self._file_by_id:
+            del self._file_by_id[ID]
         return ocrd_file
 
     @property
