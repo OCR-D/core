@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added:
 
   * `ocrd workspace remove` to remove files, #275
+  * `ocrd workspace remove-group` to remove file groups, #275
 
 ## [1.0.0b11] - 2019-08-08
 
