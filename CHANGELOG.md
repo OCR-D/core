@@ -5,13 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b13] - 2019-08-13
+
 Added:
 
-  * `ocrd workspace remove` to remove files, #275
-  * `ocrd workspace remove-group` to remove file groups, #275
+  * `ocrd workspace remove` to remove files, #275, #245
+  * `ocrd workspace remove-group` to remove file groups, #275, #245
   * `ocrd workspace prune-files`
 
-## [1.0.0b11] - 2019-08-08
+## [1.0.0b12] - 2019-08-08
 
 Fixed:
 
@@ -507,6 +509,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0b13]: ../../compare/v1.0.0b13...v1.0.0b12
+[1.0.0b12]: ../../compare/v1.0.0b12...v1.0.0b11
+[1.0.0b11]: ../../compare/v1.0.0b11...v1.0.0b10
 [1.0.0b10]: ../../compare/v1.0.0b10...v1.0.0b9
 [1.0.0b9]: ../../compare/v1.0.0b9...v1.0.0b6
 [1.0.0b6]: ../../compare/v1.0.0b6...v1.0.0b1
