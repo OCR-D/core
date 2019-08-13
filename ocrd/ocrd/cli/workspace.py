@@ -1,12 +1,12 @@
 import os
-from os.path import relpath
+from os.path import relpath, exists
 import sys
 from tempfile import mkdtemp
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, pushd_popd, is_local_filename
 from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
@@ -226,6 +226,27 @@ def remove_group(ctx, group, recursive, force):
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     workspace.remove_file_group(group, recursive, force)
     workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace prune-files
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('prune-files', help="""
+
+    Removes mets:files that point to non-existing local files
+
+""")
+@pass_workspace
+def prune_files(ctx):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    with pushd_popd(workspace.directory):
+        for f in workspace.mets.find_files():
+            try:
+                if not exists(f.url):
+                    workspace.mets.remove_file(f.ID)
+            except Exception as e:
+                log.debug(e)
+        workspace.save_mets()
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-group

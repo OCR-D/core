@@ -9,6 +9,7 @@ Added:
 
   * `ocrd workspace remove` to remove files, #275
   * `ocrd workspace remove-group` to remove file groups, #275
+  * `ocrd workspace prune-files`
 
 ## [1.0.0b11] - 2019-08-08
 

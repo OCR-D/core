@@ -137,6 +137,19 @@ class TestCli(TestCase):
             # File should have been deleted
             self.assertFalse(exists(content_file))
 
+    def test_prune_files(self):
+        with TemporaryDirectory() as tempdir:
+            copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
+
+            ws1 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
+            self.assertEqual(len(ws1.mets.find_files()), 35)
+
+            result = self.runner.invoke(workspace_cli, ['-d', join(tempdir, 'ws'), 'prune-files'])
+            self.assertEqual(result.exit_code, 0)
+
+            ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
+            self.assertEqual(len(ws2.mets.find_files()), 7)
+
     def test_remove_file_group(self):
         """
         Test removal of filegrp
