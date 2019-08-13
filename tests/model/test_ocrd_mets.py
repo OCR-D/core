@@ -4,7 +4,7 @@ from tests.base import TestCase, main, assets
 from ocrd_utils import VERSION, MIMETYPE_PAGE
 from ocrd_models import OcrdMets
 
-# pylint: disable=protected-access,deprecated-method
+# pylint: disable=protected-access,deprecated-method,too-many-public-methods
 class TestOcrdMets(TestCase):
 
     def setUp(self):
@@ -128,6 +128,18 @@ class TestOcrdMets(TestCase):
     def test_nocontent_nofilename(self):
         with self.assertRaisesRegex(Exception, "Must pass 'filename' or 'content' to"):
             OcrdMets()
+
+    def test_remove_file_group(self):
+        """
+        Test removal of filegrp
+        """
+        self.assertEqual(len(self.mets.file_groups), 17)
+        self.assertEqual(len(self.mets.find_files()), 35)
+        with self.assertRaisesRegex(Exception, "not empty"):
+            self.mets.remove_file_group('OCR-D-GT-ALTO')
+        self.mets.remove_file_group('OCR-D-GT-ALTO', recursive=True)
+        self.assertEqual(len(self.mets.file_groups), 16)
+        self.assertEqual(len(self.mets.find_files()), 33)
 
 if __name__ == '__main__':
     main()

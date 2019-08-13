@@ -178,6 +178,28 @@ class OcrdMets(OcrdXmlDocument):
             el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
+    def remove_file_group(self, USE, recursive=False):
+        """
+        Remove a fileGrp.
+
+        Arguments:
+            USE (string): USE attribute of the fileGrp to delete
+            recursive (boolean): Whether to recursively delete all files in the group
+        """
+        el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
+        if el_fileSec is None:
+            raise Exception("No fileSec!")
+        el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        if el_fileGrp is None:   # pylint: disable=len-as-condition
+            raise Exception("No such fileGrp: %s" % USE)
+        files = el_fileGrp.findall('mets:file', NS)
+        if len(files) > 0:  # pylint: disable=len-as-condition
+            if not recursive:
+                raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
+            for f in files:
+                self.remove_file(f.getparent().get('ID'))
+        el_fileGrp.getparent().remove(el_fileGrp)
+
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
         """
         Add a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
@@ -219,9 +241,10 @@ class OcrdMets(OcrdXmlDocument):
         """
         # Ensure cached
         if ID not in self._file_by_id:
-            el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % ID, NS)
-            self._file_by_id[ID] = OcrdFile(el, mets=self)
+            self._file_by_id[ID] = OcrdFile(self._tree.getroot().find(
+                './/mets:file[@ID="%s"]' % ID, NS), mets=self)
         ocrd_file = self._file_by_id[ID]
+        el = ocrd_file._el # pylint: disable=protected-access
 
         # Delete the physical page ref
         for fptr in self._tree.getroot().xpath('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
@@ -239,7 +262,6 @@ class OcrdMets(OcrdXmlDocument):
         # Uncache
         del self._file_by_id[ID]
         return ocrd_file
-
 
     @property
     def physical_pages(self):

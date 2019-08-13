@@ -210,6 +210,24 @@ def workspace_remove_file(ctx, id, force):
 
 
 # ----------------------------------------------------------------------
+# ocrd workspace remove-group
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('remove-group', help="""
+
+    Delete a file group
+
+""")
+@click.option('-r', '--recursive', help="Delete any files in the group before the group itself", default=False, is_flag=True)
+@click.option('-f', '--force', help="Also delete local files", default=False, is_flag=True)
+@click.argument('GROUP')
+@pass_workspace
+def remove_group(ctx, group, recursive, force):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace.remove_file_group(group, recursive, force)
+    workspace.save_mets()
+
+# ----------------------------------------------------------------------
 # ocrd workspace list-group
 # ----------------------------------------------------------------------
 

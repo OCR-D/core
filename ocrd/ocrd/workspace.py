@@ -105,9 +105,27 @@ class Workspace():
             if not mets_file.local_filename:
                 raise Exception("File not locally available %s" % mets_file)
             with pushd_popd(self.directory):
-                log.info("rm %s", mets_file.local_filename)
+                log.info("rm %s [cwd=%s]", mets_file.local_filename, self.directory)
                 unlink(mets_file.local_filename)
         return mets_file
+
+    def remove_file_group(self, USE, recursive=False, force=False):
+        """
+        Remove a fileGrp.
+
+        Arguments:
+            USE (string): USE attribute of the fileGrp to delete
+            recursive (boolean): Whether to recursively delete all files in the group
+            force (boolean): When deleting recursively whether to delete files from HDD
+        """
+        if force and not recursive:
+            raise Exception("remove_file_group: force without recursive is likely a logic error")
+        if USE not in self.mets.file_groups:
+            raise Exception("No such fileGrp: %s" % USE)
+        if recursive:
+            for f in self.mets.find_files(fileGrp=USE):
+                self.remove_file(f.ID, force=force)
+        self.mets.remove_file_group(USE)
 
     def add_file(self, file_grp, content=None, **kwargs):
         """

@@ -1,10 +1,10 @@
 from os.path import join, exists
-#  from shutil import copyfile
+from shutil import copytree
 from tempfile import TemporaryDirectory
 
 from click.testing import CliRunner
 
-from tests.base import TestCase, main # pylint: disable=import-error, no-name-in-module
+from tests.base import TestCase, main, assets # pylint: disable=import-error, no-name-in-module
 
 from ocrd_utils.logging import initLogging
 from ocrd.cli.workspace import workspace_cli
@@ -136,6 +136,34 @@ class TestCli(TestCase):
 
             # File should have been deleted
             self.assertFalse(exists(content_file))
+
+    def test_remove_file_group(self):
+        """
+        Test removal of filegrp
+        """
+        with TemporaryDirectory() as tempdir:
+            copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
+            file_group = 'OCR-D-GT-PAGE'
+            file_path = join(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT')
+            self.assertTrue(exists(file_path))
+
+            workspace = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
+
+            with self.assertRaisesRegex(Exception, "not empty"):
+                workspace.remove_file_group(file_group)
+            with self.assertRaisesRegex(Exception, "force without recursive"):
+                workspace.remove_file_group(file_group, force=True)
+
+            self.assertTrue(exists(file_path))
+            self.assertEqual(len(workspace.mets.file_groups), 17)
+            self.assertEqual(len(workspace.mets.find_files()), 35)
+
+            workspace.remove_file_group(file_group, recursive=True, force=True)
+
+            self.assertEqual(len(workspace.mets.file_groups), 16)
+            self.assertEqual(len(workspace.mets.find_files()), 33)
+            self.assertFalse(exists(file_path))
+
 
 if __name__ == '__main__':
     main()
