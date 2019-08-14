@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b15] - 2019-08-14
+
 Fixed:
 
   * regression in namespace handling of PAGE output, #277
@@ -519,6 +521,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0b15]: ../../compare/v1.0.0b15...v1.0.0b14
 [1.0.0b14]: ../../compare/v1.0.0b14...v1.0.0b13
 [1.0.0b13]: ../../compare/v1.0.0b13...v1.0.0b12
 [1.0.0b12]: ../../compare/v1.0.0b12...v1.0.0b11
