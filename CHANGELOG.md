@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * METS is serialized as Unicode instead of character entities, #279
+
 ## [1.0.0b13] - 2019-08-13
 
 Added:
