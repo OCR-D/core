@@ -3,6 +3,30 @@ Constants for ocrd_models.
 """
 from pkg_resources import resource_string
 
+__all__ = [
+    'IDENTIFIER_PRIORITY',
+    'METS_XML_EMPTY',
+    'NAMESPACES',
+    'TAG_METS_AGENT',
+    'TAG_METS_DIV',
+    'TAG_METS_FILE',
+    'TAG_METS_FILEGRP',
+    'TAG_METS_FILESEC',
+    'TAG_METS_FPTR',
+    'TAG_METS_FLOCAT',
+    'TAG_METS_METSHDR',
+    'TAG_METS_NAME',
+    'TAG_METS_STRUCTMAP',
+    'TAG_MODS_IDENTIFIER',
+    'TAG_PAGE_ALTERNATIVEIMAGE',
+    'TAG_PAGE_COORDS',
+    'TAG_PAGE_READINGORDER',
+    'TAG_PAGE_REGIONREFINDEXED',
+    'TAG_PAGE_TEXTLINE',
+    'TAG_PAGE_TEXTEQUIV',
+    'TAG_PAGE_TEXTREGION'
+]
+    
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 
 METS_XML_EMPTY = resource_string(__name__, 'mets-empty.xml')
@@ -29,6 +53,7 @@ TAG_METS_STRUCTMAP        = '{%s}structMap' % NAMESPACES['mets']
 
 TAG_MODS_IDENTIFIER       = '{%s}identifier' % NAMESPACES['mods']
 
+TAG_PAGE_ALTERNATIVEIMAGE = '{%s}AlternativeImage' % NAMESPACES['page']
 TAG_PAGE_COORDS           = '{%s}Coords' % NAMESPACES['page']
 TAG_PAGE_READINGORDER     = '{%s}ReadingOrder' % NAMESPACES['page']
 TAG_PAGE_REGIONREFINDEXED = '{%s}RegionRefIndexed' % NAMESPACES['page']
