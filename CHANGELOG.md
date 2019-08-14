@@ -9,6 +9,18 @@ Changed:
 
   * workspace bagger will create files with extension
 
+## [1.0.0b15] - 2019-08-14
+
+Fixed:
+
+  * regression in namespace handling of PAGE output, #277
+
+## [1.0.0b14] - 2019-08-14
+
+Fixed:
+
+  * METS is serialized as Unicode instead of character entities, #279
+
 ## [1.0.0b13] - 2019-08-13
 
 Added:
@@ -513,6 +525,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0b15]: ../../compare/v1.0.0b15...v1.0.0b14
+[1.0.0b14]: ../../compare/v1.0.0b14...v1.0.0b13
 [1.0.0b13]: ../../compare/v1.0.0b13...v1.0.0b12
 [1.0.0b12]: ../../compare/v1.0.0b12...v1.0.0b11
 [1.0.0b11]: ../../compare/v1.0.0b11...v1.0.0b10

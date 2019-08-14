@@ -42,7 +42,7 @@ class OcrdXmlDocument():
             xmllint (boolean): Format with ``xmllint`` in addition to pretty-printing
         """
         root = self._tree.getroot()
-        ret = ET.tostring(ET.ElementTree(root), pretty_print=True)
+        ret = ET.tostring(ET.ElementTree(root), pretty_print=True, encoding='UTF-8')
         if xmllint:
             ret = xmllint_format(ret)
         return ret

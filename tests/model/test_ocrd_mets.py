@@ -134,6 +134,20 @@ class TestOcrdMets(TestCase):
         with self.assertRaisesRegex(Exception, "Must pass 'filename' or 'content' to"):
             OcrdMets()
 
+    def test_encoding_entities(self):
+        mets = OcrdMets(content="""
+        <mets>
+          <metsHdr>
+            <agent>
+              <name>Őh śéé Áŕ</name>
+              <note>OCR-D</note>
+            </agent>
+          </metsHdr>
+        </mets>
+        """)
+        self.assertIn('Őh śéé Áŕ', mets.to_xml().decode('utf-8'))
+
+
     def test_remove_file_group(self):
         """
         Test removal of filegrp
