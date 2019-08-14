@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * workspace bagger will create files with extension
+
 ## [1.0.0b15] - 2019-08-14
 
 Fixed:
