@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * regression in namespace handling of PAGE output, #277
+
 ## [1.0.0b14] - 2019-08-14
 
 Fixed:
