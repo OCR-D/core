@@ -109,6 +109,7 @@ ocrd__parse_argv () {
         echo >&2 "WARNING: output fileGrp '${ocrd_argv[output_file_grp]}' does not conform to OCR-D spec"
     fi
 
+
     local params_parsed retval
     params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]}")"
     retval=$?

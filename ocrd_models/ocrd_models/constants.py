@@ -26,7 +26,7 @@ __all__ = [
     'TAG_PAGE_TEXTEQUIV',
     'TAG_PAGE_TEXTREGION'
 ]
-    
+
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 
 METS_XML_EMPTY = resource_string(__name__, 'mets-empty.xml')
