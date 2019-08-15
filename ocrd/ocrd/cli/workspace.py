@@ -198,14 +198,15 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
 
 @workspace_cli.command('remove')
 @click.option('--force', help="Also delete file in storage if applicable", default=False, is_flag=True)
-@click.argument('ID')
+@click.argument('ID', nargs=-1)
 @pass_workspace
-def workspace_remove_file(ctx, id, force):
+def workspace_remove_file(ctx, id, force):  # pylint: disable=redefined-builtin
     """
     Delete file by ID from mets.xml
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
-    workspace.remove_file(id, force=force)
+    for i in id:
+        workspace.remove_file(i, force=force)
     workspace.save_mets()
 
 
@@ -220,11 +221,12 @@ def workspace_remove_file(ctx, id, force):
 """)
 @click.option('-r', '--recursive', help="Delete any files in the group before the group itself", default=False, is_flag=True)
 @click.option('-f', '--force', help="Also delete local files", default=False, is_flag=True)
-@click.argument('GROUP')
+@click.argument('GROUP', nargs=-1)
 @pass_workspace
 def remove_group(ctx, group, recursive, force):
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
-    workspace.remove_file_group(group, recursive, force)
+    for g in group:
+        workspace.remove_file_group(g, recursive, force)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
