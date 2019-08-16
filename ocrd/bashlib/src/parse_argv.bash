@@ -48,11 +48,11 @@ ocrd__parse_argv () {
     fi
 
     if [[ ! "${ocrd__argv[input_file_grp]:=OCR-D-IMG}" =~ OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?(,OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?)* ]];then
-        echo >&2 "WARNING: input fileGrp '${ocrd_argv[input_file_grp]}' does not conform to OCR-D spec"
+        echo >&2 "WARNING: input fileGrp '${ocrd__argv[input_file_grp]}' does not conform to OCR-D spec"
     fi
 
     if [[ ! "${ocrd__argv[output_file_grp]:=OCR-D-OCR}" =~ OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?(,OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?)* ]];then
-        echo >&2 "WARNING: output fileGrp '${ocrd_argv[output_file_grp]}' does not conform to OCR-D spec"
+        echo >&2 "WARNING: output fileGrp '${ocrd__argv[output_file_grp]}' does not conform to OCR-D spec"
     fi
 
 
