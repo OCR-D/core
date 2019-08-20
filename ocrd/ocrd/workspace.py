@@ -5,6 +5,7 @@ from os.path import join as pjoin, isdir
 import cv2
 from PIL import Image
 import numpy as np
+from atomicwrites import atomic_write
 
 from ocrd_models import OcrdMets, OcrdExif
 from ocrd_utils import getLogger, is_local_filename, abspath, pushd_popd
@@ -170,8 +171,8 @@ class Workspace():
         log.info("Saving mets '%s'" % self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
-        with open(self.mets_target, 'wb') as f:
-            f.write(self.mets.to_xml(xmllint=True))
+        with atomic_write(self.mets_target, overwrite=True) as f:
+            f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
         """

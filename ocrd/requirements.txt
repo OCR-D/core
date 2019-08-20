@@ -9,3 +9,4 @@ opencv-python-headless
 Flask
 jsonschema
 pyyaml
+atomicwrites >= 1.3.0
