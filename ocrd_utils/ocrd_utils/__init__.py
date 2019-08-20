@@ -1,32 +1,45 @@
 """
 Utility methods usable in various circumstances.
 
-* xywh_from_points, points_from_xywh, polygon_from_points
-* coordinates_of_segment, coordinates_for_segment, rotate_coordinates
+* ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points``
+* ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``
 
-These functions convert polygon outlines for PAGE elements on all hierarchy levels (page, region, line, word, glyph) between relative coordinates w.r.t. parent segment and absolute coordinates w.r.t. the top-level (source) image. This includes rotation and offset correction.
+These functions convert polygon outlines for PAGE elements on all hierarchy
+levels (page, region, line, word, glyph) between relative coordinates w.r.t.
+parent segment and absolute coordinates w.r.t. the top-level (source) image.
+This includes rotation and offset correction.
 
-* polygon_mask, image_from_polygon, crop_image
+* ``polygon_mask``, ``image_from_polygon``, ``crop_image``
 
 These functions combine PIL.Image with polygons or bboxes.
-The functions have the syntax X_from_Y, where X/Y can be
+The functions have the syntax ``X_from_Y``, where ``X``/``Y`` can be
 
-    * `x0y0x1y1` is a 4-list of strings x0, y0, x1, y1 of the bounding box (rectangle)
-    * `bbox` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
-* points a string encoding a polygon: "0,0 100,0 100,100, 0,100"
-    * `polygon` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: [[0,0], [100,0], [100,100], [0,100]]
-* xywh a dict with keys for x, y, width and height: {'x': 0, 'y': 0, 'w': 100, 'h': 100}
+* ``x0y0x1y1`` is a 4-list of strings ``x0``, ``y0``, ``x1``, ``y1`` of the
+  bounding box (rectangle)
+* ``bbox`` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
+* ``points`` a string encoding a polygon: ``"0,0 100,0 100,100, 0,100"``
+* ``polygon`` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: ``[[0,0], [100,0], [100,100], [0,100]]``
+* ``xywh`` a dict with keys for x, y, width and height: ``{'x': 0, 'y': 0, 'w': 100, 'h': 100}``
 
-polygon is what opencv2 and higher-level coordinate functions in ocrd_utils expect
+``polygon`` is what opencv2 and higher-level coordinate functions in ocrd_utils expect
 
-xywh and x0y0x1y1 are what tesserocr expects/produces.
-points is what PAGE-XML uses.
-bbox is what PIL.Image uses.
-* is_local_filename, safe_filename, abspath
+``xywh`` and ``x0y0x1y1`` are what tesserocr expects/produces.
 
-* is_string, membername, concat_padded
+``points`` is what PAGE-XML uses.
 
-* MIMETYPE_PAGE, EXT_TO_MIME, VERSION
+``bbox`` is what PIL.Image uses.
+
+* ``is_local_filename``, ``safe_filename``, ``abspath``
+
+FS-related utilities
+
+* ``is_string``, ``membername``, ``concat_padded``
+
+String and OOP utilities
+
+* ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``VERSION``
+
+Constants
 """
 
 __all__ = [
@@ -40,12 +53,9 @@ __all__ = [
     'crop_image',
     'getLogger',
     'is_local_filename',
-    'image_from_segment',
     'is_string',
     'logging',
     'membername',
-    'image_from_page',
-    'image_from_segment',
     'image_from_polygon',
     'points_from_bbox',
     'points_from_polygon',
@@ -133,7 +143,7 @@ def xywh_from_polygon(polygon):
 def coordinates_for_segment(polygon, parent_image, parent_xywh):
     """Convert a relative coordinates polygon to absolute.
 
-    Given a numpy array `polygon` of points, and a parent PIL.Image
+    Given a numpy array ``polygon`` of points, and a parent PIL.Image
     along with its bounding box to which the coordinates are relative,
     calculate the absolute coordinates within the page.
     That is, (in case the parent was rotated,) rotate all points in
@@ -155,7 +165,7 @@ def coordinates_for_segment(polygon, parent_image, parent_xywh):
 def coordinates_of_segment(segment, parent_image, parent_xywh):
     """Extract the relative coordinates polygon of a PAGE segment element.
 
-    Given a Region / TextLine / Word / Glyph `segment` and
+    Given a Region / TextLine / Word / Glyph ``segment`` and
     the PIL.Image of its parent Page / Region / TextLine / Word
     along with its bounding box, calculate the relative coordinates
     of the segment within the image. That is, shift all points from
@@ -191,12 +201,12 @@ def concat_padded(base, *args):
 def crop_image(image, box=None):
     """"Crop an image to a rectangle, filling with background.
 
-    Given a PIL.Image `image` and a list `box` of the bounding
+    Given a PIL.Image ``image`` and a list ``box`` of the bounding
     rectangle relative to the image, crop at the box coordinates,
-    filling everything outside `image` with the background.
-    (This covers the case where `box` indexes are negative or
-    larger than `image` width/height. PIL.Image.crop would fill
-    with black.) Since `image` is not necessarily binarized yet,
+    filling everything outside ``image`` with the background.
+    (This covers the case where ``box`` indexes are negative or
+    larger than ``image`` width/height. PIL.Image.crop would fill
+    with black.) Since ``image`` is not necessarily binarized yet,
     determine the background from the median color (instead of
     white).
 
@@ -216,9 +226,9 @@ def crop_image(image, box=None):
 def image_from_polygon(image, polygon):
     """"Mask an image with a polygon.
 
-    Given a PIL.Image `image` and a numpy array `polygon`
+    Given a PIL.Image ``image`` and a numpy array ``polygon``
     of relative coordinates into the image, put everything
-    outside the polygon hull to the background. Since `image`
+    outside the polygon hull to the background. Since ``image``
     is not necessarily binarized yet, determine the background
     from the median color (instead of white).
 
@@ -336,8 +346,8 @@ def polygon_from_xywh(xywh):
 def polygon_mask(image, coordinates):
     """"Create a mask image of a polygon.
 
-    Given a PIL.Image `image` (merely for dimensions), and
-    a numpy array `polygon` of relative coordinates into the image,
+    Given a PIL.Image ``image`` (merely for dimensions), and
+    a numpy array ``polygon`` of relative coordinates into the image,
     create a new image of the same size with black background, and
     fill everything inside the polygon hull with white.
 
@@ -352,10 +362,10 @@ def polygon_mask(image, coordinates):
 def rotate_coordinates(polygon, angle, orig=np.array([0, 0])):
     """Apply a passive rotation transformation to the given coordinates.
 
-    Given a numpy array `polygon` of points and a rotation `angle`,
-    as well as a numpy array `orig` of the center of rotation,
+    Given a numpy array ``polygon`` of points and a rotation ``angle``,
+    as well as a numpy array ``orig`` of the center of rotation,
     calculate the coordinate transform corresponding to the rotation
-    of the underlying image by `angle` degrees at `center` by
+    of the underlying image by ``angle`` degrees at ``center`` by
     applying translation to the center, inverse rotation,
     and translation from the center.
 
