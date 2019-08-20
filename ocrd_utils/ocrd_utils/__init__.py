@@ -1,8 +1,7 @@
 """
 Utility methods usable in various circumstances.
 
-* ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points``
-* ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``
+* ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``, ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points``
 
 These functions convert polygon outlines for PAGE elements on all hierarchy
 levels (page, region, line, word, glyph) between relative coordinates w.r.t.
@@ -14,12 +13,12 @@ This includes rotation and offset correction.
 These functions combine PIL.Image with polygons or bboxes.
 The functions have the syntax ``X_from_Y``, where ``X``/``Y`` can be
 
-* ``x0y0x1y1`` is a 4-list of strings ``x0``, ``y0``, ``x1``, ``y1`` of the
-  bounding box (rectangle)
-* ``bbox`` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
-* ``points`` a string encoding a polygon: ``"0,0 100,0 100,100, 0,100"``
-* ``polygon`` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: ``[[0,0], [100,0], [100,100], [0,100]]``
-* ``xywh`` a dict with keys for x, y, width and height: ``{'x': 0, 'y': 0, 'w': 100, 'h': 100}``
+    * ``bbox`` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
+    * ``points`` a string encoding a polygon: ``"0,0 100,0 100,100, 0,100"``
+    * ``polygon`` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: ``[[0,0], [100,0], [100,100], [0,100]]``
+    * ``xywh`` a dict with keys for x, y, width and height: ``{'x': 0, 'y': 0, 'w': 100, 'h': 100}``
+    * ``x0y0x1y1`` is a 4-list of strings ``x0``, ``y0``, ``x1``, ``y1`` of the bounding box (rectangle)
+    * ``y0x0y1x1`` is the same as ``x0y0x1y1`` with positions of ``x`` and ``y`` in the list swapped
 
 ``polygon`` is what opencv2 and higher-level coordinate functions in ocrd_utils expect
 
@@ -289,7 +288,7 @@ def points_from_xywh(box):
 
 def points_from_y0x0y1x1(yxyx):
     """
-    Constructs a polygon representation from a rectangle described as a list [y0, x0, y1, x1]
+    Construct a polygon representation from a rectangle described as a list [y0, x0, y1, x1]
     """
     y0 = yxyx[0]
     x0 = yxyx[1]
@@ -304,7 +303,7 @@ def points_from_y0x0y1x1(yxyx):
 
 def points_from_x0y0x1y1(xyxy):
     """
-    Constructs a polygon representation from a rectangle described as a list [x0, y0, x1, y1]
+    Construct a polygon representation from a rectangle described as a list [x0, y0, x1, y1]
     """
     x0 = xyxy[0]
     y0 = xyxy[1]
@@ -371,7 +370,7 @@ def rotate_coordinates(polygon, angle, orig=np.array([0, 0])):
 
     Return a numpy array of the resulting polygon.
     """
-    angle = np.deg2rad(angle)
+    angle = np.deg2rad(angle)  # pylint: disable=assignment-from-no-return
     cos = np.cos(angle)
     sin = np.sin(angle)
     # active rotation:  [[cos, -sin], [sin, cos]]
