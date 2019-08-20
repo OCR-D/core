@@ -7,7 +7,25 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
-  * many utility methods for image manipulation and coordinate handling, #268
+  * many utility methods for image manipulation and coordinate handling, #268, OCR-D/ocrd_tesserocr#49
+    * `bbox_from_points`
+    * `bbox_from_xywh`
+    * `bbox_from_polygon`
+    * `coordinates_for_segment`
+    * `coordinates_of_segment`
+    * `crop_image`
+    * `membername`
+    * `image_from_polygon`
+    * `points_from_bbox`
+    * `points_from_polygon`
+    * `points_from_xywh`
+    * `polygon_from_bbox`
+    * `polygon_from_x0y0x1y1`
+    * `polygon_from_xywh`
+    * `polygon_mask`
+    * `rotate_coordinates`
+    * `xywh_from_bbox`
+  * Spec-conformant handling of AlternativeImage, OCR-D/spec#116, OCR-D/ocrd_tesserocr#33, #284
 
 Changed:
 
