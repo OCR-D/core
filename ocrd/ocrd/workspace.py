@@ -247,12 +247,12 @@ class Workspace():
 
         Given a PageType object, `page`, extract its PIL.Image from
         AlternativeImage if it exists. Otherwise extract the PIL.Image
-        from imageFilename and crop it if a Border exists. Otherwise
+        from imageFilename and cut it if a Border exists. Otherwise
         just return it.
 
-        When cropping, respect any orientation angle annotated for
+        When cuting, respect any orientation angle annotated for
         the page (from page-level deskewing) by rotating the
-        cropped image, respectively.
+        cut image, respectively.
 
         If the resulting page image is larger than the bounding box of
         `page`, pass down the page's box coordinates with an offset of
@@ -281,8 +281,8 @@ class Workspace():
 
         alternative_image = page.get_AlternativeImage()
         if alternative_image:
-            # (e.g. from page-level cropping, binarization, deskewing or despeckling)
-            # assumes implicit cropping (i.e. page_xywh has been applied already)
+            # (e.g. from page-level cutting, binarization, deskewing or despeckling)
+            # assumes implicit cutting (i.e. page_xywh has been applied already)
             log.debug("Using AlternativeImage %d (%s) for page '%s'",
                       len(alternative_image), alternative_image[-1].get_comments(),
                       page_id)
@@ -293,7 +293,7 @@ class Workspace():
             page_polygon = np.array(polygon_from_points(page_points))
             # create a mask from the page polygon:
             page_image = image_from_polygon(page_image, page_polygon)
-            # recrop into page rectangle:
+            # crop into page rectangle:
             page_image = crop_image(page_image,
                 box=(page_xywh['x'],
                      page_xywh['y'],
@@ -318,21 +318,21 @@ class Workspace():
         its absolute coordinates, `parent_xywh`, and a PAGE
         segment (TextRegion / TextLine / Word / Glyph) object
         logically contained in it, `segment`, extract its PIL.Image
-        from AlternativeImage (if it exists), or via cropping from
+        from AlternativeImage (if it exists), or via cutting from
         `parent_image`.
 
-        When cropping, respect any orientation angle annotated for
+        When cutting, respect any orientation angle annotated for
         the parent (from parent-level deskewing) by compensating the
         segment coordinates in an inverse transformation (translation
         to center, rotation, re-translation).
         Also, mind the difference between annotated and actual size
         of the parent (usually from deskewing), by a respective offset
-        into the image. Cropping uses a polygon mask (not just the
+        into the image. Cutting uses a polygon mask (not just the
         rectangle).
 
-        When cropping, respect any orientation angle annotated for
+        When cutting, respect any orientation angle annotated for
         the segment (from segment-level deskewing) by rotating the
-        cropped image, respectively.
+        cutted image, respectively.
 
         If the resulting segment image is larger than the bounding box of
         `segment`, pass down the segment's box coordinates with an offset
@@ -348,7 +348,7 @@ class Workspace():
             segment_xywh['angle'] = -(segment.get_orientation() or 0)
         alternative_image = segment.get_AlternativeImage()
         if alternative_image:
-            # (e.g. from segment-level cropping, binarization, deskewing or despeckling)
+            # (e.g. from segment-level cutting, binarization, deskewing or despeckling)
             log.debug("Using AlternativeImage %d (%s) for segment '%s'",
                       len(alternative_image), alternative_image[-1].get_comments(),
                       segment.id)
@@ -359,7 +359,7 @@ class Workspace():
             segment_polygon = coordinates_of_segment(segment, parent_image, parent_xywh)
             # create a mask from the segment polygon:
             segment_image = image_from_polygon(parent_image, segment_polygon)
-            # recrop into segment rectangle:
+            # crop into segment rectangle:
             segment_image = crop_image(segment_image,
                 box=(segment_xywh['x'] - parent_xywh['x'],
                      segment_xywh['y'] - parent_xywh['y'],
