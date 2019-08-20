@@ -8,7 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * workspace bagger will create files with extension
-  * `save_mets` is atomic now, #278
+  * `save_mets` is atomic now, #278, #285
 
 ## [1.0.0b15] - 2019-08-14
 

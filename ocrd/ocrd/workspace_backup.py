@@ -10,6 +10,8 @@ from ocrd_utils import getLogger
 
 from .constants import BACKUP_DIR
 
+from atomicwrites import atomic_write
+
 def _chksum(s):
     return hashlib.sha256(s).hexdigest()
 
@@ -83,8 +85,8 @@ class WorkspaceBackupManager():
             mets_file = join(d, 'mets.xml')
             log.info("Backing up to %s" % mets_file)
             makedirs(d)
-            with open(mets_file, 'wb') as f:
-                f.write(mets_str)
+            with atomic_write(mets_file, overwrite=True) as f:
+                f.write(mets_str.decode('utf-8'))
         return chksum
 
     def list(self):
