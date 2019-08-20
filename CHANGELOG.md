@@ -9,7 +9,32 @@ Added:
 
   * many utility methods for image manipulation and coordinate handling, #268
 
-## [1.0.0b11] - 2019-08-08
+Changed:
+
+  * workspace bagger will create files with extension
+  * `save_mets` is atomic now, #278, #285
+
+## [1.0.0b15] - 2019-08-14
+
+Fixed:
+
+  * regression in namespace handling of PAGE output, #277
+
+## [1.0.0b14] - 2019-08-14
+
+Fixed:
+
+  * METS is serialized as Unicode instead of character entities, #279
+
+## [1.0.0b13] - 2019-08-13
+
+Added:
+
+  * `ocrd workspace remove` to remove files, #275, #245
+  * `ocrd workspace remove-group` to remove file groups, #275, #245
+  * `ocrd workspace prune-files`
+
+## [1.0.0b12] - 2019-08-08
 
 Fixed:
 
@@ -505,6 +530,12 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+<<<<<<< HEAD
+=======
+[1.0.0b15]: ../../compare/v1.0.0b15...v1.0.0b14
+[1.0.0b14]: ../../compare/v1.0.0b14...v1.0.0b13
+[1.0.0b13]: ../../compare/v1.0.0b13...v1.0.0b12
+>>>>>>> master
 [1.0.0b12]: ../../compare/v1.0.0b12...v1.0.0b11
 [1.0.0b11]: ../../compare/v1.0.0b11...v1.0.0b10
 [1.0.0b10]: ../../compare/v1.0.0b10...v1.0.0b9

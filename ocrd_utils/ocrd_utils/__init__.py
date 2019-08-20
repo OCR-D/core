@@ -78,11 +78,14 @@ __all__ = [
 ]
 
 import io
-import os
-from os.path import isfile, abspath as os_abspath
 import re
 import sys
+import logging
+import os
+from os import getcwd, chdir
+from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
+import contextlib
 
 import numpy as np
 from PIL import Image, ImageStat, ImageDraw
@@ -184,6 +187,16 @@ def coordinates_of_segment(segment, parent_image, parent_xywh):
             orig=np.array([0.5 * parent_image.width,
                            0.5 * parent_image.height]))
     return np.round(polygon).astype(np.int32)
+
+@contextlib.contextmanager
+def pushd_popd(newcwd=None):
+    oldcwd = getcwd()
+    try:
+        if newcwd:
+            chdir(newcwd)
+        yield
+    finally:
+        chdir(oldcwd)
 
 def concat_padded(base, *args):
     """

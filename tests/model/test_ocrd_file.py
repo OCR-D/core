@@ -28,6 +28,14 @@ class TestOcrdFile(TestCase):
         f = OcrdFile(None, local_filename='/tmp/foo/bar/foo.bar')
         self.assertEqual(f.basename, 'foo.bar')
 
+    def test_extension(self):
+        f = OcrdFile(None, local_filename='/tmp/foo/bar/foo.bar')
+        self.assertEqual(f.extension, '.bar')
+
+    def test_extension_tar(self):
+        f = OcrdFile(None, local_filename='/tmp/foo/bar/foo.tar.gz')
+        self.assertEqual(f.extension, '.tar.gz')
+
     def test_basename_without_extension(self):
         f = OcrdFile(None, local_filename='/tmp/foo/bar/foo.bar')
         self.assertEqual(f.basename_without_extension, 'foo')

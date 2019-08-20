@@ -1,11 +1,12 @@
 import os
+from os.path import relpath, exists
 import sys
 from tempfile import mkdtemp
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, pushd_popd, is_local_filename
 from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
@@ -130,11 +131,14 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
+    #  log.warning(ctx.directory)
+    #  log.error(local_filename)
     if not local_filename.startswith(ctx.directory):
         log.debug("File '%s' is not in workspace, copying", local_filename)
         local_filename = ctx.resolver.download_to_directory(ctx.directory, "file://" + local_filename, subdir=file_grp)
+    local_filename = relpath(local_filename, ctx.directory)
 
-    url = "file://" + local_filename
+    url = local_filename
 
     workspace.mets.add_file(
         fileGrp=file_grp,
@@ -187,6 +191,64 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
             workspace.save_mets()
         ret = '\t'.join([getattr(f, field) or '' for field in output_field])
         print(ret)
+
+# ----------------------------------------------------------------------
+# ocrd workspace remove
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('remove')
+@click.option('--force', help="Also delete file in storage if applicable", default=False, is_flag=True)
+@click.argument('ID', nargs=-1)
+@pass_workspace
+def workspace_remove_file(ctx, id, force):  # pylint: disable=redefined-builtin
+    """
+    Delete file by ID from mets.xml
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    for i in id:
+        workspace.remove_file(i, force=force)
+    workspace.save_mets()
+
+
+# ----------------------------------------------------------------------
+# ocrd workspace remove-group
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('remove-group', help="""
+
+    Delete a file group
+
+""")
+@click.option('-r', '--recursive', help="Delete any files in the group before the group itself", default=False, is_flag=True)
+@click.option('-f', '--force', help="Also delete local files", default=False, is_flag=True)
+@click.argument('GROUP', nargs=-1)
+@pass_workspace
+def remove_group(ctx, group, recursive, force):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    for g in group:
+        workspace.remove_file_group(g, recursive, force)
+    workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace prune-files
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('prune-files', help="""
+
+    Removes mets:files that point to non-existing local files
+
+""")
+@pass_workspace
+def prune_files(ctx):
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    with pushd_popd(workspace.directory):
+        for f in workspace.mets.find_files():
+            try:
+                if not exists(f.url):
+                    workspace.mets.remove_file(f.ID)
+            except Exception as e:
+                log.debug(e)
+        workspace.save_mets()
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-group

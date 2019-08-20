@@ -13,34 +13,8 @@ from ocrd_models.ocrd_page import (
     parse,
     to_xml
 )
-#  from ocrd.model_factory import page_from_file
 
-# pylint: disable=protected-access
-
-class TestOcrdPage(TestCase):
-
-    def setUp(self):
-        with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), 'rb') as f:
-            self.xml_as_str = f.read()
-            self.pcgts = parseString(self.xml_as_str, silence=True)
-
-    def test_to_xml(self):
-        #  with open('/tmp/test.xml', 'w') as f:
-            #  f.write(to_xml(self.pcgts))
-        self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
-    
-    def test_issue_269(self):
-        """
-        @conf is parsed as str but should be float
-        https://github.com/OCR-D/core/issues/269
-        """
-        # GIGO
-        self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].set_conf(1.0)
-        self.assertEqual(type(self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].get_conf()), float)
-        self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].set_conf('1.0')
-        self.assertEqual(type(self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].get_conf()), str)
-        # test with parseString that @conf in TextEquiv won't throw an error
-        parseString("""
+simple_page = """\
 <PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
     <Metadata>
         <Creator>OCR-D</Creator>
@@ -67,11 +41,44 @@ class TestOcrdPage(TestCase):
         </TextRegion>
     </Page>
 </PcGts>
-""", silence=True)
+"""
+
+# pylint: disable=protected-access
+
+class TestOcrdPage(TestCase):
+
+    def setUp(self):
+        with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), 'rb') as f:
+            self.xml_as_str = f.read()
+            self.pcgts = parseString(self.xml_as_str, silence=True)
+
+    def test_to_xml(self):
+        #  with open('/tmp/test.xml', 'w') as f:
+            #  f.write(to_xml(self.pcgts))
+        self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
+    
+    def test_issue_269(self):
+        """
+        @conf is parsed as str but should be float
+        https://github.com/OCR-D/core/issues/269
+        """
+        # GIGO
+        self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].set_conf(1.0)
+        self.assertEqual(type(self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].get_conf()), float)
+        self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].set_conf('1.0')
+        self.assertEqual(type(self.pcgts.get_Page().get_TextRegion()[0].get_TextEquiv()[0].get_conf()), str)
+        # test with parseString that @conf in TextEquiv won't throw an error
+        parseString(simple_page, silence=True)
         #  self.assertTrue(True)
 
     def test_pcGtsId(self):
         self.assertEqual(self.pcgts.pcGtsId, 'glyph-test')
+
+    def test_delete_region(self):
+        pcgts = parseString(simple_page, silence=True)
+        self.assertEqual(len(pcgts.get_Page().get_TextRegion()), 1)
+        del pcgts.get_Page().get_TextRegion()[0]
+        self.assertEqual(len(pcgts.get_Page().get_TextRegion()), 0)
 
     def test_imageFileName(self):
         #  print(self.pcgts.export(sys.stdout, 0))

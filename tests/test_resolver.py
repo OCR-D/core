@@ -12,7 +12,7 @@ from ocrd.workspace import Workspace
 #  setOverrideLogLevel('DEBUG')
 
 
-TMP_FOLDER = '/tmp/test-pyocrd-resolver'
+TMP_FOLDER = '/tmp/test-core-resolver'
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 TEST_ZIP = assets.path_to('test.ocrd.zip')

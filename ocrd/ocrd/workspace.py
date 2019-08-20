@@ -1,10 +1,11 @@
 import io
-import os
-from os.path import join
+from os import makedirs, chdir, getcwd, unlink
+from os.path import join as pjoin, isdir
 
 import cv2
 from PIL import Image
 import numpy as np
+from atomicwrites import atomic_write
 
 from ocrd_models import OcrdMets, OcrdExif
 from ocrd_utils import (
@@ -16,6 +17,7 @@ from ocrd_utils import (
     is_local_filename,
     polygon_from_points,
     xywh_from_points,
+    pushd_popd,
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -40,7 +42,7 @@ class Workspace():
     def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None):
         self.resolver = resolver
         self.directory = directory
-        self.mets_target = os.path.join(directory, mets_basename)
+        self.mets_target = pjoin(directory, mets_basename)
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -78,7 +80,7 @@ class Workspace():
             The local filename of the downloaded file
         """
         if self.baseurl and '://' not in url:
-            url = join(self.baseurl, url)
+            url = pjoin(self.baseurl, url)
         return self.resolver.download_to_directory(self.directory, url, **kwargs)
 
     def download_file(self, f):
@@ -87,9 +89,7 @@ class Workspace():
         """
         #  os.chdir(self.directory)
         #  log.info('f=%s' % f)
-        oldpwd = os.getcwd()
-        try:
-            os.chdir(self.directory)
+        with pushd_popd(self.directory):
             if is_local_filename(f.url):
                 f.local_filename = abspath(f.url)
             else:
@@ -97,11 +97,47 @@ class Workspace():
                     log.debug("Already downloaded: %s", f.local_filename)
                 else:
                     f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
-        finally:
-            os.chdir(oldpwd)
 
         #  print(f)
         return f
+
+    def remove_file(self, ID, force=False):
+        """
+        Remove a file from the workspace.
+
+        Arguments:
+            ID (string): ID of the file to delete
+            force (boolean): Whether to delete from disk as well
+        """
+        log.debug('Deleting mets:file %s', ID)
+        mets_file = self.mets.remove_file(ID)
+        if force:
+            if not mets_file:
+                raise Exception("File '%s' not found" % ID)
+            if not mets_file.local_filename:
+                raise Exception("File not locally available %s" % mets_file)
+            with pushd_popd(self.directory):
+                log.info("rm %s [cwd=%s]", mets_file.local_filename, self.directory)
+                unlink(mets_file.local_filename)
+        return mets_file
+
+    def remove_file_group(self, USE, recursive=False, force=False):
+        """
+        Remove a fileGrp.
+
+        Arguments:
+            USE (string): USE attribute of the fileGrp to delete
+            recursive (boolean): Whether to recursively delete all files in the group
+            force (boolean): When deleting recursively whether to delete files from HDD
+        """
+        if force and not recursive:
+            raise Exception("remove_file_group: force without recursive is likely a logic error")
+        if USE not in self.mets.file_groups:
+            raise Exception("No such fileGrp: %s" % USE)
+        if recursive:
+            for f in self.mets.find_files(fileGrp=USE):
+                self.remove_file(f.ID, force=force)
+        self.mets.remove_file_group(USE)
 
     def add_file(self, file_grp, content=None, **kwargs):
         """
@@ -116,13 +152,13 @@ class Workspace():
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
 
-        oldpwd = os.getcwd()
+        oldpwd = getcwd()
         try:
-            os.chdir(self.directory)
+            chdir(self.directory)
             if 'local_filename' in kwargs:
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-                if not os.path.isdir(local_filename_dir):
-                    os.makedirs(local_filename_dir)
+                if not isdir(local_filename_dir):
+                    makedirs(local_filename_dir)
                 if 'url' not in kwargs:
                     kwargs['url'] = kwargs['local_filename']
 
@@ -135,7 +171,7 @@ class Workspace():
                         content = bytes(content, 'utf-8')
                     f.write(content)
         finally:
-            os.chdir(oldpwd)
+            chdir(oldpwd)
 
         return ret
 
@@ -146,8 +182,8 @@ class Workspace():
         log.info("Saving mets '%s'" % self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
-        with open(self.mets_target, 'wb') as f:
-            f.write(self.mets.to_xml(xmllint=True))
+        with atomic_write(self.mets_target, overwrite=True) as f:
+            f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
         """
@@ -373,8 +409,7 @@ class Workspace():
         """
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
-        file_path = os.path.join(file_grp,
-                                 file_id + '.' + format.lower())
+        file_path = pjoin(file_grp, file_id + '.' + format.lower())
         out = self.add_file(
             ID=file_id,
             file_grp=file_grp,

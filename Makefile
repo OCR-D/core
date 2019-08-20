@@ -50,7 +50,7 @@ help:
 # END-EVAL
 
 # Docker tag.
-DOCKER_TAG = 'ocrd/pyocrd'
+DOCKER_TAG = 'ocrd/core'
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL = pip install
@@ -164,7 +164,7 @@ docs-coverage:
 	for mod in $(BUILD_ORDER);do echo "# $$mod"; docstr-coverage -v1 $$mod/$$mod -e '.*(ocrd_page_generateds|/ocrd/cli/).*'|sed 's/^/\t/';done
 
 gh-pages:
-	git clone --branch gh-pages https://github.com/OCR-D/pyocrd gh-pages
+	git clone --branch gh-pages https://github.com/OCR-D/core gh-pages
 
 #
 # Clean up
