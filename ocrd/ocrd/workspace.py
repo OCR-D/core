@@ -6,6 +6,7 @@ import cv2
 from PIL import Image
 import numpy as np
 from atomicwrites import atomic_write
+from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif
 from ocrd_utils import (
@@ -205,7 +206,11 @@ class Workspace():
             self.image_cache['exif'][image_url] = OcrdExif(Image.open(image_filename))
         return self.image_cache['exif'][image_url]
 
+    @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
     def resolve_image_as_pil(self, image_url, coords=None):
+        return self._resolve_image_as_pil(image_url, coords)
+
+    def _resolve_image_as_pil(self, image_url, coords=None):
         """
         Resolve an image URL to a PIL image.
 
@@ -262,7 +267,7 @@ class Workspace():
         the page's bounding box / border (for passing down), and
         an OcrdExif instance associated with the original image.
         """
-        page_image = self.resolve_image_as_pil(page.imageFilename)
+        page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
         page_xywh = {'x': 0,
                      'y': 0,
@@ -286,7 +291,7 @@ class Workspace():
             log.debug("Using AlternativeImage %d (%s) for page '%s'",
                       len(alternative_image), alternative_image[-1].get_comments(),
                       page_id)
-            page_image = self.resolve_image_as_pil(
+            page_image = self._resolve_image_as_pil(
                 alternative_image[-1].get_filename())
         elif border:
             # get polygon outline of page border:
@@ -352,7 +357,7 @@ class Workspace():
             log.debug("Using AlternativeImage %d (%s) for segment '%s'",
                       len(alternative_image), alternative_image[-1].get_comments(),
                       segment.id)
-            segment_image = self.resolve_image_as_pil(
+            segment_image = self._resolve_image_as_pil(
                 alternative_image[-1].get_filename())
         else:
             # get polygon outline of segment relative to parent image:
