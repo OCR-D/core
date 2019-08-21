@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b16] - 2019-08-21
+
 Added:
 
   * many utility methods for image manipulation and coordinate handling, #268, OCR-D/ocrd_tesserocr#49
