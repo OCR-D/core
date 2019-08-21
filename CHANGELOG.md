@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b17] - 2019-08-21
+
 Fixed:
 
   * Require `Pillow == 5.4.1` throughout
