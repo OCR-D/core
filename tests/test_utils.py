@@ -1,23 +1,35 @@
-from os import getcwd, chdir
-from tests.base import TestCase, main, assets
-from ocrd_utils import (
-    abspath,
-    is_local_filename,
-    points_from_xywh,
-    is_string,
-    concat_padded,
-    points_from_x0y0x1y1,
-    pushd_popd,
-    polygon_from_points,
-    xywh_from_points,
-)
-from ocrd_models.utils import xmllint_format
+from os import getcwd
 
 from PIL import Image
 
-class TestUtils(TestCase):
+from tests.base import TestCase, main, assets
+from ocrd_utils import (
+    abspath,
 
-    #  def runTest(self):
+    bbox_from_points,
+    bbox_from_xywh,
+
+    concat_padded,
+    is_local_filename,
+    is_string,
+    membername,
+
+    points_from_bbox,
+    points_from_x0y0x1y1,
+    points_from_xywh,
+    points_from_polygon,
+
+    polygon_from_points,
+    polygon_from_x0y0x1y1,
+
+    xywh_from_points,
+    xywh_from_polygon,
+    pushd_popd,
+
+)
+from ocrd_models.utils import xmllint_format
+
+class TestUtils(TestCase):
 
     def test_abspath(self):
         self.assertEqual(abspath('file:///'), '/')
@@ -28,15 +40,41 @@ class TestUtils(TestCase):
     def test_points_from_xywh(self):
         self.assertEqual(
             points_from_xywh({'x': 100, 'y': 100, 'w': 100, 'h': 100}),
-            '100,100 200,100 200,200 100,200'
-        )
+            '100,100 200,100 200,200 100,200')
+
+    def test_points_from_bbox(self):
+        self.assertEqual(
+            points_from_bbox(100, 100, 200, 200),
+            '100,100 200,100 200,200 100,200')
+
+    def test_points_from_polygon(self):
+        self.assertEqual(
+            points_from_polygon([[100, 100], [200, 100], [200, 200], [100, 200]]),
+            '100,100 200,100 200,200 100,200')
+
+    def test_polygon_from_x0y0x1y1(self):
+        self.assertEqual(
+            polygon_from_x0y0x1y1([100, 100, 200, 200]),
+            [[100, 100], [200, 100], [200, 200], [100, 200]])
 
     def test_points_from_x0y0x1y1(self):
         self.assertEqual(
             points_from_x0y0x1y1([100, 100, 200, 200]),
-            '100,100 200,100 200,200 100,200'
-        )
+            '100,100 200,100 200,200 100,200')
 
+    def test_bbox_from_points(self):
+        self.assertEqual(
+            bbox_from_points('100,100 200,100 200,200 100,200'), (100, 100, 200, 200))
+
+    def test_bbox_from_xywh(self):
+        self.assertEqual(
+            bbox_from_xywh({'x': 100, 'y': 100, 'w': 100, 'h': 100}),
+            (100, 100, 200, 200))
+
+    def test_xywh_from_polygon(self):
+        self.assertEqual(
+            xywh_from_polygon([[100, 100], [200, 100], [200, 200], [100, 200]]),
+            {'x': 100, 'y': 100, 'w': 100, 'h': 100})
 
     def test_xywh_from_points(self):
         self.assertEqual(
@@ -66,6 +104,13 @@ class TestUtils(TestCase):
         xml_str = '<beep>\n  <boop>42</boop>\n</beep>\n'
         pretty_xml = xmllint_format(xml_str).decode('utf-8')
         self.assertEqual(pretty_xml, '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str)
+
+    def test_membername(self):
+        class Klazz:
+            def __init__(self):
+                self.prop = 42
+        instance = Klazz()
+        self.assertEqual(membername(instance, 42), 'prop')
 
     def test_pil_version(self):
         """
