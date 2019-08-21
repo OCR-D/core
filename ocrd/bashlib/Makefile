@@ -5,7 +5,7 @@ help:
 	@echo "  Targets"
 	@echo ""
 	@echo "    lib        Build the lib"
-	@echo "    watch-lib  Continously build lib"
+	@echo "    watch-lib  Continuously build lib"
 	@echo "    doc        Include the docs from the README"
 
 # END-EVAL
@@ -16,7 +16,7 @@ lib: lib.bash
 lib.bash: $(wildcard src/*.bash)
 	shinclude -c pound src/lib.bash > "$@"
 
-# Continously build lib
+# Continuously build lib
 watch-lib:
 	nodemon -w src -e bash -x make lib
 

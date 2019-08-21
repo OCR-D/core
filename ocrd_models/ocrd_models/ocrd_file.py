@@ -84,14 +84,14 @@ class OcrdFile():
     @property
     def ID(self):
         """
-        Get the ``ID`` atribute.
+        Get the ``ID`` attribute.
         """
         return self._el.get('ID')
 
     @ID.setter
     def ID(self, ID):
         """
-        Set the ``ID`` atribute.
+        Set the ``ID`` attribute.
         """
         if ID is None:
             return

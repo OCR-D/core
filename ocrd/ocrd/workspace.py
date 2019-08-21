@@ -280,7 +280,7 @@ class Workspace():
         border = page.get_Border() or page.get_PrintSpace()
         if border:
             page_points = border.get_Coords().points
-            log.debug("Using explictly set page border '%s' for page '%s'",
+            log.debug("Using explicitly set page border '%s' for page '%s'",
                       page_points, page_id)
             page_xywh = xywh_from_points(page_points)
 
