@@ -3,7 +3,6 @@ bagit_profile >= 1.3.0
 click >=7
 requests
 lxml
-Pillow >= 5.3.0
 opencv-python-headless
 Flask
 jsonschema
