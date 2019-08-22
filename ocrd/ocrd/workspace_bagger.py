@@ -13,7 +13,6 @@ from bagit import Bag, make_manifests  # pylint: disable=no-name-in-module
 from ocrd_utils import (
     pushd_popd,
     getLogger,
-    abspath,
     is_local_filename,
     unzip_file_to_dir,
 
@@ -65,8 +64,7 @@ class WorkspaceBagger():
             for f in mets.find_files():
                 log.info("Resolving %s (%s)", f.url, ocrd_manifestation_depth)
                 if is_local_filename(f.url):
-                    # FIXME No abspath! No!
-                    #  f.url = abspath(f.url)
+                    # nothing to do then
                     pass
                 elif ocrd_manifestation_depth != 'full':
                     self._log_or_raise("Not fetching non-local files, skipping %s" % f.url)

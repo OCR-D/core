@@ -1,5 +1,5 @@
 from os import makedirs
-from os.path import exists, isfile, join, isdir, abspath, dirname
+from os.path import exists, isfile, join, isdir, dirname
 from shutil import copyfile
 import tempfile
 
@@ -95,8 +95,6 @@ class Resolver():
         Returns:
             Workspace
         """
-        if dst_dir and not dst_dir.startswith('/'):
-            dst_dir = abspath(dst_dir)
 
         if mets_url is None:
             if baseurl is None:

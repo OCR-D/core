@@ -1,7 +1,7 @@
 import os
 import json
 import subprocess
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, is_local_filename, get_local_filename
 from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
@@ -40,9 +40,9 @@ def run_processor(
         mets_url,
         working_dir
     )
-    if parameter is not None:
-        if not '://' in parameter:
-            fname = os.path.abspath(parameter)
+    if parameter:
+        if is_local_filename(parameter):
+            fname = os.path.abspath(get_local_filename(parameter))
         else:
             fname = workspace.download_url(parameter)
         with open(fname, 'r') as param_json_file:
