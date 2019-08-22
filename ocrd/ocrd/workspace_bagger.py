@@ -65,10 +65,9 @@ class WorkspaceBagger():
             for f in mets.find_files():
                 log.info("Resolving %s (%s)", f.url, ocrd_manifestation_depth)
                 if is_local_filename(f.url):
-                    f.url = abspath(f.url)
-                # XXX cannot happen because chdir above
-                #  elif is_local_filename(join(workspace.directory, 'data', f.url)):
-                #      f.url = abspath(join(workspace.directory, 'data', f.url))
+                    # FIXME No abspath! No!
+                    #  f.url = abspath(f.url)
+                    pass
                 elif ocrd_manifestation_depth != 'full':
                     self._log_or_raise("Not fetching non-local files, skipping %s" % f.url)
                     continue

@@ -1,8 +1,11 @@
 import os
+from os.path import isfile
 
 import click
 
 from ocrd_utils import (
+    is_local_filename,
+    get_local_filename,
     setOverrideLogLevel,
     VERSION as OCRD_VERSION
 )
@@ -29,9 +32,7 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
         print(msg)
         raise Exception(msg)
     else:
-        if mets.find('://') == -1:
-            mets = 'file://' + os.path.abspath(mets)
-        if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
+        if is_local_filename(mets) and not isfile(get_local_filename(mets)):
             msg = "File does not exist: %s" % mets
             print(msg)
             raise Exception(msg)

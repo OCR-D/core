@@ -33,7 +33,7 @@ Utility functions and constants usable in various circumstances.
       (produced by tesserocr)
     * ``y0x0y1x1`` is the same as ``x0y0x1y1`` with positions of ``x`` and ``y`` in the list swapped
 
-* ``is_local_filename``, ``safe_filename``, ``abspath``
+* ``is_local_filename``, ``safe_filename``, ``abspath``, ``get_local_filename``
 
     FS-related utilities
 
@@ -247,6 +247,30 @@ def crop_image(image, box=None):
     new_image.paste(image, (-xywh['x'], -xywh['y']))
     return new_image
 
+def get_local_filename(url, start=None):
+    """
+    Return local filename, optionally relative to ``start``
+
+    Arguments:
+        url (string): filename or URL
+        start (string): Base path to remove from filename. Raise an exception if not a prefix of url
+    """
+    if url.startswith('https://') or url.startswith('http:'):
+        raise Exception("Can't determine local filename of http(s) URL")
+    if url.startswith('file://'):
+        url = url[len('file://'):]
+    # Goobi/Kitodo produces those, they are always absolute
+    if url.startswith('file:/'):
+        url = url[len('file:'):]
+    if start:
+        if not url.startswith(start):
+            raise Exception("Cannot remove prefix %s from url %s" % (start, url))
+        if not start.endswith('/'):
+            start += '/'
+        url = url[len(start):]
+    return url
+
+
 def image_from_polygon(image, polygon):
     """"Mask an image with a polygon.
 
@@ -273,11 +297,7 @@ def is_local_filename(url):
     """
     Whether a url is a local filename.
     """
-    if url.startswith('file://'):
-        return True
-    if isfile(url):
-        return True
-    return False
+    return url.startswith('file:/') or not('://' in url)
 
 def is_string(val):
     """

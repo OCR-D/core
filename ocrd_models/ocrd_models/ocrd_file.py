@@ -3,6 +3,8 @@ API to ``mets:file``
 """
 import os
 
+from ocrd_utils import is_local_filename, get_local_filename
+
 from .ocrd_xml_base import ET
 from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
 
@@ -32,12 +34,9 @@ class OcrdFile():
         self._instance = instance
         self.mets = mets
 
-        if self.url:
-            if not self.url.startswith('http://') and \
-                not self.url.startswith('https://'):
-                self.local_filename = self.url
-            if self.url.startswith('file://'):
-                self.local_filename = self.url[len('file://'):]
+        if not(local_filename):
+            if self.url and is_local_filename(self.url):
+                self.local_filename = get_local_filename(self.url)
 
         #  if baseurl and not local_filename and '://' not in self.url:
         #      self.local_filename = '%s/%s' % (baseurl, self.url)

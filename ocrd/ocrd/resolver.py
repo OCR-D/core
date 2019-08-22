@@ -6,7 +6,7 @@ import tempfile
 import requests
 
 from ocrd.constants import TMP_PREFIX
-from ocrd_utils import getLogger, safe_filename, is_local_filename
+from ocrd_utils import getLogger, safe_filename, is_local_filename, get_local_filename
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
 
@@ -21,7 +21,7 @@ class Resolver():
         """
         Download a file to the workspace.
 
-        Early Shortcut: If url is a file://-URL and that file is already in the directory, keep it there.
+        Early Shortcut: If url is a local file and that file is already in the directory, keep it there.
 
         If basename is not given but subdir is, assume user knows what she's doing and use last URL segment as the basename.
         If basename is not given and no subdir is given, use the alnum characters in the URL as the basename.
@@ -46,7 +46,7 @@ class Resolver():
 
         if basename is None:
             if (subdir is not None) or \
-                (directory and url.startswith('file://%s' % directory)): # in case downloading a url 'file:///tmp/foo/bar' to directory '/tmp/foo'
+                (directory and get_local_filename(url).startswith(directory)): # in case downloading a url '/tmp/foo/bar' to directory '/tmp/foo'
                 basename = url.rsplit('/', 1)[-1]
             else:
                 basename = safe_filename(url)
@@ -67,13 +67,9 @@ class Resolver():
 
         log.debug("Downloading <%s> to '%s'", url, outfilename)
 
-        # de-scheme file:// URL
-        if url.startswith('file://'):
-            url = url[len('file://'):]
-
         # Copy files or download remote assets
-        if '://' not in url:
-            copyfile(url, outfilename)
+        if is_local_filename(url) and exists(get_local_filename(url)):
+            copyfile(get_local_filename(url), outfilename)
         else:
             response = requests.get(url)
             if response.status_code != 200:
@@ -106,21 +102,17 @@ class Resolver():
             if baseurl is None:
                 raise Exception("Must pass mets_url and/or baseurl to workspace_from_url")
             else:
-                mets_url = 'file://%s/%s' % (baseurl, mets_basename if mets_basename else 'mets.xml')
+                mets_url = '%s/%s' % (baseurl, mets_basename if mets_basename else 'mets.xml')
         if baseurl is None:
             baseurl = mets_url.rsplit('/', 1)[0]
         log.debug("workspace_from_url\nmets_url='%s'\nbaseurl='%s'\ndst_dir='%s'", mets_url, baseurl, dst_dir)
 
-        # resolve to absolute
-        if '://' not in mets_url:
-            mets_url = 'file://%s' % abspath(mets_url)
-
         if dst_dir is None:
-            # if mets_url is a file-url assume working directory is source directory
-            if mets_url.startswith('file://'):
+            # if mets_url is a local file assume working directory is source directory
+            if is_local_filename(mets_url):
                 # if dst_dir was not given and mets_url is a file assume that
                 # dst_dir should be the directory where the mets.xml resides
-                dst_dir = dirname(mets_url[len('file://'):])
+                dst_dir = dirname(get_local_filename(mets_url))
             else:
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
                 log.debug("Creating workspace '%s' for METS @ <%s>", dst_dir, mets_url)
@@ -134,7 +126,7 @@ class Resolver():
 
         dst_mets = join(dst_dir, mets_basename)
         log.debug("Copying mets url '%s' to '%s'", mets_url, dst_mets)
-        if 'file://' + dst_mets == mets_url:
+        if is_local_filename(mets_url) and get_local_filename(dst_mets) == get_local_filename(mets_url):
             log.debug("Target and source mets are identical")
         else:
             if exists(dst_mets) and not clobber_mets:

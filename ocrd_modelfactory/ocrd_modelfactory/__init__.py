@@ -53,7 +53,7 @@ def page_from_image(input_file):
             imageWidth=exif.width,
             imageHeight=exif.height,
             # XXX brittle
-            imageFilename=input_file.url if input_file.url is not None else 'file://' + input_file.local_filename
+            imageFilename=input_file.url if input_file.url is not None else input_file.local_filename
         )
     )
 

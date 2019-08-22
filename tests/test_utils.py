@@ -11,6 +11,7 @@ from ocrd_utils import (
 
     concat_padded,
     is_local_filename,
+    get_local_filename,
     is_string,
     membername,
 
@@ -33,9 +34,6 @@ class TestUtils(TestCase):
 
     def test_abspath(self):
         self.assertEqual(abspath('file:///'), '/')
-
-    def test_is_local_filename(self):
-        self.assertEqual(is_local_filename('file:///'), True)
 
     def test_points_from_xywh(self):
         self.assertEqual(
@@ -133,6 +131,21 @@ class TestUtils(TestCase):
         with pushd_popd('/tmp'):
             self.assertEqual(getcwd(), '/tmp')
         self.assertEqual(getcwd(), cwd)
+
+    def test_is_local_filename(self):
+        self.assertTrue(is_local_filename('/foo/bar'))
+        self.assertTrue(is_local_filename('file:///foo/bar'))
+        self.assertTrue(is_local_filename('file:/foo/bar'))
+        self.assertTrue(is_local_filename('foo/bar'))
+        self.assertFalse(is_local_filename('bad-scheme://foo/bar'))
+
+    def test_local_filename(self):
+        self.assertEqual(get_local_filename('/foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('file:///foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('/foo/bar', '/foo/'), 'bar')
+        self.assertEqual(get_local_filename('/foo/bar', '/foo'), 'bar')
+        self.assertEqual(get_local_filename('foo/bar', 'foo'), 'bar')
 
 
 if __name__ == '__main__':
