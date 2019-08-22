@@ -16,7 +16,7 @@
 
 <!-- BEGIN-MARKDOWN-TOC -->
 * [Introduction](#introduction)
-* [Modules](#modules)
+* [Packages](#packages)
 	* [ocrd_utils](#ocrd_utils)
 	* [ocrd_models](#ocrd_models)
 	* [ocrd_modelfactory](#ocrd_modelfactory)
@@ -29,10 +29,10 @@
 
 ## Introduction
 
-This repository contains the python modules that form the base for tools within the
+This repository contains the python packages that form the base for tools within the
 [OCR-D ecosphere](https://github.com/topics/ocr-d).
 
-All modules are also published to [PyPI](https://pypi.org/search/?q=ocrd).
+All packages are also published to [PyPI](https://pypi.org/search/?q=ocrd).
 
 The easiest way to install is via `pip`:
 
@@ -46,11 +46,11 @@ pip install ocrd_modelfactory
 
 All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.5 or higher.
 
-## Modules
+## Packages
 
 ### ocrd_utils
 
-Contains helpers and utilities, e.g. for unified logging, path normalization etc.
+Contains utilities and constants, e.g. for logging, path normalization, coordinate calculation etc.
 
 See [README for `ocrd_utils`](./ocrd_utils/README.md) for further information.
 
@@ -74,7 +74,7 @@ See [README for `ocrd_validators`](./ocrd_validators/README.md) for further info
 
 ### ocrd
 
-Contains all of the above and in addition decorators for creating OCR-D processors and CLI.
+Depends on all of the above, also contains decorators and classes for creating OCR-D processors and CLIs.
 
 Also contains the command line tool `ocrd`.
 
