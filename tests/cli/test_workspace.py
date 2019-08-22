@@ -6,7 +6,7 @@ from click.testing import CliRunner
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error, no-name-in-module
 
-from ocrd_utils.logging import initLogging
+from ocrd_utils import initLogging
 from ocrd.cli.workspace import workspace_cli
 from ocrd.resolver import Resolver
 

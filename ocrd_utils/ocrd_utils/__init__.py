@@ -3,14 +3,14 @@ Utility functions and constants usable in various circumstances.
 
 * ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``
 
-   These functions convert polygon outlines for PAGE elements on all hierarchy
-   levels (page, region, line, word, glyph) between relative coordinates w.r.t.
-   parent segment and absolute coordinates w.r.t. the top-level (source) image.
-   This includes rotation and offset correction.
+    These functions convert polygon outlines for PAGE elements on all hierarchy
+    levels (page, region, line, word, glyph) between relative coordinates w.r.t.
+    parent segment and absolute coordinates w.r.t. the top-level (source) image.
+    This includes rotation and offset correction.
 
 * ``polygon_mask``, ``image_from_polygon``, ``crop_image``
 
-   These functions combine PIL.Image with polygons or bboxes.
+    These functions combine PIL.Image with polygons or bboxes.
 
 * ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points`` etc.
 
@@ -35,15 +35,19 @@ Utility functions and constants usable in various circumstances.
 
 * ``is_local_filename``, ``safe_filename``, ``abspath``
 
-   FS-related utilities
+    FS-related utilities
 
 * ``is_string``, ``membername``, ``concat_padded``
 
-   String and OOP utilities
+    String and OOP utilities
 
 * ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``VERSION``
 
-   Constants
+    Constants
+
+* ``logging``, ``setOverrideLogLevel``, ``getLevelName``, ``getLogger``, ``initLogging``
+
+    Exports of ocrd_utils.logging
 """
 
 __all__ = [
@@ -55,7 +59,9 @@ __all__ = [
     'coordinates_of_segment',
     'concat_padded',
     'crop_image',
+    'getLevelName',
     'getLogger',
+    'initLogging',
     'is_local_filename',
     'is_string',
     'logging',
@@ -73,6 +79,7 @@ __all__ = [
     'polygon_mask',
     'rotate_coordinates',
     'safe_filename',
+    'setOverrideLogLevel',
     'unzip_file_to_dir',
     'xywh_from_bbox',
     'xywh_from_points',
@@ -96,7 +103,7 @@ import numpy as np
 from PIL import Image, ImageStat, ImageDraw
 
 import logging
-from .logging import getLogger
+from .logging import * # pylint: disable=wildcard-import
 from .constants import *  # pylint: disable=wildcard-import
 
 LOG = getLogger('ocrd_utils')

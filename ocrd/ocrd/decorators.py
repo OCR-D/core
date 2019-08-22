@@ -2,8 +2,10 @@ import os
 
 import click
 
-from ocrd_utils import VERSION as OCRD_VERSION
-from ocrd_utils.logging import setOverrideLogLevel
+from ocrd_utils import (
+    setOverrideLogLevel,
+    VERSION as OCRD_VERSION
+)
 
 from .resolver import Resolver
 from .processor.base import run_processor

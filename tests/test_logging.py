@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 
 from tests.base import TestCase, main
 
-from ocrd_utils.logging import (
+from ocrd_utils import (
     getLevelName,
     setOverrideLogLevel,
     initLogging,

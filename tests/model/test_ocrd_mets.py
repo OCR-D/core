@@ -4,8 +4,11 @@ from shutil import copytree
 from os.path import join
 from tests.base import TestCase, main, assets
 
-from ocrd_utils import VERSION, MIMETYPE_PAGE
-from ocrd_utils.logging import initLogging
+from ocrd_utils import (
+    initLogging,
+    VERSION,
+    MIMETYPE_PAGE
+)
 from ocrd_models import OcrdMets
 
 # pylint: disable=protected-access,deprecated-method,too-many-public-methods

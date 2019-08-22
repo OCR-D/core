@@ -9,7 +9,7 @@ from tests.base import TestCase, assets, main # pylint: disable=import-error, no
 
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_loglevel, ocrd_cli_wrap_processor
-from ocrd_utils.logging import setOverrideLogLevel, initLogging
+from ocrd_utils import setOverrideLogLevel, initLogging
 
 @click.command()
 @ocrd_cli_options
