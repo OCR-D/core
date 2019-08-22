@@ -10,12 +10,13 @@ from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif
 from ocrd_utils import (
-    abspath,
     coordinates_of_segment,
     crop_image,
     getLogger,
     image_from_polygon,
     is_local_filename,
+    get_local_filename,
+    pushd_popd,
     polygon_from_points,
     xywh_from_points,
     pushd_popd,
@@ -88,11 +89,10 @@ class Workspace():
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
-        #  os.chdir(self.directory)
-        #  log.info('f=%s' % f)
+        log.debug('Downloading OcrdFile %s' % f)
         with pushd_popd(self.directory):
             if is_local_filename(f.url):
-                f.local_filename = abspath(f.url)
+                f.local_filename = get_local_filename(f.url)
             else:
                 if f.local_filename:
                     log.debug("Already downloaded: %s", f.local_filename)
@@ -227,7 +227,8 @@ class Workspace():
             image_filename = self.download_url(image_url)
 
         if image_url not in self.image_cache['pil']:
-            self.image_cache['pil'][image_url] = Image.open(image_filename)
+            with pushd_popd(self.directory):
+                self.image_cache['pil'][image_url] = Image.open(image_filename)
 
         pil_image = self.image_cache['pil'][image_url]
 

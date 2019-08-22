@@ -3,7 +3,11 @@ Validating a workspace.
 """
 import re
 
-from ocrd_utils import getLogger, MIMETYPE_PAGE
+from ocrd_utils import (
+    getLogger,
+    pushd_popd,
+    MIMETYPE_PAGE,
+)
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
 from .page_validator import PageValidator
@@ -69,16 +73,17 @@ class WorkspaceValidator():
         """
         try:
             self._resolve_workspace()
-            if 'mets_unique_identifier' not in self.skip:
-                self._validate_mets_unique_identifier()
-            if 'mets_file_group_names' not in self.skip:
-                self._validate_mets_file_group_names()
-            if 'mets_files' not in self.skip:
-                self._validate_mets_files()
-            if 'pixel_density' not in self.skip:
-                self._validate_pixel_density()
-            if 'page' not in self.skip:
-                self._validate_page()
+            with pushd_popd(self.workspace.directory):
+                if 'mets_unique_identifier' not in self.skip:
+                    self._validate_mets_unique_identifier()
+                if 'mets_file_group_names' not in self.skip:
+                    self._validate_mets_file_group_names()
+                if 'mets_files' not in self.skip:
+                    self._validate_mets_files()
+                if 'pixel_density' not in self.skip:
+                    self._validate_pixel_density()
+                if 'page' not in self.skip:
+                    self._validate_page()
         except Exception as e: # pylint: disable=broad-except
             self.report.add_error("Failed to instantiate workspace: %s" % e)
             #  raise e
