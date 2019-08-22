@@ -2,43 +2,43 @@
 Utility functions and constants usable in various circumstances.
 
 * ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``
-   
+
    These functions convert polygon outlines for PAGE elements on all hierarchy
    levels (page, region, line, word, glyph) between relative coordinates w.r.t.
    parent segment and absolute coordinates w.r.t. the top-level (source) image.
    This includes rotation and offset correction.
-   
+
 * ``polygon_mask``, ``image_from_polygon``, ``crop_image``
-   
+
    These functions combine PIL.Image with polygons or bboxes.
-   
+
 * ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points`` etc.
-   
+
    These functions have the syntax ``X_from_Y``, where ``X``/``Y`` can be
-   
+
     * ``bbox`` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
-      
+
       (used by PIL.Image)
     * ``points`` a string encoding a polygon: ``"0,0 100,0 100,100, 0,100"``
-      
+
       (used by PAGE-XML)
     * ``polygon`` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: ``[[0,0], [100,0], [100,100], [0,100]]``
-      
+
       (used by opencv2 and higher-level coordinate functions in ocrd_utils)
     * ``xywh`` a dict with keys for x, y, width and height: ``{'x': 0, 'y': 0, 'w': 100, 'h': 100}``
-      
+
       (produced by tesserocr and image/coordinate recursion methods in ocrd.workspace)
     * ``x0y0x1y1`` is a 4-list of strings ``x0``, ``y0``, ``x1``, ``y1`` of the bounding box (rectangle)
-      
+
       (produced by tesserocr)
     * ``y0x0y1x1`` is the same as ``x0y0x1y1`` with positions of ``x`` and ``y`` in the list swapped
 
 * ``is_local_filename``, ``safe_filename``, ``abspath``
-   
+
    FS-related utilities
 
 * ``is_string``, ``membername``, ``concat_padded``
-   
+
    String and OOP utilities
 
 * ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``VERSION``
