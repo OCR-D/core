@@ -78,31 +78,34 @@ class TestResolver(TestCase):
         self.assertEqual(f.ID, 'FILE_0001_IMAGE')
         #  print(f)
 
+    # pylint: disable=protected-access
     def test_resolve_image(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
         input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
         f = input_files[0]
         print(f.url)
-        img_pil1 = workspace.resolve_image_as_pil(f.url)
+        img_pil1 = workspace._resolve_image_as_pil(f.url)
         self.assertEqual(img_pil1.size, (2875, 3749))
-        img_pil2 = workspace.resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
+        img_pil2 = workspace._resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
         self.assertEqual(img_pil2.size, (1, 1))
-        img_pil2 = workspace.resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
+        img_pil2 = workspace._resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
 
+    # pylint: disable=protected-access
     def test_resolve_image_grayscale(self):
         img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017')
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        img_pil1 = workspace.resolve_image_as_pil(img_url)
+        img_pil1 = workspace._resolve_image_as_pil(img_url)
         self.assertEqual(img_pil1.size, (1457, 2083))
-        img_pil2 = workspace.resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
+        img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
         self.assertEqual(img_pil2.size, (1, 1))
 
+    # pylint: disable=protected-access
     def test_resolve_image_bitonal(self):
         img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017')
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        img_pil1 = workspace.resolve_image_as_pil(img_url)
+        img_pil1 = workspace._resolve_image_as_pil(img_url)
         self.assertEqual(img_pil1.size, (1457, 2083))
-        img_pil2 = workspace.resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
+        img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
         self.assertEqual(img_pil2.size, (1, 1))
 
     def test_workspace_from_nothing(self):
