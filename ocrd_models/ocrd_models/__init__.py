@@ -1,5 +1,5 @@
 """
-API to various file formats in the OCR domain.
+APIs and schemas for various file formats in the OCR domain.
 """
 from .ocrd_agent import OcrdAgent
 from .ocrd_exif import OcrdExif

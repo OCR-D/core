@@ -1,5 +1,5 @@
 """
-Utility methods usable in various circumstances.
+Utility functions and constants usable in various circumstances.
 
 * ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``
    
