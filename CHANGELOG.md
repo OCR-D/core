@@ -10,6 +10,7 @@ Changed:
   * OcrdFile: Default fileGrp to `TEMP`
   * OcrdFile: Accept url constructor arg
   * Workspace: Simplify file download code, add extensions to files
+  * Processor: `chdir` to workspace directory on init so relative files resolve properly
 
 Added:
 
