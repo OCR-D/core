@@ -1,10 +1,10 @@
-import os
 import logging
 from tempfile import TemporaryDirectory
 
 from tests.base import TestCase, main
 
 from ocrd_utils import (
+    pushd_popd,
     getLevelName,
     setOverrideLogLevel,
     initLogging,
@@ -40,13 +40,11 @@ class TestLogging2(TestCase):
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
 
     def test_configfile(self):
-        previous_dir = os.getcwd()
         with TemporaryDirectory() as tempdir:
-            os.chdir(tempdir)
-            with open('ocrd_logging.py', 'w') as f:
-                f.write('print("this is mighty dangerous")')
-            initLogging()
-        os.chdir(previous_dir)
+            with pushd_popd(tempdir):
+                with open('ocrd_logging.py', 'w') as f:
+                    f.write('print("this is mighty dangerous")')
+                initLogging()
 
 if __name__ == '__main__':
     main()

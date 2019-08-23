@@ -1,4 +1,4 @@
-import os
+from os import makedirs, walk
 from os.path import join, exists
 from shutil import copytree, rmtree
 from re import sub
@@ -8,7 +8,7 @@ from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
-#  from ocrd_utils.logging import setOverrideLogLevel
+from ocrd_utils import pushd_popd
 #  setOverrideLogLevel('DEBUG')
 
 
@@ -16,7 +16,6 @@ TMP_FOLDER = '/tmp/test-core-resolver'
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 TEST_ZIP = assets.path_to('test.ocrd.zip')
-oldpwd = os.getcwd()
 
 # pylint: disable=redundant-unittest-assert, broad-except, deprecated-method, too-many-public-methods
 
@@ -27,7 +26,7 @@ class TestResolver(TestCase):
         self.folder = join(TMP_FOLDER, 'kant_aufklaerung_1784')
         if exists(TMP_FOLDER):
             rmtree(TMP_FOLDER)
-            os.makedirs(TMP_FOLDER)
+            makedirs(TMP_FOLDER)
         copytree(FOLDER_KANT, self.folder)
 
     def test_workspace_from_url_bad(self):
@@ -62,9 +61,8 @@ class TestResolver(TestCase):
 
     def test_workspace_from_url_rel_dir(self):
         with TemporaryDirectory() as dst_dir:
-            os.chdir(FOLDER_KANT)
-            self.resolver.workspace_from_url(None, baseurl='data', dst_dir='../../../../../../../../../../../../../../../../'+dst_dir[1:])
-            os.chdir(oldpwd)
+            with pushd_popd(FOLDER_KANT):
+                self.resolver.workspace_from_url(None, baseurl='data', dst_dir='../../../../../../../../../../../../../../../../'+dst_dir[1:])
 
     def test_workspace_from_url(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
@@ -201,7 +199,7 @@ class TestResolver(TestCase):
     def test_227_1(self):
         def find_recursive(root):
             ret = []
-            for _, _, f in os.walk(root):
+            for _, _, f in walk(root):
                 for file in f:
                     ret.append(file)
             return ret

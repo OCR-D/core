@@ -203,7 +203,11 @@ def coordinates_of_segment(segment, parent_image, parent_xywh):
 
 @contextlib.contextmanager
 def pushd_popd(newcwd=None):
-    oldcwd = getcwd()
+    try:
+        oldcwd = getcwd()
+    except FileNotFoundError as e:
+        # This happens when a directory is deleted before the context is exited
+        oldcwd = '/tmp'
     try:
         if newcwd:
             chdir(newcwd)
