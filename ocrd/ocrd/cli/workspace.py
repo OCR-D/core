@@ -245,7 +245,7 @@ def prune_files(ctx):
                 if not exists(f.url):
                     workspace.mets.remove_file(f.ID)
             except Exception as e:
-                log.debug(e)
+                log.debug("Error removing %f: %s", f, e)
         workspace.save_mets()
 
 # ----------------------------------------------------------------------
