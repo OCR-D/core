@@ -9,6 +9,7 @@ Changed:
 
   * OcrdFile: Default fileGrp to `TEMP`
   * OcrdFile: Accept url constructor arg
+  * Workspace: Simplify file download code, add extensions to files
 
 Added:
 

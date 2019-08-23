@@ -9,7 +9,7 @@ import numpy as np
 from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
-from ocrd_models import OcrdMets, OcrdExif
+from ocrd_models import OcrdMets, OcrdExif, OcrdFile
 from ocrd_utils import (
     coordinates_of_segment,
     crop_image,
@@ -21,6 +21,8 @@ from ocrd_utils import (
     polygon_from_points,
     xywh_from_points,
     pushd_popd,
+
+    MIME_TO_EXT,
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -77,14 +79,12 @@ class Workspace():
 
         Args:
             url (string): URL to download to directory
-            **kwargs : See :py:mod:`ocrd.resolver.Resolver`
+            **kwargs : See :py:mod:`ocrd_models.ocrd_file.OcrdFile`
 
         Returns:
             The local filename of the downloaded file
         """
-        if self.baseurl and '://' not in url:
-            url = pjoin(self.baseurl, url)
-        return self.resolver.download_to_directory(self.directory, url, **kwargs)
+        return self.download_file(OcrdFile(None, url=url, **kwargs)).local_filename
 
     def download_file(self, f, recursion_count=0):
         """
@@ -92,7 +92,6 @@ class Workspace():
         """
         log.debug('Downloading OcrdFile %s' % f)
         with pushd_popd(self.directory):
-            target_filename = '%s/%s' % (f.fileGrp, f.ID)
             if is_local_filename(f.url):
                 url_local_filename = get_local_filename(f.url)
                 if not exists(url_local_filename):
@@ -100,19 +99,17 @@ class Workspace():
                         f.url = pjoin(self.baseurl, url_local_filename)
                         return self.download_file(f, recursion_count + 1)
                     else:
-                        raise Exception("Cannot retrieve non-existant local file %s (%s)" % (url_local_filename))
+                        raise Exception("Cannot retrieve non-existant local file %s" % (url_local_filename))
                 if abspath(url_local_filename).startswith(self.directory):
                     log.debug("Present in the directory, nothing to do")
                     f.local_filename = url_local_filename
-                else:
-                    if not exists(f.fileGrp):
-                        makedirs(f.fileGrp)
-                    copyfile(f.local_filename, target_filename)
-            else:
-                if f.local_filename:
-                    log.debug("Already downloaded: %s", f.local_filename)
-                else:
-                    f.local_filename = self.download_url(f.url, basename=target_filename)
+                    return f
+            f.local_filename = self.resolver.download_to_directory(
+                self.directory,
+                f.url,
+                subdir=f.fileGrp,
+                basename='%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, ''))
+            )
 
         #  print(f)
         return f
@@ -236,10 +233,7 @@ class Workspace():
             Image or region in image as PIL.Image
         """
         files = self.mets.find_files(url=image_url)
-        if files:
-            image_filename = self.download_file(files[0]).local_filename
-        else:
-            image_filename = self.download_url(image_url)
+        image_filename = self.download_file(files[0] if files else OcrdFile(None, url=image_url)).local_filename
 
         if image_url not in self.image_cache['pil']:
             with pushd_popd(self.directory):

@@ -214,7 +214,7 @@ class TestResolver(TestCase):
             for file in ws1.mets.find_files():
                 ws1.download_file(file)
             self.assertEqual(len(find_recursive(wsdir)), 2)
-            self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE')))
+            self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE.tif')))
 
 if __name__ == '__main__':
     main()

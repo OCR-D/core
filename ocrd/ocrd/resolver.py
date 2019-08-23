@@ -61,7 +61,7 @@ class Resolver():
             return outfilename
 
         outfiledir = outfilename.rsplit('/', 1)[0]
-        #  print(outfiledir)
+        #  print(">>>>>>> %s" % outfiledir)
         if not isdir(outfiledir):
             makedirs(outfiledir)
 
