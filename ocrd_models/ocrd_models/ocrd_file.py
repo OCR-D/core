@@ -17,7 +17,7 @@ class OcrdFile():
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, instance=None, local_filename=None, mets=None):
+    def __init__(self, el, mimetype=None, instance=None, local_filename=None, mets=None, url=None):
         """
         Args:
             el (LxmlElement):
@@ -34,12 +34,12 @@ class OcrdFile():
         self._instance = instance
         self.mets = mets
 
+        if url:
+            self.url = url
+
         if not(local_filename):
             if self.url and is_local_filename(self.url):
                 self.local_filename = get_local_filename(self.url)
-
-        #  if baseurl and not local_filename and '://' not in self.url:
-        #      self.local_filename = '%s/%s' % (baseurl, self.url)
 
     def __str__(self):
         """
@@ -61,7 +61,7 @@ class OcrdFile():
         """
         Get the ``os.path.basename`` of the local file, if any.
         """
-        return os.path.basename(self.local_filename)
+        return os.path.basename(self.local_filename if self.local_filename else self.url)
 
     @property
     def extension(self):
@@ -138,7 +138,10 @@ class OcrdFile():
         """
         The ``USE`` attribute of the containing ``mets:fileGrp``
         """
-        return self._el.getparent().get('USE')
+        parent = self._el.getparent()
+        if parent is not None:
+            return self._el.getparent().get('USE')
+        return 'TEMP'
 
     @property
     def url(self):

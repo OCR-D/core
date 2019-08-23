@@ -41,7 +41,7 @@ Utility functions and constants usable in various circumstances.
 
     String and OOP utilities
 
-* ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``VERSION``
+* ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``MIME_TO_EXT``, ``VERSION``
 
     Constants
 
@@ -87,6 +87,7 @@ __all__ = [
     'VERSION',
     'MIMETYPE_PAGE',
     'EXT_TO_MIME',
+    'MIME_TO_EXT',
 ]
 
 import io

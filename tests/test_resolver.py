@@ -76,6 +76,7 @@ class TestResolver(TestCase):
         #  print(image_file)
         f = workspace.download_file(image_file)
         self.assertEqual(f.ID, 'FILE_0001_IMAGE')
+        self.assertEqual(f.local_filename, 'OCR-D-IMG/FILE_0001_IMAGE')
         #  print(f)
 
     # pylint: disable=protected-access

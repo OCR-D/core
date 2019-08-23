@@ -5,6 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * OcrdFile: Default fileGrp to `TEMP`
+  * OcrdFile: Accept url constructor arg
+
+Added:
+
+  * utils: `MIME_TO_EXT` to map mime types to preferred extension
+
 ## [1.0.0b17] - 2019-08-21
 
 Fixed:
