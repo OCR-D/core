@@ -1,7 +1,6 @@
 import io
-from os import makedirs, chdir, getcwd, unlink, makedirs
+from os import makedirs, unlink
 from os.path import join as pjoin, isdir, exists, abspath
-from shutil import copyfile
 
 import cv2
 from PIL import Image
@@ -17,7 +16,6 @@ from ocrd_utils import (
     image_from_polygon,
     is_local_filename,
     get_local_filename,
-    pushd_popd,
     polygon_from_points,
     xywh_from_points,
     pushd_popd,
@@ -90,7 +88,7 @@ class Workspace():
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
-        log.debug('Downloading OcrdFile %s' % f)
+        log.debug('Downloading OcrdFile %s', f)
         with pushd_popd(self.directory):
             if is_local_filename(f.url):
                 url_local_filename = get_local_filename(f.url)
@@ -98,8 +96,7 @@ class Workspace():
                     if self.baseurl and recursion_count == 0:
                         f.url = pjoin(self.baseurl, url_local_filename)
                         return self.download_file(f, recursion_count + 1)
-                    else:
-                        raise Exception("Cannot retrieve non-existant local file %s" % (url_local_filename))
+                    raise Exception("Cannot retrieve non-existant local file %s" % (url_local_filename))
                 if abspath(url_local_filename).startswith(self.directory):
                     log.debug("Present in the directory, nothing to do")
                     f.local_filename = url_local_filename
@@ -165,9 +162,7 @@ class Workspace():
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
 
-        oldpwd = getcwd()
-        try:
-            chdir(self.directory)
+        with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
                 if not isdir(local_filename_dir):
@@ -183,8 +178,6 @@ class Workspace():
                     if isinstance(content, str):
                         content = bytes(content, 'utf-8')
                     f.write(content)
-        finally:
-            chdir(oldpwd)
 
         return ret
 
@@ -192,7 +185,7 @@ class Workspace():
         """
         Write out the current state of the METS file.
         """
-        log.info("Saving mets '%s'" % self.mets_target)
+        log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
         with atomic_write(self.mets_target, overwrite=True) as f:
@@ -310,17 +303,17 @@ class Workspace():
             page_image = image_from_polygon(page_image, page_polygon)
             # recrop into page rectangle:
             page_image = crop_image(page_image,
-                box=(page_xywh['x'],
-                     page_xywh['y'],
-                     page_xywh['x'] + page_xywh['w'],
-                     page_xywh['y'] + page_xywh['h']))
+                                    box=(page_xywh['x'],
+                                         page_xywh['y'],
+                                         page_xywh['x'] + page_xywh['w'],
+                                         page_xywh['y'] + page_xywh['h']))
             if 'angle' in page_xywh and page_xywh['angle']:
                 log.info("About to rotate page '%s' by %.2f°",
-                          page_id, page_xywh['angle'])
+                         page_id, page_xywh['angle'])
                 page_image = page_image.rotate(page_xywh['angle'],
-                                                   expand=True,
-                                                   #resample=Image.BILINEAR,
-                                                   fillcolor='white')
+                                               expand=True,
+                                               # resample=Image.BILINEAR,
+                                               fillcolor='white')
         # subtract offset from any increase in binary region size over source:
         page_xywh['x'] -= round(0.5 * max(0, page_image.width  - page_xywh['w']))
         page_xywh['y'] -= round(0.5 * max(0, page_image.height - page_xywh['h']))
@@ -396,21 +389,23 @@ class Workspace():
             # or reduced polygon coordinates).
             if 'angle' in segment_xywh and segment_xywh['angle']:
                 log.info("About to rotate segment '%s' by %.2f°",
-                          segment.id, segment_xywh['angle'])
+                         segment.id, segment_xywh['angle'])
                 segment_image = segment_image.rotate(segment_xywh['angle'],
                                                      expand=True,
-                                                     #resample=Image.BILINEAR,
+                                                     # resample=Image.BILINEAR,
                                                      fillcolor='white')
         # subtract offset from any increase in binary region size over source:
-        segment_xywh['x'] -= round(0.5 * max(0, segment_image.width  - segment_xywh['w']))
-        segment_xywh['y'] -= round(0.5 * max(0, segment_image.height - segment_xywh['h']))
+        segment_xywh['x'] -= round(0.5 * max(0,
+                                             segment_image.width - segment_xywh['w']))
+        segment_xywh['y'] -= round(0.5 * max(0,
+                                             segment_image.height - segment_xywh['h']))
         return segment_image, segment_xywh
 
     # pylint: disable=redefined-builtin
     def save_image_file(self, image,
                         file_id,
                         page_id=None,
-                        file_grp='OCR-D-IMG', # or -BIN?
+                        file_grp='OCR-D-IMG',  # or -BIN?
                         format='PNG',
                         force=True):
         """Store and reference an image as file into the workspace.
