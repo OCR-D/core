@@ -1,6 +1,7 @@
 import io
-from os import makedirs, chdir, getcwd, unlink
-from os.path import join as pjoin, isdir
+from os import makedirs, chdir, getcwd, unlink, makedirs
+from os.path import join as pjoin, isdir, exists, abspath
+from shutil import copyfile
 
 import cv2
 from PIL import Image
@@ -85,19 +86,33 @@ class Workspace():
             url = pjoin(self.baseurl, url)
         return self.resolver.download_to_directory(self.directory, url, **kwargs)
 
-    def download_file(self, f):
+    def download_file(self, f, recursion_count=0):
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
         log.debug('Downloading OcrdFile %s' % f)
         with pushd_popd(self.directory):
+            target_filename = '%s/%s' % (f.fileGrp, f.ID)
             if is_local_filename(f.url):
-                f.local_filename = get_local_filename(f.url)
+                url_local_filename = get_local_filename(f.url)
+                if not exists(url_local_filename):
+                    if self.baseurl and recursion_count == 0:
+                        f.url = pjoin(self.baseurl, url_local_filename)
+                        return self.download_file(f, recursion_count + 1)
+                    else:
+                        raise Exception("Cannot retrieve non-existant local file %s (%s)" % (url_local_filename))
+                if abspath(url_local_filename).startswith(self.directory):
+                    log.debug("Present in the directory, nothing to do")
+                    f.local_filename = url_local_filename
+                else:
+                    if not exists(f.fileGrp):
+                        makedirs(f.fileGrp)
+                    copyfile(f.local_filename, target_filename)
             else:
                 if f.local_filename:
                     log.debug("Already downloaded: %s", f.local_filename)
                 else:
-                    f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
+                    f.local_filename = self.download_url(f.url, basename=target_filename)
 
         #  print(f)
         return f

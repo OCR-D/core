@@ -81,7 +81,7 @@ class Resolver():
 
     def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, baseurl=None):
         """
-        Create a workspace from a METS by URL.
+        Create a workspace from a METS by URL (i.e. clone it).
 
         Sets the mets.xml file
 

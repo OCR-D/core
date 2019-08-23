@@ -5,6 +5,7 @@ import re
 
 from ocrd_utils import (
     getLogger,
+    is_local_filename,
     pushd_popd,
     MIMETYPE_PAGE,
 )
@@ -113,7 +114,7 @@ class WorkspaceValidator():
         See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
         """
         for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
-            if not f.local_filename and not self.download:
+            if not is_local_filename(f.url) and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
                 continue
             exif = self.workspace.resolve_image_exif(f.url)
