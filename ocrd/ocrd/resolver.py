@@ -101,8 +101,16 @@ class Resolver():
                 raise Exception("Must pass mets_url and/or baseurl to workspace_from_url")
             else:
                 mets_url = '%s/%s' % (baseurl, mets_basename if mets_basename else 'mets.xml')
+
+        # if mets_basename is not given, use the last URL segment of the mets_url
+        if mets_basename is None:
+            mets_basename = mets_url \
+                .rsplit('/', 1)[-1] \
+                .split('?')[0] \
+                .split('#')[0]
+
         if baseurl is None:
-            baseurl = mets_url.rsplit('/', 1)[0]
+            baseurl = mets_url[0:-len(mets_basename)].rsplit('/', 1)[0]
         log.debug("workspace_from_url\nmets_url='%s'\nbaseurl='%s'\ndst_dir='%s'", mets_url, baseurl, dst_dir)
 
         if dst_dir is None:
@@ -114,13 +122,6 @@ class Resolver():
             else:
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
                 log.debug("Creating workspace '%s' for METS @ <%s>", dst_dir, mets_url)
-
-        # if mets_basename is not given, use the last URL segment of the mets_url
-        if mets_basename is None:
-            mets_basename = mets_url \
-                .rsplit('/', 1)[-1] \
-                .split('?')[0] \
-                .split('#')[0]
 
         dst_mets = join(dst_dir, mets_basename)
         log.debug("Copying mets url '%s' to '%s'", mets_url, dst_mets)
