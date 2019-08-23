@@ -64,7 +64,9 @@ def page_from_file(input_file):
     Arguments:
         * input_file (OcrdFile):
     """
-    #  print("PARSING PARSING '%s'" % input_file)
+    #  from os import getcwd
+    #  from os.path import exists
+    #  print(">>>>>> cwd='%s' local_filename=%s exists=%s" %(getcwd(), input_file.local_filename, exists(input_file.local_filename)))
     if input_file.mimetype.startswith('image'):
         return page_from_image(input_file)
     if input_file.mimetype == MIMETYPE_PAGE:

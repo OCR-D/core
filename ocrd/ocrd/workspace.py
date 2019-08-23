@@ -82,7 +82,7 @@ class Workspace():
         Returns:
             The local filename of the downloaded file
         """
-        return self.download_file(OcrdFile(None, url=url, **kwargs)).local_filename
+        return abspath(self.download_file(OcrdFile(None, url=url, **kwargs)).local_filename)
 
     def download_file(self, f, recursion_count=0):
         """
