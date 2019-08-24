@@ -1,10 +1,10 @@
 # pylint: disable=unused-import
 
-import os
+from os.path import dirname, realpath
 import sys
 from unittest import TestCase, skip, main
 
-from .assets import assets
+from .assets import assets, copy_of_directory
 
 #  import traceback
 #  import warnings
@@ -14,4 +14,4 @@ from .assets import assets
 #      log.write(warnings.formatwarning(message, category, filename, lineno, line))
 #  warnings.showwarning = warn_with_traceback
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../ocrd')
+sys.path.append(dirname(realpath(__file__)) + '/../ocrd')

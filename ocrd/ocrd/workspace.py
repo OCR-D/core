@@ -59,8 +59,9 @@ class Workspace():
         }
 
     def __str__(self):
-        return 'Workspace[directory=%s, file_groups=%s, files=%s]' % (
+        return 'Workspace[directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
             self.directory,
+            self.baseurl,
             self.mets.file_groups,
             [str(f) for f in self.mets.find_files()],
         )
@@ -88,7 +89,7 @@ class Workspace():
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
-        log.debug('Downloading OcrdFile %s', f)
+        log.debug('Workspace.download_file(%s, recursion_count=%s', f, recursion_count)
         with pushd_popd(self.directory):
             if is_local_filename(f.url):
                 url_local_filename = get_local_filename(f.url)
@@ -97,6 +98,7 @@ class Workspace():
                         f.url = pjoin(self.baseurl, url_local_filename)
                         return self.download_file(f, recursion_count + 1)
                     raise Exception("Cannot retrieve non-existant local file %s" % (url_local_filename))
+                log.debug("url_local_filename_abs=%s\tself.directory=%s" % (abspath(url_local_filename), self.directory))
                 if abspath(url_local_filename).startswith(self.directory):
                     log.debug("Present in the directory, nothing to do")
                     f.local_filename = url_local_filename

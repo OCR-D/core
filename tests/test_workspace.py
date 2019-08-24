@@ -1,25 +1,24 @@
-from os import makedirs, walk
+from os import walk
 from os.path import join, exists, abspath, basename
-from shutil import copytree, rmtree
 from tempfile import TemporaryDirectory
+from shutil import copyfile
 
 from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 
+#  from ocrd_utils import setOverrideLogLevel
+#  setOverrideLogLevel('DEBUG')
+
 TMP_FOLDER = '/tmp/test-core-workspace'
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
+REL_FILE_URL = 'OCR-D-IMG/INPUT_0017'
 
 class TestWorkspace(TestCase):
 
     def setUp(self):
         self.resolver = Resolver()
-        self.folder = join(TMP_FOLDER, 'kant_aufklaerung_1784')
-        if exists(TMP_FOLDER):
-            rmtree(TMP_FOLDER)
-            makedirs(TMP_FOLDER)
-        copytree(FOLDER_KANT, self.folder)
 
     def test_workspace_add_file(self):
         with TemporaryDirectory() as tempdir:
@@ -65,7 +64,7 @@ class TestWorkspace(TestCase):
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
             ws1.save_mets()
             ws1.reload_mets()
-            self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
+            self.assertEqual(str(ws1), 'Workspace[directory=%s, baseurl=None, file_groups=[], files=[]]' % tempdir)
 
     def test_workspace_backup(self):
         with TemporaryDirectory() as tempdir:
@@ -73,13 +72,21 @@ class TestWorkspace(TestCase):
             ws1.automatic_backup = True
             ws1.save_mets()
             ws1.reload_mets()
-            self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
+            self.assertEqual(str(ws1), 'Workspace[directory=%s, baseurl=None, file_groups=[], files=[]]' % tempdir)
 
     def test_download_url(self):
         with TemporaryDirectory() as tempdir:
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
             fn = ws1.download_url(abspath(__file__))
             self.assertEqual(fn, join(ws1.directory, 'TEMP', basename(__file__)))
+
+    def test_download_file_without_baseurl(self):
+        with TemporaryDirectory() as tempdir:
+            mets_url = join(tempdir, 'mets.xml')
+            copyfile(join(FOLDER_KANT, 'data', 'mets.xml'), mets_url)
+            ws1 = self.resolver.workspace_from_url(mets_url)
+            with self.assertRaisesRegex(Exception, "Cannot retrieve non-existant local file %s" % join(tempdir, REL_FILE_URL)):
+                ws1.download_url(REL_FILE_URL)
 
     def test_227_1(self):
         def find_recursive(root):
