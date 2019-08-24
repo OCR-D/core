@@ -1,5 +1,5 @@
 from os import makedirs
-from os.path import exists, isfile, join, isdir, dirname
+from os.path import exists, join, isdir, dirname
 from shutil import copyfile
 import tempfile
 
@@ -129,8 +129,7 @@ class Resolver():
         else:
             if exists(dst_mets) and not clobber_mets:
                 raise Exception("File '%s' already exists but clobber_mets is false" % dst_mets)
-            else:
-                self.download_to_directory(dst_dir, mets_url, basename=mets_basename)
+            self.download_to_directory(dst_dir, mets_url, basename=mets_basename)
 
         workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=baseurl)
 

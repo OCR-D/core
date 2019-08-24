@@ -13,9 +13,10 @@ from ocrd.workspace import Workspace
 
 TMP_FOLDER = '/tmp/test-core-workspace'
 SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
-SAMPLE_FILE_SUBDIR = 'OCR-D-IMG'
-SAMPLE_FILE_BASENAME = 'INPUT_0017'
-SAMPLE_FILE_URL = join(SAMPLE_FILE_SUBDIR, SAMPLE_FILE_BASENAME)
+
+SAMPLE_FILE_FILEGRP = 'OCR-D-IMG'
+SAMPLE_FILE_ID = 'INPUT_0017'
+SAMPLE_FILE_URL = join(SAMPLE_FILE_FILEGRP, SAMPLE_FILE_ID)
 
 class TestWorkspace(TestCase):
 
@@ -97,7 +98,7 @@ class TestWorkspace(TestCase):
             ws1 = self.resolver.workspace_from_url(dst_mets, baseurl=dirname(SRC_METS))
             fn = ws1.download_url(SAMPLE_FILE_URL)
             self.assertTrue(exists(fn))
-            self.assertEqual(fn, join(ws1.directory, 'TEMP', SAMPLE_FILE_BASENAME))
+            self.assertEqual(fn, join(ws1.directory, 'TEMP', SAMPLE_FILE_ID))
 
     def test_227_1(self):
         def find_recursive(root):

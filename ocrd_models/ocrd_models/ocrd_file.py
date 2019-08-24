@@ -2,6 +2,7 @@
 API to ``mets:file``
 """
 import os
+from os.path import splitext, basename
 
 from ocrd_utils import is_local_filename, get_local_filename
 
@@ -61,11 +62,11 @@ class OcrdFile():
         """
         Get the ``os.path.basename`` of the local file, if any.
         """
-        return os.path.basename(self.local_filename if self.local_filename else self.url)
+        return basename(self.local_filename if self.local_filename else self.url)
 
     @property
     def extension(self):
-        basename, ext = os.path.splitext(self.basename)
+        basename, ext = splitext(self.basename)
         if basename.endswith('.tar'):
             ext = ".tar" + ext
         return ext
