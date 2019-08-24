@@ -1,4 +1,4 @@
-from os import makedirs, walk
+from os import makedirs
 from os.path import join, exists
 from shutil import copytree, rmtree
 from re import sub
@@ -7,15 +7,12 @@ from tempfile import TemporaryDirectory
 from tests.base import TestCase, assets, main
 
 from ocrd.resolver import Resolver
-from ocrd.workspace import Workspace
 from ocrd_utils import pushd_popd
 #  setOverrideLogLevel('DEBUG')
-
 
 TMP_FOLDER = '/tmp/test-core-resolver'
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
-TEST_ZIP = assets.path_to('test.ocrd.zip')
 
 # pylint: disable=redundant-unittest-assert, broad-except, deprecated-method, too-many-public-methods
 
@@ -141,78 +138,6 @@ class TestResolver(TestCase):
         tmp_dir = join(TMP_FOLDER, 'target')
         fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(self.folder, 'data/mets.xml'), subdir='baz')
         self.assertEqual(fn, join(tmp_dir, 'baz', 'mets.xml'))
-
-    def test_workspace_add_file(self):
-        with TemporaryDirectory() as tempdir:
-            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
-            fpath = join(tempdir, 'ID1.tif')
-            ws1.add_file(
-                'GRP',
-                ID='ID1',
-                mimetype='image/tiff',
-                content='CONTENT',
-                local_filename=fpath
-            )
-            f = ws1.mets.find_files()[0]
-            self.assertEqual(f.ID, 'ID1')
-            self.assertEqual(f.mimetype, 'image/tiff')
-            self.assertEqual(f.url, fpath)
-            self.assertEqual(f.local_filename, fpath)
-            self.assertTrue(exists(fpath))
-
-    def test_workspace_add_file_basename_no_content(self):
-        with TemporaryDirectory() as tempdir:
-            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws1.add_file('GRP', ID='ID1', mimetype='image/tiff')
-            f = ws1.mets.find_files()[0]
-            self.assertEqual(f.url, '')
-
-    def test_workspace_add_file_binary_content(self):
-        with TemporaryDirectory() as tempdir:
-            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
-            fpath = join(tempdir, 'subdir', 'ID1.tif')
-            ws1.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar')
-            self.assertTrue(exists(fpath))
-
-    def test_workspacec_add_file_content_wo_local_filename(self):
-        with TemporaryDirectory() as tempdir:
-            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
-            with self.assertRaisesRegex(Exception, "'content' was set but no 'local_filename'"):
-                ws1.add_file('GRP', ID='ID1', content=b'CONTENT')
-
-
-    def test_workspace_str(self):
-        with TemporaryDirectory() as tempdir:
-            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws1.save_mets()
-            ws1.reload_mets()
-            self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
-
-    def test_workspace_backup(self):
-        with TemporaryDirectory() as tempdir:
-            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws1.automatic_backup = True
-            ws1.save_mets()
-            ws1.reload_mets()
-            self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
-
-    def test_227_1(self):
-        def find_recursive(root):
-            ret = []
-            for _, _, f in walk(root):
-                for file in f:
-                    ret.append(file)
-            return ret
-        with TemporaryDirectory() as wsdir:
-            with open(assets.path_to('SBB0000F29300010000/data/mets_one_file.xml'), 'r') as f_in:
-                with open(join(wsdir, 'mets.xml'), 'w') as f_out:
-                    f_out.write(f_in.read())
-            self.assertEqual(len(find_recursive(wsdir)), 1)
-            ws1 = Workspace(self.resolver, wsdir)
-            for file in ws1.mets.find_files():
-                ws1.download_file(file)
-            self.assertEqual(len(find_recursive(wsdir)), 2)
-            self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE.tif')))
 
 if __name__ == '__main__':
     main()

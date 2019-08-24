@@ -99,8 +99,7 @@ class Resolver():
         if mets_url is None:
             if baseurl is None:
                 raise Exception("Must pass mets_url and/or baseurl to workspace_from_url")
-            else:
-                mets_url = '%s/%s' % (baseurl, mets_basename if mets_basename else 'mets.xml')
+            mets_url = '%s/%s' % (baseurl, mets_basename if mets_basename else 'mets.xml')
 
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
