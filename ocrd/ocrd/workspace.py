@@ -101,11 +101,12 @@ class Workspace():
                     log.debug("Present in the directory, nothing to do")
                     f.local_filename = url_local_filename
                     return f
+            basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
             f.local_filename = self.resolver.download_to_directory(
                 self.directory,
                 f.url,
                 subdir=f.fileGrp,
-                basename='%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, ''))
+                basename=basename
             )
 
         #  print(f)

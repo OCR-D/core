@@ -1,5 +1,5 @@
 from os import makedirs, walk
-from os.path import join, exists
+from os.path import join, exists, abspath, basename
 from shutil import copytree, rmtree
 from tempfile import TemporaryDirectory
 
@@ -74,6 +74,12 @@ class TestWorkspace(TestCase):
             ws1.save_mets()
             ws1.reload_mets()
             self.assertEqual(str(ws1), 'Workspace[directory=%s, file_groups=[], files=[]]' % tempdir)
+
+    def test_download_url(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            fn = ws1.download_url(abspath(__file__))
+            self.assertEqual(fn, join(ws1.directory, 'TEMP', basename(__file__)))
 
     def test_227_1(self):
         def find_recursive(root):
