@@ -1,5 +1,5 @@
 from os import makedirs
-from os.path import join, exists
+from os.path import join, exists, isdir
 from re import sub
 from tempfile import TemporaryDirectory
 
@@ -19,6 +19,8 @@ class TestResolver(TestCase):
 
     def setUp(self):
         self.resolver = Resolver()
+        if not isdir(TMP_FOLDER):
+            makedirs(TMP_FOLDER)
 
     def test_workspace_from_url_bad(self):
         with self.assertRaisesRegex(Exception, "Must pass mets_url and/or baseurl"):
@@ -102,6 +104,12 @@ class TestResolver(TestCase):
         ws1 = self.resolver.workspace_from_nothing(None)
         self.assertIsNotNone(ws1.mets)
 
+    def test_workspace_from_nothing_makedirs(self):
+        with TemporaryDirectory() as tempdir:
+            non_existant_dir = join(tempdir, 'target')
+            ws1 = self.resolver.workspace_from_nothing(non_existant_dir)
+            self.assertEqual(ws1.directory, non_existant_dir)
+
     def test_workspace_from_nothing_noclobber(self):
         with TemporaryDirectory() as tempdir:
             ws2 = self.resolver.workspace_from_nothing(tempdir)
@@ -120,21 +128,21 @@ class TestResolver(TestCase):
 
     def test_download_to_directory_default(self):
         with copy_of_directory(FOLDER_KANT) as dst:
-            tmp_dir = join(TMP_FOLDER, 'target')
-            fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(dst, 'data/mets.xml'))
-            self.assertEqual(fn, join(tmp_dir, 'file%s.data.mets.xml' % sub(r'[/_\.\-]', '.', dst)))
+            dst_subdir = join(dst, 'target')
+            fn = self.resolver.download_to_directory(dst_subdir, 'file://' + join(dst, 'data/mets.xml'))
+            self.assertEqual(fn, join(dst_subdir, 'file%s.data.mets.xml' % sub(r'[/_\.\-]', '.', dst)))
 
     def test_download_to_directory_basename(self):
         with copy_of_directory(FOLDER_KANT) as dst:
-            tmp_dir = join(TMP_FOLDER, 'target')
-            fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(dst, 'data/mets.xml'), basename='foo')
-            self.assertEqual(fn, join(tmp_dir, 'foo'))
+            dst_subdir = join(dst, 'target')
+            fn = self.resolver.download_to_directory(dst_subdir, 'file://' + join(dst, 'data/mets.xml'), basename='foo')
+            self.assertEqual(fn, join(dst_subdir, 'foo'))
 
     def test_download_to_directory_subdir(self):
         with copy_of_directory(FOLDER_KANT) as dst:
-            tmp_dir = join(TMP_FOLDER, 'target')
-            fn = self.resolver.download_to_directory(tmp_dir, 'file://' + join(dst, 'data/mets.xml'), subdir='baz')
-            self.assertEqual(fn, join(tmp_dir, 'baz', 'mets.xml'))
+            dst_subdir = join(dst, 'target')
+            fn = self.resolver.download_to_directory(dst_subdir, 'file://' + join(dst, 'data/mets.xml'), subdir='baz')
+            self.assertEqual(fn, join(dst_subdir, 'baz', 'mets.xml'))
 
 if __name__ == '__main__':
     main()

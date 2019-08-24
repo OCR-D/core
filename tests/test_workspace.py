@@ -1,5 +1,5 @@
 from os import walk
-from os.path import join, exists, abspath, basename
+from os.path import join, exists, abspath, basename, dirname
 from tempfile import TemporaryDirectory
 from shutil import copyfile
 
@@ -12,8 +12,10 @@ from ocrd.workspace import Workspace
 #  setOverrideLogLevel('DEBUG')
 
 TMP_FOLDER = '/tmp/test-core-workspace'
-FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
-REL_FILE_URL = 'OCR-D-IMG/INPUT_0017'
+SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
+SAMPLE_FILE_SUBDIR = 'OCR-D-IMG'
+SAMPLE_FILE_BASENAME = 'INPUT_0017'
+SAMPLE_FILE_URL = join(SAMPLE_FILE_SUBDIR, SAMPLE_FILE_BASENAME)
 
 class TestWorkspace(TestCase):
 
@@ -80,13 +82,22 @@ class TestWorkspace(TestCase):
             fn = ws1.download_url(abspath(__file__))
             self.assertEqual(fn, join(ws1.directory, 'TEMP', basename(__file__)))
 
-    def test_download_file_without_baseurl(self):
+    def test_download_url_without_baseurl(self):
         with TemporaryDirectory() as tempdir:
-            mets_url = join(tempdir, 'mets.xml')
-            copyfile(join(FOLDER_KANT, 'data', 'mets.xml'), mets_url)
-            ws1 = self.resolver.workspace_from_url(mets_url)
-            with self.assertRaisesRegex(Exception, "Cannot retrieve non-existant local file %s" % join(tempdir, REL_FILE_URL)):
-                ws1.download_url(REL_FILE_URL)
+            dst_mets = join(tempdir, 'mets.xml')
+            copyfile(SRC_METS, dst_mets)
+            ws1 = self.resolver.workspace_from_url(dst_mets)
+            with self.assertRaisesRegex(Exception, "Cannot retrieve non-existant local file %s" % join(tempdir, SAMPLE_FILE_URL)):
+                ws1.download_url(SAMPLE_FILE_URL)
+
+    def test_download_url_with_baseurl(self):
+        with TemporaryDirectory() as tempdir:
+            dst_mets = join(tempdir, 'mets.xml')
+            copyfile(SRC_METS, dst_mets)
+            ws1 = self.resolver.workspace_from_url(dst_mets, baseurl=dirname(SRC_METS))
+            fn = ws1.download_url(SAMPLE_FILE_URL)
+            self.assertTrue(exists(fn))
+            self.assertEqual(fn, join(ws1.directory, 'TEMP', SAMPLE_FILE_BASENAME))
 
     def test_227_1(self):
         def find_recursive(root):
