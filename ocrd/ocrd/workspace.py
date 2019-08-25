@@ -85,18 +85,18 @@ class Workspace():
         """
         return abspath(self.download_file(OcrdFile(None, url=url, **kwargs)).local_filename)
 
-    def download_file(self, f, recursion_count=0):
+    def download_file(self, f, _recursion_count=0):
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
-        log.debug('Workspace.download_file(%s, recursion_count=%s', f, recursion_count)
+        log.debug('Workspace.download_file(%s, _recursion_count=%s', f, _recursion_count)
         with pushd_popd(self.directory):
             if is_local_filename(f.url):
                 url_local_filename = get_local_filename(f.url)
                 if not exists(url_local_filename):
-                    if self.baseurl and recursion_count == 0:
+                    if self.baseurl and _recursion_count == 0:
                         f.url = pjoin(self.baseurl, url_local_filename)
-                        return self.download_file(f, recursion_count + 1)
+                        return self.download_file(f, _recursion_count + 1)
                     raise Exception("Cannot retrieve non-existant local file %s" % (url_local_filename))
                 log.debug("url_local_filename_abs=%s\tself.directory=%s" % (abspath(url_local_filename), self.directory))
                 if abspath(url_local_filename).startswith(self.directory):
@@ -119,20 +119,20 @@ class Workspace():
         Remove a file from the workspace.
 
         Arguments:
-            ID (string): ID of the file to delete
+            ID (string|OcrdFile): ID of the file to delete or the file itself
             force (boolean): Whether to delete from disk as well
         """
         log.debug('Deleting mets:file %s', ID)
-        mets_file = self.mets.remove_file(ID)
+        ocrd_file = self.mets.remove_file(ID)
         if force:
-            if not mets_file:
+            if not ocrd_file:
                 raise Exception("File '%s' not found" % ID)
-            if not mets_file.local_filename:
-                raise Exception("File not locally available %s" % mets_file)
+            if not ocrd_file.local_filename:
+                raise Exception("File not locally available %s" % ocrd_file)
             with pushd_popd(self.directory):
-                log.info("rm %s [cwd=%s]", mets_file.local_filename, self.directory)
-                unlink(mets_file.local_filename)
-        return mets_file
+                log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                unlink(ocrd_file.local_filename)
+        return ocrd_file
 
     def remove_file_group(self, USE, recursive=False, force=False):
         """

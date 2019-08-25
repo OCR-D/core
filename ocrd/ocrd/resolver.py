@@ -103,10 +103,7 @@ class Resolver():
 
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
-            mets_basename = mets_url \
-                .rsplit('/', 1)[-1] \
-                .split('?')[0] \
-                .split('#')[0]
+            mets_basename = nth_url_segment(mets_url, -1)
 
         if baseurl is None:
             baseurl = mets_url[0:-len(mets_basename)].rsplit('/', 1)[0]

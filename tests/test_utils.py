@@ -15,6 +15,9 @@ from ocrd_utils import (
     is_string,
     membername,
 
+    nth_url_segment,
+    remove_non_path_from_url,
+
     points_from_bbox,
     points_from_x0y0x1y1,
     points_from_xywh,
@@ -147,6 +150,23 @@ class TestUtils(TestCase):
         self.assertEqual(get_local_filename('/foo/bar', '/foo'), 'bar')
         self.assertEqual(get_local_filename('foo/bar', 'foo'), 'bar')
 
+    def test_remove_non_path_from_url(self):
+        self.assertEqual(remove_non_path_from_url('https://foo/bar'), 'https://foo/bar')
+        self.assertEqual(remove_non_path_from_url('https://foo//?bar#frag'), 'https://foo')
+        self.assertEqual(remove_non_path_from_url('/path/to/foo#frag'), '/path/to/foo')
+
+    def test_nth_url_segment(self):
+        self.assertEqual(nth_url_segment(''), '')
+        self.assertEqual(nth_url_segment('foo'), 'foo')
+        self.assertEqual(nth_url_segment('foo', n=-1), 'foo')
+        self.assertEqual(nth_url_segment('foo', n=-2), '')
+        self.assertEqual(nth_url_segment('foo/bar', n=-2), 'foo')
+        self.assertEqual(nth_url_segment('/baz/bar', n=-2), 'baz')
+        self.assertEqual(nth_url_segment('foo/'), 'foo')
+        self.assertEqual(nth_url_segment('foo//?bar#frag'), 'foo')
+        self.assertEqual(nth_url_segment('/path/to/foo#frag'), 'foo')
+        self.assertEqual(nth_url_segment('/path/to/foo#frag', n=-2), 'to')
+        self.assertEqual(nth_url_segment('https://server/foo?xyz=zyx'), 'foo')
 
 if __name__ == '__main__':
     main()

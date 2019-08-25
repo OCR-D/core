@@ -37,7 +37,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``
 
     String and OOP utilities
 
@@ -64,6 +64,8 @@ __all__ = [
     'initLogging',
     'is_local_filename',
     'is_string',
+    'nth_url_segment',
+    'remove_non_path_from_url',
     'logging',
     'membername',
     'image_from_polygon',
@@ -95,6 +97,7 @@ import re
 import sys
 import logging
 import os
+import re
 from os import getcwd, chdir
 from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
@@ -226,6 +229,29 @@ def concat_padded(base, *args):
         else:
             ret = "%s_%04i"  % (ret, n + 1)
     return ret
+
+def remove_non_path_from_url(url):
+    """
+    Remove everything from URL after path.
+    """
+    url = url.split('?', 1)[0]    # query
+    url = url.split('#', 1)[0]    # fragment identifier
+    url = re.sub(r"/+$", "", url) # trailing slashes
+    return url
+
+def nth_url_segment(url, n=-1):
+    """
+    Return the last /-delimited segment of a URL-like string
+
+    Arguments:
+        url (string):
+        n (integer): index of segment, default: -1
+    """
+    segments = remove_non_path_from_url(url).split('/')
+    try:
+        return segments[n]
+    except IndexError:
+        return ''
 
 def crop_image(image, box=None):
     """"Crop an image to a rectangle, filling with background.
