@@ -2,6 +2,7 @@ from os import walk
 from os.path import join, exists, abspath, basename, dirname
 from tempfile import TemporaryDirectory
 from shutil import copyfile
+from pathlib import Path
 
 from tests.base import TestCase, assets, main
 
@@ -78,10 +79,10 @@ class TestWorkspace(TestCase):
             self.assertEqual(str(ws1), 'Workspace[directory=%s, baseurl=None, file_groups=[], files=[]]' % tempdir)
 
     def test_download_url(self):
-        with TemporaryDirectory() as tempdir:
-            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+        with TemporaryDirectory() as directory:
+            ws1 = self.resolver.workspace_from_nothing(directory)
             fn = ws1.download_url(abspath(__file__))
-            self.assertEqual(fn, join(ws1.directory, 'TEMP', basename(__file__)))
+            self.assertEqual(fn, join('TEMP', basename(__file__)))
 
     def test_download_url_without_baseurl(self):
         with TemporaryDirectory() as tempdir:
@@ -96,9 +97,9 @@ class TestWorkspace(TestCase):
             dst_mets = join(tempdir, 'mets.xml')
             copyfile(SRC_METS, dst_mets)
             ws1 = self.resolver.workspace_from_url(dst_mets, baseurl=dirname(SRC_METS))
-            fn = ws1.download_url(SAMPLE_FILE_URL)
-            self.assertTrue(exists(fn))
-            self.assertEqual(fn, join(ws1.directory, 'TEMP', SAMPLE_FILE_ID))
+            f = Path(ws1.download_url(SAMPLE_FILE_URL))
+            self.assertEqual(f, Path('TEMP', SAMPLE_FILE_ID))
+            self.assertTrue(Path(ws1.directory, f).exists())
 
     def test_227_1(self):
         def find_recursive(root):
@@ -117,6 +118,18 @@ class TestWorkspace(TestCase):
                 ws1.download_file(file)
             self.assertEqual(len(find_recursive(wsdir)), 2)
             self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE.tif')))
+
+    #  def test_remove(self):
+    #      with TemporaryDirectory() as tempdir:
+    #          dst_dir = 
+    #          ws1 = self.resolver.workspace_from_url(SRC_METS, dst_dir=dst_dir)
+    #          res = ws1.download_url(SAMPLE_FILE_URL)
+    #          print('>>>>>> %s' % res)
+    #          ocrd_file = ws1.remove_file(SAMPLE_FILE_ID)
+    #          print(ocrd_file)
+    #          import os
+    #          self.assertTrue(exists(join(ws1.directory, ocrd_file.local_filename)))
+    #          #  with copy_of_directory(FOLDER_KANT) as tempdir:
 
 if __name__ == '__main__':
     main()

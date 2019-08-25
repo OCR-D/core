@@ -242,8 +242,8 @@ def prune_files(ctx):
     with pushd_popd(workspace.directory):
         for f in workspace.mets.find_files():
             try:
-                if not exists(f.url):
-                    workspace.mets.remove_file(f.ID)
+                if exists(f.local_filename):
+                    workspace.mets.remove_file(f)
             except Exception as e:
                 log.debug("Error removing %f: %s", f, e)
         workspace.save_mets()
