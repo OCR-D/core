@@ -71,6 +71,7 @@ class Workspace():
         self.mets = OcrdMets(filename=self.mets_target)
 
 
+    @deprecated(version='1.0.0', reason="Use workspace.download_file")
     def download_url(self, url, **kwargs):
         """
         Download a URL to the workspace.
@@ -101,8 +102,10 @@ class Workspace():
                 if _recursion_count >= 1:
                     raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
                 log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
+                # XXX FIXME HACK
                 f.url = '%s/%s' % (self.baseurl, f.url)
                 f.url = self.download_file(f, _recursion_count + 1).local_filename
+                f.local_filename = f.url
             return f
 
     def remove_file(self, ID, force=False):
