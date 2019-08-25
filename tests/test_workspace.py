@@ -89,7 +89,7 @@ class TestWorkspace(TestCase):
             dst_mets = join(dst_dir, 'mets.xml')
             copyfile(SRC_METS, dst_mets)
             ws1 = self.resolver.workspace_from_url(dst_mets)
-            with self.assertRaisesRegex(Exception, "Already tried prepending baseurl '%s'" % dst_dir):
+            with self.assertRaisesRegex(Exception, "Already tried prepending baseurl '%s'" % dst_dir)
                 ws1.download_url(SAMPLE_FILE_URL)
 
     def test_download_url_with_baseurl(self):

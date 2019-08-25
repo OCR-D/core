@@ -41,7 +41,7 @@ class Resolver():
             Local filename, __relative__ to directory
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
-        log.debug("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s|", directory, url, basename, overwrite, subdir)
+        log.info("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s|", directory, url, basename, overwrite, subdir)
 
         if not url:
             raise Exception("'url' must be a string")
@@ -53,32 +53,29 @@ class Resolver():
 
         subdir_path = Path(subdir if subdir else '')
         basename_path = Path(basename if basename else nth_url_segment(url))
-        dst_rel_path = subdir_path / basename_path
-        dst_path = directory / dst_rel_path
+        ret = str(Path(subdir_path, basename_path))
+        dst_path = directory / ret
 
         #  print('url=%s', url)
         #  print('directory=%s', directory)
         #  print('subdir_path=%s', subdir_path)
         #  print('basename_path=%s', basename_path)
-        #  print('dst_rel_path=%s', dst_rel_path)
+        #  print('ret=%s', ret)
         #  print('dst_path=%s', dst_path)
 
         src_path = None
         if is_local_filename(url):
             src_path = Path(get_local_filename(url)).resolve(strict=False)
             if not src_path.exists():
-                log.error("File path passed as 'url' to download_to_directory does not exist: %s" % url)
+                log.error("Failed to resolve URL locally: %s --> %s which doesnt' exist" % (url, src_path))
                 raise FileNotFoundError("File path passed as 'url' to download_to_directory does not exist: %s" % url)
-            try:
-                if src_path.relative_to(directory) == dst_rel_path:
-                    log.debug("Stop early, src url '%s' already in dst dir %s as '%s'" % (url, directory, dst_rel_path))
-                    return str(dst_rel_path)
-            except ValueError as e:
-                log.debug(e)
+            if src_path == dst_path:
+                log.debug("Stop early, src_path and dst_path are the same: '%s' (url: '%s')" % (src_path, url))
+                return ret
 
         # Respect 'overwrite' arg
         if dst_path.exists() and not overwrite:
-            raise Exception("File already exists and 'overwrite' not set: %s" % dst_path)
+            raise Exception("File already exists and 'overwrite' not set: %s" % (dst_path))
 
         # Create dst_path parent dir
         dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -94,7 +91,7 @@ class Resolver():
                 raise Exception("HTTP request failed: %s (HTTP %d)" % (url, response.status_code))
             dst_path.write_bytes(response.content)
 
-        return str(dst_rel_path)
+        return ret
 
     def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, src_baseurl=None):
         """
@@ -125,22 +122,12 @@ class Resolver():
             last_segment = nth_url_segment(mets_url)
             src_baseurl = remove_non_path_from_url(remove_non_path_from_url(mets_url)[:-len(last_segment)])
 
-        #  # Resolve src_baseurl
-        #  if is_local_filename(src_baseurl):
-        #      src_baseurl = str(Path(get_local_filename(src_baseurl)).resolve(strict=True))
-
         # resolve dst_dir
-        if dst_dir:
-            dst_dir = str(Path(dst_dir).resolve(strict=True))
+        if not dst_dir:
+            log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
+            dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
         else:
-            # if mets_url is a local file assume working directory is source directory
-            if is_local_filename(mets_url):
-                # if dst_dir was not given and mets_url is a file assume that
-                # dst_dir should be the directory where the mets.xml resides
-                dst_dir = str(Path(mets_url).parent)
-            else:
-                dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
-                log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
+            dst_dir = str(Path(dst_dir).resolve(strict=True))
 
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
             mets_basename, mets_url, src_baseurl, dst_dir)

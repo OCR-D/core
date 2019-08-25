@@ -1,7 +1,6 @@
 import io
 from os import makedirs, unlink
 from os.path import join as pjoin, isdir
-from pathlib import Path
 
 import cv2
 from PIL import Image
@@ -15,8 +14,6 @@ from ocrd_utils import (
     crop_image,
     getLogger,
     image_from_polygon,
-    is_local_filename,
-    get_local_filename,
     polygon_from_points,
     xywh_from_points,
     pushd_popd,
@@ -73,6 +70,7 @@ class Workspace():
         """
         self.mets = OcrdMets(filename=self.mets_target)
 
+
     def download_url(self, url, **kwargs):
         """
         Download a URL to the workspace.
@@ -86,6 +84,7 @@ class Workspace():
         """
         return self.download_file(OcrdFile(None, url=url, **kwargs)).local_filename
 
+
     def download_file(self, f, _recursion_count=0):
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
@@ -94,20 +93,16 @@ class Workspace():
         with pushd_popd(self.directory):
             # XXX FIXME hacky
             basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
-            url = f.url
-            local_filename = None
             try:
-                local_filename = self.resolver.download_to_directory(self.directory, url, subdir=f.fileGrp, basename=basename)
+                f.url = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
             except FileNotFoundError as e:
                 if not self.baseurl:
-                    raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % url)
+                    raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
                 if _recursion_count >= 1:
-                    raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, url))
-                log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", url, self.baseurl, e)
-                f.url = '%s/%s' % (self.baseurl, url)
-                local_filename = self.download_file(f, _recursion_count + 1).local_filename
-
-            f.local_filename = local_filename
+                    raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
+                log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
+                f.url = '%s/%s' % (self.baseurl, f.url)
+                f.url = self.download_file(f, _recursion_count + 1).local_filename
             return f
 
     def remove_file(self, ID, force=False):
@@ -201,12 +196,11 @@ class Workspace():
             :class:`OcrdExif`
         """
         files = self.mets.find_files(url=image_url)
-        if files:
-            image_filename = self.download_file(files[0]).local_filename
-        else:
-            image_filename = self.download_url(image_url)
+        f = files[0] if files else OcrdFile(None, url=image_url)
+        image_filename = self.download_file(f).local_filename
 
         if image_url not in self.image_cache['exif']:
+            # FIXME must be in the right directory
             self.image_cache['exif'][image_url] = OcrdExif(Image.open(image_filename))
         return self.image_cache['exif'][image_url]
 
@@ -225,7 +219,8 @@ class Workspace():
             Image or region in image as PIL.Image
         """
         files = self.mets.find_files(url=image_url)
-        image_filename = self.download_file(files[0] if files else OcrdFile(None, url=image_url)).local_filename
+        f = files[0] if files else OcrdFile(None, url=image_url)
+        image_filename = self.download_file(f).local_filename
 
         if image_url not in self.image_cache['pil']:
             with pushd_popd(self.directory):
