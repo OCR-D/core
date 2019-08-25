@@ -78,25 +78,25 @@ class TestWorkspace(TestCase):
             ws1.reload_mets()
             self.assertEqual(str(ws1), 'Workspace[directory=%s, baseurl=None, file_groups=[], files=[]]' % tempdir)
 
-    def test_download_url(self):
+    def test_download_url0(self):
         with TemporaryDirectory() as directory:
             ws1 = self.resolver.workspace_from_nothing(directory)
             fn = ws1.download_url(abspath(__file__))
             self.assertEqual(fn, join('TEMP', basename(__file__)))
 
     def test_download_url_without_baseurl(self):
-        with TemporaryDirectory() as tempdir:
-            dst_mets = join(tempdir, 'mets.xml')
+        with TemporaryDirectory() as dst_dir:
+            dst_mets = join(dst_dir, 'mets.xml')
             copyfile(SRC_METS, dst_mets)
             ws1 = self.resolver.workspace_from_url(dst_mets)
-            with self.assertRaisesRegex(Exception, "Cannot retrieve non-existant local file %s" % join(tempdir, SAMPLE_FILE_URL)):
+            with self.assertRaisesRegex(Exception, "Already tried prepending baseurl '%s'" % dst_dir):
                 ws1.download_url(SAMPLE_FILE_URL)
 
     def test_download_url_with_baseurl(self):
         with TemporaryDirectory() as tempdir:
             dst_mets = join(tempdir, 'mets.xml')
             copyfile(SRC_METS, dst_mets)
-            ws1 = self.resolver.workspace_from_url(dst_mets, baseurl=dirname(SRC_METS))
+            ws1 = self.resolver.workspace_from_url(dst_mets, src_baseurl=dirname(SRC_METS))
             f = Path(ws1.download_url(SAMPLE_FILE_URL))
             self.assertEqual(f, Path('TEMP', SAMPLE_FILE_ID))
             self.assertTrue(Path(ws1.directory, f).exists())
@@ -121,7 +121,7 @@ class TestWorkspace(TestCase):
 
     #  def test_remove(self):
     #      with TemporaryDirectory() as tempdir:
-    #          dst_dir = 
+    #          dst_dir =
     #          ws1 = self.resolver.workspace_from_url(SRC_METS, dst_dir=dst_dir)
     #          res = ws1.download_url(SAMPLE_FILE_URL)
     #          print('>>>>>> %s' % res)

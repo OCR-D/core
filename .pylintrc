@@ -22,8 +22,7 @@ disable =
     useless-import-alias,
     bad-continuation,
     no-else-return,
-    logging-not-lazy,
-    bad-continuation
+    logging-not-lazy
 
 [FORMAT]
 no-space-check=empty-line

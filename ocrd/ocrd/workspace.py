@@ -1,6 +1,6 @@
 import io
 from os import makedirs, unlink
-from os.path import join as pjoin, isdir, exists, abspath
+from os.path import join as pjoin, isdir
 from pathlib import Path
 
 import cv2
@@ -90,31 +90,25 @@ class Workspace():
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
-        log.debug('Workspace.download_file(%s, _recursion_count=%s', f, _recursion_count)
+        log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
+            # XXX FIXME hacky
             basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
+            url = f.url
+            local_filename = None
             try:
-                self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
-            except Exception as e:
-                if is_local_filename(f.url):
-                    url_path = Path(get_local_filename(f.url))
-                    if not url_path.is_absolute() and self.baseurl and _recursion_count == 0:
-                        log.debug('Failed to copy file on the first try, try prepending baseurl')
-                        f.url = '%s/%s' % (self.baseurl, str(url_path))
-                        return self.download_file(f, _recursion_count + 1)
-                raise e
-            #  if is_local_filename(f.url):
-            #      url_path = Path(get_local_filename(f.url))
-            #      if not url_path.exists():
-            #          if self.baseurl and _recursion_count == 0:
-            #              f.url = pjoin(self.baseurl, str(url_path))
-            #              return self.download_file(f, _recursion_count + 1)
-            #          raise Exception("Cannot retrieve non-existant local file %s" % (url_path))
-            #      log.debug("url_local_filename_abs=%s\tself.directory=%s" % (url_path.resolve(strict=False), self.directory))
+                local_filename = self.resolver.download_to_directory(self.directory, url, subdir=f.fileGrp, basename=basename)
+            except FileNotFoundError as e:
+                if not self.baseurl:
+                    raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % url)
+                if _recursion_count >= 1:
+                    raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, url))
+                log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", url, self.baseurl, e)
+                f.url = '%s/%s' % (self.baseurl, url)
+                local_filename = self.download_file(f, _recursion_count + 1).local_filename
 
-
-        #  print(f)
-        return f
+            f.local_filename = local_filename
+            return f
 
     def remove_file(self, ID, force=False):
         """

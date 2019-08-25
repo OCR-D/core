@@ -7,8 +7,8 @@ from tests.base import TestCase, assets, main, copy_of_directory
 from ocrd.resolver import Resolver
 from ocrd_utils import pushd_popd
 
-from ocrd_utils import setOverrideLogLevel
-setOverrideLogLevel('DEBUG')
+#  from ocrd_utils import setOverrideLogLevel
+#  setOverrideLogLevel('DEBUG')
 
 TMP_FOLDER = Path('/tmp/test-core-resolver')
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
@@ -23,7 +23,7 @@ class TestResolver(TestCase):
         TMP_FOLDER.mkdir(parents=True, exist_ok=True)
 
     def test_workspace_from_url_bad(self):
-        with self.assertRaisesRegex(Exception, "Must pass mets_url and/or baseurl"):
+        with self.assertRaisesRegex(Exception, "Must pass 'mets_url'"):
             self.resolver.workspace_from_url(None)
 
     def test_workspace_from_url_tempdir(self):
@@ -41,7 +41,7 @@ class TestResolver(TestCase):
 
     def test_workspace_from_url_no_clobber(self):
         with TemporaryDirectory() as dst_dir:
-            with self.assertRaisesRegex(Exception, "METS 'mets.xml' already exists in '%s' and clobber_mets not set" % dst_dir):
+            with self.assertRaisesRegex(Exception, "File already exists and overwrite=False: %s" % dst_dir):
                 Path(dst_dir, 'mets.xml').write_text('CONTENT')
                 self.resolver.workspace_from_url(
                         'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml',
@@ -55,13 +55,12 @@ class TestResolver(TestCase):
         with TemporaryDirectory() as dst_dir:
             bogus_dst_dir = '../../../../../../../../../../../../../../../../%s'  % dst_dir[1:]
             with pushd_popd(FOLDER_KANT):
-                ws1 = self.resolver.workspace_from_url(None, baseurl='data', dst_dir=bogus_dst_dir)
+                ws1 = self.resolver.workspace_from_url('data/mets.xml', dst_dir=bogus_dst_dir)
                 self.assertEqual(ws1.mets_target, pjoin(dst_dir, 'mets.xml'))
                 self.assertEqual(ws1.directory, dst_dir)
 
-    def test_workspace_from_url(self):
+    def test_workspace_from_url0(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        #  print(METS_HEROLD)
         #  print(workspace.mets)
         input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
         #  print [str(f) for f in input_files]
@@ -89,9 +88,9 @@ class TestResolver(TestCase):
         img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017')
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
         img_pil1 = workspace._resolve_image_as_pil(img_url)
-        #  self.assertEqual(img_pil1.size, (1457, 2083))
-        #  img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
-        #  self.assertEqual(img_pil2.size, (1, 1))
+        self.assertEqual(img_pil1.size, (1457, 2083))
+        img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
+        self.assertEqual(img_pil2.size, (1, 1))
 
     # pylint: disable=protected-access
     def test_resolve_image_bitonal(self):
