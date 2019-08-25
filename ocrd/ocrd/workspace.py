@@ -273,9 +273,6 @@ class Workspace():
                      'y': 0,
                      'w': page_image.width,
                      'h': page_image.height}
-        # region angle: PAGE orientation is defined clockwise,
-        # whereas PIL/ndimage rotation is in mathematical direction:
-        page_xywh['angle'] = -(page.get_orientation() or 0)
         # FIXME: remove PrintSpace here as soon as GT abides by the PAGE standard:
         border = page.get_Border() or page.get_PrintSpace()
         if border:
@@ -283,6 +280,9 @@ class Workspace():
             log.debug("Using explicitly set page border '%s' for page '%s'",
                       page_points, page_id)
             page_xywh = xywh_from_points(page_points)
+        # region angle: PAGE orientation is defined clockwise,
+        # whereas PIL/ndimage rotation is in mathematical direction:
+        page_xywh['angle'] = -(page.get_orientation() or 0)
 
         alternative_image = page.get_AlternativeImage()
         if alternative_image:
