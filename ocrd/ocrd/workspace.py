@@ -252,25 +252,18 @@ class Workspace():
         
         Given a PageType object, ``page``, extract its PIL.Image from
         AlternativeImage if it exists. Otherwise extract the PIL.Image
-        from imageFilename, and crop it if a Border exists, and rotate
-        it if an orientation angle exists. Otherwise just return it.
+        from imageFilename. Also crop it if a Border exists, and rotate
+        it if an @orientation exists. Otherwise just return it.
         
-        When an AlternativeImage exists, if ``feature_selector`` and/or
-        ``feature_filter`` is given, select/filter among the available
-        AlternativeImages the last which contains all of the selected
-        but none of the filtered features (i.e. @comments classes), or
-        raise an error. Otherwise use the last one.
-        Regardless, if the chosen AlternativeImage does not have "cropped",
-        but a Border exists, then crop it. And if the chosen AlternativeImage
-        does not have "deskewed" and an orientation exists, then rotate it.
-
-        When no AlternativeImage exists, if ``feature_selector`` and/or
-        ``feature_filter`` is given, verify that the image to be produced from
-        imageFilename contains all of the selected but none of the filtered
-        features, or raise an error.
-        Regardless, crop to the segment polygon, and respect any orientation
-        angle annotated for the page (from page-level deskewing) by rotating
-        the image.
+        If ``feature_selector`` and/or ``feature_filter`` is given, then
+        select/filter among imageFilename and all AlternativeImages the
+        last which contains all of the selected but none of the filtered
+        features (i.e. @comments classes), or raise an error.
+        
+        If the chosen image does not have "cropped", but a Border exists,
+        then crop it (unless "cropped" is also being filtered). And if the
+        chosen image does not have "deskewed", but an @orientation exists,
+        then rotate it (unless "deskewed" is also being filtered).
         
         Cropping uses a polygon mask (not just the rectangle).
         
@@ -284,7 +277,7 @@ class Workspace():
         image and offset will still crop relative to the original center).
         
         Return a tuple:
-         * the extracted image, 
+         * the extracted image,
          * a dictionary with the absolute coordinates of the page's
            bounding box / border (xywh), angle and the AlternativeImage
            @comments (features, i.e. of all operations that lead up to
@@ -296,8 +289,8 @@ class Workspace():
         Example:
          * get a raw (colored) but already deskewed and cropped image:
            ``page_image, page_xywh, page_image_info = workspace.image_from_page(
-                 page, page_id, 
-                 feature_selector='deskewed,cropped', 
+                 page, page_id,
+                 feature_selector='deskewed,cropped',
                  feature_filter='binarized,grayscale_normalized')``
         """
         page_image = self._resolve_image_as_pil(page.imageFilename)
@@ -355,17 +348,17 @@ class Workspace():
             page_image = image_from_polygon(page_image, page_polygon)
             # recrop into page rectangle:
             page_image = crop_image(page_image,
-                box=(page_xywh['x'],
-                     page_xywh['y'],
-                     page_xywh['x'] + page_xywh['w'],
-                     page_xywh['y'] + page_xywh['h']))
+                                    box=(page_xywh['x'],
+                                         page_xywh['y'],
+                                         page_xywh['x'] + page_xywh['w'],
+                                         page_xywh['y'] + page_xywh['h']))
             page_xywh['features'] += ',cropped'
         # deskew, if (still) necessary:
         if (page_xywh['angle'] and
             not 'deskewed' in page_xywh['features'] and
             not 'deskewed' in feature_filter.split(',')):
             log.info("Rotating AlternativeImage for page '%s' by %.2f°",
-                      page_id, page_xywh['angle'])
+                     page_id, page_xywh['angle'])
             page_image = page_image.rotate(page_xywh['angle'],
                                            expand=True,
                                            #resample=Image.BILINEAR,
@@ -390,25 +383,22 @@ class Workspace():
     def image_from_segment(self, segment, parent_image, parent_xywh, feature_selector='', feature_filter=''):
         """Extract a segment image from its parent's image.
 
-        Given a PIL.Image of the parent, ``parent_image``, and its
+        Given a PIL.Image of the parent, ``parent_image``, with its
         absolute coordinates, ``parent_xywh``, and a PAGE segment
         (TextRegionType / TextLineType / WordType / GlyphType) object
         which is logically contained in it, ``segment``, extract its
-        PIL.Image from AlternativeImage (if it exists), or via cropping
-        from ``parent_image``.
+        PIL.Image from AlternativeImage if it exists. Otherwise produce
+        an image via cropping from ``parent_image``.
         
-        When an AlternativeImage exists, if ``feature_selector`` and/or
-        ``feature_filter`` is given, select/filter among the available
-        AlternativeImages the last which contains all of the selected
-        but none of the filtered features (i.e. @comments classes), or
-        raise an error. Otherwise use the last one.
-        Regardless, if the chosen AlternativeImage does not have "deskewed",
-        and an orientation exists, then rotate it.
+        If ``feature_selector`` and/or ``feature_filter`` is given, then
+        select/filter among the cropped ``parent_image`` and the available
+        AlternativeImages the last which contains all of the selected but none
+        of the filtered features (i.e. @comments classes), or raise an error.
         
-        When no AlternativeImage exists, if ``feature_selector`` and/or
-        ``feature_filter`` is given, verify that the image to be produced from
-        parent image contains all of the selected but none of the filtered
-        features, or raise an error.
+        If the chosen AlternativeImage does not have "deskewed", but
+        an @orientation exists, then rotate it (unless "deskewed" is
+        also being filtered).
+        
         Regardless, respect any orientation angle annotated for the parent
         (from parent-level deskewing) by rotating the image, and compensating
         the segment coordinates in an inverse transformation (i.e. translation
@@ -435,9 +425,9 @@ class Workspace():
         
         Example:
          * get a raw (colored) but already deskewed and cropped image:
-           ``image, xywh = workspace.image_from_segment(region, 
+           ``image, xywh = workspace.image_from_segment(region,
                  page_image, page_xywh,
-                 feature_selector='deskewed,cropped', 
+                 feature_selector='deskewed,cropped',
                  feature_filter='binarized,grayscale_normalized')``
         """
         # note: We should mask overlapping neighbouring segments here,
@@ -462,10 +452,10 @@ class Workspace():
         segment_image = image_from_polygon(parent_image, segment_polygon)
         # recrop into segment rectangle:
         segment_image = crop_image(segment_image,
-            box=(segment_xywh['x'] - parent_xywh['x'],
-                 segment_xywh['y'] - parent_xywh['y'],
-                 segment_xywh['x'] - parent_xywh['x'] + segment_xywh['w'],
-                 segment_xywh['y'] - parent_xywh['y'] + segment_xywh['h']))
+                                   box=(segment_xywh['x'] - parent_xywh['x'],
+                                        segment_xywh['y'] - parent_xywh['y'],
+                                        segment_xywh['x'] - parent_xywh['x'] + segment_xywh['w'],
+                                        segment_xywh['y'] - parent_xywh['y'] + segment_xywh['h']))
         if 'orientation' in segment.__dict__:
             # angle: PAGE orientation is defined clockwise,
             # whereas PIL/ndimage rotation is in mathematical direction:
@@ -490,8 +480,8 @@ class Workspace():
                     else:
                         alternative_image = None
             else:
-                 alternative_image = alternative_images[-1]
-                 features = alternative_image.get_comments()
+                alternative_image = alternative_images[-1]
+                features = alternative_image.get_comments()
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for segment '%s'",
                           alternative_images.index(alternative_image) + 1,
@@ -504,7 +494,7 @@ class Workspace():
             not 'deskewed' in segment_xywh['features'] and
             not 'deskewed' in feature_filter.split(',')):
             log.info("Rotating AlternativeImage for segment '%s' by %.2f°",
-                      segment.id, segment_xywh['angle'])
+                     segment.id, segment_xywh['angle'])
             segment_image = segment_image.rotate(segment_xywh['angle'],
                                                  expand=True,
                                                  #resample=Image.BILINEAR,
