@@ -329,9 +329,9 @@ class Workspace():
                 for alternative_image in reversed(alternative_images):
                     features = alternative_image.get_comments()
                     if (all(feature in features
-                            for feature in feature_selector.split(',')) and
+                            for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
-                                for feature in feature_filter.split(','))):
+                                for feature in feature_filter.split(',') if feature)):
                         break
                     else:
                         alternative_image = None
@@ -373,12 +373,12 @@ class Workspace():
             page_xywh['features'] += ',deskewed'
         # verify constraints again:
         if not all(feature in page_xywh['features']
-                   for feature in feature_selector.split(',')):
+                   for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'selector="%s" in page "%s"' % (
                                 feature_selector, page_id))
         if any(feature in page_xywh['features']
-               for feature in feature_filter.split(',')):
+               for feature in feature_filter.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filter="%s" in page "%s"' % (
                                 feature_filter, page_id))
@@ -483,9 +483,9 @@ class Workspace():
                 for alternative_image in reversed(alternative_images):
                     features = alternative_image.get_comments()
                     if (all(feature in features
-                            for feature in feature_selector.split(',')) and
+                            for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
-                                for feature in feature_filter.split(','))):
+                                for feature in feature_filter.split(',') if feature)):
                         break
                     else:
                         alternative_image = None
@@ -512,12 +512,12 @@ class Workspace():
             segment_xywh['features'] += ',deskewed'
         # verify constraints again:
         if not all(feature in segment_xywh['features']
-                   for feature in feature_selector.split(',')):
+                   for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements' +
                             'selector="%s" in segment "%s"' % (
                                 feature_selector, segment.id))
         if any(feature in segment_xywh['features']
-               for feature in feature_filter.split(',')):
+               for feature in feature_filter.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filter="%s" in segment "%s"' % (
                                 feature_filter, segment.id))
