@@ -247,25 +247,58 @@ class Workspace():
         ]
         return Image.fromarray(region_cut)
 
-    def image_from_page(self, page, page_id):
-        """Extract the Page image from the workspace.
-
-        Given a PageType object, `page`, extract its PIL.Image from
+    def image_from_page(self, page, page_id, feature_selector='', feature_filter=''):
+        """Extract a Page image from the workspace.
+        
+        Given a PageType object, ``page``, extract its PIL.Image from
         AlternativeImage if it exists. Otherwise extract the PIL.Image
-        from imageFilename and crop it if a Border exists. Otherwise
-        just return it.
+        from imageFilename, and crop it if a Border exists, and rotate
+        it if an orientation angle exists. Otherwise just return it.
+        
+        When an AlternativeImage exists, if ``feature_selector`` and/or
+        ``feature_filter`` is given, select/filter among the available
+        AlternativeImages the last which contains all of the selected
+        but none of the filtered features (i.e. @comments classes), or
+        raise an error. Otherwise use the last one.
+        Regardless, if the chosen AlternativeImage does not have "cropped",
+        but a Border exists, then crop it. And if the chosen AlternativeImage
+        does not have "deskewed" and an orientation exists, then rotate it.
 
-        When cropping, respect any orientation angle annotated for
-        the page (from page-level deskewing) by rotating the
-        cropped image, respectively.
-
+        When no AlternativeImage exists, if ``feature_selector`` and/or
+        ``feature_filter`` is given, verify that the image to be produced from
+        imageFilename contains all of the selected but none of the filtered
+        features, or raise an error.
+        Regardless, crop to the segment polygon, and respect any orientation
+        angle annotated for the page (from page-level deskewing) by rotating
+        the image.
+        
+        Cropping uses a polygon mask (not just the rectangle).
+        
+        (Required and produced features need not be in the same order, so
+        ``feature_selector`` is merely a mask specifying Boolean AND, and
+        ``feature_filter`` is merely a mask specifying Boolean OR.)
+        
         If the resulting page image is larger than the bounding box of
-        `page`, pass down the page's box coordinates with an offset of
-        half the width/height difference.
-
-        Return the extracted image, and the absolute coordinates of
-        the page's bounding box / border (for passing down), and
-        an OcrdExif instance associated with the original image.
+        ``page``, then in the returned bounding box, reduce the offset by
+        half the width/height difference (so consumers being passed this
+        image and offset will still crop relative to the original center).
+        
+        Return a tuple:
+         * the extracted image, 
+         * a dictionary with the absolute coordinates of the page's
+           bounding box / border (xywh), angle and the AlternativeImage
+           @comments (features, i.e. of all operations that lead up to
+           this result),
+         * an OcrdExif instance associated with the original image.
+        (The first two can be used to annotate a new AlternativeImage,
+         or pass down with ``image_from_segment``.)
+        
+        Example:
+         * get a raw (colored) but already deskewed and cropped image:
+           ``page_image, page_xywh, page_image_info = workspace.image_from_page(
+                 page, page_id, 
+                 feature_selector='deskewed,cropped', 
+                 feature_filter='binarized,grayscale_normalized')``
         """
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
@@ -283,115 +316,211 @@ class Workspace():
         # region angle: PAGE orientation is defined clockwise,
         # whereas PIL/ndimage rotation is in mathematical direction:
         page_xywh['angle'] = -(page.get_orientation() or 0)
+        # initialize AlternativeImage@comments classes as empty:
+        page_xywh['features'] = ''
 
-        alternative_image = page.get_AlternativeImage()
-        if alternative_image:
+        alternative_images = page.get_AlternativeImage()
+        if alternative_images:
             # (e.g. from page-level cropping, binarization, deskewing or despeckling)
-            # assumes implicit cropping (i.e. page_xywh has been applied already)
-            log.debug("Using AlternativeImage %d (%s) for page '%s'",
-                      len(alternative_image), alternative_image[-1].get_comments(),
-                      page_id)
-            page_image = self._resolve_image_as_pil(
-                alternative_image[-1].get_filename())
-        else:
-            if border:
-                # get polygon outline of page border:
-                page_polygon = np.array(polygon_from_points(page_points))
-                # create a mask from the page polygon:
-                page_image = image_from_polygon(page_image, page_polygon)
-                # recrop into page rectangle:
-                page_image = crop_image(page_image,
-                    box=(page_xywh['x'],
-                         page_xywh['y'],
-                         page_xywh['x'] + page_xywh['w'],
-                         page_xywh['y'] + page_xywh['h']))
-            if page_xywh['angle']:
-                log.info("About to rotate page '%s' by %.2f°",
-                          page_id, page_xywh['angle'])
-                page_image = page_image.rotate(page_xywh['angle'],
-                                                   expand=True,
-                                                   #resample=Image.BILINEAR,
-                                                   fillcolor='white')
+            if feature_selector or feature_filter:
+                alternative_image = None
+                # search from the end, because by convention we always append,
+                # and among multiple satisfactory images we want the most recent:
+                for alternative_image in reversed(alternative_images):
+                    features = alternative_image.get_comments()
+                    if (all(feature in features
+                            for feature in feature_selector.split(',')) and
+                        not any(feature in features
+                                for feature in feature_filter.split(','))):
+                        break
+                    else:
+                        alternative_image = None
+            else:
+                alternative_image = alternative_images[-1]
+                features = alternative_image.get_comments()
+            if alternative_image:
+                log.debug("Using AlternativeImage %d (%s) for page '%s'",
+                          alternative_images.index(alternative_image) + 1,
+                          features, page_id)
+                page_image = self._resolve_image_as_pil(alternative_image.get_filename())
+                page_xywh['features'] = features
+        # crop, if (still) necessary:
+        if (border and
+            not 'cropped' in page_xywh['features'] and
+            not 'cropped' in feature_filter.split(',')):
+            log.debug('Cropping to border')
+            # get polygon outline of page border:
+            page_polygon = np.array(polygon_from_points(page_points))
+            # create a mask from the page polygon:
+            page_image = image_from_polygon(page_image, page_polygon)
+            # recrop into page rectangle:
+            page_image = crop_image(page_image,
+                box=(page_xywh['x'],
+                     page_xywh['y'],
+                     page_xywh['x'] + page_xywh['w'],
+                     page_xywh['y'] + page_xywh['h']))
+            page_xywh['features'] += ',cropped'
+        # deskew, if (still) necessary:
+        if (page_xywh['angle'] and
+            not 'deskewed' in page_xywh['features'] and
+            not 'deskewed' in feature_filter.split(',')):
+            log.info("Rotating AlternativeImage for page '%s' by %.2f°",
+                      page_id, page_xywh['angle'])
+            page_image = page_image.rotate(page_xywh['angle'],
+                                           expand=True,
+                                           #resample=Image.BILINEAR,
+                                           fillcolor='white')
+            page_xywh['features'] += ',deskewed'
+        # verify constraints again:
+        if not all(feature in page_xywh['features']
+                   for feature in feature_selector.split(',')):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'selector="%s" in page "%s"' % (
+                                feature_selector, page_id))
+        if any(feature in page_xywh['features']
+               for feature in feature_filter.split(',')):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filter="%s" in page "%s"' % (
+                                feature_filter, page_id))
         # subtract offset from any increase in binary region size over source:
         page_xywh['x'] -= round(0.5 * max(0, page_image.width  - page_xywh['w']))
         page_xywh['y'] -= round(0.5 * max(0, page_image.height - page_xywh['h']))
         return page_image, page_xywh, page_image_info
 
-    def image_from_segment(self, segment, parent_image, parent_xywh):
+    def image_from_segment(self, segment, parent_image, parent_xywh, feature_selector='', feature_filter=''):
         """Extract a segment image from its parent's image.
 
-        Given a PIL.Image of the parent, `parent_image`, and
-        its absolute coordinates, `parent_xywh`, and a PAGE
-        segment (TextRegion / TextLine / Word / Glyph) object
-        logically contained in it, `segment`, extract its PIL.Image
-        from AlternativeImage (if it exists), or via cropping from
-        `parent_image`.
-
-        When cropping, respect any orientation angle annotated for
-        the parent (from parent-level deskewing) by compensating the
-        segment coordinates in an inverse transformation (translation
-        to center, rotation, re-translation).
-        Also, mind the difference between annotated and actual size
-        of the parent (usually from deskewing), by a respective offset
-        into the image. Cropping uses a polygon mask (not just the
-        rectangle).
-
-        When cropping, respect any orientation angle annotated for
-        the segment (from segment-level deskewing) by rotating the
-        cropped image, respectively.
-
+        Given a PIL.Image of the parent, ``parent_image``, and its
+        absolute coordinates, ``parent_xywh``, and a PAGE segment
+        (TextRegionType / TextLineType / WordType / GlyphType) object
+        which is logically contained in it, ``segment``, extract its
+        PIL.Image from AlternativeImage (if it exists), or via cropping
+        from ``parent_image``.
+        
+        When an AlternativeImage exists, if ``feature_selector`` and/or
+        ``feature_filter`` is given, select/filter among the available
+        AlternativeImages the last which contains all of the selected
+        but none of the filtered features (i.e. @comments classes), or
+        raise an error. Otherwise use the last one.
+        Regardless, if the chosen AlternativeImage does not have "deskewed",
+        and an orientation exists, then rotate it.
+        
+        When no AlternativeImage exists, if ``feature_selector`` and/or
+        ``feature_filter`` is given, verify that the image to be produced from
+        parent image contains all of the selected but none of the filtered
+        features, or raise an error.
+        Regardless, respect any orientation angle annotated for the parent
+        (from parent-level deskewing) by rotating the image, and compensating
+        the segment coordinates in an inverse transformation (i.e. translation
+        to center, passive rotation, re-translation).
+        
+        Cropping uses a polygon mask (not just the rectangle).
+        
+        (Required and produced features need not be in the same order, so
+        ``feature_selector`` is merely a mask specifying Boolean AND, and
+        ``feature_filter`` is merely a mask specifying Boolean OR.)
+        
         If the resulting segment image is larger than the bounding box of
-        `segment`, pass down the segment's box coordinates with an offset
-        of half the width/height difference.
-
-        Return the extracted image, and the absolute coordinates of
-        the segment's bounding box (for passing down).
+        ``segment``, then in the returned bounding box, reduce the offset by
+        half the width/height difference (so consumers being passed this
+        image and offset will still crop relative to the original center).
+        
+        Return a tuple:
+         * the extracted image,
+         * a dictionary with the absolute coordinates of the segment's
+           bounding box (xywh), angle and the AlternativeImage @comments
+           (features, i.e. of all operations that lead up to this result).
+        (These can be used to create a new AlternativeImage, or pass down
+         for calls on lower hierarchy levels.)
+        
+        Example:
+         * get a raw (colored) but already deskewed and cropped image:
+           ``image, xywh = workspace.image_from_segment(region, 
+                 page_image, page_xywh,
+                 feature_selector='deskewed,cropped', 
+                 feature_filter='binarized,grayscale_normalized')``
         """
+        # note: We should mask overlapping neighbouring segments here,
+        # but finding the right clipping rules can be difficult if operating
+        # on the raw (non-binary) image data alone: for each intersection, it
+        # must be decided which one of either segment or neighbour to assign,
+        # e.g. an ImageRegion which properly contains our TextRegion should be
+        # completely ignored, but an ImageRegion which is properly contained
+        # in our TextRegion should be completely masked, while partial overlap
+        # may be more difficult to decide. On the other hand, on the binary image,
+        # we can use connected component analysis to mask foreground areas which
+        # originate in the neighbouring regions. But that would introduce either
+        # the assumption that the input has already been binarized, or a dependency
+        # on some ad-hoc binarization method. Thus, it is preferable to use
+        # a dedicated processor for this (which produces clipped AlternativeImage
+        # or reduced polygon coordinates).
+        # crop:
         segment_xywh = xywh_from_points(segment.get_Coords().points)
+        # get polygon outline of segment relative to parent image:
+        segment_polygon = coordinates_of_segment(segment, parent_image, parent_xywh)
+        # create a mask from the segment polygon:
+        segment_image = image_from_polygon(parent_image, segment_polygon)
+        # recrop into segment rectangle:
+        segment_image = crop_image(segment_image,
+            box=(segment_xywh['x'] - parent_xywh['x'],
+                 segment_xywh['y'] - parent_xywh['y'],
+                 segment_xywh['x'] - parent_xywh['x'] + segment_xywh['w'],
+                 segment_xywh['y'] - parent_xywh['y'] + segment_xywh['h']))
         if 'orientation' in segment.__dict__:
             # angle: PAGE orientation is defined clockwise,
             # whereas PIL/ndimage rotation is in mathematical direction:
             segment_xywh['angle'] = -(segment.get_orientation() or 0)
-        alternative_image = segment.get_AlternativeImage()
-        if alternative_image:
+        # initialize AlternativeImage@comments classes from parent:
+        segment_xywh['features'] = parent_xywh['features'] + ',cropped'
+        
+        alternative_images = segment.get_AlternativeImage()
+        if alternative_images:
             # (e.g. from segment-level cropping, binarization, deskewing or despeckling)
-            log.debug("Using AlternativeImage %d (%s) for segment '%s'",
-                      len(alternative_image), alternative_image[-1].get_comments(),
-                      segment.id)
-            segment_image = self._resolve_image_as_pil(
-                alternative_image[-1].get_filename())
-        else:
-            # get polygon outline of segment relative to parent image:
-            segment_polygon = coordinates_of_segment(segment, parent_image, parent_xywh)
-            # create a mask from the segment polygon:
-            segment_image = image_from_polygon(parent_image, segment_polygon)
-            # recrop into segment rectangle:
-            segment_image = crop_image(segment_image,
-                box=(segment_xywh['x'] - parent_xywh['x'],
-                     segment_xywh['y'] - parent_xywh['y'],
-                     segment_xywh['x'] - parent_xywh['x'] + segment_xywh['w'],
-                     segment_xywh['y'] - parent_xywh['y'] + segment_xywh['h']))
-            # note: We should mask overlapping neighbouring segments here,
-            # but finding the right clipping rules can be difficult if operating
-            # on the raw (non-binary) image data alone: for each intersection, it
-            # must be decided which one of either segment or neighbour to assign,
-            # e.g. an ImageRegion which properly contains our TextRegion should be
-            # completely ignored, but an ImageRegion which is properly contained
-            # in our TextRegion should be completely masked, while partial overlap
-            # may be more difficult to decide. On the other hand, on the binary image,
-            # we can use connected component analysis to mask foreground areas which
-            # originate in the neighbouring regions. But that would introduce either
-            # the assumption that the input has already been binarized, or a dependency
-            # on some ad-hoc binarization method. Thus, it is preferable to use
-            # a dedicated processor for this (which produces clipped AlternativeImage
-            # or reduced polygon coordinates).
-            if 'angle' in segment_xywh and segment_xywh['angle']:
-                log.info("About to rotate segment '%s' by %.2f°",
-                          segment.id, segment_xywh['angle'])
-                segment_image = segment_image.rotate(segment_xywh['angle'],
-                                                     expand=True,
-                                                     #resample=Image.BILINEAR,
-                                                     fillcolor='white')
+            if feature_selector or feature_filter:
+                alternative_image = None
+                # search from the end, because by convention we always append,
+                # and among multiple satisfactory images we want the most recent:
+                for alternative_image in reversed(alternative_images):
+                    features = alternative_image.get_comments()
+                    if (all(feature in features
+                            for feature in feature_selector.split(',')) and
+                        not any(feature in features
+                                for feature in feature_filter.split(','))):
+                        break
+                    else:
+                        alternative_image = None
+            else:
+                 alternative_image = alternative_images[-1]
+                 features = alternative_image.get_comments()
+            if alternative_image:
+                log.debug("Using AlternativeImage %d (%s) for segment '%s'",
+                          alternative_images.index(alternative_image) + 1,
+                          features, segment.id)
+                segment_image = self._resolve_image_as_pil(alternative_image.get_filename())
+                segment_xywh['features'] = features
+        # deskew, if (still) necessary:
+        if ('angle' in segment_xywh and
+            segment_xywh['angle'] and
+            not 'deskewed' in segment_xywh['features'] and
+            not 'deskewed' in feature_filter.split(',')):
+            log.info("Rotating AlternativeImage for segment '%s' by %.2f°",
+                      segment.id, segment_xywh['angle'])
+            segment_image = segment_image.rotate(segment_xywh['angle'],
+                                                 expand=True,
+                                                 #resample=Image.BILINEAR,
+                                                 fillcolor='white')
+            segment_xywh['features'] += ',deskewed'
+        # verify constraints again:
+        if not all(feature in segment_xywh['features']
+                   for feature in feature_selector.split(',')):
+            raise Exception('Found no AlternativeImage that satisfies all requirements' +
+                            'selector="%s" in segment "%s"' % (
+                                feature_selector, segment.id))
+        if any(feature in segment_xywh['features']
+               for feature in feature_filter.split(',')):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filter="%s" in segment "%s"' % (
+                                feature_filter, segment.id))
         # subtract offset from any increase in binary region size over source:
         segment_xywh['x'] -= round(0.5 * max(0, segment_image.width  - segment_xywh['w']))
         segment_xywh['y'] -= round(0.5 * max(0, segment_image.height - segment_xywh['h']))
