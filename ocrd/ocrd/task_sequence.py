@@ -42,8 +42,8 @@ class ProcessorTask():
             raise Exception("Parameter file not readable: %s" % self.parameter_path)
         if not self.input_file_grps:
             raise Exception("Task must have input file group")
-        if not self.output_file_grps:
-            raise Exception("Task must have output file group")
+        # if not self.output_file_grps:
+        #     raise Exception("Task must have output file group")
         if not which(self.executable):
             raise Exception("Executable not found in PATH: %s" % self.executable)
 
