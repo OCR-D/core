@@ -273,9 +273,6 @@ class Workspace():
                      'y': 0,
                      'w': page_image.width,
                      'h': page_image.height}
-        # region angle: PAGE orientation is defined clockwise,
-        # whereas PIL/ndimage rotation is in mathematical direction:
-        page_xywh['angle'] = -(page.get_orientation() or 0)
         # FIXME: remove PrintSpace here as soon as GT abides by the PAGE standard:
         border = page.get_Border() or page.get_PrintSpace()
         if border:
@@ -283,6 +280,9 @@ class Workspace():
             log.debug("Using explicitly set page border '%s' for page '%s'",
                       page_points, page_id)
             page_xywh = xywh_from_points(page_points)
+        # region angle: PAGE orientation is defined clockwise,
+        # whereas PIL/ndimage rotation is in mathematical direction:
+        page_xywh['angle'] = -(page.get_orientation() or 0)
 
         alternative_image = page.get_AlternativeImage()
         if alternative_image:
@@ -293,18 +293,19 @@ class Workspace():
                       page_id)
             page_image = self._resolve_image_as_pil(
                 alternative_image[-1].get_filename())
-        elif border:
-            # get polygon outline of page border:
-            page_polygon = np.array(polygon_from_points(page_points))
-            # create a mask from the page polygon:
-            page_image = image_from_polygon(page_image, page_polygon)
-            # recrop into page rectangle:
-            page_image = crop_image(page_image,
-                box=(page_xywh['x'],
-                     page_xywh['y'],
-                     page_xywh['x'] + page_xywh['w'],
-                     page_xywh['y'] + page_xywh['h']))
-            if 'angle' in page_xywh and page_xywh['angle']:
+        else:
+            if border:
+                # get polygon outline of page border:
+                page_polygon = np.array(polygon_from_points(page_points))
+                # create a mask from the page polygon:
+                page_image = image_from_polygon(page_image, page_polygon)
+                # recrop into page rectangle:
+                page_image = crop_image(page_image,
+                    box=(page_xywh['x'],
+                         page_xywh['y'],
+                         page_xywh['x'] + page_xywh['w'],
+                         page_xywh['y'] + page_xywh['h']))
+            if page_xywh['angle']:
                 log.info("About to rotate page '%s' by %.2f°",
                           page_id, page_xywh['angle'])
                 page_image = page_image.rotate(page_xywh['angle'],
