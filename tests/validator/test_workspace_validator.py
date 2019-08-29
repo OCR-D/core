@@ -146,7 +146,7 @@ class TestWorkspaceValidator(TestCase):
             wsdir = join(tempdir, 'foo')
             copytree(assets.path_to('kant_aufklaerung_1784/data'), wsdir)
             with pushd_popd(wsdir):
-                os.system("""sed -i 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
+                os.system("""sed -i 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE""")
                 report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'), src_dir=wsdir, skip=[
                     'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density',
                     ], download=False)
