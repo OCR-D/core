@@ -4,7 +4,6 @@ Validating a workspace.
 import re
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd
-from ocrd_models import OcrdExif
 from ocrd_modelfactory import page_from_file
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
@@ -116,9 +115,9 @@ class WorkspaceValidator():
                 continue
             page = page_from_file(f).get_Page()
             _, _, exif = self.workspace.image_from_page(page, f.pageId)
-            if not page.imageHeight == exif.height:
+            if page.imageHeight != exif.height:
                 self.report.add_error("PAGE '%s': @imageHeight != image's actual height (%s != %s)" % (f.ID, page.imageHeight, exif.height))
-            if not page.imageWidth == exif.width:
+            if page.imageWidth != exif.width:
                 self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
 
     def _validate_pixel_density(self):
