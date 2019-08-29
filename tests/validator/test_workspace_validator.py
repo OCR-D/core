@@ -1,6 +1,9 @@
-from tempfile import TemporaryDirectory
+import os
+from tempfile import TemporaryDirectory, mkdtemp
 from os.path import join
+from shutil import copytree
 
+from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
 from ocrd_validators import WorkspaceValidator
 
@@ -137,6 +140,24 @@ class TestWorkspaceValidator(TestCase):
             ]
         )
         self.assertTrue(report.is_valid)
+
+    def test_dimensions(self):
+        with TemporaryDirectory() as tempdir:
+            wsdir = join(tempdir, 'foo')
+            copytree(assets.path_to('kant_aufklaerung_1784/data'), wsdir)
+            with pushd_popd(wsdir):
+                os.system("""sed -i 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE""")
+                report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'), src_dir=wsdir, skip=[
+                    'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density',
+                    ], download=False)
+                self.assertIn("PAGE 'PAGE_0017_PAGE': @imageHeight != image's actual height (1234 != 2083)", report.errors)
+                self.assertEqual(len(report.errors), 1)
+                self.assertEqual(report.is_valid, False)
+                report2 = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'), src_dir=wsdir, skip=[
+                    'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density',
+                    'dimension'
+                    ], download=False)
+            self.assertEqual(report2.is_valid, True)
 
     def test_src_dir(self):
         report = WorkspaceValidator.validate(
