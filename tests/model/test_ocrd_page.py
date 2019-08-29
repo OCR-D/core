@@ -48,7 +48,7 @@ simple_page = """\
 class TestOcrdPage(TestCase):
 
     def setUp(self):
-        with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), 'rb') as f:
+        with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'), 'rb') as f:
             self.xml_as_str = f.read()
             self.pcgts = parseString(self.xml_as_str, silence=True)
 

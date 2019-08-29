@@ -94,7 +94,7 @@ class TestWorkspaceValidator(TestCase):
             self.assertIn("has GROUPID attribute", report.notices[0])
 
     def test_validate_pixel_no_download(self):
-        imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020')
+        imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
@@ -106,7 +106,7 @@ class TestWorkspaceValidator(TestCase):
             self.assertEqual(len(report.notices), 0)
 
     def test_validate_pixel_density_too_low(self):
-        imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0017')
+        imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0017.png')
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
