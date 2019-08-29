@@ -157,7 +157,7 @@ class TestCli(TestCase):
         with TemporaryDirectory() as tempdir:
             copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
             file_group = 'OCR-D-GT-PAGE'
-            file_path = join(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT')
+            file_path = join(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT.xml')
             self.assertTrue(exists(file_path))
 
             workspace = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
