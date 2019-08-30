@@ -5,6 +5,18 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * typos in docstrings
+  * README: 'module' -> 'package'
+  * workspace.image_from_page: logic with rotation/angle
+  * Adapted test suite to OCR-D/assets now with file extensions
+
+Added:
+
+  * Validation of imageHeight/imageWidth in PAGE vs. actual image height/width, #229
+
+
 ## [1.0.0b17] - 2019-08-21
 
 Fixed:
