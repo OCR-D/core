@@ -83,7 +83,9 @@ class Workspace():
         Returns:
             The local filename of the downloaded file
         """
-        return self.download_file(OcrdFile(None, url=url, **kwargs)).local_filename
+        f = OcrdFile(None, url=url, **kwargs)
+        f = self.download_file(f)
+        return f.local_filename
 
 
     def download_file(self, f, _recursion_count=0):
@@ -102,10 +104,10 @@ class Workspace():
                 if _recursion_count >= 1:
                     raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
                 log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
-                # XXX FIXME HACK
                 f.url = '%s/%s' % (self.baseurl, f.url)
                 f.url = self.download_file(f, _recursion_count + 1).local_filename
-                f.local_filename = f.url
+            # XXX FIXME HACK
+            f.local_filename = f.url
             return f
 
     def remove_file(self, ID, force=False):

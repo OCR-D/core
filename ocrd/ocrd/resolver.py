@@ -21,7 +21,7 @@ class Resolver():
     Handle Uploads, Downloads, Repository access and manage temporary directories
     """
 
-    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None):
+    def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None):
         """
         Download a file to the workspace.
 
@@ -34,14 +34,14 @@ class Resolver():
             directory (string): Directory to download files to
             basename (string, None): basename part of the filename on disk.
             url (string): URL to download from
-            overwrite (boolean): Whether to overwrite existing files with that name
+            if_exists (string, "skip"): Waht to do if target file already exists. One of ``skip`` (default), ``overwrite`` or ``raise``
             subdir (string, None): Subdirectory to create within the directory. Think fileGrp.
 
         Returns:
             Local filename, __relative__ to directory
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
-        log.info("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s|", directory, url, basename, overwrite, subdir)
+        log.info("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
 
         if not url:
             raise Exception("'url' must be a string")
@@ -56,6 +56,7 @@ class Resolver():
         ret = str(Path(subdir_path, basename_path))
         dst_path = directory / ret
 
+        #  log.info("\n\tdst_path='%s \n\turl=%s", dst_path, url)
         #  print('url=%s', url)
         #  print('directory=%s', directory)
         #  print('subdir_path=%s', subdir_path)
@@ -73,9 +74,12 @@ class Resolver():
                 log.debug("Stop early, src_path and dst_path are the same: '%s' (url: '%s')" % (src_path, url))
                 return ret
 
-        # Respect 'overwrite' arg
-        if dst_path.exists() and not overwrite:
-            raise FileExistsError("File already exists and 'overwrite' not set: %s" % (dst_path))
+        # Respect 'if_exists' arg
+        if dst_path.exists():
+            if if_exists == 'skip':
+                return ret
+            if if_exists == 'raise':
+                raise FileExistsError("File already exists and if_exists == 'raise': %s" % (dst_path))
 
         # Create dst_path parent dir
         dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -132,7 +136,7 @@ class Resolver():
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
             mets_basename, mets_url, src_baseurl, dst_dir)
 
-        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, overwrite=clobber_mets)
+        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'raise')
 
         workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl)
 
