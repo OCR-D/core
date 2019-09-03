@@ -23,7 +23,7 @@ class Resolver():
 
     def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None):
         """
-        Download a file to the workspace.
+        Download a file to a directory.
 
         Early Shortcut: If url is a local file and that file is already in the directory, keep it there.
 
@@ -128,10 +128,13 @@ class Resolver():
 
         # resolve dst_dir
         if not dst_dir:
-            log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
-            dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        else:
-            dst_dir = str(Path(dst_dir).resolve(strict=True))
+            if is_local_filename(mets_url):
+                log.debug("Deriving dst_dir %s from %s", Path(mets_url).parent, mets_url)
+                dst_dir = Path(mets_url).parent
+            else:
+                log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
+                dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        dst_dir = str(Path(dst_dir).resolve(strict=True))
 
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
             mets_basename, mets_url, src_baseurl, dst_dir)
