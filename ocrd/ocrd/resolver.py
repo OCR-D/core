@@ -75,7 +75,7 @@ class Resolver():
 
         # Respect 'overwrite' arg
         if dst_path.exists() and not overwrite:
-            raise Exception("File already exists and 'overwrite' not set: %s" % (dst_path))
+            raise FileExistsError("File already exists and 'overwrite' not set: %s" % (dst_path))
 
         # Create dst_path parent dir
         dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -111,7 +111,7 @@ class Resolver():
         """
 
         if mets_url is None:
-            raise Exception("Must pass 'mets_url' workspace_from_url")
+            raise ValueError("Must pass 'mets_url' workspace_from_url")
 
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
@@ -151,7 +151,7 @@ class Resolver():
         Path(directory).mkdir(parents=True, exist_ok=True)
         mets_path = Path(directory, mets_basename)
         if mets_path.exists() and not clobber_mets:
-            raise Exception("METS '%s' already exists in '%s' and clobber_mets not set." % (mets_basename, directory))
+            raise FileExistsError("METS '%s' already exists in '%s' and clobber_mets not set." % (mets_basename, directory))
         mets = OcrdMets.empty_mets()
         log.info("Writing METS to%s", mets_path)
         mets_path.write_bytes(mets.to_xml(xmllint=True))
