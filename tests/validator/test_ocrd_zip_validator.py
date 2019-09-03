@@ -30,11 +30,15 @@ class TestOcrdZipValidator(TestCase):
         report = OcrdZipValidator(self.resolver, ocrdzip).validate()
         self.assertEqual(report.is_valid, True)
 
-    def test_validation_unzipped(self):
+    def test_validation_unzipped0(self):
         validator = OcrdZipValidator(self.resolver, self.bagdir)
+        # import os
+        # from ocrd_utils import pushd_popd
+        # with pushd_popd(self.bagdir):
+        #     os.system('find')
+        # print(report)
         report = validator.validate(skip_unzip=True)
         self.assertEqual(report.is_valid, True)
-        print(report)
 
     def test_validation_unzipped_skip_bag(self):
         validator = OcrdZipValidator(self.resolver, self.bagdir)

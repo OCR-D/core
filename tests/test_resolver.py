@@ -86,16 +86,16 @@ class TestResolver(TestCase):
 
     # pylint: disable=protected-access
     def test_resolve_image_grayscale(self):
-        img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017')
+        img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png')
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        img_pil1 = workspace._resolve_image_as_pil(img_url)
+        img_pil1 = workspace.resolve_image_as_pil(img_url)
         self.assertEqual(img_pil1.size, (1457, 2083))
         img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
         self.assertEqual(img_pil2.size, (1, 1))
 
     # pylint: disable=protected-access
     def test_resolve_image_bitonal(self):
-        img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017')
+        img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017.png')
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
         img_pil1 = workspace._resolve_image_as_pil(img_url)
         self.assertEqual(img_pil1.size, (1457, 2083))

@@ -126,7 +126,7 @@ class TestUtils(TestCase):
             6.1.0 yes
         """
         for _ in range(0, 10):
-            pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470'))
+            pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470.tif'))
             pil_image.crop(box=[1539, 202, 1626, 271])
 
     def test_pushd_popd(self):

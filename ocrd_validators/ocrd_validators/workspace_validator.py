@@ -3,12 +3,9 @@ Validating a workspace.
 """
 import re
 
-from ocrd_utils import (
-    getLogger,
-    is_local_filename,
-    pushd_popd,
-    MIMETYPE_PAGE,
-)
+from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd
+from ocrd_modelfactory import page_from_file
+
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
 from .page_validator import PageValidator
@@ -59,7 +56,7 @@ class WorkspaceValidator():
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
-            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'url'
+            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'dimension', 'url'
             download (boolean): Whether to download files
 
         Returns:
@@ -83,6 +80,8 @@ class WorkspaceValidator():
                     self._validate_mets_files()
                 if 'pixel_density' not in self.skip:
                     self._validate_pixel_density()
+                if 'dimension' not in self.skip:
+                    self._validate_dimension()
                 if 'page' not in self.skip:
                     self._validate_page()
         except Exception as e: # pylint: disable=broad-except
@@ -106,6 +105,21 @@ class WorkspaceValidator():
         """
         if self.mets.unique_identifier is None:
             self.report.add_error("METS has no unique identifier")
+
+    def _validate_dimension(self):
+        """
+        Validate image height and PAGE imageHeight match
+        """
+        for f in [f for f in self.mets.find_files() if f.mimetype == MIMETYPE_PAGE]:
+            if not f.local_filename and not self.download:
+                self.report.add_notice("Won't download remote PAGE XML <%s>" % f.url)
+                continue
+            page = page_from_file(f).get_Page()
+            _, _, exif = self.workspace.image_from_page(page, f.pageId)
+            if page.imageHeight != exif.height:
+                self.report.add_error("PAGE '%s': @imageHeight != image's actual height (%s != %s)" % (f.ID, page.imageHeight, exif.height))
+            if page.imageWidth != exif.width:
+                self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
 
     def _validate_pixel_density(self):
         """

@@ -7,8 +7,8 @@ from ocrd_modelfactory import (
     page_from_file
 )
 
-SAMPLE_IMG = assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017')
-SAMPLE_PAGE = assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0017_PAGE')
+SAMPLE_IMG = assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')
+SAMPLE_PAGE = assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')
 
 class TestModelFactory(TestCase):
 

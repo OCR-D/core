@@ -15,6 +15,14 @@ Changed:
 Added:
 
   * utils: `MIME_TO_EXT` to map mime types to preferred extension
+  * Validation of imageHeight/imageWidth in PAGE vs. actual image height/width, #229
+
+Fixed:
+
+  * typos in docstrings
+  * README: 'module' -> 'package'
+  * workspace.image_from_page: logic with rotation/angle
+  * Adapted test suite to OCR-D/assets now with file extensions
 
 ## [1.0.0b17] - 2019-08-21
 

@@ -22,7 +22,7 @@ simple_page = """\
         <LastChange>2018-04-25T17:44:49.605+01:00</LastChange>
     </Metadata>
     <Page
-        imageFilename="https://github.com/OCR-D/assets/raw/master/data/kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017"
+        imageFilename="https://github.com/OCR-D/assets/raw/master/data/kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif"
         imageWidth="1457"
         imageHeight="2083"
         type="content">
@@ -48,7 +48,7 @@ simple_page = """\
 class TestOcrdPage(TestCase):
 
     def setUp(self):
-        with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), 'rb') as f:
+        with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'), 'rb') as f:
             self.xml_as_str = f.read()
             self.pcgts = parseString(self.xml_as_str, silence=True)
 
@@ -56,7 +56,7 @@ class TestOcrdPage(TestCase):
         #  with open('/tmp/test.xml', 'w') as f:
             #  f.write(to_xml(self.pcgts))
         self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
-    
+
     def test_issue_269(self):
         """
         @conf is parsed as str but should be float
