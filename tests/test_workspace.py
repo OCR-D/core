@@ -17,7 +17,7 @@ SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
 
 SAMPLE_FILE_FILEGRP = 'OCR-D-IMG'
 SAMPLE_FILE_ID = 'INPUT_0017'
-SAMPLE_FILE_URL = join(SAMPLE_FILE_FILEGRP, SAMPLE_FILE_ID)
+SAMPLE_FILE_URL = join(SAMPLE_FILE_FILEGRP, '%s.tif' % SAMPLE_FILE_ID)
 
 class TestWorkspace(TestCase):
 
@@ -98,7 +98,7 @@ class TestWorkspace(TestCase):
             copyfile(SRC_METS, dst_mets)
             ws1 = self.resolver.workspace_from_url(dst_mets, src_baseurl=dirname(SRC_METS))
             f = Path(ws1.download_url(SAMPLE_FILE_URL))
-            self.assertEqual(f, Path('TEMP', SAMPLE_FILE_ID))
+            self.assertEqual(f, Path('TEMP', '%s.tif' % SAMPLE_FILE_ID))
             self.assertTrue(Path(ws1.directory, f).exists())
 
     def test_227_1(self):

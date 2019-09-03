@@ -41,7 +41,7 @@ class TestResolver(TestCase):
         with TemporaryDirectory() as dst_dir:
             dst_mets = Path(dst_dir, 'mets.xml')
             dst_mets.write_text('CONTENT')
-            with self.assertRaisesRegex(Exception, "File already exists and 'overwrite' not set: %s" % dst_mets):
+            with self.assertRaisesRegex(FileExistsError, "File already exists and if_exists == 'raise': %s" % dst_mets):
                 self.resolver.workspace_from_url(
                         'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml',
                         dst_dir=dst_dir)
