@@ -40,15 +40,6 @@ def run_processor(
         mets_url,
         working_dir
     )
-    if parameter is not None:
-        if not '://' in parameter:
-            fname = os.path.abspath(parameter)
-        else:
-            fname = workspace.download_url(parameter)
-        with open(fname, 'r') as param_json_file:
-            parameter = json.load(param_json_file)
-    else:
-        parameter = {}
     log.debug("Running processor %s", processorClass)
     processor = processorClass(
         workspace,

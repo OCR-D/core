@@ -4,7 +4,7 @@ import os
 import sys
 from unittest import TestCase, skip, main
 
-from .assets import assets
+from .assets import assets, copy_of_directory
 
 #  import traceback
 #  import warnings
