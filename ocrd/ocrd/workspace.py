@@ -1,6 +1,6 @@
 import io
 from os import makedirs, unlink
-from os.path import join as pjoin, isdir
+from pathlib import Path
 
 import cv2
 from PIL import Image
@@ -43,7 +43,7 @@ class Workspace():
     def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None):
         self.resolver = resolver
         self.directory = directory
-        self.mets_target = pjoin(directory, mets_basename)
+        self.mets_target = str(Path(directory, mets_basename))
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -164,7 +164,7 @@ class Workspace():
         with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-                if not isdir(local_filename_dir):
+                if not Path(local_filename_dir).is_dir():
                     makedirs(local_filename_dir)
                 if 'url' not in kwargs:
                     kwargs['url'] = kwargs['local_filename']
@@ -419,7 +419,7 @@ class Workspace():
         """
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
-        file_path = pjoin(file_grp, file_id + '.' + format.lower())
+        file_path = str(Path(file_grp, '%s.%s' % (file_id, format.lower())))
         out = self.add_file(
             ID=file_id,
             file_grp=file_grp,

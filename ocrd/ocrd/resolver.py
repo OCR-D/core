@@ -50,12 +50,12 @@ class Resolver():
 
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)
-        directory = directory.resolve()
+        directory = str(directory.resolve())
 
         subdir_path = Path(subdir if subdir else '')
         basename_path = Path(basename if basename else nth_url_segment(url))
         ret = str(Path(subdir_path, basename_path))
-        dst_path = directory / ret
+        dst_path = Path(directory, ret)
 
         #  log.info("\n\tdst_path='%s \n\turl=%s", dst_path, url)
         #  print('url=%s', url)
