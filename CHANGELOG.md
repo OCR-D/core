@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * `-m/--mets` is not required anymore, #301
+  * `-p/--parameter` argument accepts raw JSON as well now, #239
 
 Fixed:
 
