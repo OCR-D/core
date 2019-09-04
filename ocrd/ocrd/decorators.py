@@ -19,13 +19,19 @@ loglevel_option = click.option('-l', '--log-level', help="Log level",
 
 def _parse_json_string_or_file(ctx, param, value='{}'):    # pylint: disable=unused-argument
     ret = None
+    err = None
     try:
-        with open(value, 'r') as f:
-            ret = json.load(f)
-    except FileNotFoundError:
-        ret = json.loads(value.strip())
-    if not isinstance(ret, dict):
-        raise ValueError("JSON parameter '%s' is not a valid JSON object")
+        try:
+            with open(value, 'r') as f:
+                ret = json.load(f)
+        except FileNotFoundError:
+            ret = json.loads(value.strip())
+        if not isinstance(ret, dict):
+            err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, ret))
+    except json.decoder.JSONDecodeError as e:
+        err = ValueError("Error parsing '%s': %s" % (value, e))
+    if err:
+        raise err       # pylint: disable=raising-bad-type
     return ret
 
 parameter_option = click.option('-p', '--parameter',
