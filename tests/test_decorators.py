@@ -90,7 +90,7 @@ class TestDecorators(TestCase):
         self.assertEqual(_parse_json_string_or_file(None, None, '{"foo": 32}'), {'foo': 32})
         self.assertEqual(_parse_json_string_or_file(None, None, '{"foo": 32}'), {'foo': 32})
         with TemporaryDirectory() as tempdir:
-            paramfile = Path(tempdir, '{}') # XXX yes, the file is called '{}'
+            paramfile = str(Path(tempdir, '{}')) # XXX yes, the file is called '{}'
             with open(paramfile, 'w') as f:
                 f.write('{"bar": 42}')
             self.assertEqual(_parse_json_string_or_file(None, None, paramfile), {'bar': 42})
