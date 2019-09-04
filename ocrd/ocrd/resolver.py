@@ -48,8 +48,9 @@ class Resolver():
         if not directory:
             raise Exception("'directory' must be a string")  # acutally Path would also work
 
-        directory = Path(directory).resolve(strict=False)
+        directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)
+        directory = directory.resolve()
 
         subdir_path = Path(subdir if subdir else '')
         basename_path = Path(basename if basename else nth_url_segment(url))
@@ -66,9 +67,13 @@ class Resolver():
 
         src_path = None
         if is_local_filename(url):
-            src_path = Path(get_local_filename(url)).resolve(strict=False)
-            if not src_path.exists():
+            try:
+                # XXX this raises FNFE in Python 3.5 if src_path doesn't exist but not 3.6+
+                src_path = Path(get_local_filename(url)).resolve()
+            except FileNotFoundError as e:
                 log.error("Failed to resolve URL locally: %s --> %s which doesnt' exist" % (url, src_path))
+                raise e
+            if not src_path.exists():
                 raise FileNotFoundError("File path passed as 'url' to download_to_directory does not exist: %s" % url)
             if src_path == dst_path:
                 log.debug("Stop early, src_path and dst_path are the same: '%s' (url: '%s')" % (src_path, url))
@@ -134,7 +139,7 @@ class Resolver():
             else:
                 log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        dst_dir = str(Path(dst_dir).resolve(strict=True))
+        dst_dir = str(Path(dst_dir).resolve())
 
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
             mets_basename, mets_url, src_baseurl, dst_dir)
