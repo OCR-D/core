@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `-m/--mets` is not required anymore, #301
+
 Fixed:
 
   * typos in docstrings

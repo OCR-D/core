@@ -70,11 +70,6 @@ class TestDecorators(TestCase):
         result = self.runner.invoke(cli_dummy_processor, ['--version'])
         self.assertEqual(result.exit_code, 0)
 
-    def test_processor_no_mets(self):
-        result = self.runner.invoke(cli_dummy_processor)
-        self.assertIn('Error: Missing option "-m" / "--mets".', result.output)
-        self.assertEqual(result.exit_code, 1)
-
     def test_processor_non_existing_mets(self):
         result = self.runner.invoke(cli_dummy_processor, ['--mets', 'file:///does/not/exist.xml'])
         self.assertIn('File does not exist: file:///does/not/exist.xml', result.output)
