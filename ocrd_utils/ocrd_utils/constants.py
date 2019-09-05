@@ -27,6 +27,7 @@ MIME_TO_EXT = {
     'image/tiff': '.tif',
     'image/png': '.png',
     'image/jpg': '.jpg',
+    'image/jpeg': '.jpg',
     MIMETYPE_PAGE: '.xml',
     'application/alto+xml': '.xml',
 }
