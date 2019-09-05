@@ -6,7 +6,7 @@ from tempfile import mkdtemp
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, pushd_popd, is_local_filename
+from ocrd_utils import getLogger, pushd_popd
 from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
@@ -245,7 +245,8 @@ def prune_files(ctx):
                 if not f.local_filename or not exists(f.local_filename):
                     workspace.mets.remove_file(f.ID)
             except Exception as e:
-                log.warning("Error removing %f: %s", f, e)
+                log.exception("Error removing %f: %s", f, e)
+                raise(e)
         workspace.save_mets()
 
 # ----------------------------------------------------------------------
@@ -306,7 +307,7 @@ def get_id(ctx):
 """)
 @click.argument('ID')
 @pass_workspace
-def set_id(ctx, id):
+def set_id(ctx, id):   # pylint: disable=redefined-builtin
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     workspace.mets.unique_identifier = id
     workspace.save_mets()

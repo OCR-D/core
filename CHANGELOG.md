@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * `-m/--mets` is not required anymore, #301
+  * `ocrd workspace prune-files`: Throw on error removing non-existant file
 
 Fixed:
 
