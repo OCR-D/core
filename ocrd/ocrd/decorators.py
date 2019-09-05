@@ -10,6 +10,7 @@ from ocrd_utils import (
     VERSION as OCRD_VERSION
 )
 
+from ocrd_utils import getLogger
 from .resolver import Resolver
 from .processor.base import run_processor
 
@@ -22,6 +23,7 @@ loglevel_option = click.option('-l', '--log-level', help="Log level",
                                default=None, callback=_set_root_logger_version)
 
 def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
+    LOG = getLogger('ocrd_cli_wrap_processor')
     if dump_json:
         processorClass(workspace=None, dump_json=True)
     elif version:
@@ -29,12 +31,12 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
         print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:
         msg = 'Error: Missing option "-m" / "--mets".'
-        print(msg)
+        LOG.error(msg)
         raise Exception(msg)
     else:
         if is_local_filename(mets) and not isfile(get_local_filename(mets)):
             msg = "File does not exist: %s" % mets
-            print(msg)
+            LOG.error(msg)
             raise Exception(msg)
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)

@@ -34,7 +34,7 @@ class Resolver():
             directory (string): Directory to download files to
             basename (string, None): basename part of the filename on disk.
             url (string): URL to download from
-            if_exists (string, "skip"): Waht to do if target file already exists. One of ``skip`` (default), ``overwrite`` or ``raise``
+            if_exists (string, "skip"): What to do if target file already exists. One of ``skip`` (default), ``overwrite`` or ``raise``
             subdir (string, None): Subdirectory to create within the directory. Think fileGrp.
 
         Returns:
