@@ -404,8 +404,8 @@ class Workspace():
     # pylint: disable=redefined-builtin
     def save_image_file(self, image,
                         file_id,
+                        file_grp,
                         page_id=None,
-                        file_grp='OCR-D-IMG',  # or -BIN?
                         format='PNG',
                         force=True):
         """Store and reference an image as file into the workspace.
