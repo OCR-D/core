@@ -1,10 +1,13 @@
 from os.path import join, exists
+from pathlib import Path
+from filecmp import dircmp
 from shutil import copytree
 from tempfile import TemporaryDirectory
 
 from click.testing import CliRunner
 
-from tests.base import TestCase, main, assets # pylint: disable=import-error, no-name-in-module
+# pylint: disable=import-error, no-name-in-module
+from tests.base import TestCase, main, assets, copy_of_directory
 
 from ocrd_utils import initLogging
 from ocrd.cli.workspace import workspace_cli
@@ -98,7 +101,7 @@ class TestCli(TestCase):
             ])
             self.assertEqual(result.exit_code, 0)
 
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'remove', ID ])
+            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'remove', ID])
             self.assertEqual(result.exit_code, 0)
 
             # File should still exist
@@ -179,6 +182,27 @@ class TestCli(TestCase):
             self.assertEqual(len(workspace.mets.find_files()), 33)
             self.assertFalse(exists(file_path))
 
+    def test_copy_vs_clone(self):
+        src_dir = assets.path_to('kant_aufklaerung_1784/data')
+        with TemporaryDirectory() as tempdir:
+            shallowcloneddir = join(tempdir, 'cloned-shallow')
+            fullcloneddir = join(tempdir, 'cloned-all')
+            copieddir = Path(tempdir, 'copied')
+
+            Path(fullcloneddir).mkdir()
+            Path(shallowcloneddir).mkdir()
+
+            result = self.runner.invoke(workspace_cli, ['clone', join(src_dir, 'mets.xml'), shallowcloneddir])
+            self.assertEqual(result.exit_code, 0)
+
+            result = self.runner.invoke(workspace_cli, ['clone', '-a', join(src_dir, 'mets.xml'), fullcloneddir])
+            self.assertEqual(result.exit_code, 0)
+
+            with copy_of_directory(src_dir, copieddir):
+                shallow_vs_copied = dircmp(shallowcloneddir, copieddir)
+                full_vs_copied = dircmp(fullcloneddir, copieddir)
+                self.assertEqual(shallow_vs_copied.right_only, ['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG'])
+                self.assertEqual(full_vs_copied.diff_files, [])
 
 if __name__ == '__main__':
     main()
