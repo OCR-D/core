@@ -1,3 +1,4 @@
+import json
 import os
 from os.path import isfile
 
@@ -21,6 +22,28 @@ def _set_root_logger_version(ctx, param, value):    # pylint: disable=unused-arg
 loglevel_option = click.option('-l', '--log-level', help="Log level",
                                type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']),
                                default=None, callback=_set_root_logger_version)
+
+def _parse_json_string_or_file(ctx, param, value='{}'):    # pylint: disable=unused-argument
+    ret = None
+    err = None
+    try:
+        try:
+            with open(value, 'r') as f:
+                ret = json.load(f)
+        except FileNotFoundError:
+            ret = json.loads(value.strip())
+        if not isinstance(ret, dict):
+            err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, ret))
+    except json.decoder.JSONDecodeError as e:
+        err = ValueError("Error parsing '%s': %s" % (value, e))
+    if err:
+        raise err       # pylint: disable=raising-bad-type
+    return ret
+
+parameter_option = click.option('-p', '--parameter',
+                                help="Parameters, either JSON string or path to JSON file",
+                                default='{}',
+                                callback=_parse_json_string_or_file)
 
 def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
     LOG = getLogger('ocrd_cli_wrap_processor')
@@ -68,7 +91,7 @@ def ocrd_cli_options(f):
         click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
         click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         click.option('-g', '--page-id', help="ID(s) of the pages to process"),
-        click.option('-p', '--parameter', type=click.Path()),
+        parameter_option,
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         loglevel_option,
         click.option('-V', '--version', help="Show version", is_flag=True, default=False)

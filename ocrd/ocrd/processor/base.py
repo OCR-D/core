@@ -40,15 +40,6 @@ def run_processor(
         mets_url,
         working_dir
     )
-    if parameter:
-        if is_local_filename(parameter):
-            fname = os.path.abspath(get_local_filename(parameter))
-        else:
-            fname = workspace.download_url(parameter)
-        with open(fname, 'r') as param_json_file:
-            parameter = json.load(param_json_file)
-    else:
-        parameter = {}
     log.debug("Running processor %s", processorClass)
     processor = processorClass(
         workspace,

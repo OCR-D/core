@@ -9,6 +9,7 @@ Changed:
 
   * `-m/--mets` is not required anymore, #301
   * `ocrd workspace prune-files`: Throw on error removing non-existant file
+  * `-p/--parameter` argument accepts raw JSON as well now, #239
 
 Fixed:
 
