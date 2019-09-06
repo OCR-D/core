@@ -201,7 +201,7 @@ class TestCli(TestCase):
             with copy_of_directory(src_dir, copieddir):
                 shallow_vs_copied = dircmp(shallowcloneddir, copieddir)
                 full_vs_copied = dircmp(fullcloneddir, copieddir)
-                self.assertEqual(shallow_vs_copied.right_only, ['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG'])
+                self.assertEqual(set(shallow_vs_copied.right_only), set(['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG']))
                 self.assertEqual(full_vs_copied.diff_files, [])
 
 if __name__ == '__main__':
