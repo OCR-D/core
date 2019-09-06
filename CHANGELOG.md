@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b18] - 2019-09-06
+
 Changed:
 
   * `-m/--mets` is not required anymore, #301
