@@ -187,7 +187,7 @@ class TestCli(TestCase):
         with TemporaryDirectory() as tempdir:
             shallowcloneddir = join(tempdir, 'cloned-shallow')
             fullcloneddir = join(tempdir, 'cloned-all')
-            copieddir = Path(tempdir, 'copied')
+            copieddir = join(tempdir, 'copied')
 
             Path(fullcloneddir).mkdir()
             Path(shallowcloneddir).mkdir()
