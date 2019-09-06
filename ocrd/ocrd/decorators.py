@@ -1,11 +1,17 @@
 import json
 import os
+from os.path import isfile
 
 import click
 
-from ocrd_utils import VERSION as OCRD_VERSION
-from ocrd_utils.logging import setOverrideLogLevel
+from ocrd_utils import (
+    is_local_filename,
+    get_local_filename,
+    setOverrideLogLevel,
+    VERSION as OCRD_VERSION
+)
 
+from ocrd_utils import getLogger
 from .resolver import Resolver
 from .processor.base import run_processor
 
@@ -40,6 +46,7 @@ parameter_option = click.option('-p', '--parameter',
                                 callback=_parse_json_string_or_file)
 
 def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
+    LOG = getLogger('ocrd_cli_wrap_processor')
     if dump_json:
         processorClass(workspace=None, dump_json=True)
     elif version:
@@ -47,14 +54,12 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
         print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:
         msg = 'Error: Missing option "-m" / "--mets".'
-        print(msg)
+        LOG.error(msg)
         raise Exception(msg)
     else:
-        if mets.find('://') == -1:
-            mets = 'file://' + os.path.abspath(mets)
-        if mets.startswith('file://') and not os.path.exists(mets[len('file://'):]):
+        if is_local_filename(mets) and not isfile(get_local_filename(mets)):
             msg = "File does not exist: %s" % mets
-            print(msg)
+            LOG.error(msg)
             raise Exception(msg)
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)

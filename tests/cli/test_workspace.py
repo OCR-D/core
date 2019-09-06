@@ -6,7 +6,7 @@ from click.testing import CliRunner
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error, no-name-in-module
 
-from ocrd_utils.logging import initLogging
+from ocrd_utils import initLogging
 from ocrd.cli.workspace import workspace_cli
 from ocrd.resolver import Resolver
 
@@ -155,12 +155,14 @@ class TestCli(TestCase):
         Test removal of filegrp
         """
         with TemporaryDirectory() as tempdir:
-            copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
+            wsdir = join(tempdir, 'ws')
+            copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
             file_group = 'OCR-D-GT-PAGE'
             file_path = join(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT.xml')
             self.assertTrue(exists(file_path))
 
-            workspace = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
+            workspace = self.resolver.workspace_from_url(join(wsdir, 'mets.xml'))
+            self.assertEqual(workspace.directory, wsdir)
 
             with self.assertRaisesRegex(Exception, "not empty"):
                 workspace.remove_file_group(file_group)

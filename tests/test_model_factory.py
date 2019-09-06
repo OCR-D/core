@@ -34,12 +34,16 @@ class TestModelFactory(TestCase):
         self.assertEqual(p.get_Page().imageWidth, 1457)
 
     def test_page_from_file_no_local_filename(self):
-        with self.assertRaisesRegex(Exception, "input_file must have 'local_filename' property"):
+        with self.assertRaisesRegex(ValueError, "input_file must have 'local_filename' property"):
             page_from_file(OcrdFile(None, mimetype='image/tiff'))
 
+    def test_page_from_file_no_existe(self):
+        with self.assertRaisesRegex(FileNotFoundError, "File not found: 'no-existe'"):
+            page_from_file(OcrdFile(None, local_filename='no-existe', mimetype='foo/bar'))
+
     def test_page_from_file_unsupported_mimetype(self):
-        with self.assertRaisesRegex(Exception, "Unsupported mimetype"):
-            page_from_file(OcrdFile(None, mimetype='foo/bar'))
+        with self.assertRaisesRegex(ValueError, "Unsupported mimetype"):
+            page_from_file(OcrdFile(None, local_filename=__file__, mimetype='foo/bar'))
 
 if __name__ == '__main__':
     main()

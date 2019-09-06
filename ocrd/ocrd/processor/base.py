@@ -1,7 +1,7 @@
 import os
 import json
 import subprocess
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, is_local_filename, get_local_filename
 from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
@@ -121,6 +121,11 @@ class Processor(object):
         self.ocrd_tool = ocrd_tool
         self.version = version
         self.workspace = workspace
+        # FIXME HACK would be better to use pushd_popd(self.workspace.directory)
+        # but there is no way to do that in process here since it's an
+        # overridden method. chdir is almost always an anti-pattern.
+        if self.workspace:
+            os.chdir(self.workspace.directory)
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
         self.page_id = None if page_id == [] or page_id is None else page_id

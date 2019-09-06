@@ -1,5 +1,3 @@
-from os import chdir
-
 from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
 from ocrd.resolver import Resolver
 from ocrd_validators import PageValidator

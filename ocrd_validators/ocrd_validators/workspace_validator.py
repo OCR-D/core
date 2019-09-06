@@ -3,8 +3,9 @@ Validating a workspace.
 """
 import re
 
-from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd
+from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
 from ocrd_modelfactory import page_from_file
+
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
 from .page_validator import PageValidator
@@ -36,13 +37,13 @@ class WorkspaceValidator():
         self.skip = skip if skip else []
         log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
+        if mets_url is None and src_dir is not None:
+            mets_url = '%s/mets.xml' % src_dir
         self.mets_url = mets_url
         self.download = download
         self.page_strictness = page_strictness
 
         self.src_dir = src_dir
-        if mets_url is None and src_dir is not None:
-            mets_url = '%s/mets.xml' % src_dir
         self.workspace = None
         self.mets = None
 
@@ -70,22 +71,23 @@ class WorkspaceValidator():
         """
         try:
             self._resolve_workspace()
-            with pushd_popd(self.workspace.directory):
-                if 'mets_unique_identifier' not in self.skip:
-                    self._validate_mets_unique_identifier()
-                if 'mets_file_group_names' not in self.skip:
-                    self._validate_mets_file_group_names()
-                if 'mets_files' not in self.skip:
-                    self._validate_mets_files()
-                if 'pixel_density' not in self.skip:
-                    self._validate_pixel_density()
-                if 'dimension' not in self.skip:
-                    self._validate_dimension()
-                if 'page' not in self.skip:
-                    self._validate_page()
         except Exception as e: # pylint: disable=broad-except
+            log.warning("Failed to instantiate workspace: %s", e)
             self.report.add_error("Failed to instantiate workspace: %s" % e)
-            #  raise e
+            return self.report
+        with pushd_popd(self.workspace.directory):
+            if 'mets_unique_identifier' not in self.skip:
+                self._validate_mets_unique_identifier()
+            if 'mets_file_group_names' not in self.skip:
+                self._validate_mets_file_group_names()
+            if 'mets_files' not in self.skip:
+                self._validate_mets_files()
+            if 'pixel_density' not in self.skip:
+                self._validate_pixel_density()
+            if 'dimension' not in self.skip:
+                self._validate_dimension()
+            if 'page' not in self.skip:
+                self._validate_page()
         return self.report
 
     def _resolve_workspace(self):
@@ -93,7 +95,7 @@ class WorkspaceValidator():
         Clone workspace from mets_url unless workspace was provided.
         """
         if self.workspace is None:
-            self.workspace = self.resolver.workspace_from_url(self.mets_url, baseurl=self.src_dir, download=self.download)
+            self.workspace = self.resolver.workspace_from_url(self.mets_url, src_baseurl=self.src_dir, download=self.download)
             self.mets = self.workspace.mets
 
     def _validate_mets_unique_identifier(self):
@@ -127,7 +129,7 @@ class WorkspaceValidator():
         See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
         """
         for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
-            if not f.local_filename and not self.download:
+            if not is_local_filename(f.url) and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
                 continue
             exif = self.workspace.resolve_image_exif(f.url)

@@ -101,9 +101,9 @@ class TestWorkspaceValidator(TestCase):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url='file://%s' % imgpath)
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url=imgpath)
             workspace.save_mets()
-            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[])
+            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=False)
             self.assertEqual(len(report.errors), 0)
             self.assertEqual(len(report.warnings), 0)
             self.assertEqual(len(report.notices), 0)
@@ -113,7 +113,7 @@ class TestWorkspaceValidator(TestCase):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url='file://%s' % imgpath)
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url=imgpath)
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=True)
             self.assertEqual(len(report.errors), 2)
