@@ -1,6 +1,6 @@
 import io
-from os import makedirs, chdir, getcwd, unlink
-from os.path import join as pjoin, isdir
+from os import makedirs, unlink
+from pathlib import Path
 
 import cv2
 from PIL import Image
@@ -8,17 +8,17 @@ import numpy as np
 from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
-from ocrd_models import OcrdMets, OcrdExif
+from ocrd_models import OcrdMets, OcrdExif, OcrdFile
 from ocrd_utils import (
-    abspath,
     coordinates_of_segment,
     crop_image,
     getLogger,
     image_from_polygon,
-    is_local_filename,
     polygon_from_points,
     xywh_from_points,
     pushd_popd,
+
+    MIME_TO_EXT,
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -43,7 +43,7 @@ class Workspace():
     def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None):
         self.resolver = resolver
         self.directory = directory
-        self.mets_target = pjoin(directory, mets_basename)
+        self.mets_target = str(Path(directory, mets_basename))
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -57,8 +57,9 @@ class Workspace():
         }
 
     def __str__(self):
-        return 'Workspace[directory=%s, file_groups=%s, files=%s]' % (
+        return 'Workspace[directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
             self.directory,
+            self.baseurl,
             self.mets.file_groups,
             [str(f) for f in self.mets.find_files()],
         )
@@ -69,58 +70,65 @@ class Workspace():
         """
         self.mets = OcrdMets(filename=self.mets_target)
 
+
+    @deprecated(version='1.0.0', reason="Use workspace.download_file")
     def download_url(self, url, **kwargs):
         """
         Download a URL to the workspace.
 
         Args:
             url (string): URL to download to directory
-            **kwargs : See :py:mod:`ocrd.resolver.Resolver`
+            **kwargs : See :py:mod:`ocrd_models.ocrd_file.OcrdFile`
 
         Returns:
             The local filename of the downloaded file
         """
-        if self.baseurl and '://' not in url:
-            url = pjoin(self.baseurl, url)
-        return self.resolver.download_to_directory(self.directory, url, **kwargs)
+        f = OcrdFile(None, url=url, **kwargs)
+        f = self.download_file(f)
+        return f.local_filename
 
-    def download_file(self, f):
+
+    def download_file(self, f, _recursion_count=0):
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
-        #  os.chdir(self.directory)
-        #  log.info('f=%s' % f)
+        log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
-            if is_local_filename(f.url):
-                f.local_filename = abspath(f.url)
-            else:
-                if f.local_filename:
-                    log.debug("Already downloaded: %s", f.local_filename)
-                else:
-                    f.local_filename = self.download_url(f.url, basename='%s/%s' % (f.fileGrp, f.ID))
-
-        #  print(f)
-        return f
+            # XXX FIXME hacky
+            basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
+            try:
+                f.url = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
+            except FileNotFoundError as e:
+                if not self.baseurl:
+                    raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
+                if _recursion_count >= 1:
+                    raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
+                log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
+                f.url = '%s/%s' % (self.baseurl, f.url)
+                f.url = self.download_file(f, _recursion_count + 1).local_filename
+            # XXX FIXME HACK
+            f.local_filename = f.url
+            return f
 
     def remove_file(self, ID, force=False):
         """
         Remove a file from the workspace.
 
         Arguments:
-            ID (string): ID of the file to delete
+            ID (string|OcrdFile): ID of the file to delete or the file itself
             force (boolean): Whether to delete from disk as well
         """
         log.debug('Deleting mets:file %s', ID)
-        mets_file = self.mets.remove_file(ID)
+        ocrd_file = self.mets.remove_file(ID)
         if force:
-            if not mets_file:
+            if not ocrd_file:
                 raise Exception("File '%s' not found" % ID)
-            if not mets_file.local_filename:
-                raise Exception("File not locally available %s" % mets_file)
+            if not ocrd_file.local_filename:
+                raise Exception("File not locally available %s" % ocrd_file)
             with pushd_popd(self.directory):
-                log.info("rm %s [cwd=%s]", mets_file.local_filename, self.directory)
-                unlink(mets_file.local_filename)
-        return mets_file
+                log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                unlink(ocrd_file.local_filename)
+        return ocrd_file
 
     def remove_file_group(self, USE, recursive=False, force=False):
         """
@@ -153,12 +161,10 @@ class Workspace():
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
 
-        oldpwd = getcwd()
-        try:
-            chdir(self.directory)
+        with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-                if not isdir(local_filename_dir):
+                if not Path(local_filename_dir).is_dir():
                     makedirs(local_filename_dir)
                 if 'url' not in kwargs:
                     kwargs['url'] = kwargs['local_filename']
@@ -171,8 +177,6 @@ class Workspace():
                     if isinstance(content, str):
                         content = bytes(content, 'utf-8')
                     f.write(content)
-        finally:
-            chdir(oldpwd)
 
         return ret
 
@@ -180,7 +184,7 @@ class Workspace():
         """
         Write out the current state of the METS file.
         """
-        log.info("Saving mets '%s'" % self.mets_target)
+        log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
         with atomic_write(self.mets_target, overwrite=True) as f:
@@ -197,12 +201,11 @@ class Workspace():
             :class:`OcrdExif`
         """
         files = self.mets.find_files(url=image_url)
-        if files:
-            image_filename = self.download_file(files[0]).local_filename
-        else:
-            image_filename = self.download_url(image_url)
+        f = files[0] if files else OcrdFile(None, url=image_url)
+        image_filename = self.download_file(f).local_filename
 
         if image_url not in self.image_cache['exif']:
+            # FIXME must be in the right directory
             self.image_cache['exif'][image_url] = OcrdExif(Image.open(image_filename))
         return self.image_cache['exif'][image_url]
 
@@ -221,13 +224,12 @@ class Workspace():
             Image or region in image as PIL.Image
         """
         files = self.mets.find_files(url=image_url)
-        if files:
-            image_filename = self.download_file(files[0]).local_filename
-        else:
-            image_filename = self.download_url(image_url)
+        f = files[0] if files else OcrdFile(None, url=image_url)
+        image_filename = self.download_file(f).local_filename
 
         if image_url not in self.image_cache['pil']:
-            self.image_cache['pil'][image_url] = Image.open(image_filename)
+            with pushd_popd(self.directory):
+                self.image_cache['pil'][image_url] = Image.open(image_filename)
 
         pil_image = self.image_cache['pil'][image_url]
 
@@ -249,33 +251,33 @@ class Workspace():
 
     def image_from_page(self, page, page_id, feature_selector='', feature_filter=''):
         """Extract a Page image from the workspace.
-        
+
         Given a PageType object, ``page``, extract its PIL.Image from
         AlternativeImage if it exists. Otherwise extract the PIL.Image
         from imageFilename. Also crop it if a Border exists, and rotate
         it if an @orientation exists. Otherwise just return it.
-        
+
         If ``feature_selector`` and/or ``feature_filter`` is given, then
         select/filter among imageFilename and all AlternativeImages the
         last which contains all of the selected but none of the filtered
         features (i.e. @comments classes), or raise an error.
-        
+
         If the chosen image does not have "cropped", but a Border exists,
         then crop it (unless "cropped" is also being filtered). And if the
         chosen image does not have "deskewed", but an @orientation exists,
         then rotate it (unless "deskewed" is also being filtered).
-        
+
         Cropping uses a polygon mask (not just the rectangle).
-        
+
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
         ``feature_filter`` is merely a mask specifying Boolean OR.)
-        
+
         If the resulting page image is larger than the bounding box of
         ``page``, then in the returned bounding box, reduce the offset by
         half the width/height difference (so consumers being passed this
         image and offset will still crop relative to the original center).
-        
+
         Return a tuple:
          * the extracted image,
          * a dictionary with the absolute coordinates of the page's
@@ -285,7 +287,7 @@ class Workspace():
          * an OcrdExif instance associated with the original image.
         (The first two can be used to annotate a new AlternativeImage,
          or pass down with ``image_from_segment``.)
-        
+
         Example:
          * get a raw (colored) but already deskewed and cropped image:
            ``page_image, page_xywh, page_image_info = workspace.image_from_page(
@@ -389,32 +391,32 @@ class Workspace():
         which is logically contained in it, ``segment``, extract its
         PIL.Image from AlternativeImage if it exists. Otherwise produce
         an image via cropping from ``parent_image``.
-        
+
         If ``feature_selector`` and/or ``feature_filter`` is given, then
         select/filter among the cropped ``parent_image`` and the available
         AlternativeImages the last which contains all of the selected but none
         of the filtered features (i.e. @comments classes), or raise an error.
-        
+
         If the chosen AlternativeImage does not have "deskewed", but
         an @orientation exists, then rotate it (unless "deskewed" is
         also being filtered).
-        
+
         Regardless, respect any orientation angle annotated for the parent
         (from parent-level deskewing) by rotating the image, and compensating
         the segment coordinates in an inverse transformation (i.e. translation
         to center, passive rotation, re-translation).
-        
+
         Cropping uses a polygon mask (not just the rectangle).
-        
+
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
         ``feature_filter`` is merely a mask specifying Boolean OR.)
-        
+
         If the resulting segment image is larger than the bounding box of
         ``segment``, then in the returned bounding box, reduce the offset by
         half the width/height difference (so consumers being passed this
         image and offset will still crop relative to the original center).
-        
+
         Return a tuple:
          * the extracted image,
          * a dictionary with the absolute coordinates of the segment's
@@ -422,7 +424,7 @@ class Workspace():
            (features, i.e. of all operations that lead up to this result).
         (These can be used to create a new AlternativeImage, or pass down
          for calls on lower hierarchy levels.)
-        
+
         Example:
          * get a raw (colored) but already deskewed and cropped image:
            ``image, xywh = workspace.image_from_segment(region,
@@ -462,7 +464,7 @@ class Workspace():
             segment_xywh['angle'] = -(segment.get_orientation() or 0)
         # initialize AlternativeImage@comments classes from parent:
         segment_xywh['features'] = parent_xywh['features'] + ',cropped'
-        
+
         alternative_images = segment.get_AlternativeImage()
         if alternative_images:
             # (e.g. from segment-level cropping, binarization, deskewing or despeckling)
@@ -512,15 +514,17 @@ class Workspace():
                             'filter="%s" in segment "%s"' % (
                                 feature_filter, segment.id))
         # subtract offset from any increase in binary region size over source:
-        segment_xywh['x'] -= round(0.5 * max(0, segment_image.width  - segment_xywh['w']))
-        segment_xywh['y'] -= round(0.5 * max(0, segment_image.height - segment_xywh['h']))
+        segment_xywh['x'] -= round(0.5 * max(0,
+                                             segment_image.width - segment_xywh['w']))
+        segment_xywh['y'] -= round(0.5 * max(0,
+                                             segment_image.height - segment_xywh['h']))
         return segment_image, segment_xywh
 
     # pylint: disable=redefined-builtin
     def save_image_file(self, image,
                         file_id,
+                        file_grp,
                         page_id=None,
-                        file_grp='OCR-D-IMG', # or -BIN?
                         format='PNG',
                         force=True):
         """Store and reference an image as file into the workspace.
@@ -534,7 +538,7 @@ class Workspace():
         """
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
-        file_path = pjoin(file_grp, file_id + '.' + format.lower())
+        file_path = str(Path(file_grp, '%s.%s' % (file_id, format.lower())))
         out = self.add_file(
             ID=file_id,
             file_grp=file_grp,

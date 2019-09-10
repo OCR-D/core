@@ -1,11 +1,12 @@
 from datetime import datetime
-from tempfile import TemporaryDirectory
-from shutil import copytree
 from os.path import join
-from tests.base import TestCase, main, assets
+from tests.base import TestCase, main, assets, copy_of_directory
 
-from ocrd_utils import VERSION, MIMETYPE_PAGE
-from ocrd_utils.logging import initLogging
+from ocrd_utils import (
+    initLogging,
+    VERSION,
+    MIMETYPE_PAGE
+)
 from ocrd_models import OcrdMets
 
 # pylint: disable=protected-access,deprecated-method,too-many-public-methods
@@ -152,17 +153,16 @@ class TestOcrdMets(TestCase):
         """
         Test removal of filegrp
         """
-        with TemporaryDirectory() as tempdir:
-            copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
-            mets = OcrdMets(filename=join(tempdir, 'ws', 'mets.xml'))
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
             self.assertEqual(len(mets.file_groups), 17)
             self.assertEqual(len(mets.find_files()), 35)
-            print()
-            before = sorted([x.ID for x in mets.find_files()])
+            #  print()
+            #  before = sorted([x.ID for x in mets.find_files()])
             with self.assertRaisesRegex(Exception, "not empty"):
                 mets.remove_file_group('OCR-D-GT-ALTO')
             mets.remove_file_group('OCR-D-GT-PAGE', recursive=True)
-            print([x for x in before if x not in sorted([x.ID for x in mets.find_files()])])
+            #  print([x for x in before if x not in sorted([x.ID for x in mets.find_files()])])
             self.assertEqual(len(mets.file_groups), 16)
             self.assertEqual(len(mets.find_files()), 33)
 

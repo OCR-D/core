@@ -1,12 +1,16 @@
-from os import makedirs
-from os.path import exists, isfile, join, isdir, abspath, dirname
-from shutil import copyfile
 import tempfile
+from pathlib import Path
 
 import requests
 
 from ocrd.constants import TMP_PREFIX
-from ocrd_utils import getLogger, safe_filename, is_local_filename
+from ocrd_utils import (
+    getLogger,
+    is_local_filename,
+    get_local_filename,
+    remove_non_path_from_url,
+    nth_url_segment
+)
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
 
@@ -17,11 +21,11 @@ class Resolver():
     Handle Uploads, Downloads, Repository access and manage temporary directories
     """
 
-    def download_to_directory(self, directory, url, basename=None, overwrite=False, subdir=None):
+    def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None):
         """
-        Download a file to the workspace.
+        Download a file to a directory.
 
-        Early Shortcut: If url is a file://-URL and that file is already in the directory, keep it there.
+        Early Shortcut: If url is a local file and that file is already in the directory, keep it there.
 
         If basename is not given but subdir is, assume user knows what she's doing and use last URL segment as the basename.
         If basename is not given and no subdir is given, use the alnum characters in the URL as the basename.
@@ -30,62 +34,77 @@ class Resolver():
             directory (string): Directory to download files to
             basename (string, None): basename part of the filename on disk.
             url (string): URL to download from
-            overwrite (boolean): Whether to overwrite existing files with that name
+            if_exists (string, "skip"): What to do if target file already exists. One of ``skip`` (default), ``overwrite`` or ``raise``
             subdir (string, None): Subdirectory to create within the directory. Think fileGrp.
 
         Returns:
-            Local filename
+            Local filename, __relative__ to directory
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
-        log.debug("directory=|%s| url=|%s| basename=|%s| overwrite=|%s| subdir=|%s|", directory, url, basename, overwrite, subdir)
+        log.info("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
 
-        if url is None:
+        if not url:
             raise Exception("'url' must be a string")
-        if directory is None:
-            raise Exception("'directory' must be a string")
+        if not directory:
+            raise Exception("'directory' must be a string")  # acutally Path would also work
 
-        if basename is None:
-            if (subdir is not None) or \
-                (directory and url.startswith('file://%s' % directory)): # in case downloading a url 'file:///tmp/foo/bar' to directory '/tmp/foo'
-                basename = url.rsplit('/', 1)[-1]
-            else:
-                basename = safe_filename(url)
+        directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
+        directory = str(directory.resolve())
 
-        if subdir is not None:
-            basename = join(subdir, basename)
+        subdir_path = Path(subdir if subdir else '')
+        basename_path = Path(basename if basename else nth_url_segment(url))
+        ret = str(Path(subdir_path, basename_path))
+        dst_path = Path(directory, ret)
 
-        outfilename = join(directory, basename)
+        #  log.info("\n\tdst_path='%s \n\turl=%s", dst_path, url)
+        #  print('url=%s', url)
+        #  print('directory=%s', directory)
+        #  print('subdir_path=%s', subdir_path)
+        #  print('basename_path=%s', basename_path)
+        #  print('ret=%s', ret)
+        #  print('dst_path=%s', dst_path)
 
-        if exists(outfilename) and not overwrite:
-            log.debug("File already exists and overwrite=False: %s", outfilename)
-            return outfilename
+        src_path = None
+        if is_local_filename(url):
+            try:
+                # XXX this raises FNFE in Python 3.5 if src_path doesn't exist but not 3.6+
+                src_path = Path(get_local_filename(url)).resolve()
+            except FileNotFoundError as e:
+                log.error("Failed to resolve URL locally: %s --> %s which doesnt' exist" % (url, src_path))
+                raise e
+            if not src_path.exists():
+                raise FileNotFoundError("File path passed as 'url' to download_to_directory does not exist: %s" % url)
+            if src_path == dst_path:
+                log.debug("Stop early, src_path and dst_path are the same: '%s' (url: '%s')" % (src_path, url))
+                return ret
 
-        outfiledir = outfilename.rsplit('/', 1)[0]
-        #  print(outfiledir)
-        if not isdir(outfiledir):
-            makedirs(outfiledir)
+        # Respect 'if_exists' arg
+        if dst_path.exists():
+            if if_exists == 'skip':
+                return ret
+            if if_exists == 'raise':
+                raise FileExistsError("File already exists and if_exists == 'raise': %s" % (dst_path))
 
-        log.debug("Downloading <%s> to '%s'", url, outfilename)
-
-        # de-scheme file:// URL
-        if url.startswith('file://'):
-            url = url[len('file://'):]
+        # Create dst_path parent dir
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Copy files or download remote assets
-        if '://' not in url:
-            copyfile(url, outfilename)
+        if src_path:
+            log.debug("Copying file '%s' to '%s'", src_path, dst_path)
+            dst_path.write_bytes(src_path.read_bytes())
         else:
+            log.debug("Downloading URL '%s' to '%s'", url, dst_path)
             response = requests.get(url)
             if response.status_code != 200:
-                raise Exception("Not found: %s (HTTP %d)" % (url, response.status_code))
-            with open(outfilename, 'wb') as outfile:
-                outfile.write(response.content)
+                raise Exception("HTTP request failed: %s (HTTP %d)" % (url, response.status_code))
+            dst_path.write_bytes(response.content)
 
-        return outfilename
+        return ret
 
-    def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, baseurl=None):
+    def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, src_baseurl=None):
         """
-        Create a workspace from a METS by URL.
+        Create a workspace from a METS by URL (i.e. clone it).
 
         Sets the mets.xml file
 
@@ -94,55 +113,40 @@ class Resolver():
             dst_dir (string, None): Target directory for the workspace
             clobber_mets (boolean, False): Whether to overwrite existing mets.xml. By default existing mets.xml will raise an exception.
             download (boolean, False): Whether to download all the files
-            baseurl (string, None): Base URL for resolving relative file locations
+            src_baseurl (string, None): Base URL for resolving relative file locations
 
         Returns:
             Workspace
         """
-        if dst_dir and not dst_dir.startswith('/'):
-            dst_dir = abspath(dst_dir)
 
         if mets_url is None:
-            if baseurl is None:
-                raise Exception("Must pass mets_url and/or baseurl to workspace_from_url")
-            else:
-                mets_url = 'file://%s/%s' % (baseurl, mets_basename if mets_basename else 'mets.xml')
-        if baseurl is None:
-            baseurl = mets_url.rsplit('/', 1)[0]
-        log.debug("workspace_from_url\nmets_url='%s'\nbaseurl='%s'\ndst_dir='%s'", mets_url, baseurl, dst_dir)
-
-        # resolve to absolute
-        if '://' not in mets_url:
-            mets_url = 'file://%s' % abspath(mets_url)
-
-        if dst_dir is None:
-            # if mets_url is a file-url assume working directory is source directory
-            if mets_url.startswith('file://'):
-                # if dst_dir was not given and mets_url is a file assume that
-                # dst_dir should be the directory where the mets.xml resides
-                dst_dir = dirname(mets_url[len('file://'):])
-            else:
-                dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
-                log.debug("Creating workspace '%s' for METS @ <%s>", dst_dir, mets_url)
+            raise ValueError("Must pass 'mets_url' workspace_from_url")
 
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
-            mets_basename = mets_url \
-                .rsplit('/', 1)[-1] \
-                .split('?')[0] \
-                .split('#')[0]
+            mets_basename = nth_url_segment(mets_url, -1)
 
-        dst_mets = join(dst_dir, mets_basename)
-        log.debug("Copying mets url '%s' to '%s'", mets_url, dst_mets)
-        if 'file://' + dst_mets == mets_url:
-            log.debug("Target and source mets are identical")
-        else:
-            if exists(dst_mets) and not clobber_mets:
-                raise Exception("File '%s' already exists but clobber_mets is false" % dst_mets)
+        # If src_baseurl wasn't given, determine from mets_url by removing last url segment
+        if not src_baseurl:
+            last_segment = nth_url_segment(mets_url)
+            src_baseurl = remove_non_path_from_url(remove_non_path_from_url(mets_url)[:-len(last_segment)])
+
+        # resolve dst_dir
+        if not dst_dir:
+            if is_local_filename(mets_url):
+                log.debug("Deriving dst_dir %s from %s", Path(mets_url).parent, mets_url)
+                dst_dir = Path(mets_url).parent
             else:
-                self.download_to_directory(dst_dir, mets_url, basename=mets_basename)
+                log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
+                dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        dst_dir = str(Path(dst_dir).resolve())
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=baseurl)
+        log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
+            mets_basename, mets_url, src_baseurl, dst_dir)
+
+        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'raise')
+
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl)
 
         if download:
             for f in workspace.mets.find_files():
@@ -156,15 +160,12 @@ class Resolver():
         """
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
-        if not exists(directory):
-            makedirs(directory)
-
-        mets_fpath = join(directory, mets_basename)
-        if not clobber_mets and exists(mets_fpath):
-            raise Exception("Not clobbering existing mets.xml in '%s'." % directory)
+        Path(directory).mkdir(parents=True, exist_ok=True)
+        mets_path = Path(directory, mets_basename)
+        if mets_path.exists() and not clobber_mets:
+            raise FileExistsError("METS '%s' already exists in '%s' and clobber_mets not set." % (mets_basename, directory))
         mets = OcrdMets.empty_mets()
-        with open(mets_fpath, 'wb') as fmets:
-            log.info("Writing %s", mets_fpath)
-            fmets.write(mets.to_xml(xmllint=True))
+        log.info("Writing METS to%s", mets_path)
+        mets_path.write_bytes(mets.to_xml(xmllint=True))
 
         return Workspace(self, directory, mets)

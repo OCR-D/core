@@ -1,5 +1,3 @@
-from os import chdir
-
 from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
 from ocrd.resolver import Resolver
 from ocrd_validators import PageValidator
@@ -21,11 +19,11 @@ class TestPageValidator(TestCase):
             PageValidator(None, 'superstrictest', 'index1')
 
     def test_validate_filename(self):
-        report = PageValidator.validate(filename=assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'))
+        report = PageValidator.validate(filename=assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'))
         self.assertEqual(len(report.errors), 17, '17 errors')
 
     def test_validate_filename_off(self):
-        report = PageValidator.validate(filename=assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), strictness='off')
+        report = PageValidator.validate(filename=assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'), strictness='off')
         self.assertEqual(len(report.errors), 0, 'no errors')
 
     def test_validate_ocrd_file(self):
@@ -37,7 +35,7 @@ class TestPageValidator(TestCase):
             self.assertEqual(len(report.errors), 17, 'errors')
 
     def test_validate_lax(self):
-        ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE'), silence=True)
+        ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE.xml'), silence=True)
 
         # introduce a single word error (not just whitespace inconsistency)
         ocrd_page.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[1].get_TextEquiv()[0].set_Unicode('FOO')
@@ -46,7 +44,7 @@ class TestPageValidator(TestCase):
         self.assertEqual(len(PageValidator.validate(ocrd_page=ocrd_page, strictness='lax').errors), 1, '1 error - lax')
 
     def test_validate_multi_textequiv_index1(self):
-        ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE'), silence=True)
+        ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE.xml'), silence=True)
         self.assertEqual(len(PageValidator.validate(ocrd_page=ocrd_page).errors), 25, '25 errors - strict')
 
         word = ocrd_page.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[1]
@@ -64,7 +62,7 @@ class TestPageValidator(TestCase):
 
 
     def test_validate_multi_textequiv(self):
-        ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE'), silence=True)
+        ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE.xml'), silence=True)
         self.assertEqual(len(PageValidator.validate(ocrd_page=ocrd_page).errors), 25, '25 errors - strict')
 
         word = ocrd_page.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[1]
@@ -82,7 +80,7 @@ class TestPageValidator(TestCase):
 
 
     def test_fix(self):
-        ocrd_page = parse(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS'), silence=True)
+        ocrd_page = parse(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'), silence=True)
         report = PageValidator.validate(ocrd_page=ocrd_page)
         self.assertEqual(len(report.errors), 17, 'errors')
         PageValidator.validate(ocrd_page=ocrd_page, strictness='fix')

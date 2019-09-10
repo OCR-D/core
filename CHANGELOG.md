@@ -5,6 +5,30 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b18] - 2019-09-06
+
+Changed:
+
+  * `-m/--mets` is not required anymore, #301
+  * `ocrd workspace prune-files`: Throw on error removing non-existant file
+  * `-p/--parameter` argument accepts raw JSON as well now, #239
+
+Fixed:
+
+  * OcrdFile: Default fileGrp to `TEMP`
+  * OcrdFile: Accept url constructor arg
+  * Workspace: Simplify file download code, add extensions to files
+  * Processor: `chdir` to workspace directory on init so relative files resolve properly
+  * typos in docstrings
+  * README: 'module' -> 'package'
+  * workspace.image_from_page: logic with rotation/angle
+  * Adapted test suite to OCR-D/assets now with file extensions
+
+Added:
+
+  * utils: `MIME_TO_EXT` to map mime types to preferred extension
+  * Validation of imageHeight/imageWidth in PAGE vs. actual image height/width, #229
+
 ## [1.0.0b17] - 2019-08-21
 
 Fixed:

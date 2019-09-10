@@ -22,6 +22,7 @@ __all__ = [
     'logging',
     'getLogger',
     'getLevelName',
+    'initLogging',
     'setOverrideLogLevel'
 ]
 

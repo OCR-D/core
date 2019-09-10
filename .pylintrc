@@ -20,6 +20,7 @@ disable =
     ungrouped-imports,
     useless-object-inheritance,
     useless-import-alias,
+    bad-continuation,
     no-else-return,
     logging-not-lazy
 

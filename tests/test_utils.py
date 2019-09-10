@@ -11,8 +11,12 @@ from ocrd_utils import (
 
     concat_padded,
     is_local_filename,
+    get_local_filename,
     is_string,
     membername,
+
+    nth_url_segment,
+    remove_non_path_from_url,
 
     points_from_bbox,
     points_from_x0y0x1y1,
@@ -33,9 +37,6 @@ class TestUtils(TestCase):
 
     def test_abspath(self):
         self.assertEqual(abspath('file:///'), '/')
-
-    def test_is_local_filename(self):
-        self.assertEqual(is_local_filename('file:///'), True)
 
     def test_points_from_xywh(self):
         self.assertEqual(
@@ -125,7 +126,7 @@ class TestUtils(TestCase):
             6.1.0 yes
         """
         for _ in range(0, 10):
-            pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470'))
+            pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470.tif'))
             pil_image.crop(box=[1539, 202, 1626, 271])
 
     def test_pushd_popd(self):
@@ -134,6 +135,38 @@ class TestUtils(TestCase):
             self.assertEqual(getcwd(), '/tmp')
         self.assertEqual(getcwd(), cwd)
 
+    def test_is_local_filename(self):
+        self.assertTrue(is_local_filename('/foo/bar'))
+        self.assertTrue(is_local_filename('file:///foo/bar'))
+        self.assertTrue(is_local_filename('file:/foo/bar'))
+        self.assertTrue(is_local_filename('foo/bar'))
+        self.assertFalse(is_local_filename('bad-scheme://foo/bar'))
+
+    def test_local_filename(self):
+        self.assertEqual(get_local_filename('/foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('file:///foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('/foo/bar', '/foo/'), 'bar')
+        self.assertEqual(get_local_filename('/foo/bar', '/foo'), 'bar')
+        self.assertEqual(get_local_filename('foo/bar', 'foo'), 'bar')
+
+    def test_remove_non_path_from_url(self):
+        self.assertEqual(remove_non_path_from_url('https://foo/bar'), 'https://foo/bar')
+        self.assertEqual(remove_non_path_from_url('https://foo//?bar#frag'), 'https://foo')
+        self.assertEqual(remove_non_path_from_url('/path/to/foo#frag'), '/path/to/foo')
+
+    def test_nth_url_segment(self):
+        self.assertEqual(nth_url_segment(''), '')
+        self.assertEqual(nth_url_segment('foo'), 'foo')
+        self.assertEqual(nth_url_segment('foo', n=-1), 'foo')
+        self.assertEqual(nth_url_segment('foo', n=-2), '')
+        self.assertEqual(nth_url_segment('foo/bar', n=-2), 'foo')
+        self.assertEqual(nth_url_segment('/baz/bar', n=-2), 'baz')
+        self.assertEqual(nth_url_segment('foo/'), 'foo')
+        self.assertEqual(nth_url_segment('foo//?bar#frag'), 'foo')
+        self.assertEqual(nth_url_segment('/path/to/foo#frag'), 'foo')
+        self.assertEqual(nth_url_segment('/path/to/foo#frag', n=-2), 'to')
+        self.assertEqual(nth_url_segment('https://server/foo?xyz=zyx'), 'foo')
 
 if __name__ == '__main__':
     main()

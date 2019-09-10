@@ -14,7 +14,7 @@ from ..decorators import ocrd_loglevel
 # ----------------------------------------------------------------------
 @click.command('process')
 @ocrd_loglevel
-@click.option('-m', '--mets', help="METS to process", required=True)
+@click.option('-m', '--mets', help="METS to process", default="mets.xml")
 @click.option('-g', '--page-id', help="ID(s) of the pages to process")
 @click.argument('tasks', nargs=-1, required=True)
 def process_cli(log_level, mets, page_id, tasks):

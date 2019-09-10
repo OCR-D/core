@@ -6,7 +6,7 @@ from tempfile import mkdtemp
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, pushd_popd, is_local_filename
+from ocrd_utils import getLogger, pushd_popd
 from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
@@ -135,16 +135,14 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
     #  log.error(local_filename)
     if not local_filename.startswith(ctx.directory):
         log.debug("File '%s' is not in workspace, copying", local_filename)
-        local_filename = ctx.resolver.download_to_directory(ctx.directory, "file://" + local_filename, subdir=file_grp)
+        local_filename = ctx.resolver.download_to_directory(ctx.directory, local_filename, subdir=file_grp)
     local_filename = relpath(local_filename, ctx.directory)
-
-    url = local_filename
 
     workspace.mets.add_file(
         fileGrp=file_grp,
         ID=file_id,
         mimetype=mimetype,
-        url=url,
+        url=local_filename,
         pageId=page_id,
         force=force,
         local_filename=local_filename
@@ -244,10 +242,11 @@ def prune_files(ctx):
     with pushd_popd(workspace.directory):
         for f in workspace.mets.find_files():
             try:
-                if not exists(f.url):
+                if not f.local_filename or not exists(f.local_filename):
                     workspace.mets.remove_file(f.ID)
             except Exception as e:
-                log.debug(e)
+                log.exception("Error removing %f: %s", f, e)
+                raise(e)
         workspace.save_mets()
 
 # ----------------------------------------------------------------------
@@ -308,7 +307,7 @@ def get_id(ctx):
 """)
 @click.argument('ID')
 @pass_workspace
-def set_id(ctx, id):
+def set_id(ctx, id):   # pylint: disable=redefined-builtin
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     workspace.mets.unique_identifier = id
     workspace.save_mets()

@@ -2,48 +2,52 @@
 Utility functions and constants usable in various circumstances.
 
 * ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``
-   
-   These functions convert polygon outlines for PAGE elements on all hierarchy
-   levels (page, region, line, word, glyph) between relative coordinates w.r.t.
-   parent segment and absolute coordinates w.r.t. the top-level (source) image.
-   This includes rotation and offset correction.
-   
+
+    These functions convert polygon outlines for PAGE elements on all hierarchy
+    levels (page, region, line, word, glyph) between relative coordinates w.r.t.
+    parent segment and absolute coordinates w.r.t. the top-level (source) image.
+    This includes rotation and offset correction.
+
 * ``polygon_mask``, ``image_from_polygon``, ``crop_image``
-   
-   These functions combine PIL.Image with polygons or bboxes.
-   
+
+    These functions combine PIL.Image with polygons or bboxes.
+
 * ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points`` etc.
-   
+
    These functions have the syntax ``X_from_Y``, where ``X``/``Y`` can be
-   
+
     * ``bbox`` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
-      
+
       (used by PIL.Image)
     * ``points`` a string encoding a polygon: ``"0,0 100,0 100,100, 0,100"``
-      
+
       (used by PAGE-XML)
     * ``polygon`` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: ``[[0,0], [100,0], [100,100], [0,100]]``
-      
+
       (used by opencv2 and higher-level coordinate functions in ocrd_utils)
     * ``xywh`` a dict with keys for x, y, width and height: ``{'x': 0, 'y': 0, 'w': 100, 'h': 100}``
-      
+
       (produced by tesserocr and image/coordinate recursion methods in ocrd.workspace)
     * ``x0y0x1y1`` is a 4-list of strings ``x0``, ``y0``, ``x1``, ``y1`` of the bounding box (rectangle)
-      
+
       (produced by tesserocr)
     * ``y0x0y1x1`` is the same as ``x0y0x1y1`` with positions of ``x`` and ``y`` in the list swapped
 
-* ``is_local_filename``, ``safe_filename``, ``abspath``
-   
-   FS-related utilities
+* ``is_local_filename``, ``safe_filename``, ``abspath``, ``get_local_filename``
 
-* ``is_string``, ``membername``, ``concat_padded``
-   
-   String and OOP utilities
+    FS-related utilities
 
-* ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``VERSION``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``
 
-   Constants
+    String and OOP utilities
+
+* ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``MIME_TO_EXT``, ``VERSION``
+
+    Constants
+
+* ``logging``, ``setOverrideLogLevel``, ``getLevelName``, ``getLogger``, ``initLogging``
+
+    Exports of ocrd_utils.logging
 """
 
 __all__ = [
@@ -55,9 +59,13 @@ __all__ = [
     'coordinates_of_segment',
     'concat_padded',
     'crop_image',
+    'getLevelName',
     'getLogger',
+    'initLogging',
     'is_local_filename',
     'is_string',
+    'nth_url_segment',
+    'remove_non_path_from_url',
     'logging',
     'membername',
     'image_from_polygon',
@@ -73,6 +81,7 @@ __all__ = [
     'polygon_mask',
     'rotate_coordinates',
     'safe_filename',
+    'setOverrideLogLevel',
     'unzip_file_to_dir',
     'xywh_from_bbox',
     'xywh_from_points',
@@ -80,6 +89,7 @@ __all__ = [
     'VERSION',
     'MIMETYPE_PAGE',
     'EXT_TO_MIME',
+    'MIME_TO_EXT',
 ]
 
 import io
@@ -87,6 +97,7 @@ import re
 import sys
 import logging
 import os
+import re
 from os import getcwd, chdir
 from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
@@ -96,7 +107,7 @@ import numpy as np
 from PIL import Image, ImageStat, ImageDraw
 
 import logging
-from .logging import getLogger
+from .logging import * # pylint: disable=wildcard-import
 from .constants import *  # pylint: disable=wildcard-import
 
 LOG = getLogger('ocrd_utils')
@@ -195,7 +206,11 @@ def coordinates_of_segment(segment, parent_image, parent_xywh):
 
 @contextlib.contextmanager
 def pushd_popd(newcwd=None):
-    oldcwd = getcwd()
+    try:
+        oldcwd = getcwd()
+    except FileNotFoundError as e:
+        # This happens when a directory is deleted before the context is exited
+        oldcwd = '/tmp'
     try:
         if newcwd:
             chdir(newcwd)
@@ -214,6 +229,29 @@ def concat_padded(base, *args):
         else:
             ret = "%s_%04i"  % (ret, n + 1)
     return ret
+
+def remove_non_path_from_url(url):
+    """
+    Remove everything from URL after path.
+    """
+    url = url.split('?', 1)[0]    # query
+    url = url.split('#', 1)[0]    # fragment identifier
+    url = re.sub(r"/+$", "", url) # trailing slashes
+    return url
+
+def nth_url_segment(url, n=-1):
+    """
+    Return the last /-delimited segment of a URL-like string
+
+    Arguments:
+        url (string):
+        n (integer): index of segment, default: -1
+    """
+    segments = remove_non_path_from_url(url).split('/')
+    try:
+        return segments[n]
+    except IndexError:
+        return ''
 
 def crop_image(image, box=None):
     """"Crop an image to a rectangle, filling with background.
@@ -239,6 +277,30 @@ def crop_image(image, box=None):
                           background) # or 'white'
     new_image.paste(image, (-xywh['x'], -xywh['y']))
     return new_image
+
+def get_local_filename(url, start=None):
+    """
+    Return local filename, optionally relative to ``start``
+
+    Arguments:
+        url (string): filename or URL
+        start (string): Base path to remove from filename. Raise an exception if not a prefix of url
+    """
+    if url.startswith('https://') or url.startswith('http:'):
+        raise Exception("Can't determine local filename of http(s) URL")
+    if url.startswith('file://'):
+        url = url[len('file://'):]
+    # Goobi/Kitodo produces those, they are always absolute
+    if url.startswith('file:/'):
+        url = url[len('file:'):]
+    if start:
+        if not url.startswith(start):
+            raise Exception("Cannot remove prefix %s from url %s" % (start, url))
+        if not start.endswith('/'):
+            start += '/'
+        url = url[len(start):]
+    return url
+
 
 def image_from_polygon(image, polygon):
     """"Mask an image with a polygon.
@@ -266,11 +328,7 @@ def is_local_filename(url):
     """
     Whether a url is a local filename.
     """
-    if url.startswith('file://'):
-        return True
-    if isfile(url):
-        return True
-    return False
+    return url.startswith('file:/') or not('://' in url)
 
 def is_string(val):
     """
