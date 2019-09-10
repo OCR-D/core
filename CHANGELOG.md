@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+* Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS
+
 ## [1.0.0b19] - 2019-09-10
 
 * image_from_page: allow filtering by feature (@comment), #294
