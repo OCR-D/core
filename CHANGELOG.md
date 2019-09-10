@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.0b19] - 2019-09-10
+
+* image_from_page: allow filtering by feature (@comment), #294
+
 ## [1.0.0b18] - 2019-09-06
 
 Changed:
