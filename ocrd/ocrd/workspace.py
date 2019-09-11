@@ -3,7 +3,7 @@ from os import makedirs, unlink
 from pathlib import Path
 
 import cv2
-from PIL import Image
+from PIL import Image, ImageStat
 import numpy as np
 from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
@@ -359,12 +359,24 @@ class Workspace():
         if (page_xywh['angle'] and
             not 'deskewed' in page_xywh['features'] and
             not 'deskewed' in feature_filter.split(',')):
-            log.info("Rotating AlternativeImage for page '%s' by %.2f°",
-                     page_id, page_xywh['angle'])
+            log.info("Rotating %s for page '%s' by %.2f°",
+                     "AlternativeImage" if alternative_image else
+                     "image", page_id, page_xywh['angle'])
+            if page_image.mode in ['RGB', 'L']:
+                # ensure no information is lost by adding transparency
+                # (which rotation will respect):
+                page_image.putalpha(255)
+            background = ImageStat.Stat(page_image).median[0]
             page_image = page_image.rotate(page_xywh['angle'],
                                            expand=True,
                                            #resample=Image.BILINEAR,
-                                           fillcolor='white')
+                                           fillcolor=(
+                                               # background detection by median can fail
+                                               # if segments are very small or have lots
+                                               # of image foreground; if we already know
+                                               # this is binarized, fill with white:
+                                               'white' if page_image.mode == '1' else
+                                               background))
             page_xywh['features'] += ',deskewed'
         # verify constraints again:
         if not all(feature in page_xywh['features']
@@ -495,12 +507,24 @@ class Workspace():
             segment_xywh['angle'] and
             not 'deskewed' in segment_xywh['features'] and
             not 'deskewed' in feature_filter.split(',')):
-            log.info("Rotating AlternativeImage for segment '%s' by %.2f°",
-                     segment.id, segment_xywh['angle'])
+            log.info("Rotating %s for segment '%s' by %.2f°",
+                     "AlternativeImage" if alternative_image else
+                     "image", segment.id, segment_xywh['angle'])
+            if segment_image.mode in ['RGB', 'L']:
+                # ensure no information is lost by adding transparency
+                # (which rotation will respect):
+                segment_image.putalpha(255)
+            background = ImageStat.Stat(segment_image).median[0]
             segment_image = segment_image.rotate(segment_xywh['angle'],
                                                  expand=True,
                                                  #resample=Image.BILINEAR,
-                                                 fillcolor='white')
+                                                 fillcolor=(
+                                                     # background detection by median can fail
+                                                     # if segments are very small or have lots
+                                                     # of image foreground; if we already know
+                                                     # this is binarized, fill with white:
+                                                     'white' if page_image.mode == '1' else
+                                                     background))
             segment_xywh['features'] += ',deskewed'
         # verify constraints again:
         if not all(feature in segment_xywh['features']
