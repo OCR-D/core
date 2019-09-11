@@ -76,7 +76,7 @@ class TestWorkspaceValidator(TestCase):
             workspace.mets.unique_identifier = 'foobar'
             workspace.mets.add_file('OCR-D-GT-PAGE', ID='file1', mimetype='image/png')
             workspace.save_mets()
-            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
+            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density', 'imagefilename'])
             self.assertEqual(len(report.errors), 1)
             self.assertIn("does not manifest any physical page.", report.errors[0])
 
@@ -137,6 +137,7 @@ class TestWorkspaceValidator(TestCase):
                 'mets_file_group_names',
                 'mets_files',
                 'pixel_density',
+                'imagefilename',
             ]
         )
         self.assertTrue(report.is_valid)
@@ -148,13 +149,14 @@ class TestWorkspaceValidator(TestCase):
             with pushd_popd(wsdir):
                 os.system("""sed -i 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
                 report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'), src_dir=wsdir, skip=[
-                    'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density',
+                    'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename'
                     ], download=False)
                 self.assertIn("PAGE 'PAGE_0017_PAGE': @imageHeight != image's actual height (1234 != 2083)", report.errors)
+                print(report.errors)
                 self.assertEqual(len(report.errors), 1)
                 self.assertEqual(report.is_valid, False)
                 report2 = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'), src_dir=wsdir, skip=[
-                    'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density',
+                    'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename',
                     'dimension'
                     ], download=False)
             self.assertEqual(report2.is_valid, True)
@@ -162,9 +164,19 @@ class TestWorkspaceValidator(TestCase):
     def test_src_dir(self):
         report = WorkspaceValidator.validate(
             self.resolver, None, src_dir=assets.path_to('kant_aufklaerung_1784/data'),
+            skip=['imagefilename'],
             download=True,
         )
         self.assertEqual(len(report.errors), 42)
+
+    def test_imagefilename(self):
+        report = WorkspaceValidator.validate(
+            self.resolver, None, src_dir=assets.path_to('kant_aufklaerung_1784/data'),
+            skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density'],
+            download=False,
+        )
+        self.assertEqual(len(report.errors), 0)
+
 
 if __name__ == '__main__':
     main()
