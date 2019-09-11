@@ -5,7 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-* Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS
+* Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS, #309
+* `ocrd ocrd-tool parse-params` has the string-or-filepath logic for -p/--parameter as for the [CLI](https://ocr-d.github.io/cli#-p---parameter-param_json)
 
 ## [1.0.0b19] - 2019-09-10
 
