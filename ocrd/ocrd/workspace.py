@@ -343,7 +343,9 @@ class Workspace():
         if (border and
             not 'cropped' in page_xywh['features'] and
             not 'cropped' in feature_filter.split(',')):
-            log.debug('Cropping to border')
+            log.debug("Cropping %s for page '%s' to border", 
+                      "AlternativeImage" if alternative_image else
+                      "image", page_id)
             # get polygon outline of page border:
             page_polygon = np.array(polygon_from_points(page_points))
             # create a mask from the page polygon:

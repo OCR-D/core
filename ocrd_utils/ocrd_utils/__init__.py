@@ -320,7 +320,12 @@ def image_from_polygon(image, polygon):
     # background = np.median(array, axis=[0, 1], keepdims=True)
     # array = np.broadcast_to(background.astype(np.uint8), array.shape)
     background = ImageStat.Stat(image).median[0]
-    new_image = Image.new('L', image.size, background)
+    new_image = Image.new(image.mode, image.size, background)
+    if image.mode in ['RGB', 'L']:
+        # ensure no information is lost by adding transparency
+        # (so we do not have to rely on background estimation):
+        image.putalpha(mask)
+        return image
     new_image.paste(image, mask=mask)
     return new_image
 
