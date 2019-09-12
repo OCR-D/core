@@ -314,6 +314,7 @@ class Workspace():
         # initialize AlternativeImage@comments classes as empty:
         page_xywh['features'] = ''
 
+        alternative_image = None
         alternative_images = page.get_AlternativeImage()
         if alternative_images:
             # (e.g. from page-level cropping, binarization, deskewing or despeckling)
@@ -479,6 +480,7 @@ class Workspace():
         # initialize AlternativeImage@comments classes from parent:
         segment_xywh['features'] = parent_xywh['features'] + ',cropped'
 
+        alternative_image = None
         alternative_images = segment.get_AlternativeImage()
         if alternative_images:
             # (e.g. from segment-level cropping, binarization, deskewing or despeckling)
