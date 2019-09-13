@@ -76,6 +76,7 @@ generate-page: repo/assets
 	generateDS \
 		-f \
 		--root-element='PcGts' \
+		--export='write etree' \
 		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
 

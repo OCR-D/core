@@ -1,3 +1,5 @@
+from lxml.etree import _Element
+
 from tests.base import TestCase, main, assets
 
 from ocrd_models.ocrd_page import (
@@ -56,6 +58,16 @@ class TestOcrdPage(TestCase):
         #  with open('/tmp/test.xml', 'w') as f:
             #  f.write(to_xml(self.pcgts))
         self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
+
+    def test_parent(self):
+        page_obj = self.pcgts.get_Page()
+        #  self.assertIn(id(page_obj), self.pcgts.el2obj)
+        page_el = self.pcgts.obj2el[id(page_obj)]
+        self.assertEqual(type(page_el), _Element)
+        #  print(page_el)
+        #  print(self.pcgts.el2obj)
+        #  print(self.pcgts.obj2el)
+        #  self.assertEqual(
 
     def test_issue_269(self):
         """
