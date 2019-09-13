@@ -2,19 +2,20 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Aug  5 20:18:48 2019 by generateDS.py version 2.30.11.
+# Generated Fri Sep 13 12:02:52 2019 by generateDS.py version 2.30.11.
 # Python 3.6.6 (default, Jul 24 2018, 16:39:20)  [GCC 4.9.2]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
+#   ('--export', 'write etree')
 #   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
 #
 # Command line arguments:
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /data/monorepo/venv3.6/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" repo/assets/data/schema/data/2019.xsd
+#   /data/monorepo/venv3.6/bin/generateDS -f --root-element="PcGts" --export="write etree" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -936,6 +937,22 @@ class PcGtsType(GeneratedsSuper):
             self.Metadata.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Metadata', pretty_print=pretty_print)
         if self.Page is not None:
             self.Page.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Page', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PcGtsType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.pcGtsId is not None:
+            element.set('pcGtsId', self.gds_format_string(self.pcGtsId))
+        if self.Metadata is not None:
+            Metadata_ = self.Metadata
+            Metadata_.to_etree(element, name_='Metadata', mapping_=mapping_)
+        if self.Page is not None:
+            Page_ = self.Page
+            Page_.to_etree(element, name_='Page', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1092,6 +1109,33 @@ class MetadataType(GeneratedsSuper):
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for MetadataItem_ in self.MetadataItem:
             MetadataItem_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MetadataItem', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MetadataType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.externalRef is not None:
+            element.set('externalRef', self.gds_format_string(self.externalRef))
+        if self.Creator is not None:
+            Creator_ = self.Creator
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Creator').text = self.gds_format_string(Creator_)
+        if self.Created is not None:
+            Created_ = self.Created
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Created').text = self.gds_format_datetime(Created_)
+        if self.LastChange is not None:
+            LastChange_ = self.LastChange
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}LastChange').text = self.gds_format_datetime(LastChange_)
+        if self.Comments is not None:
+            Comments_ = self.Comments
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Comments').text = self.gds_format_string(Comments_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for MetadataItem_ in self.MetadataItem:
+            MetadataItem_.to_etree(element, name_='MetadataItem', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1241,6 +1285,24 @@ class MetadataItemType(GeneratedsSuper):
             eol_ = ''
         for Labels_ in self.Labels:
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MetadataItemType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.date is not None:
+            element.set('date', self.gds_format_datetime(self.date))
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1381,6 +1443,24 @@ class LabelsType(GeneratedsSuper):
             eol_ = ''
         for Label_ in self.Label:
             Label_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Label', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LabelsType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.externalModel is not None:
+            element.set('externalModel', self.gds_format_string(self.externalModel))
+        if self.externalId is not None:
+            element.set('externalId', self.gds_format_string(self.externalId))
+        if self.prefix is not None:
+            element.set('prefix', self.gds_format_string(self.prefix))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for Label_ in self.Label:
+            Label_.to_etree(element, name_='Label', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -1489,6 +1569,20 @@ class LabelType(GeneratedsSuper):
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='LabelType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2096,6 +2190,101 @@ class PageType(GeneratedsSuper):
             UnknownRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnknownRegion', pretty_print=pretty_print)
         for CustomRegion_ in self.CustomRegion:
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PageType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.imageFilename is not None:
+            element.set('imageFilename', self.gds_format_string(self.imageFilename))
+        if self.imageWidth is not None:
+            element.set('imageWidth', self.gds_format_integer(self.imageWidth))
+        if self.imageHeight is not None:
+            element.set('imageHeight', self.gds_format_integer(self.imageHeight))
+        if self.imageXResolution is not None:
+            element.set('imageXResolution', self.gds_format_float(self.imageXResolution))
+        if self.imageYResolution is not None:
+            element.set('imageYResolution', self.gds_format_float(self.imageYResolution))
+        if self.imageResolutionUnit is not None:
+            element.set('imageResolutionUnit', self.gds_format_string(self.imageResolutionUnit))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.primaryLanguage)
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.secondaryLanguage)
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.primaryScript)
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.secondaryScript)
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.readingDirection)
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.textLineOrder)
+        if self.conf is not None:
+            element.set('conf', self.conf)
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_)
+        if self.Border is not None:
+            Border_ = self.Border
+            Border_.to_etree(element, name_='Border', mapping_=mapping_)
+        if self.PrintSpace is not None:
+            PrintSpace_ = self.PrintSpace
+            PrintSpace_.to_etree(element, name_='PrintSpace', mapping_=mapping_)
+        if self.ReadingOrder is not None:
+            ReadingOrder_ = self.ReadingOrder
+            ReadingOrder_.to_etree(element, name_='ReadingOrder', mapping_=mapping_)
+        if self.Layers is not None:
+            Layers_ = self.Layers
+            Layers_.to_etree(element, name_='Layers', mapping_=mapping_)
+        if self.Relations is not None:
+            Relations_ = self.Relations
+            Relations_.to_etree(element, name_='Relations', mapping_=mapping_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        for TextRegion_ in self.TextRegion:
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_)
+        for ImageRegion_ in self.ImageRegion:
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_)
+        for LineDrawingRegion_ in self.LineDrawingRegion:
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_)
+        for GraphicRegion_ in self.GraphicRegion:
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_)
+        for TableRegion_ in self.TableRegion:
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_)
+        for ChartRegion_ in self.ChartRegion:
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_)
+        for MapRegion_ in self.MapRegion:
+            MapRegion_.to_etree(element, name_='MapRegion', mapping_=mapping_)
+        for SeparatorRegion_ in self.SeparatorRegion:
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_)
+        for MathsRegion_ in self.MathsRegion:
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_)
+        for ChemRegion_ in self.ChemRegion:
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_)
+        for MusicRegion_ in self.MusicRegion:
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_)
+        for AdvertRegion_ in self.AdvertRegion:
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_)
+        for NoiseRegion_ in self.NoiseRegion:
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_)
+        for UnknownRegion_ in self.UnknownRegion:
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_)
+        for CustomRegion_ in self.CustomRegion:
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2377,6 +2566,18 @@ class CoordsType(GeneratedsSuper):
             outfile.write(' conf=%s' % (quote_attrib(self.conf), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='CoordsType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.points is not None:
+            element.set('points', self.points)
+        if self.conf is not None:
+            element.set('conf', self.conf)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2635,6 +2836,52 @@ class TextLineType(GeneratedsSuper):
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TextLineType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.primaryLanguage)
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.primaryScript)
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.secondaryScript)
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.readingDirection)
+        if self.production is not None:
+            element.set('production', self.production)
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_)
+        if self.Baseline is not None:
+            Baseline_ = self.Baseline
+            Baseline_.to_etree(element, name_='Baseline', mapping_=mapping_)
+        for Word_ in self.Word:
+            Word_.to_etree(element, name_='Word', mapping_=mapping_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -2946,6 +3193,47 @@ class WordType(GeneratedsSuper):
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='WordType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.language is not None:
+            element.set('language', self.language)
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.primaryScript)
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.secondaryScript)
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.readingDirection)
+        if self.production is not None:
+            element.set('production', self.production)
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_)
+        for Glyph_ in self.Glyph:
+            Glyph_.to_etree(element, name_='Glyph', mapping_=mapping_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3222,6 +3510,46 @@ class GlyphType(GeneratedsSuper):
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GlyphType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.symbol is not None:
+            element.set('symbol', self.gds_format_boolean(self.symbol))
+        if self.script is not None:
+            element.set('script', self.script)
+        if self.production is not None:
+            element.set('production', self.production)
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_)
+        if self.Graphemes is not None:
+            Graphemes_ = self.Graphemes
+            Graphemes_.to_etree(element, name_='Graphemes', mapping_=mapping_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3422,6 +3750,30 @@ class TextEquivType(GeneratedsSuper):
         if self.Unicode is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%sUnicode>%s</%sUnicode>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Unicode), input_name='Unicode')), namespaceprefix_ , eol_))
+    def to_etree(self, parent_element=None, name_='TextEquivType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.conf is not None:
+            element.set('conf', self.conf)
+        if self.dataType is not None:
+            element.set('dataType', self.dataType)
+        if self.dataTypeDetails is not None:
+            element.set('dataTypeDetails', self.gds_format_string(self.dataTypeDetails))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.PlainText is not None:
+            PlainText_ = self.PlainText
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}PlainText').text = self.gds_format_string(PlainText_)
+        if self.Unicode is not None:
+            Unicode_ = self.Unicode
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Unicode').text = self.gds_format_string(Unicode_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3536,6 +3888,16 @@ class GridType(GeneratedsSuper):
             eol_ = ''
         for GridPoints_ in self.GridPoints:
             GridPoints_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GridPoints', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GridType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        for GridPoints_ in self.GridPoints:
+            GridPoints_.to_etree(element, name_='GridPoints', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3618,6 +3980,18 @@ class GridPointsType(GeneratedsSuper):
             outfile.write(' points=%s' % (quote_attrib(self.points), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='GridPointsType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.points is not None:
+            element.set('points', self.points)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3707,6 +4081,17 @@ class PrintSpaceType(GeneratedsSuper):
             eol_ = ''
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PrintSpaceType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3803,6 +4188,22 @@ class ReadingOrderType(GeneratedsSuper):
             self.OrderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
         if self.UnorderedGroup is not None:
             self.UnorderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ReadingOrderType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.conf is not None:
+            element.set('conf', self.conf)
+        if self.OrderedGroup is not None:
+            OrderedGroup_ = self.OrderedGroup
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_)
+        if self.UnorderedGroup is not None:
+            UnorderedGroup_ = self.UnorderedGroup
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -3894,6 +4295,18 @@ class RegionRefIndexedType(GeneratedsSuper):
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='RegionRefIndexedType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4122,6 +4535,41 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='OrderedGroupIndexedType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4404,6 +4852,41 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
         for UnorderedGroup_ in self.UnorderedGroup:
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnorderedGroupIndexedType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_)
+        for OrderedGroup_ in self.OrderedGroup:
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4536,6 +5019,16 @@ class RegionRefType(GeneratedsSuper):
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -4748,6 +5241,39 @@ class OrderedGroupType(GeneratedsSuper):
             OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5013,6 +5539,39 @@ class UnorderedGroupType(GeneratedsSuper):
             OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
         for UnorderedGroup_ in self.UnorderedGroup:
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_)
+        for OrderedGroup_ in self.OrderedGroup:
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5144,6 +5703,17 @@ class BorderType(GeneratedsSuper):
             eol_ = ''
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='BorderType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5235,6 +5805,16 @@ class LayersType(GeneratedsSuper):
             eol_ = ''
         for Layer_ in self.Layer:
             Layer_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layer', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LayersType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        for Layer_ in self.Layer:
+            Layer_.to_etree(element, name_='Layer', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5346,6 +5926,22 @@ class LayerType(GeneratedsSuper):
             eol_ = ''
         for RegionRef_ in self.RegionRef:
             RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LayerType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.zIndex is not None:
+            element.set('zIndex', self.gds_format_integer(self.zIndex))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5442,6 +6038,18 @@ class BaselineType(GeneratedsSuper):
             outfile.write(' conf=%s' % (quote_attrib(self.conf), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='BaselineType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.points is not None:
+            element.set('points', self.points)
+        if self.conf is not None:
+            element.set('conf', self.conf)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5535,6 +6143,16 @@ class RelationsType(GeneratedsSuper):
             eol_ = ''
         for Relation_ in self.Relation:
             Relation_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relation', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RelationsType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        for Relation_ in self.Relation:
+            Relation_.to_etree(element, name_='Relation', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5682,6 +6300,30 @@ class RelationType(GeneratedsSuper):
             self.SourceRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SourceRegionRef', pretty_print=pretty_print)
         if self.TargetRegionRef is not None:
             self.TargetRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TargetRegionRef', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RelationType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        if self.SourceRegionRef is not None:
+            SourceRegionRef_ = self.SourceRegionRef
+            SourceRegionRef_.to_etree(element, name_='SourceRegionRef', mapping_=mapping_)
+        if self.TargetRegionRef is not None:
+            TargetRegionRef_ = self.TargetRegionRef
+            TargetRegionRef_.to_etree(element, name_='TargetRegionRef', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -5953,6 +6595,56 @@ class TextStyleType(GeneratedsSuper):
             outfile.write(' letterSpaced="%s"' % self.gds_format_boolean(self.letterSpaced, input_name='letterSpaced'))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='TextStyleType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.fontFamily is not None:
+            element.set('fontFamily', self.gds_format_string(self.fontFamily))
+        if self.serif is not None:
+            element.set('serif', self.gds_format_boolean(self.serif))
+        if self.monospace is not None:
+            element.set('monospace', self.gds_format_boolean(self.monospace))
+        if self.fontSize is not None:
+            element.set('fontSize', self.gds_format_float(self.fontSize))
+        if self.xHeight is not None:
+            element.set('xHeight', self.gds_format_integer(self.xHeight))
+        if self.kerning is not None:
+            element.set('kerning', self.gds_format_integer(self.kerning))
+        if self.textColour is not None:
+            element.set('textColour', self.textColour)
+        if self.textColourRgb is not None:
+            element.set('textColourRgb', self.gds_format_integer(self.textColourRgb))
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if self.bgColourRgb is not None:
+            element.set('bgColourRgb', self.gds_format_integer(self.bgColourRgb))
+        if self.reverseVideo is not None:
+            element.set('reverseVideo', self.gds_format_boolean(self.reverseVideo))
+        if self.bold is not None:
+            element.set('bold', self.gds_format_boolean(self.bold))
+        if self.italic is not None:
+            element.set('italic', self.gds_format_boolean(self.italic))
+        if self.underlined is not None:
+            element.set('underlined', self.gds_format_boolean(self.underlined))
+        if self.underlineStyle is not None:
+            element.set('underlineStyle', self.underlineStyle)
+        if self.doubleUnderlined is not None:
+            element.set('doubleUnderlined', self.gds_format_boolean(self.doubleUnderlined))
+        if self.subscript is not None:
+            element.set('subscript', self.gds_format_boolean(self.subscript))
+        if self.superscript is not None:
+            element.set('superscript', self.gds_format_boolean(self.superscript))
+        if self.strikethrough is not None:
+            element.set('strikethrough', self.gds_format_boolean(self.strikethrough))
+        if self.smallCaps is not None:
+            element.set('smallCaps', self.gds_format_boolean(self.smallCaps))
+        if self.letterSpaced is not None:
+            element.set('letterSpaced', self.gds_format_boolean(self.letterSpaced))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6544,6 +7236,65 @@ class RegionType(GeneratedsSuper):
             UnknownRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnknownRegion', pretty_print=pretty_print)
         for CustomRegion_ in self.CustomRegion:
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RegionType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_)
+        if self.Roles is not None:
+            Roles_ = self.Roles
+            Roles_.to_etree(element, name_='Roles', mapping_=mapping_)
+        for TextRegion_ in self.TextRegion:
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_)
+        for ImageRegion_ in self.ImageRegion:
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_)
+        for LineDrawingRegion_ in self.LineDrawingRegion:
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_)
+        for GraphicRegion_ in self.GraphicRegion:
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_)
+        for TableRegion_ in self.TableRegion:
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_)
+        for ChartRegion_ in self.ChartRegion:
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_)
+        for SeparatorRegion_ in self.SeparatorRegion:
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_)
+        for MathsRegion_ in self.MathsRegion:
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_)
+        for ChemRegion_ in self.ChemRegion:
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_)
+        for MusicRegion_ in self.MusicRegion:
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_)
+        for AdvertRegion_ in self.AdvertRegion:
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_)
+        for NoiseRegion_ in self.NoiseRegion:
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_)
+        for UnknownRegion_ in self.UnknownRegion:
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_)
+        for CustomRegion_ in self.CustomRegion:
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6748,6 +7499,20 @@ class AlternativeImageType(GeneratedsSuper):
             outfile.write(' conf=%s' % (quote_attrib(self.conf), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='AlternativeImageType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.filename is not None:
+            element.set('filename', self.gds_format_string(self.filename))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.conf is not None:
+            element.set('conf', self.conf)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -6883,6 +7648,20 @@ class GraphemesType(GeneratedsSuper):
             NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
         for GraphemeGroup_ in self.GraphemeGroup:
             GraphemeGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphemeGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemesType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        for Grapheme_ in self.Grapheme:
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_)
+        for NonPrintingChar_ in self.NonPrintingChar:
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_)
+        for GraphemeGroup_ in self.GraphemeGroup:
+            GraphemeGroup_.to_etree(element, name_='GraphemeGroup', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7041,6 +7820,30 @@ class GraphemeBaseType(GeneratedsSuper):
             eol_ = ''
         for TextEquiv_ in self.TextEquiv:
             TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeBaseType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.charType is not None:
+            element.set('charType', self.gds_format_string(self.charType))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7158,6 +7961,14 @@ class GraphemeType(GraphemeBaseType):
             eol_ = ''
         if self.Coords is not None:
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeType', mapping_=None):
+        element = super(GraphemeType, self).to_etree(parent_element, name_, mapping_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7230,6 +8041,11 @@ class NonPrintingCharType(GraphemeBaseType):
         super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
         super(NonPrintingCharType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NonPrintingCharType', mapping_=None):
+        element = super(NonPrintingCharType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7337,6 +8153,15 @@ class GraphemeGroupType(GraphemeBaseType):
             Grapheme_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grapheme', pretty_print=pretty_print)
         for NonPrintingChar_ in self.NonPrintingChar:
             NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeGroupType', mapping_=None):
+        element = super(GraphemeGroupType, self).to_etree(parent_element, name_, mapping_)
+        for Grapheme_ in self.Grapheme:
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_)
+        for NonPrintingChar_ in self.NonPrintingChar:
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7432,6 +8257,16 @@ class UserDefinedType(GeneratedsSuper):
             eol_ = ''
         for UserAttribute_ in self.UserAttribute:
             UserAttribute_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserAttribute', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UserDefinedType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        for UserAttribute_ in self.UserAttribute:
+            UserAttribute_.to_etree(element, name_='UserAttribute', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7530,6 +8365,22 @@ class UserAttributeType(GeneratedsSuper):
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='UserAttributeType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.description is not None:
+            element.set('description', self.gds_format_string(self.description))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7650,6 +8501,24 @@ class TableCellRoleType(GeneratedsSuper):
             outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='TableCellRoleType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.rowIndex is not None:
+            element.set('rowIndex', self.gds_format_integer(self.rowIndex))
+        if self.columnIndex is not None:
+            element.set('columnIndex', self.gds_format_integer(self.columnIndex))
+        if self.rowSpan is not None:
+            element.set('rowSpan', self.gds_format_integer(self.rowSpan))
+        if self.colSpan is not None:
+            element.set('colSpan', self.gds_format_integer(self.colSpan))
+        if self.header is not None:
+            element.set('header', self.gds_format_boolean(self.header))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7759,6 +8628,17 @@ class RolesType(GeneratedsSuper):
             eol_ = ''
         if self.TableCellRole is not None:
             self.TableCellRole.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableCellRole', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RolesType', mapping_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_)
+        if self.TableCellRole is not None:
+            TableCellRole_ = self.TableCellRole
+            TableCellRole_.to_etree(element, name_='TableCellRole', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7839,6 +8719,13 @@ class CustomRegionType(RegionType):
             outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='CustomRegionType', fromsubclass_=False, pretty_print=True):
         super(CustomRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='CustomRegionType', mapping_=None):
+        element = super(CustomRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7909,6 +8796,11 @@ class UnknownRegionType(RegionType):
         super(UnknownRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
         super(UnknownRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnknownRegionType', mapping_=None):
+        element = super(UnknownRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -7976,6 +8868,11 @@ class NoiseRegionType(RegionType):
         super(NoiseRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
         super(NoiseRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NoiseRegionType', mapping_=None):
+        element = super(NoiseRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8062,6 +8959,15 @@ class AdvertRegionType(RegionType):
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
         super(AdvertRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='AdvertRegionType', mapping_=None):
+        element = super(AdvertRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8159,6 +9065,15 @@ class MusicRegionType(RegionType):
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
         super(MusicRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MusicRegionType', mapping_=None):
+        element = super(MusicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8247,6 +9162,13 @@ class MapRegionType(RegionType):
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
         super(MapRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MapRegionType', mapping_=None):
+        element = super(MapRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8340,6 +9262,15 @@ class ChemRegionType(RegionType):
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
         super(ChemRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChemRegionType', mapping_=None):
+        element = super(ChemRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8438,6 +9369,15 @@ class MathsRegionType(RegionType):
             outfile.write(' bgColour=%s' % (quote_attrib(self.bgColour), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
         super(MathsRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MathsRegionType', mapping_=None):
+        element = super(MathsRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8536,6 +9476,15 @@ class SeparatorRegionType(RegionType):
             outfile.write(' colour=%s' % (quote_attrib(self.colour), ))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
         super(SeparatorRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='SeparatorRegionType', mapping_=None):
+        element = super(SeparatorRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colour is not None:
+            element.set('colour', self.colour)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8660,6 +9609,21 @@ class ChartRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
         super(ChartRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChartRegionType', mapping_=None):
+        element = super(ChartRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8834,6 +9798,28 @@ class TableRegionType(RegionType):
             eol_ = ''
         if self.Grid is not None:
             self.Grid.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grid', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TableRegionType', mapping_=None):
+        element = super(TableRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.rows is not None:
+            element.set('rows', self.gds_format_integer(self.rows))
+        if self.columns is not None:
+            element.set('columns', self.gds_format_integer(self.columns))
+        if self.lineColour is not None:
+            element.set('lineColour', self.lineColour)
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if self.lineSeparators is not None:
+            element.set('lineSeparators', self.gds_format_boolean(self.lineSeparators))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if self.Grid is not None:
+            Grid_ = self.Grid
+            Grid_.to_etree(element, name_='Grid', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -8990,6 +9976,19 @@ class GraphicRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
         super(GraphicRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphicRegionType', mapping_=None):
+        element = super(GraphicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -9121,6 +10120,19 @@ class LineDrawingRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
         super(LineDrawingRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LineDrawingRegionType', mapping_=None):
+        element = super(LineDrawingRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.penColour is not None:
+            element.set('penColour', self.penColour)
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -9249,6 +10261,19 @@ class ImageRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='pc:', namespacedef_='', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
         super(ImageRegionType, self).exportChildren(outfile, level, namespaceprefix_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ImageRegionType', mapping_=None):
+        element = super(ImageRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colourDepth is not None:
+            element.set('colourDepth', self.colourDepth)
+        if self.bgColour is not None:
+            element.set('bgColour', self.bgColour)
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
@@ -9512,6 +10537,44 @@ class TextRegionType(RegionType):
             TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
         if self.TextStyle is not None:
             self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TextRegionType', mapping_=None):
+        element = super(TextRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.type_)
+        if self.leading is not None:
+            element.set('leading', self.gds_format_integer(self.leading))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.readingDirection)
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.textLineOrder)
+        if self.readingOrientation is not None:
+            element.set('readingOrientation', self.gds_format_float(self.readingOrientation))
+        if self.indented is not None:
+            element.set('indented', self.gds_format_boolean(self.indented))
+        if self.align is not None:
+            element.set('align', self.align)
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.primaryLanguage)
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.secondaryLanguage)
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.primaryScript)
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.secondaryScript)
+        if self.production is not None:
+            element.set('production', self.production)
+        for TextLine_ in self.TextLine:
+            TextLine_.to_etree(element, name_='TextLine', mapping_=mapping_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node):
         already_processed = set()
         self.buildAttributes(node, node.attrib, already_processed)
