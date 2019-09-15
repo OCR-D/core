@@ -78,7 +78,7 @@ class WorkspaceBagger():
                 if not isdir(file_grp_dir):
                     makedirs(file_grp_dir)
                 self.resolver.download_to_directory(file_grp_dir, f.url, basename="%s%s" % (f.ID, f.extension))
-                f.url = join(f.fileGrp, f.ID)
+                f.url = join(f.fileGrp, f.ID + f.extension)
 
             # save mets.xml
             with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
