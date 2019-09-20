@@ -104,7 +104,7 @@ from zipfile import ZipFile
 import contextlib
 
 import numpy as np
-from PIL import Image, ImageStat, ImageDraw
+from PIL import Image, ImageStat, ImageDraw, ImageChops
 
 import logging
 from .logging import * # pylint: disable=wildcard-import
@@ -301,31 +301,37 @@ def get_local_filename(url, start=None):
         url = url[len(start):]
     return url
 
-
-def image_from_polygon(image, polygon):
+def image_from_polygon(image, polygon, fill='transparent'):
     """"Mask an image with a polygon.
 
     Given a PIL.Image ``image`` and a numpy array ``polygon``
-    of relative coordinates into the image, put everything
-    outside the polygon hull to the background. Since ``image``
-    is not necessarily binarized yet, determine the background
-    from the median color (instead of white).
-
+    of relative coordinates into the image, fill everything
+    outside the polygon hull to a color according to ``fill``:
+    - if ``background`` (the default), then use the median color
+      of the image;
+    - if ``white``, then use white;
+    - if ``transparent``, then add a transparency channel from
+      the polygon mask (i.e. everything outside the polygon will
+      be transparent).
+    
     Return a new PIL.Image.
     """
     mask = polygon_mask(image, polygon)
-    # create a background image from its median color
-    # (in case it has not been binarized yet):
-    # array = np.asarray(image)
-    # background = np.median(array, axis=[0, 1], keepdims=True)
-    # array = np.broadcast_to(background.astype(np.uint8), array.shape)
-    background = ImageStat.Stat(image).median[0]
+    if fill == 'transparent' and image.mode in ['RGB', 'L', 'RGBA', 'LA']:
+        # ensure no information is lost by adding transparency channel
+        # initialized to fully transparent outside the mask
+        # (so consumers do not have to rely on background estimation):
+        # ensure transparency maximizes (i.e. parent mask AND mask):
+        if image.mode in ['RGBA', 'LA']:
+            mask = ImageChops.darker(mask, image.getchannel('A')) # min opaque
+        new_image = image.copy()
+        new_image.putalpha(mask)
+        return new_image
+    if fill == 'background':
+        background = ImageStat.Stat(image).median[0]
+    else:
+        background = 'white'
     new_image = Image.new(image.mode, image.size, background)
-    if image.mode in ['RGB', 'L']:
-        # ensure no information is lost by adding transparency
-        # (so we do not have to rely on background estimation):
-        image.putalpha(mask)
-        return image
     new_image.paste(image, mask=mask)
     return new_image
 

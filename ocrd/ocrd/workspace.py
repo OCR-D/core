@@ -249,7 +249,7 @@ class Workspace():
         ]
         return Image.fromarray(region_cut)
 
-    def image_from_page(self, page, page_id, feature_selector='', feature_filter=''):
+    def image_from_page(self, page, page_id, fill='transparent', feature_selector='', feature_filter=''):
         """Extract a Page image from the workspace.
 
         Given a PageType object, ``page``, extract its PIL.Image from
@@ -267,7 +267,15 @@ class Workspace():
         chosen image does not have "deskewed", but an @orientation exists,
         then rotate it (unless "deskewed" is also being filtered).
 
-        Cropping uses a polygon mask (not just the rectangle).
+        Cropping uses a polygon mask (not just the rectangle). Areas outside
+        the polygon (regardless of cropping and deskewing) will be filled
+        according to ``fill``:
+        - if ``background`` (the default), then fill with the median color
+          of the image;
+        - if ``white``, then fill with white;
+        - if ``transparent``, then add a transparency channel which is
+          fully opaque before cropping and rotating (thus only the exposed
+          areas will be transparent afterwards).
 
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
@@ -350,7 +358,7 @@ class Workspace():
             # get polygon outline of page border:
             page_polygon = np.array(polygon_from_points(page_points))
             # create a mask from the page polygon:
-            page_image = image_from_polygon(page_image, page_polygon)
+            page_image = image_from_polygon(page_image, page_polygon, fill=fill)
             # recrop into page rectangle:
             page_image = crop_image(page_image,
                                     box=(page_xywh['x'],
@@ -365,21 +373,21 @@ class Workspace():
             log.info("Rotating %s for page '%s' by %.2f°",
                      "AlternativeImage" if alternative_image else
                      "image", page_id, page_xywh['angle'])
-            if page_image.mode in ['RGB', 'L']:
-                # ensure no information is lost by adding transparency
-                # (which rotation will respect):
-                page_image.putalpha(255)
-            background = ImageStat.Stat(page_image).median[0]
+            if fill == 'transparent':
+                if page_image.mode in ['RGB', 'L']:
+                    # ensure no information is lost by adding transparency channel
+                    # initialized to fully opaque (so cropping and rotation will
+                    # expose areas as transparent):
+                    page_image.putalpha(255)
+                background = 0
+            elif fill == 'background':
+                background = ImageStat.Stat(page_image).median[0]
+            else:
+                background = 'white'
             page_image = page_image.rotate(page_xywh['angle'],
                                            expand=True,
                                            #resample=Image.BILINEAR,
-                                           fillcolor=(
-                                               # background detection by median can fail
-                                               # if segments are very small or have lots
-                                               # of image foreground; if we already know
-                                               # this is binarized, fill with white:
-                                               'white' if page_image.mode == '1' else
-                                               background))
+                                           fillcolor=background)
             page_xywh['features'] += ',deskewed'
         # verify constraints again:
         if not all(feature in page_xywh['features']
@@ -395,9 +403,10 @@ class Workspace():
         # subtract offset from any increase in binary region size over source:
         page_xywh['x'] -= round(0.5 * max(0, page_image.width  - page_xywh['w']))
         page_xywh['y'] -= round(0.5 * max(0, page_image.height - page_xywh['h']))
+        page_image.format = 'PNG' # workaround for tesserocr#194
         return page_image, page_xywh, page_image_info
 
-    def image_from_segment(self, segment, parent_image, parent_xywh, feature_selector='', feature_filter=''):
+    def image_from_segment(self, segment, parent_image, parent_xywh, fill='transparent', feature_selector='', feature_filter=''):
         """Extract a segment image from its parent's image.
 
         Given a PIL.Image of the parent, ``parent_image``, with its
@@ -421,8 +430,16 @@ class Workspace():
         the segment coordinates in an inverse transformation (i.e. translation
         to center, passive rotation, re-translation).
 
-        Cropping uses a polygon mask (not just the rectangle).
-
+        Cropping uses a polygon mask (not just the rectangle). Areas outside
+        the polygon (regardless of cropping and deskewing) will be filled
+        according to ``fill``:
+        - if ``background`` (the default), then fill with the median color
+          of the image;
+        - if ``white``, then fill with white;
+        - if ``transparent``, then add a transparency channel which is
+          fully opaque before cropping and rotating (thus only the exposed
+          areas will be transparent afterwards).
+        
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
         ``feature_filter`` is merely a mask specifying Boolean OR.)
@@ -466,7 +483,7 @@ class Workspace():
         # get polygon outline of segment relative to parent image:
         segment_polygon = coordinates_of_segment(segment, parent_image, parent_xywh)
         # create a mask from the segment polygon:
-        segment_image = image_from_polygon(parent_image, segment_polygon)
+        segment_image = image_from_polygon(parent_image, segment_polygon, fill=fill)
         # recrop into segment rectangle:
         segment_image = crop_image(segment_image,
                                    box=(segment_xywh['x'] - parent_xywh['x'],
@@ -514,21 +531,21 @@ class Workspace():
             log.info("Rotating %s for segment '%s' by %.2f°",
                      "AlternativeImage" if alternative_image else
                      "image", segment.id, segment_xywh['angle'])
-            if segment_image.mode in ['RGB', 'L']:
-                # ensure no information is lost by adding transparency
-                # (which rotation will respect):
-                segment_image.putalpha(255)
-            background = ImageStat.Stat(segment_image).median[0]
+            if fill == 'transparent':
+                if segment_image.mode in ['RGB', 'L']:
+                    # ensure no information is lost by adding transparency channel
+                    # initialized to fully opaque (so cropping and rotation will
+                    # expose areas as transparent):
+                    segment_image.putalpha(255)
+                background = 0
+            elif fill == 'background':
+                background = ImageStat.Stat(segment_image).median[0]
+            else:
+                background = 'white'
             segment_image = segment_image.rotate(segment_xywh['angle'],
                                                  expand=True,
                                                  #resample=Image.BILINEAR,
-                                                 fillcolor=(
-                                                     # background detection by median can fail
-                                                     # if segments are very small or have lots
-                                                     # of image foreground; if we already know
-                                                     # this is binarized, fill with white:
-                                                     'white' if page_image.mode == '1' else
-                                                     background))
+                                                 fillcolor=background)
             segment_xywh['features'] += ',deskewed'
         # verify constraints again:
         if not all(feature in segment_xywh['features']
@@ -546,6 +563,7 @@ class Workspace():
                                              segment_image.width - segment_xywh['w']))
         segment_xywh['y'] -= round(0.5 * max(0,
                                              segment_image.height - segment_xywh['h']))
+        segment_image.format = 'PNG' # workaround for tesserocr#194
         return segment_image, segment_xywh
 
     # pylint: disable=redefined-builtin
