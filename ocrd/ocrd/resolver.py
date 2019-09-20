@@ -41,7 +41,7 @@ class Resolver():
             Local filename, __relative__ to directory
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
-        log.info("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
+        log.debug("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
 
         if not url:
             raise Exception("'url' must be a string")
@@ -165,7 +165,7 @@ class Resolver():
         if mets_path.exists() and not clobber_mets:
             raise FileExistsError("METS '%s' already exists in '%s' and clobber_mets not set." % (mets_basename, directory))
         mets = OcrdMets.empty_mets()
-        log.info("Writing METS to%s", mets_path)
+        log.info("Writing METS to %s", mets_path)
         mets_path.write_bytes(mets.to_xml(xmllint=True))
 
         return Workspace(self, directory, mets)

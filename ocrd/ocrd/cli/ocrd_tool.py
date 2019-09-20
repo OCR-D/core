@@ -4,6 +4,7 @@ import sys
 
 import click
 
+from ocrd.decorators import parameter_option
 from ocrd_utils import VERSION as OCRD_VERSION
 from ocrd_validators import ParameterValidator, OcrdToolValidator
 
@@ -111,25 +112,20 @@ def ocrd_tool_tool_dump(ctx):
 # ----------------------------------------------------------------------
 
 @ocrd_tool_tool.command('parse-params')
-@click.option('-p', '--parameters', help='Parameter JSON file', type=click.Path())
+@parameter_option
 @click.option('-j', '--json', help='Output JSON instead of shell variables', is_flag=True, default=False)
 @pass_ocrd_tool
-def ocrd_tool_tool_parse_params(ctx, parameters, json):
+def ocrd_tool_tool_parse_params(ctx, parameter, json):
     """
     Parse parameters with fallback to defaults and output as shell-eval'able assignments to params var.
     """
-    if parameters is None or parameters == "":
-        parameters = {}
-    else:
-        with open(parameters, 'r') as f:
-            parameters = loads(f.read())
     parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
-    report = parameterValidator.validate(parameters)
+    report = parameterValidator.validate(parameter)
     if not report.is_valid:
         print(report.to_xml())
         sys.exit(1)
     if json:
-        print(dumps(parameters))
+        print(dumps(parameter))
     else:
-        for k in parameters:
-            print('params["%s"]="%s"' % (k, parameters[k]))
+        for k in parameter:
+            print('params["%s"]="%s"' % (k, parameter[k]))
