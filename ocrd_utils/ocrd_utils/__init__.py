@@ -310,9 +310,11 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     - if ``background`` (the default), then use the median color
       of the image;
     - if ``white``, then use white.
-    Moreover, if ``transparent`` is true, then add an alpha channel
+    Moreover, if ``transparency`` is true, then add an alpha channel
     from the polygon mask (i.e. everything outside the polygon will
     be transparent for those that can interpret alpha channels).
+    (Images which already have an alpha channel will have them
+    shrinked from the polygon mask.)
     
     Return a new PIL.Image.
     """
@@ -323,15 +325,17 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
         background = 'white'
     new_image = Image.new(image.mode, image.size, background)
     new_image.paste(image, mask=mask)
-    if transparency and image.mode in ['RGB', 'L', 'RGBA', 'LA']:
-        # ensure no information is lost by adding transparency channel
-        # initialized to fully transparent outside the mask
-        # (so consumers do not have to rely on background estimation,
-        #  which can fail on foreground-dominated segments, or white,
-        #  which can be inconsistent on unbinarized images):
-        if image.mode in ['RGBA', 'LA']:
-            # ensure transparency maximizes (i.e. parent mask AND mask):
-            mask = ImageChops.darker(mask, image.getchannel('A')) # min opaque
+    # ensure no information is lost by a adding transparency channel
+    # initialized to fully transparent outside the polygon mask
+    # (so consumers do not have to rely on background estimation,
+    #  which can fail on foreground-dominated segments, or white,
+    #  which can be inconsistent on unbinarized images):
+    if image.mode in ['RGBA', 'LA']:
+        # ensure transparency maximizes (i.e. parent mask AND mask):
+        mask = ImageChops.darker(mask, image.getchannel('A')) # min opaque
+        new_image.putalpha(mask)
+    elif transparency and image.mode in ['RGB', 'L']:
+        # introduce transparency:
         new_image.putalpha(mask)
     return new_image
 
