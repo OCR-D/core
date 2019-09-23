@@ -2,6 +2,7 @@
 Validating a workspace.
 """
 import re
+from pathlib import Path
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
 from ocrd_modelfactory import page_from_file
@@ -86,6 +87,8 @@ class WorkspaceValidator():
                 self._validate_pixel_density()
             if 'dimension' not in self.skip:
                 self._validate_dimension()
+            if 'imagefilename' not in self.skip:
+                self._validate_imagefilename()
             if 'page' not in self.skip:
                 self._validate_page()
         return self.report
@@ -107,11 +110,27 @@ class WorkspaceValidator():
         if self.mets.unique_identifier is None:
             self.report.add_error("METS has no unique identifier")
 
+    def _validate_imagefilename(self):
+        """
+        Validate that the imageFilename is correctly set to a filename relative to the workspace
+        """
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+            if not f.local_filename and not self.download:
+                self.report.add_notice("Won't download remote PAGE XML <%s>" % f.url)
+                continue
+            self.workspace.download_file(f)
+            page = page_from_file(f).get_Page()
+            imageFilename = page.imageFilename
+            if not self.mets.find_files(url=imageFilename):
+                self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
+            if is_local_filename(imageFilename) and not Path(imageFilename).exists():
+                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existant local file")
+
     def _validate_dimension(self):
         """
         Validate image height and PAGE imageHeight match
         """
-        for f in [f for f in self.mets.find_files() if f.mimetype == MIMETYPE_PAGE]:
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
             if not f.local_filename and not self.download:
                 self.report.add_notice("Won't download remote PAGE XML <%s>" % f.url)
                 continue

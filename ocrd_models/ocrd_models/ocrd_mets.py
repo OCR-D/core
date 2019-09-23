@@ -168,6 +168,8 @@ class OcrdMets(OcrdXmlDocument):
         Arguments:
             fileGrp (string): ``USE`` attribute of the new filegroup.
         """
+        if ',' in fileGrp:
+            raise Exception('fileGrp must not contain commas')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)
