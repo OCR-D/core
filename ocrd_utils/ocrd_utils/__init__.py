@@ -271,6 +271,9 @@ def crop_image(image, box=None):
     # (It should be invalid in PAGE-XML to extend beyond parents.)
     if not box:
         box = (0, 0, image.width, image.height)
+    elif box[0] < 0 or box[1] < 0 or box[2] > image.width or box[3] > image.height:
+        LOG.error('crop coordinates (%s) exceed image (%dx%d)',
+                  str(box), image.width, image.height)
     xywh = xywh_from_bbox(*box)
     background = ImageStat.Stat(image).median[0]
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
@@ -446,7 +449,7 @@ def polygon_mask(image, coordinates):
     mask = Image.new('L', image.size, 0)
     if isinstance(coordinates, np.ndarray):
         coordinates = list(map(tuple, coordinates))
-    ImageDraw.Draw(mask).polygon(coordinates, outline=1, fill=255)
+    ImageDraw.Draw(mask).polygon(coordinates, outline=255, fill=255)
     return mask
 
 def rotate_coordinates(polygon, angle, orig=np.array([0, 0])):
