@@ -1,16 +1,25 @@
 """
 Utility functions and constants usable in various circumstances.
 
-* ``coordinates_of_segment``, ``coordinates_for_segment``, ``rotate_coordinates``
+* ``coordinates_of_segment``, ``coordinates_for_segment``
 
     These functions convert polygon outlines for PAGE elements on all hierarchy
-    levels (page, region, line, word, glyph) between relative coordinates w.r.t.
-    parent segment and absolute coordinates w.r.t. the top-level (source) image.
-    This includes rotation and offset correction.
+    levels below page (i.e. region, line, word, glyph) between relative coordinates
+    w.r.t. the parent segment and absolute coordinates w.r.t. the top-level image.
+    This includes rotation and offset correction, based on affine transformations.
+    (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``)
 
-* ``polygon_mask``, ``image_from_polygon``, ``crop_image``
+* ``rotate_coordinates``, ``shift_coordinates``, ``transform_coordinates``
 
-    These functions combine PIL.Image with polygons or bboxes.
+    These backend functions compose affine transformations for rotation and offset
+    correction of coordinates, or apply them to a set of points. They can be used
+    to pass down the coordinate system along with images (both invariably sharing
+    the same operations context) when traversing the element hierarchy top to bottom.
+    (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``).
+
+* ``crop_image``, ``rotate_image``, ``image_from_polygon``, ``polygon_mask``
+
+    These functions operate on PIL.Image objects.
 
 * ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points`` etc.
 
@@ -52,6 +61,7 @@ Utility functions and constants usable in various circumstances.
 
 __all__ = [
     'abspath',
+    'adjust_canvas_to_rotation',
     'bbox_from_points',
     'bbox_from_xywh',
     'bbox_from_polygon',
@@ -80,8 +90,11 @@ __all__ = [
     'polygon_from_xywh',
     'polygon_mask',
     'rotate_coordinates',
+    'rotate_image',
     'safe_filename',
     'setOverrideLogLevel',
+    'shift_coordinates',
+    'transform_coordinates',
     'unzip_file_to_dir',
     'xywh_from_bbox',
     'xywh_from_points',
@@ -132,8 +145,8 @@ def bbox_from_polygon(polygon):
     """Construct a numeric list representing a bounding box from polygon coordinates in numeric list representation."""
     minx = sys.maxsize
     miny = sys.maxsize
-    maxx = 0
-    maxy = 0
+    maxx = -sys.maxsize
+    maxy = -sys.maxsize
     for xy in polygon:
         if xy[0] < minx:
             minx = xy[0]
@@ -159,49 +172,55 @@ def xywh_from_polygon(polygon):
     return xywh_from_bbox(*bbox_from_polygon(polygon))
 
 def coordinates_for_segment(polygon, parent_image, parent_xywh):
-    """Convert a relative coordinates polygon to absolute.
+    """Convert relative coordinates to absolute.
 
-    Given a numpy array ``polygon`` of points, and a parent PIL.Image
-    along with its bounding box to which the coordinates are relative,
-    calculate the absolute coordinates within the page.
-    That is, (in case the parent was rotated,) rotate all points in
-    opposite direction with the center of the image as origin, then
-    shift all points to the offset of the parent.
+    Given...
+    - ``polygon``, a numpy array of points relative to
+    - ``parent_image``, a PIL.Image, along with
+    - ``parent_xywh``, its absolute coordinates (bounding box),
+    ...calculate the absolute coordinates within the page.
+    
+    That is:
+    1. If ``parent_image`` is larger than indicated by ``parent_xywh`` in
+       width and height, (which only occurs when the parent was rotated),
+       then subtract from all points an offset of half the size difference.
+    2. In case the parent was rotated, rotate all points,
+       in opposite direction with the center of the image as origin.
+    3. Shift all points to the offset of the parent.
 
     Return the rounded numpy array of the resulting polygon.
     """
-    # angle correction (unrotate coordinates if image has been rotated):
-    if 'angle' in parent_xywh:
-        polygon = rotate_coordinates(
-            polygon, -parent_xywh['angle'],
-            orig=np.array([0.5 * parent_image.width,
-                           0.5 * parent_image.height]))
-    # offset correction (shift coordinates from base of segment):
-    polygon += np.array([parent_xywh['x'], parent_xywh['y']])
+    polygon = np.array(polygon, dtype=np.float32) # avoid implicit type cast problems
+    # apply inverse of affine transform:
+    inv_transform = np.linalg.inv(parent_xywh['transform'])
+    polygon = transform_coordinates(polygon, inv_transform)
     return np.round(polygon).astype(np.int32)
 
 def coordinates_of_segment(segment, parent_image, parent_xywh):
-    """Extract the relative coordinates polygon of a PAGE segment element.
+    """Extract the coordinates of a PAGE segment element relative to its parent.
 
-    Given a Region / TextLine / Word / Glyph ``segment`` and
-    the PIL.Image of its parent Page / Region / TextLine / Word
-    along with its bounding box, calculate the relative coordinates
-    of the segment within the image. That is, shift all points from
-    the offset of the parent, and (in case the parent was rotated,)
-    rotate all points with the center of the image as origin.
-
+    Given...
+    - ``segment``, a PAGE segment object in absolute coordinates
+      (i.e. RegionType / TextLineType / WordType / GlyphType), and
+    - ``parent_image``, the PIL.Image of its corresponding parent object
+      (i.e. PageType / RegionType / TextLineType / WordType), along with
+    - ``parent_xywh``, its absolute coordinates (bounding box),
+    ...calculate the relative coordinates of the segment within the image.
+    
+    That is:
+    1. Shift all points from the offset of the parent.
+    2. In case the parent image was rotated, rotate all points,
+       with the center of the image as origin.
+    3. If ``parent_image`` is larger than indicated by ``parent_xywh`` in
+       width and height, (which only occurs when the parent was rotated),
+       then add to all points an offset of half the size difference.
+    
     Return the rounded numpy array of the resulting polygon.
     """
     # get polygon:
     polygon = np.array(polygon_from_points(segment.get_Coords().points))
-    # offset correction (shift coordinates to base of segment):
-    polygon -= np.array([parent_xywh['x'], parent_xywh['y']])
-    # angle correction (rotate coordinates if image has been rotated):
-    if 'angle' in parent_xywh:
-        polygon = rotate_coordinates(
-            polygon, parent_xywh['angle'],
-            orig=np.array([0.5 * parent_image.width,
-                           0.5 * parent_image.height]))
+    # apply affine transform:
+    polygon = transform_coordinates(polygon, parent_xywh['transform'])
     return np.round(polygon).astype(np.int32)
 
 @contextlib.contextmanager
@@ -267,18 +286,51 @@ def crop_image(image, box=None):
 
     Return a new PIL.Image.
     """
-    # todo: perhaps we should issue a warning if we encounter this
-    # (It should be invalid in PAGE-XML to extend beyond parents.)
     if not box:
         box = (0, 0, image.width, image.height)
     elif box[0] < 0 or box[1] < 0 or box[2] > image.width or box[3] > image.height:
-        LOG.error('crop coordinates (%s) exceed image (%dx%d)',
-                  str(box), image.width, image.height)
+        # (It should be invalid in PAGE-XML to extend beyond parents.)
+        LOG.warning('crop coordinates (%s) exceed image (%dx%d)',
+                    str(box), image.width, image.height)
     xywh = xywh_from_bbox(*box)
     background = ImageStat.Stat(image).median[0]
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
                           background) # or 'white'
     new_image.paste(image, (-xywh['x'], -xywh['y']))
+    return new_image
+
+def rotate_image(image, angle, fill='background', transparency=False):
+    """"Rotate an image, enlarging and filling with background.
+
+    Given a PIL.Image ``image`` and a rotation angle in degrees
+    counter-clockwise ``angle``, rotate the image, increasing its
+    size at the margins accordingly, and filling everything outside
+    the original image according to ``fill``:
+    - if ``background`` (the default),
+      then use the median color of the image;
+    - otherwise use the given color, e.g. ``white`` or (255,255,255).
+    Moreover, if ``transparency`` is true, then add an alpha channel
+    fully opaque (i.e. everything outside the original image will
+    be transparent for those that can interpret alpha channels).
+    (This is true for images which already have an alpha channel,
+    regardless of the setting used.)
+
+    Return a new PIL.Image.
+    """
+    if fill == 'background':
+        background = ImageStat.Stat(image).median[0]
+    else:
+        background = fill
+    if transparency and image.mode in ['RGB', 'L']:
+        # ensure no information is lost by adding transparency channel
+        # initialized to fully opaque (so cropping and rotation will
+        # expose areas as transparent):
+        image = image.copy()
+        image.putalpha(255)
+    new_image = image.rotate(angle,
+                             expand=True,
+                             #resample=Image.BILINEAR,
+                             fillcolor=background)
     return new_image
 
 def get_local_filename(url, start=None):
@@ -310,9 +362,9 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     Given a PIL.Image ``image`` and a numpy array ``polygon``
     of relative coordinates into the image, fill everything
     outside the polygon hull to a color according to ``fill``:
-    - if ``background`` (the default), then use the median color
-      of the image;
-    - if ``white``, then use white.
+    - if ``background`` (the default),
+      then use the median color of the image;
+    - otherwise use the given color, e.g. ``white`` or (255,255,255).
     Moreover, if ``transparency`` is true, then add an alpha channel
     from the polygon mask (i.e. everything outside the polygon will
     be transparent for those that can interpret alpha channels).
@@ -325,7 +377,7 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     if fill == 'background':
         background = ImageStat.Stat(image).median[0]
     else:
-        background = 'white'
+        background = fill
     new_image = Image.new(image.mode, image.size, background)
     new_image.paste(image, mask=mask)
     # ensure no information is lost by a adding transparency channel
@@ -452,24 +504,89 @@ def polygon_mask(image, coordinates):
     ImageDraw.Draw(mask).polygon(coordinates, outline=255, fill=255)
     return mask
 
-def rotate_coordinates(polygon, angle, orig=np.array([0, 0])):
-    """Apply a passive rotation transformation to the given coordinates.
-
-    Given a numpy array ``polygon`` of points and a rotation ``angle``,
-    as well as a numpy array ``orig`` of the center of rotation,
-    calculate the coordinate transform corresponding to the rotation
-    of the underlying image by ``angle`` degrees at ``center`` by
-    applying translation to the center, inverse rotation,
-    and translation from the center.
-
-    Return a numpy array of the resulting polygon.
+def adjust_canvas_to_rotation(size, angle):
+    """Calculate the enlarged image size after rotation.
+    
+    Given a numpy array ``size`` of an original canvas (width and height),
+    and a rotation angle in degrees counter-clockwise ``angle``,
+    calculate the new size which is necessary to encompass the full
+    image after rotation.
+    
+    Return a numpy array of the enlarged width and height.
     """
-    angle = np.deg2rad(angle)  # pylint: disable=assignment-from-no-return
-    cos = np.cos(angle)
-    sin = np.sin(angle)
-    # active rotation:  [[cos, -sin], [sin, cos]]
-    # passive rotation: [[cos, sin], [-sin, cos]] (inverse)
-    return orig + np.dot(polygon - orig, np.array([[cos, sin], [-sin, cos]]).transpose())
+    angle = np.deg2rad(angle)
+    sin = np.abs(np.sin(angle))
+    cos = np.abs(np.cos(angle))
+    return np.dot(np.array([[cos, sin],
+                            [sin, cos]]),
+                  np.array(size))
+    
+def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
+    """Compose an affine coordinate transformation with a passive rotation.
+
+    Given a numpy array ``transform`` of an existing transformation
+    matrix in homogeneous (3d) coordinates, and a rotation angle in
+    degrees counter-clockwise ``angle``, as well as a numpy array
+    ``orig`` of the center of rotation, calculate the affine
+    coordinate transform corresponding to the composition of both
+    transformations. (This entails translation to the center, followed
+    by pure rotation, and subsequent translation back. However, since
+    rotation necessarily increases the bounding box, and thus image size,
+    do not translate back the same amount, but to the enlarged offset.)
+    
+    Return a numpy array of the resulting affine transformation matrix.
+    """
+    LOG.debug('rotating by %.2f° around %s', angle, str(orig))
+    rad = np.deg2rad(angle)
+    cos = np.cos(rad)
+    sin = np.sin(rad)
+    # get rotation matrix for passive rotation:
+    rot = np.array([[+cos, sin, 0],
+                    [-sin, cos, 0],
+                    [0, 0, 1]])
+    return shift_coordinates(
+        np.dot(rot,
+               shift_coordinates(transform,
+                                 -orig)),
+        #orig)
+        # the image (bounding box) increases with rotation,
+        # so we must translate back to the new upper left:
+        adjust_canvas_to_rotation(orig, angle))
+
+def shift_coordinates(transform, offset):
+    """Compose an affine coordinate transformation with a translation.
+
+    Given a numpy array ``transform`` of an existing transformation
+    matrix in homogeneous (3d) coordinates, and a numpy array
+    ``offset`` of the translation vector, calculate the affine
+    coordinate transform corresponding to the composition of both
+    transformations.
+    
+    Return a numpy array of the resulting affine transformation matrix.
+    """
+    LOG.debug('shifting by %s', str(offset))
+    shift = np.eye(3)
+    shift[0, 2] = offset[0]
+    shift[1, 2] = offset[1]
+    return np.dot(shift, transform)
+
+def transform_coordinates(polygon, transform=None):
+    """Apply an affine transformation to a set of points.
+    
+    Augment the 2d numpy array of points ``polygon`` with a an extra
+    column of ones (homogeneous coordinates), then multiply with
+    the transformation matrix ``transform`` (or the identity matrix),
+    and finally remove the extra column from the result.
+    """
+    if transform is None:
+        transform = np.eye(3)
+    polygon = np.insert(polygon, 2, 1, axis=1) # make 3d homogeneous coordinates
+    polygon = np.dot(transform, polygon.T).T
+    # ones = polygon[:,2]
+    # assert np.all(np.array_equal(ones, np.clip(ones, 1 - 1e-2, 1 + 1e-2))), \
+    #     'affine transform failed' # should never happen
+    polygon = np.delete(polygon, 2, axis=1) # remove z coordinate again
+    return polygon
 
 def safe_filename(url):
     """
@@ -500,24 +617,4 @@ def xywh_from_points(points):
     """
     Construct a numeric dict representing a bounding box from polygon coordinates in page representation.
     """
-    xys = [[int(p) for p in pair.split(',')] for pair in points.split(' ')]
-    minx = sys.maxsize
-    miny = sys.maxsize
-    maxx = 0
-    maxy = 0
-    for xy in xys:
-        if xy[0] < minx:
-            minx = xy[0]
-        if xy[0] > maxx:
-            maxx = xy[0]
-        if xy[1] < miny:
-            miny = xy[1]
-        if xy[1] > maxy:
-            maxy = xy[1]
-
-    return {
-        'x': minx,
-        'y': miny,
-        'w': maxx - minx,
-        'h': maxy - miny,
-    }
+    return xywh_from_bbox(*bbox_from_points(points))
