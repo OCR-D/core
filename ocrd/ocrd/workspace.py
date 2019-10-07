@@ -322,7 +322,7 @@ class Workspace():
             log.debug("Using explicitly set page border '%s' for page '%s'",
                       page_points, page_id)
             # get polygon outline of page border:
-            page_polygon = np.array(polygon_from_points(page_points))
+            page_polygon = np.array(polygon_from_points(page_points), dtype=np.int32)
             page_bbox = bbox_from_polygon(page_polygon)
             # subtract offset in affine coordinate transform:
             # (consistent with image cropping or AlternativeImage below)
