@@ -5,7 +5,7 @@ Utility functions and constants usable in various circumstances.
 
     These functions convert polygon outlines for PAGE elements on all hierarchy
     levels below page (i.e. region, line, word, glyph) between relative coordinates
-    w.r.t. the parent segment and absolute coordinates w.r.t. the top-level image.
+    w.r.t. a corresponding image and absolute coordinates w.r.t. the top-level image.
     This includes rotation and offset correction, based on affine transformations.
     (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``)
 
@@ -17,9 +17,14 @@ Utility functions and constants usable in various circumstances.
     the same operations context) when traversing the element hierarchy top to bottom.
     (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``).
 
-* ``crop_image``, ``rotate_image``, ``image_from_polygon``, ``polygon_mask``
+* ``crop_image``, ``rotate_image``
 
-    These functions operate on PIL.Image objects.
+    These PIL.Image functions are safe replacements for the ``crop`` and ``rotate``
+    methods.
+
+* ``image_from_polygon``, ``polygon_mask``
+
+    These functions apply polygon masks to PIL.Image objects.
 
 * ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points`` etc.
 
@@ -110,7 +115,6 @@ import re
 import sys
 import logging
 import os
-import re
 from os import getcwd, chdir
 from os.path import isfile, abspath as os_abspath
 from zipfile import ZipFile
@@ -119,7 +123,6 @@ import contextlib
 import numpy as np
 from PIL import Image, ImageStat, ImageDraw, ImageChops
 
-import logging
 from .logging import * # pylint: disable=wildcard-import
 from .constants import *  # pylint: disable=wildcard-import
 
@@ -171,56 +174,66 @@ def xywh_from_polygon(polygon):
     """Construct a numeric dict representing a bounding box from polygon coordinates in numeric list representation."""
     return xywh_from_bbox(*bbox_from_polygon(polygon))
 
-def coordinates_for_segment(polygon, parent_image, parent_xywh):
+def coordinates_for_segment(polygon, parent_image, parent_coords):
     """Convert relative coordinates to absolute.
 
     Given...
     - ``polygon``, a numpy array of points relative to
-    - ``parent_image``, a PIL.Image, along with
-    - ``parent_xywh``, its absolute coordinates (bounding box),
+    - ``parent_image``, a PIL.Image (not used), along with
+    - ``parent_coords``, its corresponding affine transformation,
     ...calculate the absolute coordinates within the page.
     
-    That is:
-    1. If ``parent_image`` is larger than indicated by ``parent_xywh`` in
-       width and height, (which only occurs when the parent was rotated),
-       then subtract from all points an offset of half the size difference.
-    2. In case the parent was rotated, rotate all points,
-       in opposite direction with the center of the image as origin.
-    3. Shift all points to the offset of the parent.
+    That is, apply the given transform inversely to ``polygon``
+    The transform encodes (recursively):
+    1. Whenever ``parent_image`` or any of its parents was cropped,
+       all points must be shifted by the offset in opposite direction
+       (i.e. coordinate system gets translated by the upper left).
+    2. Whenever ``parent_image`` or any of its parents was rotated,
+       all points must be rotated around the center of that image in
+       opposite direction
+       (i.e. coordinate system gets translated by the center in
+       opposite direction, rotated purely, and translated back;
+       the latter involves an additional offset from the increase
+       in canvas size necessary to accomodate all points).
 
     Return the rounded numpy array of the resulting polygon.
     """
     polygon = np.array(polygon, dtype=np.float32) # avoid implicit type cast problems
     # apply inverse of affine transform:
-    inv_transform = np.linalg.inv(parent_xywh['transform'])
+    inv_transform = np.linalg.inv(parent_coords['transform'])
     polygon = transform_coordinates(polygon, inv_transform)
     return np.round(polygon).astype(np.int32)
 
-def coordinates_of_segment(segment, parent_image, parent_xywh):
+def coordinates_of_segment(segment, parent_image, parent_coords):
     """Extract the coordinates of a PAGE segment element relative to its parent.
 
     Given...
     - ``segment``, a PAGE segment object in absolute coordinates
       (i.e. RegionType / TextLineType / WordType / GlyphType), and
     - ``parent_image``, the PIL.Image of its corresponding parent object
-      (i.e. PageType / RegionType / TextLineType / WordType), along with
-    - ``parent_xywh``, its absolute coordinates (bounding box),
+      (i.e. PageType / RegionType / TextLineType / WordType), (not used),
+      along with
+    - ``parent_coords``, its corresponding affine transformation,
     ...calculate the relative coordinates of the segment within the image.
     
-    That is:
-    1. Shift all points from the offset of the parent.
-    2. In case the parent image was rotated, rotate all points,
-       with the center of the image as origin.
-    3. If ``parent_image`` is larger than indicated by ``parent_xywh`` in
-       width and height, (which only occurs when the parent was rotated),
-       then add to all points an offset of half the size difference.
+    That is, apply the given transform to the points annotated in ``segment``.
+    The transform encodes (recursively):
+    1. Whenever ``parent_image`` or any of its parents was cropped,
+       all points must be shifted by the offset
+       (i.e. coordinate system gets translated by the upper left).
+    2. Whenever ``parent_image`` or any of its parents was rotated,
+       all points must be rotated around the center of that image
+       (i.e. coordinate system gets translated by the center in
+       opposite direction, rotated purely, and translated back;
+       the latter involves an additional offset from the increase
+       in canvas size necessary to accomodate all points).
     
     Return the rounded numpy array of the resulting polygon.
     """
     # get polygon:
     polygon = np.array(polygon_from_points(segment.get_Coords().points))
     # apply affine transform:
-    polygon = transform_coordinates(polygon, parent_xywh['transform'])
+    polygon = transform_coordinates(polygon, parent_coords['transform'])
     return np.round(polygon).astype(np.int32)
 
 @contextlib.contextmanager
@@ -308,7 +321,7 @@ def rotate_image(image, angle, fill='background', transparency=False):
     the original image according to ``fill``:
     - if ``background`` (the default),
       then use the median color of the image;
-    - otherwise use the given color, e.g. ``white`` or (255,255,255).
+    - otherwise use the given color, e.g. ``'white'`` or (255,255,255).
     Moreover, if ``transparency`` is true, then add an alpha channel
     fully opaque (i.e. everything outside the original image will
     be transparent for those that can interpret alpha channels).
@@ -364,12 +377,13 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     outside the polygon hull to a color according to ``fill``:
     - if ``background`` (the default),
       then use the median color of the image;
-    - otherwise use the given color, e.g. ``white`` or (255,255,255).
+    - otherwise use the given color, e.g. ``'white'`` or (255,255,255).
     Moreover, if ``transparency`` is true, then add an alpha channel
     from the polygon mask (i.e. everything outside the polygon will
-    be transparent for those that can interpret alpha channels).
-    (Images which already have an alpha channel will have them
-    shrinked from the polygon mask.)
+    be transparent, for those consumers that can interpret alpha channels).
+    Images which already have an alpha channel will have it shrinked
+    from the polygon mask (i.e. everything outside the polygon will
+    be transparent, in addition to existing transparent pixels).
     
     Return a new PIL.Image.
     """
