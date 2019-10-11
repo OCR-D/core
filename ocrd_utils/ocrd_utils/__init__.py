@@ -9,18 +9,18 @@ Utility functions and constants usable in various circumstances.
     This includes rotation and offset correction, based on affine transformations.
     (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``)
 
-* ``rotate_coordinates``, ``shift_coordinates``, ``transform_coordinates``
+* ``rotate_coordinates``, ``shift_coordinates``, ``transpose_coordinates``, ``transform_coordinates``
 
-    These backend functions compose affine transformations for rotation and offset
-    correction of coordinates, or apply them to a set of points. They can be used
-    to pass down the coordinate system along with images (both invariably sharing
+    These backend functions compose affine transformations for reflection, rotation
+    and offset correction of coordinates, or apply them to a set of points. They can be
+    used to pass down the coordinate system along with images (both invariably sharing
     the same operations context) when traversing the element hierarchy top to bottom.
     (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``).
 
-* ``crop_image``, ``rotate_image``
+* ``rotate_image``, ``crop_image``, ``transpose_image``
 
-    These PIL.Image functions are safe replacements for the ``crop`` and ``rotate``
-    methods.
+    These PIL.Image functions are safe replacements for the ``rotate``, ``crop``, and
+    ``transpose`` methods.
 
 * ``image_from_polygon``, ``polygon_mask``
 
@@ -67,6 +67,7 @@ Utility functions and constants usable in various circumstances.
 __all__ = [
     'abspath',
     'adjust_canvas_to_rotation',
+    'adjust_canvas_to_transposition',
     'bbox_from_points',
     'bbox_from_xywh',
     'bbox_from_polygon',
@@ -100,6 +101,8 @@ __all__ = [
     'setOverrideLogLevel',
     'shift_coordinates',
     'transform_coordinates',
+    'transpose_coordinates',
+    'transpose_image',
     'unzip_file_to_dir',
     'xywh_from_bbox',
     'xywh_from_points',
@@ -305,6 +308,7 @@ def crop_image(image, box=None):
         # (It should be invalid in PAGE-XML to extend beyond parents.)
         LOG.warning('crop coordinates (%s) exceed image (%dx%d)',
                     str(box), image.width, image.height)
+    LOG.debug('cropping image to %s', str(box))
     xywh = xywh_from_bbox(*box)
     background = ImageStat.Stat(image).median[0]
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
@@ -330,6 +334,7 @@ def rotate_image(image, angle, fill='background', transparency=False):
 
     Return a new PIL.Image.
     """
+    LOG.debug('rotating image by %.2f°', angle)
     if fill == 'background':
         background = ImageStat.Stat(image).median[0]
     else:
@@ -346,6 +351,44 @@ def rotate_image(image, angle, fill='background', transparency=False):
                              fillcolor=background)
     return new_image
 
+def transpose_image(image, method):
+    """"Transpose (i.e. flip or rotate in 90° multiples) an image.
+
+    Given a PIL.Image ``image`` and a transposition mode ``method``,
+    apply the respective operation:
+    - ``PIL.Image.FLIP_LEFT_RIGHT``:
+      all pixels get mirrored at half the width of the image
+    - ``PIL.Image.FLIP_TOP_BOTTOM``:
+      all pixels get mirrored at half the height of the image
+    - ``PIL.Image.ROTATE_180``:
+      all pixels get mirrored at both, the width and half the height
+      of the image,
+      i.e. the image gets rotated by 180° counter-clockwise
+    - ``PIL.Image.ROTATE_90``:
+      rows become columns (but counted from the right) and
+      columns become rows,
+      i.e. the image gets rotated by 90° counter-clockwise;
+      width becomes height and vice versa
+    - ``PIL.Image.ROTATE_270``:
+      rows become columns and
+      columns become rows (but counted from the bottom),
+      i.e. the image gets rotated by 270° counter-clockwise;
+      width becomes height and vice versa
+    - ``PIL.Image.TRANSPOSE``:
+      rows become columns and vice versa,
+      i.e. all pixels get mirrored at the main diagonal;
+      width becomes height and vice versa
+    - ``PIL.Image.TRANSVERSE``:
+      rows become columns (but counted from the right) and
+      columns become rows (but counted from the bottom),
+      i.e. all pixels get mirrored at the opposite diagonal;
+      width becomes height and vice versa
+    
+    Return a new PIL.Image.
+    """
+    LOG.debug('transposing image with %s', membername(Image, method))
+    return image.transpose(method)
+    
 def get_local_filename(url, start=None):
     """
     Return local filename, optionally relative to ``start``
@@ -534,7 +577,23 @@ def adjust_canvas_to_rotation(size, angle):
     return np.dot(np.array([[cos, sin],
                             [sin, cos]]),
                   np.array(size))
+
+def adjust_canvas_to_transposition(size, method):
+    """Calculate the flipped image size after transposition.
     
+    Given a numpy array ``size`` of an original canvas (width and height),
+    and a transposition mode ``method`` (see ``transpose_image``),
+    calculate the new size after transposition.
+    
+    Return a numpy array of the enlarged width and height.
+    """
+    if method in [Image.ROTATE_90,
+                  Image.ROTATE_270,
+                  Image.TRANSPOSE,
+                  Image.TRANSVERSE]:
+        size = size[::-1]
+    return size
+
 def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     """Compose an affine coordinate transformation with a passive rotation.
 
@@ -550,7 +609,7 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     
     Return a numpy array of the resulting affine transformation matrix.
     """
-    LOG.debug('rotating by %.2f° around %s', angle, str(orig))
+    LOG.debug('rotating coordinates by %.2f° around %s', angle, str(orig))
     rad = np.deg2rad(angle)
     cos = np.cos(rad)
     sin = np.sin(rad)
@@ -578,11 +637,75 @@ def shift_coordinates(transform, offset):
     
     Return a numpy array of the resulting affine transformation matrix.
     """
-    LOG.debug('shifting by %s', str(offset))
+    LOG.debug('shifting coordinates by %s', str(offset))
     shift = np.eye(3)
     shift[0, 2] = offset[0]
     shift[1, 2] = offset[1]
     return np.dot(shift, transform)
+
+def transpose_coordinates(transform, method, orig=np.array([0, 0])):
+    """"Compose an affine coordinate transformation with a transposition (i.e. flip or rotate in 90° multiples).
+
+    Given a numpy array ``transform`` of an existing transformation
+    matrix in homogeneous (3d) coordinates, a transposition mode ``method``,
+    as well as a numpy array ``orig`` of the center of the image,
+    calculate the affine coordinate transform corresponding to the composition
+    of both transformations, which is respectively:
+    - ``PIL.Image.FLIP_LEFT_RIGHT``:
+      entails translation to the center, followed by pure reflection
+      about the y-axis, and subsequent translation back
+    - ``PIL.Image.FLIP_TOP_BOTTOM``:
+      entails translation to the center, followed by pure reflection
+      about the x-axis, and subsequent translation back
+    - ``PIL.Image.ROTATE_180``:
+      entails translation to the center, followed by pure reflection
+      about the origin, and subsequent translation back
+    - ``PIL.Image.ROTATE_90``:
+      entails translation to the center, followed by pure rotation
+      by 90° counter-clockwise, and subsequent translation back
+    - ``PIL.Image.ROTATE_270``:
+      entails translation to the center, followed by pure rotation
+      by 270° counter-clockwise, and subsequent translation back
+    - ``PIL.Image.TRANSPOSE``:
+      entails translation to the center, followed by pure rotation
+      by 90° counter-clockwise and pure reflection about the x-axis,
+      and subsequent translation back
+    - ``PIL.Image.TRANSVERSE``:
+      entails translation to the center, followed by pure rotation
+      by 90° counter-clockwise and pure reflection about the y-axis,
+      and subsequent translation back
+    
+    Return a numpy array of the resulting affine transformation matrix.
+    """
+    LOG.debug('transposing coordinates with %s around %s', membername(Image, method), str(orig))
+    # get rotation matrix for passive rotation/reflection:
+    rot90 = np.array([[0, 1, 0],
+                      [-1, 0, 0],
+                      [0, 0, 1]])
+    reflx = np.array([[1, 0, 0],
+                      [0, -1, 0],
+                      [0, 0, 1]])
+    refly = np.array([[-1, 0, 0],
+                      [0, 1, 0],
+                      [0, 0, 1]])
+    transform = shift_coordinates(transform, -orig)
+    operations = {
+        Image.FLIP_LEFT_RIGHT: [refly],
+        Image.FLIP_TOP_BOTTOM: [reflx],
+        Image.ROTATE_180: [reflx, refly],
+        Image.ROTATE_90: [rot90],
+        Image.ROTATE_270: [rot90, reflx, refly],
+        Image.TRANSPOSE: [rot90, reflx],
+        Image.TRANSVERSE: [rot90, refly]
+    }.get(method) # no default
+    for operation in operations:
+        transform = np.dot(operation, transform)
+    transform = shift_coordinates(
+        transform,
+        # the image (bounding box) may flip with transposition,
+        # so we must translate back to the new upper left:
+        adjust_canvas_to_transposition(orig, method))
+    return transform
 
 def transform_coordinates(polygon, transform=None):
     """Apply an affine transformation to a set of points.

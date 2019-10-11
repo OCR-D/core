@@ -14,11 +14,14 @@ from ocrd_utils import (
     image_from_polygon,
     coordinates_of_segment,
     transform_coordinates,
+    adjust_canvas_to_rotation,
+    adjust_canvas_to_transposition,
     shift_coordinates,
     rotate_coordinates,
-    adjust_canvas_to_rotation,
-    rotate_image,
+    transpose_coordinates,
     crop_image,
+    rotate_image,
+    transpose_image,
     bbox_from_polygon,
     polygon_from_points,
     xywh_from_bbox,
@@ -279,7 +282,9 @@ class Workspace():
         a Border exists, and unless "cropped" is being filtered, then crop it.
         Likewise, if the chosen image does not have the feature "deskewed" yet,
         but an @orientation angle is annotated, and unless "deskewed" is being
-        filtered, then rotate it.
+        filtered, then rotate it. (However, if @orientation is above the
+        [-45°,45°] interval, then apply as much transposition as possible first,
+        unless "rotated-90" / "rotated-180" / "rotated-270" is being filtered.)
         
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to ``fill``:
@@ -298,7 +303,7 @@ class Workspace():
              converts from absolute coordinates to those relative to the image,
              i.e. after cropping to the page's border / bounding box (if any)
              and deskewing with the page's orientation angle (if any)
-           - ``angle``: the page-level rotation angle applied to the image,
+           - ``angle``: the rotation/reflection angle applied to the image so far,
            - ``features``: the AlternativeImage @comments for the image, i.e.
              names of all operations that lead up to this result,
          * an OcrdExif instance associated with the original image.
@@ -344,15 +349,42 @@ class Workspace():
         # page angle: PAGE @orientation is defined clockwise,
         # whereas PIL/ndimage rotation is in mathematical direction:
         page_coords['angle'] = -(page.get_orientation() or 0)
-        if (page_coords['angle'] and
+        # map angle from (-180,180] to [0,360], and partition into multiples of 90;
+        # but avoid unnecessary large remainders, i.e. split symmetrically:
+        orientation = (page_coords['angle'] + 45) % 360
+        orientation = orientation - (orientation % 90)
+        skew = (page_coords['angle'] % 360) - orientation
+        skew = 180 - (180 - skew) % 360 # map to [-45,45]
+        page_coords['angle'] = 0 # nothing applied yet (depends on filters)
+        log.debug("page '%s' has orientation=%d skew=%.2f",
+                  page_id, orientation, skew)
+        
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # Transpose in affine coordinate transform:
+            # (consistent with image transposition or AlternativeImage below)
+            transposition = { 90: Image.ROTATE_90,
+                              180: Image.ROTATE_180,
+                              270: Image.ROTATE_270
+            }.get(orientation) # no default
+            page_coords['transform'] = transpose_coordinates(
+                page_coords['transform'],
+                transposition,
+                np.array([0.5 * page_xywh['w'],
+                          0.5 * page_xywh['h']]))
+            page_xywh['w'], page_xywh['h'] = adjust_canvas_to_transposition(
+                [page_xywh['w'], page_xywh['h']], transposition)
+            page_coords['angle'] = orientation
+        if (skew and
             not 'deskewed' in feature_filter.split(',')):
             # Rotate around center in affine coordinate transform:
             # (consistent with image rotation or AlternativeImage below)
             page_coords['transform'] = rotate_coordinates(
                 page_coords['transform'],
-                page_coords['angle'],
+                skew,
                 np.array([0.5 * page_xywh['w'],
                           0.5 * page_xywh['h']]))
+            page_coords['angle'] += skew
             
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
@@ -397,20 +429,43 @@ class Workspace():
             # recrop into page rectangle:
             page_image = crop_image(page_image, box=page_bbox)
             page_coords['features'] += ',cropped'
+        # transpose, if (still) necessary:
+        if (orientation and
+            not 'rotated-%d' % orientation in page_coords['features'] and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            log.info("Transposing %s for page '%s' by %d°",
+                     "AlternativeImage" if alternative_image else
+                     "image", page_id, orientation)
+            page_image = transpose_image(page_image, {
+                90: Image.ROTATE_90,
+                180: Image.ROTATE_180,
+                270: Image.ROTATE_270
+            }.get(orientation)) # no default
+            page_coords['features'] += ',rotated-%d' % orientation
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # FIXME we should enforce consistency here (i.e. split into transposition
+            #       and minimal rotation)
+            if not (page_image.width == page_xywh['w'] and
+                    page_image.height == page_xywh['h']):
+                log.error('page "%s" image (%s; %dx%d) has not been transposed properly (%dx%d) during rotation',
+                          page_id, page_coords['features'],
+                          page_image.width, page_image.height,
+                          page_xywh['w'], page_xywh['h'])
         # deskew, if (still) necessary:
-        if (page_coords['angle'] and
+        if (skew and
             not 'deskewed' in page_coords['features'] and
             not 'deskewed' in feature_filter.split(',')):
             log.info("Rotating %s for page '%s' by %.2f°",
                      "AlternativeImage" if alternative_image else
-                     "image", page_id, page_coords['angle'])
-            page_image = rotate_image(page_image, page_coords['angle'],
+                     "image", page_id, skew)
+            page_image = rotate_image(page_image, skew,
                                       fill=fill, transparency=transparency)
             page_coords['features'] += ',deskewed'
-        if (page_coords['angle'] and
+        if (skew and
             not 'deskewed' in feature_filter.split(',')):
             w_new, h_new = adjust_canvas_to_rotation(
-                [page_xywh['w'], page_xywh['h']], page_coords['angle'])
+                [page_xywh['w'], page_xywh['h']], skew)
             # FIXME we should enforce consistency here (i.e. rotation always reshapes,
             #       and rescaling never happens)
             if not (w_new - 1.5 < page_image.width < w_new + 1.5 and
@@ -445,7 +500,7 @@ class Workspace():
            - ``transform``: a Numpy array with an affine transform which
              converts from absolute coordinates to those relative to the image,
              i.e. after applying all operations (starting with the original image)
-           - ``angle``: the parent-level rotation angle applied to the image,
+           - ``angle``: the rotation/reflection angle applied to the image so far,
            - ``features``: the AlternativeImage @comments for the image, i.e.
              names of all operations that lead up to this result, and
          * ``segment``, a PAGE segment object logically contained in it
@@ -482,7 +537,10 @@ class Workspace():
         Regardless, if any @orientation angle is annotated for the segment
         (from segment-level deskewing), and the chosen image does not have
         the feature "deskewed" yet, and unless "deskewed" is being filtered,
-        then rotate it.
+        then rotate it - compensating for any previous ``angle``. (However,
+        if @orientation is above the [-45°,45°] interval, then apply as much
+        transposition as possible first, unless "rotated-90" / "rotated-180" /
+        "rotated-270" is being filtered.)
         
         Return a tuple:
          * the extracted image,
@@ -492,7 +550,7 @@ class Workspace():
              i.e. after applying all parent operations, and then cropping to
              the segment's bounding box, and deskewing with the segment's
              orientation angle (if any)
-           - ``angle``: the segment-level rotation angle applied to the image,
+           - ``angle``: the rotation/reflection angle applied to the image so far,
            - ``features``: the AlternativeImage @comments for the image, i.e.
              names of all operations that lead up to this result.
         (These can be used to create a new AlternativeImage, or passed down
@@ -548,17 +606,49 @@ class Workspace():
             segment_coords['angle'] = -(segment.get_orientation() or 0)
         else:
             segment_coords['angle'] = 0
-        if (segment_coords['angle'] and
+        if segment_coords['angle']:
+            # @orientation is always absolute; if higher levels
+            # have already rotated, then we must compensate:
+            angle = segment_coords['angle'] - parent_coords['angle']
+            # map angle from (-180,180] to [0,360], and partition into multiples of 90;
+            # but avoid unnecessary large remainders, i.e. split symmetrically:
+            orientation = (angle + 45) % 360
+            orientation = orientation - (orientation % 90)
+            skew = (angle % 360) - orientation
+            skew = 180 - (180 - skew) % 360 # map to [-45,45]
+            segment_coords['angle'] = parent_coords['angle'] # nothing applied yet (depends on filters)
+            log.debug("segment '%s' has orientation=%d skew=%.2f",
+                      segment.id, orientation, skew)
+        else:
+            orientation = 0
+            skew = 0
+
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # Transpose in affine coordinate transform:
+            # (consistent with image transposition or AlternativeImage below)
+            transposition = { 90: Image.ROTATE_90,
+                              180: Image.ROTATE_180,
+                              270: Image.ROTATE_270
+            }.get(orientation) # no default
+            segment_coords['transform'] = transpose_coordinates(
+                segment_coords['transform'],
+                transposition,
+                np.array([0.5 * segment_xywh['w'],
+                          0.5 * segment_xywh['h']]))
+            segment_xywh['w'], segment_xywh['h'] = adjust_canvas_to_transposition(
+                [segment_xywh['w'], segment_xywh['h']], transposition)
+            segment_coords['angle'] = orientation
+        if (skew and
             not 'deskewed' in feature_filter.split(',')):
             # Rotate around center in affine coordinate transform:
             # (consistent with image rotation or AlternativeImage below)
             segment_coords['transform'] = rotate_coordinates(
                 segment_coords['transform'],
-                # @orientation is always absolute; if higher levels
-                # have already rotated, then we must compensate:
-                segment_coords['angle'] - parent_coords['angle'],
+                skew,
                 np.array([0.5 * segment_xywh['w'],
                           0.5 * segment_xywh['h']]))
+            segment_coords['angle'] += skew
             
         # initialize AlternativeImage@comments classes from parent:
         segment_coords['features'] = parent_coords['features'] + ',cropped'
@@ -589,24 +679,45 @@ class Workspace():
                           features, segment.id)
                 segment_image = self._resolve_image_as_pil(alternative_image.get_filename())
                 segment_coords['features'] = features
+        # transpose, if (still) necessary:
+        if (orientation and
+            not 'rotated-%d' % orientation in segment_coords['features'] and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            log.info("Transposing %s for segment '%s' by %d°",
+                     "AlternativeImage" if alternative_image else
+                     "image", segment.id, orientation)
+            segment_image = transpose_image(segment_image, {
+                90: Image.ROTATE_90,
+                180: Image.ROTATE_180,
+                270: Image.ROTATE_270
+            }.get(orientation)) # no default
+            segment_coords['features'] += ',rotated-%d' % orientation
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # FIXME we should enforce consistency here (i.e. split into transposition
+            #       and minimal rotation)
+            if not (segment_image.width == segment_xywh['w'] and
+                    segment_image.height == segment_xywh['h']):
+                log.error('segment "%s" image (%s; %dx%d) has not been transposed properly (%dx%d) during rotation',
+                          segment.id, segment_coords['features'],
+                          segment_image.width, segment_image.height,
+                          segment_xywh['w'], segment_xywh['h'])
         # deskew, if (still) necessary:
-        if (segment_coords['angle'] and
+        if (skew and
             not 'deskewed' in segment_coords['features'] and
             not 'deskewed' in feature_filter.split(',')):
-            log.info("Rotating %s for segment '%s' by %.2f°-%.2f°",
+            log.info("Rotating %s for segment '%s' by %.2f°",
                      "AlternativeImage" if alternative_image else
-                     "image", segment.id, segment_coords['angle'], parent_coords['angle'])
-            # @orientation is always absolute; if higher levels
-            # have already rotated, then we must compensate:
-            segment_image = rotate_image(segment_image, segment_coords['angle'] - parent_coords['angle'],
+                     "image", segment.id, skew)
+            segment_image = rotate_image(segment_image, skew,
                                          fill=fill, transparency=transparency)
             segment_coords['features'] += ',deskewed'
-        if (segment_coords['angle'] and
+        if (skew and
             not 'deskewed' in feature_filter.split(',')):
             # FIXME we should enforce consistency here (i.e. rotation always reshapes,
             #       and rescaling never happens)
             w_new, h_new = adjust_canvas_to_rotation(
-                [segment_xywh['w'], segment_xywh['h']], segment_coords['angle'])
+                [segment_xywh['w'], segment_xywh['h']], skew)
             if not (w_new - 1.5 < segment_image.width < w_new + 1.5 and
                     h_new - 1.5 < segment_image.height < h_new + 1.5):
                 log.error('segment "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during rotation',
