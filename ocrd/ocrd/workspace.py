@@ -616,12 +616,12 @@ class Workspace():
             orientation = orientation - (orientation % 90)
             skew = (angle % 360) - orientation
             skew = 180 - (180 - skew) % 360 # map to [-45,45]
-            segment_coords['angle'] = parent_coords['angle'] # nothing applied yet (depends on filters)
             log.debug("segment '%s' has orientation=%d skew=%.2f",
                       segment.id, orientation, skew)
         else:
             orientation = 0
             skew = 0
+        segment_coords['angle'] = parent_coords['angle'] # nothing applied yet (depends on filters)
 
         if (orientation and
             not 'rotated-%d' % orientation in feature_filter.split(',')):
@@ -638,7 +638,7 @@ class Workspace():
                           0.5 * segment_xywh['h']]))
             segment_xywh['w'], segment_xywh['h'] = adjust_canvas_to_transposition(
                 [segment_xywh['w'], segment_xywh['h']], transposition)
-            segment_coords['angle'] = orientation
+            segment_coords['angle'] += orientation
         if (skew and
             not 'deskewed' in feature_filter.split(',')):
             # Rotate around center in affine coordinate transform:
@@ -650,9 +650,13 @@ class Workspace():
                           0.5 * segment_xywh['h']]))
             segment_coords['angle'] += skew
             
-        # initialize AlternativeImage@comments classes from parent:
-        segment_coords['features'] = parent_coords['features'] + ',cropped'
-
+        # initialize AlternativeImage@comments classes from parent, except
+        # for those operations that can apply on multiple hierarchy levels:
+        segment_coords['features'] = ','.join(
+            [feature for feature in parent_coords['features'].split(',')
+             if feature in ['binarized', 'grayscale_normalized',
+                            'despeckled', 'dewarped']])
+        
         alternative_image = None
         alternative_images = segment.get_AlternativeImage()
         if alternative_images:
