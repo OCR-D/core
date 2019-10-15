@@ -310,7 +310,7 @@ def crop_image(image, box=None):
                     str(box), image.width, image.height)
     LOG.debug('cropping image to %s', str(box))
     xywh = xywh_from_bbox(*box)
-    background = ImageStat.Stat(image).median[0]
+    background = tuple(ImageStat.Stat(image).median)
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
                           background) # or 'white'
     new_image.paste(image, (-xywh['x'], -xywh['y']))
@@ -335,20 +335,30 @@ def rotate_image(image, angle, fill='background', transparency=False):
     Return a new PIL.Image.
     """
     LOG.debug('rotating image by %.2f°', angle)
-    if fill == 'background':
-        background = ImageStat.Stat(image).median[0]
-    else:
-        background = fill
     if transparency and image.mode in ['RGB', 'L']:
         # ensure no information is lost by adding transparency channel
         # initialized to fully opaque (so cropping and rotation will
         # expose areas as transparent):
         image = image.copy()
         image.putalpha(255)
+    if fill == 'background':
+        background = ImageStat.Stat(image).median
+        if image.mode in ['RGBA', 'LA']:
+            background[-1] = 0 # fully transparent
+        background = tuple(background)
+    else:
+        background = fill
     new_image = image.rotate(angle,
                              expand=True,
                              #resample=Image.BILINEAR,
                              fillcolor=background)
+    if new_image.mode in ['LA']:
+        # workaround for #1600 (bug in LA support which
+        # causes areas fully transparent before rotation
+        # to be filled with black here):
+        image = new_image
+        new_image = Image.new(image.mode, image.size, background)
+        new_image.paste(image, mask=image.getchannel('A'))
     return new_image
 
 def transpose_image(image, method):
@@ -432,7 +442,7 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     """
     mask = polygon_mask(image, polygon)
     if fill == 'background':
-        background = ImageStat.Stat(image).median[0]
+        background = tuple(ImageStat.Stat(image).median)
     else:
         background = fill
     new_image = Image.new(image.mode, image.size, background)
