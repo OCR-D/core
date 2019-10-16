@@ -7,10 +7,11 @@ ENV LANG C.UTF-8
 
 WORKDIR /build-ocrd
 COPY ocrd ./ocrd
+COPY ocrd_modelfactory ./ocrd_modelfactory/
+COPY ocrd_models ./ocrd_models
+COPY ocrd_utils ./ocrd_utils
 COPY Makefile .
-COPY setup.py .
-COPY requirements.txt .
-COPY README.rst .
+COPY README.md .
 COPY LICENSE .
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
@@ -19,9 +20,9 @@ RUN apt-get update && \
     sudo \
     git \
     libglib2.0.0 \
-    libsm6 \
-    libxrender1 \
     libxext6
+    # libsm6 \
+    # libxrender1 \
 RUN make deps-ubuntu
 RUN pip3 install --upgrade pip
 RUN make deps install
