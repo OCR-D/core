@@ -9,6 +9,10 @@ Fixed:
 
   * Add `dimension` to workspace validation skip list, #329
 
+Added:
+
+  * image_from_page etc: allow filling with background or transparency
+
 ## [1.0.0] - 2019-10-18
 
 * Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS, #309
@@ -16,7 +20,7 @@ Fixed:
 
 ## [1.0.0b19] - 2019-09-10
 
-* image_from_page: allow filtering by feature (@comment), #294
+* image_from_page etc: allow filtering by feature (@comments), #294
 
 ## [1.0.0b18] - 2019-09-06
 
@@ -34,7 +38,7 @@ Fixed:
   * Processor: `chdir` to workspace directory on init so relative files resolve properly
   * typos in docstrings
   * README: 'module' -> 'package'
-  * workspace.image_from_page: logic with rotation/angle
+  * workspace.image_from_page etc: logic with rotation/angle
   * Adapted test suite to OCR-D/assets now with file extensions
 
 Added:

@@ -104,7 +104,7 @@ from zipfile import ZipFile
 import contextlib
 
 import numpy as np
-from PIL import Image, ImageStat, ImageDraw
+from PIL import Image, ImageStat, ImageDraw, ImageChops
 
 import logging
 from .logging import * # pylint: disable=wildcard-import
@@ -271,6 +271,9 @@ def crop_image(image, box=None):
     # (It should be invalid in PAGE-XML to extend beyond parents.)
     if not box:
         box = (0, 0, image.width, image.height)
+    elif box[0] < 0 or box[1] < 0 or box[2] > image.width or box[3] > image.height:
+        LOG.error('crop coordinates (%s) exceed image (%dx%d)',
+                  str(box), image.width, image.height)
     xywh = xywh_from_bbox(*box)
     background = ImageStat.Stat(image).median[0]
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
@@ -301,27 +304,42 @@ def get_local_filename(url, start=None):
         url = url[len(start):]
     return url
 
-
-def image_from_polygon(image, polygon):
+def image_from_polygon(image, polygon, fill='background', transparency=False):
     """"Mask an image with a polygon.
 
     Given a PIL.Image ``image`` and a numpy array ``polygon``
-    of relative coordinates into the image, put everything
-    outside the polygon hull to the background. Since ``image``
-    is not necessarily binarized yet, determine the background
-    from the median color (instead of white).
-
+    of relative coordinates into the image, fill everything
+    outside the polygon hull to a color according to ``fill``:
+    - if ``background`` (the default), then use the median color
+      of the image;
+    - if ``white``, then use white.
+    Moreover, if ``transparency`` is true, then add an alpha channel
+    from the polygon mask (i.e. everything outside the polygon will
+    be transparent for those that can interpret alpha channels).
+    (Images which already have an alpha channel will have them
+    shrinked from the polygon mask.)
+    
     Return a new PIL.Image.
     """
     mask = polygon_mask(image, polygon)
-    # create a background image from its median color
-    # (in case it has not been binarized yet):
-    # array = np.asarray(image)
-    # background = np.median(array, axis=[0, 1], keepdims=True)
-    # array = np.broadcast_to(background.astype(np.uint8), array.shape)
-    background = ImageStat.Stat(image).median[0]
-    new_image = Image.new('L', image.size, background)
+    if fill == 'background':
+        background = ImageStat.Stat(image).median[0]
+    else:
+        background = 'white'
+    new_image = Image.new(image.mode, image.size, background)
     new_image.paste(image, mask=mask)
+    # ensure no information is lost by a adding transparency channel
+    # initialized to fully transparent outside the polygon mask
+    # (so consumers do not have to rely on background estimation,
+    #  which can fail on foreground-dominated segments, or white,
+    #  which can be inconsistent on unbinarized images):
+    if image.mode in ['RGBA', 'LA']:
+        # ensure transparency maximizes (i.e. parent mask AND mask):
+        mask = ImageChops.darker(mask, image.getchannel('A')) # min opaque
+        new_image.putalpha(mask)
+    elif transparency and image.mode in ['RGB', 'L']:
+        # introduce transparency:
+        new_image.putalpha(mask)
     return new_image
 
 def is_local_filename(url):
@@ -431,7 +449,7 @@ def polygon_mask(image, coordinates):
     mask = Image.new('L', image.size, 0)
     if isinstance(coordinates, np.ndarray):
         coordinates = list(map(tuple, coordinates))
-    ImageDraw.Draw(mask).polygon(coordinates, outline=1, fill=255)
+    ImageDraw.Draw(mask).polygon(coordinates, outline=255, fill=255)
     return mask
 
 def rotate_coordinates(polygon, angle, orig=np.array([0, 0])):
