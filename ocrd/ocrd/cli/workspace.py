@@ -47,7 +47,7 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 ''')
 @pass_workspace
 @click.option('-a', '--download', is_flag=True, help="Download all files")
-@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
+@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
 @click.option('--page-strictness', help="How strict to check PAGE consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.argument('mets_url')
 def validate_workspace(ctx, mets_url, download, skip, page_strictness):

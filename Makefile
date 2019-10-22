@@ -16,6 +16,9 @@ BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
 
 FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
 
+# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
+DOCKER_ARGS = 
+
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
@@ -44,6 +47,7 @@ help:
 	@echo "  Variables"
 	@echo ""
 	@echo "    PAGE_VERSION  PAGE schema version to use. Default: '$(PAGE_VERSION)'"
+	@echo "    DOCKER_ARGS   Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
 	@echo "    DOCKER_TAG    Docker tag."
 	@echo "    PIP_INSTALL   pip install command. Default: $(PIP_INSTALL)"
 
@@ -57,7 +61,7 @@ PIP_INSTALL = pip install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	sudo apt install -y python3 python3-pip
+	sudo apt-get install -y python3 python3-pip
 
 # Install test python deps via pip
 deps-test:
@@ -181,7 +185,7 @@ pyclean:
 
 # Build docker image
 docker:
-	docker build -t $(DOCKER_TAG) .
+	docker build -t $(DOCKER_TAG) $(DOCKER_ARGS) .
 
 #
 # bash library
