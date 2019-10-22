@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Add `dimension` to workspace validation skip list, #329
+
 ## [1.0.0] - 2019-10-18
 
 * Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS, #309
