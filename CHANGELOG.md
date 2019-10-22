@@ -6,6 +6,9 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 * image_from_page etc: allow filling with background or transparency
+
+## [1.0.0] - 2019-10-18
+
 * Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS, #309
 * `ocrd ocrd-tool parse-params` has the string-or-filepath logic for -p/--parameter as for the [CLI](https://ocr-d.github.io/cli#-p---parameter-param_json)
 
@@ -588,6 +591,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0]: ../../compare/v1.0.0...v1.0.0b19
+[1.0.0b19]: ../../compare/v1.0.0b19...v1.0.0b18
+[1.0.0b18]: ../../compare/v1.0.0b18...v1.0.0b17
 [1.0.0b17]: ../../compare/v1.0.0b17...v1.0.0b16
 [1.0.0b16]: ../../compare/v1.0.0b16...v1.0.0b15
 [1.0.0b15]: ../../compare/v1.0.0b15...v1.0.0b14

@@ -77,7 +77,7 @@ def spill(dest, src):
     """
     resolver = Resolver()
     workspace_bagger = WorkspaceBagger(resolver)
-    workspace = workspace_bagger.spill(src, directory)
+    workspace = workspace_bagger.spill(src, dest)
     print(workspace)
 
 # ----------------------------------------------------------------------
