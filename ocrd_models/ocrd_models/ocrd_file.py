@@ -157,6 +157,7 @@ class OcrdFile():
             if 'OTHERLOCTYPE' in el_FLocat.attrib:
                 del el_FLocat.attrib['OTHERLOCTYPE']
         else:
+            el_FLocat.set('LOCTYPE', 'OTHER')
             el_FLocat.set('OTHERLOCTYPE', otherloctype)
 
     @property

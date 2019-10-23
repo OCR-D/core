@@ -20,6 +20,8 @@ class TestOcrdFile(TestCase):
         f.loctype = 'URN'
         self.assertEqual(f.loctype, 'URN')
         self.assertEqual(f.otherloctype, None)
+        f.otherloctype = 'foo'
+        self.assertEqual(f.loctype, 'OTHER')
 
     def test_set_url(self):
         f = OcrdFile(None)
