@@ -10,6 +10,9 @@ Fixed:
   * Add `dimension` to workspace validation skip list, #329
   * Update ocrd-tool.json schema to spec 3.3.0 (no output_file_grp, no syntax restriction on content-type)
 
+Changed:
+  * `ocrd process`: task validation takes processor's ocrd-tool into account, #296
+
 ## [1.0.0] - 2019-10-18
 
 * Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS, #309
