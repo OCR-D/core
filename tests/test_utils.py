@@ -1,4 +1,6 @@
 from os import getcwd
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from PIL import Image
 
@@ -175,6 +177,21 @@ class TestUtils(TestCase):
         self.assertEqual(parse_json_string_or_file('{}'), {})
         self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
         self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
+
+    def test_parameter_file(self):
+        with TemporaryDirectory() as tempdir:
+            paramfile = str(Path(tempdir, '{}')) # XXX yes, the file is called '{}'
+            with open(paramfile, 'w') as f:
+                f.write('{"bar": 42}')
+            self.assertEqual(parse_json_string_or_file(paramfile), {'bar': 42})
+            with pushd_popd(tempdir):
+                self.assertEqual(parse_json_string_or_file(), {'bar': 42})
+
+    def test_parameters_invalid(self):
+        with self.assertRaisesRegex(ValueError, 'Not a valid JSON object'):
+            parse_json_string_or_file('[]')
+        with self.assertRaisesRegex(ValueError, 'Error parsing'):
+            parse_json_string_or_file('[}')
 
 
 if __name__ == '__main__':
