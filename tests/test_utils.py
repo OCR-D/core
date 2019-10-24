@@ -124,6 +124,7 @@ class TestUtils(TestCase):
             5.4.1 no
             6.0.0 yes
             6.1.0 yes
+            6.2.0 no
         """
         for _ in range(0, 10):
             pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470.tif'))
