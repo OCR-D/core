@@ -41,7 +41,7 @@ class ProcessorTask():
     def validate(self):
         if not which(self.executable):
             raise Exception("Executable not found in PATH: %s" % self.executable)
-        result = run([self.executable, '--dump-json'], stdout=PIPE)
+        result = run([self.executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
         ocrd_tool_json = json.loads(result.stdout)
         # TODO check for required parameters in ocrd_tool
         if self.parameter_path:
