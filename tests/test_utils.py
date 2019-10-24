@@ -18,6 +18,8 @@ from ocrd_utils import (
     nth_url_segment,
     remove_non_path_from_url,
 
+    parse_json_string_or_file,
+
     points_from_bbox,
     points_from_x0y0x1y1,
     points_from_xywh,
@@ -167,6 +169,13 @@ class TestUtils(TestCase):
         self.assertEqual(nth_url_segment('/path/to/foo#frag'), 'foo')
         self.assertEqual(nth_url_segment('/path/to/foo#frag', n=-2), 'to')
         self.assertEqual(nth_url_segment('https://server/foo?xyz=zyx'), 'foo')
+
+    def test_parse_json_string_or_file(self):
+        self.assertEqual(parse_json_string_or_file(), {})
+        self.assertEqual(parse_json_string_or_file('{}'), {})
+        self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
+        self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
+
 
 if __name__ == '__main__':
     main()

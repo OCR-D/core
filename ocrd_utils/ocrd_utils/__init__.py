@@ -37,7 +37,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_or_file``
 
     String and OOP utilities
 
@@ -69,6 +69,7 @@ __all__ = [
     'logging',
     'membername',
     'image_from_polygon',
+    'parse_json_string_or_file',
     'points_from_bbox',
     'points_from_polygon',
     'points_from_x0y0x1y1',
@@ -93,9 +94,8 @@ __all__ = [
 ]
 
 import io
-import re
+import json
 import sys
-import logging
 import os
 import re
 from os import getcwd, chdir
@@ -503,3 +503,23 @@ def xywh_from_points(points):
         'w': maxx - minx,
         'h': maxy - miny,
     }
+
+def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
+    """
+    Parse a string as either the path to a JSON object or a literal JSON object.
+    """
+    ret = None
+    err = None
+    try:
+        try:
+            with open(value, 'r') as f:
+                ret = json.load(f)
+        except FileNotFoundError:
+            ret = json.loads(value.strip())
+        if not isinstance(ret, dict):
+            err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, ret))
+    except json.decoder.JSONDecodeError as e:
+        err = ValueError("Error parsing '%s': %s" % (value, e))
+    if err:
+        raise err       # pylint: disable=raising-bad-type
+    return ret

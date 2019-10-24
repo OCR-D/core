@@ -1,8 +1,9 @@
-import os
+import json
 from shlex import split as shlex_split
 from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
+from subprocess import run, PIPE
 
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, parse_json_string_or_file
 from ocrd.processor.base import run_cli
 from ocrd.resolver import Resolver
 
@@ -38,14 +39,18 @@ class ProcessorTask():
         self.parameter_path = parameter_path
 
     def validate(self):
-        if self.parameter_path and not os.access(self.parameter_path, os.R_OK):
-            raise Exception("Parameter file not readable: %s" % self.parameter_path)
-        if not self.input_file_grps:
-            raise Exception("Task must have input file group")
-        # if not self.output_file_grps:
-        #     raise Exception("Task must have output file group")
         if not which(self.executable):
             raise Exception("Executable not found in PATH: %s" % self.executable)
+        result = run([self.executable, '--dump-json'], stdout=PIPE)
+        ocrd_tool_json = json.loads(result.stdout)
+        # TODO check for required parameters in ocrd_tool
+        if self.parameter_path:
+            parse_json_string_or_file(self.parameter_path)
+        if not self.input_file_grps:
+            raise Exception("Task must have input file group")
+        if 'output_file_grp' in ocrd_tool_json and not self.output_file_grps:
+            raise Exception("Processor requires output_file_grp but none was provided.")
+        return True
 
     def __str__(self):
         ret = '%s -I %s -O %s' % (
