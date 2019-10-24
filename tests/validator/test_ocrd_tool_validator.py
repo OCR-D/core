@@ -34,19 +34,20 @@ class TestOcrdToolValidator(TestCase):
         report = OcrdToolValidator.validate(ocrd_tool)
         self.assertEqual(report.is_valid, True)
 
-    def test_file_param_bad_content_types(self):
-        bad_and_why = [
-                [2, 'Number not string'],
-                ['foo', 'No subtype'],
-                ['foo/bar~300', 'Invalid char in subtype'],
-                ['foo/bar 300', 'Invalid char in subtype'],
-        ]
-        for case in bad_and_why:
-            ocrd_tool = json.loads(skeleton)
-            ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": case[0]}}
-            report = OcrdToolValidator.validate(ocrd_tool)
-            print('# %s: %s' % (case[0], case[1]))
-            self.assertEqual(report.is_valid, False, case[1])
+    # Not restricted anymore since spec 3.3.0
+    #  def test_file_param_bad_content_types(self):
+    #      bad_and_why = [
+    #              [2, 'Number not string'],
+    #              ['foo', 'No subtype'],
+    #              ['foo/bar~300', 'Invalid char in subtype'],
+    #              ['foo/bar 300', 'Invalid char in subtype'],
+    #      ]
+    #      for case in bad_and_why:
+    #          ocrd_tool = json.loads(skeleton)
+    #          ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": case[0]}}
+    #          report = OcrdToolValidator.validate(ocrd_tool)
+    #          print('# %s: %s' % (case[0], case[1]))
+    #          self.assertEqual(report.is_valid, False, case[1])
 
 if __name__ == '__main__':
     main()
