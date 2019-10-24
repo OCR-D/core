@@ -4,7 +4,7 @@ from tempfile import mkdtemp
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
 
-from bagit import BagValidationError # pylint: disable=no-name-in-module
+#  from bagit import BagValidationError # pylint: disable=no-name-in-module
 
 from ocrd_validators import OcrdZipValidator
 from ocrd.workspace import Workspace
@@ -25,16 +25,20 @@ class TestOcrdZipValidator(TestCase):
     def tearDown(self):
         rmtree(self.tempdir)
 
-    def test_validation(self):
+    def test_validation0(self):
         ocrdzip = self.bagger.bag(self.workspace, 'SBB0000F29300010000', ocrd_manifestation_depth='partial')
         report = OcrdZipValidator(self.resolver, ocrdzip).validate()
         self.assertEqual(report.is_valid, True)
 
-    def test_validation_unzipped(self):
+    def test_validation_unzipped0(self):
         validator = OcrdZipValidator(self.resolver, self.bagdir)
+        # import os
+        # from ocrd_utils import pushd_popd
+        # with pushd_popd(self.bagdir):
+        #     os.system('find')
+        # print(report)
         report = validator.validate(skip_unzip=True)
         self.assertEqual(report.is_valid, True)
-        print(report)
 
     def test_validation_unzipped_skip_bag(self):
         validator = OcrdZipValidator(self.resolver, self.bagdir)

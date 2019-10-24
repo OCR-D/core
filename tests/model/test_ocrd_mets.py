@@ -1,11 +1,12 @@
 from datetime import datetime
-from tempfile import TemporaryDirectory
-from shutil import copytree
 from os.path import join
-from tests.base import TestCase, main, assets
+from tests.base import TestCase, main, assets, copy_of_directory
 
-from ocrd_utils import VERSION, MIMETYPE_PAGE
-from ocrd_utils.logging import initLogging
+from ocrd_utils import (
+    initLogging,
+    VERSION,
+    MIMETYPE_PAGE
+)
 from ocrd_models import OcrdMets
 
 # pylint: disable=protected-access,deprecated-method,too-many-public-methods
@@ -48,6 +49,7 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001-NOTEXIST')), 0, '0 pages for "PHYS_0001-NOTEXIST"')
         self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
+        self.assertEqual(len(self.mets.find_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
 
     def test_find_files_local_only(self):
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001', local_only=True)), 3, '3 local files for page "PHYS_0001"')
@@ -152,17 +154,16 @@ class TestOcrdMets(TestCase):
         """
         Test removal of filegrp
         """
-        with TemporaryDirectory() as tempdir:
-            copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
-            mets = OcrdMets(filename=join(tempdir, 'ws', 'mets.xml'))
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
             self.assertEqual(len(mets.file_groups), 17)
             self.assertEqual(len(mets.find_files()), 35)
-            print()
-            before = sorted([x.ID for x in mets.find_files()])
+            #  print()
+            #  before = sorted([x.ID for x in mets.find_files()])
             with self.assertRaisesRegex(Exception, "not empty"):
                 mets.remove_file_group('OCR-D-GT-ALTO')
             mets.remove_file_group('OCR-D-GT-PAGE', recursive=True)
-            print([x for x in before if x not in sorted([x.ID for x in mets.find_files()])])
+            #  print([x for x in before if x not in sorted([x.ID for x in mets.find_files()])])
             self.assertEqual(len(mets.file_groups), 16)
             self.assertEqual(len(mets.find_files()), 33)
 

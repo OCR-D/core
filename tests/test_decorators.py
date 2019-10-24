@@ -1,23 +1,30 @@
-from os.path import join
-from shutil import copyfile
 from tempfile import TemporaryDirectory
+from pathlib import Path
 
 import click
 from click.testing import CliRunner
 
-from tests.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
+from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 
 from ocrd import Processor
-from ocrd.decorators import ocrd_cli_options, ocrd_loglevel, ocrd_cli_wrap_processor
+from ocrd.decorators import (
+    ocrd_cli_options,
+    ocrd_loglevel,
+    ocrd_cli_wrap_processor,
+    _parse_json_string_or_file
+)    # pylint: disable=protected-access
 from ocrd_utils.logging import setOverrideLogLevel, initLogging
+from ocrd_utils import pushd_popd
 
 @click.command()
 @ocrd_cli_options
-def cli_with_ocrd_cli_options(*args, **kwargs): pass # pylint: disable=unused-argument, multiple-statements
+def cli_with_ocrd_cli_options(*args, **kwargs):      # pylint: disable=unused-argument
+    pass
 
 @click.command()
 @ocrd_loglevel
-def cli_with_ocrd_loglevel(*args, **kwargs): pass # pylint: disable=unused-argument, multiple-statements
+def cli_with_ocrd_loglevel(*args, **kwargs):         # pylint: disable=unused-argument
+    pass
 
 DUMMY_TOOL = {'executable': 'ocrd-test', 'steps': ['recognition/post-correction']}
 
@@ -70,22 +77,38 @@ class TestDecorators(TestCase):
         result = self.runner.invoke(cli_dummy_processor, ['--version'])
         self.assertEqual(result.exit_code, 0)
 
-    def test_processor_no_mets(self):
-        result = self.runner.invoke(cli_dummy_processor)
-        self.assertIn('Error: Missing option "-m" / "--mets".', result.output)
-        self.assertEqual(result.exit_code, 1)
-
-    def test_processor_non_existing_mets(self):
-        result = self.runner.invoke(cli_dummy_processor, ['--mets', 'file:///does/not/exist.xml'])
-        self.assertIn('File does not exist: file:///does/not/exist.xml', result.output)
-        self.assertEqual(result.exit_code, 1)
+    # XXX cannot be tested in this way because logging is reused and not part of output
+    #  def test_processor_non_existing_mets(self):
+    #      result = self.runner.invoke(cli_dummy_processor, ['--mets', 'file:///does/not/exist.xml'])
+    #      #  self.assertIn('File does not exist: file:///does/not/exist.xml', result.output)
+    #      self.assertEqual(result.exit_code, 1)
 
     def test_processor_run(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            with pushd_popd(tempdir):
+                result = self.runner.invoke(cli_dummy_processor, ['--mets', 'mets.xml'])
+                self.assertEqual(result.exit_code, 0)
+
+    def test_parameters0(self):
+        self.assertEqual(_parse_json_string_or_file(None, None), {})
+        self.assertEqual(_parse_json_string_or_file(None, None, '{}'), {})
+        self.assertEqual(_parse_json_string_or_file(None, None, '{"foo": 32}'), {'foo': 32})
+        self.assertEqual(_parse_json_string_or_file(None, None, '{"foo": 32}'), {'foo': 32})
+
+    def test_parameter_file(self):
         with TemporaryDirectory() as tempdir:
-            mets_path = join(tempdir, 'mets.xml')
-            copyfile(assets.path_to('SBB0000F29300010000/data/mets.xml'), mets_path)
-            result = self.runner.invoke(cli_dummy_processor, ['--mets', mets_path])
-            self.assertEqual(result.exit_code, 0)
+            paramfile = str(Path(tempdir, '{}')) # XXX yes, the file is called '{}'
+            with open(paramfile, 'w') as f:
+                f.write('{"bar": 42}')
+            self.assertEqual(_parse_json_string_or_file(None, None, paramfile), {'bar': 42})
+            with pushd_popd(tempdir):
+                self.assertEqual(_parse_json_string_or_file(None, None), {'bar': 42})
+
+    def test_parameters_invalid(self):
+        with self.assertRaisesRegex(ValueError, 'Not a valid JSON object'):
+            _parse_json_string_or_file(None, None, '[]')
+        with self.assertRaisesRegex(ValueError, 'Error parsing'):
+            _parse_json_string_or_file(None, None, '[}')
 
 
 if __name__ == '__main__':

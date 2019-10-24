@@ -74,5 +74,6 @@ class JsonValidator():
         report = ValidationReport()
         if not self.validator.is_valid(obj):
             for v in self.validator.iter_errors(obj):
+                #  print(">>>>>>>>> v='%s', obj='%s'" % (v, obj))
                 report.add_error("[%s] %s" % ('.'.join(str(vv) for vv in v.path), v.message))
         return report

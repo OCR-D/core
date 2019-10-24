@@ -1,3 +1,5 @@
+import json
+
 from tempfile import TemporaryDirectory
 from os.path import join
 from tests.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
@@ -47,26 +49,14 @@ class TestResolver(TestCase):
         with TemporaryDirectory() as tempdir:
             jsonpath = join(tempdir, 'params.json')
             with open(jsonpath, 'w') as f:
-                f.write('{}')
-            processor = run_processor(
-                DummyProcessor,
-                parameter=jsonpath,
-                resolver=self.resolver,
-                mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml')
-            )
-            self.assertEqual(len(processor.input_files), 35)
-
-    def test_parameter_url(self):
-        with TemporaryDirectory() as tempdir:
-            jsonpath = join(tempdir, 'params.json')
-            with open(jsonpath, 'w') as f:
-                f.write('{}')
-            processor = run_processor(
-                DummyProcessor,
-                parameter='file://%s' % jsonpath,
-                resolver=self.resolver,
-                mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml')
-            )
+                f.write('{"baz": "quux"}')
+            with open(jsonpath, 'r') as f:
+                processor = run_processor(
+                    DummyProcessor,
+                    parameter=json.load(f),
+                    resolver=self.resolver,
+                    mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml')
+                )
             self.assertEqual(len(processor.input_files), 35)
 
     def test_verify(self):

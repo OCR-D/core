@@ -1,7 +1,9 @@
 """
 API to ``mets:file``
 """
-import os
+from os.path import splitext, basename
+
+from ocrd_utils import is_local_filename, get_local_filename
 
 from .ocrd_xml_base import ET
 from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
@@ -15,7 +17,7 @@ class OcrdFile():
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, instance=None, local_filename=None, mets=None):
+    def __init__(self, el, mimetype=None, loctype='OTHER', instance=None, local_filename=None, mets=None, url=None):
         """
         Args:
             el (LxmlElement):
@@ -31,16 +33,14 @@ class OcrdFile():
         self.local_filename = local_filename
         self._instance = instance
         self.mets = mets
+        self.loctype = loctype
 
-        if self.url:
-            if not self.url.startswith('http://') and \
-                not self.url.startswith('https://'):
-                self.local_filename = self.url
-            if self.url.startswith('file://'):
-                self.local_filename = self.url[len('file://'):]
+        if url:
+            self.url = url
 
-        #  if baseurl and not local_filename and '://' not in self.url:
-        #      self.local_filename = '%s/%s' % (baseurl, self.url)
+        if not(local_filename):
+            if self.url and is_local_filename(self.url):
+                self.local_filename = get_local_filename(self.url)
 
     def __str__(self):
         """
@@ -62,12 +62,12 @@ class OcrdFile():
         """
         Get the ``os.path.basename`` of the local file, if any.
         """
-        return os.path.basename(self.local_filename)
+        return basename(self.local_filename if self.local_filename else self.url)
 
     @property
     def extension(self):
-        basename, ext = os.path.splitext(self.basename)
-        if basename.endswith('.tar'):
+        _basename, ext = splitext(self.basename)
+        if _basename.endswith('.tar'):
             ext = ".tar" + ext
         return ext
 
@@ -119,6 +119,48 @@ class OcrdFile():
 
 
     @property
+    def loctype(self):
+        """
+        Get the ``LOCTYPE``.
+        """
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        return '' if el_FLocat is None else el_FLocat.get('LOCTYPE')
+
+    @loctype.setter
+    def loctype(self, loctype):
+        """
+        Set the ``LOCTYPE``.
+        """
+        if loctype is None:
+            return
+        loctype = loctype.upper()
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        if el_FLocat is None:
+            el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
+        el_FLocat.set('LOCTYPE', loctype)
+        if loctype == 'OTHER':
+            self.otherloctype = 'FILE'
+        else:
+            self.otherloctype = None
+
+    @property
+    def otherloctype(self):
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        return '' if el_FLocat is None else el_FLocat.get('OTHERLOCTYPE')
+
+    @otherloctype.setter
+    def otherloctype(self, otherloctype):
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        if el_FLocat is None:
+            el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
+        if not otherloctype:
+            if 'OTHERLOCTYPE' in el_FLocat.attrib:
+                del el_FLocat.attrib['OTHERLOCTYPE']
+        else:
+            el_FLocat.set('LOCTYPE', 'OTHER')
+            el_FLocat.set('OTHERLOCTYPE', otherloctype)
+
+    @property
     def mimetype(self):
         """
         Get the ``MIMETYPE``.
@@ -139,7 +181,10 @@ class OcrdFile():
         """
         The ``USE`` attribute of the containing ``mets:fileGrp``
         """
-        return self._el.getparent().get('USE')
+        parent = self._el.getparent()
+        if parent is not None:
+            return self._el.getparent().get('USE')
+        return 'TEMP'
 
     @property
     def url(self):

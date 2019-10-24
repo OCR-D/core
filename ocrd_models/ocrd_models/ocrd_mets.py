@@ -3,7 +3,7 @@ API to METS
 """
 from datetime import datetime
 
-from ocrd_utils import getLogger, VERSION
+from ocrd_utils import is_local_filename, getLogger, VERSION
 
 from .constants import (
     NAMESPACES as NS,
@@ -124,7 +124,7 @@ class OcrdMets(OcrdXmlDocument):
             pageId (string) : ID of physical page manifested by matching files
             url (string) : @xlink:href of mets:Flocat of mets:file
             mimetype (string) : MIMETYPE of matching files
-            local (boolean) : Whether to restrict results to local files, i.e. file://-URL
+            local (boolean) : Whether to restrict results to local files
 
         Return:
             List of files.
@@ -154,10 +154,9 @@ class OcrdMets(OcrdXmlDocument):
             if file_id not in self._file_by_id:
                 self._file_by_id[file_id] = OcrdFile(el, mets=self)
 
-            # If only local resources should be returned and file is neither a
-            # file:// URL nor a file path: skip the file
+            # If only local resources should be returned and file is not a file path: skip the file
             url = self._file_by_id[file_id].url
-            if local_only and not (url.startswith('file://') or '://' not in url):
+            if local_only and not is_local_filename(url):
                 continue
             ret.append(self._file_by_id[file_id])
         return ret
@@ -169,6 +168,8 @@ class OcrdMets(OcrdXmlDocument):
         Arguments:
             fileGrp (string): ``USE`` attribute of the new filegroup.
         """
+        if ',' in fileGrp:
+            raise Exception('fileGrp must not contain commas')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)

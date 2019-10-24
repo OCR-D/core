@@ -68,7 +68,7 @@ def bag(directory, mets_basename, dest, identifier, in_place, manifestation_dept
               help='Workspace folder location.',
               show_default=True)
 @click.argument('src', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
-def spill(directory, src):
+def spill(dest, src):
     """
     Spill/unpack OCRD-ZIP bag at SRC to DEST
 
@@ -77,7 +77,7 @@ def spill(directory, src):
     """
     resolver = Resolver()
     workspace_bagger = WorkspaceBagger(resolver)
-    workspace = workspace_bagger.spill(src, directory)
+    workspace = workspace_bagger.spill(src, dest)
     print(workspace)
 
 # ----------------------------------------------------------------------

@@ -5,6 +5,44 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Add `dimension` to workspace validation skip list, #329
+  * Update ocrd-tool.json schema to spec 3.3.0 (no output_file_grp, no syntax restriction on content-type)
+
+## [1.0.0] - 2019-10-18
+
+* Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS, #309
+* `ocrd ocrd-tool parse-params` has the string-or-filepath logic for -p/--parameter as for the [CLI](https://ocr-d.github.io/cli#-p---parameter-param_json)
+
+## [1.0.0b19] - 2019-09-10
+
+* image_from_page: allow filtering by feature (@comment), #294
+
+## [1.0.0b18] - 2019-09-06
+
+Changed:
+
+  * `-m/--mets` is not required anymore, #301
+  * `ocrd workspace prune-files`: Throw on error removing non-existant file
+  * `-p/--parameter` argument accepts raw JSON as well now, #239
+
+Fixed:
+
+  * OcrdFile: Default fileGrp to `TEMP`
+  * OcrdFile: Accept url constructor arg
+  * Workspace: Simplify file download code, add extensions to files
+  * Processor: `chdir` to workspace directory on init so relative files resolve properly
+  * typos in docstrings
+  * README: 'module' -> 'package'
+  * workspace.image_from_page: logic with rotation/angle
+  * Adapted test suite to OCR-D/assets now with file extensions
+
+Added:
+
+  * utils: `MIME_TO_EXT` to map mime types to preferred extension
+  * Validation of imageHeight/imageWidth in PAGE vs. actual image height/width, #229
+
 ## [1.0.0b17] - 2019-08-21
 
 Fixed:
@@ -556,6 +594,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[1.0.0]: ../../compare/v1.0.0...v1.0.0b19
+[1.0.0b19]: ../../compare/v1.0.0b19...v1.0.0b18
+[1.0.0b18]: ../../compare/v1.0.0b18...v1.0.0b17
 [1.0.0b17]: ../../compare/v1.0.0b17...v1.0.0b16
 [1.0.0b16]: ../../compare/v1.0.0b16...v1.0.0b15
 [1.0.0b15]: ../../compare/v1.0.0b15...v1.0.0b14

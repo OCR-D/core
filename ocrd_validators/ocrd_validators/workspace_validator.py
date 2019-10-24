@@ -2,8 +2,11 @@
 Validating a workspace.
 """
 import re
+from pathlib import Path
 
-from ocrd_utils import getLogger, MIMETYPE_PAGE
+from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
+from ocrd_modelfactory import page_from_file
+
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
 from .page_validator import PageValidator
@@ -35,13 +38,13 @@ class WorkspaceValidator():
         self.skip = skip if skip else []
         log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
+        if mets_url is None and src_dir is not None:
+            mets_url = '%s/mets.xml' % src_dir
         self.mets_url = mets_url
         self.download = download
         self.page_strictness = page_strictness
 
         self.src_dir = src_dir
-        if mets_url is None and src_dir is not None:
-            mets_url = '%s/mets.xml' % src_dir
         self.workspace = None
         self.mets = None
 
@@ -54,7 +57,7 @@ class WorkspaceValidator():
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
-            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'url'
+            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'dimension', 'url'
             download (boolean): Whether to download files
 
         Returns:
@@ -69,6 +72,11 @@ class WorkspaceValidator():
         """
         try:
             self._resolve_workspace()
+        except Exception as e: # pylint: disable=broad-except
+            log.warning("Failed to instantiate workspace: %s", e)
+            self.report.add_error("Failed to instantiate workspace: %s" % e)
+            return self.report
+        with pushd_popd(self.workspace.directory):
             if 'mets_unique_identifier' not in self.skip:
                 self._validate_mets_unique_identifier()
             if 'mets_file_group_names' not in self.skip:
@@ -77,11 +85,12 @@ class WorkspaceValidator():
                 self._validate_mets_files()
             if 'pixel_density' not in self.skip:
                 self._validate_pixel_density()
+            if 'dimension' not in self.skip:
+                self._validate_dimension()
+            if 'imagefilename' not in self.skip:
+                self._validate_imagefilename()
             if 'page' not in self.skip:
                 self._validate_page()
-        except Exception as e: # pylint: disable=broad-except
-            self.report.add_error("Failed to instantiate workspace: %s" % e)
-            #  raise e
         return self.report
 
     def _resolve_workspace(self):
@@ -89,7 +98,7 @@ class WorkspaceValidator():
         Clone workspace from mets_url unless workspace was provided.
         """
         if self.workspace is None:
-            self.workspace = self.resolver.workspace_from_url(self.mets_url, baseurl=self.src_dir, download=self.download)
+            self.workspace = self.resolver.workspace_from_url(self.mets_url, src_baseurl=self.src_dir, download=self.download)
             self.mets = self.workspace.mets
 
     def _validate_mets_unique_identifier(self):
@@ -101,6 +110,37 @@ class WorkspaceValidator():
         if self.mets.unique_identifier is None:
             self.report.add_error("METS has no unique identifier")
 
+    def _validate_imagefilename(self):
+        """
+        Validate that the imageFilename is correctly set to a filename relative to the workspace
+        """
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+            if not f.local_filename and not self.download:
+                self.report.add_notice("Won't download remote PAGE XML <%s>" % f.url)
+                continue
+            self.workspace.download_file(f)
+            page = page_from_file(f).get_Page()
+            imageFilename = page.imageFilename
+            if not self.mets.find_files(url=imageFilename):
+                self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
+            if is_local_filename(imageFilename) and not Path(imageFilename).exists():
+                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existant local file")
+
+    def _validate_dimension(self):
+        """
+        Validate image height and PAGE imageHeight match
+        """
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+            if not f.local_filename and not self.download:
+                self.report.add_notice("Won't download remote PAGE XML <%s>" % f.url)
+                continue
+            page = page_from_file(f).get_Page()
+            _, _, exif = self.workspace.image_from_page(page, f.pageId)
+            if page.imageHeight != exif.height:
+                self.report.add_error("PAGE '%s': @imageHeight != image's actual height (%s != %s)" % (f.ID, page.imageHeight, exif.height))
+            if page.imageWidth != exif.width:
+                self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
+
     def _validate_pixel_density(self):
         """
         Validate image pixel density
@@ -108,7 +148,7 @@ class WorkspaceValidator():
         See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
         """
         for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
-            if not f.local_filename and not self.download:
+            if not is_local_filename(f.url) and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
                 continue
             exif = self.workspace.resolve_image_exif(f.url)
@@ -152,7 +192,7 @@ class WorkspaceValidator():
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
             if not f.pageId:
                 self.report.add_error("File '%s' does not manifest any physical page." % f.ID)
-            if 'url' not in self.skip and ':/' in f.url:
+            if 'url' not in self.skip and f.url and ':/' in f.url:
                 if re.match(r'^file:/[^/]', f.url):
                     self.report.add_warning("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
                 scheme = f.url[0:f.url.index(':')]

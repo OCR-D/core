@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import makedirs, chdir, walk, getcwd
+from os import makedirs, chdir, walk
 from os.path import join, isdir, basename, exists, relpath
 from shutil import make_archive, rmtree, copyfile, move
 from tempfile import mkdtemp
@@ -10,8 +10,18 @@ import sys
 from pkg_resources import get_distribution
 from bagit import Bag, make_manifests  # pylint: disable=no-name-in-module
 
-from ocrd_utils import VERSION, getLogger, abspath, is_local_filename, unzip_file_to_dir
+from ocrd_utils import (
+    pushd_popd,
+    getLogger,
+    is_local_filename,
+    unzip_file_to_dir,
+
+    MIMETYPE_PAGE,
+    VERSION,
+)
 from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
+from ocrd_modelfactory import page_from_file
+from ocrd_models.ocrd_page import to_xml
 
 from .workspace import Workspace
 
@@ -43,47 +53,69 @@ class WorkspaceBagger():
             # Remove temporary bagdir
             rmtree(bagdir)
 
-    def _log_or_raise(self, msg, oldpwd):
+    def _log_or_raise(self, msg):
         if self.strict:
-            chdir(oldpwd)
             raise(Exception(msg))
         else:
             log.info(msg)
 
     def _bag_mets_files(self, workspace, bagdir, ocrd_manifestation_depth, ocrd_mets, processes):
         mets = workspace.mets
+        changed_urls = {}
 
         # TODO allow filtering by fileGrp@USE and such
-        oldpwd = getcwd()
-        chdir(workspace.directory)
-        for f in mets.find_files():
-            log.info("Resolving %s (%s)", f.url, ocrd_manifestation_depth)
-            if is_local_filename(f.url):
-                f.url = abspath(f.url)
-            # XXX cannot happen because chdir above
-            #  elif is_local_filename(join(workspace.directory, 'data', f.url)):
-            #      f.url = abspath(join(workspace.directory, 'data', f.url))
-            elif ocrd_manifestation_depth != 'full':
-                self._log_or_raise("Not fetching non-local files, skipping %s" % f.url, oldpwd)
-                continue
-            elif not f.url.startswith('http'):
-                self._log_or_raise("Not an http URL: %s" % f.url, oldpwd)
-                continue
-            log.info("Resolved %s", f.url)
+        with pushd_popd(workspace.directory):
+            # URLs of the files before changing
+            for f in mets.find_files():
+                log.info("Resolving %s (%s)", f.url, ocrd_manifestation_depth)
+                if is_local_filename(f.url):
+                    # nothing to do then
+                    pass
+                elif ocrd_manifestation_depth != 'full':
+                    self._log_or_raise("Not fetching non-local files, skipping %s" % f.url)
+                    continue
+                elif not f.url.startswith('http'):
+                    self._log_or_raise("Not an http URL: %s" % f.url)
+                    continue
+                log.info("Resolved %s", f.url)
 
-            file_grp_dir = join(bagdir, 'data', f.fileGrp)
-            if not isdir(file_grp_dir):
-                makedirs(file_grp_dir)
-            self.resolver.download_to_directory(file_grp_dir, f.url, basename="%s%s" % (f.ID, f.extension))
-            f.url = join(f.fileGrp, f.ID)
+                file_grp_dir = join(bagdir, 'data', f.fileGrp)
+                if not isdir(file_grp_dir):
+                    makedirs(file_grp_dir)
 
-        # save mets.xml
-        with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
-            f.write(workspace.mets.to_xml())
+                _basename = "%s%s" % (f.ID, f.extension)
+                _relpath = join(f.fileGrp, _basename)
+                self.resolver.download_to_directory(file_grp_dir, f.url, basename=_basename)
+                changed_urls[f.url] = _relpath
+                f.url = _relpath
 
-        chdir(bagdir)
-        total_bytes, total_files = make_manifests('data', processes, algorithms=['sha512'])
-        chdir(oldpwd)
+            # save mets.xml
+            with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
+                f.write(workspace.mets.to_xml())
+
+        # Walk through bagged workspace and fix the PAGE
+        # Page/@imageFilename and
+        # AlternativeImage/@filename
+        bag_workspace = Workspace(self.resolver, directory=join(bagdir, 'data'))
+        with pushd_popd(bag_workspace.directory):
+            for page_file in bag_workspace.mets.find_files(mimetype=MIMETYPE_PAGE):
+                pcgts = page_from_file(page_file)
+                changed = False
+                #  page_doc.set(imageFileName
+            #  for old, new in changed_urls:
+                for old, new in changed_urls.items():
+                    if pcgts.get_Page().imageFilename == old:
+                        pcgts.get_Page().imageFilename = new
+                        changed = True
+                    # TODO replace AlternativeImage, recursively...
+                if changed:
+                    with open(page_file.url, 'w') as out:
+                        out.write(to_xml(pcgts))
+                    #  log.info("Replace %s -> %s in %s" % (old, new, page_file))
+
+            chdir(bagdir)
+            total_bytes, total_files = make_manifests('data', processes, algorithms=['sha512'])
+            log.info("New vs. old: %s" % changed_urls)
         return total_bytes, total_files
 
     def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum):
