@@ -119,11 +119,14 @@ class TestUtils(TestCase):
 
         Run the same code multiple times to make segfaults more probable
 
-        Should fail persistently:
-            5.3.1 no
-            5.4.1 no
-            6.0.0 yes
-            6.1.0 yes
+        Test is failing due to segfaults in Pillow versions:
+            6.0.0
+            6.1.0
+
+        Test succeeds in Pillow versions:
+            5.3.1
+            5.4.1
+            6.2.0
         """
         for _ in range(0, 10):
             pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470.tif'))
