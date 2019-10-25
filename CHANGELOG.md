@@ -10,6 +10,7 @@ Fixed:
   * Add `dimension` to workspace validation skip list, #329
   * Update ocrd-tool.json schema to spec 3.3.0 (no output_file_grp, no syntax restriction on content-type)
   * PAGE XML output references xsi:schemaLocation, #331
+  * Update Pillow to 6.2.0
 
 ## [1.0.0] - 2019-10-18
 
