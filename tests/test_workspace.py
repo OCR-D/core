@@ -47,7 +47,7 @@ class TestWorkspace(TestCase):
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
             ws1.add_file('GRP', ID='ID1', mimetype='image/tiff')
             f = ws1.mets.find_files()[0]
-            self.assertEqual(f.url, '')
+            self.assertEqual(f.url, None)
 
     def test_workspace_add_file_binary_content(self):
         with TemporaryDirectory() as tempdir:

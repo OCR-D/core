@@ -55,6 +55,7 @@ class TestOcrdPage(TestCase):
     def test_to_xml(self):
         #  with open('/tmp/test.xml', 'w') as f:
             #  f.write(to_xml(self.pcgts))
+        self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', to_xml(self.pcgts)[:1000])
         self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
 
     def test_issue_269(self):
