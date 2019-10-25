@@ -76,7 +76,7 @@ uninstall:
 	for mod in $(BUILD_ORDER);do pip uninstall -y $$mod;done
 
 # Regenerate python code from PAGE XSD
-generate-page: repo/assets
+generate-page: assets
 	generateDS \
 		-f \
 		--root-element='PcGts' \
@@ -104,17 +104,20 @@ repo/spec:
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
 spec: repo/spec
-	cp repo/spec/ocrd_tool.schema.yml ocrd_validators/ocrd_validators/ocrd_tool.schema.yml
-	cp repo/spec/bagit-profile.yml ocrd_validators/ocrd_validators/bagit-profile.yml
+	git -C $< pull
+	cp -f repo/spec/ocrd_tool.schema.yml ocrd_validators/ocrd_validators/ocrd_tool.schema.yml
+	cp -f repo/spec/bagit-profile.yml ocrd_validators/ocrd_validators/bagit-profile.yml
 
 #
 # Assets
 #
 
+.PHONY: assets
 # Setup test assets
 assets: repo/assets
+	git -C $< pull
 	mkdir -p $(TESTDIR)/assets
-	cp -r -t $(TESTDIR)/assets repo/assets/data/*
+	cp -f -r -t $(TESTDIR)/assets repo/assets/data/*
 
 # Start asset server at http://localhost:5001
 assets-server:
