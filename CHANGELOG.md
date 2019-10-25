@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [1.0.1] - 2019-10-25
+
 Fixed:
 
   * Add `dimension` to workspace validation skip list, #329
