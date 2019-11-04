@@ -14,11 +14,12 @@ COPY ocrd_validators/ ./ocrd_validators
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
-RUN apt-get update && \
-    apt-get -y install --no-install-recommends \
+RUN apt-get update && apt-get -y install --no-install-recommends \
     ca-certificates \
+    python3-dev \
     python3-pip \
     make \
+    wget \
     sudo \
     git \
     libglib2.0.0 \
@@ -28,4 +29,4 @@ RUN apt-get update && \
 
 WORKDIR /data
 
-CMD ["/usr/local/bin/ocrd"]
+CMD ["/usr/local/bin/ocrd", "--help"]
