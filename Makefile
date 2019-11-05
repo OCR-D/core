@@ -83,6 +83,19 @@ generate-page: repo/assets
 		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
 
+# ALTO version
+
+ALTO_VERSION = 4-1
+# Regenerate python code from ALTO XSD
+generate-alto: repo/assets
+	wget -nc 'http://www.loc.gov/standards/alto/v4/alto-$(ALTO_VERSION).xsd'; \
+	generateDS \
+		-f \
+		--root-element='alto' \
+		-o ocrd_models/ocrd_models/ocrd_alto_generateds.py \
+		alto-$(ALTO_VERSION).xsd
+
+
 #
 # Repos
 #
