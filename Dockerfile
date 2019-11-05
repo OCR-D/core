@@ -14,18 +14,19 @@ COPY ocrd_validators/ ./ocrd_validators
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
-RUN apt-get update && \
-    apt-get -y install --no-install-recommends \
+RUN apt-get update && apt-get -y install --no-install-recommends \
     ca-certificates \
+    python3-dev \
+    python3-pip \
     make \
+    wget \
     sudo \
     git \
-    libglib2.0.0
-    # libxext6
-    # libsm6 \
-    # libxrender1 \
-RUN make deps-ubuntu
-RUN pip3 install --upgrade pip
-RUN make deps-ubuntu install
+    libglib2.0.0 \
+    && pip3 install --upgrade pip setuptools \
+    && make install \
+    && rm -rf /build-ocrd
 
-ENTRYPOINT ["/usr/local/bin/ocrd"]
+WORKDIR /data
+
+CMD ["/usr/local/bin/ocrd", "--help"]
