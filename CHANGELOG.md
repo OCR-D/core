@@ -11,6 +11,8 @@ Changed:
 
   * image_from_page etc: allow filling with background or transparency
   * :fire: API changes, #311, #327
+  * Dockerfile: Omit `ENTRYPOINT`, OCR-D/spec#130, #340
+  * Relax pixel density validation errors to warnings, OCR-D/spec#129, #339
 
 ## [1.0.1] - 2019-10-25
 
