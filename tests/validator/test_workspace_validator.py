@@ -116,10 +116,10 @@ class TestWorkspaceValidator(TestCase):
             workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url=imgpath)
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=True)
-            self.assertEqual(len(report.errors), 2)
-            self.assertIn("xResolution", report.errors[0])
-            self.assertIn("yResolution", report.errors[1])
-            self.assertEqual(len(report.warnings), 0)
+            self.assertEqual(len(report.warnings), 2)
+            self.assertIn("xResolution", report.warnings[0])
+            self.assertIn("yResolution", report.warnings[1])
+            self.assertEqual(len(report.errors), 0)
             self.assertEqual(len(report.notices), 0)
 
     def test_bad_workspace(self):
