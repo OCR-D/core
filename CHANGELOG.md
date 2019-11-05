@@ -5,10 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-Added:
+## [2.0.0] - 2019-11-05
+
+Changed:
 
   * image_from_page etc: allow filling with background or transparency
-  * API changes, #311, #327
+  * :fire: API changes, #311, #327
 
 ## [1.0.1] - 2019-10-25
 
