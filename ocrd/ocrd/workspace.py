@@ -3,21 +3,30 @@ from os import makedirs, unlink
 from pathlib import Path
 
 import cv2
-from PIL import Image
+from PIL import Image, ImageStat
 import numpy as np
 from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif, OcrdFile
 from ocrd_utils import (
-    coordinates_of_segment,
-    crop_image,
     getLogger,
     image_from_polygon,
+    coordinates_of_segment,
+    transform_coordinates,
+    adjust_canvas_to_rotation,
+    adjust_canvas_to_transposition,
+    shift_coordinates,
+    rotate_coordinates,
+    transpose_coordinates,
+    crop_image,
+    rotate_image,
+    transpose_image,
+    bbox_from_polygon,
     polygon_from_points,
+    xywh_from_bbox,
     xywh_from_points,
     pushd_popd,
-
     MIME_TO_EXT,
 )
 
@@ -249,71 +258,138 @@ class Workspace():
         ]
         return Image.fromarray(region_cut)
 
-    def image_from_page(self, page, page_id, feature_selector='', feature_filter=''):
-        """Extract a Page image from the workspace.
-
-        Given a PageType object, ``page``, extract its PIL.Image from
-        AlternativeImage if it exists. Otherwise extract the PIL.Image
-        from imageFilename. Also crop it if a Border exists, and rotate
-        it if an @orientation exists. Otherwise just return it.
-
+    def image_from_page(self, page, page_id,
+                        fill='background', transparency=False,
+                        feature_selector='', feature_filter=''):
+        """Extract an image for a PAGE-XML page from the workspace.
+        
+        Given ``page``, a PAGE PageType object, extract its PIL.Image,
+        either from its AlternativeImage (if it exists), or from its
+        @imageFilename (otherwise). Also crop it, if a Border exists,
+        and rotate it, if any @orientation angle is annotated.
+        
         If ``feature_selector`` and/or ``feature_filter`` is given, then
-        select/filter among imageFilename and all AlternativeImages the
-        last which contains all of the selected but none of the filtered
-        features (i.e. @comments classes), or raise an error.
-
-        If the chosen image does not have "cropped", but a Border exists,
-        then crop it (unless "cropped" is also being filtered). And if the
-        chosen image does not have "deskewed", but an @orientation exists,
-        then rotate it (unless "deskewed" is also being filtered).
-
-        Cropping uses a polygon mask (not just the rectangle).
-
+        select/filter among the @imageFilename image and the available
+        AlternativeImages the last one which contains all of the selected,
+        but none of the filtered features (i.e. @comments classes), or
+        raise an error.
+        
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
         ``feature_filter`` is merely a mask specifying Boolean OR.)
-
-        If the resulting page image is larger than the bounding box of
-        ``page``, then in the returned bounding box, reduce the offset by
-        half the width/height difference (so consumers being passed this
-        image and offset will still crop relative to the original center).
-
+        
+        If the chosen image does not have the feature "cropped" yet, but
+        a Border exists, and unless "cropped" is being filtered, then crop it.
+        Likewise, if the chosen image does not have the feature "deskewed" yet,
+        but an @orientation angle is annotated, and unless "deskewed" is being
+        filtered, then rotate it. (However, if @orientation is above the
+        [-45°,45°] interval, then apply as much transposition as possible first,
+        unless "rotated-90" / "rotated-180" / "rotated-270" is being filtered.)
+        
+        Cropping uses a polygon mask (not just the bounding box rectangle).
+        Areas outside the polygon will be filled according to ``fill``:
+        - if ``background`` (the default),
+          then fill with the median color of the image;
+        - otherwise, use the given color, e.g. ``white`` or (255,255,255).
+        Moreover, if ``transparency`` is true, and unless the image already
+        has an alpha channel, then add an alpha channel which is fully opaque
+        before cropping and rotating. (Thus, only the exposed areas will be
+        transparent afterwards, for those that can interpret alpha channels).
+        
         Return a tuple:
          * the extracted image,
-         * a dictionary with the absolute coordinates of the page's
-           bounding box / border (xywh), angle and the AlternativeImage
-           @comments (features, i.e. of all operations that lead up to
-           this result),
+         * a dictionary with information about the extracted image:
+           - ``transform``: a Numpy array with an affine transform which
+             converts from absolute coordinates to those relative to the image,
+             i.e. after cropping to the page's border / bounding box (if any)
+             and deskewing with the page's orientation angle (if any)
+           - ``angle``: the rotation/reflection angle applied to the image so far,
+           - ``features``: the AlternativeImage @comments for the image, i.e.
+             names of all operations that lead up to this result,
          * an OcrdExif instance associated with the original image.
         (The first two can be used to annotate a new AlternativeImage,
-         or pass down with ``image_from_segment``.)
-
+         or be passed down with ``image_from_segment``.)
+        
         Example:
          * get a raw (colored) but already deskewed and cropped image:
-           ``page_image, page_xywh, page_image_info = workspace.image_from_page(
+           ``page_image, page_coords, page_image_info = workspace.image_from_page(
                  page, page_id,
                  feature_selector='deskewed,cropped',
                  feature_filter='binarized,grayscale_normalized')``
         """
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
-        page_xywh = {'x': 0,
-                     'y': 0,
-                     'w': page_image.width,
-                     'h': page_image.height}
         # FIXME: remove PrintSpace here as soon as GT abides by the PAGE standard:
         border = page.get_Border() or page.get_PrintSpace()
-        if border:
+        if (border and
+            not 'cropped' in feature_filter.split(',')):
             page_points = border.get_Coords().points
             log.debug("Using explicitly set page border '%s' for page '%s'",
                       page_points, page_id)
-            page_xywh = xywh_from_points(page_points)
-        # region angle: PAGE orientation is defined clockwise,
+            # get polygon outline of page border:
+            page_polygon = np.array(polygon_from_points(page_points), dtype=np.int32)
+            page_bbox = bbox_from_polygon(page_polygon)
+            # subtract offset in affine coordinate transform:
+            # (consistent with image cropping or AlternativeImage below)
+            page_coords = {
+                'transform': shift_coordinates(
+                    np.eye(3),
+                    np.array([-page_bbox[0],
+                              -page_bbox[1]]))
+            }
+        else:
+            page_bbox = [0, 0, page_image.width, page_image.height]
+            # use identity as affine coordinate transform:
+            page_coords = {
+                'transform': np.eye(3)
+            }
+        # get size of the page after cropping but before rotation:
+        page_xywh = xywh_from_bbox(*page_bbox)
+        
+        # page angle: PAGE @orientation is defined clockwise,
         # whereas PIL/ndimage rotation is in mathematical direction:
-        page_xywh['angle'] = -(page.get_orientation() or 0)
+        page_coords['angle'] = -(page.get_orientation() or 0)
+        # map angle from (-180,180] to [0,360], and partition into multiples of 90;
+        # but avoid unnecessary large remainders, i.e. split symmetrically:
+        orientation = (page_coords['angle'] + 45) % 360
+        orientation = orientation - (orientation % 90)
+        skew = (page_coords['angle'] % 360) - orientation
+        skew = 180 - (180 - skew) % 360 # map to [-45,45]
+        page_coords['angle'] = 0 # nothing applied yet (depends on filters)
+        log.debug("page '%s' has orientation=%d skew=%.2f",
+                  page_id, orientation, skew)
+        
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # Transpose in affine coordinate transform:
+            # (consistent with image transposition or AlternativeImage below)
+            transposition = { 90: Image.ROTATE_90,
+                              180: Image.ROTATE_180,
+                              270: Image.ROTATE_270
+            }.get(orientation) # no default
+            page_coords['transform'] = transpose_coordinates(
+                page_coords['transform'],
+                transposition,
+                np.array([0.5 * page_xywh['w'],
+                          0.5 * page_xywh['h']]))
+            page_xywh['w'], page_xywh['h'] = adjust_canvas_to_transposition(
+                [page_xywh['w'], page_xywh['h']], transposition)
+            page_coords['angle'] = orientation
+        if (skew and
+            not 'deskewed' in feature_filter.split(',')):
+            # Rotate around center in affine coordinate transform:
+            # (consistent with image rotation or AlternativeImage below)
+            page_coords['transform'] = rotate_coordinates(
+                page_coords['transform'],
+                skew,
+                np.array([0.5 * page_xywh['w'],
+                          0.5 * page_xywh['h']]))
+            page_coords['angle'] += skew
+            
         # initialize AlternativeImage@comments classes as empty:
-        page_xywh['features'] = ''
-
+        page_coords['features'] = ''
+        
+        alternative_image = None
         alternative_images = page.get_AlternativeImage()
         if alternative_images:
             # (e.g. from page-level cropping, binarization, deskewing or despeckling)
@@ -338,93 +414,148 @@ class Workspace():
                           alternative_images.index(alternative_image) + 1,
                           features, page_id)
                 page_image = self._resolve_image_as_pil(alternative_image.get_filename())
-                page_xywh['features'] = features
+                page_coords['features'] = features
+        
         # crop, if (still) necessary:
         if (border and
-            not 'cropped' in page_xywh['features'] and
+            not 'cropped' in page_coords['features'] and
             not 'cropped' in feature_filter.split(',')):
-            log.debug('Cropping to border')
-            # get polygon outline of page border:
-            page_polygon = np.array(polygon_from_points(page_points))
+            log.debug("Cropping %s for page '%s' to border", 
+                      "AlternativeImage" if alternative_image else "image",
+                      page_id)
             # create a mask from the page polygon:
-            page_image = image_from_polygon(page_image, page_polygon)
+            page_image = image_from_polygon(page_image, page_polygon,
+                                            fill=fill, transparency=transparency)
             # recrop into page rectangle:
-            page_image = crop_image(page_image,
-                                    box=(page_xywh['x'],
-                                         page_xywh['y'],
-                                         page_xywh['x'] + page_xywh['w'],
-                                         page_xywh['y'] + page_xywh['h']))
-            page_xywh['features'] += ',cropped'
+            page_image = crop_image(page_image, box=page_bbox)
+            page_coords['features'] += ',cropped'
+        # transpose, if (still) necessary:
+        if (orientation and
+            not 'rotated-%d' % orientation in page_coords['features'] and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            log.info("Transposing %s for page '%s' by %d°",
+                     "AlternativeImage" if alternative_image else
+                     "image", page_id, orientation)
+            page_image = transpose_image(page_image, {
+                90: Image.ROTATE_90,
+                180: Image.ROTATE_180,
+                270: Image.ROTATE_270
+            }.get(orientation)) # no default
+            page_coords['features'] += ',rotated-%d' % orientation
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # FIXME we should enforce consistency here (i.e. split into transposition
+            #       and minimal rotation)
+            if not (page_image.width == page_xywh['w'] and
+                    page_image.height == page_xywh['h']):
+                log.error('page "%s" image (%s; %dx%d) has not been transposed properly (%dx%d) during rotation',
+                          page_id, page_coords['features'],
+                          page_image.width, page_image.height,
+                          page_xywh['w'], page_xywh['h'])
         # deskew, if (still) necessary:
-        if (page_xywh['angle'] and
-            not 'deskewed' in page_xywh['features'] and
+        if (skew and
+            not 'deskewed' in page_coords['features'] and
             not 'deskewed' in feature_filter.split(',')):
-            log.info("Rotating AlternativeImage for page '%s' by %.2f°",
-                     page_id, page_xywh['angle'])
-            page_image = page_image.rotate(page_xywh['angle'],
-                                           expand=True,
-                                           #resample=Image.BILINEAR,
-                                           fillcolor='white')
-            page_xywh['features'] += ',deskewed'
+            log.info("Rotating %s for page '%s' by %.2f°",
+                     "AlternativeImage" if alternative_image else
+                     "image", page_id, skew)
+            page_image = rotate_image(page_image, skew,
+                                      fill=fill, transparency=transparency)
+            page_coords['features'] += ',deskewed'
+        if (skew and
+            not 'deskewed' in feature_filter.split(',')):
+            w_new, h_new = adjust_canvas_to_rotation(
+                [page_xywh['w'], page_xywh['h']], skew)
+            # FIXME we should enforce consistency here (i.e. rotation always reshapes,
+            #       and rescaling never happens)
+            if not (w_new - 1.5 < page_image.width < w_new + 1.5 and
+                    h_new - 1.5 < page_image.height < h_new + 1.5):
+                log.error('page "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during rotation',
+                          page_id, page_coords['features'],
+                          page_image.width, page_image.height,
+                          w_new, h_new)
+        
         # verify constraints again:
-        if not all(feature in page_xywh['features']
+        if not all(feature in page_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'selector="%s" in page "%s"' % (
                                 feature_selector, page_id))
-        if any(feature in page_xywh['features']
+        if any(feature in page_coords['features']
                for feature in feature_filter.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filter="%s" in page "%s"' % (
                                 feature_filter, page_id))
-        # subtract offset from any increase in binary region size over source:
-        page_xywh['x'] -= round(0.5 * max(0, page_image.width  - page_xywh['w']))
-        page_xywh['y'] -= round(0.5 * max(0, page_image.height - page_xywh['h']))
-        return page_image, page_xywh, page_image_info
+        page_image.format = 'PNG' # workaround for tesserocr#194
+        return page_image, page_coords, page_image_info
 
-    def image_from_segment(self, segment, parent_image, parent_xywh, feature_selector='', feature_filter=''):
-        """Extract a segment image from its parent's image.
-
-        Given a PIL.Image of the parent, ``parent_image``, with its
-        absolute coordinates, ``parent_xywh``, and a PAGE segment
-        (TextRegionType / TextLineType / WordType / GlyphType) object
-        which is logically contained in it, ``segment``, extract its
-        PIL.Image from AlternativeImage if it exists. Otherwise produce
-        an image via cropping from ``parent_image``.
-
+    def image_from_segment(self, segment, parent_image, parent_coords,
+                           fill='background', transparency=False,
+                           feature_selector='', feature_filter=''):
+        """Extract an image for a PAGE-XML hierarchy segment from its parent's image.
+        
+        Given...
+         * ``parent_image``, a PIL.Image of the parent, with
+         * ``parent_coords``, a dict with information about ``parent_image``:
+           - ``transform``: a Numpy array with an affine transform which
+             converts from absolute coordinates to those relative to the image,
+             i.e. after applying all operations (starting with the original image)
+           - ``angle``: the rotation/reflection angle applied to the image so far,
+           - ``features``: the AlternativeImage @comments for the image, i.e.
+             names of all operations that lead up to this result, and
+         * ``segment``, a PAGE segment object logically contained in it
+           (i.e. TextRegionType / TextLineType / WordType / GlyphType),
+        ...extract the segment's corresponding PIL.Image, either from
+        AlternativeImage (if it exists), or producing a new image via
+        cropping from ``parent_image`` (otherwise).
+        
         If ``feature_selector`` and/or ``feature_filter`` is given, then
         select/filter among the cropped ``parent_image`` and the available
-        AlternativeImages the last which contains all of the selected but none
-        of the filtered features (i.e. @comments classes), or raise an error.
-
-        If the chosen AlternativeImage does not have "deskewed", but
-        an @orientation exists, then rotate it (unless "deskewed" is
-        also being filtered).
-
-        Regardless, respect any orientation angle annotated for the parent
-        (from parent-level deskewing) by rotating the image, and compensating
-        the segment coordinates in an inverse transformation (i.e. translation
-        to center, passive rotation, re-translation).
-
-        Cropping uses a polygon mask (not just the rectangle).
-
+        AlternativeImages the last one which contains all of the selected,
+        but none of the filtered features (i.e. @comments classes), or
+        raise an error.
+        
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
         ``feature_filter`` is merely a mask specifying Boolean OR.)
-
-        If the resulting segment image is larger than the bounding box of
-        ``segment``, then in the returned bounding box, reduce the offset by
-        half the width/height difference (so consumers being passed this
-        image and offset will still crop relative to the original center).
-
+        
+        Cropping uses a polygon mask (not just the bounding box rectangle).
+        Areas outside the polygon will be filled according to ``fill``:
+        - if ``background`` (the default),
+          then fill with the median color of the image;
+        - otherwise, use the given color, e.g. ``white`` or (255,255,255).
+        Moreover, if ``transparency`` is true, and unless the image already
+        has an alpha channel, then add an alpha channel which is fully opaque
+        before cropping and rotating. (Thus, only the exposed areas will be
+        transparent afterwards, for those that can interpret alpha channels).
+        
+        When cropping, compensate any @orientation angle annotated for the
+        parent (from parent-level deskewing) by rotating the segment coordinates
+        in an inverse transformation (i.e. translation to center, then passive
+        rotation, and translation back).
+        
+        Regardless, if any @orientation angle is annotated for the segment
+        (from segment-level deskewing), and the chosen image does not have
+        the feature "deskewed" yet, and unless "deskewed" is being filtered,
+        then rotate it - compensating for any previous ``angle``. (However,
+        if @orientation is above the [-45°,45°] interval, then apply as much
+        transposition as possible first, unless "rotated-90" / "rotated-180" /
+        "rotated-270" is being filtered.)
+        
         Return a tuple:
          * the extracted image,
-         * a dictionary with the absolute coordinates of the segment's
-           bounding box (xywh), angle and the AlternativeImage @comments
-           (features, i.e. of all operations that lead up to this result).
-        (These can be used to create a new AlternativeImage, or pass down
+         * a dictionary with information about the extracted image:
+           - ``transform``: a Numpy array with an affine transform which
+             converts from absolute coordinates to those relative to the image,
+             i.e. after applying all parent operations, and then cropping to
+             the segment's bounding box, and deskewing with the segment's
+             orientation angle (if any)
+           - ``angle``: the rotation/reflection angle applied to the image so far,
+           - ``features``: the AlternativeImage @comments for the image, i.e.
+             names of all operations that lead up to this result.
+        (These can be used to create a new AlternativeImage, or passed down
          for calls on lower hierarchy levels.)
-
+        
         Example:
          * get a raw (colored) but already deskewed and cropped image:
            ``image, xywh = workspace.image_from_segment(region,
@@ -446,25 +577,87 @@ class Workspace():
         # on some ad-hoc binarization method. Thus, it is preferable to use
         # a dedicated processor for this (which produces clipped AlternativeImage
         # or reduced polygon coordinates).
-        # crop:
-        segment_xywh = xywh_from_points(segment.get_Coords().points)
+        
         # get polygon outline of segment relative to parent image:
-        segment_polygon = coordinates_of_segment(segment, parent_image, parent_xywh)
+        segment_polygon = coordinates_of_segment(segment, parent_image, parent_coords)
+        # get relative bounding box:
+        segment_bbox = bbox_from_polygon(segment_polygon)
+        # get size of the segment in the parent image after cropping
+        # (i.e. possibly different from size before rotation at the parent, but
+        #  also possibly different from size after rotation below/AlternativeImage):
+        segment_xywh = xywh_from_bbox(*segment_bbox)
         # create a mask from the segment polygon:
-        segment_image = image_from_polygon(parent_image, segment_polygon)
+        segment_image = image_from_polygon(parent_image, segment_polygon,
+                                           fill=fill, transparency=transparency)
         # recrop into segment rectangle:
-        segment_image = crop_image(segment_image,
-                                   box=(segment_xywh['x'] - parent_xywh['x'],
-                                        segment_xywh['y'] - parent_xywh['y'],
-                                        segment_xywh['x'] - parent_xywh['x'] + segment_xywh['w'],
-                                        segment_xywh['y'] - parent_xywh['y'] + segment_xywh['h']))
+        segment_image = crop_image(segment_image, box=segment_bbox)
+        # subtract offset from parent in affine coordinate transform:
+        # (consistent with image cropping)
+        segment_coords = {
+            'transform': shift_coordinates(
+                parent_coords['transform'],
+                np.array([-segment_bbox[0],
+                          -segment_bbox[1]]))
+        }
+        
         if 'orientation' in segment.__dict__:
-            # angle: PAGE orientation is defined clockwise,
+            # region angle: PAGE @orientation is defined clockwise,
             # whereas PIL/ndimage rotation is in mathematical direction:
-            segment_xywh['angle'] = -(segment.get_orientation() or 0)
-        # initialize AlternativeImage@comments classes from parent:
-        segment_xywh['features'] = parent_xywh['features'] + ',cropped'
+            segment_coords['angle'] = -(segment.get_orientation() or 0)
+        else:
+            segment_coords['angle'] = 0
+        if segment_coords['angle']:
+            # @orientation is always absolute; if higher levels
+            # have already rotated, then we must compensate:
+            angle = segment_coords['angle'] - parent_coords['angle']
+            # map angle from (-180,180] to [0,360], and partition into multiples of 90;
+            # but avoid unnecessary large remainders, i.e. split symmetrically:
+            orientation = (angle + 45) % 360
+            orientation = orientation - (orientation % 90)
+            skew = (angle % 360) - orientation
+            skew = 180 - (180 - skew) % 360 # map to [-45,45]
+            log.debug("segment '%s' has orientation=%d skew=%.2f",
+                      segment.id, orientation, skew)
+        else:
+            orientation = 0
+            skew = 0
+        segment_coords['angle'] = parent_coords['angle'] # nothing applied yet (depends on filters)
 
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # Transpose in affine coordinate transform:
+            # (consistent with image transposition or AlternativeImage below)
+            transposition = { 90: Image.ROTATE_90,
+                              180: Image.ROTATE_180,
+                              270: Image.ROTATE_270
+            }.get(orientation) # no default
+            segment_coords['transform'] = transpose_coordinates(
+                segment_coords['transform'],
+                transposition,
+                np.array([0.5 * segment_xywh['w'],
+                          0.5 * segment_xywh['h']]))
+            segment_xywh['w'], segment_xywh['h'] = adjust_canvas_to_transposition(
+                [segment_xywh['w'], segment_xywh['h']], transposition)
+            segment_coords['angle'] += orientation
+        if (skew and
+            not 'deskewed' in feature_filter.split(',')):
+            # Rotate around center in affine coordinate transform:
+            # (consistent with image rotation or AlternativeImage below)
+            segment_coords['transform'] = rotate_coordinates(
+                segment_coords['transform'],
+                skew,
+                np.array([0.5 * segment_xywh['w'],
+                          0.5 * segment_xywh['h']]))
+            segment_coords['angle'] += skew
+            
+        # initialize AlternativeImage@comments classes from parent, except
+        # for those operations that can apply on multiple hierarchy levels:
+        segment_coords['features'] = ','.join(
+            [feature for feature in parent_coords['features'].split(',')
+             if feature in ['binarized', 'grayscale_normalized',
+                            'despeckled', 'dewarped']])
+        
+        alternative_image = None
         alternative_images = segment.get_AlternativeImage()
         if alternative_images:
             # (e.g. from segment-level cropping, binarization, deskewing or despeckling)
@@ -489,36 +682,73 @@ class Workspace():
                           alternative_images.index(alternative_image) + 1,
                           features, segment.id)
                 segment_image = self._resolve_image_as_pil(alternative_image.get_filename())
-                segment_xywh['features'] = features
+                segment_coords['features'] = features
+        # transpose, if (still) necessary:
+        if (orientation and
+            not 'rotated-%d' % orientation in segment_coords['features'] and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            log.info("Transposing %s for segment '%s' by %d°",
+                     "AlternativeImage" if alternative_image else
+                     "image", segment.id, orientation)
+            segment_image = transpose_image(segment_image, {
+                90: Image.ROTATE_90,
+                180: Image.ROTATE_180,
+                270: Image.ROTATE_270
+            }.get(orientation)) # no default
+            segment_coords['features'] += ',rotated-%d' % orientation
+        if (orientation and
+            not 'rotated-%d' % orientation in feature_filter.split(',')):
+            # FIXME we should enforce consistency here (i.e. split into transposition
+            #       and minimal rotation)
+            if not (segment_image.width == segment_xywh['w'] and
+                    segment_image.height == segment_xywh['h']):
+                log.error('segment "%s" image (%s; %dx%d) has not been transposed properly (%dx%d) during rotation',
+                          segment.id, segment_coords['features'],
+                          segment_image.width, segment_image.height,
+                          segment_xywh['w'], segment_xywh['h'])
         # deskew, if (still) necessary:
-        if ('angle' in segment_xywh and
-            segment_xywh['angle'] and
-            not 'deskewed' in segment_xywh['features'] and
+        if (skew and
+            not 'deskewed' in segment_coords['features'] and
             not 'deskewed' in feature_filter.split(',')):
-            log.info("Rotating AlternativeImage for segment '%s' by %.2f°",
-                     segment.id, segment_xywh['angle'])
-            segment_image = segment_image.rotate(segment_xywh['angle'],
-                                                 expand=True,
-                                                 #resample=Image.BILINEAR,
-                                                 fillcolor='white')
-            segment_xywh['features'] += ',deskewed'
+            log.info("Rotating %s for segment '%s' by %.2f°",
+                     "AlternativeImage" if alternative_image else
+                     "image", segment.id, skew)
+            segment_image = rotate_image(segment_image, skew,
+                                         fill=fill, transparency=transparency)
+            segment_coords['features'] += ',deskewed'
+        if (skew and
+            not 'deskewed' in feature_filter.split(',')):
+            # FIXME we should enforce consistency here (i.e. rotation always reshapes,
+            #       and rescaling never happens)
+            w_new, h_new = adjust_canvas_to_rotation(
+                [segment_xywh['w'], segment_xywh['h']], skew)
+            if not (w_new - 1.5 < segment_image.width < w_new + 1.5 and
+                    h_new - 1.5 < segment_image.height < h_new + 1.5):
+                log.error('segment "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during rotation',
+                          segment.id, segment_coords['features'],
+                          segment_image.width, segment_image.height,
+                          w_new, h_new)
+        else:
+            if not (segment_xywh['w'] - 1.5 < segment_image.width < segment_xywh['w'] + 1.5 and
+                    segment_xywh['h'] - 1.5 < segment_image.height < segment_xywh['h'] + 1.5):
+                log.error('segment "%s" image (%s; %dx%d) has not been cropped properly (%dx%d)',
+                          segment.id, segment_coords['features'],
+                          segment_image.width, segment_image.height,
+                          segment_xywh['w'], segment_xywh['h'])
+            
         # verify constraints again:
-        if not all(feature in segment_xywh['features']
+        if not all(feature in segment_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements' +
                             'selector="%s" in segment "%s"' % (
                                 feature_selector, segment.id))
-        if any(feature in segment_xywh['features']
+        if any(feature in segment_coords['features']
                for feature in feature_filter.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filter="%s" in segment "%s"' % (
                                 feature_filter, segment.id))
-        # subtract offset from any increase in binary region size over source:
-        segment_xywh['x'] -= round(0.5 * max(0,
-                                             segment_image.width - segment_xywh['w']))
-        segment_xywh['y'] -= round(0.5 * max(0,
-                                             segment_image.height - segment_xywh['h']))
-        return segment_image, segment_xywh
+        segment_image.format = 'PNG' # workaround for tesserocr#194
+        return segment_image, segment_coords
 
     # pylint: disable=redefined-builtin
     def save_image_file(self, image,

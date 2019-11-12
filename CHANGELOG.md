@@ -5,10 +5,23 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.0.0] - 2019-11-05
+
+Changed:
+
+  * image_from_page etc: allow filling with background or transparency
+  * :fire: API changes, #311, #327
+  * Dockerfile: Omit `ENTRYPOINT`, OCR-D/spec#130, #340
+  * Relax pixel density validation errors to warnings, OCR-D/spec#129, #339
+
+## [1.0.1] - 2019-10-25
+
 Fixed:
 
   * Add `dimension` to workspace validation skip list, #329
   * Update ocrd-tool.json schema to spec 3.3.0 (no output_file_grp, no syntax restriction on content-type)
+  * PAGE XML output references xsi:schemaLocation, #331
+  * Update Pillow to 6.2.0
 
 Changed:
   * `ocrd process`: task validation takes processor's ocrd-tool into account, #296
@@ -20,7 +33,7 @@ Changed:
 
 ## [1.0.0b19] - 2019-09-10
 
-* image_from_page: allow filtering by feature (@comment), #294
+* image_from_page etc: allow filtering by feature (@comments), #294
 
 ## [1.0.0b18] - 2019-09-06
 
@@ -38,7 +51,7 @@ Fixed:
   * Processor: `chdir` to workspace directory on init so relative files resolve properly
   * typos in docstrings
   * README: 'module' -> 'package'
-  * workspace.image_from_page: logic with rotation/angle
+  * workspace.image_from_page etc: logic with rotation/angle
   * Adapted test suite to OCR-D/assets now with file extensions
 
 Added:
