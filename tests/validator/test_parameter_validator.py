@@ -3,6 +3,13 @@ from ocrd_validators import ParameterValidator
 
 class TestParameterValidator(TestCase):
 
+    def test_extraneous(self):
+        validator = ParameterValidator({"parameters": {}})
+        obj = {"foo": 42}
+        report = validator.validate(obj)
+        self.assertFalse(report.is_valid)
+        self.assertIn("Additional properties are not allowed ('foo' was unexpected)", report.errors[0])
+
     def test_missing_required(self):
         validator = ParameterValidator({
             "parameters": {
