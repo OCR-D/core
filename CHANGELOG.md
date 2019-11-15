@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd process` uses the ocrd-tool.json of the tools to check whether output file group necessary, #296
+
 ## [2.0.0] - 2019-11-05
 
 Changed:
@@ -22,6 +26,9 @@ Fixed:
   * Update ocrd-tool.json schema to spec 3.3.0 (no output_file_grp, no syntax restriction on content-type)
   * PAGE XML output references xsi:schemaLocation, #331
   * Update Pillow to 6.2.0
+
+Changed:
+  * `ocrd process`: task validation takes processor's ocrd-tool into account, #296
 
 ## [1.0.0] - 2019-10-18
 

@@ -1,4 +1,6 @@
 from os import getcwd
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from PIL import Image
 
@@ -17,6 +19,8 @@ from ocrd_utils import (
 
     nth_url_segment,
     remove_non_path_from_url,
+
+    parse_json_string_or_file,
 
     points_from_bbox,
     points_from_x0y0x1y1,
@@ -170,6 +174,30 @@ class TestUtils(TestCase):
         self.assertEqual(nth_url_segment('/path/to/foo#frag'), 'foo')
         self.assertEqual(nth_url_segment('/path/to/foo#frag', n=-2), 'to')
         self.assertEqual(nth_url_segment('https://server/foo?xyz=zyx'), 'foo')
+
+    def test_parse_json_string_or_file(self):
+        self.assertEqual(parse_json_string_or_file(), {})
+        self.assertEqual(parse_json_string_or_file('{}'), {})
+        self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
+
+    def test_parameter_file(self):
+        """
+        Verify that existing filenames get priority over valid JSON string interpretation
+        """
+        with TemporaryDirectory() as tempdir:
+            paramfile = Path(tempdir, '{"foo":23}')  # XXX yes, the file is called '{"foo":23}'
+            paramfile.write_text('{"bar": 42}')
+            # /tmp/<var>/{"foo":23} -- exists, read file and parse as JSON
+            self.assertEqual(parse_json_string_or_file(str(paramfile)), {'bar': 42})
+            # $PWD/{"foo":23} -- does not exist, parse as json
+            self.assertEqual(parse_json_string_or_file(paramfile.name), {'foo': 23})
+
+    def test_parameters_invalid(self):
+        with self.assertRaisesRegex(ValueError, 'Not a valid JSON object'):
+            parse_json_string_or_file('[]')
+        with self.assertRaisesRegex(ValueError, 'Error parsing'):
+            parse_json_string_or_file('[}')
+
 
 if __name__ == '__main__':
     main()

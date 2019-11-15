@@ -51,7 +51,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_or_file``
 
     String and OOP utilities
 
@@ -85,6 +85,7 @@ __all__ = [
     'logging',
     'membername',
     'image_from_polygon',
+    'parse_json_string_or_file',
     'points_from_bbox',
     'points_from_polygon',
     'points_from_x0y0x1y1',
@@ -114,12 +115,12 @@ __all__ = [
 ]
 
 import io
-import re
+import json
 import sys
-import logging
 import os
 from os import getcwd, chdir
 from os.path import isfile, abspath as os_abspath
+import re
 from zipfile import ZipFile
 import contextlib
 
@@ -243,7 +244,7 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
 def pushd_popd(newcwd=None):
     try:
         oldcwd = getcwd()
-    except FileNotFoundError as e:
+    except FileNotFoundError as e:  # pylint: disable=unused-variable
         # This happens when a directory is deleted before the context is exited
         oldcwd = '/tmp'
     try:
@@ -719,7 +720,6 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
 
 def transform_coordinates(polygon, transform=None):
     """Apply an affine transformation to a set of points.
-    
     Augment the 2d numpy array of points ``polygon`` with a an extra
     column of ones (homogeneous coordinates), then multiply with
     the transformation matrix ``transform`` (or the identity matrix),
@@ -765,3 +765,23 @@ def xywh_from_points(points):
     Construct a numeric dict representing a bounding box from polygon coordinates in page representation.
     """
     return xywh_from_bbox(*bbox_from_points(points))
+
+def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
+    """
+    Parse a string as either the path to a JSON object or a literal JSON object.
+    """
+    ret = None
+    err = None
+    try:
+        try:
+            with open(value, 'r') as f:
+                ret = json.load(f)
+        except FileNotFoundError:
+            ret = json.loads(value.strip())
+        if not isinstance(ret, dict):
+            err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, ret))
+    except json.decoder.JSONDecodeError as e:
+        err = ValueError("Error parsing '%s': %s" % (value, e))
+    if err:
+        raise err       # pylint: disable=raising-bad-type
+    return ret
