@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * `ocrd process` uses the ocrd-tool.json of the tools to check whether output file group necessary, #296
+  * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
 
 ## [2.0.0] - 2019-11-05
 
