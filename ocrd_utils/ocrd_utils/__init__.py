@@ -120,6 +120,7 @@ import sys
 import os
 from os import getcwd, chdir
 from os.path import isfile, abspath as os_abspath
+import re
 from zipfile import ZipFile
 import contextlib
 
@@ -243,7 +244,7 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
 def pushd_popd(newcwd=None):
     try:
         oldcwd = getcwd()
-    except FileNotFoundError as e:
+    except FileNotFoundError as e:  # pylint: disable=unused-variable
         # This happens when a directory is deleted before the context is exited
         oldcwd = '/tmp'
     try:
@@ -719,7 +720,6 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
 
 def transform_coordinates(polygon, transform=None):
     """Apply an affine transformation to a set of points.
-    
     Augment the 2d numpy array of points ``polygon`` with a an extra
     column of ones (homogeneous coordinates), then multiply with
     the transformation matrix ``transform`` (or the identity matrix),
