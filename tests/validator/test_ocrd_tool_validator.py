@@ -23,10 +23,25 @@ skeleton = '''
 
 class TestOcrdToolValidator(TestCase):
 
-    def test_something(self):
-        report = OcrdToolValidator.validate(json.loads(skeleton))
-        #  print(report.to_xml())
+    def setUp(self):
+        self.ocrd_tool = json.loads(skeleton)
+
+    def test_smoke(self):
+        report = OcrdToolValidator.validate(self.ocrd_tool)
         self.assertEqual(report.is_valid, True)
+
+    def test_additional_props(self):
+        self.ocrd_tool['not-allowed'] = 'YUP'
+        report = OcrdToolValidator.validate(self.ocrd_tool)
+        self.assertFalse(report.is_valid)
+        self.assertIn("Additional properties are not allowed ('not-allowed' was unexpected)", report.errors[0])
+
+    def test_additional_props_in_tool(self):
+        # XXX 'parameter' is the wrong key, should be 'parameters'
+        self.ocrd_tool['tools']['ocrd-xyz']['parameter'] = {}
+        report = OcrdToolValidator.validate(self.ocrd_tool)
+        self.assertFalse(report.is_valid)
+        self.assertIn("Additional properties are not allowed ('parameter' was unexpected)", report.errors[0])
 
     def test_file_param_ok(self):
         ocrd_tool = json.loads(skeleton)
