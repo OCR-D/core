@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd process` uses the ocrd-tool.json of the tools to check whether output file group necessary, #296
+
 ## [2.0.0] - 2019-11-05
 
 Changed:
