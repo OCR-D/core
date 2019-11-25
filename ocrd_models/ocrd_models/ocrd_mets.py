@@ -32,13 +32,15 @@ class OcrdMets(OcrdXmlDocument):
     """
 
     @staticmethod
-    def empty_mets():
+    def empty_mets(now=None):
         """
         Create an empty METS file from bundled template.
         """
+        if not now:
+            now = datetime.now().isoformat()
         tpl = METS_XML_EMPTY.decode('utf-8')
         tpl = tpl.replace('{{ VERSION }}', VERSION)
-        tpl = tpl.replace('{{ NOW }}', '%s' % datetime.now())
+        tpl = tpl.replace('{{ NOW }}', '%s' % now)
         return OcrdMets(content=tpl.encode('utf-8'))
 
     def __init__(self, file_by_id=None, **kwargs):
