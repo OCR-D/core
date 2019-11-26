@@ -5,12 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.0.1] - 2019-11-26
+
 Fixed:
 
   * METS `CREATEDATE` date format now ISO8601, #360
   * `ocrd workspace find` allow outputting file group, #359
   * processor decorator: `--version` should succeed independent of parameters, #358
-
 
 Changed:
 
@@ -623,6 +624,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.0.1]: ../../compare/v2.0.1...v2.0.0
+[2.0.0]: ../../compare/v2.0.0...v1.0.1
+[1.0.1]: ../../compare/v1.0.1...v1.0.0
 [1.0.0]: ../../compare/v1.0.0...v1.0.0b19
 [1.0.0b19]: ../../compare/v1.0.0b19...v1.0.0b18
 [1.0.0b18]: ../../compare/v1.0.0b18...v1.0.0b17
