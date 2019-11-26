@@ -167,6 +167,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
             'mimetype',
             'pageId',
             'ID',
+            'fileGrp',
             'basename',
             'basename_without_extension',
             'local_filename',
