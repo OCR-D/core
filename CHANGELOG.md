@@ -5,10 +5,18 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * METS `CREATEDATE` date format now ISO8601, #360
+  * `ocrd workspace find` allow outputting file group, #359
+  * processor decorator: `--version` should succeed independent of parameters, #358
+
+
 Changed:
 
   * `ocrd process` uses the ocrd-tool.json of the tools to check whether output file group necessary, #296
   * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
+  * pixel density warnings downgraded further to "notice", #360
 
 ## [2.0.0] - 2019-11-05
 
