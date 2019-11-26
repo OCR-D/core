@@ -35,7 +35,10 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
     if dump_json:
         processorClass(workspace=None, dump_json=True)
     elif version:
-        p = processorClass(workspace=None)
+        try:
+            p = processorClass(workspace=None)
+        except e:
+            pass
         print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:
         msg = 'Error: Missing option "-m" / "--mets".'
