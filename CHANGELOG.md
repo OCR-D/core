@@ -7,8 +7,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Changed:
 
-  * `ocrd process` uses the ocrd-tool.json of the tools to check whether output file group necessary, #296
+  * `ocrd process`: Use the ocrd-tool.json of the tools to check whether output file group necessary, #296
+  * `ocrd process`: Validate parameters when validating a task
   * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
+  * Parameter validation: Raise exception for unknown parameters
+  * `ocrd ocrd-tool validate`: Raise exception for unknown keys in JSON
 
 ## [2.0.0] - 2019-11-05
 
