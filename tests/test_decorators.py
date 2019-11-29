@@ -11,7 +11,7 @@ from ocrd.decorators import (
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
 from ocrd_utils.logging import setOverrideLogLevel, initLogging
-from ocrd_utils import pushd_popd
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
 
 @click.command()
 @ocrd_cli_options
@@ -23,7 +23,15 @@ def cli_with_ocrd_cli_options(*args, **kwargs):      # pylint: disable=unused-ar
 def cli_with_ocrd_loglevel(*args, **kwargs):         # pylint: disable=unused-argument
     pass
 
-DUMMY_TOOL = {'executable': 'ocrd-test', 'steps': ['recognition/post-correction']}
+DUMMY_TOOL = {
+    'executable': 'ocrd-test',
+    'steps': ['recognition/post-correction'],
+    'parameters': {
+        'foo': {
+            'required': True
+        }
+    }
+}
 
 class DummyProcessor(Processor):
 
@@ -72,6 +80,7 @@ class TestDecorators(TestCase):
 
     def test_processor_version(self):
         result = self.runner.invoke(cli_dummy_processor, ['--version'])
+        self.assertEqual(result.output, 'Version 0.0.1, ocrd/core %s\n' % OCRD_VERSION)
         self.assertEqual(result.exit_code, 0)
 
     # XXX cannot be tested in this way because logging is reused and not part of output
@@ -83,7 +92,7 @@ class TestDecorators(TestCase):
     def test_processor_run(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(cli_dummy_processor, ['--mets', 'mets.xml'])
+                result = self.runner.invoke(cli_dummy_processor, ['-p', '{"foo": 42}', '--mets', 'mets.xml'])
                 self.assertEqual(result.exit_code, 0)
 
 

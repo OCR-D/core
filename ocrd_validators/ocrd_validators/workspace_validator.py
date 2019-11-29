@@ -155,7 +155,7 @@ class WorkspaceValidator():
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)
                 if v is None or v <= 72:
-                    self.report.add_warning("Image %s: %s (%s pixels per %s) is too low" % (f.ID, k, v, exif.resolutionUnit))
+                    self.report.add_notice("Image %s: %s (%s pixels per %s) is suspiciously low" % (f.ID, k, v, exif.resolutionUnit))
 
     def _validate_mets_file_group_names(self):
         """

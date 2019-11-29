@@ -9,7 +9,7 @@ from click.testing import CliRunner
 # pylint: disable=import-error, no-name-in-module
 from tests.base import TestCase, main, assets, copy_of_directory
 
-from ocrd_utils import initLogging
+from ocrd_utils import initLogging, pushd_popd
 from ocrd.cli.workspace import workspace_cli
 from ocrd.resolver import Resolver
 
@@ -139,6 +139,15 @@ class TestCli(TestCase):
 
             # File should have been deleted
             self.assertFalse(exists(content_file))
+
+    def test_find_files(self):
+        with TemporaryDirectory() as tempdir:
+            wsdir = join(tempdir, 'ws')
+            copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
+            with pushd_popd(wsdir):
+                result = self.runner.invoke(workspace_cli, ['find', '-G', 'OCR-D-IMG-BIN', '-k', 'fileGrp'])
+                self.assertEqual(result.output, 'OCR-D-IMG-BIN\nOCR-D-IMG-BIN\n')
+                self.assertEqual(result.exit_code, 0)
 
     def test_prune_files(self):
         with TemporaryDirectory() as tempdir:

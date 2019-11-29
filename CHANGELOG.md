@@ -7,11 +7,24 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Changed:
 
-  * `ocrd process`: Use the ocrd-tool.json of the tools to check whether output file group necessary, #296
   * `ocrd process`: Validate parameters when validating a task
   * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
   * Parameter validation: Raise exception for unknown parameters
   * `ocrd ocrd-tool validate`: Raise exception for unknown keys in JSON
+
+## [2.0.1] - 2019-11-26
+
+Fixed:
+
+  * METS `CREATEDATE` date format now ISO8601, #360
+  * `ocrd workspace find` allow outputting file group, #359
+  * processor decorator: `--version` should succeed independent of parameters, #358
+
+Changed:
+
+  * `ocrd process` uses the ocrd-tool.json of the tools to check whether output file group necessary, #296
+  * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
+  * pixel density warnings downgraded further to "notice", #361
 
 ## [2.0.0] - 2019-11-05
 
@@ -618,6 +631,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.0.1]: ../../compare/v2.0.1...v2.0.0
+[2.0.0]: ../../compare/v2.0.0...v1.0.1
+[1.0.1]: ../../compare/v1.0.1...v1.0.0
 [1.0.0]: ../../compare/v1.0.0...v1.0.0b19
 [1.0.0b19]: ../../compare/v1.0.0b19...v1.0.0b18
 [1.0.0b18]: ../../compare/v1.0.0b18...v1.0.0b17
