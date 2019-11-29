@@ -30,6 +30,12 @@ SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP = json.loads(SAMPLE_OCRD_TOOL_JSON
 del SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP['output_file_grp']
 SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP = json.dumps(SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP)
 
+SAMPLE_NAME_REQUIRED_PARAM = 'ocrd-sample-processor-required-param'
+SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM = json.loads(SAMPLE_OCRD_TOOL_JSON)
+del SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['parameters']['param1']['default']
+SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['parameters']['param1']['required'] = True
+SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM = json.dumps(SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM)
+
 class TestTaskSequence(TestCase):
 
     def tearDown(self):
@@ -50,6 +56,13 @@ print('''%s''')
 #!/usr/bin/env python
 print('''%s''')
         """ % SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP)
+        p.chmod(0o777)
+
+        p = Path(self.tempdir, SAMPLE_NAME_REQUIRED_PARAM)
+        p.write_text("""\
+#!/usr/bin/env python
+print('''%s''')
+        """ % SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM)
         p.chmod(0o777)
 
         os.environ['PATH'] = os.pathsep.join([self.tempdir, os.environ['PATH']])
@@ -98,6 +111,10 @@ print('''%s''')
         with self.assertRaisesRegex(Exception, 'Executable not found in '):
             task.validate()
 
+    def test_required_param(self):
+        task = ProcessorTask.parse('sample-processor-required-param -I IN -O OUT')
+        with self.assertRaisesRegex(Exception, "'param1' is a required property"):
+            task.validate()
 
 if __name__ == '__main__':
     main()

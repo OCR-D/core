@@ -6,6 +6,7 @@ from subprocess import run, PIPE
 from ocrd_utils import getLogger, parse_json_string_or_file
 from ocrd.processor.base import run_cli
 from ocrd.resolver import Resolver
+from ocrd_validators import ParameterValidator
 
 class ProcessorTask():
 
@@ -41,13 +42,17 @@ class ProcessorTask():
     def validate(self):
         if not which(self.executable):
             raise Exception("Executable not found in PATH: %s" % self.executable)
-        result = run([self.executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
-        ocrd_tool_json = json.loads(result.stdout)
-        # TODO check for required parameters in ocrd_tool
-        if self.parameter_path:
-            parse_json_string_or_file(self.parameter_path)
         if not self.input_file_grps:
             raise Exception("Task must have input file group")
+        result = run([self.executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
+        ocrd_tool_json = json.loads(result.stdout)
+        parameters = {}
+        if self.parameter_path:
+            parameters = parse_json_string_or_file(self.parameter_path)
+        param_validator = ParameterValidator(ocrd_tool_json)
+        report = param_validator.validate(parameters)
+        if not report.is_valid:
+            raise Exception(report.errors)
         if 'output_file_grp' in ocrd_tool_json and not self.output_file_grps:
             raise Exception("Processor requires output_file_grp but none was provided.")
         return True
