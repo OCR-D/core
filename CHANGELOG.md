@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd process`: Validate parameters when validating a task
+  * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
+  * Parameter validation: Raise exception for unknown parameters
+  * `ocrd ocrd-tool validate`: Raise exception for unknown keys in JSON
+
 ## [2.0.1] - 2019-11-26
 
 Fixed:
