@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.0.2] - 2019-12-02
+
 Changed:
 
   * `ocrd process`: Validate parameters when validating a task
@@ -631,6 +633,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.0.2]: ../../compare/v2.0.2...v2.0.1
 [2.0.1]: ../../compare/v2.0.1...v2.0.0
 [2.0.0]: ../../compare/v2.0.0...v1.0.1
 [1.0.1]: ../../compare/v1.0.1...v1.0.0
