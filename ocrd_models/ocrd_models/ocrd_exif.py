@@ -6,8 +6,9 @@ from math import sqrt
 
 class OcrdExif():
     """Represents technical image metadata.
-    
+
     Members:
+
     - `width` / `height`: pixel dimensions
     - `photometricInterpretation`: pixel type/depth, e.g.
       '1' for b/w,
@@ -18,6 +19,7 @@ class OcrdExif():
       (see PIL concept `mode`)
     - `resolution` / `xResolution` / `yResolution`: pixel density
     - `resolutionUnits`: unit of measurement (either `inches` or `cm`)
+
     """
 
     def __init__(self, img):

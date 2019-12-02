@@ -227,10 +227,11 @@ class Workspace():
         Resolve an image URL to a PIL image.
 
         Args:
-            coords (list) : Coordinates of the bounding box to cut from the image
+            - coords (list) : Coordinates of the bounding box to cut from the image
 
         Returns:
             Image or region in image as PIL.Image
+
         """
         files = self.mets.find_files(url=image_url)
         f = files[0] if files else OcrdFile(None, url=image_url)
@@ -262,22 +263,22 @@ class Workspace():
                         fill='background', transparency=False,
                         feature_selector='', feature_filter=''):
         """Extract an image for a PAGE-XML page from the workspace.
-        
+
         Given ``page``, a PAGE PageType object, extract its PIL.Image,
         either from its AlternativeImage (if it exists), or from its
         @imageFilename (otherwise). Also crop it, if a Border exists,
         and rotate it, if any @orientation angle is annotated.
-        
+
         If ``feature_selector`` and/or ``feature_filter`` is given, then
         select/filter among the @imageFilename image and the available
         AlternativeImages the last one which contains all of the selected,
         but none of the filtered features (i.e. @comments classes), or
         raise an error.
-        
+
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
         ``feature_filter`` is merely a mask specifying Boolean OR.)
-        
+
         If the chosen image does not have the feature "cropped" yet, but
         a Border exists, and unless "cropped" is being filtered, then crop it.
         Likewise, if the chosen image does not have the feature "deskewed" yet,
@@ -285,20 +286,24 @@ class Workspace():
         filtered, then rotate it. (However, if @orientation is above the
         [-45°,45°] interval, then apply as much transposition as possible first,
         unless "rotated-90" / "rotated-180" / "rotated-270" is being filtered.)
-        
+
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to ``fill``:
+
         - if ``background`` (the default),
           then fill with the median color of the image;
         - otherwise, use the given color, e.g. ``white`` or (255,255,255).
+
         Moreover, if ``transparency`` is true, and unless the image already
         has an alpha channel, then add an alpha channel which is fully opaque
         before cropping and rotating. (Thus, only the exposed areas will be
         transparent afterwards, for those that can interpret alpha channels).
-        
+
         Return a tuple:
+
          * the extracted image,
          * a dictionary with information about the extracted image:
+
            - ``transform``: a Numpy array with an affine transform which
              converts from absolute coordinates to those relative to the image,
              i.e. after cropping to the page's border / bounding box (if any)
@@ -306,16 +311,22 @@ class Workspace():
            - ``angle``: the rotation/reflection angle applied to the image so far,
            - ``features``: the AlternativeImage @comments for the image, i.e.
              names of all operations that lead up to this result,
+
          * an OcrdExif instance associated with the original image.
+
         (The first two can be used to annotate a new AlternativeImage,
          or be passed down with ``image_from_segment``.)
-        
+
         Example:
+
          * get a raw (colored) but already deskewed and cropped image:
-           ``page_image, page_coords, page_image_info = workspace.image_from_page(
+
+           ``
+           page_image, page_coords, page_image_info = workspace.image_from_page(
                  page, page_id,
                  feature_selector='deskewed,cropped',
-                 feature_filter='binarized,grayscale_normalized')``
+                 feature_filter='binarized,grayscale_normalized')
+           ``
         """
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
@@ -493,8 +504,9 @@ class Workspace():
                            fill='background', transparency=False,
                            feature_selector='', feature_filter=''):
         """Extract an image for a PAGE-XML hierarchy segment from its parent's image.
-        
+
         Given...
+
          * ``parent_image``, a PIL.Image of the parent, with
          * ``parent_coords``, a dict with information about ``parent_image``:
            - ``transform``: a Numpy array with an affine transform which
@@ -505,35 +517,38 @@ class Workspace():
              names of all operations that lead up to this result, and
          * ``segment``, a PAGE segment object logically contained in it
            (i.e. TextRegionType / TextLineType / WordType / GlyphType),
+
         ...extract the segment's corresponding PIL.Image, either from
         AlternativeImage (if it exists), or producing a new image via
         cropping from ``parent_image`` (otherwise).
-        
+
         If ``feature_selector`` and/or ``feature_filter`` is given, then
         select/filter among the cropped ``parent_image`` and the available
         AlternativeImages the last one which contains all of the selected,
         but none of the filtered features (i.e. @comments classes), or
         raise an error.
-        
+
         (Required and produced features need not be in the same order, so
         ``feature_selector`` is merely a mask specifying Boolean AND, and
         ``feature_filter`` is merely a mask specifying Boolean OR.)
-        
+
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to ``fill``:
+
         - if ``background`` (the default),
           then fill with the median color of the image;
         - otherwise, use the given color, e.g. ``white`` or (255,255,255).
+
         Moreover, if ``transparency`` is true, and unless the image already
         has an alpha channel, then add an alpha channel which is fully opaque
         before cropping and rotating. (Thus, only the exposed areas will be
         transparent afterwards, for those that can interpret alpha channels).
-        
+
         When cropping, compensate any @orientation angle annotated for the
         parent (from parent-level deskewing) by rotating the segment coordinates
         in an inverse transformation (i.e. translation to center, then passive
         rotation, and translation back).
-        
+
         Regardless, if any @orientation angle is annotated for the segment
         (from segment-level deskewing), and the chosen image does not have
         the feature "deskewed" yet, and unless "deskewed" is being filtered,
@@ -541,8 +556,9 @@ class Workspace():
         if @orientation is above the [-45°,45°] interval, then apply as much
         transposition as possible first, unless "rotated-90" / "rotated-180" /
         "rotated-270" is being filtered.)
-        
+
         Return a tuple:
+
          * the extracted image,
          * a dictionary with information about the extracted image:
            - ``transform``: a Numpy array with an affine transform which
@@ -553,11 +569,14 @@ class Workspace():
            - ``angle``: the rotation/reflection angle applied to the image so far,
            - ``features``: the AlternativeImage @comments for the image, i.e.
              names of all operations that lead up to this result.
+
         (These can be used to create a new AlternativeImage, or passed down
          for calls on lower hierarchy levels.)
-        
+
         Example:
+
          * get a raw (colored) but already deskewed and cropped image:
+
            ``image, xywh = workspace.image_from_segment(region,
                  page_image, page_xywh,
                  feature_selector='deskewed,cropped',

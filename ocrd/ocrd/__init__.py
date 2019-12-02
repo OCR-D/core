@@ -2,6 +2,7 @@
 OCR-D reference implementation, base package: decorators and classes for processors and CLIs.
 
 Related (and dependent) packages:
+
 * ``ocrd_utils``
   Contains utilities and constants, e.g. for logging, path normalization, coordinate calculation etc.
 * ``ocrd_models``
@@ -10,6 +11,7 @@ Related (and dependent) packages:
   Code to instantiate models from existing data.
 * ``ocrd_validators``
   Schemas and routines for validating BagIt, ``ocrd-tool.json``, workspaces, METS, page, CLI parameters etc.
+
 """
 
 from ocrd.processor.base import run_processor, run_cli, Processor

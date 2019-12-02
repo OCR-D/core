@@ -182,13 +182,16 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
     """Convert relative coordinates to absolute.
 
     Given...
+
     - ``polygon``, a numpy array of points relative to
     - ``parent_image``, a PIL.Image (not used), along with
     - ``parent_coords``, its corresponding affine transformation,
+
     ...calculate the absolute coordinates within the page.
     
     That is, apply the given transform inversely to ``polygon``
     The transform encodes (recursively):
+
     1. Whenever ``parent_image`` or any of its parents was cropped,
        all points must be shifted by the offset in opposite direction
        (i.e. coordinate system gets translated by the upper left).
@@ -212,16 +215,19 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
     """Extract the coordinates of a PAGE segment element relative to its parent.
 
     Given...
+
     - ``segment``, a PAGE segment object in absolute coordinates
       (i.e. RegionType / TextLineType / WordType / GlyphType), and
     - ``parent_image``, the PIL.Image of its corresponding parent object
       (i.e. PageType / RegionType / TextLineType / WordType), (not used),
       along with
     - ``parent_coords``, its corresponding affine transformation,
+
     ...calculate the relative coordinates of the segment within the image.
-    
+
     That is, apply the given transform to the points annotated in ``segment``.
     The transform encodes (recursively):
+
     1. Whenever ``parent_image`` or any of its parents was cropped,
        all points must be shifted by the offset
        (i.e. coordinate system gets translated by the upper left).
@@ -231,7 +237,7 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
        opposite direction, rotated purely, and translated back;
        the latter involves an additional offset from the increase
        in canvas size necessary to accomodate all points).
-    
+
     Return the rounded numpy array of the resulting polygon.
     """
     # get polygon:
@@ -324,9 +330,11 @@ def rotate_image(image, angle, fill='background', transparency=False):
     counter-clockwise ``angle``, rotate the image, increasing its
     size at the margins accordingly, and filling everything outside
     the original image according to ``fill``:
+
     - if ``background`` (the default),
       then use the median color of the image;
     - otherwise use the given color, e.g. ``'white'`` or (255,255,255).
+
     Moreover, if ``transparency`` is true, then add an alpha channel
     fully opaque (i.e. everything outside the original image will
     be transparent for those that can interpret alpha channels).
@@ -367,6 +375,7 @@ def transpose_image(image, method):
 
     Given a PIL.Image ``image`` and a transposition mode ``method``,
     apply the respective operation:
+
     - ``PIL.Image.FLIP_LEFT_RIGHT``:
       all pixels get mirrored at half the width of the image
     - ``PIL.Image.FLIP_TOP_BOTTOM``:
@@ -394,7 +403,7 @@ def transpose_image(image, method):
       columns become rows (but counted from the bottom),
       i.e. all pixels get mirrored at the opposite diagonal;
       width becomes height and vice versa
-    
+ 
     Return a new PIL.Image.
     """
     LOG.debug('transposing image with %s', membername(Image, method))
@@ -429,9 +438,11 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     Given a PIL.Image ``image`` and a numpy array ``polygon``
     of relative coordinates into the image, fill everything
     outside the polygon hull to a color according to ``fill``:
+
     - if ``background`` (the default),
       then use the median color of the image;
     - otherwise use the given color, e.g. ``'white'`` or (255,255,255).
+
     Moreover, if ``transparency`` is true, then add an alpha channel
     from the polygon mask (i.e. everything outside the polygon will
     be transparent, for those consumers that can interpret alpha channels).
@@ -662,6 +673,7 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
     as well as a numpy array ``orig`` of the center of the image,
     calculate the affine coordinate transform corresponding to the composition
     of both transformations, which is respectively:
+
     - ``PIL.Image.FLIP_LEFT_RIGHT``:
       entails translation to the center, followed by pure reflection
       about the y-axis, and subsequent translation back
@@ -685,7 +697,7 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
       entails translation to the center, followed by pure rotation
       by 90° counter-clockwise and pure reflection about the y-axis,
       and subsequent translation back
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG.debug('transposing coordinates with %s around %s', membername(Image, method), str(orig))
