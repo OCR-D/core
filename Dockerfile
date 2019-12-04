@@ -16,7 +16,6 @@ COPY README.md .
 COPY LICENSE .
 RUN apt-get update && apt-get -y install --no-install-recommends \
     software-properties-common \
-    ca-certificates \
     python3-dev \
     python3-pip \
     make \
@@ -24,7 +23,6 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     curl \
     sudo \
     git \
-    libglib2.0.0 \
     && pip3 install --upgrade pip setuptools \
     && make install \
     && rm -rf /build-ocrd
