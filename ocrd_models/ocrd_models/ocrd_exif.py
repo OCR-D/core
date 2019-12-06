@@ -31,6 +31,7 @@ class OcrdExif():
         self.width = img.width
         self.height = img.height
         self.photometricInterpretation = img.mode
+        self.n_frames = img.n_frames if 'n_frames' in img.__dict__ else 1
         #  if img.format == 'PNG':
         #      print(img.info)
         for prop in ['compression', 'photometric_interpretation']:

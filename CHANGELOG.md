@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Workspace validation will check cardinality of images per file is 1, #243, OCR-D/spec#132
+
 Changed:
   
   * bashlib will no longer warn about "non-conformant" file group names, #365

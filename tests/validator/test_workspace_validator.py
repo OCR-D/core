@@ -88,7 +88,7 @@ class TestWorkspaceValidator(TestCase):
             f = workspace.mets.add_file('OCR-D-GT-PAGE', ID='file2', mimetype='image/png', pageId='page2', url='nothttp://unusual.scheme')
             f._el.set('GROUPID', 'donotuse') # pylint: disable=protected-access
             workspace.save_mets()
-            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
+            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density', 'multipage'])
             self.assertEqual(len(report.errors), 0)
             self.assertEqual(len(report.warnings), 2)
             self.assertIn("Java-specific", report.warnings[0])

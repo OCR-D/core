@@ -85,6 +85,8 @@ class WorkspaceValidator():
                 self._validate_mets_files()
             if 'pixel_density' not in self.skip:
                 self._validate_pixel_density()
+            if 'multipage' not in self.skip:
+                self._validate_multipage()
             if 'dimension' not in self.skip:
                 self._validate_dimension()
             if 'imagefilename' not in self.skip:
@@ -141,13 +143,27 @@ class WorkspaceValidator():
             if page.imageWidth != exif.width:
                 self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
 
+    def _validate_multipage(self):
+        """
+        Validate the number of images per file is 1 (TIFF allows multi-page images)
+
+        See `spec <https://ocr-d.github.io/mets#no-multi-page-images>`_.
+        """
+        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/') and f.url]:
+            if not is_local_filename(f.url) and not self.download:
+                self.report.add_notice("Won't download remote image <%s>" % f.url)
+                continue
+            exif = self.workspace.resolve_image_exif(f.url)
+            if exif.n_frames > 1:
+                self.report.add_warning("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
+
     def _validate_pixel_density(self):
         """
         Validate image pixel density
 
         See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
         """
-        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
+        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/') and f.url]:
             if not is_local_filename(f.url) and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
                 continue
