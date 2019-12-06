@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+  
+  * bashlib will no longer warn about "non-conformant" file group names, #365
+
 ## [2.0.2] - 2019-12-02
 
 Changed:
