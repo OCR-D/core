@@ -69,6 +69,7 @@ deps-test:
 
 # (Re)install the tool
 install: spec
+	$(PIP) install -U "pip>=19.0.0" wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
 # Uninstall the tool
