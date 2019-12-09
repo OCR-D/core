@@ -28,7 +28,7 @@ class TestOcrdMets(TestCase):
         self.assertEqual(mets.unique_identifier, 'foo', 'Right identifier after change')
         as_string = mets.to_xml().decode('utf-8')
         self.assertIn('ocrd/core v%s' % VERSION, as_string)
-        self.assertIn('CREATEDATE="%d-%d-%02dT' % (
+        self.assertIn('CREATEDATE="%04u-%02u-%02uT' % (
             datetime.now().year,
             datetime.now().month,
             datetime.now().day,
