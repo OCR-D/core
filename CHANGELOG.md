@@ -9,6 +9,7 @@ Changed:
   
   * bashlib will no longer warn about "non-conformant" file group names, #365
   * Invalid `file:/` URL will now raise exceptions, #373
+  * image_from_*: increase tolerance for size mismatch after rotation to 2px, #371
 
 ## [2.0.2] - 2019-12-02
 
