@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
   
   * bashlib will no longer warn about "non-conformant" file group names, #365
+  * Invalid `file:/` URL will now raise exceptions, #373
 
 ## [2.0.2] - 2019-12-02
 
