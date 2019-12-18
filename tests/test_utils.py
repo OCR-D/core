@@ -152,7 +152,8 @@ class TestUtils(TestCase):
     def test_local_filename(self):
         self.assertEqual(get_local_filename('/foo/bar'), '/foo/bar')
         self.assertEqual(get_local_filename('file:///foo/bar'), '/foo/bar')
-        self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
+        with self.assertRaisesRegex(Exception, "Invalid.* URL"):
+            self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
         self.assertEqual(get_local_filename('/foo/bar', '/foo/'), 'bar')
         self.assertEqual(get_local_filename('/foo/bar', '/foo'), 'bar')
         self.assertEqual(get_local_filename('foo/bar', 'foo'), 'bar')

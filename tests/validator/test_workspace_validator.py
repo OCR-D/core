@@ -88,13 +88,8 @@ class TestWorkspaceValidator(TestCase):
             f = workspace.mets.add_file('OCR-D-GT-PAGE', ID='file2', mimetype='image/png', pageId='page2', url='nothttp://unusual.scheme')
             f._el.set('GROUPID', 'donotuse') # pylint: disable=protected-access
             workspace.save_mets()
-            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
-            self.assertEqual(len(report.errors), 0)
-            self.assertEqual(len(report.warnings), 2)
-            self.assertIn("Java-specific", report.warnings[0])
-            self.assertIn("non-HTTP", report.warnings[1])
-            self.assertEqual(len(report.notices), 1)
-            self.assertIn("has GROUPID attribute", report.notices[0])
+            with self.assertRaisesRegex(Exception, "Invalid.* URL"):
+                WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
 
     def test_validate_pixel_no_download(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')

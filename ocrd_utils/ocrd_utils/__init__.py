@@ -423,7 +423,7 @@ def get_local_filename(url, start=None):
         url = url[len('file://'):]
     # Goobi/Kitodo produces those, they are always absolute
     if url.startswith('file:/'):
-        url = url[len('file:'):]
+        raise Exception("Invalid (java) URL: %s" % url)
     if start:
         if not url.startswith(start):
             raise Exception("Cannot remove prefix %s from url %s" % (start, url))
@@ -477,7 +477,7 @@ def is_local_filename(url):
     """
     Whether a url is a local filename.
     """
-    return url.startswith('file:/') or not('://' in url)
+    return url.startswith('file://') or not('://' in url)
 
 def is_string(val):
     """
