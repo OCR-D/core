@@ -74,7 +74,7 @@ class TestWorkspaceValidator(TestCase):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file('OCR-D-GT-PAGE', ID='file1', mimetype='image/png')
+            workspace.mets.add_file('OCR-D-GT-PAGE', ID='file1', mimetype='image/png', url='http://foo')
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density', 'imagefilename'])
             self.assertEqual(len(report.errors), 1)
@@ -88,8 +88,9 @@ class TestWorkspaceValidator(TestCase):
             f = workspace.mets.add_file('OCR-D-GT-PAGE', ID='file2', mimetype='image/png', pageId='page2', url='nothttp://unusual.scheme')
             f._el.set('GROUPID', 'donotuse') # pylint: disable=protected-access
             workspace.save_mets()
-            with self.assertRaisesRegex(Exception, "Invalid.* URL"):
-                WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
+            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
+            self.assertEqual(len(report.errors), 1)
+            self.assertIn("Invalid (java) URL", report.errors[0])
 
     def test_validate_pixel_no_download(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')

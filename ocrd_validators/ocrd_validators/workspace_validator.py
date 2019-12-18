@@ -2,6 +2,7 @@
 Validating a workspace.
 """
 import re
+from traceback import format_exc
 from pathlib import Path
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
@@ -77,22 +78,25 @@ class WorkspaceValidator():
             self.report.add_error("Failed to instantiate workspace: %s" % e)
             return self.report
         with pushd_popd(self.workspace.directory):
-            if 'mets_unique_identifier' not in self.skip:
-                self._validate_mets_unique_identifier()
-            if 'mets_file_group_names' not in self.skip:
-                self._validate_mets_file_group_names()
-            if 'mets_files' not in self.skip:
-                self._validate_mets_files()
-            if 'pixel_density' not in self.skip:
-                self._validate_pixel_density()
-            if 'multipage' not in self.skip:
-                self._validate_multipage()
-            if 'dimension' not in self.skip:
-                self._validate_dimension()
-            if 'imagefilename' not in self.skip:
-                self._validate_imagefilename()
-            if 'page' not in self.skip:
-                self._validate_page()
+            try:
+                if 'mets_unique_identifier' not in self.skip:
+                    self._validate_mets_unique_identifier()
+                if 'mets_file_group_names' not in self.skip:
+                    self._validate_mets_file_group_names()
+                if 'mets_files' not in self.skip:
+                    self._validate_mets_files()
+                if 'pixel_density' not in self.skip:
+                    self._validate_pixel_density()
+                if 'multipage' not in self.skip:
+                    self._validate_multipage()
+                if 'dimension' not in self.skip:
+                    self._validate_dimension()
+                if 'imagefilename' not in self.skip:
+                    self._validate_imagefilename()
+                if 'page' not in self.skip:
+                    self._validate_page()
+            except Exception:
+                self.report.add_error("Validation aborted with exception: %s" % format_exc())
         return self.report
 
     def _resolve_workspace(self):
@@ -149,7 +153,7 @@ class WorkspaceValidator():
 
         See `spec <https://ocr-d.github.io/mets#no-multi-page-images>`_.
         """
-        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/') and f.url]:
+        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
             if not is_local_filename(f.url) and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
                 continue
@@ -163,7 +167,7 @@ class WorkspaceValidator():
 
         See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
         """
-        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/') and f.url]:
+        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
             if not is_local_filename(f.url) and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
                 continue
@@ -208,7 +212,10 @@ class WorkspaceValidator():
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
             if not f.pageId:
                 self.report.add_error("File '%s' does not manifest any physical page." % f.ID)
-            if 'url' not in self.skip and f.url and ':/' in f.url:
+            if not f.url:
+                self.report.add_error("File '%s' has no mets:Flocat/@xlink:href" % f.ID)
+                continue
+            if 'url' not in self.skip and ':/' in f.url:
                 if re.match(r'^file:/[^/]', f.url):
                     self.report.add_error("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
                 scheme = f.url[0:f.url.index(':')]
