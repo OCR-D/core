@@ -155,7 +155,7 @@ class WorkspaceValidator():
                 continue
             exif = self.workspace.resolve_image_exif(f.url)
             if exif.n_frames > 1:
-                self.report.add_warning("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
+                self.report.add_error("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
 
     def _validate_pixel_density(self):
         """
