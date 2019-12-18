@@ -479,8 +479,8 @@ class Workspace():
                 [page_xywh['w'], page_xywh['h']], skew)
             # FIXME we should enforce consistency here (i.e. rotation always reshapes,
             #       and rescaling never happens)
-            if not (w_new - 1.5 < page_image.width < w_new + 1.5 and
-                    h_new - 1.5 < page_image.height < h_new + 1.5):
+            if not (w_new - 2 < page_image.width < w_new + 2 and
+                    h_new - 2 < page_image.height < h_new + 2):
                 log.error('page "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during rotation',
                           page_id, page_coords['features'],
                           page_image.width, page_image.height,
@@ -741,15 +741,16 @@ class Workspace():
             #       and rescaling never happens)
             w_new, h_new = adjust_canvas_to_rotation(
                 [segment_xywh['w'], segment_xywh['h']], skew)
-            if not (w_new - 1.5 < segment_image.width < w_new + 1.5 and
-                    h_new - 1.5 < segment_image.height < h_new + 1.5):
+            if not (w_new - 2 < segment_image.width < w_new + 2 and
+                    h_new - 2 < segment_image.height < h_new + 2):
                 log.error('segment "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during rotation',
                           segment.id, segment_coords['features'],
                           segment_image.width, segment_image.height,
                           w_new, h_new)
         else:
-            if not (segment_xywh['w'] - 1.5 < segment_image.width < segment_xywh['w'] + 1.5 and
-                    segment_xywh['h'] - 1.5 < segment_image.height < segment_xywh['h'] + 1.5):
+            # FIXME: currently unavoidable with line-level dewarping (which increases height)
+            if not (segment_xywh['w'] - 2 < segment_image.width < segment_xywh['w'] + 2 and
+                    segment_xywh['h'] - 2 < segment_image.height < segment_xywh['h'] + 2):
                 log.error('segment "%s" image (%s; %dx%d) has not been cropped properly (%dx%d)',
                           segment.id, segment_coords['features'],
                           segment_image.width, segment_image.height,
