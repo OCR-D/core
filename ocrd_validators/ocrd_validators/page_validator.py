@@ -64,24 +64,26 @@ class ConsistencyError(Exception):
     (Element text strings must be the concatenation of their children's text strings, joined by white space.)
     """
 
-    def __init__(self, tag, ID, actual, expected):
+    def __init__(self, tag, ID, file_id, actual, expected):
         """
         Construct a new ConsistencyError.
 
         Arguments:
             tag (string): Level of the inconsistent element (parent)
             ID (string): ``ID`` of the inconsistent element (parent)
+            file_id (string): ``mets:id`` of the PAGE file
             actual (string): Value of parent's TextEquiv[0]/Unicode
             expected (string): Concatenated values of children's
                                TextEquiv[0]/Unicode, joined by white-space
         """
         self.tag = tag
         self.ID = ID
+        self.file_id = file_id
         self.actual = actual
         self.expected = expected
         super(ConsistencyError, self).__init__(
-            "INCONSISTENCY in %s ID '%s': text results '%s' != concatenated '%s'" % (
-                tag, ID, actual, expected))
+            "INCONSISTENCY in %s ID '%s' of file '%s': text results '%s' != concatenated '%s'" % (
+                tag, ID, file_id, actual, expected))
 
 class CoordinateConsistencyError(Exception):
     """
@@ -89,23 +91,25 @@ class CoordinateConsistencyError(Exception):
     (Element coordinate polygons must be properly contained in their parents' coordinate polygons.)
     """
 
-    def __init__(self, tag, ID, outer, inner):
+    def __init__(self, tag, ID, file_id, outer, inner):
         """
         Construct a new CoordinateConsistencyError.
 
         Arguments:
             tag (string): Level of the offending element (child)
             ID (string): ``ID`` of the offending element (child)
+            file_id (string): ``mets:id`` of the PAGE file
             outer (string): Coordinate points of the parent
             inner (string): Coordinate points of the child
         """
         self.tag = tag
         self.ID = ID
+        self.file_id = file_id
         self.outer = outer
         self.inner = inner
         super(CoordinateConsistencyError, self).__init__(
-            "INCONSISTENCY in %s ID '%s': coords '%s' not within parent coords '%s'" % (
-                tag, ID, inner, outer))
+            "INCONSISTENCY in %s ID '%s' of '%s': coords '%s' not within parent coords '%s'" % (
+                tag, ID, file_id, inner, outer))
 
 class CoordinateValidityError(Exception):
     """
@@ -114,7 +118,7 @@ class CoordinateValidityError(Exception):
      self-intersect or be non-contiguous or be negative.)
     """
 
-    def __init__(self, tag, ID, points):
+    def __init__(self, tag, ID, file_id, points):
         """
         Construct a new CoordinateValidityError.
 
@@ -125,10 +129,11 @@ class CoordinateValidityError(Exception):
         """
         self.tag = tag
         self.ID = ID
+        self.file_id = file_id
         self.points = points
         super(CoordinateValidityError, self).__init__(
-            "INVALIDITY in %s ID '%s': coords '%s'" % (
-                tag, ID, points))
+            "INVALIDITY in %s ID '%s' of '%s': coords '%s'" % (
+                tag, ID, file_id, points))
         
 def compare_without_whitespace(a, b):
     """
@@ -136,7 +141,7 @@ def compare_without_whitespace(a, b):
     """
     return re.sub('\\s+', '', a) == re.sub('\\s+', '', b)
 
-def validate_consistency(node, strictness, strategy, check_baseline, check_coords, report):
+def validate_consistency(node, strictness, strategy, check_baseline, check_coords, report, file_id):
     """
     Check whether the text results on an element is consistent with its child element text results,
     and whether the coordinates of an element are fully within its parent element coordinates.
@@ -166,7 +171,7 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                 or node_poly.bounds[0] < 0
                 or node_poly.bounds[1] < 0
                 or node_poly.length < 4):
-                report.add_error(CoordinateValidityError(tag, node_id, parent_points))
+                report.add_error(CoordinateValidityError(tag, node_id, file_id, parent_points))
                 log.info("Invalid coords of %s %s", tag, node_id)
                 consistent = False
         else:
@@ -178,7 +183,7 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
         for child in children:
             consistent = (validate_consistency(child, strictness, strategy,
                                                check_baseline, check_coords,
-                                               report)
+                                               report, file_id)
                           and consistent)
             if check_coords and node_poly:
                 child_tag = child.original_tagname_
@@ -189,14 +194,13 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                     or child_poly.bounds[0] < 0
                     or child_poly.bounds[1] < 0
                     or child_poly.length < 4):
-                    report.add_error(CoordinateValidityError(child_tag, child.id, child_points))
+                    report.add_error(CoordinateValidityError(child_tag, child.id, file_id, child_points))
                     log.info("Invalid coords of %s %s", child_tag, child.id)
                     consistent = False
                 elif not child_poly.within(node_poly):
                     # TODO: automatic repair?
-                    report.add_error(CoordinateConsistencyError(tag, child.id,
-                                                                parent_points,
-                                                                child_points))
+                    report.add_error(CoordinateConsistencyError(tag, child.id, file_id,
+                                                                parent_points, child_points))
                     log.info("Inconsistent coords of %s %s", child_tag, child.id)
                     consistent = False
         if isinstance(node, TextLineType) and check_baseline and node.get_Baseline():
@@ -207,13 +211,12 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                 or baseline_line.bounds[0] < 0
                 or baseline_line.bounds[1] < 0
                 or baseline_line.length < 4):
-                report.add_error(CoordinateValidityError("Baseline", node_id, baseline_points))
+                report.add_error(CoordinateValidityError("Baseline", node_id, file_id, baseline_points))
                 log.info("Invalid coords of baseline in %s", node_id)
                 consistent = False
             elif not baseline_line.within(node_poly):
-                report.add_error(CoordinateConsistencyError("Baseline", node_id,
-                                                            parent_points,
-                                                            baseline_points))
+                report.add_error(CoordinateConsistencyError("Baseline", node_id, file_id,
+                                                            parent_points, baseline_points))
                 log.info("Inconsistent coords of baseline in %s %s", tag, node_id)
                 consistent = False
         if concatenate_with is not None and strictness != 'off':
@@ -228,9 +231,8 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                 elif (strictness == 'strict' # or 'lax' but...
                       or not compare_without_whitespace(concatenated, text_results)):
                     log.info("Inconsistent text of %s %s", tag, node_id)
-                    report.add_error(ConsistencyError(tag, node_id,
-                                                      text_results,
-                                                      concatenated))
+                    report.add_error(ConsistencyError(tag, node_id, file_id,
+                                                      text_results, concatenated))
     return consistent
 
 def concatenate(nodes, concatenate_with, strategy):
@@ -300,10 +302,13 @@ class PageValidator():
         """
         if ocrd_page:
             page = ocrd_page
+            file_id = ocrd_page.get_pcGtsId()
         elif ocrd_file:
             page = page_from_file(ocrd_file)
+            file_id = ocrd_file.ID
         elif filename:
             page = parse(filename, silence=True)
+            file_id = filename
         else:
             raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
         if strategy not in ('index1'):
@@ -311,5 +316,6 @@ class PageValidator():
         if strictness not in ('strict', 'lax', 'fix', 'off'):
             raise Exception("Strictness level %s not implemented" % strictness)
         report = ValidationReport()
-        validate_consistency(page, strictness, strategy, check_baseline, check_coords, report)
+        log.info("Validating input file '%s'", file_id)
+        validate_consistency(page, strictness, strategy, check_baseline, check_coords, report, file_id)
         return report
