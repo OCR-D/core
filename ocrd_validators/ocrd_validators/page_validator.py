@@ -172,7 +172,7 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                 or node_poly.bounds[1] < 0
                 or node_poly.length < 4):
                 report.add_error(CoordinateValidityError(tag, node_id, file_id, parent_points))
-                log.info("Invalid coords of %s %s", tag, node_id)
+                log.debug("Invalid coords of %s %s", tag, node_id)
                 consistent = False
         else:
             node_poly = None
@@ -195,13 +195,13 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                     or child_poly.bounds[1] < 0
                     or child_poly.length < 4):
                     report.add_error(CoordinateValidityError(child_tag, child.id, file_id, child_points))
-                    log.info("Invalid coords of %s %s", child_tag, child.id)
+                    log.debug("Invalid coords of %s %s", child_tag, child.id)
                     consistent = False
                 elif not child_poly.within(node_poly):
                     # TODO: automatic repair?
                     report.add_error(CoordinateConsistencyError(tag, child.id, file_id,
                                                                 parent_points, child_points))
-                    log.info("Inconsistent coords of %s %s", child_tag, child.id)
+                    log.debug("Inconsistent coords of %s %s", child_tag, child.id)
                     consistent = False
         if isinstance(node, TextLineType) and check_baseline and node.get_Baseline():
             baseline_points = node.get_Baseline().points
@@ -212,12 +212,12 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                 or baseline_line.bounds[1] < 0
                 or baseline_line.length < 4):
                 report.add_error(CoordinateValidityError("Baseline", node_id, file_id, baseline_points))
-                log.info("Invalid coords of baseline in %s", node_id)
+                log.debug("Invalid coords of baseline in %s", node_id)
                 consistent = False
             elif not baseline_line.within(node_poly):
                 report.add_error(CoordinateConsistencyError("Baseline", node_id, file_id,
                                                             parent_points, baseline_points))
-                log.info("Inconsistent coords of baseline in %s %s", tag, node_id)
+                log.debug("Inconsistent coords of baseline in %s %s", tag, node_id)
                 consistent = False
         if concatenate_with is not None and strictness != 'off':
             # validate textual consistency of node with children
@@ -226,11 +226,11 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
             if concatenated and text_results and concatenated != text_results:
                 consistent = False
                 if strictness == 'fix':
-                    log.info("Repaired text of %s %s", tag, node_id)
+                    log.debug("Repaired text of %s %s", tag, node_id)
                     set_text(node, concatenated, strategy)
                 elif (strictness == 'strict' # or 'lax' but...
                       or not compare_without_whitespace(concatenated, text_results)):
-                    log.info("Inconsistent text of %s %s", tag, node_id)
+                    log.debug("Inconsistent text of %s %s", tag, node_id)
                     report.add_error(ConsistencyError(tag, node_id, file_id,
                                                       text_results, concatenated))
     return consistent
