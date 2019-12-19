@@ -22,7 +22,8 @@ class WorkspaceValidator():
     Validates an OCR-D/METS workspace against the specs.
     """
 
-    def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False, page_strictness='strict'):
+    def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False,
+                 page_strictness='strict', page_discipline='poly'):
         """
         Construct a new WorkspaceValidator.
 
@@ -33,6 +34,7 @@ class WorkspaceValidator():
             skip (list):
             download (boolean):
             page_strictness ("strict"|"lax"|"fix"|"off"):
+            page_discipline ("poly"|"baseline"|"both"|"off"):
         """
         self.report = ValidationReport()
         self.skip = skip if skip else []
@@ -43,6 +45,7 @@ class WorkspaceValidator():
         self.mets_url = mets_url
         self.download = download
         self.page_strictness = page_strictness
+        self.page_discipline = page_discipline
 
         self.src_dir = src_dir
         self.workspace = None
@@ -205,5 +208,8 @@ class WorkspaceValidator():
         """
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
             self.workspace.download_file(ocrd_file)
-            page_report = PageValidator.validate(ocrd_file=ocrd_file, strictness=self.page_strictness)
+            page_report = PageValidator.validate(ocrd_file=ocrd_file,
+                                                 strictness=self.page_strictness,
+                                                 check_coords=self.page_discipline in ['poly', 'both'],
+                                                 check_baseline=self.page_discipline in ['baseline', 'both'])
             self.report.merge_report(page_report)
