@@ -15,17 +15,20 @@ class TestPageValidator(TestCase):
     def test_validate_err(self):
         with self.assertRaisesRegex(Exception, 'At least one of ocrd_page, ocrd_file or filename must be set'):
             PageValidator.validate()
-        with self.assertRaisesRegex(Exception, 'Element selection strategy best not implemented'):
+        with self.assertRaisesRegex(Exception, 'page_textequiv_strategy best not implemented'):
+            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_strategy='best')
+        # test with deprecated name
+        with self.assertRaisesRegex(Exception, 'page_textequiv_strategy best not implemented'):
             PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, strategy='best')
-        with self.assertRaisesRegex(Exception, 'Strictness level superstrictest not implemented'):
-            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, strictness='superstrictest', strategy='index1')
+        with self.assertRaisesRegex(Exception, 'page_textequiv_consistency level superstrictest not implemented'):
+            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_consistency='superstrictest', strategy='index1')
 
     def test_validate_filename(self):
         report = PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME)
         self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 17, '17 textequiv consistency errors')
 
     def test_validate_filename_off(self):
-        report = PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, strictness='off')
+        report = PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_consistency='off')
         self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 0, '0 textequiv consistency errors')
 
     def test_validate_ocrd_file(self):

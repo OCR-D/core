@@ -4,7 +4,7 @@ API for validating `OcrdPage <../ocrd_models/ocrd_models.ocrd_page.html>`_.
 import re
 from shapely.geometry import Polygon, LineString
 
-from ocrd_utils import getLogger, polygon_from_points
+from ocrd_utils import getLogger, polygon_from_points, deprecated_alias
 from ocrd_models.ocrd_page import parse
 from ocrd_modelfactory import page_from_file
 
@@ -134,14 +134,16 @@ class CoordinateValidityError(Exception):
         super(CoordinateValidityError, self).__init__(
             "INVALIDITY in %s ID '%s' of '%s': coords '%s'" % (
                 tag, ID, file_id, points))
-        
+
 def compare_without_whitespace(a, b):
     """
     Compare two strings, ignoring all whitespace.
     """
     return re.sub('\\s+', '', a) == re.sub('\\s+', '', b)
 
-def validate_consistency(node, strictness, strategy, check_baseline, check_coords, report, file_id):
+@deprecated_alias(strictness='page_textequiv_consistency')
+@deprecated_alias(strategy='page_textequiv_strategy')
+def validate_consistency(node, page_textequiv_consistency, page_textequiv_strategy, check_baseline, check_coords, report, file_id):
     """
     Check whether the text results on an element is consistent with its child element text results,
     and whether the coordinates of an element are fully within its parent element coordinates.
@@ -181,7 +183,7 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
             continue
         children = getattr(node, getter)()
         for child in children:
-            consistent = (validate_consistency(child, strictness, strategy,
+            consistent = (validate_consistency(child, page_textequiv_consistency, page_textequiv_strategy,
                                                check_baseline, check_coords,
                                                report, file_id)
                           and consistent)
@@ -219,30 +221,30 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                                                             parent_points, baseline_points))
                 log.debug("Inconsistent coords of baseline in %s %s", tag, node_id)
                 consistent = False
-        if concatenate_with is not None and strictness != 'off':
+        if concatenate_with is not None and page_textequiv_consistency != 'off':
             # validate textual consistency of node with children
-            concatenated = concatenate(children, concatenate_with, strategy)
-            text_results = get_text(node, strategy)
+            concatenated = concatenate(children, concatenate_with, page_textequiv_strategy)
+            text_results = get_text(node, page_textequiv_strategy)
             if concatenated and text_results and concatenated != text_results:
                 consistent = False
-                if strictness == 'fix':
+                if page_textequiv_consistency == 'fix':
                     log.debug("Repaired text of %s %s", tag, node_id)
-                    set_text(node, concatenated, strategy)
-                elif (strictness == 'strict' # or 'lax' but...
+                    set_text(node, concatenated, page_textequiv_strategy)
+                elif (page_textequiv_consistency == 'strict' # or 'lax' but...
                       or not compare_without_whitespace(concatenated, text_results)):
                     log.debug("Inconsistent text of %s %s", tag, node_id)
                     report.add_error(ConsistencyError(tag, node_id, file_id,
                                                       text_results, concatenated))
     return consistent
 
-def concatenate(nodes, concatenate_with, strategy):
+def concatenate(nodes, concatenate_with, page_textequiv_strategy):
     """
     Concatenate nodes textually according to https://ocr-d.github.io/page#consistency-of-text-results-on-different-levels
     """
-    tokens = [get_text(node, strategy) for node in nodes]
+    tokens = [get_text(node, page_textequiv_strategy) for node in nodes]
     return concatenate_with.join(tokens).strip()
 
-def get_text(node, strategy):
+def get_text(node, page_textequiv_strategy):
     """
     Get the most confident text results, either those with @index = 1 or the first text results or empty string.
     """
@@ -250,7 +252,7 @@ def get_text(node, strategy):
     if not textEquivs:
         log.debug("No text results on %s %s", node, node.id)
         return ''
-    #  elif strategy == 'index1':
+    #  elif page_textequiv_strategy == 'index1':
     else:
         if len(textEquivs) > 1:
             index1 = [x for x in textEquivs if x.index == 1]
@@ -258,7 +260,7 @@ def get_text(node, strategy):
                 return index1[0].get_Unicode().strip()
         return textEquivs[0].get_Unicode().strip()
 
-def set_text(node, text, strategy):
+def set_text(node, text, page_textequiv_strategy):
     """
     Set the most confident text results, either those with @index = 1, the first text results or add new one.
     """
@@ -266,7 +268,7 @@ def set_text(node, text, strategy):
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
         node.add_TextEquiv(TextEquivType(Unicode=text))
-    #  elif strategy == 'index1':
+    #  elif page_textequiv_strategy == 'index1':
     else:
         if len(textEquivs) > 1:
             index1 = [x for x in textEquivs if x.index == 1]
@@ -281,8 +283,10 @@ class PageValidator():
     """
 
     @staticmethod
+    @deprecated_alias(strictness='page_textequiv_consistency')
+    @deprecated_alias(strategy='page_textequiv_strategy')
     def validate(filename=None, ocrd_page=None, ocrd_file=None,
-                 strictness='strict', strategy='index1',
+                 page_textequiv_consistency='strict', page_textequiv_strategy='index1',
                  check_baseline=True, check_coords=True):
         """
         Validates a PAGE file for consistency by filename, OcrdFile or passing OcrdPage directly.
@@ -291,8 +295,8 @@ class PageValidator():
             filename (string): Path to PAGE
             ocrd_page (OcrdPage): OcrdPage instance
             ocrd_file (OcrdFile): OcrdFile instance wrapping OcrdPage
-            strictness (string): 'strict', 'lax', 'fix' or 'off'
-            strategy (string): Currently only 'index1'
+            page_textequiv_consistency (string): 'strict', 'lax', 'fix' or 'off'
+            page_textequiv_strategy (string): Currently only 'index1'
             check_baseline (bool): whether Baseline must be fully within TextLine/Coords
             check_coords (bool): whether *Region/TextLine/Word/Glyph must each be fully
                                  contained within Border/*Region/TextLine/Word, resp.
@@ -311,11 +315,11 @@ class PageValidator():
             file_id = filename
         else:
             raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
-        if strategy not in ('index1'):
-            raise Exception("Element selection strategy %s not implemented" % strategy)
-        if strictness not in ('strict', 'lax', 'fix', 'off'):
-            raise Exception("Strictness level %s not implemented" % strictness)
+        if page_textequiv_strategy not in ('index1'):
+            raise Exception("page_textequiv_strategy %s not implemented" % page_textequiv_strategy)
+        if page_textequiv_consistency not in ('strict', 'lax', 'fix', 'off'):
+            raise Exception("page_textequiv_consistency level %s not implemented" % page_textequiv_consistency)
         report = ValidationReport()
         log.info("Validating input file '%s'", file_id)
-        validate_consistency(page, strictness, strategy, check_baseline, check_coords, report, file_id)
+        validate_consistency(page, page_textequiv_consistency, page_textequiv_strategy, check_baseline, check_coords, report, file_id)
         return report

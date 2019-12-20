@@ -62,6 +62,10 @@ Utility functions and constants usable in various circumstances.
 * ``logging``, ``setOverrideLogLevel``, ``getLevelName``, ``getLogger``, ``initLogging``
 
     Exports of ocrd_utils.logging
+
+* ``deprecated_alias``
+
+    Decorator to mark a kwarg as deprecated
 """
 
 __all__ = [
@@ -75,6 +79,7 @@ __all__ = [
     'coordinates_of_segment',
     'concat_padded',
     'crop_image',
+    'deprecated_alias',
     'getLevelName',
     'getLogger',
     'initLogging',
@@ -129,6 +134,7 @@ from PIL import Image, ImageStat, ImageDraw, ImageChops
 
 from .logging import * # pylint: disable=wildcard-import
 from .constants import *  # pylint: disable=wildcard-import
+from .deprecate import deprecated_alias
 
 LOG = getLogger('ocrd_utils')
 

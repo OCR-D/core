@@ -23,7 +23,7 @@ class WorkspaceValidator():
     """
 
     def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False,
-                 page_strictness='strict', page_discipline='poly'):
+                 page_strictness='strict', page_coordinate_consistency='poly'):
         """
         Construct a new WorkspaceValidator.
 
@@ -34,7 +34,7 @@ class WorkspaceValidator():
             skip (list):
             download (boolean):
             page_strictness ("strict"|"lax"|"fix"|"off"):
-            page_discipline ("poly"|"baseline"|"both"|"off"):
+            page_coordinate_consistency ("poly"|"baseline"|"both"|"off"):
         """
         self.report = ValidationReport()
         self.skip = skip if skip else []
@@ -45,7 +45,7 @@ class WorkspaceValidator():
         self.mets_url = mets_url
         self.download = download
         self.page_strictness = page_strictness
-        self.page_discipline = page_discipline
+        self.page_coordinate_consistency = page_coordinate_consistency
 
         self.src_dir = src_dir
         self.workspace = None
@@ -210,6 +210,6 @@ class WorkspaceValidator():
             self.workspace.download_file(ocrd_file)
             page_report = PageValidator.validate(ocrd_file=ocrd_file,
                                                  strictness=self.page_strictness,
-                                                 check_coords=self.page_discipline in ['poly', 'both'],
-                                                 check_baseline=self.page_discipline in ['baseline', 'both'])
+                                                 check_coords=self.page_coordinate_consistency in ['poly', 'both'],
+                                                 check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
             self.report.merge_report(page_report)
