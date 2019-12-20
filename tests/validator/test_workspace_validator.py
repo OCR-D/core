@@ -6,7 +6,7 @@ from shutil import copytree
 from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
 from ocrd_validators import WorkspaceValidator
-from ocrd_validators.page_validator import TextequivConsistencyError
+from ocrd_validators.page_validator import ConsistencyError
 
 from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
 
@@ -164,7 +164,7 @@ class TestWorkspaceValidator(TestCase):
             download=True,
         )
         print(report.errors)
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 42, '42 textequiv consistency errors')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 42, '42 textequiv consistency errors')
 
     def test_imagefilename(self):
         report = WorkspaceValidator.validate(

@@ -1,7 +1,7 @@
 from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
 from ocrd.resolver import Resolver
 from ocrd_validators import PageValidator
-from ocrd_validators.page_validator import get_text, set_text, TextequivConsistencyError
+from ocrd_validators.page_validator import get_text, set_text, ConsistencyError
 from ocrd_models.ocrd_page import parse, TextEquivType
 from ocrd_utils import pushd_popd
 
@@ -22,11 +22,11 @@ class TestPageValidator(TestCase):
 
     def test_validate_filename(self):
         report = PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME)
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 17, '17 textequiv consistency errors')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 17, '17 textequiv consistency errors')
 
     def test_validate_filename_off(self):
         report = PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, strictness='off')
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 0, '0 textequiv consistency errors')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 0, '0 textequiv consistency errors')
 
     def test_validate_ocrd_file(self):
         resolver = Resolver()
@@ -34,7 +34,7 @@ class TestPageValidator(TestCase):
         with pushd_popd(workspace.directory):
             ocrd_file = workspace.mets.find_files(ID="FAULTY_GLYPHS_FILE")[0]
             report = PageValidator.validate(ocrd_file=ocrd_file)
-            self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 17, '17 textequiv consistency errors')
+            self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 17, '17 textequiv consistency errors')
 
     def test_validate_lax(self):
         ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE.xml'), silence=True)
@@ -43,14 +43,14 @@ class TestPageValidator(TestCase):
         ocrd_page.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[1].get_TextEquiv()[0].set_Unicode('FOO')
 
         report = PageValidator.validate(ocrd_page=ocrd_page)
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 26, '26 textequiv consistency errors - strict')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 26, '26 textequiv consistency errors - strict')
         report = PageValidator.validate(ocrd_page=ocrd_page, strictness='lax')
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 1, '1 textequiv consistency errors - lax')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 1, '1 textequiv consistency errors - lax')
 
     def test_validate_multi_textequiv_index1(self):
         ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE.xml'), silence=True)
         report = PageValidator.validate(ocrd_page=ocrd_page)
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 25, '25 textequiv consistency errors - strict')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 25, '25 textequiv consistency errors - strict')
 
         word = ocrd_page.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[1]
 
@@ -69,7 +69,7 @@ class TestPageValidator(TestCase):
     def test_validate_multi_textequiv(self):
         ocrd_page = parse(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0020_PAGE.xml'), silence=True)
         report = PageValidator.validate(ocrd_page=ocrd_page)
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 25, '25 textequiv consistency errors - strict')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 25, '25 textequiv consistency errors - strict')
 
         word = ocrd_page.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[1]
 
@@ -88,10 +88,10 @@ class TestPageValidator(TestCase):
     def test_fix(self):
         ocrd_page = parse(FAULTY_GLYPH_PAGE_FILENAME, silence=True)
         report = PageValidator.validate(ocrd_page=ocrd_page)
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 17, '17 textequiv consistency errors')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 17, '17 textequiv consistency errors')
         PageValidator.validate(ocrd_page=ocrd_page, strictness='fix')
         report = PageValidator.validate(ocrd_page=ocrd_page)
-        self.assertEqual(len([e for e in report.errors if isinstance(e, TextequivConsistencyError)]), 0, 'no more textequiv consistency errors')
+        self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 0, 'no more textequiv consistency errors')
 
 if __name__ == '__main__':
     main()

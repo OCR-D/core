@@ -58,7 +58,7 @@ _HIERARCHY = [
     (GlyphType,      None,             None), # pylint: disable=bad-whitespace
 ]
 
-class TextequivConsistencyError(Exception):
+class ConsistencyError(Exception):
     """
     Exception representing a consistency error in textual transcription across levels of a PAGE-XML.
     (Element text strings must be the concatenation of their children's text strings, joined by white space.)
@@ -66,7 +66,7 @@ class TextequivConsistencyError(Exception):
 
     def __init__(self, tag, ID, file_id, actual, expected):
         """
-        Construct a new TextequivConsistencyError.
+        Construct a new ConsistencyError.
 
         Arguments:
             tag (string): Level of the inconsistent element (parent)
@@ -81,7 +81,7 @@ class TextequivConsistencyError(Exception):
         self.file_id = file_id
         self.actual = actual
         self.expected = expected
-        super(TextequivConsistencyError, self).__init__(
+        super(ConsistencyError, self).__init__(
             "INCONSISTENCY in %s ID '%s' of file '%s': text results '%s' != concatenated '%s'" % (
                 tag, ID, file_id, actual, expected))
 
@@ -231,7 +231,7 @@ def validate_consistency(node, strictness, strategy, check_baseline, check_coord
                 elif (strictness == 'strict' # or 'lax' but...
                       or not compare_without_whitespace(concatenated, text_results)):
                     log.debug("Inconsistent text of %s %s", tag, node_id)
-                    report.add_error(TextequivConsistencyError(tag, node_id, file_id,
+                    report.add_error(ConsistencyError(tag, node_id, file_id,
                                                       text_results, concatenated))
     return consistent
 
