@@ -55,7 +55,7 @@ class ProcessorTask():
             raise Exception(report.errors)
         if 'output_file_grp' in ocrd_tool_json and not self.output_file_grps:
             raise Exception("Processor requires output_file_grp but none was provided.")
-        return True
+        return report
 
     def __str__(self):
         ret = '%s -I %s -O %s' % (
