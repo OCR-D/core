@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * PAGE validator: coordinate self-validity and mutual consistency, #374
+
 ## [2.1.0] - 2019-12-20
 
 Added:
