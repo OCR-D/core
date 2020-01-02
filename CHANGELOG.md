@@ -9,6 +9,10 @@ Added:
 
   * PAGE validator: coordinate self-validity and mutual consistency, #374
 
+Fixed:
+
+  * Add more related mime types and fix image/jpeg, #382
+
 ## [2.1.0] - 2019-12-20
 
 Added:
