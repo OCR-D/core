@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.1.1] - 2020-01-02
+
 Added:
 
   * PAGE validator: coordinate self-validity and mutual consistency, #374
@@ -653,6 +655,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.1.1]: ../../compare/v2.2.1...v2.1.0
 [2.1.0]: ../../compare/v2.1.0...v2.0.2
 [2.0.2]: ../../compare/v2.0.2...v2.0.1
 [2.0.1]: ../../compare/v2.0.1...v2.0.0
