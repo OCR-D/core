@@ -71,7 +71,7 @@ class Resolver():
                 # XXX this raises FNFE in Python 3.5 if src_path doesn't exist but not 3.6+
                 src_path = Path(get_local_filename(url)).resolve()
             except FileNotFoundError as e:
-                log.error("Failed to resolve URL locally: %s --> %s which doesnt' exist" % (url, src_path))
+                log.error("Failed to resolve URL locally: %s --> '%s' which does not exist" % (url, src_path))
                 raise e
             if not src_path.exists():
                 raise FileNotFoundError("File path passed as 'url' to download_to_directory does not exist: %s" % url)
