@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * have save_mets use UTF-8 encoding for byte-serialization (no entities), #388
+
+Fixed:
+
+  * regression from #374, #387
+
 ## [2.1.1] - 2020-01-02
 
 Added:
