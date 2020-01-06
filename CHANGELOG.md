@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.1.2] - 2020-01-06
+
 Changed:
 
   * have save_mets use UTF-8 encoding for byte-serialization (no entities), #388
@@ -663,7 +665,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-[2.1.1]: ../../compare/v2.2.1...v2.1.0
+[2.1.2]: ../../compare/v2.1.2...v2.1.1
+[2.1.1]: ../../compare/v2.1.1...v2.1.0
 [2.1.0]: ../../compare/v2.1.0...v2.0.2
 [2.0.2]: ../../compare/v2.0.2...v2.0.1
 [2.0.1]: ../../compare/v2.0.1...v2.0.0
