@@ -215,7 +215,9 @@ class Workspace():
 
         if image_url not in self.image_cache['exif']:
             # FIXME must be in the right directory
-            self.image_cache['exif'][image_url] = OcrdExif(Image.open(image_filename))
+            with Image.open(image_filename) as pil_img:
+                ocrd_exif = OcrdExif(pil_img)
+            self.image_cache['exif'][image_url] = ocrd_exif
         return self.image_cache['exif'][image_url]
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
