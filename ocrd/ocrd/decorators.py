@@ -74,7 +74,7 @@ def ocrd_cli_options(f):
             print(mets_url)
     """
     params = [
-        click.option('-m', '--mets', help="METS URL to validate", default="mets.xml"),
+        click.option('-m', '--mets', help="METS to process", default="mets.xml"),
         click.option('-w', '--working-dir', help="Working Directory"),
         click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
         click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
