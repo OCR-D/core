@@ -15,6 +15,7 @@ COPY Makefile .
 COPY README.md .
 COPY LICENSE .
 RUN apt-get update && apt-get -y install --no-install-recommends \
+    ca-certificates \
     software-properties-common \
     python3-dev \
     python3-pip \
