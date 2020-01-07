@@ -1,5 +1,3 @@
-import json
-import os
 from os.path import isfile
 
 import click
@@ -37,7 +35,7 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
     elif version:
         try:
             p = processorClass(workspace=None)
-        except e:
+        except Exception:
             pass
         print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:

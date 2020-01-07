@@ -4,6 +4,7 @@ Validating a workspace.
 import re
 from traceback import format_exc
 from pathlib import Path
+from contextlib import contextmanager
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
 from ocrd_modelfactory import page_from_file
@@ -22,6 +23,23 @@ class WorkspaceValidator():
     """
     Validates an OCR-D/METS workspace against the specs.
     """
+
+    @staticmethod
+    @contextmanager
+    def check_file_grp(workspace, input_file_grp, output_file_grp):
+        """
+        Return a report on whether input_file_grp is/are in workspace.mets
+        To be run before processing
+        """
+        report = ValidationReport()
+        for grp in input_file_grp.split(','):
+            if grp not in workspace.mets.file_groups:
+                report.add_error("Input fileGrp[@USE='%s'] not in METS!" % grp)
+        for grp in output_file_grp.split(','):
+            if grp in workspace.mets.file_groups:
+                report.add_error("Output fileGrp[@USE='%s'] already in METS!" % grp)
+        yield report
+        return report
 
     def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False,
                  page_strictness='strict', page_coordinate_consistency='poly'):

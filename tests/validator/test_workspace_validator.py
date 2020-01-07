@@ -1,5 +1,5 @@
 import os
-from tempfile import TemporaryDirectory, mkdtemp
+from tempfile import TemporaryDirectory
 from os.path import join
 from shutil import copytree
 
@@ -14,6 +14,21 @@ class TestWorkspaceValidator(TestCase):
 
     def setUp(self):
         self.resolver = Resolver()
+
+    def test_check_file_grp(self):
+        workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        with WorkspaceValidator.check_file_grp(workspace, 'foo', 'bar') as report:
+            self.assertFalse(report.is_valid)
+            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(report.errors[0], "Input fileGrp[@USE='foo'] not in METS!")
+        with WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN') as report:
+            self.assertFalse(report.is_valid)
+            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(report.errors[0], "Output fileGrp[@USE='OCR-D-IMG-BIN'] already in METS!")
+        with WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG,FOO', 'FOO') as report:
+            self.assertFalse(report.is_valid)
+            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(report.errors[0], "Input fileGrp[@USE='FOO'] not in METS!")
 
     def test_simple(self):
         report = WorkspaceValidator.validate(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), download=True)
