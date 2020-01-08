@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.1.3] - 2020-01-08
+
 Changed:
 
   * bagit-profile matches changes from spec v3.4.2 (metadata dir)
@@ -669,6 +671,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.1.3]: ../../compare/v2.1.3...v2.1.2
 [2.1.2]: ../../compare/v2.1.2...v2.1.1
 [2.1.1]: ../../compare/v2.1.1...v2.1.0
 [2.1.0]: ../../compare/v2.1.0...v2.0.2
