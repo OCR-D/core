@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * bagit-profile matches changes from spec v3.4.2 (metadata dir)
+
 ## [2.1.2] - 2020-01-06
 
 Changed:

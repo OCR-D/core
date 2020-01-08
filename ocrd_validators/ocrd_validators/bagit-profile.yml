@@ -32,6 +32,8 @@ Tag-Files-Allowed:
   - Makefile
   - build.sh
   - sources.csv
+  - metadata/*.xml
+  - metadata/*.txt
 Allow-Fetch.txt: true
 Serialization: required
 Accept-Serialization: application/zip
