@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * PIL.Image.open'ed files weren't closed, #390
+
 ## [2.1.3] - 2020-01-08
 
 Changed:
