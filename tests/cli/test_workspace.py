@@ -162,6 +162,20 @@ class TestCli(TestCase):
             ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
             self.assertEqual(len(ws2.mets.find_files()), 7)
 
+    def test_clone_into_nonexisting_dir(self):
+        """
+        https://github.com/OCR-D/core/issues/330
+        """
+        with TemporaryDirectory() as tempdir:
+            clone_to = join(tempdir, 'non-existing-dir')
+            result = self.runner.invoke(workspace_cli, [
+                'clone',
+                '--download',
+                assets.path_to('scribo-test/data/mets.xml'),
+                clone_to
+            ])
+            self.assertEqual(result.exit_code, 0)
+
     def test_remove_file_group(self):
         """
         Test removal of filegrp
