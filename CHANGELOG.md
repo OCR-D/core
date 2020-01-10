@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * PIL.Image.open'ed files weren't closed, #390
+  * resolver: if mets_url is relative path, resolve before anything else, #319, #397
 
 ## [2.1.3] - 2020-01-08
 
