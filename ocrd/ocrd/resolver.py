@@ -122,6 +122,10 @@ class Resolver():
         if mets_url is None:
             raise ValueError("Must pass 'mets_url' workspace_from_url")
 
+        # if mets_url is a relative filename, make it absolute
+        if is_local_filename(mets_url) and not Path(mets_url).is_absolute():
+            mets_url = str(Path(Path.cwd() / mets_url))
+
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
             mets_basename = nth_url_segment(mets_url, -1)
