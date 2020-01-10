@@ -27,6 +27,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.resolution, 300)
         self.assertEqual(exif.compression, 'jpeg')
         self.assertEqual(exif.photometricInterpretation, 'RGB')
+        self.assertEqual(exif.resolutionUnit, 'inches')
 
     def test_png1(self):
         with Image.open(assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')) as img:
@@ -49,6 +50,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.yResolution, 1)
         self.assertEqual(exif.resolution, 1)
         self.assertEqual(exif.photometricInterpretation, '1')
+        self.assertEqual(exif.resolutionUnit, 'inches')
 
     def test_jpg(self):
         with Image.open(assets.path_to('leptonica_samples/data/OCR-D-IMG/OCR-D-IMG_1555_007.jpg')) as img:
@@ -60,6 +62,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.resolution, 1)
         self.assertEqual(exif.resolutionUnit, 'inches')
         self.assertEqual(exif.photometricInterpretation, 'RGB')
+        self.assertEqual(exif.resolutionUnit, 'inches')
 
     def test_jp2(self):
         with Image.open(assets.path_to('kant_aufklaerung_1784-jp2/data/OCR-D-IMG/INPUT_0020.jp2')) as img:
@@ -70,6 +73,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.yResolution, 1)
         self.assertEqual(exif.resolution, 1)
         self.assertEqual(exif.photometricInterpretation, 'RGB')
+        self.assertEqual(exif.resolutionUnit, 'inches')
 
 if __name__ == '__main__':
     main()
