@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.2.0] - 2020-01-10
+
 Fixed:
 
   * PIL.Image.open'ed files weren't closed, #390
@@ -682,6 +684,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.2.0]: ../../compare/v2.2.0...v2.1.3
 [2.1.3]: ../../compare/v2.1.3...v2.1.2
 [2.1.2]: ../../compare/v2.1.2...v2.1.1
 [2.1.1]: ../../compare/v2.1.1...v2.1.0
