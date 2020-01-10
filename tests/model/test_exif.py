@@ -36,6 +36,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.xResolution, 295)
         self.assertEqual(exif.yResolution, 295)
         self.assertEqual(exif.resolution, 295)
+        self.assertEqual(exif.resolutionUnit, 'inches')
         self.assertEqual(exif.compression, None)
         self.assertEqual(exif.photometricInterpretation, '1')
 
