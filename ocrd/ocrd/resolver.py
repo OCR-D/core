@@ -141,8 +141,11 @@ class Resolver():
                 log.debug("Deriving dst_dir %s from %s", Path(mets_url).parent, mets_url)
                 dst_dir = Path(mets_url).parent
             else:
-                log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
+                log.debug("Creating ephemeral workspace '%s' for METS @ <%s>", dst_dir, mets_url)
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        # XXX Path.resolve is always strict in Python <= 3.5, so create dst_dir unless it exists consistently
+        if not Path(dst_dir).exists():
+            Path(dst_dir).mkdir(parents=True, exist_ok=False)
         dst_dir = str(Path(dst_dir).resolve())
 
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
