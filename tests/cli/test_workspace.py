@@ -191,6 +191,14 @@ class TestCli(TestCase):
             self.assertEqual(len(workspace.mets.find_files()), 33)
             self.assertFalse(exists(file_path))
 
+    def test_clone_relative(self):
+        # Create a relative path to trigger make sure #319 is gone
+        src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
+        with TemporaryDirectory() as tempdir:
+            result = self.runner.invoke(workspace_cli, ['clone', '-a', src_path, tempdir])
+            self.assertEqual(result.exit_code, 0)
+            self.assertTrue(exists(join(tempdir, 'OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')))
+
     def test_copy_vs_clone(self):
         src_dir = assets.path_to('kant_aufklaerung_1784/data')
         with TemporaryDirectory() as tempdir:
