@@ -10,6 +10,11 @@ Fixed:
   * PIL.Image.open'ed files weren't closed, #390
   * resolver: if mets_url is relative path, resolve before anything else, #319, #397
   * Resolver.workspace_from_url: Create dst_dir before resolve for py `<=` 3.5, #330, #393
+  * fix help string for -m/--mets, fix #263, #391
+
+Changed:
+
+  * downgrade filegrp syntax errors to warnings, #364, #389
 
 ## [2.1.3] - 2020-01-08
 
