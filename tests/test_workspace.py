@@ -101,6 +101,22 @@ class TestWorkspace(TestCase):
             self.assertEqual(f, Path('TEMP', '%s.tif' % SAMPLE_FILE_ID))
             self.assertTrue(Path(ws1.directory, f).exists())
 
+    def test_from_url_dst_dir_download(self):
+        """
+        https://github.com/OCR-D/core/issues/319
+        """
+        with TemporaryDirectory() as tempdir:
+            # TODO re-enable once #393 is merged
+            #  ws_dir = join(tempdir, 'non-existing-for-good-measure')
+            ws_dir = tempdir
+            # Create a relative path to trigger #319
+            src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
+            self.resolver.workspace_from_url(src_path, dst_dir=ws_dir, download=True)
+            #  from os import system
+            #  system('find %s' % ws_dir)
+            self.assertTrue(Path(ws_dir, 'mets.xml').exists())  # sanity check, mets.xml must exist
+            self.assertTrue(Path(ws_dir, 'OCR-D-GT-PAGE/PAGE_0017_PAGE.xml').exists())
+
     def test_227_1(self):
         def find_recursive(root):
             ret = []
