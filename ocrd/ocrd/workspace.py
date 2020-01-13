@@ -59,11 +59,6 @@ class Workspace():
         self.automatic_backup = automatic_backup
         self.baseurl = baseurl
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
-        self.image_cache = {
-            'pil': {},
-            'cv2': {},
-            'exif': {},
-        }
 
     def __str__(self):
         return 'Workspace[directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
@@ -212,13 +207,9 @@ class Workspace():
         files = self.mets.find_files(url=image_url)
         f = files[0] if files else OcrdFile(None, url=image_url)
         image_filename = self.download_file(f).local_filename
-
-        if image_url not in self.image_cache['exif']:
-            # FIXME must be in the right directory
-            with Image.open(image_filename) as pil_img:
-                ocrd_exif = OcrdExif(pil_img)
-            self.image_cache['exif'][image_url] = ocrd_exif
-        return self.image_cache['exif'][image_url]
+        with Image.open(image_filename) as pil_img:
+            ocrd_exif = OcrdExif(pil_img)
+        return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
     def resolve_image_as_pil(self, image_url, coords=None):
@@ -239,20 +230,17 @@ class Workspace():
         f = files[0] if files else OcrdFile(None, url=image_url)
         image_filename = self.download_file(f).local_filename
 
-        if image_url not in self.image_cache['pil']:
-            with pushd_popd(self.directory):
-                self.image_cache['pil'][image_url] = Image.open(image_filename)
-
-        pil_image = self.image_cache['pil'][image_url]
+        with pushd_popd(self.directory):
+            pil_image = Image.open(image_filename)
 
         if coords is None:
             return pil_image
-        if image_url not in self.image_cache['cv2']:
-            log.debug("Converting PIL to OpenCV: %s", image_url)
-            color_conversion = cv2.COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  cv2.COLOR_RGB2BGR
-            pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
-            self.image_cache['cv2'][image_url] = cv2.cvtColor(pil_as_np_array, color_conversion)
-        cv2_image = self.image_cache['cv2'][image_url]
+
+        log.debug("Converting PIL to OpenCV: %s", image_url)
+        color_conversion = cv2.COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  cv2.COLOR_RGB2BGR
+        pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
+        cv2_image = cv2.cvtColor(pil_as_np_array, color_conversion)
+
         poly = np.array(coords, np.int32)
         log.debug("Cutting region %s from %s", coords, image_url)
         region_cut = cv2_image[
