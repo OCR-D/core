@@ -1,6 +1,6 @@
 path_classifiers:
   generated:
-    - "ocrd/model/ocrd_page_generateds.py"
+    - "ocrd_models/ocrd_models/ocrd_page_generateds.py"
 
 queries:
   - exclude: py/import-and-import-from
