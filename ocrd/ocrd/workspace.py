@@ -3,7 +3,7 @@ from os import makedirs, unlink
 from pathlib import Path
 
 import cv2
-from PIL import Image, ImageStat
+from PIL import Image
 import numpy as np
 from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
@@ -13,7 +13,6 @@ from ocrd_utils import (
     getLogger,
     image_from_polygon,
     coordinates_of_segment,
-    transform_coordinates,
     adjust_canvas_to_rotation,
     adjust_canvas_to_transposition,
     shift_coordinates,
@@ -25,7 +24,6 @@ from ocrd_utils import (
     bbox_from_polygon,
     polygon_from_points,
     xywh_from_bbox,
-    xywh_from_points,
     pushd_popd,
     MIME_TO_EXT,
 )
@@ -167,8 +165,9 @@ class Workspace():
 
         with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
+                # If the local filename has folder components, create those folders
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-                if not Path(local_filename_dir).is_dir():
+                if local_filename_dir != kwargs['local_filename'] and not Path(local_filename_dir).is_dir():
                     makedirs(local_filename_dir)
                 if 'url' not in kwargs:
                     kwargs['url'] = kwargs['local_filename']
