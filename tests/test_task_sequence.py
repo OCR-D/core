@@ -1,13 +1,14 @@
 import os
 import json
-from tempfile import mkdtemp
+from tempfile import mkdtemp, TemporaryDirectory
 from shutil import rmtree
 
 from pathlib import Path
 
-from tests.base import TestCase, main
+from tests.base import TestCase, main, assets
 
-from ocrd.task_sequence import ProcessorTask
+from ocrd.resolver import Resolver
+from ocrd.task_sequence import ProcessorTask, validate_tasks
 
 SAMPLE_NAME = 'ocrd-sample-processor'
 SAMPLE_OCRD_TOOL_JSON = '''{
@@ -115,6 +116,19 @@ print('''%s''')
         task = ProcessorTask.parse('sample-processor-required-param -I IN -O OUT')
         with self.assertRaisesRegex(Exception, "'param1' is a required property"):
             task.validate()
+
+
+    def test_validate_sequence(self):
+        resolver = Resolver()
+        with TemporaryDirectory() as tempdir:
+            workspace = resolver.workspace_from_url(assets.path_to('kant_aufklaerung_1784/data/mets.xml'), dst_dir=tempdir)
+            params_path = Path(tempdir, 'params.json')
+            params_path.write_text('{"param1": true}')
+            with self.assertRaisesRegex(Exception, 'Input file group not contained in METS or produced by previous steps: FOO'):
+                validate_tasks([ProcessorTask.parse(x) for x in [
+                    'sample-processor-required-param -I IN -O OUT -p %s' % params_path,
+                    'sample-processor-required-param -I FOO -O OUT -p %s' % params_path
+                ]], workspace)
 
 if __name__ == '__main__':
     main()

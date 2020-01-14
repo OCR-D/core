@@ -26,12 +26,13 @@ class WorkspaceValidator():
 
     @staticmethod
     @contextmanager
-    def check_file_grp(workspace, input_file_grp=None, output_file_grp=None):
+    def check_file_grp(workspace, input_file_grp=None, output_file_grp=None, report=None):
         """
         Return a report on whether input_file_grp is/are in workspace.mets and output_file_grp is/are not.
         To be run before processing
         """
-        report = ValidationReport()
+        if not report:
+            report = ValidationReport()
         if input_file_grp:
             for grp in input_file_grp.split(','):
                 if grp not in workspace.mets.file_groups:
