@@ -96,19 +96,23 @@ class Workspace():
         """
         log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
-            # XXX FIXME hacky
-            basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
             try:
-                f.url = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
-            except FileNotFoundError as e:
-                if not self.baseurl:
-                    raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
-                if _recursion_count >= 1:
-                    raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
-                log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
-                f.url = '%s/%s' % (self.baseurl, f.url)
-                f.url = self.download_file(f, _recursion_count + 1).local_filename
-            # XXX FIXME HACK
+                # If the f.url is already a file path, and is within self.directory, do nothing
+                url_path = Path(f.url).resolve()
+                if not (url_path.exists() and url_path.relative_to(str(Path(self.directory).resolve()))):
+                    raise Exception("Not already downloaded, moving on")
+            except Exception as e:
+                basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
+                try:
+                    f.url = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
+                except FileNotFoundError as e:
+                    if not self.baseurl:
+                        raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
+                    if _recursion_count >= 1:
+                        raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
+                    log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
+                    f.url = '%s/%s' % (self.baseurl, f.url)
+                    f.url = self.download_file(f, _recursion_count + 1).local_filename
             f.local_filename = f.url
             return f
 
