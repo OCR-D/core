@@ -3,7 +3,7 @@ from os import makedirs, unlink
 from pathlib import Path
 
 import cv2
-from PIL import Image, ImageStat
+from PIL import Image
 import numpy as np
 from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
@@ -13,7 +13,6 @@ from ocrd_utils import (
     getLogger,
     image_from_polygon,
     coordinates_of_segment,
-    transform_coordinates,
     adjust_canvas_to_rotation,
     adjust_canvas_to_transposition,
     shift_coordinates,
@@ -25,7 +24,6 @@ from ocrd_utils import (
     bbox_from_polygon,
     polygon_from_points,
     xywh_from_bbox,
-    xywh_from_points,
     pushd_popd,
     MIME_TO_EXT,
 )
@@ -98,19 +96,23 @@ class Workspace():
         """
         log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
-            # XXX FIXME hacky
-            basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
             try:
-                f.url = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
-            except FileNotFoundError as e:
-                if not self.baseurl:
-                    raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
-                if _recursion_count >= 1:
-                    raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
-                log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
-                f.url = '%s/%s' % (self.baseurl, f.url)
-                f.url = self.download_file(f, _recursion_count + 1).local_filename
-            # XXX FIXME HACK
+                # If the f.url is already a file path, and is within self.directory, do nothing
+                url_path = Path(f.url).resolve()
+                if not (url_path.exists() and url_path.relative_to(str(Path(self.directory).resolve()))):
+                    raise Exception("Not already downloaded, moving on")
+            except Exception as e:
+                basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
+                try:
+                    f.url = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
+                except FileNotFoundError as e:
+                    if not self.baseurl:
+                        raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
+                    if _recursion_count >= 1:
+                        raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
+                    log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
+                    f.url = '%s/%s' % (self.baseurl, f.url)
+                    f.url = self.download_file(f, _recursion_count + 1).local_filename
             f.local_filename = f.url
             return f
 
@@ -167,8 +169,9 @@ class Workspace():
 
         with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
+                # If the local filename has folder components, create those folders
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-                if not Path(local_filename_dir).is_dir():
+                if local_filename_dir != kwargs['local_filename'] and not Path(local_filename_dir).is_dir():
                     makedirs(local_filename_dir)
                 if 'url' not in kwargs:
                     kwargs['url'] = kwargs['local_filename']

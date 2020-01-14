@@ -1,16 +1,16 @@
 from os import walk
 from os.path import join, exists, abspath, basename, dirname
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, mkdtemp
 from shutil import copyfile
 from pathlib import Path
 
-from tests.base import TestCase, assets, main
+from tests.base import TestCase, assets, main, copy_of_directory
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 
-#  from ocrd_utils import setOverrideLogLevel
-#  setOverrideLogLevel('DEBUG')
+from ocrd_utils import setOverrideLogLevel
+setOverrideLogLevel('DEBUG')
 
 TMP_FOLDER = '/tmp/test-core-workspace'
 SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
@@ -106,18 +106,19 @@ class TestWorkspace(TestCase):
         https://github.com/OCR-D/core/issues/319
         """
         with TemporaryDirectory() as tempdir:
-            # TODO re-enable once #393 is merged
-            #  ws_dir = join(tempdir, 'non-existing-for-good-measure')
-            ws_dir = tempdir
+            ws_dir = join(tempdir, 'non-existing-for-good-measure')
             # Create a relative path to trigger #319
             src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
             self.resolver.workspace_from_url(src_path, dst_dir=ws_dir, download=True)
-            #  from os import system
-            #  system('find %s' % ws_dir)
+            from os import system
+            system('find %s' % ws_dir)
             self.assertTrue(Path(ws_dir, 'mets.xml').exists())  # sanity check, mets.xml must exist
             self.assertTrue(Path(ws_dir, 'OCR-D-GT-PAGE/PAGE_0017_PAGE.xml').exists())
 
-    def test_227_1(self):
+    def test_superfluous_copies_in_ws_dir(self):
+        """
+        https://github.com/OCR-D/core/issues/227
+        """
         def find_recursive(root):
             ret = []
             for _, _, f in walk(root):
@@ -146,6 +147,28 @@ class TestWorkspace(TestCase):
     #          import os
     #          self.assertTrue(exists(join(ws1.directory, ocrd_file.local_filename)))
     #          #  with copy_of_directory(FOLDER_KANT) as tempdir:
+
+    def test_download_to_directory_from_workspace_download_file(self):
+        """
+        https://github.com/OCR-D/core/issues/342
+        """
+        #  tempdir = mkdtemp()
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+
+            f1 = ws1.add_file('IMG', ID='page1_img', mimetype='image/tiff', local_filename='test.tif', content='')
+            f2 = ws1.add_file('GT', ID='page1_gt', mimetype='text/xml', local_filename='test.xml', content='')
+
+            self.assertEqual(f1.url, 'test.tif')
+            self.assertEqual(f2.url, 'test.xml')
+
+            # these should be no-ops
+            ws1.download_file(f1)
+            ws1.download_file(f2)
+
+            self.assertEqual(f1.url, 'test.tif')
+            self.assertEqual(f2.url, 'test.xml')
+
 
 if __name__ == '__main__':
     main()
