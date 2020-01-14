@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Remove the trivial and error-prone  image caching feature in resolver, #399
+
 ## [2.2.0] - 2020-01-10
 
 Fixed:
