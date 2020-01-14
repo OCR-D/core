@@ -5,9 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.2.1] - 2020-01-14
+
 Fixed:
 
   * Remove the trivial and error-prone  image caching feature in resolver, #399
+  * When creating files with workspace.add_file, single-component file paths (i.e. just the basename of a file) were treated as directories, #404
+  * When downloading files to a workspace, check first whether those files to be added already exist on disk and are within the workspace directory., #404
 
 ## [2.2.0] - 2020-01-10
 
@@ -688,6 +692,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.2.1]: ../../compare/v2.2.1...v2.2.0
 [2.2.0]: ../../compare/v2.2.0...v2.1.3
 [2.1.3]: ../../compare/v2.1.3...v2.1.2
 [2.1.2]: ../../compare/v2.1.2...v2.1.1
