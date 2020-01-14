@@ -29,6 +29,12 @@ class TestWorkspaceValidator(TestCase):
             self.assertFalse(report.is_valid)
             self.assertEqual(len(report.errors), 1)
             self.assertEqual(report.errors[0], "Input fileGrp[@USE='FOO'] not in METS!")
+        with WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG,FOO', None) as report:
+            self.assertFalse(report.is_valid)
+            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(report.errors[0], "Input fileGrp[@USE='FOO'] not in METS!")
+        with WorkspaceValidator.check_file_grp(workspace, None, '') as report:
+            self.assertTrue(report.is_valid)
 
     def test_simple(self):
         report = WorkspaceValidator.validate(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), download=True)
