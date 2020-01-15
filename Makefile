@@ -1,8 +1,8 @@
 export
 
 SHELL = /bin/bash
-PYTHON = python
-PIP = pip
+PYTHON = python3
+PIP = pip3
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = tests
