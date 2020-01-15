@@ -9,6 +9,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
 
+  * OcrdExif: PNG metadata extraction was broken, #395, #396
   * Remove the trivial and error-prone  image caching feature in resolver, #399
   * When creating files with workspace.add_file, single-component file paths (i.e. just the basename of a file) were treated as directories, #404
   * When downloading files to a workspace, check first whether those files to be added already exist on disk and are within the workspace directory., #404
