@@ -169,6 +169,14 @@ class TestWorkspace(TestCase):
             self.assertEqual(f1.url, 'test.tif')
             self.assertEqual(f2.url, 'test.xml')
 
+    def test_mets_write_encoding(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_url(
+                    assets.url_of('kant_aufklaerung_1784-page-block-line-word_glyph/data/mets.xml'),
+                    dst_dir=tempdir)
+            ws1.save_mets()
+
+
 
 if __name__ == '__main__':
     main()
