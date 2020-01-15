@@ -52,9 +52,9 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
         workspace = resolver.workspace_from_url(mets, working_dir)
         # TODO once we implement 'overwrite' CLI option and mechanism, disable the
         # `output_file_grp_ check by setting to False-y value if 'overwrite' is set
-        with WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], kwargs['output_file_grp']) as report:
-            if not report.is_valid:
-                raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
+        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], kwargs['output_file_grp'])
+        if not report.is_valid:
+            raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
 
 def ocrd_loglevel(f):
