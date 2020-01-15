@@ -37,7 +37,6 @@ class WorkspaceValidator():
         if isinstance(output_file_grp, str):
             output_file_grp = output_file_grp.split(',')
 
-        print('hi')
         log.info("input_file_grp=%s output_file_grp=%s" % (input_file_grp, output_file_grp))
         print(input_file_grp)
         if input_file_grp:
