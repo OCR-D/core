@@ -1,5 +1,3 @@
-import json
-import os
 from os.path import isfile
 
 import click
@@ -30,14 +28,16 @@ parameter_option = click.option('-p', '--parameter',
                                 default='{}',
                                 callback=lambda ctx, param, value: parse_json_string_or_file(value))
 
-def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, version=False, **kwargs):
+def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, help=False, version=False, **kwargs):
     LOG = getLogger('ocrd_cli_wrap_processor')
     if dump_json:
         processorClass(workspace=None, dump_json=True)
+    elif help:
+        processorClass(workspace=None, show_help=True)
     elif version:
         try:
             p = processorClass(workspace=None)
-        except e:
+        except: # pylint: disable=bare-except
             pass
         print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:
@@ -82,7 +82,8 @@ def ocrd_cli_options(f):
         parameter_option,
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         loglevel_option,
-        click.option('-V', '--version', help="Show version", is_flag=True, default=False)
+        click.option('-V', '--version', help="Show version", is_flag=True, default=False),
+        click.option('-h', '--help', help="This help message", is_flag=True, default=False),
     ]
     for param in params:
         param(f)

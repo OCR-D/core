@@ -1,7 +1,7 @@
 import os
 import json
 import subprocess
-from ocrd_utils import getLogger, is_local_filename, get_local_filename
+from ocrd_utils import getLogger
 from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
@@ -22,7 +22,7 @@ def run_processor(
         resolver=None,
         workspace=None,
         page_id=None,
-        log_level=None,
+        log_level=None,         # TODO actually use this!
         input_file_grp=None,
         output_file_grp=None,
         parameter=None,
@@ -110,6 +110,7 @@ class Processor(object):
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             page_id=None,
+            show_help=False,
             dump_json=False,
             version=None
     ):
@@ -119,6 +120,9 @@ class Processor(object):
             print(json.dumps(ocrd_tool, indent=True))
             return
         self.ocrd_tool = ocrd_tool
+        if show_help:
+            self.show_help()
+            return
         self.version = version
         self.workspace = workspace
         # FIXME HACK would be better to use pushd_popd(self.workspace.directory)
@@ -134,6 +138,45 @@ class Processor(object):
         if not report.is_valid:
             raise Exception("Invalid parameters %s" % report.errors)
         self.parameter = parameter
+
+    def show_help(self):
+        parameter_help = ''
+        if 'parameters' not in self.ocrd_tool or not self.ocrd_tool['parameters']:
+            parameter_help = '  NONE\n'
+        else:
+            for param_name, param in self.ocrd_tool['parameters'].items():
+                parameter_help += '  "%s" [%s] %s\n' % (param_name, param['type'], param['description'])
+        print('''
+Usage: %s [OPTIONS]
+
+  %s
+
+Parameters:
+%s
+Default Wiring:
+  %s -> %s
+
+Options:
+  -V, --version                   Show version
+  -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
+                                  Log level
+  -J, --dump-json                 Dump tool description as JSON and exit
+  -p, --parameter TEXT            Parameters, either JSON string or path 
+                                  JSON file
+  -g, --page-id TEXT              ID(s) of the pages to process
+  -O, --output-file-grp TEXT      File group(s) used as output.
+  -I, --input-file-grp TEXT       File group(s) used as input.
+  -w, --working-dir TEXT          Working Directory
+  -m, --mets TEXT                 METS to process
+  -h, --help                      This help message
+
+''' % (
+    self.ocrd_tool['executable'],
+    self.ocrd_tool['description'],
+    parameter_help,
+    self.ocrd_tool['input_file_grp'],
+    self.ocrd_tool['output_file_grp'],
+))
 
     def verify(self):
         """
