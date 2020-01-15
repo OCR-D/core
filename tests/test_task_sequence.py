@@ -124,10 +124,14 @@ print('''%s''')
             workspace = resolver.workspace_from_url(assets.path_to('kant_aufklaerung_1784/data/mets.xml'), dst_dir=tempdir)
             params_path = Path(tempdir, 'params.json')
             params_path.write_text('{"param1": true}')
-            with self.assertRaisesRegex(Exception, 'Input file group not contained in METS or produced by previous steps: FOO'):
+            with self.assertRaisesRegex(Exception, "Input fileGrp.@USE='IN'. not in METS!"):
                 validate_tasks([ProcessorTask.parse(x) for x in [
-                    'sample-processor-required-param -I IN -O OUT -p %s' % params_path,
-                    'sample-processor-required-param -I FOO -O OUT -p %s' % params_path
+                    'sample-processor-required-param -I IN -O OUT1 -p %s' % params_path,
+                ]], workspace)
+            with self.assertRaisesRegex(Exception, "Input file group not contained in METS or produced by previous steps: FOO'"):
+                validate_tasks([ProcessorTask.parse(x) for x in [
+                    'sample-processor-required-param -I OCR-D-IMG -O OUT1 -p %s' % params_path,
+                    'sample-processor-required-param -I FOO -O OUT2 -p %s' % params_path
                 ]], workspace)
 
 if __name__ == '__main__':

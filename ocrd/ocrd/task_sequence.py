@@ -80,17 +80,17 @@ def validate_tasks(tasks, workspace):
         task.validate()
         if task_idx == 0:
             # first task: check input/output file groups from METS
-            # TODO disable output_file_grp checks once CLI parameter 'overwrite' is implemented
+            # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
             WorkspaceValidator.check_file_grp(workspace, task.input_file_grps, task.output_file_grps, report)
         else:
             # check either existing fileGrp or output-file group of previous task matches current input_file_group
             prev_output_file_grps = workspace.mets.file_groups
-            for prev_task in tasks[0:task_idx - 1]:
-                prev_output_file_grps += prev_task.output_file_grp.split(',')
+            for prev_task in tasks[0:task_idx]:
+                prev_output_file_grps += prev_task.output_file_grps
             for input_file_grp in task.input_file_grps:
                 if not input_file_grp in prev_output_file_grps:
                     report.add_error("Input file group not contained in METS or produced by previous steps: %s" % input_file_grp)
-            # TODO disable output_file_grp checks once CLI parameter 'overwrite' is implemented
+            # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
             if len(prev_output_file_grps) != len(set(prev_output_file_grps)):
                 report.add_error("Output file group specified multiple times: %s" % 
                     [grp for grp, count in Counter(prev_output_file_grps).items() if count >= 2])

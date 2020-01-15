@@ -33,12 +33,18 @@ class WorkspaceValidator():
         """
         if not report:
             report = ValidationReport()
+        if isinstance(input_file_grp, str):
+            input_file_grp = input_file_grp.split(',')
+        if isinstance(output_file_grp, str):
+            output_file_grp = output_file_grp.split(',')
+
+        log.info("input_file_grp=%s output_file_grp=%s" % (input_file_grp, output_file_grp))
         if input_file_grp:
-            for grp in input_file_grp.split(','):
+            for grp in input_file_grp:
                 if grp not in workspace.mets.file_groups:
                     report.add_error("Input fileGrp[@USE='%s'] not in METS!" % grp)
         if output_file_grp:
-            for grp in output_file_grp.split(','):
+            for grp in output_file_grp:
                 if grp in workspace.mets.file_groups:
                     report.add_error("Output fileGrp[@USE='%s'] already in METS!" % grp)
         yield report
