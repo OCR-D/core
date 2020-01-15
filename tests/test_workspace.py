@@ -127,7 +127,7 @@ class TestWorkspace(TestCase):
             return ret
         with TemporaryDirectory() as wsdir:
             with open(assets.path_to('SBB0000F29300010000/data/mets_one_file.xml'), 'r') as f_in:
-                with open(join(wsdir, 'mets.xml'), 'w') as f_out:
+                with open(join(wsdir, 'mets.xml'), 'w', encoding='utf-8') as f_out:
                     f_out.write(f_in.read())
             self.assertEqual(len(find_recursive(wsdir)), 1)
             ws1 = Workspace(self.resolver, wsdir)

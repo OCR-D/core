@@ -85,7 +85,7 @@ class WorkspaceBackupManager():
             mets_file = join(d, 'mets.xml')
             log.info("Backing up to %s" % mets_file)
             makedirs(d)
-            with atomic_write(mets_file, overwrite=True) as f:
+            with atomic_write(mets_file, overwrite=True, encoding='utf-8') as f:
                 f.write(mets_str.decode('utf-8'))
         return chksum
 

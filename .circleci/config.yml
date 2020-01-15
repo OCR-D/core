@@ -7,9 +7,11 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: apt-get update ; apt-get install -y make git wget curl python3-pip
+      - run: apt-get update ; apt-get install -y make git wget curl python3-pip locales
       - run: make deps-test install
-      - run: make test
+      - run: locale-gen "en_US.UTF-8"
+      - run: update-locale LC_ALL="en_US.UTF-8"
+      - run: LC_ALL=en_US.UTF-8 make test
 
 workflows:
   version: 2
