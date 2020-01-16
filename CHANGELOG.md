@@ -13,6 +13,7 @@ Added:
 Fixed:
 
   * bashlib: Calling bashlib processor w/o parameters, #381, #400
+  * bashlib: syntax error, regression from 2d89c22ae3. #410
 
 ## [2.2.1] - 2020-01-14
 
