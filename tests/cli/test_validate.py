@@ -83,6 +83,11 @@ class TestCli(TestCase):
                 result = self.runner.invoke(validate_cli, ['parameters', 'ocrd-tool.json', 'ocrd-xyz', dumps({"baz": "foo"})])
                 self.assertEqual(result.exit_code, 0)
 
+    def test_validate_page(self):
+        page_path = assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml')
+        result = self.runner.invoke(validate_cli, ['page', page_path])
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn('<report valid="false">', result.stdout)
 
 if __name__ == '__main__':
     main()

@@ -55,9 +55,11 @@ def validate_parameters(ocrd_tool, executable, param_json):
     _inform_of_result(ParameterValidator(ocrd_tool['tools'][executable]).validate(parse_json_string_or_file(param_json)))
 
 @validate_cli.command('page')
-@click.argument('page')
+@click.argument('page', required=True, nargs=1)
 @click.option('--page-textequiv-consistency', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
-@click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
+@click.option('--page-textequiv-strategy', help="Strategy to determine the correct textequiv", type=click.Choice(['index1']), default='index1')
+@click.option('--check-baseline', help="Whether Baseline must be fully within TextLine/Coords", is_flag=True, default=False)
+@click.option('--check-coords', help="Whether *Region/TextLine/Word/Glyph must each be fully contained within Border/*Region/TextLine/Word, resp.", is_flag=True, default=False)
 def validate_page(page, **kwargs):
     '''
     Validate PAGE against OCR-D conventions
