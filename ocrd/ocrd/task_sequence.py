@@ -2,11 +2,12 @@ import json
 from shlex import split as shlex_split
 from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
 from subprocess import run, PIPE
+from collections import Counter
 
 from ocrd_utils import getLogger, parse_json_string_or_file
 from ocrd.processor.base import run_cli
 from ocrd.resolver import Resolver
-from ocrd_validators import ParameterValidator
+from ocrd_validators import ParameterValidator, WorkspaceValidator, ValidationReport
 
 class ProcessorTask():
 
@@ -38,22 +39,29 @@ class ProcessorTask():
         self.input_file_grps = input_file_grps
         self.output_file_grps = output_file_grps
         self.parameter_path = parameter_path
+        self._ocrd_tool_json = None
+
+    @property
+    def ocrd_tool_json(self):
+        if self._ocrd_tool_json:
+            return self._ocrd_tool_json
+        result = run([self.executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
+        self._ocrd_tool_json = json.loads(result.stdout)
+        return self._ocrd_tool_json
 
     def validate(self):
         if not which(self.executable):
             raise Exception("Executable not found in PATH: %s" % self.executable)
         if not self.input_file_grps:
             raise Exception("Task must have input file group")
-        result = run([self.executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
-        ocrd_tool_json = json.loads(result.stdout)
         parameters = {}
         if self.parameter_path:
             parameters = parse_json_string_or_file(self.parameter_path)
-        param_validator = ParameterValidator(ocrd_tool_json)
+        param_validator = ParameterValidator(self.ocrd_tool_json)
         report = param_validator.validate(parameters)
         if not report.is_valid:
             raise Exception(report.errors)
-        if 'output_file_grp' in ocrd_tool_json and not self.output_file_grps:
+        if 'output_file_grp' in self.ocrd_tool_json and not self.output_file_grps:
             raise Exception("Processor requires output_file_grp but none was provided.")
         return True
 
@@ -66,24 +74,40 @@ class ProcessorTask():
             ret += ' -p %s' % self.parameter_path
         return ret
 
+def validate_tasks(tasks, workspace):
+    report = ValidationReport()
+    prev_output_file_grps = workspace.mets.file_groups
+
+    # first task: check input/output file groups from METS
+    # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
+    WorkspaceValidator.check_file_grp(workspace, tasks[0].input_file_grps, tasks[0].output_file_grps, report)
+
+    prev_output_file_grps += tasks[0].input_file_grps
+    for task in tasks[1:]:
+        task.validate()
+        # check either existing fileGrp or output-file group of previous task matches current input_file_group
+        for input_file_grp in task.input_file_grps:
+            if not input_file_grp in prev_output_file_grps:
+                report.add_error("Input file group not contained in METS or produced by previous steps: %s" % input_file_grp)
+        # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
+        if len(prev_output_file_grps) != len(set(prev_output_file_grps)):
+            report.add_error("Output file group specified multiple times: %s" % 
+                [grp for grp, count in Counter(prev_output_file_grps).items() if count >= 2])
+        prev_output_file_grps += task.output_file_grps
+    if not report.is_valid:
+        raise Exception("Invalid task sequence input/output file groups: %s" % report.errors)
+
+
 def run_tasks(mets, log_level, page_id, task_strs):
     resolver = Resolver()
     workspace = resolver.workspace_from_url(mets)
-    log = getLogger('ocrd.task_sequence')
+    log = getLogger('ocrd.task_sequence.run_tasks')
     tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
+    validate_tasks(tasks, workspace)
+
+    # Run the tasks
     for task in tasks:
-
-        task.validate()
-
-        # check input file groups are in mets
-        for input_file_grp in task.input_file_grps:
-            if not input_file_grp in workspace.mets.file_groups:
-                raise Exception("Unmet requirement: expected input file group not contained in mets: %s" % input_file_grp)
-
-        for output_file_grp in task.output_file_grps:
-            if output_file_grp in workspace.mets.file_groups:
-                raise Exception("Conflict: output file group already contained in mets: %s" % output_file_grp)
 
         log.info("Start processing task '%s'", task)
 
@@ -113,5 +137,4 @@ def run_tasks(mets, log_level, page_id, task_strs):
         for output_file_grp in task.output_file_grps:
             if not output_file_grp in workspace.mets.file_groups:
                 raise Exception("Invalid state: expected output file group not in mets: %s" % output_file_grp)
-
 

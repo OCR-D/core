@@ -95,7 +95,7 @@ def run_cli(
     log.debug("Running subprocess '%s'", ' '.join(args))
     return subprocess.call(args)
 
-class Processor(object):
+class Processor():
     """
     A processor runs an algorithm based on the workspace, the mets.xml in the
     workspace (and the input files defined therein) as well as optional
