@@ -11,7 +11,7 @@ from tests.base import TestCase, main, assets, copy_of_directory
 
 from ocrd_utils import initLogging, pushd_popd
 from ocrd.cli.workspace import workspace_cli
-from ocrd.resolver import Resolver
+from ocrd import Resolver, Workspace
 
 class TestCli(TestCase):
 
@@ -101,7 +101,13 @@ class TestCli(TestCase):
             ])
             self.assertEqual(result.exit_code, 0)
 
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'remove', ID])
+            result = self.runner.invoke(workspace_cli, [
+                '-d',
+                tempdir,
+                'remove',
+                '--keep-file',
+                ID
+            ])
             self.assertEqual(result.exit_code, 0)
 
             # File should still exist
@@ -132,7 +138,13 @@ class TestCli(TestCase):
             ])
             self.assertEqual(result.exit_code, 0)
 
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'remove', '--force', ID])
+            result = self.runner.invoke(workspace_cli, [
+                '-d',
+                tempdir,
+                'remove',
+                '--force',
+                ID
+            ])
             print(result)
             print(result.output)
             self.assertEqual(result.exit_code, 0)
@@ -184,18 +196,16 @@ class TestCli(TestCase):
             wsdir = join(tempdir, 'ws')
             copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
             file_group = 'OCR-D-GT-PAGE'
-            file_path = join(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT.xml')
-            self.assertTrue(exists(file_path))
+            file_path = Path(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT.xml')
+            self.assertTrue(file_path.exists())
 
             workspace = self.resolver.workspace_from_url(join(wsdir, 'mets.xml'))
             self.assertEqual(workspace.directory, wsdir)
 
             with self.assertRaisesRegex(Exception, "not empty"):
                 workspace.remove_file_group(file_group)
-            with self.assertRaisesRegex(Exception, "force without recursive"):
-                workspace.remove_file_group(file_group, force=True)
 
-            self.assertTrue(exists(file_path))
+            self.assertTrue(file_path.exists())
             self.assertEqual(len(workspace.mets.file_groups), 17)
             self.assertEqual(len(workspace.mets.find_files()), 35)
 
@@ -203,7 +213,11 @@ class TestCli(TestCase):
 
             self.assertEqual(len(workspace.mets.file_groups), 16)
             self.assertEqual(len(workspace.mets.find_files()), 33)
-            self.assertFalse(exists(file_path))
+            self.assertFalse(file_path.exists())
+
+            # TODO ensure empty dirs are removed
+            # self.assertFalse(file_path.parent.exists())
+
 
     def test_clone_relative(self):
         # Create a relative path to trigger make sure #319 is gone

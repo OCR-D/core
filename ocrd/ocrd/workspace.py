@@ -116,43 +116,50 @@ class Workspace():
             f.local_filename = f.url
             return f
 
-    def remove_file(self, ID, force=False):
+    def remove_file(self, ID, force=False, keep_file=False):
         """
         Remove a file from the workspace.
 
         Arguments:
             ID (string|OcrdFile): ID of the file to delete or the file itself
-            force (boolean): Whether to delete from disk as well
+            force (boolean): Continue removing even if file not found in METS
+            keep_file (boolean): Whether to keep files on disk
         """
         log.debug('Deleting mets:file %s', ID)
-        ocrd_file = self.mets.remove_file(ID)
-        if force:
-            if not ocrd_file:
-                raise Exception("File '%s' not found" % ID)
-            if not ocrd_file.local_filename:
-                raise Exception("File not locally available %s" % ocrd_file)
-            with pushd_popd(self.directory):
-                log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
-                unlink(ocrd_file.local_filename)
-        return ocrd_file
+        try:
+            ocrd_file = self.mets.remove_file(ID)
+            if not keep_file:
+                if not ocrd_file.local_filename:
+                    log.warning("File not locally available %s", ocrd_file)
+                    if not force:
+                        raise Exception("File not locally available %s" % ocrd_file)
+                else:
+                    with pushd_popd(self.directory):
+                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                        unlink(ocrd_file.local_filename)
+            return ocrd_file
+        except FileNotFoundError as e:
+            if not force:
+                raise e
 
-    def remove_file_group(self, USE, recursive=False, force=False):
+    def remove_file_group(self, USE, recursive=False, force=False, keep_files=False):
         """
         Remove a fileGrp.
 
         Arguments:
             USE (string): USE attribute of the fileGrp to delete
             recursive (boolean): Whether to recursively delete all files in the group
-            force (boolean): When deleting recursively whether to delete files from HDD
+            force (boolean): Continue removing even if group or containing files not found in METS
+            keep_files (boolean): When deleting recursively whether to keep files on disk
         """
-        if force and not recursive:
-            raise Exception("remove_file_group: force without recursive is likely a logic error")
-        if USE not in self.mets.file_groups:
+        if USE not in self.mets.file_groups and not force:
             raise Exception("No such fileGrp: %s" % USE)
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
-                self.remove_file(f.ID, force=force)
-        self.mets.remove_file_group(USE)
+                self.remove_file(f.ID, force=force, keep_file=keep_files)
+        if USE in self.mets.file_groups:
+            self.mets.remove_file_group(USE)
+        # TODO remove empty dirs
 
     def add_file(self, file_grp, content=None, **kwargs):
         """

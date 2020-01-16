@@ -245,7 +245,7 @@ class OcrdMets(OcrdXmlDocument):
         log.info("remove_file(%s)" % ID)
         ocrd_file = self.find_files(ID)
         if not ocrd_file:
-            raise Exception("File not found: %s" % ID)
+            raise FileNotFoundError("File not found: %s" % ID)
         ocrd_file = ocrd_file[0]
 
         # Delete the physical page ref

@@ -198,16 +198,17 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('remove')
-@click.option('--force', help="Also delete file in storage if applicable", default=False, is_flag=True)
+@click.option('-k', '--keep-file', help="Do not delete file from file system", default=False, is_flag=True)
+@click.option('-f', '--force', help="Continue even if mets:file or file on file system does not exist", default=False, is_flag=True)
 @click.argument('ID', nargs=-1)
 @pass_workspace
-def workspace_remove_file(ctx, id, force):  # pylint: disable=redefined-builtin
+def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefined-builtin
     """
     Delete file by ID from mets.xml
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     for i in id:
-        workspace.remove_file(i, force=force)
+        workspace.remove_file(i, force=force, keep_file=keep_file)
     workspace.save_mets()
 
 
@@ -221,13 +222,14 @@ def workspace_remove_file(ctx, id, force):  # pylint: disable=redefined-builtin
 
 """)
 @click.option('-r', '--recursive', help="Delete any files in the group before the group itself", default=False, is_flag=True)
-@click.option('-f', '--force', help="Also delete local files", default=False, is_flag=True)
+@click.option('-f', '--force', help="Continue removing even if group or containing files not found in METS", default=False, is_flag=True)
+@click.option('-k', '--keep-files', help="Do not delete files from file system", default=False, is_flag=True)
 @click.argument('GROUP', nargs=-1)
 @pass_workspace
-def remove_group(ctx, group, recursive, force):
+def remove_group(ctx, group, recursive, force, keep_files):
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for g in group:
-        workspace.remove_file_group(g, recursive, force)
+        workspace.remove_file_group(g, recursive=recursive, force=force, keep_files=keep_files)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
