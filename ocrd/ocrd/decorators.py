@@ -14,6 +14,7 @@ from ocrd_utils import (
 from ocrd_utils import getLogger
 from .resolver import Resolver
 from .processor.base import run_processor
+from ocrd_validators import WorkspaceValidator
 
 def _set_root_logger_version(ctx, param, value):    # pylint: disable=unused-argument
     setOverrideLogLevel(value)
@@ -37,7 +38,7 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
     elif version:
         try:
             p = processorClass(workspace=None)
-        except: # pylint: disable=bare-except
+        except Exception: # pylint: disable=bare-except
             pass
         print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
     elif mets is None:
@@ -51,6 +52,11 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
             raise Exception(msg)
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)
+        # TODO once we implement 'overwrite' CLI option and mechanism, disable the
+        # `output_file_grp_ check by setting to False-y value if 'overwrite' is set
+        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], kwargs['output_file_grp'])
+        if not report.is_valid:
+            raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
 
 def ocrd_loglevel(f):

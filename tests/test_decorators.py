@@ -92,7 +92,7 @@ class TestDecorators(TestCase):
     def test_processor_run(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(cli_dummy_processor, ['-p', '{"foo": 42}', '--mets', 'mets.xml'])
+                result = self.runner.invoke(cli_dummy_processor, ['-p', '{"foo": 42}', '--mets', 'mets.xml', '-I', 'OCR-D-IMG'])
                 self.assertEqual(result.exit_code, 0)
 
 
