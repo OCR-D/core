@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added:
 
   * Validation of input/output file groups before running a processor/task sequence, #392
+  * Improved `--help` for both python and bashlib processors, #402, #408
 
 ## [2.2.1] - 2020-01-14
 
