@@ -9,7 +9,6 @@
 [![Docker Automated build](https://img.shields.io/docker/automated/ocrd/core.svg)](https://hub.docker.com/r/ocrd/core/tags/)
 [![image](https://codecov.io/gh/OCR-D/core/branch/master/graph/badge.svg)](https://codecov.io/gh/OCR-D/core)
 [![image](https://scrutinizer-ci.com/g/OCR-D/core/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/OCR-D/core)
-[![image](https://img.shields.io/lgtm/alerts/g/OCR-D/core.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OCR-D/core/alerts/)
 
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/OCR-D/Lobby)
 

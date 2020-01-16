@@ -34,6 +34,9 @@ from ocrd_utils import (
     xywh_from_polygon,
     pushd_popd,
 
+    MIME_TO_EXT,
+    EXT_TO_MIME,
+
 )
 from ocrd_models.utils import xmllint_format
 
@@ -178,6 +181,8 @@ class TestUtils(TestCase):
 
     def test_parse_json_string_or_file(self):
         self.assertEqual(parse_json_string_or_file(), {})
+        self.assertEqual(parse_json_string_or_file(''), {})
+        self.assertEqual(parse_json_string_or_file(' '), {})
         self.assertEqual(parse_json_string_or_file('{}'), {})
         self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
 
@@ -198,6 +203,10 @@ class TestUtils(TestCase):
             parse_json_string_or_file('[]')
         with self.assertRaisesRegex(ValueError, 'Error parsing'):
             parse_json_string_or_file('[}')
+
+    def test_mime_ext(self):
+        self.assertEquals(MIME_TO_EXT['image/jp2'], '.jp2')
+        self.assertEquals(EXT_TO_MIME['.jp2'], 'image/jp2')
 
 
 if __name__ == '__main__':

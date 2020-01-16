@@ -16,13 +16,14 @@ COPY README.md .
 COPY LICENSE .
 RUN apt-get update && apt-get -y install --no-install-recommends \
     ca-certificates \
+    software-properties-common \
     python3-dev \
     python3-pip \
     make \
     wget \
+    curl \
     sudo \
     git \
-    libglib2.0.0 \
     && pip3 install --upgrade pip setuptools \
     && make install \
     && rm -rf /build-ocrd

@@ -7,7 +7,60 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
+  * Validation of input/output file groups before running a processor/task sequence, #392
+  * Improved `--help` for both python and bashlib processors, #402, #408
+
+Fixed:
+
+  * bashlib: Calling bashlib processor w/o parameters, #381, #400
+
+## [2.2.1] - 2020-01-14
+
+Fixed:
+
+  * OcrdExif: PNG metadata extraction was broken, #395, #396
+  * Remove the trivial and error-prone  image caching feature in resolver, #399
+  * When creating files with workspace.add_file, single-component file paths (i.e. just the basename of a file) were treated as directories, #404
+  * When downloading files to a workspace, check first whether those files to be added already exist on disk and are within the workspace directory., #404
+
+## [2.2.0] - 2020-01-10
+
+Fixed:
+
+  * PIL.Image.open'ed files weren't closed, #390
+  * resolver: if mets_url is relative path, resolve before anything else, #319, #397
+  * Resolver.workspace_from_url: Create dst_dir before resolve for py `<=` 3.5, #330, #393
+  * fix help string for -m/--mets, fix #263, #391
+
+Changed:
+
+  * downgrade filegrp syntax errors to warnings, #364, #389
+
+## [2.1.3] - 2020-01-08
+
+Changed:
+
+  * bagit-profile matches changes from spec v3.4.2 (metadata dir)
+
+## [2.1.2] - 2020-01-06
+
+Changed:
+
+  * have save_mets use UTF-8 encoding for byte-serialization (no entities), #388
+
+Fixed:
+
+  * regression from #374, #387
+
+## [2.1.1] - 2020-01-02
+
+Added:
+
   * PAGE validator: coordinate self-validity and mutual consistency, #374
+
+Fixed:
+
+  * Add more related mime types and fix image/jpeg, #382
 
 ## [2.1.0] - 2019-12-20
 
@@ -649,6 +702,11 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.2.1]: ../../compare/v2.2.1...v2.2.0
+[2.2.0]: ../../compare/v2.2.0...v2.1.3
+[2.1.3]: ../../compare/v2.1.3...v2.1.2
+[2.1.2]: ../../compare/v2.1.2...v2.1.1
+[2.1.1]: ../../compare/v2.1.1...v2.1.0
 [2.1.0]: ../../compare/v2.1.0...v2.0.2
 [2.0.2]: ../../compare/v2.0.2...v2.0.1
 [2.0.1]: ../../compare/v2.0.1...v2.0.0

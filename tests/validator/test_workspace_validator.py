@@ -1,5 +1,5 @@
 import os
-from tempfile import TemporaryDirectory, mkdtemp
+from tempfile import TemporaryDirectory
 from os.path import join
 from shutil import copytree
 
@@ -14,6 +14,27 @@ class TestWorkspaceValidator(TestCase):
 
     def setUp(self):
         self.resolver = Resolver()
+
+    def test_check_file_grp(self):
+        workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        report = WorkspaceValidator.check_file_grp(workspace, 'foo', 'bar')
+        self.assertFalse(report.is_valid)
+        self.assertEqual(len(report.errors), 1)
+        self.assertEqual(report.errors[0], "Input fileGrp[@USE='foo'] not in METS!")
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN')
+        self.assertFalse(report.is_valid)
+        self.assertEqual(len(report.errors), 1)
+        self.assertEqual(report.errors[0], "Output fileGrp[@USE='OCR-D-IMG-BIN'] already in METS!")
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG,FOO', 'FOO')
+        self.assertFalse(report.is_valid)
+        self.assertEqual(len(report.errors), 1)
+        self.assertEqual(report.errors[0], "Input fileGrp[@USE='FOO'] not in METS!")
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG,FOO', None)
+        self.assertFalse(report.is_valid)
+        self.assertEqual(len(report.errors), 1)
+        self.assertEqual(report.errors[0], "Input fileGrp[@USE='FOO'] not in METS!")
+        report = WorkspaceValidator.check_file_grp(workspace, None, '')
+        self.assertTrue(report.is_valid)
 
     def test_simple(self):
         report = WorkspaceValidator.validate(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), download=True)
@@ -56,9 +77,10 @@ class TestWorkspaceValidator(TestCase):
             workspace.mets.add_file_group('OCR-D-INVALID-FILEGRP')
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 2)
-            self.assertEqual(report.errors[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
-            self.assertIn('No files', report.errors[1])
+            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(len(report.warnings), 1)
+            self.assertEqual(report.warnings[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
+            self.assertIn('No files', report.errors[0])
 
     def test_validate_file_groups_bad_name(self):
         with TemporaryDirectory() as tempdir:
@@ -67,9 +89,10 @@ class TestWorkspaceValidator(TestCase):
             workspace.mets.add_file_group('OCR-D-GT-X')
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 2)
-            self.assertIn("Invalid USE name 'X' in fileGrp", report.errors[0])
-            self.assertIn('No files', report.errors[1])
+            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(len(report.warnings), 1)
+            self.assertIn("Invalid USE name 'X' in fileGrp", report.warnings[0])
+            self.assertIn('No files', report.errors[0])
 
     def test_validate_files_nopageid(self):
         with TemporaryDirectory() as tempdir:

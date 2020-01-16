@@ -71,7 +71,7 @@ class Resolver():
                 # XXX this raises FNFE in Python 3.5 if src_path doesn't exist but not 3.6+
                 src_path = Path(get_local_filename(url)).resolve()
             except FileNotFoundError as e:
-                log.error("Failed to resolve URL locally: %s --> %s which doesnt' exist" % (url, src_path))
+                log.error("Failed to resolve URL locally: %s --> '%s' which does not exist" % (url, src_path))
                 raise e
             if not src_path.exists():
                 raise FileNotFoundError("File path passed as 'url' to download_to_directory does not exist: %s" % url)
@@ -122,6 +122,10 @@ class Resolver():
         if mets_url is None:
             raise ValueError("Must pass 'mets_url' workspace_from_url")
 
+        # if mets_url is a relative filename, make it absolute
+        if is_local_filename(mets_url) and not Path(mets_url).is_absolute():
+            mets_url = str(Path(Path.cwd() / mets_url))
+
         # if mets_basename is not given, use the last URL segment of the mets_url
         if mets_basename is None:
             mets_basename = nth_url_segment(mets_url, -1)
@@ -137,8 +141,11 @@ class Resolver():
                 log.debug("Deriving dst_dir %s from %s", Path(mets_url).parent, mets_url)
                 dst_dir = Path(mets_url).parent
             else:
-                log.debug("Creating ephemereal workspace '%s' for METS @ <%s>", dst_dir, mets_url)
+                log.debug("Creating ephemeral workspace '%s' for METS @ <%s>", dst_dir, mets_url)
                 dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
+        # XXX Path.resolve is always strict in Python <= 3.5, so create dst_dir unless it exists consistently
+        if not Path(dst_dir).exists():
+            Path(dst_dir).mkdir(parents=True, exist_ok=False)
         dst_dir = str(Path(dst_dir).resolve())
 
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",

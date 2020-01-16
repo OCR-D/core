@@ -51,14 +51,14 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
 @click.argument('mets_url')
-def validate_workspace(ctx, mets_url, download, skip, page_strictness, page_coordinate_consistency):
+def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
         src_dir=ctx.directory,
         skip=skip,
         download=download,
-        page_strictness=page_strictness,
+        page_strictness=page_textequiv_consistency,
         page_coordinate_consistency=page_coordinate_consistency
     )
     print(report.to_xml())

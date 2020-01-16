@@ -5,10 +5,11 @@ import sys
 import click
 
 from ocrd.decorators import parameter_option
+from ocrd.processor import generate_processor_help
 from ocrd_utils import VERSION as OCRD_VERSION
 from ocrd_validators import ParameterValidator, OcrdToolValidator
 
-class OcrdToolCtx(object):
+class OcrdToolCtx():
 
     def __init__(self, filename):
         self.filename = filename
@@ -79,6 +80,11 @@ def ocrd_tool_tool(ctx, tool_name):
 @pass_ocrd_tool
 def ocrd_tool_tool_description(ctx):
     print(ctx.json['tools'][ctx.tool_name]['description'])
+
+@ocrd_tool_tool.command('help', help="Generate help for processors")
+@pass_ocrd_tool
+def ocrd_tool_tool_params_help(ctx):
+    print(generate_processor_help(ctx.json['tools'][ctx.tool_name]))
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories

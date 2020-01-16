@@ -162,6 +162,20 @@ class TestCli(TestCase):
             ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
             self.assertEqual(len(ws2.mets.find_files()), 7)
 
+    def test_clone_into_nonexisting_dir(self):
+        """
+        https://github.com/OCR-D/core/issues/330
+        """
+        with TemporaryDirectory() as tempdir:
+            clone_to = join(tempdir, 'non-existing-dir')
+            result = self.runner.invoke(workspace_cli, [
+                'clone',
+                '--download',
+                assets.path_to('scribo-test/data/mets.xml'),
+                clone_to
+            ])
+            self.assertEqual(result.exit_code, 0)
+
     def test_remove_file_group(self):
         """
         Test removal of filegrp
@@ -190,6 +204,14 @@ class TestCli(TestCase):
             self.assertEqual(len(workspace.mets.file_groups), 16)
             self.assertEqual(len(workspace.mets.find_files()), 33)
             self.assertFalse(exists(file_path))
+
+    def test_clone_relative(self):
+        # Create a relative path to trigger make sure #319 is gone
+        src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
+        with TemporaryDirectory() as tempdir:
+            result = self.runner.invoke(workspace_cli, ['clone', '-a', src_path, tempdir])
+            self.assertEqual(result.exit_code, 0)
+            self.assertTrue(exists(join(tempdir, 'OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')))
 
     def test_copy_vs_clone(self):
         src_dir = assets.path_to('kant_aufklaerung_1784/data')

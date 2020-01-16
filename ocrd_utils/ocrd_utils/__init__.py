@@ -787,9 +787,13 @@ def xywh_from_points(points):
 def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
     """
     Parse a string as either the path to a JSON object or a literal JSON object.
+
+    Empty strings are equivalent to '{}'
     """
     ret = None
     err = None
+    if re.fullmatch(r"\s*", value):
+        return {}
     try:
         try:
             with open(value, 'r') as f:

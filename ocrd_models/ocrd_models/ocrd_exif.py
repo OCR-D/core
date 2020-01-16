@@ -18,7 +18,7 @@ class OcrdExif():
       'F' for floating-point grayscale
       (see PIL concept `mode`)
     - `resolution` / `xResolution` / `yResolution`: pixel density
-    - `resolutionUnits`: unit of measurement (either `inches` or `cm`)
+    - `resolutionUnit`: unit of measurement (either `inches` or `cm`)
 
     """
 
@@ -39,7 +39,10 @@ class OcrdExif():
         if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
             self.xResolution = int(img.info['dpi'][0])
             self.yResolution = int(img.info['dpi'][1])
-            self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
+            if img.format == 'TIFF':
+                self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
+            else:
+                self.resolutionUnit = 'inches'
         elif img.format == 'JPEG' and 'jfif_density' in img.info:
             self.xResolution = img.info['jfif_density'][0]
             self.yResolution = img.info['jfif_density'][1]
@@ -47,6 +50,7 @@ class OcrdExif():
         elif img.format == 'PNG' and 'aspect' in img.info:
             self.xResolution = img.info['aspect'][0]
             self.yResolution = img.info['aspect'][1]
+            self.resolutionUnit = 'inches'
         else:
             #  if img.format == 'JPEG2000':
             #      import sys
