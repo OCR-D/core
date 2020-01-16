@@ -1,7 +1,8 @@
 import os
 import json
+from click import wrap_text
 import subprocess
-from ocrd_utils import getLogger, is_local_filename, get_local_filename
+from ocrd_utils import getLogger
 from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
@@ -22,7 +23,7 @@ def run_processor(
         resolver=None,
         workspace=None,
         page_id=None,
-        log_level=None,
+        log_level=None,         # TODO actually use this!
         input_file_grp=None,
         output_file_grp=None,
         parameter=None,
@@ -95,6 +96,52 @@ def run_cli(
     log.debug("Running subprocess '%s'", ' '.join(args))
     return subprocess.call(args)
 
+def generate_processor_help(ocrd_tool):
+    parameter_help = ''
+    if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
+        parameter_help = '  NONE\n'
+    else:
+        for param_name, param in ocrd_tool['parameters'].items():
+            parameter_help += wrap_text('  "%s" [%s%s] %s' % (
+                param_name,
+                param['type'],
+                ' - REQUIRED' if 'required' in param and param['required'] else '',
+                param['description']
+            ), subsequent_indent='    ', width=72, preserve_paragraphs=True)
+            parameter_help += "\n"
+    return '''
+Usage: %s [OPTIONS]
+
+  %s
+
+Parameters:
+%s
+Default Wiring:
+  %s -> %s
+
+Options:
+  -V, --version                   Show version
+  -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
+                                  Log level
+  -J, --dump-json                 Dump tool description as JSON and exit
+  -p, --parameter TEXT            Parameters, either JSON string or path 
+                                  JSON file
+  -g, --page-id TEXT              ID(s) of the pages to process
+  -O, --output-file-grp TEXT      File group(s) used as output.
+  -I, --input-file-grp TEXT       File group(s) used as input.
+  -w, --working-dir TEXT          Working Directory
+  -m, --mets TEXT                 METS to process
+  -h, --help                      This help message
+
+''' % (
+    ocrd_tool['executable'],
+    ocrd_tool['description'],
+    parameter_help,
+    ocrd_tool['input_file_grp'],
+    ocrd_tool.get('output_file_grp', 'NONE')
+)
+
+
 class Processor():
     """
     A processor runs an algorithm based on the workspace, the mets.xml in the
@@ -110,6 +157,7 @@ class Processor():
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             page_id=None,
+            show_help=False,
             dump_json=False,
             version=None
     ):
@@ -119,6 +167,9 @@ class Processor():
             print(json.dumps(ocrd_tool, indent=True))
             return
         self.ocrd_tool = ocrd_tool
+        if show_help:
+            self.show_help()
+            return
         self.version = version
         self.workspace = workspace
         # FIXME HACK would be better to use pushd_popd(self.workspace.directory)
@@ -135,9 +186,12 @@ class Processor():
             raise Exception("Invalid parameters %s" % report.errors)
         self.parameter = parameter
 
+    def show_help(self):
+        print(generate_processor_help(self.ocrd_tool))
+
     def verify(self):
         """
-        Verify that the input is fulfills the processor's requirements.
+        Verify that the input fulfills the processor's requirements.
         """
         return True
 
