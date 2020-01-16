@@ -31,11 +31,13 @@ def validate_cli():
     """
 
 @validate_cli.command('tool-json')
-@click.argument('ocrd_tool')
+@click.argument('ocrd_tool', required=False, nargs=1)
 def validate_ocrd_tool(ocrd_tool):
     '''
     Validate OCRD_TOOL as an ocrd-tool.json file.
     '''
+    if not ocrd_tool:
+        ocrd_tool = 'ocrd-tool.json'
     with codecs.open(ocrd_tool, encoding='utf-8') as f:
         ocrd_tool = loads(f.read())
     _inform_of_result(OcrdToolValidator.validate(ocrd_tool))
