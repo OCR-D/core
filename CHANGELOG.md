@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.2.2] - 2020-01-16
+
 Added:
 
   * Validation of input/output file groups before running a processor/task sequence, #392
@@ -703,6 +705,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.2.2]: ../../compare/v2.2.2...v2.2.1
 [2.2.1]: ../../compare/v2.2.1...v2.2.0
 [2.2.0]: ../../compare/v2.2.0...v2.1.3
 [2.1.3]: ../../compare/v2.1.3...v2.1.2
