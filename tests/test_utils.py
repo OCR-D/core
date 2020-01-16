@@ -181,6 +181,8 @@ class TestUtils(TestCase):
 
     def test_parse_json_string_or_file(self):
         self.assertEqual(parse_json_string_or_file(), {})
+        self.assertEqual(parse_json_string_or_file(''), {})
+        self.assertEqual(parse_json_string_or_file(' '), {})
         self.assertEqual(parse_json_string_or_file('{}'), {})
         self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
 
