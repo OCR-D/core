@@ -4,8 +4,8 @@ import click
 from json import loads
 import codecs
 
-from ocrd import Resolver
-from ocrd.task_sequence import ProcessorTask
+from ocrd import Resolver, Workspace
+from ocrd.task_sequence import ProcessorTask, validate_tasks
 
 from ocrd_utils import (
     parse_json_string_or_file
@@ -66,39 +66,42 @@ def validate_page(page, **kwargs):
     '''
     _inform_of_result(PageValidator.validate(filename=page, **kwargs))
 
-@validate_cli.command('zip')
-@click.argument('src', type=click.Path(dir_okay=True, readable=True, resolve_path=True), required=True)
-@click.option('-Z', '--skip-unzip', help="Treat SRC as a directory not a ZIP", is_flag=True, default=False)
-@click.option('-B', '--skip-bag', help="Whether to skip all checks of manifests and files", is_flag=True, default=False)
-@click.option('-C', '--skip-checksums', help="Whether to omit checksum checks but still check basic BagIt conformance", is_flag=True, default=False)
-@click.option('-D', '--skip-delete', help="Whether to skip deleting the unpacked OCRD-ZIP dir after valdiation", is_flag=True, default=False)
-@click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
-def validate(src, **kwargs):
-    """
-    Validate OCRD-ZIP
+#  @validate_cli.command('zip')
+#  @click.argument('src', type=click.Path(dir_okay=True, readable=True, resolve_path=True), required=True)
+#  @click.option('-Z', '--skip-unzip', help="Treat SRC as a directory not a ZIP", is_flag=True, default=False)
+#  @click.option('-B', '--skip-bag', help="Whether to skip all checks of manifests and files", is_flag=True, default=False)
+#  @click.option('-C', '--skip-checksums', help="Whether to omit checksum checks but still check basic BagIt conformance", is_flag=True, default=False)
+#  @click.option('-D', '--skip-delete', help="Whether to skip deleting the unpacked OCRD-ZIP dir after valdiation", is_flag=True, default=False)
+#  @click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
+#  def validate(src, **kwargs):
+#      """
+#      Validate OCRD-ZIP
 
-    SRC must exist an be an OCRD-ZIP, either a ZIP file or a directory.
-    """
-    _inform_of_result(OcrdZipValidator(Resolver(), src).validate(**kwargs))
+#      SRC must exist an be an OCRD-ZIP, either a ZIP file or a directory.
+#      """
+#      _inform_of_result(OcrdZipValidator(Resolver(), src).validate(**kwargs))
 
-@validate_cli.command('workspace')
-@click.option('-a', '--download', is_flag=True, help="Download all files")
-@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
-@click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
-@click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
-@click.argument('mets_url')
-def validate_workspace(mets_url, **kwargs):
-    '''
-        Validate a workspace
-    '''
-    _inform_of_result(WorkspaceValidator.validate(Resolver(), mets_url, **kwargs))
+#  @validate_cli.command('workspace')
+#  @click.option('-a', '--download', is_flag=True, help="Download all files")
+#  @click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
+#  @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
+#  @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
+#  @click.argument('mets_url')
+#  def validate_workspace(mets_url, **kwargs):
+#      '''
+#          Validate a workspace
+#      '''
+#      _inform_of_result(WorkspaceValidator.validate(Resolver(), mets_url, **kwargs))
 
-@validate_cli.command('process')
-@click.argument('task', nargs=-1, required=True)
-def validate_process(task):
+@validate_cli.command('tasks')
+@click.option('--workspace', nargs=1, required=False, help='Workspace these tasks are to be run. If omitted, only validate syntax')
+@click.argument('tasks', nargs=-1, required=True)
+def validate_process(tasks, workspace):
     '''
     Validate a sequence of tasks passable to 'ocrd process'
     '''
-    for t in [ProcessorTask.parse(t) for t in task]:
-        print("Validating Task '%s'" % t)
-        _inform_of_result(t.validate())
+    if workspace:
+        _inform_of_result(validate_tasks([ProcessorTask.parse(t) for t in tasks], Workspace(Resolver(), directory=workspace)))
+    else:
+        for t in [ProcessorTask.parse(t) for t in tasks]:
+            _inform_of_result(t.validate())

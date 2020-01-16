@@ -1,8 +1,5 @@
 from json import loads, dumps
-from os.path import join, exists
 from pathlib import Path
-from filecmp import dircmp
-from shutil import copytree
 from tempfile import TemporaryDirectory
 
 from click.testing import CliRunner
@@ -10,10 +7,11 @@ from click.testing import CliRunner
 # pylint: disable=import-error, no-name-in-module
 from tests.base import TestCase, main, assets, copy_of_directory
 
-from ocrd_utils import initLogging, pushd_popd
+from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
 
 from ocrd.cli.validate import validate_cli
+from tests.test_task_sequence import TestTaskSequence
 
 OCRD_TOOL = '''
 {
@@ -50,12 +48,11 @@ OCRD_TOOL = '''
 }
 '''
 
-class TestCli(TestCase):
+# inherit from TestTaskSequence for the setUp/tearDown methods
+class TestCli(TestTaskSequence):
 
-
-    def setUp(self):
-        self.resolver = Resolver()
-        initLogging()
+    def __init__(self, *args, **kwargs):
+        super(TestTaskSequence, self).__init__(*args, **kwargs)
         self.runner = CliRunner()
 
     def test_validate_ocrd_tool(self):
@@ -88,6 +85,24 @@ class TestCli(TestCase):
         result = self.runner.invoke(validate_cli, ['page', page_path])
         self.assertEqual(result.exit_code, 1)
         self.assertIn('<report valid="false">', result.stdout)
+
+    def test_validate_tasks(self):
+        # simple
+        result = self.runner.invoke(validate_cli, ['tasks',
+            "sample-processor-required-param -I FOO -O OUT1 -p '{\"param1\": true}'",
+            "sample-processor-required-param -I FOO -O OUT2 -p '{\"param1\": true}'",
+        ])
+        self.assertEqual(result.exit_code, 0)
+
+        # with workspace
+        result = self.runner.invoke(validate_cli, ['tasks', '--workspace', assets.path_to('kant_aufklaerung_1784/data'),
+            "sample-processor-required-param -I OCR-D-IMG -O OUT1 -p '{\"param1\": true}'",
+            "sample-processor-required-param -I OCR-D-IMG -O OUT2 -p '{\"param1\": true}'",
+        ])
+        print(result)
+        print(result.stdout)
+        self.assertEqual(result.exit_code, 0)
+
 
 if __name__ == '__main__':
     main()
