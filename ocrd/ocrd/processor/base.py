@@ -175,7 +175,7 @@ Options:
     self.ocrd_tool['description'],
     parameter_help,
     self.ocrd_tool['input_file_grp'],
-    self.ocrd_tool['output_file_grp'],
+    self.ocrd_tool.get('output_file_grp', 'NONE')
 ))
 
     def verify(self):
