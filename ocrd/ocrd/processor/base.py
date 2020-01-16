@@ -146,12 +146,13 @@ class Processor(object):
             parameter_help = '  NONE\n'
         else:
             for param_name, param in self.ocrd_tool['parameters'].items():
-                parameter_help += '  "%s" [%s%s]%s\n' % (
+                parameter_help += wrap_text('  "%s" [%s%s] %s' % (
                     param_name,
                     param['type'],
-                    ' - REQUIRED' if param.required else '',
+                    ' - REQUIRED' if 'required' in param and param['required'] else '',
                     param['description']
-                )
+                ), subsequent_indent='    ', width=72, preserve_paragraphs=True)
+                parameter_help += "\n"
         print('''
 Usage: %s [OPTIONS]
 
