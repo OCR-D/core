@@ -1,4 +1,4 @@
-from json import loads
+from json import loads, dumps
 from os.path import join, exists
 from pathlib import Path
 from filecmp import dircmp
@@ -26,7 +26,25 @@ OCRD_TOOL = '''
             "input_file_grp": ["OCR-D-FOO"],
             "output_file_grp": ["OCR-D-BAR"],
             "categories": ["Layout analysis"],
-            "steps": ["layout/analysis"]
+            "steps": ["layout/analysis"],
+            "parameters": {
+                "num-param": {
+                    "type": "number",
+                    "default": 1,
+                    "description": "foo"
+                },
+                "baz": {
+                    "type": "string",
+                    "required": true,
+                    "description": "wow such foo"
+                },
+                "foo": {
+                    "type": "string",
+                    "enum": ["foo"],
+                    "required": false,
+                    "description": "return of the foo"
+                }
+            }
         }
     }
 }
@@ -47,7 +65,6 @@ class TestCli(TestCase):
 
             # normal call
             result = self.runner.invoke(validate_cli, ['tool-json', str(json_path)])
-            print(result.stdout)
             self.assertEqual(result.exit_code, 0)
             # relative path
             with pushd_popd(tempdir):
@@ -56,8 +73,14 @@ class TestCli(TestCase):
             # default path
             with pushd_popd(tempdir):
                 result = self.runner.invoke(validate_cli, ['tool-json'])
-                print(result)
-                print(result.stdout)
+                self.assertEqual(result.exit_code, 0)
+
+    def test_validate_parameter(self):
+        with TemporaryDirectory() as tempdir:
+            json_path = Path(tempdir, 'ocrd-tool.json')
+            json_path.write_text(OCRD_TOOL)
+            with pushd_popd(tempdir):
+                result = self.runner.invoke(validate_cli, ['parameters', 'ocrd-tool.json', 'ocrd-xyz', dumps({"baz": "foo"})])
                 self.assertEqual(result.exit_code, 0)
 
 

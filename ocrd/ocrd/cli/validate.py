@@ -52,7 +52,7 @@ def validate_parameters(ocrd_tool, executable, param_json):
     '''
     with codecs.open(ocrd_tool, encoding='utf-8') as f:
         ocrd_tool = loads(f.read())
-    _inform_of_result(ParameterValidator(ocrd_tool[executable]).validate(parse_json_string_or_file(param_json)))
+    _inform_of_result(ParameterValidator(ocrd_tool['tools'][executable]).validate(parse_json_string_or_file(param_json)))
 
 @validate_cli.command('page')
 @click.argument('page')
