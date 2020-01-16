@@ -1,5 +1,6 @@
 import os
 import json
+from click import wrap_text
 import subprocess
 from ocrd_utils import getLogger
 from ocrd_validators import ParameterValidator
@@ -145,7 +146,12 @@ class Processor(object):
             parameter_help = '  NONE\n'
         else:
             for param_name, param in self.ocrd_tool['parameters'].items():
-                parameter_help += '  "%s" [%s] %s\n' % (param_name, param['type'], param['description'])
+                parameter_help += '  "%s" [%s%s]%s\n' % (
+                    param_name,
+                    param['type'],
+                    ' - REQUIRED' if param.required else '',
+                    param['description']
+                )
         print('''
 Usage: %s [OPTIONS]
 
