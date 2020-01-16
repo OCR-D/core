@@ -180,7 +180,7 @@ Options:
 
     def verify(self):
         """
-        Verify that the input is fulfills the processor's requirements.
+        Verify that the input fulfills the processor's requirements.
         """
         return True
 
