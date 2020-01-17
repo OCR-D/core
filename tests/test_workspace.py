@@ -164,6 +164,13 @@ class TestWorkspace(TestCase):
             # no error
             workspace.remove_file_group('I DO NOT EXIST', force=True)
 
+    def test_remove_file_group_rmdir(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            workspace = Workspace(self.resolver, directory=tempdir)
+            self.assertTrue(exists(join(tempdir, 'OCR-D-IMG')))
+            workspace.remove_file_group('OCR-D-IMG', recursive=True)
+            self.assertFalse(exists(join(tempdir, 'OCR-D-IMG')))
+
     def test_download_to_directory_from_workspace_download_file(self):
         """
         https://github.com/OCR-D/core/issues/342

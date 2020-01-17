@@ -1,5 +1,5 @@
 import io
-from os import makedirs, unlink
+from os import makedirs, unlink, listdir
 from pathlib import Path
 
 import cv2
@@ -159,7 +159,11 @@ class Workspace():
                 self.remove_file(f.ID, force=force, keep_file=keep_files)
         if USE in self.mets.file_groups:
             self.mets.remove_file_group(USE)
-        # TODO remove empty dirs
+        # XXX this only removes directories in the workspace if they are empty
+        # and named after the fileGrp which is a convention in OCR-D.
+        with pushd_popd(self.directory):
+            if Path(USE).is_dir() and not listdir(USE):
+                Path(USE).rmdir()
 
     def add_file(self, file_grp, content=None, **kwargs):
         """
