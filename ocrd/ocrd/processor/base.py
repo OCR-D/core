@@ -105,7 +105,8 @@ def generate_processor_help(ocrd_tool):
             parameter_help += wrap_text('  "%s" [%s%s] %s' % (
                 param_name,
                 param['type'],
-                ' - REQUIRED' if 'required' in param and param['required'] else '',
+                ' - REQUIRED' if 'required' in param and param['required'] else
+                ' - %s' % param['default'] if 'default' in param else '',
                 param['description']
             ), subsequent_indent='    ', width=72, preserve_paragraphs=True)
             parameter_help += "\n"
@@ -113,11 +114,6 @@ def generate_processor_help(ocrd_tool):
 Usage: %s [OPTIONS]
 
   %s
-
-Parameters:
-%s
-Default Wiring:
-  %s -> %s
 
 Options:
   -V, --version                   Show version
@@ -132,6 +128,11 @@ Options:
   -w, --working-dir TEXT          Working Directory
   -m, --mets TEXT                 METS to process
   -h, --help                      This help message
+
+Parameters:
+%s
+Default Wiring:
+  %s -> %s
 
 ''' % (
     ocrd_tool['executable'],
