@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * layout of --help, #411
+
+Fixed:
+
+  * typos, #414
+
 ## [2.2.2] - 2020-01-16
 
 Added:
