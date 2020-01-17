@@ -107,7 +107,6 @@ def generate_processor_help(ocrd_tool):
                 param['type'],
                 ' - REQUIRED' if 'required' in param and param['required'] else
                 ' - %s' % param['default'] if 'default' in param else '',
-                ' - %s' % param['default'] if 'default' in param else '',
                 param['description']
             ), subsequent_indent='    ', width=72, preserve_paragraphs=True)
             parameter_help += "\n"
