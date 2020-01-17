@@ -114,11 +114,6 @@ Usage: %s [OPTIONS]
 
   %s
 
-Parameters:
-%s
-Default Wiring:
-  %s -> %s
-
 Options:
   -V, --version                   Show version
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
@@ -132,6 +127,11 @@ Options:
   -w, --working-dir TEXT          Working Directory
   -m, --mets TEXT                 METS to process
   -h, --help                      This help message
+
+Parameters:
+%s
+Default Wiring:
+  %s -> %s
 
 ''' % (
     ocrd_tool['executable'],
