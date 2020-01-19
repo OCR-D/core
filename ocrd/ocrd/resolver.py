@@ -46,7 +46,7 @@ class Resolver():
         if not url:
             raise Exception("'url' must be a string")
         if not directory:
-            raise Exception("'directory' must be a string")  # acutally Path would also work
+            raise Exception("'directory' must be a string")  # actually Path would also work
 
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)

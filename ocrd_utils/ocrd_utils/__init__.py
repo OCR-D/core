@@ -207,7 +207,7 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
        (i.e. coordinate system gets translated by the center in
        opposite direction, rotated purely, and translated back;
        the latter involves an additional offset from the increase
-       in canvas size necessary to accomodate all points).
+       in canvas size necessary to accommodate all points).
 
     Return the rounded numpy array of the resulting polygon.
     """
@@ -242,7 +242,7 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
        (i.e. coordinate system gets translated by the center in
        opposite direction, rotated purely, and translated back;
        the latter involves an additional offset from the increase
-       in canvas size necessary to accomodate all points).
+       in canvas size necessary to accommodate all points).
 
     Return the rounded numpy array of the resulting polygon.
     """
@@ -452,7 +452,7 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     Moreover, if ``transparency`` is true, then add an alpha channel
     from the polygon mask (i.e. everything outside the polygon will
     be transparent, for those consumers that can interpret alpha channels).
-    Images which already have an alpha channel will have it shrinked
+    Images which already have an alpha channel will have it shrunk
     from the polygon mask (i.e. everything outside the polygon will
     be transparent, in addition to existing transparent pixels).
     
