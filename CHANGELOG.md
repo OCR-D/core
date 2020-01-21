@@ -12,6 +12,7 @@ Changed:
 
 Fixed:
 
+  * `mets_basename` was not respected in `ocrd workspace init`, #415, #417
   * typos, #414
 
 Added:
