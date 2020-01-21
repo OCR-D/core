@@ -8,10 +8,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * layout of --help, #411
+  * OcrdMets: Removing the last file for a physical page will remove the physical page
 
 Fixed:
 
   * typos, #414
+
+Added:
+
+  * OcrdMets.remove_physical_page to remove `structMap[@TYPE="physical"]` entries
 
 ## [2.2.2] - 2020-01-16
 

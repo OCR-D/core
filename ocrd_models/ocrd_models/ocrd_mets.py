@@ -245,7 +245,7 @@ class OcrdMets(OcrdXmlDocument):
         log.info("remove_file(%s)" % ID)
         ocrd_file = self.find_files(ID)
         if not ocrd_file:
-            raise Exception("File not found: %s" % ID)
+            raise FileNotFoundError("File not found: %s" % ID)
         ocrd_file = ocrd_file[0]
 
         # Delete the physical page ref
@@ -253,10 +253,10 @@ class OcrdMets(OcrdXmlDocument):
             log.info("Delete fptr element %s for page '%s'", fptr, ID)
             page_div = fptr.getparent()
             page_div.remove(fptr)
-            # TODO delete empty pages
-            #  if not page_div.getchildren():
-            #      log.info("Delete empty page %s", page_div)
-            #      page_div.getparent().remove(page_div)
+            # delete empty pages
+            if not page_div.getchildren():
+                log.info("Delete empty page %s", page_div)
+                page_div.getparent().remove(page_div)
 
         # Delete the file reference
         # pylint: disable=protected-access
@@ -317,3 +317,10 @@ class OcrdMets(OcrdXmlDocument):
             ocrd_file.ID, namespaces=NS)
         if ret:
             return ret[0]
+
+    def remove_physical_page(self, ID):
+        mets_div = self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % ID,
+            namespaces=NS)
+        if mets_div:
+            mets_div[0].getparent().remove(mets_div[0])

@@ -153,6 +153,19 @@ class TestOcrdMets(TestCase):
         """)
         self.assertIn('Őh śéé Áŕ', mets.to_xml().decode('utf-8'))
 
+    def test_remove_page(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
+            mets.remove_physical_page('PHYS_0001')
+            self.assertEqual(mets.physical_pages, ['PHYS_0002', 'PHYS_0005'])
+
+    def test_remove_page_after_remove_file(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
+            mets.remove_file('FILE_0005_IMAGE')
+            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002'])
 
     def test_remove_file_group(self):
         """
