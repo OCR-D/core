@@ -5,7 +5,7 @@ from ocrd_validators.page_validator import get_text, set_text, ConsistencyError
 from ocrd_models.ocrd_page import parse, TextEquivType
 from ocrd_utils import pushd_popd
 
-FAULTY_GLYPH_PAGE_FILENAME = filename=assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml')
+FAULTY_GLYPH_PAGE_FILENAME = assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml')
 
 class TestPageValidator(TestCase):
 

@@ -63,7 +63,7 @@ class ProcessorTask():
             raise Exception(report.errors)
         if 'output_file_grp' in self.ocrd_tool_json and not self.output_file_grps:
             raise Exception("Processor requires output_file_grp but none was provided.")
-        return True
+        return report
 
     def __str__(self):
         ret = '%s -I %s -O %s' % (
@@ -90,12 +90,14 @@ def validate_tasks(tasks, workspace):
             if not input_file_grp in prev_output_file_grps:
                 report.add_error("Input file group not contained in METS or produced by previous steps: %s" % input_file_grp)
         # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
-        if len(prev_output_file_grps) != len(set(prev_output_file_grps)):
-            report.add_error("Output file group specified multiple times: %s" % 
-                [grp for grp, count in Counter(prev_output_file_grps).items() if count >= 2])
+        # XXX Thu Jan 16 20:14:17 CET 2020 still not sufficiently clever.
+        #  if len(prev_output_file_grps) != len(set(prev_output_file_grps)):
+        #      report.add_error("Output file group specified multiple times: %s" % 
+        #          [grp for grp, count in Counter(prev_output_file_grps).items() if count >= 2])
         prev_output_file_grps += task.output_file_grps
     if not report.is_valid:
         raise Exception("Invalid task sequence input/output file groups: %s" % report.errors)
+    return report
 
 
 def run_tasks(mets, log_level, page_id, task_strs):
