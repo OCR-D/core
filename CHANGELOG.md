@@ -13,6 +13,10 @@ Fixed:
 
   * typos, #414
 
+Added:
+
+  * OcrdMets.remove_physical_page to remove `structMap[@TYPE="physical"]` entries
+
 ## [2.2.2] - 2020-01-16
 
 Added:

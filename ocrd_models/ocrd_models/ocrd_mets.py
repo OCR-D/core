@@ -317,3 +317,10 @@ class OcrdMets(OcrdXmlDocument):
             ocrd_file.ID, namespaces=NS)
         if ret:
             return ret[0]
+
+    def remove_physical_page(self, ID):
+        mets_div = self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % ID,
+            namespaces=NS)
+        if mets_div:
+            mets_div[0].getparent().remove(mets_div[0])
