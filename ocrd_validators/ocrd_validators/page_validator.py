@@ -3,6 +3,7 @@ API for validating `OcrdPage <../ocrd_models/ocrd_models.ocrd_page.html>`_.
 """
 import re
 from shapely.geometry import Polygon, LineString
+from shapely.validation import explain_validity
 
 from ocrd_utils import getLogger, polygon_from_points, deprecated_alias
 from ocrd_models.ocrd_page import parse
@@ -118,7 +119,7 @@ class CoordinateValidityError(Exception):
      self-intersect or be non-contiguous or be negative.)
     """
 
-    def __init__(self, tag, ID, file_id, points):
+    def __init__(self, tag, ID, file_id, points, reason='unknown'):
         """
         Construct a new CoordinateValidityError.
 
@@ -126,14 +127,15 @@ class CoordinateValidityError(Exception):
             tag (string): Level of the offending element (child)
             ID (string): ``ID`` of the offending element (child)
             points (string): Coordinate points
+            reason (string): description of the problem
         """
         self.tag = tag
         self.ID = ID
         self.file_id = file_id
         self.points = points
         super(CoordinateValidityError, self).__init__(
-            "INVALIDITY in %s ID '%s' of '%s': coords '%s'" % (
-                tag, ID, file_id, points))
+            "INVALIDITY in %s ID '%s' of '%s': coords '%s' - %s" % (
+                tag, ID, file_id, points, reason))
 
 def compare_without_whitespace(a, b):
     """
@@ -168,12 +170,17 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
         if parent:
             parent_points = parent.get_Coords().points
             node_poly = Polygon(polygon_from_points(parent_points))
-            if (not node_poly.is_valid
-                or node_poly.is_empty
-                or node_poly.bounds[0] < 0
-                or node_poly.bounds[1] < 0
-                or node_poly.length < 4):
-                report.add_error(CoordinateValidityError(tag, node_id, file_id, parent_points))
+            reason = ''
+            if not node_poly.is_valid:
+                reason = explain_validity(node_poly)
+            elif node_poly.is_empty:
+                reason = 'is empty'
+            elif node_poly.bounds[0] < 0 or node_poly.bounds[1] < 0:
+                reason = 'is negative'
+            elif node_poly.length < 4:
+                reason = 'has too few points'
+            if reason:
+                report.add_error(CoordinateValidityError(tag, node_id, file_id, parent_points, reason))
                 log.debug("Invalid coords of %s %s", tag, node_id)
                 consistent = False
         else:
@@ -209,12 +216,17 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
         if isinstance(node, TextLineType) and check_baseline and node.get_Baseline():
             baseline_points = node.get_Baseline().points
             baseline_line = LineString(polygon_from_points(baseline_points))
-            if (not baseline_line.is_valid
-                or baseline_line.is_empty
-                or baseline_line.bounds[0] < 0
-                or baseline_line.bounds[1] < 0
-                or baseline_line.length < 4):
-                report.add_error(CoordinateValidityError("Baseline", node_id, file_id, baseline_points))
+            reason = ''
+            if not baseline_line.is_valid:
+                reason = explain_validity(baseline_line)
+            elif baseline_line.is_empty:
+                reason = 'is empty'
+            elif baseline_line.bounds[0] < 0 or baseline_line.bounds[1] < 0:
+                reason = 'is negative'
+            elif baseline_line.length < 2:
+                reason = 'has too few points'
+            if reason:
+                report.add_error(CoordinateValidityError("Baseline", node_id, file_id, baseline_points, reason))
                 log.debug("Invalid coords of baseline in %s", node_id)
                 consistent = False
             elif not baseline_line.within(node_poly):
