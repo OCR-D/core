@@ -135,7 +135,7 @@ Changed:
 Changed:
 
   * `-m/--mets` is not required anymore, #301
-  * `ocrd workspace prune-files`: Throw on error removing non-existant file
+  * `ocrd workspace prune-files`: Throw on error removing non-existent file
   * `-p/--parameter` argument accepts raw JSON as well now, #239
 
 Fixed:
@@ -527,7 +527,7 @@ Added:
 
 Fixes:
 
-  * CLI: `-k` on `workspace find` for non-existant fields, #133
+  * CLI: `-k` on `workspace find` for non-existent fields, #133
   * CLI: Persist downloads in METS, #136
   * CLI: `workspace find --download` will download to subdir of fileGrp, #137
 

@@ -159,7 +159,7 @@ class WorkspaceValidator():
             if not self.mets.find_files(url=imageFilename):
                 self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existant local file")
+                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file")
 
     def _validate_dimension(self):
         """
