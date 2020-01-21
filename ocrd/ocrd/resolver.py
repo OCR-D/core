@@ -175,4 +175,4 @@ class Resolver():
         log.info("Writing METS to %s", mets_path)
         mets_path.write_bytes(mets.to_xml(xmllint=True))
 
-        return Workspace(self, directory, mets)
+        return Workspace(self, directory, mets, mets_basename=mets_basename)

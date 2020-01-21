@@ -264,5 +264,13 @@ class TestCli(TestCase):
                 self.assertEqual(full_vs_copied.left_only, [])
                 self.assertEqual(full_vs_copied.right_only, [])
 
+    def test_mets_basename(self):
+        with TemporaryDirectory() as tempdir:
+            with pushd_popd(tempdir):
+                result = self.runner.invoke(workspace_cli, ['-M', 'foo.xml', 'init', '.'])
+                self.assertEqual(result.exit_code, 0)
+                self.assertTrue(exists('foo.xml'))
+                self.assertFalse(exists('mets.xml'))
+
 if __name__ == '__main__':
     main()
