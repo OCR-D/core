@@ -253,10 +253,10 @@ class OcrdMets(OcrdXmlDocument):
             log.info("Delete fptr element %s for page '%s'", fptr, ID)
             page_div = fptr.getparent()
             page_div.remove(fptr)
-            # TODO delete empty pages
-            #  if not page_div.getchildren():
-            #      log.info("Delete empty page %s", page_div)
-            #      page_div.getparent().remove(page_div)
+            # delete empty pages
+            if not page_div.getchildren():
+                log.info("Delete empty page %s", page_div)
+                page_div.getparent().remove(page_div)
 
         # Delete the file reference
         # pylint: disable=protected-access

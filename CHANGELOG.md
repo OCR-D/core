@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * layout of --help, #411
+  * OcrdMets: Removing the last file for a physical page will remove the physical page
 
 Fixed:
 
