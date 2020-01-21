@@ -17,6 +17,7 @@ Fixed:
 Added:
 
   * OcrdMets.remove_physical_page to remove `structMap[@TYPE="physical"]` entries
+  * `ocrd validate` CLI to validate task groups, PAGE XML and processor parameters, #245, #384
 
 ## [2.2.2] - 2020-01-16
 
