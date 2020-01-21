@@ -196,9 +196,10 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                     or child_poly.bounds[0] < 0
                     or child_poly.bounds[1] < 0
                     or child_poly.length < 4):
-                    report.add_error(CoordinateValidityError(child_tag, child.id, file_id, child_points))
-                    log.debug("Invalid coords of %s %s", child_tag, child.id)
-                    consistent = False
+                    # report.add_error(CoordinateValidityError(child_tag, child.id, file_id, child_points))
+                    # log.debug("Invalid coords of %s %s", child_tag, child.id)
+                    # consistent = False
+                    pass # already reported in recursive call above
                 elif not child_poly.within(node_poly):
                     # TODO: automatic repair?
                     report.add_error(CoordinateConsistencyError(tag, child.id, file_id,
