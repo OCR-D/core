@@ -1,5 +1,6 @@
 from json import dumps, loads
 import codecs
+from pathlib import Path
 import sys
 
 import click
@@ -24,9 +25,11 @@ pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
 # ----------------------------------------------------------------------
 
 @click.group('ocrd-tool', help='Work with ocrd-tool.json JSON_FILE')
-@click.argument('json_file')
+@click.option('-f', '--json-file', help="Path to ocrd-tool.json", default="ocrd-tool.json")
 @click.pass_context
 def ocrd_tool_cli(ctx, json_file):
+    if not Path(json_file).exists():
+        raise FileNotFoundError("No such file: %s" % json_file)
     ctx.obj = OcrdToolCtx(json_file)
 
 # ----------------------------------------------------------------------
