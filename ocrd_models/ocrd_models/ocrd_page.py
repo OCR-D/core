@@ -2,6 +2,7 @@
 API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
+from ocrd_models.constants import NAMESPACES as NS
 from time import perf_counter
 from ocrd_utils import getLogger
 import _ctypes
@@ -146,6 +147,32 @@ class OcrdPageExt():
         el = self.get_el_by_id(ID)
         if el is not None:
             return self.get_obj_for_el(el)
+
+    def get_all_regions_el(self, regions=None):
+        if not regions:
+            regions = [
+                'Text',
+                'Image',
+                'LineDrawing',
+                'Graphic',
+                'Table',
+                'Chart',
+                'Map',
+                'Separator',
+                'Maths',
+                'Chem',
+                'Music',
+                'Advert',
+                'Noise',
+                'Unknown',
+                'Custom'
+            ]
+        xpath = '|'.join(['//page:%sRegion' % t for t in regions])
+        els = self.root_el.xpath(xpath, namespaces=NS)
+        return els if els is not None else []
+
+    def get_all_regions_obj(self, regions=None):
+        return [self.get_obj_for_el(el) for el in self.get_all_regions_el(regions)]
 
 def parse(*args, **kwargs):
     """

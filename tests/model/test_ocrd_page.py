@@ -115,7 +115,7 @@ class TestOcrdPage(TestCase):
         word.add_Glyph(glyph)
         glyph.add_AlternativeImage(AlternativeImageType())
 
-    def test_ocrd_ext(self):
+    def test_ocrd_ext_mapping(self):
         ext = self.pcgts.ocrd_ext
         page_obj = self.pcgts.get_Page()
         page_el = ext.get_el_for_obj(page_obj)
@@ -125,6 +125,13 @@ class TestOcrdPage(TestCase):
         self.assertEqual(ext.get_parent_obj_for_el(page_el), self.pcgts)
         self.assertEqual(ext.get_parent_el_for_obj(page_obj).get('pcGtsId'), 'glyph-test')
         self.assertEqual(ext.get_obj_by_id('r0'), page_obj.get_TextRegion()[0])
+
+    def test_ocrd_ext_get_all_regions(self):
+        ext = self.pcgts.ocrd_ext
+        ext.update_mappings()
+        self.assertEqual(len(ext.get_all_regions_el()), 6)
+        self.assertEqual(len(ext.get_all_regions_el(['Separator'])), 1)
+        self.assertEqual(ext.get_all_regions_obj(['Text'])[0], self.pcgts.get_Page().get_TextRegion()[0])
 
 if __name__ == '__main__':
     main()
