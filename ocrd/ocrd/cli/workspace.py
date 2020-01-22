@@ -50,8 +50,10 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 @click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
 @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
-@click.argument('mets_url')
+@click.argument('mets_url', nargs=-1)
 def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
+    if not mets_url:
+        mets_url = 'mets.xml'
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
@@ -81,11 +83,13 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
 
-    If WORKSPACE_DIR is not provided, creates a temporary directory.
+    If WORKSPACE_DIR is not provided, use the current working directory
     """
+    if not workspace_dir:
+        workspace_dir = '.'
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
-        dst_dir=os.path.abspath(workspace_dir if workspace_dir else mkdtemp(prefix=TMP_PREFIX)),
+        dst_dir=os.path.abspath(workspace_dir),
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
@@ -99,7 +103,7 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
 @workspace_cli.command('init')
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
-@click.argument('directory', required=True)
+@click.argument('directory', required=False)
 @pass_workspace
 def workspace_create(ctx, clobber_mets, directory):
     """
@@ -107,6 +111,8 @@ def workspace_create(ctx, clobber_mets, directory):
 
     Use '.' for $PWD"
     """
+    if not directory:
+        directory = '.'
     workspace = ctx.resolver.workspace_from_nothing(
         directory=os.path.abspath(directory),
         mets_basename=ctx.mets_basename,

@@ -8,6 +8,9 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * More expressive coordination validation, #418
+  * `ocrd workspace init` shortcut for `ocrd workspace init .`, #419
+  * `ocrd workspace validate` shortcut for `ocrd workspace validate mets.xml`, #419
+  * `ocrd workspace clone <METS_URL>` shortcut for `ocrd workspace <METS_URL> .`, #419
 
 ## [2.3.0] - 2020-01-21
 
