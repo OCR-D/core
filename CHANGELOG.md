@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * More expressive coordination validation, #418
+
 ## [2.3.0] - 2020-01-21
 
 Changed:
