@@ -43,5 +43,6 @@ class ParameterValidator(JsonValidator):
         super(ParameterValidator, self).__init__({
             "type": "object",
             "required": required,
+            "additionalProperties": False,
             "properties": p
         }, DefaultValidatingDraft4Validator)

@@ -5,19 +5,161 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * More expressive coordination validation, #418
+  * `ocrd workspace init` shortcut for `ocrd workspace init .`, #419
+  * `ocrd workspace validate` shortcut for `ocrd workspace validate mets.xml`, #419
+  * `ocrd workspace clone <METS_URL>` shortcut for `ocrd workspace <METS_URL> .`, #419
+
+## [2.3.0] - 2020-01-21
+
+Changed:
+
+  * layout of --help, #411
+  * OcrdMets: Removing the last file for a physical page will remove the physical page
+
+Fixed:
+
+  * `mets_basename` was not respected in `ocrd workspace init`, #415, #417
+  * typos, #414
+
+Added:
+
+  * OcrdMets.remove_physical_page to remove `structMap[@TYPE="physical"]` entries
+  * `ocrd validate` CLI to validate task groups, PAGE XML and processor parameters, #245, #384
+
+## [2.2.2] - 2020-01-16
+
+Added:
+
+  * Validation of input/output file groups before running a processor/task sequence, #392
+  * Improved `--help` for both python and bashlib processors, #402, #408
+
+Fixed:
+
+  * bashlib: Calling bashlib processor w/o parameters, #381, #400
+  * bashlib: syntax error, regression from 2d89c22ae3. #410
+
+## [2.2.1] - 2020-01-14
+
+Fixed:
+
+  * OcrdExif: PNG metadata extraction was broken, #395, #396
+  * Remove the trivial and error-prone  image caching feature in resolver, #399
+  * When creating files with workspace.add_file, single-component file paths (i.e. just the basename of a file) were treated as directories, #404
+  * When downloading files to a workspace, check first whether those files to be added already exist on disk and are within the workspace directory., #404
+
+## [2.2.0] - 2020-01-10
+
+Fixed:
+
+  * PIL.Image.open'ed files weren't closed, #390
+  * resolver: if mets_url is relative path, resolve before anything else, #319, #397
+  * Resolver.workspace_from_url: Create dst_dir before resolve for py `<=` 3.5, #330, #393
+  * fix help string for -m/--mets, fix #263, #391
+
+Changed:
+
+  * downgrade filegrp syntax errors to warnings, #364, #389
+
+## [2.1.3] - 2020-01-08
+
+Changed:
+
+  * bagit-profile matches changes from spec v3.4.2 (metadata dir)
+
+## [2.1.2] - 2020-01-06
+
+Changed:
+
+  * have save_mets use UTF-8 encoding for byte-serialization (no entities), #388
+
+Fixed:
+
+  * regression from #374, #387
+
+## [2.1.1] - 2020-01-02
+
+Added:
+
+  * PAGE validator: coordinate self-validity and mutual consistency, #374
+
+Fixed:
+
+  * Add more related mime types and fix image/jpeg, #382
+
+## [2.1.0] - 2019-12-20
+
+Added:
+
+  * Workspace validation will check cardinality of images per file is 1, #243, OCR-D/spec#132
+
+Changed:
+  
+  * bashlib will no longer warn about "non-conformant" file group names, #365
+  * Invalid `file:/` URL will now raise exceptions, #373
+  * image_from_*: increase tolerance for size mismatch after rotation to 2px, #371
+
+## [2.0.2] - 2019-12-02
+
+Changed:
+
+  * `ocrd process`: Validate parameters when validating a task
+  * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
+  * Parameter validation: Raise exception for unknown parameters
+  * `ocrd ocrd-tool validate`: Raise exception for unknown keys in JSON
+
+## [2.0.1] - 2019-11-26
+
+Fixed:
+
+  * METS `CREATEDATE` date format now ISO8601, #360
+  * `ocrd workspace find` allow outputting file group, #359
+  * processor decorator: `--version` should succeed independent of parameters, #358
+
+Changed:
+
+  * `ocrd process` uses the ocrd-tool.json of the tools to check whether output file group necessary, #296
+  * Dockerfile: Revert to Ubuntu 18.04 for LTS compatibility, #344
+  * pixel density warnings downgraded further to "notice", #361
+
+## [2.0.0] - 2019-11-05
+
+Changed:
+
+  * image_from_page etc: allow filling with background or transparency
+  * :fire: API changes, #311, #327
+  * Dockerfile: Omit `ENTRYPOINT`, OCR-D/spec#130, #340
+  * Relax pixel density validation errors to warnings, OCR-D/spec#129, #339
+
+## [1.0.1] - 2019-10-25
+
+Fixed:
+
+  * Add `dimension` to workspace validation skip list, #329
+  * Update ocrd-tool.json schema to spec 3.3.0 (no output_file_grp, no syntax restriction on content-type)
+  * PAGE XML output references xsi:schemaLocation, #331
+  * Update Pillow to 6.2.0
+
+Changed:
+  * `ocrd process`: task validation takes processor's ocrd-tool into account, #296
+
+## [1.0.0] - 2019-10-18
+
 * Workspace validation: Validate that files mentioned in pc:Page/@imageFilename exist in METS and on FS, #309
 * `ocrd ocrd-tool parse-params` has the string-or-filepath logic for -p/--parameter as for the [CLI](https://ocr-d.github.io/cli#-p---parameter-param_json)
 
 ## [1.0.0b19] - 2019-09-10
 
-* image_from_page: allow filtering by feature (@comment), #294
+* image_from_page etc: allow filtering by feature (@comments), #294
 
 ## [1.0.0b18] - 2019-09-06
 
 Changed:
 
   * `-m/--mets` is not required anymore, #301
-  * `ocrd workspace prune-files`: Throw on error removing non-existant file
+  * `ocrd workspace prune-files`: Throw on error removing non-existent file
   * `-p/--parameter` argument accepts raw JSON as well now, #239
 
 Fixed:
@@ -28,7 +170,7 @@ Fixed:
   * Processor: `chdir` to workspace directory on init so relative files resolve properly
   * typos in docstrings
   * README: 'module' -> 'package'
-  * workspace.image_from_page: logic with rotation/angle
+  * workspace.image_from_page etc: logic with rotation/angle
   * Adapted test suite to OCR-D/assets now with file extensions
 
 Added:
@@ -409,7 +551,7 @@ Added:
 
 Fixes:
 
-  * CLI: `-k` on `workspace find` for non-existant fields, #133
+  * CLI: `-k` on `workspace find` for non-existent fields, #133
   * CLI: Persist downloads in METS, #136
   * CLI: `workspace find --download` will download to subdir of fileGrp, #137
 
@@ -587,6 +729,21 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.3.0]: ../../compare/v2.3.0...v2.2.2
+[2.2.2]: ../../compare/v2.2.2...v2.2.1
+[2.2.1]: ../../compare/v2.2.1...v2.2.0
+[2.2.0]: ../../compare/v2.2.0...v2.1.3
+[2.1.3]: ../../compare/v2.1.3...v2.1.2
+[2.1.2]: ../../compare/v2.1.2...v2.1.1
+[2.1.1]: ../../compare/v2.1.1...v2.1.0
+[2.1.0]: ../../compare/v2.1.0...v2.0.2
+[2.0.2]: ../../compare/v2.0.2...v2.0.1
+[2.0.1]: ../../compare/v2.0.1...v2.0.0
+[2.0.0]: ../../compare/v2.0.0...v1.0.1
+[1.0.1]: ../../compare/v1.0.1...v1.0.0
+[1.0.0]: ../../compare/v1.0.0...v1.0.0b19
+[1.0.0b19]: ../../compare/v1.0.0b19...v1.0.0b18
+[1.0.0b18]: ../../compare/v1.0.0b18...v1.0.0b17
 [1.0.0b17]: ../../compare/v1.0.0b17...v1.0.0b16
 [1.0.0b16]: ../../compare/v1.0.0b16...v1.0.0b15
 [1.0.0b15]: ../../compare/v1.0.0b15...v1.0.0b14

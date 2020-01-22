@@ -2,7 +2,9 @@
 Validating a workspace.
 """
 import re
+from traceback import format_exc
 from pathlib import Path
+from contextlib import contextmanager
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
 from ocrd_modelfactory import page_from_file
@@ -22,7 +24,33 @@ class WorkspaceValidator():
     Validates an OCR-D/METS workspace against the specs.
     """
 
-    def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False, page_strictness='strict'):
+    @staticmethod
+    def check_file_grp(workspace, input_file_grp=None, output_file_grp=None, report=None):
+        """
+        Return a report on whether input_file_grp is/are in workspace.mets and output_file_grp is/are not.
+        To be run before processing
+        """
+        if not report:
+            report = ValidationReport()
+        if isinstance(input_file_grp, str):
+            input_file_grp = input_file_grp.split(',')
+        if isinstance(output_file_grp, str):
+            output_file_grp = output_file_grp.split(',')
+
+        log.info("input_file_grp=%s output_file_grp=%s" % (input_file_grp, output_file_grp))
+        print(input_file_grp)
+        if input_file_grp:
+            for grp in input_file_grp:
+                if grp not in workspace.mets.file_groups:
+                    report.add_error("Input fileGrp[@USE='%s'] not in METS!" % grp)
+        if output_file_grp:
+            for grp in output_file_grp:
+                if grp in workspace.mets.file_groups:
+                    report.add_error("Output fileGrp[@USE='%s'] already in METS!" % grp)
+        return report
+
+    def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False,
+                 page_strictness='strict', page_coordinate_consistency='poly'):
         """
         Construct a new WorkspaceValidator.
 
@@ -33,6 +61,7 @@ class WorkspaceValidator():
             skip (list):
             download (boolean):
             page_strictness ("strict"|"lax"|"fix"|"off"):
+            page_coordinate_consistency ("poly"|"baseline"|"both"|"off"):
         """
         self.report = ValidationReport()
         self.skip = skip if skip else []
@@ -43,6 +72,7 @@ class WorkspaceValidator():
         self.mets_url = mets_url
         self.download = download
         self.page_strictness = page_strictness
+        self.page_coordinate_consistency = page_coordinate_consistency
 
         self.src_dir = src_dir
         self.workspace = None
@@ -77,20 +107,25 @@ class WorkspaceValidator():
             self.report.add_error("Failed to instantiate workspace: %s" % e)
             return self.report
         with pushd_popd(self.workspace.directory):
-            if 'mets_unique_identifier' not in self.skip:
-                self._validate_mets_unique_identifier()
-            if 'mets_file_group_names' not in self.skip:
-                self._validate_mets_file_group_names()
-            if 'mets_files' not in self.skip:
-                self._validate_mets_files()
-            if 'pixel_density' not in self.skip:
-                self._validate_pixel_density()
-            if 'dimension' not in self.skip:
-                self._validate_dimension()
-            if 'imagefilename' not in self.skip:
-                self._validate_imagefilename()
-            if 'page' not in self.skip:
-                self._validate_page()
+            try:
+                if 'mets_unique_identifier' not in self.skip:
+                    self._validate_mets_unique_identifier()
+                if 'mets_file_group_names' not in self.skip:
+                    self._validate_mets_file_group_names()
+                if 'mets_files' not in self.skip:
+                    self._validate_mets_files()
+                if 'pixel_density' not in self.skip:
+                    self._validate_pixel_density()
+                if 'multipage' not in self.skip:
+                    self._validate_multipage()
+                if 'dimension' not in self.skip:
+                    self._validate_dimension()
+                if 'imagefilename' not in self.skip:
+                    self._validate_imagefilename()
+                if 'page' not in self.skip:
+                    self._validate_page()
+            except Exception:
+                self.report.add_error("Validation aborted with exception: %s" % format_exc())
         return self.report
 
     def _resolve_workspace(self):
@@ -124,7 +159,7 @@ class WorkspaceValidator():
             if not self.mets.find_files(url=imageFilename):
                 self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existant local file")
+                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file")
 
     def _validate_dimension(self):
         """
@@ -141,6 +176,20 @@ class WorkspaceValidator():
             if page.imageWidth != exif.width:
                 self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
 
+    def _validate_multipage(self):
+        """
+        Validate the number of images per file is 1 (TIFF allows multi-page images)
+
+        See `spec <https://ocr-d.github.io/mets#no-multi-page-images>`_.
+        """
+        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
+            if not is_local_filename(f.url) and not self.download:
+                self.report.add_notice("Won't download remote image <%s>" % f.url)
+                continue
+            exif = self.workspace.resolve_image_exif(f.url)
+            if exif.n_frames > 1:
+                self.report.add_error("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
+
     def _validate_pixel_density(self):
         """
         Validate image pixel density
@@ -155,7 +204,7 @@ class WorkspaceValidator():
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)
                 if v is None or v <= 72:
-                    self.report.add_error("Image %s: %s (%s pixels per %s) is too low" % (f.ID, k, v, exif.resolutionUnit))
+                    self.report.add_notice("Image %s: %s (%s pixels per %s) is suspiciously low" % (f.ID, k, v, exif.resolutionUnit))
 
     def _validate_mets_file_group_names(self):
         """
@@ -177,9 +226,9 @@ class WorkspaceValidator():
                 if '-' in category:
                     category, name = category.split('-', 1)
                 if category not in FILE_GROUP_CATEGORIES:
-                    self.report.add_error("Unspecified USE category '%s' in fileGrp '%s'" % (category, fileGrp))
+                    self.report.add_warning("Unspecified USE category '%s' in fileGrp '%s'" % (category, fileGrp))
                 if name is not None and not re.match(r'^[A-Z0-9-]{3,}$', name):
-                    self.report.add_error("Invalid USE name '%s' in fileGrp '%s'" % (name, fileGrp))
+                    self.report.add_warning("Invalid USE name '%s' in fileGrp '%s'" % (name, fileGrp))
 
     def _validate_mets_files(self):
         """
@@ -192,9 +241,12 @@ class WorkspaceValidator():
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
             if not f.pageId:
                 self.report.add_error("File '%s' does not manifest any physical page." % f.ID)
+            if not f.url:
+                self.report.add_error("File '%s' has no mets:Flocat/@xlink:href" % f.ID)
+                continue
             if 'url' not in self.skip and ':/' in f.url:
                 if re.match(r'^file:/[^/]', f.url):
-                    self.report.add_warning("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
+                    self.report.add_error("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
                 scheme = f.url[0:f.url.index(':')]
                 if scheme not in ('http', 'https', 'file'):
                     self.report.add_warning("File '%s' has non-HTTP, non-file URL '%s'" % (f.ID, f.url))
@@ -205,5 +257,8 @@ class WorkspaceValidator():
         """
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
             self.workspace.download_file(ocrd_file)
-            page_report = PageValidator.validate(ocrd_file=ocrd_file, strictness=self.page_strictness)
+            page_report = PageValidator.validate(ocrd_file=ocrd_file,
+                                                 strictness=self.page_strictness,
+                                                 check_coords=self.page_coordinate_consistency in ['poly', 'both'],
+                                                 check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
             self.report.merge_report(page_report)

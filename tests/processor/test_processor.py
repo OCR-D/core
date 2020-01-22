@@ -7,7 +7,16 @@ from tests.base import TestCase, assets, main # pylint: disable=import-error, no
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
 
-DUMMY_TOOL = {'executable': 'ocrd-test', 'steps': ['recognition/post-correction']}
+DUMMY_TOOL = {
+    'executable': 'ocrd-test',
+    'steps': ['recognition/post-correction'],
+    'parameters': {
+        'baz': {
+            'type': 'string',
+            'default': 'bla'
+        }
+    }
+}
 
 class DummyProcessor(Processor):
 

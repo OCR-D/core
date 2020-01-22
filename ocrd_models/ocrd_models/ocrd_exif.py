@@ -6,8 +6,9 @@ from math import sqrt
 
 class OcrdExif():
     """Represents technical image metadata.
-    
+
     Members:
+
     - `width` / `height`: pixel dimensions
     - `photometricInterpretation`: pixel type/depth, e.g.
       '1' for b/w,
@@ -17,7 +18,8 @@ class OcrdExif():
       'F' for floating-point grayscale
       (see PIL concept `mode`)
     - `resolution` / `xResolution` / `yResolution`: pixel density
-    - `resolutionUnits`: unit of measurement (either `inches` or `cm`)
+    - `resolutionUnit`: unit of measurement (either `inches` or `cm`)
+
     """
 
     def __init__(self, img):
@@ -29,6 +31,7 @@ class OcrdExif():
         self.width = img.width
         self.height = img.height
         self.photometricInterpretation = img.mode
+        self.n_frames = img.n_frames if 'n_frames' in img.__dict__ else 1
         #  if img.format == 'PNG':
         #      print(img.info)
         for prop in ['compression', 'photometric_interpretation']:
@@ -36,14 +39,18 @@ class OcrdExif():
         if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
             self.xResolution = int(img.info['dpi'][0])
             self.yResolution = int(img.info['dpi'][1])
-            self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
-        elif img.format == 'JPEG':
+            if img.format == 'TIFF':
+                self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
+            else:
+                self.resolutionUnit = 'inches'
+        elif img.format == 'JPEG' and 'jfif_density' in img.info:
             self.xResolution = img.info['jfif_density'][0]
             self.yResolution = img.info['jfif_density'][1]
             self.resolutionUnit = 'cm' if img.info['jfif_unit'] == 2 else 'inches'
         elif img.format == 'PNG' and 'aspect' in img.info:
             self.xResolution = img.info['aspect'][0]
             self.yResolution = img.info['aspect'][1]
+            self.resolutionUnit = 'inches'
         else:
             #  if img.format == 'JPEG2000':
             #      import sys

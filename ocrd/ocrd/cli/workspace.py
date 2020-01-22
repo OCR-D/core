@@ -47,17 +47,21 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 ''')
 @pass_workspace
 @click.option('-a', '--download', is_flag=True, help="Download all files")
-@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
-@click.option('--page-strictness', help="How strict to check PAGE consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
-@click.argument('mets_url')
-def validate_workspace(ctx, mets_url, download, skip, page_strictness):
+@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
+@click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
+@click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
+@click.argument('mets_url', nargs=-1)
+def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
+    if not mets_url:
+        mets_url = 'mets.xml'
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
         src_dir=ctx.directory,
         skip=skip,
         download=download,
-        page_strictness=page_strictness
+        page_strictness=page_textequiv_consistency,
+        page_coordinate_consistency=page_coordinate_consistency
     )
     print(report.to_xml())
     if not report.is_valid:
@@ -79,11 +83,13 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
 
-    If WORKSPACE_DIR is not provided, creates a temporary directory.
+    If WORKSPACE_DIR is not provided, use the current working directory
     """
+    if not workspace_dir:
+        workspace_dir = '.'
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
-        dst_dir=os.path.abspath(workspace_dir if workspace_dir else mkdtemp(prefix=TMP_PREFIX)),
+        dst_dir=os.path.abspath(workspace_dir),
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
@@ -97,7 +103,7 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
 @workspace_cli.command('init')
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
-@click.argument('directory', required=True)
+@click.argument('directory', required=False)
 @pass_workspace
 def workspace_create(ctx, clobber_mets, directory):
     """
@@ -105,6 +111,8 @@ def workspace_create(ctx, clobber_mets, directory):
 
     Use '.' for $PWD"
     """
+    if not directory:
+        directory = '.'
     workspace = ctx.resolver.workspace_from_nothing(
         directory=os.path.abspath(directory),
         mets_basename=ctx.mets_basename,
@@ -167,6 +175,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
             'mimetype',
             'pageId',
             'ID',
+            'fileGrp',
             'basename',
             'basename_without_extension',
             'local_filename',
@@ -195,16 +204,17 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('remove')
-@click.option('--force', help="Also delete file in storage if applicable", default=False, is_flag=True)
+@click.option('-k', '--keep-file', help="Do not delete file from file system", default=False, is_flag=True)
+@click.option('-f', '--force', help="Continue even if mets:file or file on file system does not exist", default=False, is_flag=True)
 @click.argument('ID', nargs=-1)
 @pass_workspace
-def workspace_remove_file(ctx, id, force):  # pylint: disable=redefined-builtin
+def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefined-builtin
     """
     Delete file by ID from mets.xml
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     for i in id:
-        workspace.remove_file(i, force=force)
+        workspace.remove_file(i, force=force, keep_file=keep_file)
     workspace.save_mets()
 
 
@@ -218,13 +228,14 @@ def workspace_remove_file(ctx, id, force):  # pylint: disable=redefined-builtin
 
 """)
 @click.option('-r', '--recursive', help="Delete any files in the group before the group itself", default=False, is_flag=True)
-@click.option('-f', '--force', help="Also delete local files", default=False, is_flag=True)
+@click.option('-f', '--force', help="Continue removing even if group or containing files not found in METS", default=False, is_flag=True)
+@click.option('-k', '--keep-files', help="Do not delete files from file system", default=False, is_flag=True)
 @click.argument('GROUP', nargs=-1)
 @pass_workspace
-def remove_group(ctx, group, recursive, force):
+def remove_group(ctx, group, recursive, force, keep_files):
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for g in group:
-        workspace.remove_file_group(g, recursive, force)
+        workspace.remove_file_group(g, recursive=recursive, force=force, keep_files=keep_files)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------

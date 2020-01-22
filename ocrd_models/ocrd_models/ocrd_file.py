@@ -17,7 +17,7 @@ class OcrdFile():
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, instance=None, local_filename=None, mets=None, url=None):
+    def __init__(self, el, mimetype=None, loctype='OTHER', instance=None, local_filename=None, mets=None, url=None):
         """
         Args:
             el (LxmlElement):
@@ -33,6 +33,7 @@ class OcrdFile():
         self.local_filename = local_filename
         self._instance = instance
         self.mets = mets
+        self.loctype = loctype
 
         if url:
             self.url = url
@@ -116,6 +117,48 @@ class OcrdFile():
             raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
         self.mets.set_physical_page_for_file(pageId, self)
 
+
+    @property
+    def loctype(self):
+        """
+        Get the ``LOCTYPE``.
+        """
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        return '' if el_FLocat is None else el_FLocat.get('LOCTYPE')
+
+    @loctype.setter
+    def loctype(self, loctype):
+        """
+        Set the ``LOCTYPE``.
+        """
+        if loctype is None:
+            return
+        loctype = loctype.upper()
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        if el_FLocat is None:
+            el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
+        el_FLocat.set('LOCTYPE', loctype)
+        if loctype == 'OTHER':
+            self.otherloctype = 'FILE'
+        else:
+            self.otherloctype = None
+
+    @property
+    def otherloctype(self):
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        return '' if el_FLocat is None else el_FLocat.get('OTHERLOCTYPE')
+
+    @otherloctype.setter
+    def otherloctype(self, otherloctype):
+        el_FLocat = self._el.find('mets:FLocat', NS)
+        if el_FLocat is None:
+            el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
+        if not otherloctype:
+            if 'OTHERLOCTYPE' in el_FLocat.attrib:
+                del el_FLocat.attrib['OTHERLOCTYPE']
+        else:
+            el_FLocat.set('LOCTYPE', 'OTHER')
+            el_FLocat.set('OTHERLOCTYPE', otherloctype)
 
     @property
     def mimetype(self):

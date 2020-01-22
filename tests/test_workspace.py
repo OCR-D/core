@@ -1,16 +1,16 @@
 from os import walk
 from os.path import join, exists, abspath, basename, dirname
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, mkdtemp
 from shutil import copyfile
 from pathlib import Path
 
-from tests.base import TestCase, assets, main
+from tests.base import TestCase, assets, main, copy_of_directory
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 
-#  from ocrd_utils import setOverrideLogLevel
-#  setOverrideLogLevel('DEBUG')
+from ocrd_utils import setOverrideLogLevel
+setOverrideLogLevel('DEBUG')
 
 TMP_FOLDER = '/tmp/test-core-workspace'
 SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
@@ -47,7 +47,7 @@ class TestWorkspace(TestCase):
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
             ws1.add_file('GRP', ID='ID1', mimetype='image/tiff')
             f = ws1.mets.find_files()[0]
-            self.assertEqual(f.url, '')
+            self.assertEqual(f.url, None)
 
     def test_workspace_add_file_binary_content(self):
         with TemporaryDirectory() as tempdir:
@@ -101,7 +101,24 @@ class TestWorkspace(TestCase):
             self.assertEqual(f, Path('TEMP', '%s.tif' % SAMPLE_FILE_ID))
             self.assertTrue(Path(ws1.directory, f).exists())
 
-    def test_227_1(self):
+    def test_from_url_dst_dir_download(self):
+        """
+        https://github.com/OCR-D/core/issues/319
+        """
+        with TemporaryDirectory() as tempdir:
+            ws_dir = join(tempdir, 'non-existing-for-good-measure')
+            # Create a relative path to trigger #319
+            src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
+            self.resolver.workspace_from_url(src_path, dst_dir=ws_dir, download=True)
+            from os import system
+            system('find %s' % ws_dir)
+            self.assertTrue(Path(ws_dir, 'mets.xml').exists())  # sanity check, mets.xml must exist
+            self.assertTrue(Path(ws_dir, 'OCR-D-GT-PAGE/PAGE_0017_PAGE.xml').exists())
+
+    def test_superfluous_copies_in_ws_dir(self):
+        """
+        https://github.com/OCR-D/core/issues/227
+        """
         def find_recursive(root):
             ret = []
             for _, _, f in walk(root):
@@ -119,17 +136,62 @@ class TestWorkspace(TestCase):
             self.assertEqual(len(find_recursive(wsdir)), 2)
             self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE.tif')))
 
-    #  def test_remove(self):
-    #      with TemporaryDirectory() as tempdir:
-    #          dst_dir =
-    #          ws1 = self.resolver.workspace_from_url(SRC_METS, dst_dir=dst_dir)
-    #          res = ws1.download_url(SAMPLE_FILE_URL)
-    #          print('>>>>>> %s' % res)
-    #          ocrd_file = ws1.remove_file(SAMPLE_FILE_ID)
-    #          print(ocrd_file)
-    #          import os
-    #          self.assertTrue(exists(join(ws1.directory, ocrd_file.local_filename)))
-    #          #  with copy_of_directory(FOLDER_KANT) as tempdir:
+    def test_remove_file_force(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            workspace = Workspace(self.resolver, directory=tempdir)
+            with self.assertRaisesRegex(FileNotFoundError, "not found"):
+                # should fail
+                workspace.remove_file('non-existing-id')
+            # should succeed
+            workspace.remove_file('non-existing-id', force=True)
+
+    def test_remove_file_remote(self):
+        with TemporaryDirectory() as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.add_file('IMG', ID='page1_img', mimetype='image/tiff', url='http://remote')
+            with self.assertRaisesRegex(Exception, "not locally available"):
+                # should fail
+                ws.remove_file('page1_img')
+            # should succeed
+            ws.remove_file('page1_img', force=True)
+
+    def test_remove_file_group_force(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            workspace = Workspace(self.resolver, directory=tempdir)
+            with self.assertRaisesRegex(Exception, "No such fileGrp"):
+                # raise error unless force
+                workspace.remove_file_group('I DO NOT EXIST')
+            # no error
+            workspace.remove_file_group('I DO NOT EXIST', force=True)
+
+    def test_remove_file_group_rmdir(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            workspace = Workspace(self.resolver, directory=tempdir)
+            self.assertTrue(exists(join(tempdir, 'OCR-D-IMG')))
+            workspace.remove_file_group('OCR-D-IMG', recursive=True)
+            self.assertFalse(exists(join(tempdir, 'OCR-D-IMG')))
+
+    def test_download_to_directory_from_workspace_download_file(self):
+        """
+        https://github.com/OCR-D/core/issues/342
+        """
+        #  tempdir = mkdtemp()
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+
+            f1 = ws1.add_file('IMG', ID='page1_img', mimetype='image/tiff', local_filename='test.tif', content='')
+            f2 = ws1.add_file('GT', ID='page1_gt', mimetype='text/xml', local_filename='test.xml', content='')
+
+            self.assertEqual(f1.url, 'test.tif')
+            self.assertEqual(f2.url, 'test.xml')
+
+            # these should be no-ops
+            ws1.download_file(f1)
+            ws1.download_file(f2)
+
+            self.assertEqual(f1.url, 'test.tif')
+            self.assertEqual(f2.url, 'test.xml')
+
 
 if __name__ == '__main__':
     main()

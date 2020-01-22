@@ -30,24 +30,9 @@ ocrd__dumpjson () {
 ## Print usage
 ## 
 ocrd__usage () {
-    echo "
-Usage: $OCRD_TOOL_NAME [OPTIONS]
 
-`ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" description`
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" help
 
-Options:
--l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
-                                Log level
--J, --dump-json                 Dump tool description as JSON and exit
--p, --parameter PATH
--g, --page-id TEXT              ID(s) of the physical page
--O, --output-file-grp TEXT      File group(s) used as output.
--I, --input-file-grp TEXT       File group(s) used as input.
--w, --working-dir TEXT          Working Directory
--m, --mets TEXT                 METS URL to validate  [required]
---help                          Show this message and exit.
--V, --version                   Show version.
-    "
 }
 
 # END-INCLUDE 
@@ -101,17 +86,17 @@ ocrd__parse_argv () {
         ocrd__raise "log level '${ocrd__argv[log_level]}' is invalid"
     fi
 
-    if [[ ! "${ocrd__argv[input_file_grp]:=OCR-D-IMG}" =~ OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?(,OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?)* ]];then
-        echo >&2 "WARNING: input fileGrp '${ocrd__argv[input_file_grp]}' does not conform to OCR-D spec"
-    fi
+    # if [[ ! "${ocrd__argv[input_file_grp]:=OCR-D-IMG}" =~ OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?(,OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?)* ]];then
+    #     echo >&2 "WARNING: input fileGrp '${ocrd__argv[input_file_grp]}' does not conform to OCR-D spec"
+    # fi
 
-    if [[ ! "${ocrd__argv[output_file_grp]:=OCR-D-OCR}" =~ OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?(,OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?)* ]];then
-        echo >&2 "WARNING: output fileGrp '${ocrd__argv[output_file_grp]}' does not conform to OCR-D spec"
-    fi
+    # if [[ ! "${ocrd__argv[output_file_grp]:=OCR-D-OCR}" =~ OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?(,OCR-D-(GT-)?(IMG|SEG|OCR|COR)(-[A-Z0-9\-]{3,})?)* ]];then
+    #     echo >&2 "WARNING: output fileGrp '${ocrd__argv[output_file_grp]}' does not conform to OCR-D spec"
+    # fi
 
 
     local params_parsed retval
-    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]}")"
+    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]:-{\}}")"
     retval=$?
     if [[ $retval != 0 ]];then
         echo "Error: Failed to parse parameters (retval $retval):"

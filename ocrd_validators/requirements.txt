@@ -3,3 +3,4 @@ bagit_profile >= 1.3.0
 click >=7
 jsonschema
 pyyaml
+shapely

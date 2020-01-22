@@ -9,9 +9,9 @@ from click.testing import CliRunner
 # pylint: disable=import-error, no-name-in-module
 from tests.base import TestCase, main, assets, copy_of_directory
 
-from ocrd_utils import initLogging
+from ocrd_utils import initLogging, pushd_popd
 from ocrd.cli.workspace import workspace_cli
-from ocrd.resolver import Resolver
+from ocrd import Resolver, Workspace
 
 class TestCli(TestCase):
 
@@ -101,7 +101,13 @@ class TestCli(TestCase):
             ])
             self.assertEqual(result.exit_code, 0)
 
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'remove', ID])
+            result = self.runner.invoke(workspace_cli, [
+                '-d',
+                tempdir,
+                'remove',
+                '--keep-file',
+                ID
+            ])
             self.assertEqual(result.exit_code, 0)
 
             # File should still exist
@@ -132,13 +138,28 @@ class TestCli(TestCase):
             ])
             self.assertEqual(result.exit_code, 0)
 
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'remove', '--force', ID])
+            result = self.runner.invoke(workspace_cli, [
+                '-d',
+                tempdir,
+                'remove',
+                '--force',
+                ID
+            ])
             print(result)
             print(result.output)
             self.assertEqual(result.exit_code, 0)
 
             # File should have been deleted
             self.assertFalse(exists(content_file))
+
+    def test_find_files(self):
+        with TemporaryDirectory() as tempdir:
+            wsdir = join(tempdir, 'ws')
+            copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
+            with pushd_popd(wsdir):
+                result = self.runner.invoke(workspace_cli, ['find', '-G', 'OCR-D-IMG-BIN', '-k', 'fileGrp'])
+                self.assertEqual(result.output, 'OCR-D-IMG-BIN\nOCR-D-IMG-BIN\n')
+                self.assertEqual(result.exit_code, 0)
 
     def test_prune_files(self):
         with TemporaryDirectory() as tempdir:
@@ -153,6 +174,20 @@ class TestCli(TestCase):
             ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
             self.assertEqual(len(ws2.mets.find_files()), 7)
 
+    def test_clone_into_nonexisting_dir(self):
+        """
+        https://github.com/OCR-D/core/issues/330
+        """
+        with TemporaryDirectory() as tempdir:
+            clone_to = join(tempdir, 'non-existing-dir')
+            result = self.runner.invoke(workspace_cli, [
+                'clone',
+                '--download',
+                assets.path_to('scribo-test/data/mets.xml'),
+                clone_to
+            ])
+            self.assertEqual(result.exit_code, 0)
+
     def test_remove_file_group(self):
         """
         Test removal of filegrp
@@ -161,18 +196,16 @@ class TestCli(TestCase):
             wsdir = join(tempdir, 'ws')
             copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
             file_group = 'OCR-D-GT-PAGE'
-            file_path = join(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT.xml')
-            self.assertTrue(exists(file_path))
+            file_path = Path(tempdir, 'ws', file_group, 'FILE_0002_FULLTEXT.xml')
+            self.assertTrue(file_path.exists())
 
             workspace = self.resolver.workspace_from_url(join(wsdir, 'mets.xml'))
             self.assertEqual(workspace.directory, wsdir)
 
             with self.assertRaisesRegex(Exception, "not empty"):
                 workspace.remove_file_group(file_group)
-            with self.assertRaisesRegex(Exception, "force without recursive"):
-                workspace.remove_file_group(file_group, force=True)
 
-            self.assertTrue(exists(file_path))
+            self.assertTrue(file_path.exists())
             self.assertEqual(len(workspace.mets.file_groups), 17)
             self.assertEqual(len(workspace.mets.find_files()), 35)
 
@@ -180,17 +213,33 @@ class TestCli(TestCase):
 
             self.assertEqual(len(workspace.mets.file_groups), 16)
             self.assertEqual(len(workspace.mets.find_files()), 33)
-            self.assertFalse(exists(file_path))
+            self.assertFalse(file_path.exists())
+
+            # TODO ensure empty dirs are removed
+            # self.assertFalse(file_path.parent.exists())
+
+
+    def test_clone_relative(self):
+        # Create a relative path to trigger make sure #319 is gone
+        src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
+        with TemporaryDirectory() as tempdir:
+            result = self.runner.invoke(workspace_cli, ['clone', '-a', src_path, tempdir])
+            self.assertEqual(result.exit_code, 0)
+            self.assertTrue(exists(join(tempdir, 'OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')))
 
     def test_copy_vs_clone(self):
         src_dir = assets.path_to('kant_aufklaerung_1784/data')
         with TemporaryDirectory() as tempdir:
+            # cloned without download
             shallowcloneddir = join(tempdir, 'cloned-shallow')
+            # cloned with download
             fullcloneddir = join(tempdir, 'cloned-all')
+            # copied
             copieddir = join(tempdir, 'copied')
 
             Path(fullcloneddir).mkdir()
             Path(shallowcloneddir).mkdir()
+
 
             result = self.runner.invoke(workspace_cli, ['clone', join(src_dir, 'mets.xml'), shallowcloneddir])
             self.assertEqual(result.exit_code, 0)
@@ -200,9 +249,28 @@ class TestCli(TestCase):
 
             with copy_of_directory(src_dir, copieddir):
                 shallow_vs_copied = dircmp(shallowcloneddir, copieddir)
-                full_vs_copied = dircmp(fullcloneddir, copieddir)
                 self.assertEqual(set(shallow_vs_copied.right_only), set(['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG']))
-                self.assertEqual(full_vs_copied.diff_files, [])
+
+                full_vs_copied = dircmp(fullcloneddir, copieddir)
+                #  print(full_vs_copied)
+                #  from ocrd_utils import pushd_popd
+                #  with pushd_popd(tempdir):
+                    #  import os
+                    #  os.system("diff %s/mets.xml %s/mets.xml" % (fullcloneddir, copieddir))
+                # XXX mets.xml will not have the exact same content because
+                # URLs that are actually files will be marked up as such with
+                # @LOCTYPE/@OTHERLOCTYPE
+                #  self.assertEqual(full_vs_copied.diff_files, [])
+                self.assertEqual(full_vs_copied.left_only, [])
+                self.assertEqual(full_vs_copied.right_only, [])
+
+    def test_mets_basename(self):
+        with TemporaryDirectory() as tempdir:
+            with pushd_popd(tempdir):
+                result = self.runner.invoke(workspace_cli, ['-M', 'foo.xml', 'init', '.'])
+                self.assertEqual(result.exit_code, 0)
+                self.assertTrue(exists('foo.xml'))
+                self.assertFalse(exists('mets.xml'))
 
 if __name__ == '__main__':
     main()

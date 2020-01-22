@@ -1,7 +1,5 @@
 *
-!ocrd
+!ocrd*
 !Makefile
-!setup.py
-!requirements.txt
 !LICENSE
-!README.rst
+!README.md

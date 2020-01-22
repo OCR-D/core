@@ -29,7 +29,9 @@ def exif_from_filename(image_filename):
     """
     if image_filename is None:
         raise Exception("Must pass 'image_filename' to 'exif_from_filename'")
-    return OcrdExif(Image.open(image_filename))
+    with Image.open(image_filename) as pil_img:
+        ocrd_exif = OcrdExif(pil_img)
+    return ocrd_exif
 
 def page_from_image(input_file):
     """
