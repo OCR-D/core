@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd workspace init` shortcut for `ocrd workspace init .`
+  * `ocrd workspace validate` shortcut for `ocrd workspace validate mets.xml`
+  * `ocrd workspace clone <METS_URL>` shortcut for `ocrd workspace <METS_URL> .`
+
+
 ## [2.3.0] - 2020-01-21
 
 Changed:
