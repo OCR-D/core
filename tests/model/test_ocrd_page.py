@@ -1,6 +1,8 @@
 from lxml.etree import _Element
 
 from tests.base import TestCase, main, assets
+from ocrd_utils import setOverrideLogLevel
+setOverrideLogLevel('DEBUG')
 
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
@@ -17,7 +19,7 @@ from ocrd_models.ocrd_page import (
 )
 
 simple_page = """\
-<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
     <Metadata>
         <Creator>OCR-D</Creator>
         <Created>2016-09-20T11:09:27.041+02:00</Created>
@@ -59,16 +61,6 @@ class TestOcrdPage(TestCase):
             #  f.write(to_xml(self.pcgts))
         self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', to_xml(self.pcgts)[:1000])
         self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
-
-    def test_parent(self):
-        page_obj = self.pcgts.get_Page()
-        #  self.assertIn(id(page_obj), self.pcgts.el2obj)
-        page_el = self.pcgts.obj2el[id(page_obj)]
-        self.assertEqual(type(page_el), _Element)
-        #  print(page_el)
-        #  print(self.pcgts.el2obj)
-        #  print(self.pcgts.obj2el)
-        #  self.assertEqual(
 
     def test_issue_269(self):
         """
@@ -123,6 +115,16 @@ class TestOcrdPage(TestCase):
         word.add_Glyph(glyph)
         glyph.add_AlternativeImage(AlternativeImageType())
 
+    def test_ocrd_ext(self):
+        ext = self.pcgts.ocrd_ext
+        page_obj = self.pcgts.get_Page()
+        page_el = ext.get_el_for_obj(page_obj)
+        self.assertEqual(type(page_el), _Element)
+        self.assertEqual(ext.get_obj_for_el(page_el), page_obj)
+        self.assertEqual(ext.get_parent_obj_for_obj(page_obj), self.pcgts)
+        self.assertEqual(ext.get_parent_obj_for_el(page_el), self.pcgts)
+        self.assertEqual(ext.get_parent_el_for_obj(page_obj).get('pcGtsId'), 'glyph-test')
+        self.assertEqual(ext.get_obj_by_id('r0'), page_obj.get_TextRegion()[0])
 
 if __name__ == '__main__':
     main()
