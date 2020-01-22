@@ -166,8 +166,8 @@ class WorkspaceValidator():
         Validate image height and PAGE imageHeight match
         """
         for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not f.local_filename and not self.download:
-                self.report.add_notice("Won't download remote PAGE XML <%s>" % f.url)
+            if not self.download:
+                self.report.add_notice("_validate_dimension: Not executed because --download wasn't set and PAGE might reference remote (Alternatve)Images <%s>" % f.url)
                 continue
             page = page_from_file(f).get_Page()
             _, _, exif = self.workspace.image_from_page(page, f.pageId)
