@@ -54,6 +54,8 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
     if not mets_url:
         mets_url = 'mets.xml'
+    else:
+        mets_url = mets_url[0]
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
