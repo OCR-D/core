@@ -117,7 +117,6 @@ print('''%s''')
         with self.assertRaisesRegex(Exception, "'param1' is a required property"):
             task.validate()
 
-
     def test_validate_sequence(self):
         resolver = Resolver()
         with TemporaryDirectory() as tempdir:
@@ -136,6 +135,19 @@ print('''%s''')
                     'sample-processor-required-param -I IN -O OUT1 -p %s' % params_path,
                 ]], workspace)
 
+    def test_422(self):
+        """
+        # OCR-D/core#422
+        """
+        resolver = Resolver()
+        with TemporaryDirectory() as tempdir:
+            workspace = resolver.workspace_from_url(assets.path_to('kant_aufklaerung_1784/data/mets.xml'), dst_dir=tempdir)
+            validate_tasks([ProcessorTask.parse(x) for x in [
+                "sample-processor -I OCR-D-IMG       -O OCR-D-SEG-BLOCK",
+                "sample-processor -I OCR-D-SEG-BLOCK -O OCR-D-SEG-LINE",
+                "sample-processor -I OCR-D-SEG-LINE  -O OCR-D-SEG-WORD",
+                "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
+            ]], workspace)
 
 if __name__ == '__main__':
     main()

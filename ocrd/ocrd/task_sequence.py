@@ -82,7 +82,7 @@ def validate_tasks(tasks, workspace):
     # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
     WorkspaceValidator.check_file_grp(workspace, tasks[0].input_file_grps, tasks[0].output_file_grps, report)
 
-    prev_output_file_grps += tasks[0].input_file_grps
+    prev_output_file_grps += tasks[0].output_file_grps
     for task in tasks[1:]:
         task.validate()
         # check either existing fileGrp or output-file group of previous task matches current input_file_group

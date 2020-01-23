@@ -38,7 +38,6 @@ class WorkspaceValidator():
             output_file_grp = output_file_grp.split(',')
 
         log.info("input_file_grp=%s output_file_grp=%s" % (input_file_grp, output_file_grp))
-        print(input_file_grp)
         if input_file_grp:
             for grp in input_file_grp:
                 if grp not in workspace.mets.file_groups:
