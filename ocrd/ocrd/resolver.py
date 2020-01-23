@@ -151,7 +151,7 @@ class Resolver():
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
             mets_basename, mets_url, src_baseurl, dst_dir)
 
-        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'raise')
+        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'skip')
 
         workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl)
 

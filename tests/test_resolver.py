@@ -39,12 +39,13 @@ class TestResolver(TestCase):
 
     def test_workspace_from_url_no_clobber(self):
         with TemporaryDirectory() as dst_dir:
+            src_mets = Path(assets.path_to('kant_aufklaerung_1784-binarized/data/mets.xml'))
             dst_mets = Path(dst_dir, 'mets.xml')
-            dst_mets.write_text('CONTENT')
-            with self.assertRaisesRegex(FileExistsError, "File already exists and if_exists == 'raise': %s" % dst_mets):
-                self.resolver.workspace_from_url(
-                        'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml',
-                        dst_dir=dst_dir)
+            dst_mets.write_text(src_mets.read_text())
+            self.resolver.workspace_from_url(
+                    'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml',
+                    clobber_mets=False,
+                    dst_dir=dst_dir)
 
     def test_workspace_from_url_404(self):
         with self.assertRaisesRegex(Exception, "HTTP request failed"):
