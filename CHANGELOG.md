@@ -12,6 +12,12 @@ Changed:
   * `ocrd workspace validate` shortcut for `ocrd workspace validate mets.xml`, #419
   * `ocrd workspace clone <METS_URL>` shortcut for `ocrd workspace <METS_URL> .`, #419
   * workspace validation: check of dimensions in image and PAGE only with `--download`, #423
+  * behavior of `clobber_mets=False` changed to silently skip re-downloading METS instead of making a fuss, #425
+
+Fixed:
+
+  * regression from #419 for `ocrd workspace validate`
+  * regression from #384 for task sequence validation, #424
 
 ## [2.3.0] - 2020-01-21
 
@@ -730,6 +736,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.3.1]: ../../compare/v2.3.1...v2.3.0
 [2.3.0]: ../../compare/v2.3.0...v2.2.2
 [2.2.2]: ../../compare/v2.2.2...v2.2.1
 [2.2.1]: ../../compare/v2.2.1...v2.2.0
