@@ -1,6 +1,8 @@
 import os
 from os.path import relpath, exists
+from pathlib import Path
 import sys
+import re
 from tempfile import mkdtemp
 
 import click
@@ -10,6 +12,12 @@ from ocrd_utils import getLogger, pushd_popd
 from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
+
+def clean_id(dirty):
+    if re.match('^[0-9]', dirty):
+        raise ValueError("Make sure files and directories do not begin with a numeral which will lead to invalid XML identifiers")
+    return re.sub('[^A-Za-z0-9-_]+', '_', dirty)
+
 
 class WorkspaceCtx():
 
@@ -157,6 +165,54 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
         force=force,
         local_filename=local_filename
     )
+    workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace add-group
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('add-group')
+@click.option('-m', '--mimetype', help="Media type of the file", required=True)
+@click.option('-f', '--force', help="Continue even if mets:file same ID already exists", default=False, is_flag=True)
+@click.argument('file_grp_dir', type=click.Path(dir_okay=True, file_okay=False, readable=True, resolve_path=True), required=True)
+@pass_workspace
+def workspace_add_file_group(ctx, mimetype, force, file_grp_dir):
+    """
+    Add a directory of files as a fileGrp to METS.
+
+    Convention:
+        FILEGRP_DIR must reside within the workspacee
+        fileGrp ID = last folder name component
+        page ID = filename sans extension
+        file ID = sanitized concatenation of fileGrp ID and page ID
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+
+    file_grp_dir = Path(file_grp_dir).resolve()
+
+    ws_dir = Path(ctx.directory).resolve()
+    print(file_grp_dir)
+
+    # XXX will raise ValueError if file_grp_dir isn't relative to ctx.directory
+    file_grp_dir.relative_to(ws_dir)
+    file_grp = clean_id(file_grp_dir.name)
+
+    for f in file_grp_dir.iterdir():
+        page_id = f.name
+        if f.suffix:
+            page_id = page_id[0:-len(f.suffix)]
+        page_id = clean_id(page_id)
+        file_id = clean_id('_'.join([file_grp, page_id]))
+        local_filename = str(f.relative_to(ws_dir))
+        workspace.mets.add_file(
+            fileGrp=file_grp,
+            ID=file_id,
+            mimetype=mimetype,
+            url=local_filename,
+            pageId=page_id,
+            force=force,
+            local_filename=local_filename
+        )
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
