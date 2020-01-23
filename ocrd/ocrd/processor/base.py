@@ -102,12 +102,13 @@ def generate_processor_help(ocrd_tool):
         parameter_help = '  NONE\n'
     else:
         for param_name, param in ocrd_tool['parameters'].items():
-            parameter_help += wrap_text('  "%s" [%s%s] %s' % (
+            parameter_help += wrap_text('  "%s" [%s%s] %s%s' % (
                 param_name,
                 param['type'],
                 ' - REQUIRED' if 'required' in param and param['required'] else
                 ' - %s' % param['default'] if 'default' in param else '',
-                param['description']
+                param['description'],
+                ' Possible values: %s' % json.dumps(param['enum']) if 'enum' in param else ''
             ), subsequent_indent='    ', width=72, preserve_paragraphs=True)
             parameter_help += "\n"
     return '''
