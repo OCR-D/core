@@ -7,6 +7,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Changed:
 
+  * processor `--help` lists parameter enum values if available, #427
+
+## [2.3.1] - 2020-01-23
+
+Changed:
+
   * More expressive coordination validation, #418
   * `ocrd workspace init` shortcut for `ocrd workspace init .`, #419
   * `ocrd workspace validate` shortcut for `ocrd workspace validate mets.xml`, #419
