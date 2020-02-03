@@ -21,7 +21,7 @@ class TestPageValidator(TestCase):
         with self.assertRaisesRegex(Exception, 'page_textequiv_strategy best not implemented'):
             PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, strategy='best')
         with self.assertRaisesRegex(Exception, 'page_textequiv_consistency level superstrictest not implemented'):
-            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_consistency='superstrictest', strategy='index1')
+            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_consistency='superstrictest', strategy='index0')
 
     def test_validate_filename(self):
         report = PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME)
@@ -61,12 +61,12 @@ class TestPageValidator(TestCase):
         del(word.get_TextEquiv()[0])
 
         # Add textequiv
-        set_text(word, 'FOO', 'index1')
+        set_text(word, 'FOO', 'index0')
         word.add_TextEquiv(TextEquivType(Unicode='BAR', conf=.7))
         word.add_TextEquiv(TextEquivType(Unicode='BAZ', conf=.5, index=1))
-        self.assertEqual(get_text(word, 'index1'), 'BAZ')
-        set_text(word, 'XYZ', 'index1')
-        self.assertEqual(get_text(word, 'index1'), 'XYZ')
+        self.assertEqual(get_text(word, 'index0'), 'FOO')
+        set_text(word, 'XYZ', 'index0')
+        self.assertEqual(get_text(word, 'index0'), 'XYZ')
 
 
     def test_validate_multi_textequiv(self):
@@ -80,12 +80,12 @@ class TestPageValidator(TestCase):
         del(word.get_TextEquiv()[0])
 
         # Add textequiv
-        set_text(word, 'FOO', 'index1')
+        set_text(word, 'FOO', 'index0')
         word.add_TextEquiv(TextEquivType(Unicode='BAR', conf=.7))
 
-        self.assertEqual(get_text(word, 'index1'), 'FOO')
-        set_text(word, 'BAR', 'index1')
-        self.assertEqual(get_text(word, 'index1'), 'BAR')
+        self.assertEqual(get_text(word, 'index0'), 'FOO')
+        set_text(word, 'BAR', 'index0')
+        self.assertEqual(get_text(word, 'index0'), 'BAR')
 
 
     def test_fix(self):

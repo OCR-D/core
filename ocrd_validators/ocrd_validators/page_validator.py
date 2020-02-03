@@ -259,18 +259,18 @@ def concatenate(nodes, concatenate_with, page_textequiv_strategy):
 
 def get_text(node, page_textequiv_strategy):
     """
-    Get the most confident text results, either those with @index = 1 or the first text results or empty string.
+    Get the most confident text results, either those with @index = 0 or the first text results or empty string.
     """
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
         log.debug("No text results on %s %s", node, node.id)
         return ''
-    #  elif page_textequiv_strategy == 'index1':
+    #  elif page_textequiv_strategy == 'index0':
     else:
         if len(textEquivs) > 1:
-            index1 = [x for x in textEquivs if x.index == 1]
-            if index1:
-                return index1[0].get_Unicode().strip()
+            index0 = [x for x in textEquivs if x.index == 0]
+            if index0:
+                return index0[0].get_Unicode().strip()
         return textEquivs[0].get_Unicode().strip()
 
 def set_text(node, text, page_textequiv_strategy):
@@ -280,15 +280,16 @@ def set_text(node, text, page_textequiv_strategy):
     text = text.strip()
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
-        node.add_TextEquiv(TextEquivType(Unicode=text))
-    #  elif page_textequiv_strategy == 'index1':
+        node.add_TextEquiv(TextEquivType(Unicode=text, index=0))
+    #  elif page_textequiv_strategy == 'index0':
     else:
         if len(textEquivs) > 1:
-            index1 = [x for x in textEquivs if x.index == 1]
-            if index1:
-                index1[0].set_Unicode(text)
+            index0 = [x for x in textEquivs if x.index == 0]
+            if index0:
+                index0[0].set_Unicode(text)
                 return
         textEquivs[0].set_Unicode(text)
+        textEquivs[0].index = 0
 
 class PageValidator():
     """
@@ -299,7 +300,7 @@ class PageValidator():
     @deprecated_alias(strictness='page_textequiv_consistency')
     @deprecated_alias(strategy='page_textequiv_strategy')
     def validate(filename=None, ocrd_page=None, ocrd_file=None,
-                 page_textequiv_consistency='strict', page_textequiv_strategy='index1',
+                 page_textequiv_consistency='strict', page_textequiv_strategy='index0',
                  check_baseline=True, check_coords=True):
         """
         Validates a PAGE file for consistency by filename, OcrdFile or passing OcrdPage directly.
@@ -309,7 +310,7 @@ class PageValidator():
             ocrd_page (OcrdPage): OcrdPage instance
             ocrd_file (OcrdFile): OcrdFile instance wrapping OcrdPage
             page_textequiv_consistency (string): 'strict', 'lax', 'fix' or 'off'
-            page_textequiv_strategy (string): Currently only 'index1'
+            page_textequiv_strategy (string): Currently only 'index0'
             check_baseline (bool): whether Baseline must be fully within TextLine/Coords
             check_coords (bool): whether *Region/TextLine/Word/Glyph must each be fully
                                  contained within Border/*Region/TextLine/Word, resp.
@@ -328,7 +329,7 @@ class PageValidator():
             file_id = filename
         else:
             raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
-        if page_textequiv_strategy not in ('index1'):
+        if page_textequiv_strategy not in ('index0'):
             raise Exception("page_textequiv_strategy %s not implemented" % page_textequiv_strategy)
         if page_textequiv_consistency not in ('strict', 'lax', 'fix', 'off'):
             raise Exception("page_textequiv_consistency level %s not implemented" % page_textequiv_consistency)
