@@ -257,37 +257,68 @@ def concatenate(nodes, concatenate_with, page_textequiv_strategy):
     tokens = [get_text(node, page_textequiv_strategy) for node in nodes]
     return concatenate_with.join(tokens).strip()
 
-def get_text(node, page_textequiv_strategy):
+def get_text(node, page_textequiv_strategy='first'):
     """
-    Get the most confident text results, either those with @index = 1 or the first text results or empty string.
+    Get the first or most confident among text results (depending on ``page_textequiv_strategy``).
+    For the strategy ``best``, return the string of the highest scoring result.
+    For the strategy ``first``, return the string of the lowest indexed result.
+    If there are no scores/indexes, use the first result.
+    If there are no results, return the empty string.
     """
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
         log.debug("No text results on %s %s", node, node.id)
         return ''
-    #  elif page_textequiv_strategy == 'first':
+    elif page_textequiv_strategy == 'best':
+        if len(textEquivs) > 1:
+            textEquivsSorted = sorted([x for x in textEquivs if x.conf],
+                                      # generateDS does not convert simpleType for attributes (yet?)
+                                      key=lambda x: float(x.conf))
+            if textEquivsSorted:
+                return textEquivsSorted[-1].get_Unicode().strip()
+        # fall back to first element
+        return textEquivs[0].get_Unicode().strip()
+    #elif page_textequiv_strategy == 'first':
     else:
         if len(textEquivs) > 1:
-            index1 = [x for x in textEquivs if x.index == 1]
-            if index1:
-                return index1[0].get_Unicode().strip()
+            textEquivsSorted = sorted([x for x in textEquivs if isinstance(x.index, int)],
+                                      key=lambda x: x.index)
+            if textEquivsSorted:
+                return textEquivsSorted[0].get_Unicode().strip()
+        # fall back to first element
         return textEquivs[0].get_Unicode().strip()
 
 def set_text(node, text, page_textequiv_strategy):
     """
-    Set the most confident text results, either those with @index = 1, the first text results or add new one.
+    Set the first or most confident among text results (depending on ``page_textequiv_strategy``).
+    For the strategy ``best``, set the string of the highest scoring result.
+    For the strategy ``first``, set the string of the lowest indexed result.
+    If there are no scores/indexes, use the first result.
+    If there are no results, add a new one.
     """
     text = text.strip()
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
-        node.add_TextEquiv(TextEquivType(Unicode=text))
-    #  elif page_textequiv_strategy == 'first':
+        node.add_TextEquiv(TextEquivType(Unicode=text)) # or index=0 ?
+    elif page_textequiv_strategy == 'best':
+        if len(textEquivs) > 1:
+            textEquivsSorted = sorted([x for x in textEquivs if x.conf],
+                                      # generateDS does not convert simpleType for attributes (yet?)
+                                      key=lambda x: float(x.conf))
+            if textEquivsSorted:
+                textEquivsSorted[-1].set_Unicode(text)
+                return
+        # fall back to first element
+        textEquivs[0].set_Unicode(text)
+    #elif page_textequiv_strategy == 'first':
     else:
         if len(textEquivs) > 1:
-            index1 = [x for x in textEquivs if x.index == 1]
-            if index1:
-                index1[0].set_Unicode(text)
+            textEquivsSorted = sorted([x for x in textEquivs if isinstance(x.index, int)],
+                                      key=lambda x: x.index)
+            if textEquivsSorted:
+                textEquivsSorted[0].set_Unicode(text)
                 return
+        # fall back to first element
         textEquivs[0].set_Unicode(text)
 
 class PageValidator():

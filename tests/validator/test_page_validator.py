@@ -63,7 +63,7 @@ class TestPageValidator(TestCase):
         # Add textequiv
         set_text(word, 'FOO', 'first')
         word.add_TextEquiv(TextEquivType(Unicode='BAR', conf=.7))
-        word.add_TextEquiv(TextEquivType(Unicode='BAZ', conf=.5, index=1))
+        word.add_TextEquiv(TextEquivType(Unicode='BAZ', conf=.5, index=0))
         self.assertEqual(get_text(word, 'first'), 'BAZ')
         set_text(word, 'XYZ', 'first')
         self.assertEqual(get_text(word, 'first'), 'XYZ')
