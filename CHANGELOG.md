@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * concatenation of PAGE elements was based on `@index` starting with `1`, #430
+
 Changed:
 
   * processor `--help` lists parameter enum values if available, #427
