@@ -2,7 +2,7 @@ import os
 import json
 from click import wrap_text
 import subprocess
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, VERSION as OCRD_VERSION
 from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
@@ -160,6 +160,7 @@ class Processor():
             output_file_grp="OUTPUT",
             page_id=None,
             show_help=False,
+            show_version=False,
             dump_json=False,
             version=None
     ):
@@ -173,6 +174,9 @@ class Processor():
             self.show_help()
             return
         self.version = version
+        if show_version:
+            self.show_version()
+            return
         self.workspace = workspace
         # FIXME HACK would be better to use pushd_popd(self.workspace.directory)
         # but there is no way to do that in process here since it's an
@@ -190,6 +194,9 @@ class Processor():
 
     def show_help(self):
         print(generate_processor_help(self.ocrd_tool))
+
+    def show_version(self):
+        print("Version %s, ocrd/core %s" % (self.version, OCRD_VERSION))
 
     def verify(self):
         """

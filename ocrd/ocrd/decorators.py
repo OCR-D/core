@@ -7,8 +7,6 @@ from ocrd_utils import (
     get_local_filename,
     setOverrideLogLevel,
     parse_json_string_or_file,
-
-    VERSION as OCRD_VERSION
 )
 
 from ocrd_utils import getLogger
@@ -36,11 +34,7 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
     elif help:
         processorClass(workspace=None, show_help=True)
     elif version:
-        try:
-            p = processorClass(workspace=None)
-        except Exception: # pylint: disable=bare-except
-            pass
-        print("Version %s, ocrd/core %s" % (p.version, OCRD_VERSION))
+        processorClass(workspace=None, show_version=True)
     elif mets is None:
         msg = 'Error: Missing option "-m" / "--mets".'
         LOG.error(msg)
