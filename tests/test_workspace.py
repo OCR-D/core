@@ -192,6 +192,16 @@ class TestWorkspace(TestCase):
             self.assertEqual(f1.url, 'test.tif')
             self.assertEqual(f2.url, 'test.xml')
 
+    def test_save_image_file(self):
+        from PIL import Image
+        img = Image.new('RGB', (1000, 1000))
+        with TemporaryDirectory() as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            with self.assertRaisesRegex(KeyError, ''):
+                ws.save_image_file(img, 'page1_img', 'IMG', 'page1', 'ceci/nest/pas/une/mimetype')
+            ws.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg')
+            self.assertTrue(exists(join(tempdir, 'IMG', 'page1_img.jpg')))
+
 
 if __name__ == '__main__':
     main()

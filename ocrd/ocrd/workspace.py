@@ -26,6 +26,7 @@ from ocrd_utils import (
     xywh_from_bbox,
     pushd_popd,
     MIME_TO_EXT,
+    MIME_TO_PIL,
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -779,7 +780,7 @@ class Workspace():
                         file_id,
                         file_grp,
                         page_id=None,
-                        format='PNG',
+                        mimetype='image/png',
                         force=True):
         """Store and reference an image as file into the workspace.
 
@@ -791,14 +792,14 @@ class Workspace():
         Return the (absolute) path of the created file.
         """
         image_bytes = io.BytesIO()
-        image.save(image_bytes, format=format)
-        file_path = str(Path(file_grp, '%s.%s' % (file_id, format.lower())))
+        image.save(image_bytes, format=MIME_TO_PIL[mimetype])
+        file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
             ID=file_id,
             file_grp=file_grp,
             pageId=page_id,
             local_filename=file_path,
-            mimetype='image/' + format.lower(),
+            mimetype=mimetype,
             content=image_bytes.getvalue(),
             force=force)
         log.info('created file ID: %s, file_grp: %s, path: %s',
