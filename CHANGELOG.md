@@ -5,12 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.4.0] - 2020-02-17
+
 Fixed:
 
   * concatenation of PAGE elements was based on `@index` starting with `1`, #430
   * CLI: `--help` should work for processors w/o `input_file_grp`, #440
   * CLI: `--version` more robust, #433
-
 
 Changed:
 
@@ -750,6 +751,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.4.0]: ../../compare/v2.4.0...v2.3.1
 [2.3.1]: ../../compare/v2.3.1...v2.3.0
 [2.3.0]: ../../compare/v2.3.0...v2.2.2
 [2.2.2]: ../../compare/v2.2.2...v2.2.1
