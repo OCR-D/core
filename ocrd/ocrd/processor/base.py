@@ -139,7 +139,7 @@ Default Wiring:
     ocrd_tool['executable'],
     ocrd_tool['description'],
     parameter_help,
-    ocrd_tool['input_file_grp'],
+    ocrd_tool.get('input_file_grp', 'NONE'),
     ocrd_tool.get('output_file_grp', 'NONE')
 )
 
