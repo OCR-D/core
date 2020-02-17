@@ -8,10 +8,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * concatenation of PAGE elements was based on `@index` starting with `1`, #430
+  * CLI: `--help` should work for processors w/o `input_file_grp`, #440
+  * CLI: `--version` more robust, #433
+
 
 Changed:
 
   * processor `--help` lists parameter enum values if available, #427
+  * :fire: `workspace.save_image_file` takes `mimetype` instead of `format`, #441
 
 ## [2.3.1] - 2020-01-23
 
