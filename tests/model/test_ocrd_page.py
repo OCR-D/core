@@ -116,7 +116,13 @@ class TestOcrdPage(TestCase):
         self.assertTrue(isinstance(pcgts.get_Page().imageWidth, int))
         el = pcgts.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[0].get_TextEquiv()[0]
         self.assertTrue(isinstance(el.conf, float))
-
+        # XXX no validation on setting attributes :-(
+        # c.f. https://www.davekuhlman.org/generateDS.html#simpletype
+        #  el.set_conf('2.0987')
+        #  self.assertTrue(isinstance(el.conf, float))
+        with self.assertRaisesRegex(TypeError, ''):
+            el.set_conf('I AM NOT A FLOAT DEAL WITH IT')
+            parseString(to_xml(pcgts).encode('utf8'))
 
 
 if __name__ == '__main__':
