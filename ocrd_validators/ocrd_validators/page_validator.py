@@ -18,7 +18,17 @@ from ocrd_models.ocrd_page import (
     GlyphType,
     TextEquivType
 )
-from ocrd_models.ocrd_page_generateds import RegionType
+from ocrd_models.ocrd_page_generateds import (
+    RegionType,
+    ReadingDirectionSimpleType,
+    TextLineOrderSimpleType,
+    RegionRefType,
+    RegionRefIndexedType,
+    OrderedGroupType,
+    OrderedGroupIndexedType,
+    UnorderedGroupType,
+    UnorderedGroupIndexedType,
+)
 from .report import ValidationReport
 
 log = getLogger('ocrd.page_validator')
@@ -57,6 +67,14 @@ _HIERARCHY = [
     (TextLineType,   'get_Word',       ' '),  # pylint: disable=bad-whitespace
     (WordType,       'get_Glyph',      ''),   # pylint: disable=bad-whitespace
     (GlyphType,      None,             None), # pylint: disable=bad-whitespace
+]
+
+_ORDER = [
+    (None, TextLineOrderSimpleType.BOTTOMTOTOP, ReadingDirectionSimpleType.RIGHTTOLEFT),
+    (PageType,       'get_textLineOrder', 'get_readingDirection'), # pylint: disable=bad-whitespace
+    (TextRegionType, 'get_textLineOrder', 'get_readingDirection'), # pylint: disable=bad-whitespace
+    (TextLineType,   None,                'get_readingDirection'), # pylint: disable=bad-whitespace
+    (WordType,       None,                'get_readingDirection'), # pylint: disable=bad-whitespace
 ]
 
 class ConsistencyError(Exception):
@@ -143,9 +161,32 @@ def compare_without_whitespace(a, b):
     """
     return re.sub('\\s+', '', a) == re.sub('\\s+', '', b)
 
+def page_get_reading_order(ro, rogroup):
+    """Add all elements from the given reading order group to the given dictionary.
+    
+    Given a dict ``ro`` from layout element IDs to ReadingOrder element objects,
+    and an object ``rogroup`` with additional ReadingOrder element objects,
+    add all references to the dict, traversing the group recursively.
+    """
+    if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)):
+        regionrefs = (rogroup.get_RegionRefIndexed() +
+                      rogroup.get_OrderedGroupIndexed() +
+                      rogroup.get_UnorderedGroupIndexed())
+    if isinstance(rogroup, (UnorderedGroupType, UnorderedGroupIndexedType)):
+        regionrefs = (rogroup.get_RegionRef() +
+                      rogroup.get_OrderedGroup() +
+                      rogroup.get_UnorderedGroup())
+    for elem in regionrefs:
+        ro[elem.get_regionRef()] = elem
+        if not isinstance(elem, (RegionRefType, RegionRefIndexedType)):
+            page_get_reading_order(ro, elem)
+
 @deprecated_alias(strictness='page_textequiv_consistency')
 @deprecated_alias(strategy='page_textequiv_strategy')
-def validate_consistency(node, page_textequiv_consistency, page_textequiv_strategy, check_baseline, check_coords, report, file_id):
+def validate_consistency(node, page_textequiv_consistency, page_textequiv_strategy,
+                         check_baseline, check_coords, report, file_id,
+                         joinRelations=None, readingOrder=None,
+                         textLineOrder=None, readingDirection=None):
     """
     Check whether the text results on an element is consistent with its child element text results,
     and whether the coordinates of an element are fully within its parent element coordinates.
@@ -154,6 +195,22 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
         # top-level (start recursion)
         node_id = node.get_pcGtsId()
         node = node.get_Page() # has no .id
+        if not readingOrder:
+            readingOrder = dict()
+        ro = node.get_ReadingOrder()
+        if ro:
+            page_get_reading_order(readingOrder, ro.get_OrderedGroup() or ro.get_UnorderedGroup())
+        if not joinRelations:
+            joinRelations = list()
+        relations = node.get_Relations() # get RelationsType
+        if relations:
+            relations = relations.get_Relation() # get list of RelationType
+        else:
+            relations = []
+        for relation in relations:
+            if relation.get_type() == 'join': # ignore 'link' type here
+                joinRelations.append((relation.get_SourceRegionRef().get_regionRef(),
+                                      relation.get_TargetRegionRef().get_regionRef()))
     elif isinstance(node, GlyphType):
         # terminal level (end recursion)
         return True
@@ -185,14 +242,30 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                 consistent = False
         else:
             node_poly = None
+    for class_, getterLO, getterRD in _ORDER[1:]:
+        if isinstance(node, class_):
+            if getterLO:
+                textLineOrder = getattr(node, getterLO)()
+            if getterRD:
+                readingDirection = getattr(node, getterRD)()
     for class_, getter, concatenate_with in _HIERARCHY:
         if not isinstance(node, class_):
             continue
         children = getattr(node, getter)()
+        if (getter == 'get_TextRegion' and children and
+            all(child.id in readingOrder for child in children) and
+            isinstance(readingOrder[children[0].id], (OrderedGroupType, OrderedGroupIndexedType))):
+            children = sorted(children, key=lambda child:
+                              readingOrder[child.id].index)
+        elif ((getter == 'get_TextLine' and textLineOrder == _ORDER[0][1]) or
+              (getter in ['get_Word', 'get_Glyph'] and readingDirection == _ORDER[0][2])):
+            children = list(reversed(children))
         for child in children:
             consistent = (validate_consistency(child, page_textequiv_consistency, page_textequiv_strategy,
                                                check_baseline, check_coords,
-                                               report, file_id)
+                                               report, file_id,
+                                               joinRelations, readingOrder,
+                                               textLineOrder, readingDirection)
                           and consistent)
             if check_coords and node_poly:
                 child_tag = child.original_tagname_
@@ -236,7 +309,8 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                 consistent = False
         if concatenate_with is not None and page_textequiv_consistency != 'off':
             # validate textual consistency of node with children
-            concatenated = concatenate(children, concatenate_with, page_textequiv_strategy)
+            concatenated = concatenate(children, concatenate_with, page_textequiv_strategy,
+                                       joinRelations)
             text_results = get_text(node, page_textequiv_strategy)
             if concatenated and text_results and concatenated != text_results:
                 consistent = False
@@ -250,12 +324,21 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                                                       text_results, concatenated))
     return consistent
 
-def concatenate(nodes, concatenate_with, page_textequiv_strategy):
+def concatenate(nodes, concatenate_with, page_textequiv_strategy, joins=None):
     """
     Concatenate nodes textually according to https://ocr-d.github.io/page#consistency-of-text-results-on-different-levels
     """
-    tokens = [get_text(node, page_textequiv_strategy) for node in nodes]
-    return concatenate_with.join(tokens).strip()
+    if not nodes:
+        return ''
+    if not joins:
+        joins = list()
+    result = get_text(nodes[0], page_textequiv_strategy)
+    for node, next_node in zip(nodes, nodes[1:]):
+        if (node.id, next_node.id) not in joins:
+            # TODO: also cover 2-level joins like word-word
+            result += concatenate_with
+        result += get_text(next_node, page_textequiv_strategy)
+    return result.strip()
 
 def get_text(node, page_textequiv_strategy='first'):
     """
