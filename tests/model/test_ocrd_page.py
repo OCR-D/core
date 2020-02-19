@@ -33,7 +33,7 @@ simple_page = """\
                 <Baseline points="114,429 918,429"/>
                 <Word id="w_w1aab1b1b2b1b1ab1" language="German" custom="readingOrder {index:0;} textStyle {offset:0; length:11;fontFamily:Arial; fontSize:17.0; bold:true;}">
                     <Coords points="114,368 442,368 442,437 114,437"/>
-                    <TextEquiv conf="1">
+                    <TextEquiv conf="0.987654321">
                         <Unicode>Berliniſche</Unicode>
                     </TextEquiv>
                 </Word>
@@ -56,7 +56,7 @@ class TestOcrdPage(TestCase):
         #  with open('/tmp/test.xml', 'w') as f:
             #  f.write(to_xml(self.pcgts))
         self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', to_xml(self.pcgts)[:1000])
-        self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
+        self.assertIn('</TextRegion', to_xml(self.pcgts))
 
     def test_issue_269(self):
         """
@@ -110,6 +110,19 @@ class TestOcrdPage(TestCase):
         glyph = GlyphType()
         word.add_Glyph(glyph)
         glyph.add_AlternativeImage(AlternativeImageType())
+
+    def test_simpletypes(self):
+        pcgts = parseString(simple_page, silence=True)
+        self.assertTrue(isinstance(pcgts.get_Page().imageWidth, int))
+        el = pcgts.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[0].get_TextEquiv()[0]
+        self.assertTrue(isinstance(el.conf, float))
+        # XXX no validation on setting attributes :-(
+        # c.f. https://www.davekuhlman.org/generateDS.html#simpletype
+        #  el.set_conf('2.0987')
+        #  self.assertTrue(isinstance(el.conf, float))
+        with self.assertRaisesRegex(TypeError, ''):
+            el.set_conf('I AM NOT A FLOAT DEAL WITH IT')
+            parseString(to_xml(pcgts).encode('utf8'))
 
 
 if __name__ == '__main__':
