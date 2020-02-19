@@ -81,6 +81,7 @@ generate-page: repo/assets
 	generateDS \
 		-f \
 		--root-element='PcGts' \
+		--user-methods='ocrd_models/ocrd_page_user_methods.py' \
 		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
 
