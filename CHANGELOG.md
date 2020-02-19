@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.4.1] - 2020-02-19
+
+Changed:
+
+  * Updated PAGE bindings generated using generateDS, #437
+
 ## [2.4.0] - 2020-02-17
 
 Fixed:
@@ -751,6 +757,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.4.1]: ../../compare/v2.4.1...v2.4.0
 [2.4.0]: ../../compare/v2.4.0...v2.3.1
 [2.3.1]: ../../compare/v2.3.1...v2.3.0
 [2.3.0]: ../../compare/v2.3.0...v2.2.2
