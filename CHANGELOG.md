@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.4.2] - 2020-02-20
+
+Fixed:
+
+  * JSON strings longer than OS-allowed filename size crash fixed, #444
+
 ## [2.4.1] - 2020-02-19
 
 Changed:
@@ -757,6 +763,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.4.2]: ../../compare/v2.4.2...v2.4.1
 [2.4.1]: ../../compare/v2.4.1...v2.4.0
 [2.4.0]: ../../compare/v2.4.0...v2.3.1
 [2.3.1]: ../../compare/v2.3.1...v2.3.0
