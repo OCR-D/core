@@ -184,6 +184,9 @@ class TestUtils(TestCase):
         self.assertEqual(parse_json_string_or_file(' '), {})
         self.assertEqual(parse_json_string_or_file('{}'), {})
         self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
+        self.assertEqual(parse_json_string_or_file(
+          '{"dpi": -1, "textequiv_level": "word", "overwrite_words": false, "raw_lines": false, "char_whitelist": "", "char_blacklist": "", "char_unblacklist": ""}'
+        ), {"dpi": -1, "textequiv_level": "word", "overwrite_words": False, "raw_lines": False, "char_whitelist": "", "char_blacklist": "", "char_unblacklist": ""})
 
     def test_parameter_file(self):
         """

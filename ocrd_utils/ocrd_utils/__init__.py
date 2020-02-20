@@ -194,7 +194,7 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
     - ``parent_coords``, its corresponding affine transformation,
 
     ...calculate the absolute coordinates within the page.
-    
+
     That is, apply the given transform inversely to ``polygon``
     The transform encodes (recursively):
 
@@ -409,12 +409,12 @@ def transpose_image(image, method):
       columns become rows (but counted from the bottom),
       i.e. all pixels get mirrored at the opposite diagonal;
       width becomes height and vice versa
- 
+
     Return a new PIL.Image.
     """
     LOG.debug('transposing image with %s', membername(Image, method))
     return image.transpose(method)
-    
+
 def get_local_filename(url, start=None):
     """
     Return local filename, optionally relative to ``start``
@@ -455,7 +455,7 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     Images which already have an alpha channel will have it shrunk
     from the polygon mask (i.e. everything outside the polygon will
     be transparent, in addition to existing transparent pixels).
-    
+
     Return a new PIL.Image.
     """
     mask = polygon_mask(image, polygon)
@@ -591,12 +591,12 @@ def polygon_mask(image, coordinates):
 
 def adjust_canvas_to_rotation(size, angle):
     """Calculate the enlarged image size after rotation.
-    
+
     Given a numpy array ``size`` of an original canvas (width and height),
     and a rotation angle in degrees counter-clockwise ``angle``,
     calculate the new size which is necessary to encompass the full
     image after rotation.
-    
+
     Return a numpy array of the enlarged width and height.
     """
     angle = np.deg2rad(angle)
@@ -608,11 +608,11 @@ def adjust_canvas_to_rotation(size, angle):
 
 def adjust_canvas_to_transposition(size, method):
     """Calculate the flipped image size after transposition.
-    
+
     Given a numpy array ``size`` of an original canvas (width and height),
     and a transposition mode ``method`` (see ``transpose_image``),
     calculate the new size after transposition.
-    
+
     Return a numpy array of the enlarged width and height.
     """
     if method in [Image.ROTATE_90,
@@ -634,7 +634,7 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     by pure rotation, and subsequent translation back. However, since
     rotation necessarily increases the bounding box, and thus image size,
     do not translate back the same amount, but to the enlarged offset.)
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG.debug('rotating coordinates by %.2f° around %s', angle, str(orig))
@@ -662,7 +662,7 @@ def shift_coordinates(transform, offset):
     ``offset`` of the translation vector, calculate the affine
     coordinate transform corresponding to the composition of both
     transformations.
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG.debug('shifting coordinates by %s', str(offset))
@@ -799,6 +799,8 @@ def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
             with open(value, 'r') as f:
                 ret = json.load(f)
         except FileNotFoundError:
+            ret = json.loads(value.strip())
+        except OSError:
             ret = json.loads(value.strip())
         if not isinstance(ret, dict):
             err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, ret))
