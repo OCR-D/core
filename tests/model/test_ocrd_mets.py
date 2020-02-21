@@ -38,10 +38,10 @@ class TestOcrdMets(TestCase):
         mets = OcrdMets(content='<mets/>')
         self.assertEqual(str(mets), 'OcrdMets[fileGrps=[],files=[]]')
 
-    def test_override_constructor_args(self):
-        id2file = {'foo': {}}
-        mets = OcrdMets(id2file, content='<mets/>')
-        self.assertEqual(mets._file_by_id, id2file)
+    #  def test_override_constructor_args(self):
+    #      id2file = {'foo': {}}
+    #      mets = OcrdMets(id2file, content='<mets/>')
+    #      self.assertEqual(mets._file_by_id, id2file)
 
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')

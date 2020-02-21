@@ -43,16 +43,11 @@ class OcrdMets(OcrdXmlDocument):
         tpl = tpl.replace('{{ NOW }}', '%s' % now)
         return OcrdMets(content=tpl.encode('utf-8'))
 
-    def __init__(self, file_by_id=None, **kwargs):
+    def __init__(self, **kwargs):
         """
 
-        Arguments:
-            file_by_id (dict): Cache mapping file ID to OcrdFile
         """
         super(OcrdMets, self).__init__(**kwargs)
-        if file_by_id is None:
-            file_by_id = {}
-        self._file_by_id = file_by_id
 
     def __str__(self):
         """
@@ -153,14 +148,12 @@ class OcrdMets(OcrdXmlDocument):
         # instantiate / get from cache
         for file_id in file_ids:
             el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % file_id, NS)
-            if file_id not in self._file_by_id:
-                self._file_by_id[file_id] = OcrdFile(el, mets=self)
+            file = OcrdFile(el, mets=self)
 
             # If only local resources should be returned and file is not a file path: skip the file
-            url = self._file_by_id[file_id].url
-            if local_only and not is_local_filename(url):
+            if local_only and not is_local_filename(file.url):
                 continue
-            ret.append(self._file_by_id[file_id])
+            ret.append(file)
         return ret
 
     def add_file_group(self, fileGrp):
@@ -234,8 +227,6 @@ class OcrdMets(OcrdXmlDocument):
         mets_file.pageId = pageId
         mets_file.local_filename = local_filename
 
-        self._file_by_id[ID] = mets_file
-
         return mets_file
 
     def remove_file(self, ID):
@@ -262,9 +253,6 @@ class OcrdMets(OcrdXmlDocument):
         # pylint: disable=protected-access
         ocrd_file._el.getparent().remove(ocrd_file._el)
 
-        # Uncache
-        if ID in self._file_by_id:
-            del self._file_by_id[ID]
         return ocrd_file
 
     @property
