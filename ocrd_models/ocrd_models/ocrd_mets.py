@@ -313,7 +313,7 @@ class OcrdMets(OcrdXmlDocument):
         Get the pageId for a ocrd_file
         """
         ret = self._tree.getroot().xpath(
-            '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@ID' %
+            '//mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@ID' %
             ocrd_file.ID, namespaces=NS)
         if ret:
             return ret[0]
