@@ -19,6 +19,9 @@ FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
 DOCKER_ARGS = 
 
+# Base image to use for the ocrd/core-gpu variant. Default: $(DOCKER_GPU_BASE_IMAGE)
+DOCKER_GPU_BASE_IMAGE = nvidia/cuda:10.2-base-ubuntu18.04
+
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
@@ -41,15 +44,17 @@ help:
 	@echo "    docs-clean     Clean docs"
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
+	@echo "    docker-gpu     Build docker GPU / CUDA image"
 	@echo "    bashlib        Build bash library"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
-	@echo "    PAGE_VERSION  PAGE schema version to use. Default: '$(PAGE_VERSION)'"
-	@echo "    DOCKER_ARGS   Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
-	@echo "    DOCKER_TAG    Docker tag."
-	@echo "    PIP_INSTALL   pip install command. Default: $(PIP_INSTALL)"
+	@echo "    PAGE_VERSION           PAGE schema version to use. Default: '$(PAGE_VERSION)'"
+	@echo "    DOCKER_ARGS            Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
+	@echo "    DOCKER_GPU_BASE_IMAGE  Base image to use for the ocrd/core-gpu variant. Default: $(DOCKER_GPU_BASE_IMAGE)"
+	@echo "    DOCKER_TAG             Docker tag."
+	@echo "    PIP_INSTALL            pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
 
@@ -187,6 +192,12 @@ pyclean:
 # Build docker image
 docker:
 	docker build -t $(DOCKER_TAG) $(DOCKER_ARGS) .
+
+# Build docker GPU / CUDA image
+docker-gpu:
+	sed 's|FROM ubuntu:18.04|FROM $(DOCKER_GPU_BASE_IMAGE)|' Dockerfile > Dockerfile-gpu
+	docker build -t $(DOCKER_TAG)-gpu $(DOCKER_ARGS) -f Dockerfile-gpu .
+	rm Dockerfile-gpu
 
 #
 # bash library
