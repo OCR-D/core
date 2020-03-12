@@ -33,7 +33,7 @@ simple_page = """\
                 <Baseline points="114,429 918,429"/>
                 <Word id="w_w1aab1b1b2b1b1ab1" language="German" custom="readingOrder {index:0;} textStyle {offset:0; length:11;fontFamily:Arial; fontSize:17.0; bold:true;}">
                     <Coords points="114,368 442,368 442,437 114,437"/>
-                    <TextEquiv conf="0.987654321">
+                    <TextEquiv conf="1">
                         <Unicode>Berliniſche</Unicode>
                     </TextEquiv>
                 </Word>
@@ -123,7 +123,6 @@ class TestOcrdPage(TestCase):
         with self.assertRaisesRegex(TypeError, ''):
             el.set_conf('I AM NOT A FLOAT DEAL WITH IT')
             parseString(to_xml(pcgts).encode('utf8'))
-
 
 if __name__ == '__main__':
     main()

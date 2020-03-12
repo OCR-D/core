@@ -124,3 +124,33 @@ properties:
                 - layout/segmentation/word
                 - layout/segmentation/classification
                 - layout/analysis
+            sample-calls:
+              description: "Sample calls of the CLI to illustrate typical usage"
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                  - call
+                  - description
+                properties:
+                  description:
+                    description: What this command call does
+                    type: string
+                  call:
+                    description: The command line call
+                    type: string
+                    pattern: '^ocrd-'
+                  ocrd_zip:
+                    description: OCRD-ZIP fitting the command line call
+                    type: string
+                    format: uri
+                  input-image:
+                    description: A visual representation of an input image/document before processing
+                    type: string
+                    format: uri
+                  output-image:
+                    description: A visual representation of an output image/document after processing
+                    type: string
+                    format: uri
+
