@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * bashlib: ocrd-tool.json-related errors no longer lead to silent exit, #456
+  * #437 broke simple types in PAGE model, revert 3a0a3a8, #451
 
 ## [2.4.2] - 2020-02-20
 
