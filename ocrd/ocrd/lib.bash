@@ -96,13 +96,11 @@ ocrd__parse_argv () {
 
 
     local params_parsed retval
-    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]:-{\}}")"
-    retval=$?
-    if [[ $retval != 0 ]];then
-        echo "Error: Failed to parse parameters (retval $retval):"
-        echo "$params_parsed"
-        exit 42 # $retval
-    fi
+    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]:-{\}}")" || {
+        retval=$?
+        ocrd__raise "Failed to parse parameters (retval $retval):
+$params_parsed"
+    }
     eval "$params_parsed"
 
 }
