@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * bashlib: ocrd-tool.json-related errors no longer lead to silent exit, #456
+
 ## [2.4.2] - 2020-02-20
 
 Fixed:
