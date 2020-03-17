@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.4.4] - 2020-03-17
+
+Fixed:
+
+  * #437 broke simple types in PAGE model, (really) revert 3a0a3a8, #451
+
 ## [2.4.3] - 2020-03-12
 
 Fixed:
@@ -770,6 +776,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.4.4]: ../../compare/v2.4.4...v2.4.3
 [2.4.3]: ../../compare/v2.4.3...v2.4.2
 [2.4.2]: ../../compare/v2.4.2...v2.4.1
 [2.4.1]: ../../compare/v2.4.1...v2.4.0
