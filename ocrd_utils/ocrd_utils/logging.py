@@ -16,6 +16,7 @@ These files will be executed in the context of ocrd/ocrd_logging.py, with `loggi
 from __future__ import absolute_import
 
 import logging
+import logging.config
 import os
 
 __all__ = [
@@ -102,11 +103,10 @@ def initLogging():
 
 
     for p in CONFIG_PATHS:
-        config_file = os.path.join(p, 'ocrd_logging.py')
+        config_file = os.path.join(p, 'ocrd_logging.conf')
         if os.path.exists(config_file):
             logging.debug("Loading logging configuration from '%s'", config_file)
-            with open(config_file) as f:
-                code = compile(f.read(), config_file, 'exec')
-                exec(code, globals(), locals()) # pylint: disable=exec-used
+            logging.config.fileConfig(config_file)
+            return
 
 initLogging()
