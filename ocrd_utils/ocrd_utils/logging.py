@@ -79,34 +79,26 @@ def getLogger(*args, **kwargs):
 
 def initLogging():
     """
-    Sets logging defaults
+    Read logging configuration, if exists, otherwise use basicConfig
     """
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
-        datefmt='%H:%M:%S')
-    logging.getLogger('').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
-    logging.getLogger('PIL').setLevel(logging.INFO)
-    # To cut back on the `Self-intersection at or near point` INFO messages
-    logging.getLogger('shapely.geos').setLevel(logging.ERROR)
-
-    # Allow overriding
 
     CONFIG_PATHS = [
         os.path.curdir,
         os.path.join(os.path.expanduser('~')),
         '/etc',
     ]
-
-
     for p in CONFIG_PATHS:
         config_file = os.path.join(p, 'ocrd_logging.conf')
         if os.path.exists(config_file):
-            logging.debug("Loading logging configuration from '%s'", config_file)
             logging.config.fileConfig(config_file)
             return
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
+        datefmt='%H:%M:%S')
+    logging.getLogger('PIL').setLevel(logging.INFO)
+    logging.getLogger('shapely.geos').setLevel(logging.ERROR)
+    
 
 initLogging()
