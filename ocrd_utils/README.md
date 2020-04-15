@@ -27,4 +27,5 @@ In the Dockerfiles used to build `ocrd/core` (and subsequently `ocrd/all`), the 
 
 Thus, if you want to customize logging rules in one of these Docker containers, you can create a custom configuration file and either:
 - place it into your local workspace directory when running the OCR-D container.
+- mount it under `/etc` when starting up the container, e.g. `docker run --mount type=bind,source=host/path/to/your-template.conf,destination=/etc/ocrd_logging.conf ocrd/all`
 - include a Dockerfile step (layer or stage) which copies this into `/etc/ocrd_logging.conf` at build time in your own Docker image.
