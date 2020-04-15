@@ -49,9 +49,13 @@ class TestOcrdMets(TestCase):
     def test_find_files(self):
         self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
         self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
+        self.assertEqual(len(self.mets.find_files(fileGrp='re:OCR-D-I.*')), 13, '13 files in "re:OCR-D-I.*"')
+        self.assertEqual(len(self.mets.find_files(ID="FILE_0001_IMAGE")), 1, '1 files with ID "FILE_0001_IMAGE"')
+        self.assertEqual(len(self.mets.find_files(ID="re:FILE_0005_.*")), 1, '1 files with ID "re:FILE_0005_.*"')
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001')), 17, '17 files for page "PHYS_0001"')
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001-NOTEXIST')), 0, '0 pages for "PHYS_0001-NOTEXIST"')
         self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
+        self.assertEqual(len(self.mets.find_files(mimetype='re:application/.*')), 22, '22 application/.*')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
 

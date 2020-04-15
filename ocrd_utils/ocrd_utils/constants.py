@@ -10,6 +10,7 @@ __all__ = [
     'MIME_TO_EXT',
     'PIL_TO_MIME',
     'MIME_TO_PIL',
+    'REGEX_PREFIX',
 ]
 
 VERSION = get_distribution('ocrd_utils').version
@@ -73,3 +74,7 @@ MIME_TO_PIL = {
     'image/x-portable-pixmap': 'PPM',
     'image/tiff': 'TIFF',
 }
+
+
+# Prefix to denote query is regular expression not fixed string
+REGEX_PREFIX = 're:'

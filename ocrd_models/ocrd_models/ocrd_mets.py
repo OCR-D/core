@@ -2,8 +2,9 @@
 API to METS
 """
 from datetime import datetime
+from re import fullmatch
 
-from ocrd_utils import is_local_filename, getLogger, VERSION
+from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX
 
 from .constants import (
     NAMESPACES as NS,
@@ -127,18 +128,35 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
+        REGEX_PREFIX_LEN = len(REGEX_PREFIX)
         for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
-            if ID and cand.get('ID') != ID:
-                continue
+            if ID:
+                if ID.startswith(REGEX_PREFIX):
+                    if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')):
+                        continue
+                else:
+                    if not ID == cand.get('ID'):
+                        continue
+
             if pageId and not self._tree.getroot().xpath(
                 '//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr[@FILEID="%s"]' % (
                     pageId, cand.get('ID')
                 ), namespaces=NS):
                 continue
-            if fileGrp and cand.getparent().get('USE') != fileGrp:
-                continue
-            if mimetype and cand.get('MIMETYPE') != mimetype:
-                continue
+            if fileGrp:
+                if fileGrp.startswith(REGEX_PREFIX):
+                    if not fullmatch(fileGrp[REGEX_PREFIX_LEN:], cand.getparent().get('USE')):
+                        continue
+                else:
+                    if cand.getparent().get('USE') != fileGrp:
+                        continue
+            if mimetype:
+                if mimetype.startswith(REGEX_PREFIX):
+                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE')):
+                        continue
+                else:
+                    if cand.get('MIMETYPE') != mimetype:
+                        continue
             if url and cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink']) != url:
                 continue
             file = OcrdFile(cand, mets=self)
