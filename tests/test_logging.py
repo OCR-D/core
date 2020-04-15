@@ -11,7 +11,6 @@ from ocrd_utils import (
     getLogger
 )
 
-setOverrideLogLevel('INFO')
 class TestLogging(TestCase):
 
     def test_setOverrideLogLevel(self):
