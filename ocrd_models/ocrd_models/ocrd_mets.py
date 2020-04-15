@@ -127,28 +127,21 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
-        fileGrp_clause = '' if fileGrp is None else '[@USE="%s"]' % fileGrp
-        file_clause = ''
-        if ID is not None:
-            file_clause += '[@ID="%s"]' % ID
-        if mimetype is not None:
-            file_clause += '[@MIMETYPE="%s"]' % mimetype
-        if url is not None:
-            file_clause += '[mets:FLocat[@xlink:href = "%s"]]' % url
-        # TODO lxml says invalid predicate. I disagree
-        #  if local_only:
-        #      file_clause += "[mets:FLocat[starts-with(@xlink:href, 'file://')]]"
-
-        # Search
-        file_ids = self._tree.getroot().xpath("//mets:fileGrp%s/mets:file%s/@ID" % (fileGrp_clause, file_clause), namespaces=NS)
-        if pageId is not None:
-            by_pageid = self._tree.getroot().xpath('//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % pageId, namespaces=NS)
-            file_ids = [i for i in by_pageid if i in file_ids]
-
-        # instantiate / get from cache
-        for file_id in file_ids:
-            el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % file_id, NS)
-            file = OcrdFile(el, mets=self)
+        for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
+            if ID and cand.get('ID') != ID:
+                continue
+            if pageId and not self._tree.getroot().xpath(
+                '//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr[@FILEID="%s"]' % (
+                    pageId, cand.get('ID')
+                ), namespaces=NS):
+                continue
+            if fileGrp and cand.getparent().get('USE') != fileGrp:
+                continue
+            if mimetype and cand.get('MIMETYPE') != mimetype:
+                continue
+            if url and cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink']) != url:
+                continue
+            file = OcrdFile(cand, mets=self)
 
             # If only local resources should be returned and file is not a file path: skip the file
             if local_only and not is_local_filename(file.url):
