@@ -49,7 +49,7 @@ class DummyProcessor(Processor):
 def cli_dummy_processor(*args, **kwargs):
     return ocrd_cli_wrap_processor(DummyProcessor, *args, **kwargs)
 
-
+setOverrideLogLevel('INFO')
 class TestDecorators(TestCase):
 
     def setUp(self):
