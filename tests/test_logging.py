@@ -31,7 +31,6 @@ class TestLogging(TestCase):
         self.assertEqual(getLevelName('ERROR'), logging.ERROR)
         self.assertEqual(getLevelName('FATAL'), logging.ERROR)
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
-        setOverrideLogLevel('INFO')
 
 
 class TestLoggingConfiguration(TestCase):
