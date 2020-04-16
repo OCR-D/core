@@ -30,9 +30,9 @@ __all__ = [
 _overrideLogLevel = None
 
 _ocrdLevel2pythonLevel = {
-    'TRACE':    'DEBUG',
-    'OFF':      'CRITICAL',
-    'FATAL':    'ERROR',
+    'TRACE': 'DEBUG',
+    'OFF': 'CRITICAL',
+    'FATAL': 'ERROR',
 }
 
 def getLevelName(lvl):
