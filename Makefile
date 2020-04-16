@@ -132,7 +132,7 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	HOME=$(CWD) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
