@@ -1,6 +1,7 @@
 import os
 import json
 from click import wrap_text
+from time import time
 import subprocess
 from ocrd_utils import getLogger, VERSION as OCRD_VERSION
 from ocrd_validators import ParameterValidator
@@ -53,8 +54,12 @@ def run_processor(
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
+    logProfile = getLogger('profile.ocrd.processor.%s' % ocrd_tool['executable'])
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
+    t0 = time()
     processor.process()
+    t1 = time() - t0
+    logProfile.info('%fs' % t1)
     workspace.mets.add_agent(
         name=name,
         _type='OTHER',

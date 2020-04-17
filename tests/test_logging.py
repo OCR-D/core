@@ -1,7 +1,10 @@
 import logging
+from re import match
 from tempfile import TemporaryDirectory
 
-from tests.base import TestCase, main
+from tests.base import TestCase, main, FIFOIO, assets
+from tests.processor.test_processor import DummyProcessor
+from ocrd import Resolver, run_processor
 
 from ocrd_utils import (
     pushd_popd,
@@ -45,6 +48,23 @@ class TestLogging2(TestCase):
                 with open('ocrd_logging.py', 'w') as f:
                     f.write('print("this is mighty dangerous")')
                 initLogging()
+
+class TestProfileLogging(TestCase):
+
+    def testProcessorProfiling(self):
+        log_capture_string = FIFOIO(256)
+        ch = logging.StreamHandler(log_capture_string)
+        ch.setFormatter(logging.Formatter('%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'))
+        getLogger('profile').setLevel('DEBUG')
+        getLogger('profile').addHandler(ch)
+
+        run_processor(DummyProcessor, resolver=Resolver(), mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+
+        log_contents = log_capture_string.getvalue()
+        log_capture_string.close()
+        # Check whether profile information has been logged. Dummy should
+        # finish in under 0.1s
+        self.assertTrue(match(r'.*profile.ocrd.processor.ocrd-test - 0.0\d+s.*', log_contents))
 
 if __name__ == '__main__':
     main()
