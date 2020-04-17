@@ -7,9 +7,6 @@ from tests.base import TestCase, assets, main, copy_of_directory
 from ocrd.resolver import Resolver
 from ocrd_utils import pushd_popd
 
-#  from ocrd_utils import setOverrideLogLevel
-#  setOverrideLogLevel('DEBUG')
-
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 

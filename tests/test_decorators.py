@@ -10,7 +10,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils.logging import setOverrideLogLevel, initLogging
+from ocrd_utils.logging import initLogging
 from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
 
 @click.command()
@@ -71,7 +71,7 @@ class TestDecorators(TestCase):
         result = self.runner.invoke(cli_with_ocrd_loglevel, ['--log-level', 'DEBUG'])
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.DEBUG)
-        setOverrideLogLevel('INFO')
+        initLogging()
 
     def test_processor_dump_json(self):
         result = self.runner.invoke(cli_dummy_processor, ['--dump-json'])

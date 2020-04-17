@@ -9,8 +9,6 @@ from tests.base import TestCase, assets, main, copy_of_directory
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 
-from ocrd_utils import setOverrideLogLevel
-setOverrideLogLevel('DEBUG')
 
 TMP_FOLDER = '/tmp/test-core-workspace'
 SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
@@ -110,8 +108,6 @@ class TestWorkspace(TestCase):
             # Create a relative path to trigger #319
             src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
             self.resolver.workspace_from_url(src_path, dst_dir=ws_dir, download=True)
-            from os import system
-            system('find %s' % ws_dir)
             self.assertTrue(Path(ws_dir, 'mets.xml').exists())  # sanity check, mets.xml must exist
             self.assertTrue(Path(ws_dir, 'OCR-D-GT-PAGE/PAGE_0017_PAGE.xml').exists())
 
