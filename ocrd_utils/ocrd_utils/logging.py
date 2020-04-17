@@ -79,8 +79,14 @@ def getLogger(*args, **kwargs):
 
 def initLogging():
     """
-    Read logging configuration, if exists, otherwise use basicConfig
+    Reset root loggers, read logging configuration, if exists, otherwise use basicConfig
     """
+
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    global _overrideLogLevel # pylint: disable=global-statement
+    _overrideLogLevel = None
 
     CONFIG_PATHS = [
         os.path.curdir,

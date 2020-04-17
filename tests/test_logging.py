@@ -13,6 +13,12 @@ from ocrd_utils import (
 
 class TestLogging(TestCase):
 
+    def setUp(self):
+        initLogging()
+
+    def tearDown(self):
+        initLogging()
+
     def test_setOverrideLogLevel(self):
         rootLogger = logging.getLogger('')
         somelogger = getLogger('foo.bar')
