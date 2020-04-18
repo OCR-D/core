@@ -73,6 +73,7 @@ def getLogger(*args, **kwargs):
     logger = logging.getLogger(*args, **kwargs)
     if _overrideLogLevel is not None:
         logger.setLevel(logging.NOTSET)
+    logger.propagate = False
     return logger
 
 # Default logging config
