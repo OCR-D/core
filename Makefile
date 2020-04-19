@@ -132,8 +132,8 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR) -k TestLogging
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
