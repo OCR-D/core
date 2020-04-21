@@ -73,14 +73,16 @@ def getLogger(*args, **kwargs):
     logger = logging.getLogger(*args, **kwargs)
     if _overrideLogLevel is not None:
         logger.setLevel(logging.NOTSET)
-    logger.propagate = False
+    if logger.handlers:
+        # avoid duplicating messages
+        logger.propagate = False
     return logger
 
 # Default logging config
 
 def initLogging():
     """
-        Reset root loggers, read logging configuration, if exists, otherwise use basicConfig
+    Reset root logger, read logging configuration if exists, otherwise use basicConfig
     """
 
     for handler in logging.root.handlers[:]:
