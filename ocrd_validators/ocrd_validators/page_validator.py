@@ -181,6 +181,32 @@ def page_get_reading_order(ro, rogroup):
         if not isinstance(elem, (RegionRefType, RegionRefIndexedType)):
             page_get_reading_order(ro, elem)
 
+def make_poly(polygon_points):
+    """Instantiate a Polygon from a list of point pairs, or return an error string"""
+    if len(polygon_points) < 4:
+        return 'has too few points'
+    poly = Polygon(polygon_points)
+    if not poly.is_valid:
+        return explain_validity(poly)
+    elif poly.is_empty:
+        return 'is empty'
+    elif poly.bounds[0] < 0 or poly.bounds[1] < 0:
+        return 'is negative'
+    return poly
+
+def make_line(line_points):
+    """Instantiate a LineString from a list of point pairs, or return an error string"""
+    if len(line_points) < 2:
+        return 'has too few points'
+    line = LineString(line_points)
+    if not line.is_valid:
+        return explain_validity(line)
+    elif line.is_empty:
+        return 'is empty'
+    elif line.bounds[0] < 0 or line.bounds[1] < 0:
+        return 'is negative'
+    return line
+
 @deprecated_alias(strictness='page_textequiv_consistency')
 @deprecated_alias(strategy='page_textequiv_strategy')
 def validate_consistency(node, page_textequiv_consistency, page_textequiv_strategy,
@@ -226,20 +252,13 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
             parent = node
         if parent:
             parent_points = parent.get_Coords().points
-            node_poly = Polygon(polygon_from_points(parent_points))
-            reason = ''
-            if not node_poly.is_valid:
-                reason = explain_validity(node_poly)
-            elif node_poly.is_empty:
-                reason = 'is empty'
-            elif node_poly.bounds[0] < 0 or node_poly.bounds[1] < 0:
-                reason = 'is negative'
-            elif node_poly.length < 4:
-                reason = 'has too few points'
-            if reason:
-                report.add_error(CoordinateValidityError(tag, node_id, file_id, parent_points, reason))
+            node_poly = make_poly(polygon_from_points(parent_points))
+            if not isinstance(node_poly, Polygon):
+                report.add_error(CoordinateValidityError(tag, node_id, file_id,
+                                                         parent_points, node_poly))
                 log.debug("Invalid coords of %s %s", tag, node_id)
                 consistent = False
+                node_poly = None # don't use in further comparisons
         else:
             node_poly = None
     for class_, getterLO, getterRD in _ORDER[1:]:
@@ -270,12 +289,8 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
             if check_coords and node_poly:
                 child_tag = child.original_tagname_
                 child_points = child.get_Coords().points
-                child_poly = Polygon(polygon_from_points(child_points))
-                if (not child_poly.is_valid
-                    or child_poly.is_empty
-                    or child_poly.bounds[0] < 0
-                    or child_poly.bounds[1] < 0
-                    or child_poly.length < 4):
+                child_poly = make_poly(polygon_from_points(child_points))
+                if not isinstance(child_poly, Polygon):
                     # report.add_error(CoordinateValidityError(child_tag, child.id, file_id, child_points))
                     # log.debug("Invalid coords of %s %s", child_tag, child.id)
                     # consistent = False
@@ -288,18 +303,10 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                     consistent = False
         if isinstance(node, TextLineType) and check_baseline and node.get_Baseline():
             baseline_points = node.get_Baseline().points
-            baseline_line = LineString(polygon_from_points(baseline_points))
-            reason = ''
-            if not baseline_line.is_valid:
-                reason = explain_validity(baseline_line)
-            elif baseline_line.is_empty:
-                reason = 'is empty'
-            elif baseline_line.bounds[0] < 0 or baseline_line.bounds[1] < 0:
-                reason = 'is negative'
-            elif baseline_line.length < 2:
-                reason = 'has too few points'
-            if reason:
-                report.add_error(CoordinateValidityError("Baseline", node_id, file_id, baseline_points, reason))
+            baseline_line = make_line(polygon_from_points(baseline_points))
+            if not isinstance(baseline_line, LineString):
+                report.add_error(CoordinateValidityError("Baseline", node_id, file_id,
+                                                         baseline_points, baseline_line))
                 log.debug("Invalid coords of baseline in %s", node_id)
                 consistent = False
             elif not baseline_line.within(node_poly):
