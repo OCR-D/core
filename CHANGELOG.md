@@ -7,7 +7,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
-  * Execution of processors is tracked with logger 'profile.orcd.process.<processor-name>', #461
+  * Execution of processors is tracked with logger 'orcd.process.profile', #461
 
 ## [2.4.4] - 2020-03-17
 

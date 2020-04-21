@@ -54,12 +54,18 @@ def run_processor(
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
-    logProfile = getLogger('profile.ocrd.processor.%s' % ocrd_tool['executable'])
+    logProfile = getLogger('ocrd.process.profile')
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0 = time()
     processor.process()
     t1 = time() - t0
-    logProfile.info('%fs' % t1)
+    logProfile.info('Executing processor "%s" took %fs [--input-file-grp="%s" --output-file-grp="%s" --parameter="%s"]' % (
+        ocrd_tool['executable'],
+        t1,
+        input_file_grp if input_file_grp else '',
+        output_file_grp if output_file_grp else '',
+        parameter if parameter else {}
+    ))
     workspace.mets.add_agent(
         name=name,
         _type='OTHER',
