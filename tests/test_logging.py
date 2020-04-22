@@ -94,6 +94,22 @@ class TestLogging(TestCase):
             ]), child_output),
                 'child received second error and debug but not first error and debug')
 
+    def testProcessorProfiling(self):
+        log_capture_string = FIFOIO(256)
+        ch = logging.StreamHandler(log_capture_string)
+        ch.setFormatter(logging.Formatter(LOG_FORMAT))
+        getLogger('ocrd.process.profile').setLevel('DEBUG')
+        getLogger('ocrd.process.profile').addHandler(ch)
+
+        run_processor(DummyProcessor, resolver=Resolver(), mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+
+        log_contents = log_capture_string.getvalue()
+        log_capture_string.close()
+        # with open('/tmp/debug.log', 'w') as f:
+        #     f.write(log_contents)
+        # Check whether profile information has been logged. Dummy should finish in under 0.1s
+        self.assertTrue(match(r'.*Executing processor "ocrd-test" took 0.\d+s.*', log_contents))
+
 class TestLoggingConfiguration(TestCase):
 
     def test_tmpConfigfile(self):
@@ -126,22 +142,6 @@ class TestLoggingConfiguration(TestCase):
                 initLogging()
                 # ensure log level is set from temporary config file
                 self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
-
-class TestProfileLogging(TestCase):
-
-    def testProcessorProfiling(self):
-        log_capture_string = FIFOIO(256)
-        ch = logging.StreamHandler(log_capture_string)
-        ch.setFormatter(logging.Formatter(LOG_FORMAT))
-        getLogger('ocrd.process.profile').setLevel('DEBUG')
-        getLogger('ocrd.process.profile').addHandler(ch)
-
-        run_processor(DummyProcessor, resolver=Resolver(), mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
-
-        log_contents = log_capture_string.getvalue()
-        log_capture_string.close()
-        # Check whether profile information has been logged. Dummy should finish in under 0.1s
-        self.assertTrue(match(r'.*Executing processor "ocrd-test" took 0.\d+s.*', log_contents))
 
 if __name__ == '__main__':
     main()
