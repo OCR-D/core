@@ -16,6 +16,9 @@ from ocrd_utils import (
     LOG_DATEFMT
 )
 
+# "0000-00-00 00:00:00.000 "
+DATEFMT_RE = r'\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.(\d+)? '
+
 class TestLogging(TestCase):
 
     def setUp(self):
@@ -57,28 +60,39 @@ class TestLogging(TestCase):
         parent_logger = getLogger('foo')
         self.assertFalse(parent_logger.propagate, 'should not propagate because StreamHandler has been attached')
 
+        child_logger = getLogger('foo.bar')
+        self.assertTrue(child_logger.propagate, 'no handler on logger => propagate')
+        child_logger.setLevel('DEBUG')
+
+        child_logger.error('first error')
+
         child_capture = FIFOIO(256)
         child_handler = logging.StreamHandler(child_capture)
         child_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
-        child_logger = getLogger('foo.bar')
-        self.assertTrue(child_logger.propagate, 'no handler on logger => propagate')
+
+        child_logger.debug('first debug')
+
         child_logger.addHandler(child_handler)
         child_logger = getLogger('foo.bar')
         self.assertFalse(child_logger.propagate, 'should not propagate because StreamHandler has been attached')
 
-        child_logger.error('test')
+        child_logger.debug('second debug')
+        child_logger.error('second error')
 
         parent_output = parent_capture.getvalue()
         parent_capture.close()
         child_output = child_capture.getvalue()
         child_capture.close()
         # print('parent', parent_output)
-        print('child', child_output)
+        # print('child', child_output)
 
-        # self.assertEqual(parent_output, '', 'parent logger should not receive msg')
-        # 0000-00-00 00:00:00,000.000 ERROR foo.bar - test\n
-        self.assertTrue(match(r'\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d(\.\d+)? ERROR foo.bar - test\n', child_output),
-                'regex match the log entry format')
+        self.assertTrue(match(DATEFMT_RE + 'ERROR foo.bar - first error\n', parent_output),
+                'parent received first error but not second error nor first debug')
+        self.assertTrue(match("\n".join([
+            DATEFMT_RE + 'DEBUG foo.bar - second debug',
+            DATEFMT_RE + 'ERROR foo.bar - second error',
+            ]), child_output),
+                'child received second error and debug but not first error and debug')
 
 class TestLoggingConfiguration(TestCase):
 
