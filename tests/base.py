@@ -2,12 +2,18 @@
 
 from os.path import dirname, realpath
 import sys
-from unittest import TestCase, skip, main
 import logging
 import io
 import collections
+from unittest import TestCase as VanillaTestCase, skip, main
+from ocrd_utils import initLogging
 
 from .assets import assets, copy_of_directory
+
+class TestCase(VanillaTestCase):
+
+    def tearDown(self):
+        initLogging()
 
 #  import traceback
 #  import warnings

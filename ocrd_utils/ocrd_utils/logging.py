@@ -16,6 +16,7 @@ These files will be executed in the context of ocrd/ocrd_logging.py, with `loggi
 from __future__ import absolute_import
 
 import logging
+import logging.config
 import os
 
 __all__ = [
@@ -29,9 +30,9 @@ __all__ = [
 _overrideLogLevel = None
 
 _ocrdLevel2pythonLevel = {
-    'TRACE':    'DEBUG',
-    'OFF':      'CRITICAL',
-    'FATAL':    'ERROR',
+    'TRACE': 'DEBUG',
+    'OFF': 'CRITICAL',
+    'FATAL': 'ERROR',
 }
 
 def getLevelName(lvl):
@@ -72,14 +73,35 @@ def getLogger(*args, **kwargs):
     logger = logging.getLogger(*args, **kwargs)
     if _overrideLogLevel is not None:
         logger.setLevel(logging.NOTSET)
+    if logger.handlers:
+        # avoid duplicating messages
+        logger.propagate = False
     return logger
 
 # Default logging config
 
 def initLogging():
     """
-    Sets logging defaults
+    Reset root logger, read logging configuration if exists, otherwise use basicConfig
     """
+
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    global _overrideLogLevel # pylint: disable=global-statement
+    _overrideLogLevel = None
+    
+    CONFIG_PATHS = [
+        os.path.curdir,
+        os.path.join(os.path.expanduser('~')),
+        '/etc',
+    ]
+    for p in CONFIG_PATHS:
+        config_file = os.path.join(p, 'ocrd_logging.conf')
+        if os.path.exists(config_file):
+            logging.config.fileConfig(config_file)
+            return
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
@@ -91,22 +113,6 @@ def initLogging():
     logging.getLogger('PIL').setLevel(logging.INFO)
     # To cut back on the `Self-intersection at or near point` INFO messages
     logging.getLogger('shapely.geos').setLevel(logging.ERROR)
-
-    # Allow overriding
-
-    CONFIG_PATHS = [
-        os.path.curdir,
-        os.path.join(os.path.expanduser('~')),
-        '/etc',
-    ]
-
-
-    for p in CONFIG_PATHS:
-        config_file = os.path.join(p, 'ocrd_logging.py')
-        if os.path.exists(config_file):
-            logging.debug("Loading logging configuration from '%s'", config_file)
-            with open(config_file) as f:
-                code = compile(f.read(), config_file, 'exec')
-                exec(code, globals(), locals()) # pylint: disable=exec-used
+    
 
 initLogging()

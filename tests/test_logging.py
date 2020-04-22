@@ -16,6 +16,9 @@ from ocrd_utils import (
 
 class TestLogging(TestCase):
 
+    def setUp(self):
+        initLogging()
+
     def test_setOverrideLogLevel(self):
         rootLogger = logging.getLogger('')
         somelogger = getLogger('foo.bar')
@@ -29,25 +32,48 @@ class TestLogging(TestCase):
         self.assertEqual(notherlogger.getEffectiveLevel(), logging.ERROR)
         setOverrideLogLevel('INFO')
         somelogger = getLogger('foo.bar')
-        setOverrideLogLevel('INFO')
-
-
-class TestLogging2(TestCase):
-
-    def setUp(self):
-        initLogging()
 
     def test_getLevelName(self):
         self.assertEqual(getLevelName('ERROR'), logging.ERROR)
         self.assertEqual(getLevelName('FATAL'), logging.ERROR)
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
 
-    def test_configfile(self):
+    def tearDown(self):
+        initLogging()
+
+class TestLoggingConfiguration(TestCase):
+
+    def test_tmpConfigfile(self):
+        self.assertNotEqual(logging.getLogger('').getEffectiveLevel(), logging.NOTSET)
         with TemporaryDirectory() as tempdir:
             with pushd_popd(tempdir):
-                with open('ocrd_logging.py', 'w') as f:
-                    f.write('print("this is mighty dangerous")')
+                with open('ocrd_logging.conf', 'w') as f:
+                    # write logging configuration file (MWE)
+                    f.write('''
+                        [loggers]
+                        keys=root
+
+                        [handlers]
+                        keys=consoleHandler
+
+                        [formatters]
+                        keys=
+
+                        [logger_root]
+                        level=ERROR
+                        handlers=consoleHandler
+
+                        [handler_consoleHandler]
+                        class=StreamHandler
+                        formatter=
+                        args=(sys.stdout,)
+                        ''')
+                # this will call logging.config.fileConfig with disable_existing_loggers=True,
+                # so the defaults from the import-time initLogging should be invalided
                 initLogging()
+                # ensure log level is set from temporary config file
+                self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
+
 
 class TestProfileLogging(TestCase):
 
