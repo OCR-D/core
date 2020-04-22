@@ -3,7 +3,6 @@
 from os.path import dirname, realpath
 import sys
 from unittest import TestCase as VanillaTestCase, skip, main
-
 from .assets import assets, copy_of_directory
 from ocrd_utils import (initLogging)
 

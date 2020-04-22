@@ -16,9 +16,6 @@ class TestLogging(TestCase):
     def setUp(self):
         initLogging()
 
-    def tearDown(self):
-        initLogging()
-
     def test_setOverrideLogLevel(self):
         rootLogger = logging.getLogger('')
         somelogger = getLogger('foo.bar')
@@ -38,6 +35,8 @@ class TestLogging(TestCase):
         self.assertEqual(getLevelName('FATAL'), logging.ERROR)
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
 
+    def tearDown(self):
+        initLogging()
 
 class TestLoggingConfiguration(TestCase):
 
