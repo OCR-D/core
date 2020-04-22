@@ -1,6 +1,7 @@
 # pylint: disable=unused-import
 
 from os.path import dirname, realpath
+from os import chdir
 import sys
 import logging
 import io
@@ -11,6 +12,10 @@ from ocrd_utils import initLogging
 from .assets import assets, copy_of_directory
 
 class TestCase(VanillaTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        chdir(dirname(realpath(__file__)) + '/..')
 
     def tearDown(self):
         initLogging()
