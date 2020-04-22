@@ -11,7 +11,9 @@ from ocrd_utils import (
     getLevelName,
     setOverrideLogLevel,
     initLogging,
-    getLogger
+    getLogger,
+    LOG_FORMAT,
+    LOG_DATEFMT
 )
 
 class TestLogging(TestCase):
@@ -38,8 +40,45 @@ class TestLogging(TestCase):
         self.assertEqual(getLevelName('FATAL'), logging.ERROR)
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
 
-    def tearDown(self):
-        initLogging()
+    def test_logging_non_duplicate(self):
+        """
+        Verify that child loggers don't propagate a log message they handle
+        """
+
+        root_logger = logging.getLogger('')
+        self.assertTrue(root_logger.handlers, 'root logger has at least 1 handler')
+
+        parent_capture = FIFOIO(256)
+        parent_handler = logging.StreamHandler(parent_capture)
+        parent_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        parent_logger = getLogger('foo')
+        self.assertTrue(parent_logger.propagate, 'no handler on logger => propagate')
+        parent_logger.addHandler(parent_handler)
+        parent_logger = getLogger('foo')
+        self.assertFalse(parent_logger.propagate, 'should not propagate because StreamHandler has been attached')
+
+        child_capture = FIFOIO(256)
+        child_handler = logging.StreamHandler(child_capture)
+        child_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        child_logger = getLogger('foo.bar')
+        self.assertTrue(child_logger.propagate, 'no handler on logger => propagate')
+        child_logger.addHandler(child_handler)
+        child_logger = getLogger('foo.bar')
+        self.assertFalse(child_logger.propagate, 'should not propagate because StreamHandler has been attached')
+
+        child_logger.error('test')
+
+        parent_output = parent_capture.getvalue()
+        parent_capture.close()
+        child_output = child_capture.getvalue()
+        child_capture.close()
+        # print('parent', parent_output)
+        print('child', child_output)
+
+        # self.assertEqual(parent_output, '', 'parent logger should not receive msg')
+        # 0000-00-00 00:00:00,000.000 ERROR foo.bar - test\n
+        self.assertTrue(match(r'\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d(\.\d+)? ERROR foo.bar - test\n', child_output),
+                'regex match the log entry format')
 
 class TestLoggingConfiguration(TestCase):
 
@@ -74,13 +113,12 @@ class TestLoggingConfiguration(TestCase):
                 # ensure log level is set from temporary config file
                 self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
 
-
 class TestProfileLogging(TestCase):
 
     def testProcessorProfiling(self):
         log_capture_string = FIFOIO(256)
         ch = logging.StreamHandler(log_capture_string)
-        ch.setFormatter(logging.Formatter('%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'))
+        ch.setFormatter(logging.Formatter(LOG_FORMAT))
         getLogger('ocrd.process.profile').setLevel('DEBUG')
         getLogger('ocrd.process.profile').addHandler(ch)
 

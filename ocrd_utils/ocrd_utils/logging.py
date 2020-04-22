@@ -19,6 +19,8 @@ import logging
 import logging.config
 import os
 
+from .constants import LOG_FORMAT, LOG_DATEFMT
+
 __all__ = [
     'logging',
     'getLogger',
@@ -90,7 +92,7 @@ def initLogging():
 
     global _overrideLogLevel # pylint: disable=global-statement
     _overrideLogLevel = None
-    
+
     CONFIG_PATHS = [
         os.path.curdir,
         os.path.join(os.path.expanduser('~')),
@@ -104,8 +106,8 @@ def initLogging():
 
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
-        datefmt='%H:%M:%S')
+        format=LOG_FORMAT,
+        datefmt=LOG_DATEFMT)
     logging.getLogger('').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
@@ -113,6 +115,6 @@ def initLogging():
     logging.getLogger('PIL').setLevel(logging.INFO)
     # To cut back on the `Self-intersection at or near point` INFO messages
     logging.getLogger('shapely.geos').setLevel(logging.ERROR)
-    
+
 
 initLogging()
