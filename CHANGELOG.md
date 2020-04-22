@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Execution of processors is tracked with logger 'orcd.process.profile', #461
+
 ## [2.4.4] - 2020-03-17
 
 Fixed:
