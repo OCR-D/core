@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.5.0] - 2020-04-20
+
+Changed:
+
+  * Logging configuration via configuration file, not script, #460 (HT @M3ssman @bertsky)
+
 Added:
 
   * Execution of processors is tracked with logger 'orcd.process.profile', #461
