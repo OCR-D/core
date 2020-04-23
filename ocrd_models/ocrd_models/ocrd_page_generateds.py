@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu Apr 23 14:47:51 2020 by generateDS.py version 2.35.20.
+# Generated Thu Apr 23 15:06:47 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -945,14 +945,14 @@ def _cast(typ, value):
 #
 
 
-class AlignSimpleType(object):
+class AlignSimpleType(str, Enum):
     LEFT='left'
     CENTRE='centre'
     RIGHT='right'
     JUSTIFY='justify'
 
 
-class ChartTypeSimpleType(object):
+class ChartTypeSimpleType(str, Enum):
     BAR='bar'
     LINE='line'
     PIE='pie'
@@ -961,14 +961,14 @@ class ChartTypeSimpleType(object):
     OTHER='other'
 
 
-class ColourDepthSimpleType(object):
+class ColourDepthSimpleType(str, Enum):
     BILEVEL='bilevel'
     GREYSCALE='greyscale'
     COLOUR='colour'
     OTHER='other'
 
 
-class ColourSimpleType(object):
+class ColourSimpleType(str, Enum):
     BLACK='black'
     BLUE='blue'
     BROWN='brown'
@@ -987,7 +987,7 @@ class ColourSimpleType(object):
     OTHER='other'
 
 
-class GraphicsTypeSimpleType(object):
+class GraphicsTypeSimpleType(str, Enum):
     LOGO='logo'
     LETTERHEAD='letterhead'
     DECORATION='decoration'
@@ -1001,7 +1001,7 @@ class GraphicsTypeSimpleType(object):
     OTHER='other'
 
 
-class GroupTypeSimpleType(object):
+class GroupTypeSimpleType(str, Enum):
     PARAGRAPH='paragraph'
     LIST='list'
     LISTITEM='list-item'
@@ -1011,7 +1011,7 @@ class GroupTypeSimpleType(object):
     OTHER='other'
 
 
-class PageTypeSimpleType(object):
+class PageTypeSimpleType(str, Enum):
     FRONTCOVER='front-cover'
     BACKCOVER='back-cover'
     TITLE='title'
@@ -1022,7 +1022,7 @@ class PageTypeSimpleType(object):
     OTHER='other'
 
 
-class ProductionSimpleType(object):
+class ProductionSimpleType(str, Enum):
     """Text production type"""
     PRINTED='printed'
     TYPEWRITTEN='typewritten'
@@ -1032,14 +1032,14 @@ class ProductionSimpleType(object):
     OTHER='other'
 
 
-class ReadingDirectionSimpleType(object):
+class ReadingDirectionSimpleType(str, Enum):
     LEFTTORIGHT='left-to-right'
     RIGHTTOLEFT='right-to-left'
     TOPTOBOTTOM='top-to-bottom'
     BOTTOMTOTOP='bottom-to-top'
 
 
-class TextDataTypeSimpleType(object):
+class TextDataTypeSimpleType(str, Enum):
     XSDDECIMAL='xsd:decimal' # Examples: "123.456", "+1234.456", "-1234.456", "-.456", "-456"
     XSDFLOAT='xsd:float' # Examples: "123.456", "+1234.456", "-1.2344e56", "-.45E-6", "INF", "-INF", "NaN"
     XSDINTEGER='xsd:integer' # Examples: "123456", "+00000012", "-1", "-456"
@@ -1051,14 +1051,14 @@ class TextDataTypeSimpleType(object):
     OTHER='other' # An XSD type that is not listed or a custom type (use dataTypeDetails attribute).
 
 
-class TextLineOrderSimpleType(object):
+class TextLineOrderSimpleType(str, Enum):
     TOPTOBOTTOM='top-to-bottom'
     BOTTOMTOTOP='bottom-to-top'
     LEFTTORIGHT='left-to-right'
     RIGHTTOLEFT='right-to-left'
 
 
-class TextTypeSimpleType(object):
+class TextTypeSimpleType(str, Enum):
     PARAGRAPH='paragraph'
     HEADING='heading'
     CAPTION='caption'
@@ -1079,7 +1079,7 @@ class TextTypeSimpleType(object):
     OTHER='other'
 
 
-class underlineStyleType(object):
+class underlineStyleType(str, Enum):
     SINGLE_LINE='singleLine'
     DOUBLE_LINE='doubleLine'
     OTHER='other'

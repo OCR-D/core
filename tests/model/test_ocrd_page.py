@@ -122,6 +122,7 @@ class TestOcrdPage(TestCase):
         self.assertEqual(reg.get_type(), 'credit')
         self.assertTrue(isinstance(TextTypeSimpleType.CREDIT, str))
         reg.set_type(TextTypeSimpleType.PAGENUMBER)
+        self.assertEqual(reg.get_type(), 'page-number')
         self.assertTrue(isinstance(reg.get_type(), str))
 
 

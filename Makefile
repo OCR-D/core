@@ -87,8 +87,8 @@ generate-page: repo/assets
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
-	# hack to prevent #451
-	sed -i 's,(Enum):$$,(object):,' $(GDS_PAGE)
+	# hack to prevent #451: enum keys will be strings
+	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
 
 #
 # Repos
