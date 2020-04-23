@@ -1,5 +1,6 @@
 from tests.base import TestCase, main, assets
 
+from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
     PcGtsType,
@@ -110,6 +111,18 @@ class TestOcrdPage(TestCase):
         glyph = GlyphType()
         word.add_Glyph(glyph)
         glyph.add_AlternativeImage(AlternativeImageType())
+
+    def test_simple_types(self):
+        regions = self.pcgts.get_Page().get_TextRegion()
+        reg = regions[0]
+        # print([l.get_type() for l in regions])
+        self.assertTrue(isinstance(reg.get_type(), str))
+        self.assertEqual(reg.get_type(), TextTypeSimpleType.CREDIT)
+        self.assertTrue(isinstance(TextTypeSimpleType.CREDIT, str))
+        self.assertEqual(reg.get_type(), 'credit')
+        self.assertTrue(isinstance(TextTypeSimpleType.CREDIT, str))
+        reg.set_type(TextTypeSimpleType.PAGENUMBER)
+        self.assertTrue(isinstance(reg.get_type(), str))
 
 
 if __name__ == '__main__':

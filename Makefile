@@ -77,13 +77,18 @@ uninstall:
 	for mod in $(BUILD_ORDER);do pip uninstall -y $$mod;done
 
 # Regenerate python code from PAGE XSD
+generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
+generate-page: GDS_PAGE_USER = ocrd_models/ocrd_page_user_methods.py
 generate-page: repo/assets
 	generateDS \
 		-f \
 		--root-element='PcGts' \
-		--user-methods='ocrd_models/ocrd_page_user_methods.py' \
-		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
+		-o $(GDS_PAGE) \
+		--disable-generatedssuper-lookup \
+		--user-methods=$(GDS_PAGE_USER) \
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
+	# hack to prevent #451
+	sed -i 's,(Enum):$$,(object):,' $(GDS_PAGE)
 
 #
 # Repos
