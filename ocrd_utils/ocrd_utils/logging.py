@@ -37,6 +37,19 @@ _ocrdLevel2pythonLevel = {
     'FATAL': 'ERROR',
 }
 
+class PropagationShyLogger(logging.Logger):
+
+    def addHandler(self, hdlr):
+        super().addHandler(hdlr)
+        self.propagate = not self.handlers
+
+    def removeHandler(self, hdlr):
+        super().removeHandler(hdlr)
+        self.propagate = not self.handlers
+
+logging.setLoggerClass(PropagationShyLogger)
+logging.getLogger().propagate = False
+
 def getLevelName(lvl):
     """
     Get (numerical) python logging level for (string) spec-defined log level name.
@@ -75,9 +88,6 @@ def getLogger(*args, **kwargs):
     logger = logging.getLogger(*args, **kwargs)
     if _overrideLogLevel is not None:
         logger.setLevel(logging.NOTSET)
-    if logger.handlers:
-        # avoid duplicating messages
-        logger.propagate = False
     return logger
 
 # Default logging config

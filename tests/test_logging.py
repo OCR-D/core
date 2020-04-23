@@ -43,6 +43,42 @@ class TestLogging(TestCase):
         self.assertEqual(getLevelName('FATAL'), logging.ERROR)
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
 
+    def test_logging_really_non_duplicate(self):
+        child_logger = getLogger('a.b')
+        print(child_logger)
+        parent_logger = getLogger('a')
+        root_logger = getLogger('')
+        self.assertFalse(root_logger.propagate, 'root logger should not propagate')
+        self.assertTrue(parent_logger.propagate, 'parent has no handler => do propagate')
+        self.assertTrue(child_logger.propagate, 'child no handler => do propagate')
+
+        root_capture = FIFOIO(256)
+        root_handler = logging.StreamHandler(root_capture)
+        root_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        root_logger.addHandler(root_handler)
+
+        parent_capture = FIFOIO(256)
+        parent_handler = logging.StreamHandler(parent_capture)
+        parent_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        parent_logger.addHandler(parent_handler)
+
+        # parent_logger = getLogger('a')
+        # self.assertFalse(parent_logger.propagate, 'parent has handler now => do not propagate')
+
+        self.assertTrue(child_logger.propagate, 'child has still no handler => do propagate')
+
+        child_logger.error('test')
+
+        root_str = root_capture.getvalue()
+        parent_str = parent_capture.getvalue()
+
+        self.assertEqual(root_str.count('\n'), 0)
+        self.assertEqual(parent_str.count('\n'), 1)
+
+        # root_logger.removeHandler(root_handler) # remove stream handler so we actually see the output
+        # root_logger.info('root_str=%s', root_str)
+        # root_logger.info('parent_str=%s', parent_str)
+
     def test_logging_non_duplicate(self):
         """
         Verify that child loggers don't propagate a log message they handle
