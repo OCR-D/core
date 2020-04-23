@@ -5,7 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [2.5.0] - 2020-04-20
+## [2.5.1] - 2020-04-23
+
+Fixed:
+
+  * logging: disable propagation for loggers with handler, #463
+
+## [2.5.0] - 2020-04-23
 
 Changed:
 
@@ -786,6 +792,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.5.1]: ../../compare/v2.5.1...v2.5.0
+[2.5.0]: ../../compare/v2.5.0...v2.4.4
 [2.4.4]: ../../compare/v2.4.4...v2.4.3
 [2.4.3]: ../../compare/v2.4.3...v2.4.2
 [2.4.2]: ../../compare/v2.4.2...v2.4.1
