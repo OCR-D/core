@@ -127,6 +127,8 @@ class Workspace():
             keep_file (boolean): Whether to keep files on disk
         """
         log.debug('Deleting mets:file %s', ID)
+        if isinstance(ID, OcrdFile):
+            ID = ID.ID
         try:
             ocrd_file = self.mets.remove_file(ID)
             if not keep_file:

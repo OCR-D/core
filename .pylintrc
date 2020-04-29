@@ -13,6 +13,8 @@ disable =
     line-too-long,
     missing-docstring,
     no-self-use,
+    wrong-import-order,
+    too-many-nested-blocks,
     superfluous-parens,
     too-few-public-methods,
     too-many-arguments,

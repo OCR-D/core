@@ -27,7 +27,17 @@ parameter_option = click.option('-p', '--parameter',
                                 default='{}',
                                 callback=lambda ctx, param, value: parse_json_string_or_file(value))
 
-def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_dir=None, dump_json=False, help=False, version=False, **kwargs):
+def ocrd_cli_wrap_processor(
+    processorClass,
+    ocrd_tool=None,
+    mets=None,
+    working_dir=None,
+    dump_json=False,
+    help=False,
+    version=False,
+    overwrite=False,
+    **kwargs
+):
     LOG = getLogger('ocrd_cli_wrap_processor')
     if dump_json:
         processorClass(workspace=None, dump_json=True)
@@ -46,9 +56,25 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
             raise Exception(msg)
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)
-        # TODO once we implement 'overwrite' CLI option and mechanism, disable the
-        # `output_file_grp_ check by setting to False-y value if 'overwrite' is set
-        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], kwargs['output_file_grp'])
+        if overwrite:
+            if 'output_file_grp' not in kwargs or not kwargs['output_file_grp']:
+                raise Exception("--overwrite requires --output-file-grp")
+            LOG.debug("Removing files because of --overwrite")
+            for grp in kwargs['output_file_grp'].split(','):
+                if 'page_id' in kwargs:
+                    for page_id in kwargs['page_id'].split(','):
+                        LOG.debug("Removing files in output file group %s with page ID %s", grp, page_id)
+                        for file in workspace.mets.find_files(pageId=page_id, fileGrp=grp):
+                            workspace.remove_file(file, force=True, keep_file=False)
+                else:
+                    LOG.debug("Removing all files in output file group %s ", grp)
+                    workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False)
+        if overwrite and 'page_id' in kwargs:
+            # If 'overwrite' and 'page_id' were given, it is possible the output
+            # file group is not completely empty
+            report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '')
+        else:
+            report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], kwargs['output_file_grp'])
         if not report.is_valid:
             raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
@@ -79,6 +105,7 @@ def ocrd_cli_options(f):
         click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
         click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         click.option('-g', '--page-id', help="ID(s) of the pages to process"),
+        click.option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
         parameter_option,
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         loglevel_option,
