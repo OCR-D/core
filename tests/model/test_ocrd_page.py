@@ -1,5 +1,6 @@
 from tests.base import TestCase, main, assets
 
+from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
     PcGtsType,
@@ -56,7 +57,7 @@ class TestOcrdPage(TestCase):
         #  with open('/tmp/test.xml', 'w') as f:
             #  f.write(to_xml(self.pcgts))
         self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', to_xml(self.pcgts)[:1000])
-        self.assertIn('</pc:TextRegion', to_xml(self.pcgts))
+        self.assertIn('</TextRegion', to_xml(self.pcgts))
 
     def test_issue_269(self):
         """
@@ -110,6 +111,19 @@ class TestOcrdPage(TestCase):
         glyph = GlyphType()
         word.add_Glyph(glyph)
         glyph.add_AlternativeImage(AlternativeImageType())
+
+    def test_simple_types(self):
+        regions = self.pcgts.get_Page().get_TextRegion()
+        reg = regions[0]
+        # print([l.get_type() for l in regions])
+        self.assertTrue(isinstance(reg.get_type(), str))
+        self.assertEqual(reg.get_type(), TextTypeSimpleType.CREDIT)
+        self.assertTrue(isinstance(TextTypeSimpleType.CREDIT, str))
+        self.assertEqual(reg.get_type(), 'credit')
+        self.assertTrue(isinstance(TextTypeSimpleType.CREDIT, str))
+        reg.set_type(TextTypeSimpleType.PAGENUMBER)
+        self.assertEqual(reg.get_type(), 'page-number')
+        self.assertTrue(isinstance(reg.get_type(), str))
 
 
 if __name__ == '__main__':
