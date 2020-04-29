@@ -77,4 +77,4 @@ MIME_TO_PIL = {
 
 
 # Prefix to denote query is regular expression not fixed string
-REGEX_PREFIX = 're:'
+REGEX_PREFIX = '//'
