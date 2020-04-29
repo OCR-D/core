@@ -118,7 +118,7 @@ class OcrdMets(OcrdXmlDocument):
         Search ``mets:file`` in this METS document.
 
 
-        The ``ID``, ``fileGrp``, ``pageId``, ``url`` and ``mimetype`` parameters can be
+        The ``ID``, ``fileGrp``, ``url`` and ``mimetype`` parameters can be
         either a literal string or a regular expression if the string starts
         with ``//`` (double slash). If it is a regex, the leading ``//`` is removed
         and candidates are matched against the regex with ``re.fullmatch``. If it is
