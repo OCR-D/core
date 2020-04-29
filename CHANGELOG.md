@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * logging: format is spec-conformant again, #466
+
 Added:
 
   * ocrd_page: generateDS-generated code has `__hash__` method now, #443

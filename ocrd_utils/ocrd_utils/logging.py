@@ -19,7 +19,7 @@ import logging
 import logging.config
 import os
 
-from .constants import LOG_FORMAT, LOG_DATEFMT
+from .constants import LOG_FORMAT, LOG_TIMEFMT
 
 __all__ = [
     'logging',
@@ -117,7 +117,7 @@ def initLogging():
     logging.basicConfig(
         level=logging.INFO,
         format=LOG_FORMAT,
-        datefmt=LOG_DATEFMT)
+        datefmt=LOG_TIMEFMT)
     logging.getLogger('').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)

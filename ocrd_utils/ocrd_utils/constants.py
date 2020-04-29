@@ -11,7 +11,7 @@ __all__ = [
     'PIL_TO_MIME',
     'MIME_TO_PIL',
     'LOG_FORMAT',
-    'LOG_DATEFMT',
+    'LOG_TIMEFMT',
 ]
 
 VERSION = get_distribution('ocrd_utils').version
@@ -78,4 +78,4 @@ MIME_TO_PIL = {
 
 # Log level format implementing https://ocr-d.de/en/spec/cli#logging
 LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'
-LOG_DATEFMT = r'%Y-%m-%d %H:%M:%S'
+LOG_TIMEFMT = r'%H:%M:%S'

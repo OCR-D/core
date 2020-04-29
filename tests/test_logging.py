@@ -13,11 +13,11 @@ from ocrd_utils import (
     initLogging,
     getLogger,
     LOG_FORMAT,
-    LOG_DATEFMT
+    LOG_TIMEFMT
 )
 
-# "0000-00-00 00:00:00.000 "
-DATEFMT_RE = r'\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.(\d+)? '
+# "00:00:00.000 "
+TIMEFMT_RE = r'\d\d:\d\d:\d\d\.(\d+)? '
 
 class TestLogging(TestCase):
 
@@ -54,12 +54,12 @@ class TestLogging(TestCase):
 
         root_capture = FIFOIO(256)
         root_handler = logging.StreamHandler(root_capture)
-        root_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        root_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
         root_logger.addHandler(root_handler)
 
         parent_capture = FIFOIO(256)
         parent_handler = logging.StreamHandler(parent_capture)
-        parent_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        parent_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
         parent_logger.addHandler(parent_handler)
 
         # parent_logger = getLogger('a')
@@ -89,7 +89,7 @@ class TestLogging(TestCase):
 
         parent_capture = FIFOIO(256)
         parent_handler = logging.StreamHandler(parent_capture)
-        parent_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        parent_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
         parent_logger = getLogger('foo')
         self.assertTrue(parent_logger.propagate, 'no handler on logger => propagate')
         parent_logger.addHandler(parent_handler)
@@ -104,7 +104,7 @@ class TestLogging(TestCase):
 
         child_capture = FIFOIO(256)
         child_handler = logging.StreamHandler(child_capture)
-        child_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_DATEFMT))
+        child_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
 
         child_logger.debug('first debug')
 
@@ -122,11 +122,11 @@ class TestLogging(TestCase):
         # print('parent', parent_output)
         # print('child', child_output)
 
-        self.assertTrue(match(DATEFMT_RE + 'ERROR foo.bar - first error\n', parent_output),
+        self.assertTrue(match(TIMEFMT_RE + 'ERROR foo.bar - first error\n', parent_output),
                 'parent received first error but not second error nor first debug')
         self.assertTrue(match("\n".join([
-            DATEFMT_RE + 'DEBUG foo.bar - second debug',
-            DATEFMT_RE + 'ERROR foo.bar - second error',
+            TIMEFMT_RE + 'DEBUG foo.bar - second debug',
+            TIMEFMT_RE + 'ERROR foo.bar - second error',
             ]), child_output),
                 'child received second error and debug but not first error and debug')
 
