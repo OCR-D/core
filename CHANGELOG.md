@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * ocrd_page: generateDS-generated code has `__hash__` method now, #443
+
 ## [2.5.1] - 2020-04-23
 
 Fixed:
