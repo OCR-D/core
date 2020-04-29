@@ -2,19 +2,21 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu Feb 13 16:47:27 2020 by generateDS.py version 2.35.13.
-# Python 3.6.6 (default, Jul 24 2018, 16:39:20)  [GCC 4.9.2]
+# Generated Thu Apr 23 15:06:47 2020 by generateDS.py version 2.35.20.
+# Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
 #   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
+#   ('--disable-generatedssuper-lookup', '')
+#   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
 # Command line arguments:
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /data/monorepo/venv3.6/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" repo/assets/data/schema/data/2019.xsd
+#   /home/kba/env/py3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -167,295 +169,238 @@ except ImportError:
 # You can replace these methods by re-implementing the following class
 #   in a module named generatedssuper.py.
 
-try:
-    from generatedssuper import GeneratedsSuper
-except ImportError as exp:
-    
-    class GeneratedsSuper(object):
-        __hash__ = object.__hash__
-        tzoff_pattern = re_.compile(r'(\+|-)((0\d|1[0-3]):[0-5]\d|14:00)$')
-        class _FixedOffsetTZ(datetime_.tzinfo):
-            def __init__(self, offset, name):
-                self.__offset = datetime_.timedelta(minutes=offset)
-                self.__name = name
-            def utcoffset(self, dt):
-                return self.__offset
-            def tzname(self, dt):
-                return self.__name
-            def dst(self, dt):
-                return None
-        def gds_format_string(self, input_data, input_name=''):
+
+class GeneratedsSuper(object):
+    __hash__ = object.__hash__
+    tzoff_pattern = re_.compile(r'(\+|-)((0\d|1[0-3]):[0-5]\d|14:00)$')
+    class _FixedOffsetTZ(datetime_.tzinfo):
+        def __init__(self, offset, name):
+            self.__offset = datetime_.timedelta(minutes=offset)
+            self.__name = name
+        def utcoffset(self, dt):
+            return self.__offset
+        def tzname(self, dt):
+            return self.__name
+        def dst(self, dt):
+            return None
+    def gds_format_string(self, input_data, input_name=''):
+        return input_data
+    def gds_parse_string(self, input_data, node=None, input_name=''):
+        return input_data
+    def gds_validate_string(self, input_data, node=None, input_name=''):
+        if not input_data:
+            return ''
+        else:
             return input_data
-        def gds_parse_string(self, input_data, node=None, input_name=''):
-            return input_data
-        def gds_validate_string(self, input_data, node=None, input_name=''):
-            if not input_data:
-                return ''
-            else:
-                return input_data
-        def gds_format_base64(self, input_data, input_name=''):
-            return base64.b64encode(input_data)
-        def gds_validate_base64(self, input_data, node=None, input_name=''):
-            return input_data
-        def gds_format_integer(self, input_data, input_name=''):
-            return '%d' % input_data
-        def gds_parse_integer(self, input_data, node=None, input_name=''):
+    def gds_format_base64(self, input_data, input_name=''):
+        return base64.b64encode(input_data)
+    def gds_validate_base64(self, input_data, node=None, input_name=''):
+        return input_data
+    def gds_format_integer(self, input_data, input_name=''):
+        return '%d' % input_data
+    def gds_parse_integer(self, input_data, node=None, input_name=''):
+        try:
+            ival = int(input_data)
+        except (TypeError, ValueError) as exp:
+            raise_parse_error(node, 'Requires integer value: %s' % exp)
+        return ival
+    def gds_validate_integer(self, input_data, node=None, input_name=''):
+        try:
+            value = int(input_data)
+        except (TypeError, ValueError):
+            raise_parse_error(node, 'Requires integer value')
+        return value
+    def gds_format_integer_list(self, input_data, input_name=''):
+        return '%s' % ' '.join(input_data)
+    def gds_validate_integer_list(
+            self, input_data, node=None, input_name=''):
+        values = input_data.split()
+        for value in values:
             try:
-                ival = int(input_data)
-            except (TypeError, ValueError) as exp:
-                raise_parse_error(node, 'Requires integer value: %s' % exp)
-            return ival
-        def gds_validate_integer(self, input_data, node=None, input_name=''):
-            try:
-                value = int(input_data)
+                int(value)
             except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires integer value')
-            return value
-        def gds_format_integer_list(self, input_data, input_name=''):
-            return '%s' % ' '.join(input_data)
-        def gds_validate_integer_list(
-                self, input_data, node=None, input_name=''):
-            values = input_data.split()
-            for value in values:
-                try:
-                    int(value)
-                except (TypeError, ValueError):
-                    raise_parse_error(node, 'Requires sequence of integer valuess')
-            return values
-        def gds_format_float(self, input_data, input_name=''):
-            return ('%.15f' % input_data).rstrip('0')
-        def gds_parse_float(self, input_data, node=None, input_name=''):
+                raise_parse_error(node, 'Requires sequence of integer valuess')
+        return values
+    def gds_format_float(self, input_data, input_name=''):
+        return ('%.15f' % input_data).rstrip('0')
+    def gds_parse_float(self, input_data, node=None, input_name=''):
+        try:
+            fval_ = float(input_data)
+        except (TypeError, ValueError) as exp:
+            raise_parse_error(node, 'Requires float or double value: %s' % exp)
+        return fval_
+    def gds_validate_float(self, input_data, node=None, input_name=''):
+        try:
+            value = float(input_data)
+        except (TypeError, ValueError):
+            raise_parse_error(node, 'Requires float value')
+        return value
+    def gds_format_float_list(self, input_data, input_name=''):
+        return '%s' % ' '.join(input_data)
+    def gds_validate_float_list(
+            self, input_data, node=None, input_name=''):
+        values = input_data.split()
+        for value in values:
             try:
-                fval_ = float(input_data)
-            except (TypeError, ValueError) as exp:
-                raise_parse_error(node, 'Requires float or double value: %s' % exp)
-            return fval_
-        def gds_validate_float(self, input_data, node=None, input_name=''):
-            try:
-                value = float(input_data)
+                float(value)
             except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires float value')
-            return value
-        def gds_format_float_list(self, input_data, input_name=''):
-            return '%s' % ' '.join(input_data)
-        def gds_validate_float_list(
-                self, input_data, node=None, input_name=''):
-            values = input_data.split()
-            for value in values:
-                try:
-                    float(value)
-                except (TypeError, ValueError):
-                    raise_parse_error(node, 'Requires sequence of float values')
-            return values
-        def gds_format_decimal(self, input_data, input_name=''):
-            return ('%0.10f' % input_data).rstrip('0')
-        def gds_parse_decimal(self, input_data, node=None, input_name=''):
+                raise_parse_error(node, 'Requires sequence of float values')
+        return values
+    def gds_format_decimal(self, input_data, input_name=''):
+        return ('%s' % input_data).rstrip('0')
+    def gds_parse_decimal(self, input_data, node=None, input_name=''):
+        try:
+            decimal_value = decimal_.Decimal(input_data)
+        except (TypeError, ValueError):
+            raise_parse_error(node, 'Requires decimal value')
+        return decimal_value
+    def gds_validate_decimal(self, input_data, node=None, input_name=''):
+        try:
+            value = decimal_.Decimal(input_data)
+        except (TypeError, ValueError):
+            raise_parse_error(node, 'Requires decimal value')
+        return value
+    def gds_format_decimal_list(self, input_data, input_name=''):
+        return '%s' % ' '.join(input_data)
+    def gds_validate_decimal_list(
+            self, input_data, node=None, input_name=''):
+        values = input_data.split()
+        for value in values:
             try:
-                decimal_value = decimal_.Decimal(input_data)
+                decimal_.Decimal(value)
             except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires decimal value')
-            return decimal_value
-        def gds_validate_decimal(self, input_data, node=None, input_name=''):
+                raise_parse_error(node, 'Requires sequence of decimal values')
+        return values
+    def gds_format_double(self, input_data, input_name=''):
+        return '%e' % input_data
+    def gds_parse_double(self, input_data, node=None, input_name=''):
+        try:
+            fval_ = float(input_data)
+        except (TypeError, ValueError) as exp:
+            raise_parse_error(node, 'Requires double or float value: %s' % exp)
+        return fval_
+    def gds_validate_double(self, input_data, node=None, input_name=''):
+        try:
+            value = float(input_data)
+        except (TypeError, ValueError):
+            raise_parse_error(node, 'Requires double or float value')
+        return value
+    def gds_format_double_list(self, input_data, input_name=''):
+        return '%s' % ' '.join(input_data)
+    def gds_validate_double_list(
+            self, input_data, node=None, input_name=''):
+        values = input_data.split()
+        for value in values:
             try:
-                value = decimal_.Decimal(input_data)
+                float(value)
             except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires decimal value')
-            return value
-        def gds_format_decimal_list(self, input_data, input_name=''):
-            return '%s' % ' '.join(input_data)
-        def gds_validate_decimal_list(
-                self, input_data, node=None, input_name=''):
-            values = input_data.split()
-            for value in values:
-                try:
-                    decimal_.Decimal(value)
-                except (TypeError, ValueError):
-                    raise_parse_error(node, 'Requires sequence of decimal values')
-            return values
-        def gds_format_double(self, input_data, input_name=''):
-            return '%e' % input_data
-        def gds_parse_double(self, input_data, node=None, input_name=''):
-            try:
-                fval_ = float(input_data)
-            except (TypeError, ValueError) as exp:
-                raise_parse_error(node, 'Requires double or float value: %s' % exp)
-            return fval_
-        def gds_validate_double(self, input_data, node=None, input_name=''):
-            try:
-                value = float(input_data)
-            except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires double or float value')
-            return value
-        def gds_format_double_list(self, input_data, input_name=''):
-            return '%s' % ' '.join(input_data)
-        def gds_validate_double_list(
-                self, input_data, node=None, input_name=''):
-            values = input_data.split()
-            for value in values:
-                try:
-                    float(value)
-                except (TypeError, ValueError):
-                    raise_parse_error(
-                        node, 'Requires sequence of double or float values')
-            return values
-        def gds_format_boolean(self, input_data, input_name=''):
-            return ('%s' % input_data).lower()
-        def gds_parse_boolean(self, input_data, node=None, input_name=''):
-            if input_data in ('true', '1'):
-                bval = True
-            elif input_data in ('false', '0'):
-                bval = False
-            else:
-                raise_parse_error(node, 'Requires boolean value')
-            return bval
-        def gds_validate_boolean(self, input_data, node=None, input_name=''):
-            if input_data not in (True, 1, False, 0, ):
+                raise_parse_error(
+                    node, 'Requires sequence of double or float values')
+        return values
+    def gds_format_boolean(self, input_data, input_name=''):
+        return ('%s' % input_data).lower()
+    def gds_parse_boolean(self, input_data, node=None, input_name=''):
+        if input_data in ('true', '1'):
+            bval = True
+        elif input_data in ('false', '0'):
+            bval = False
+        else:
+            raise_parse_error(node, 'Requires boolean value')
+        return bval
+    def gds_validate_boolean(self, input_data, node=None, input_name=''):
+        if input_data not in (True, 1, False, 0, ):
+            raise_parse_error(
+                node,
+                'Requires boolean value '
+                '(one of True, 1, False, 0)')
+        return input_data
+    def gds_format_boolean_list(self, input_data, input_name=''):
+        return '%s' % ' '.join(input_data)
+    def gds_validate_boolean_list(
+            self, input_data, node=None, input_name=''):
+        values = input_data.split()
+        for value in values:
+            if value not in (True, 1, False, 0, ):
                 raise_parse_error(
                     node,
-                    'Requires boolean value '
+                    'Requires sequence of boolean values '
                     '(one of True, 1, False, 0)')
-            return input_data
-        def gds_format_boolean_list(self, input_data, input_name=''):
-            return '%s' % ' '.join(input_data)
-        def gds_validate_boolean_list(
-                self, input_data, node=None, input_name=''):
-            values = input_data.split()
-            for value in values:
-                if value not in (True, 1, False, 0, ):
-                    raise_parse_error(
-                        node,
-                        'Requires sequence of boolean values '
-                        '(one of True, 1, False, 0)')
-            return values
-        def gds_validate_datetime(self, input_data, node=None, input_name=''):
-            return input_data
-        def gds_format_datetime(self, input_data, input_name=''):
-            if input_data.microsecond == 0:
-                _svalue = '%04d-%02d-%02dT%02d:%02d:%02d' % (
-                    input_data.year,
-                    input_data.month,
-                    input_data.day,
-                    input_data.hour,
-                    input_data.minute,
-                    input_data.second,
-                )
-            else:
-                _svalue = '%04d-%02d-%02dT%02d:%02d:%02d.%s' % (
-                    input_data.year,
-                    input_data.month,
-                    input_data.day,
-                    input_data.hour,
-                    input_data.minute,
-                    input_data.second,
-                    ('%f' % (float(input_data.microsecond) / 1000000))[2:],
-                )
-            if input_data.tzinfo is not None:
-                tzoff = input_data.tzinfo.utcoffset(input_data)
-                if tzoff is not None:
-                    total_seconds = tzoff.seconds + (86400 * tzoff.days)
-                    if total_seconds == 0:
-                        _svalue += 'Z'
-                    else:
-                        if total_seconds < 0:
-                            _svalue += '-'
-                            total_seconds *= -1
-                        else:
-                            _svalue += '+'
-                        hours = total_seconds // 3600
-                        minutes = (total_seconds - (hours * 3600)) // 60
-                        _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
-            return _svalue
-        @classmethod
-        def gds_parse_datetime(cls, input_data):
-            tz = None
-            if input_data[-1] == 'Z':
-                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
-                input_data = input_data[:-1]
-            else:
-                results = GeneratedsSuper.tzoff_pattern.search(input_data)
-                if results is not None:
-                    tzoff_parts = results.group(2).split(':')
-                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
-                    if results.group(1) == '-':
-                        tzoff *= -1
-                    tz = GeneratedsSuper._FixedOffsetTZ(
-                        tzoff, results.group(0))
-                    input_data = input_data[:-6]
-            time_parts = input_data.split('.')
-            if len(time_parts) > 1:
-                micro_seconds = int(float('0.' + time_parts[1]) * 1000000)
-                input_data = '%s.%s' % (
-                    time_parts[0], "{}".format(micro_seconds).rjust(6, "0"), )
-                dt = datetime_.datetime.strptime(
-                    input_data, '%Y-%m-%dT%H:%M:%S.%f')
-            else:
-                dt = datetime_.datetime.strptime(
-                    input_data, '%Y-%m-%dT%H:%M:%S')
-            dt = dt.replace(tzinfo=tz)
-            return dt
-        def gds_validate_date(self, input_data, node=None, input_name=''):
-            return input_data
-        def gds_format_date(self, input_data, input_name=''):
-            _svalue = '%04d-%02d-%02d' % (
+        return values
+    def gds_validate_datetime(self, input_data, node=None, input_name=''):
+        return input_data
+    def gds_format_datetime(self, input_data, input_name=''):
+        if input_data.microsecond == 0:
+            _svalue = '%04d-%02d-%02dT%02d:%02d:%02d' % (
                 input_data.year,
                 input_data.month,
                 input_data.day,
+                input_data.hour,
+                input_data.minute,
+                input_data.second,
             )
-            try:
-                if input_data.tzinfo is not None:
-                    tzoff = input_data.tzinfo.utcoffset(input_data)
-                    if tzoff is not None:
-                        total_seconds = tzoff.seconds + (86400 * tzoff.days)
-                        if total_seconds == 0:
-                            _svalue += 'Z'
-                        else:
-                            if total_seconds < 0:
-                                _svalue += '-'
-                                total_seconds *= -1
-                            else:
-                                _svalue += '+'
-                            hours = total_seconds // 3600
-                            minutes = (total_seconds - (hours * 3600)) // 60
-                            _svalue += '{0:02d}:{1:02d}'.format(
-                                hours, minutes)
-            except AttributeError:
-                pass
-            return _svalue
-        @classmethod
-        def gds_parse_date(cls, input_data):
-            tz = None
-            if input_data[-1] == 'Z':
-                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
-                input_data = input_data[:-1]
-            else:
-                results = GeneratedsSuper.tzoff_pattern.search(input_data)
-                if results is not None:
-                    tzoff_parts = results.group(2).split(':')
-                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
-                    if results.group(1) == '-':
-                        tzoff *= -1
-                    tz = GeneratedsSuper._FixedOffsetTZ(
-                        tzoff, results.group(0))
-                    input_data = input_data[:-6]
-            dt = datetime_.datetime.strptime(input_data, '%Y-%m-%d')
-            dt = dt.replace(tzinfo=tz)
-            return dt.date()
-        def gds_validate_time(self, input_data, node=None, input_name=''):
-            return input_data
-        def gds_format_time(self, input_data, input_name=''):
-            if input_data.microsecond == 0:
-                _svalue = '%02d:%02d:%02d' % (
-                    input_data.hour,
-                    input_data.minute,
-                    input_data.second,
-                )
-            else:
-                _svalue = '%02d:%02d:%02d.%s' % (
-                    input_data.hour,
-                    input_data.minute,
-                    input_data.second,
-                    ('%f' % (float(input_data.microsecond) / 1000000))[2:],
-                )
+        else:
+            _svalue = '%04d-%02d-%02dT%02d:%02d:%02d.%s' % (
+                input_data.year,
+                input_data.month,
+                input_data.day,
+                input_data.hour,
+                input_data.minute,
+                input_data.second,
+                ('%f' % (float(input_data.microsecond) / 1000000))[2:],
+            )
+        if input_data.tzinfo is not None:
+            tzoff = input_data.tzinfo.utcoffset(input_data)
+            if tzoff is not None:
+                total_seconds = tzoff.seconds + (86400 * tzoff.days)
+                if total_seconds == 0:
+                    _svalue += 'Z'
+                else:
+                    if total_seconds < 0:
+                        _svalue += '-'
+                        total_seconds *= -1
+                    else:
+                        _svalue += '+'
+                    hours = total_seconds // 3600
+                    minutes = (total_seconds - (hours * 3600)) // 60
+                    _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
+        return _svalue
+    @classmethod
+    def gds_parse_datetime(cls, input_data):
+        tz = None
+        if input_data[-1] == 'Z':
+            tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+            input_data = input_data[:-1]
+        else:
+            results = GeneratedsSuper.tzoff_pattern.search(input_data)
+            if results is not None:
+                tzoff_parts = results.group(2).split(':')
+                tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                if results.group(1) == '-':
+                    tzoff *= -1
+                tz = GeneratedsSuper._FixedOffsetTZ(
+                    tzoff, results.group(0))
+                input_data = input_data[:-6]
+        time_parts = input_data.split('.')
+        if len(time_parts) > 1:
+            micro_seconds = int(float('0.' + time_parts[1]) * 1000000)
+            input_data = '%s.%s' % (
+                time_parts[0], "{}".format(micro_seconds).rjust(6, "0"), )
+            dt = datetime_.datetime.strptime(
+                input_data, '%Y-%m-%dT%H:%M:%S.%f')
+        else:
+            dt = datetime_.datetime.strptime(
+                input_data, '%Y-%m-%dT%H:%M:%S')
+        dt = dt.replace(tzinfo=tz)
+        return dt
+    def gds_validate_date(self, input_data, node=None, input_name=''):
+        return input_data
+    def gds_format_date(self, input_data, input_name=''):
+        _svalue = '%04d-%02d-%02d' % (
+            input_data.year,
+            input_data.month,
+            input_data.day,
+        )
+        try:
             if input_data.tzinfo is not None:
                 tzoff = input_data.tzinfo.utcoffset(input_data)
                 if tzoff is not None:
@@ -470,182 +415,236 @@ except ImportError as exp:
                             _svalue += '+'
                         hours = total_seconds // 3600
                         minutes = (total_seconds - (hours * 3600)) // 60
-                        _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
-            return _svalue
-        def gds_validate_simple_patterns(self, patterns, target):
-            # pat is a list of lists of strings/patterns.
-            # The target value must match at least one of the patterns
-            # in order for the test to succeed.
-            found1 = True
-            for patterns1 in patterns:
-                found2 = False
-                for patterns2 in patterns1:
-                    mo = re_.search(patterns2, target)
-                    if mo is not None and len(mo.group(0)) == len(target):
-                        found2 = True
-                        break
-                if not found2:
-                    found1 = False
-                    break
-            return found1
-        @classmethod
-        def gds_parse_time(cls, input_data):
-            tz = None
-            if input_data[-1] == 'Z':
-                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
-                input_data = input_data[:-1]
-            else:
-                results = GeneratedsSuper.tzoff_pattern.search(input_data)
-                if results is not None:
-                    tzoff_parts = results.group(2).split(':')
-                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
-                    if results.group(1) == '-':
-                        tzoff *= -1
-                    tz = GeneratedsSuper._FixedOffsetTZ(
-                        tzoff, results.group(0))
-                    input_data = input_data[:-6]
-            if len(input_data.split('.')) > 1:
-                dt = datetime_.datetime.strptime(input_data, '%H:%M:%S.%f')
-            else:
-                dt = datetime_.datetime.strptime(input_data, '%H:%M:%S')
-            dt = dt.replace(tzinfo=tz)
-            return dt.time()
-        def gds_check_cardinality_(
-                self, value, input_name,
-                min_occurs=0, max_occurs=1, required=None):
-            if value is None:
-                length = 0
-            elif isinstance(value, list):
-                length = len(value)
-            else:
-                length = 1
-            if required is not None :
-                if required and length < 1:
-                    self.gds_collector_.add_message(
-                        "Required value {}{} is missing".format(
-                            input_name, self.gds_get_node_lineno_()))
-            if length < min_occurs:
-                self.gds_collector_.add_message(
-                    "Number of values for {}{} is below "
-                    "the minimum allowed, "
-                    "expected at least {}, found {}".format(
-                        input_name, self.gds_get_node_lineno_(),
-                        min_occurs, length))
-            elif length > max_occurs:
-                self.gds_collector_.add_message(
-                    "Number of values for {}{} is above "
-                    "the maximum allowed, "
-                    "expected at most {}, found {}".format(
-                        input_name, self.gds_get_node_lineno_(),
-                        max_occurs, length))
-        def gds_validate_builtin_ST_(
-                self, validator, value, input_name,
-                min_occurs=None, max_occurs=None, required=None):
-            if value is not None:
-                try:
-                    validator(value, input_name=input_name)
-                except GDSParseError as parse_error:
-                    self.gds_collector_.add_message(str(parse_error))
-        def gds_validate_defined_ST_(
-                self, validator, value, input_name,
-                min_occurs=None, max_occurs=None, required=None):
-            if value is not None:
-                try:
-                    validator(value)
-                except GDSParseError as parse_error:
-                    self.gds_collector_.add_message(str(parse_error))
-        def gds_str_lower(self, instring):
-            return instring.lower()
-        def get_path_(self, node):
-            path_list = []
-            self.get_path_list_(node, path_list)
-            path_list.reverse()
-            path = '/'.join(path_list)
-            return path
-        Tag_strip_pattern_ = re_.compile(r'\{.*\}')
-        def get_path_list_(self, node, path_list):
-            if node is None:
-                return
-            tag = GeneratedsSuper.Tag_strip_pattern_.sub('', node.tag)
-            if tag:
-                path_list.append(tag)
-            self.get_path_list_(node.getparent(), path_list)
-        def get_class_obj_(self, node, default_class=None):
-            class_obj1 = default_class
-            if 'xsi' in node.nsmap:
-                classname = node.get('{%s}type' % node.nsmap['xsi'])
-                if classname is not None:
-                    names = classname.split(':')
-                    if len(names) == 2:
-                        classname = names[1]
-                    class_obj2 = globals().get(classname)
-                    if class_obj2 is not None:
-                        class_obj1 = class_obj2
-            return class_obj1
-        def gds_build_any(self, node, type_name=None):
-            # provide default value in case option --disable-xml is used.
-            content = ""
-            content = etree_.tostring(node, encoding="unicode")
-            return content
-        @classmethod
-        def gds_reverse_node_mapping(cls, mapping):
-            return dict(((v, k) for k, v in mapping.items()))
-        @staticmethod
-        def gds_encode(instring):
-            if sys.version_info.major == 2:
-                if ExternalEncoding:
-                    encoding = ExternalEncoding
-                else:
-                    encoding = 'utf-8'
-                return instring.encode(encoding)
-            else:
-                return instring
-        @staticmethod
-        def convert_unicode(instring):
-            if isinstance(instring, str):
-                result = quote_xml(instring)
-            elif sys.version_info.major == 2 and isinstance(instring, unicode):
-                result = quote_xml(instring).encode('utf8')
-            else:
-                result = GeneratedsSuper.gds_encode(str(instring))
-            return result
-        def __eq__(self, other):
-            def excl_select_objs_(obj):
-                return (obj[0] != 'parent_object_' and
-                        obj[0] != 'gds_collector_')
-            if type(self) != type(other):
-                return False
-            return all(x == y for x, y in zip_longest(
-                filter(excl_select_objs_, self.__dict__.items()),
-                filter(excl_select_objs_, other.__dict__.items())))
-        def __ne__(self, other):
-            return not self.__eq__(other)
-        # Django ETL transform hooks.
-        def gds_djo_etl_transform(self):
+                        _svalue += '{0:02d}:{1:02d}'.format(
+                            hours, minutes)
+        except AttributeError:
             pass
-        def gds_djo_etl_transform_db_obj(self, dbobj):
-            pass
-        # SQLAlchemy ETL transform hooks.
-        def gds_sqa_etl_transform(self):
-            return 0, None
-        def gds_sqa_etl_transform_db_obj(self, dbobj):
-            pass
-        def gds_get_node_lineno_(self):
-            if (hasattr(self, "gds_elementtree_node_") and
-                    self.gds_elementtree_node_ is not None):
-                return ' near line {}'.format(
-                    self.gds_elementtree_node_.sourceline)
-            else:
-                return ""
-    
-    
-    def getSubclassFromModule_(module, class_):
-        '''Get the subclass of a class from a specific module.'''
-        name = class_.__name__ + 'Sub'
-        if hasattr(module, name):
-            return getattr(module, name)
+        return _svalue
+    @classmethod
+    def gds_parse_date(cls, input_data):
+        tz = None
+        if input_data[-1] == 'Z':
+            tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+            input_data = input_data[:-1]
         else:
-            return None
+            results = GeneratedsSuper.tzoff_pattern.search(input_data)
+            if results is not None:
+                tzoff_parts = results.group(2).split(':')
+                tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                if results.group(1) == '-':
+                    tzoff *= -1
+                tz = GeneratedsSuper._FixedOffsetTZ(
+                    tzoff, results.group(0))
+                input_data = input_data[:-6]
+        dt = datetime_.datetime.strptime(input_data, '%Y-%m-%d')
+        dt = dt.replace(tzinfo=tz)
+        return dt.date()
+    def gds_validate_time(self, input_data, node=None, input_name=''):
+        return input_data
+    def gds_format_time(self, input_data, input_name=''):
+        if input_data.microsecond == 0:
+            _svalue = '%02d:%02d:%02d' % (
+                input_data.hour,
+                input_data.minute,
+                input_data.second,
+            )
+        else:
+            _svalue = '%02d:%02d:%02d.%s' % (
+                input_data.hour,
+                input_data.minute,
+                input_data.second,
+                ('%f' % (float(input_data.microsecond) / 1000000))[2:],
+            )
+        if input_data.tzinfo is not None:
+            tzoff = input_data.tzinfo.utcoffset(input_data)
+            if tzoff is not None:
+                total_seconds = tzoff.seconds + (86400 * tzoff.days)
+                if total_seconds == 0:
+                    _svalue += 'Z'
+                else:
+                    if total_seconds < 0:
+                        _svalue += '-'
+                        total_seconds *= -1
+                    else:
+                        _svalue += '+'
+                    hours = total_seconds // 3600
+                    minutes = (total_seconds - (hours * 3600)) // 60
+                    _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
+        return _svalue
+    def gds_validate_simple_patterns(self, patterns, target):
+        # pat is a list of lists of strings/patterns.
+        # The target value must match at least one of the patterns
+        # in order for the test to succeed.
+        found1 = True
+        for patterns1 in patterns:
+            found2 = False
+            for patterns2 in patterns1:
+                mo = re_.search(patterns2, target)
+                if mo is not None and len(mo.group(0)) == len(target):
+                    found2 = True
+                    break
+            if not found2:
+                found1 = False
+                break
+        return found1
+    @classmethod
+    def gds_parse_time(cls, input_data):
+        tz = None
+        if input_data[-1] == 'Z':
+            tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+            input_data = input_data[:-1]
+        else:
+            results = GeneratedsSuper.tzoff_pattern.search(input_data)
+            if results is not None:
+                tzoff_parts = results.group(2).split(':')
+                tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                if results.group(1) == '-':
+                    tzoff *= -1
+                tz = GeneratedsSuper._FixedOffsetTZ(
+                    tzoff, results.group(0))
+                input_data = input_data[:-6]
+        if len(input_data.split('.')) > 1:
+            dt = datetime_.datetime.strptime(input_data, '%H:%M:%S.%f')
+        else:
+            dt = datetime_.datetime.strptime(input_data, '%H:%M:%S')
+        dt = dt.replace(tzinfo=tz)
+        return dt.time()
+    def gds_check_cardinality_(
+            self, value, input_name,
+            min_occurs=0, max_occurs=1, required=None):
+        if value is None:
+            length = 0
+        elif isinstance(value, list):
+            length = len(value)
+        else:
+            length = 1
+        if required is not None :
+            if required and length < 1:
+                self.gds_collector_.add_message(
+                    "Required value {}{} is missing".format(
+                        input_name, self.gds_get_node_lineno_()))
+        if length < min_occurs:
+            self.gds_collector_.add_message(
+                "Number of values for {}{} is below "
+                "the minimum allowed, "
+                "expected at least {}, found {}".format(
+                    input_name, self.gds_get_node_lineno_(),
+                    min_occurs, length))
+        elif length > max_occurs:
+            self.gds_collector_.add_message(
+                "Number of values for {}{} is above "
+                "the maximum allowed, "
+                "expected at most {}, found {}".format(
+                    input_name, self.gds_get_node_lineno_(),
+                    max_occurs, length))
+    def gds_validate_builtin_ST_(
+            self, validator, value, input_name,
+            min_occurs=None, max_occurs=None, required=None):
+        if value is not None:
+            try:
+                validator(value, input_name=input_name)
+            except GDSParseError as parse_error:
+                self.gds_collector_.add_message(str(parse_error))
+    def gds_validate_defined_ST_(
+            self, validator, value, input_name,
+            min_occurs=None, max_occurs=None, required=None):
+        if value is not None:
+            try:
+                validator(value)
+            except GDSParseError as parse_error:
+                self.gds_collector_.add_message(str(parse_error))
+    def gds_str_lower(self, instring):
+        return instring.lower()
+    def get_path_(self, node):
+        path_list = []
+        self.get_path_list_(node, path_list)
+        path_list.reverse()
+        path = '/'.join(path_list)
+        return path
+    Tag_strip_pattern_ = re_.compile(r'\{.*\}')
+    def get_path_list_(self, node, path_list):
+        if node is None:
+            return
+        tag = GeneratedsSuper.Tag_strip_pattern_.sub('', node.tag)
+        if tag:
+            path_list.append(tag)
+        self.get_path_list_(node.getparent(), path_list)
+    def get_class_obj_(self, node, default_class=None):
+        class_obj1 = default_class
+        if 'xsi' in node.nsmap:
+            classname = node.get('{%s}type' % node.nsmap['xsi'])
+            if classname is not None:
+                names = classname.split(':')
+                if len(names) == 2:
+                    classname = names[1]
+                class_obj2 = globals().get(classname)
+                if class_obj2 is not None:
+                    class_obj1 = class_obj2
+        return class_obj1
+    def gds_build_any(self, node, type_name=None):
+        # provide default value in case option --disable-xml is used.
+        content = ""
+        content = etree_.tostring(node, encoding="unicode")
+        return content
+    @classmethod
+    def gds_reverse_node_mapping(cls, mapping):
+        return dict(((v, k) for k, v in mapping.items()))
+    @staticmethod
+    def gds_encode(instring):
+        if sys.version_info.major == 2:
+            if ExternalEncoding:
+                encoding = ExternalEncoding
+            else:
+                encoding = 'utf-8'
+            return instring.encode(encoding)
+        else:
+            return instring
+    @staticmethod
+    def convert_unicode(instring):
+        if isinstance(instring, str):
+            result = quote_xml(instring)
+        elif sys.version_info.major == 2 and isinstance(instring, unicode):
+            result = quote_xml(instring).encode('utf8')
+        else:
+            result = GeneratedsSuper.gds_encode(str(instring))
+        return result
+    def __eq__(self, other):
+        def excl_select_objs_(obj):
+            return (obj[0] != 'parent_object_' and
+                    obj[0] != 'gds_collector_')
+        if type(self) != type(other):
+            return False
+        return all(x == y for x, y in zip_longest(
+            filter(excl_select_objs_, self.__dict__.items()),
+            filter(excl_select_objs_, other.__dict__.items())))
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    # Django ETL transform hooks.
+    def gds_djo_etl_transform(self):
+        pass
+    def gds_djo_etl_transform_db_obj(self, dbobj):
+        pass
+    # SQLAlchemy ETL transform hooks.
+    def gds_sqa_etl_transform(self):
+        return 0, None
+    def gds_sqa_etl_transform_db_obj(self, dbobj):
+        pass
+    def gds_get_node_lineno_(self):
+        if (hasattr(self, "gds_elementtree_node_") and
+                self.gds_elementtree_node_ is not None):
+            return ' near line {}'.format(
+                self.gds_elementtree_node_.sourceline)
+        else:
+            return ""
+
+
+def getSubclassFromModule_(module, class_):
+    '''Get the subclass of a class from a specific module.'''
+    name = class_.__name__ + 'Sub'
+    if hasattr(module, name):
+        return getattr(module, name)
+    else:
+        return None
 
 
 #
@@ -848,7 +847,7 @@ class MixedContainer:
                 self.name,
                 base64.b64encode(self.value),
                 self.name))
-    def to_etree(self, element):
+    def to_etree(self, element, mapping_=None, nsmap_=None):
         if self.category == MixedContainer.CategoryText:
             # Prevent exporting empty content as empty lines.
             if self.value.strip():
@@ -868,7 +867,7 @@ class MixedContainer:
             subelement.text = self.to_etree_simple()
         else:    # category == MixedContainer.CategoryComplex
             self.value.to_etree(element)
-    def to_etree_simple(self):
+    def to_etree_simple(self, mapping_=None, nsmap_=None):
         if self.content_type == MixedContainer.TypeString:
             text = self.value
         elif (self.content_type == MixedContainer.TypeInteger or
@@ -946,14 +945,14 @@ def _cast(typ, value):
 #
 
 
-class AlignSimpleType(Enum):
+class AlignSimpleType(str, Enum):
     LEFT='left'
     CENTRE='centre'
     RIGHT='right'
     JUSTIFY='justify'
 
 
-class ChartTypeSimpleType(Enum):
+class ChartTypeSimpleType(str, Enum):
     BAR='bar'
     LINE='line'
     PIE='pie'
@@ -962,14 +961,14 @@ class ChartTypeSimpleType(Enum):
     OTHER='other'
 
 
-class ColourDepthSimpleType(Enum):
+class ColourDepthSimpleType(str, Enum):
     BILEVEL='bilevel'
     GREYSCALE='greyscale'
     COLOUR='colour'
     OTHER='other'
 
 
-class ColourSimpleType(Enum):
+class ColourSimpleType(str, Enum):
     BLACK='black'
     BLUE='blue'
     BROWN='brown'
@@ -988,7 +987,7 @@ class ColourSimpleType(Enum):
     OTHER='other'
 
 
-class GraphicsTypeSimpleType(Enum):
+class GraphicsTypeSimpleType(str, Enum):
     LOGO='logo'
     LETTERHEAD='letterhead'
     DECORATION='decoration'
@@ -1002,7 +1001,7 @@ class GraphicsTypeSimpleType(Enum):
     OTHER='other'
 
 
-class GroupTypeSimpleType(Enum):
+class GroupTypeSimpleType(str, Enum):
     PARAGRAPH='paragraph'
     LIST='list'
     LISTITEM='list-item'
@@ -1012,7 +1011,7 @@ class GroupTypeSimpleType(Enum):
     OTHER='other'
 
 
-class PageTypeSimpleType(Enum):
+class PageTypeSimpleType(str, Enum):
     FRONTCOVER='front-cover'
     BACKCOVER='back-cover'
     TITLE='title'
@@ -1023,7 +1022,7 @@ class PageTypeSimpleType(Enum):
     OTHER='other'
 
 
-class ProductionSimpleType(Enum):
+class ProductionSimpleType(str, Enum):
     """Text production type"""
     PRINTED='printed'
     TYPEWRITTEN='typewritten'
@@ -1033,14 +1032,14 @@ class ProductionSimpleType(Enum):
     OTHER='other'
 
 
-class ReadingDirectionSimpleType(Enum):
+class ReadingDirectionSimpleType(str, Enum):
     LEFTTORIGHT='left-to-right'
     RIGHTTOLEFT='right-to-left'
     TOPTOBOTTOM='top-to-bottom'
     BOTTOMTOTOP='bottom-to-top'
 
 
-class TextDataTypeSimpleType(Enum):
+class TextDataTypeSimpleType(str, Enum):
     XSDDECIMAL='xsd:decimal' # Examples: "123.456", "+1234.456", "-1234.456", "-.456", "-456"
     XSDFLOAT='xsd:float' # Examples: "123.456", "+1234.456", "-1.2344e56", "-.45E-6", "INF", "-INF", "NaN"
     XSDINTEGER='xsd:integer' # Examples: "123456", "+00000012", "-1", "-456"
@@ -1052,14 +1051,14 @@ class TextDataTypeSimpleType(Enum):
     OTHER='other' # An XSD type that is not listed or a custom type (use dataTypeDetails attribute).
 
 
-class TextLineOrderSimpleType(Enum):
+class TextLineOrderSimpleType(str, Enum):
     TOPTOBOTTOM='top-to-bottom'
     BOTTOMTOTOP='bottom-to-top'
     LEFTTORIGHT='left-to-right'
     RIGHTTOLEFT='right-to-left'
 
 
-class TextTypeSimpleType(Enum):
+class TextTypeSimpleType(str, Enum):
     PARAGRAPH='paragraph'
     HEADING='heading'
     CAPTION='caption'
@@ -1080,7 +1079,7 @@ class TextTypeSimpleType(Enum):
     OTHER='other'
 
 
-class underlineStyleType(Enum):
+class underlineStyleType(str, Enum):
     SINGLE_LINE='singleLine'
     DOUBLE_LINE='doubleLine'
     OTHER='other'
@@ -1088,6 +1087,11 @@ class underlineStyleType(Enum):
 
 class PcGtsType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('pcGtsId', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('Metadata', 'MetadataType', 0, 0, {'name': 'Metadata', 'type': 'MetadataType'}, None),
+        MemberSpec_('Page', 'PageType', 0, 0, {'name': 'Page', 'type': 'PageType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, pcGtsId=None, Metadata=None, Page=None, gds_collector_=None, **kwargs_):
@@ -1145,7 +1149,7 @@ class PcGtsType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'PcGtsType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -1202,12 +1206,23 @@ class PcGtsType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Page = obj_
             obj_.original_tagname_ = 'Page'
+    def __hash__(self):
+        return hash(self.id)
 # end class PcGtsType
 
 
 class MetadataType(GeneratedsSuper):
     """External reference of any kind"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('externalRef', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('Creator', 'string', 0, 0, {'name': 'Creator', 'type': 'string'}, None),
+        MemberSpec_('Created', 'dateTime', 0, 0, {'name': 'Created', 'type': 'dateTime'}, None),
+        MemberSpec_('LastChange', 'dateTime', 0, 0, {'name': 'LastChange', 'type': 'dateTime'}, None),
+        MemberSpec_('Comments', 'string', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Comments', 'type': 'string'}, None),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('MetadataItem', 'MetadataItemType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'MetadataItem', 'type': 'MetadataItemType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, externalRef=None, Creator=None, Created=None, LastChange=None, Comments=None, UserDefined=None, MetadataItem=None, gds_collector_=None, **kwargs_):
@@ -1310,7 +1325,7 @@ class MetadataType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'MetadataType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -1405,6 +1420,8 @@ class MetadataType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.MetadataItem.append(obj_)
             obj_.original_tagname_ = 'MetadataItem'
+    def __hash__(self):
+        return hash(self.id)
 # end class MetadataType
 
 
@@ -1413,6 +1430,13 @@ class MetadataItemType(GeneratedsSuper):
     E.g. imagePhotometricInterpretation
     E.g. RGB"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('name', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('value', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('date', 'dateTime', 0, 1, {'use': 'optional'}),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, type_=None, name=None, value=None, date=None, Labels=None, gds_collector_=None, **kwargs_):
@@ -1493,7 +1517,7 @@ class MetadataItemType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'MetadataItemType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -1566,6 +1590,8 @@ class MetadataItemType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
+    def __hash__(self):
+        return hash(self.id)
 # end class MetadataItemType
 
 
@@ -1575,6 +1601,13 @@ class LabelsType(GeneratedsSuper):
     (to be used as subject or object of an RDF triple)
     Prefix for all labels (e.g. first part of an URI)"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('externalModel', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('externalId', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('prefix', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('Label', 'LabelType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Label', 'type': 'LabelType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, externalModel=None, externalId=None, prefix=None, comments=None, Label=None, gds_collector_=None, **kwargs_):
@@ -1652,7 +1685,7 @@ class LabelsType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'LabelsType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -1722,6 +1755,8 @@ class LabelsType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Label.append(obj_)
             obj_.original_tagname_ = 'Label'
+    def __hash__(self):
+        return hash(self.id)
 # end class LabelsType
 
 
@@ -1734,6 +1769,11 @@ class LabelType(GeneratedsSuper):
     (e.g. 'YYYY-mm-dd' for a date label).
     Can be used as predicate of an RDF triple."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('value', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, value=None, type_=None, comments=None, gds_collector_=None, **kwargs_):
@@ -1790,7 +1830,7 @@ class LabelType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'LabelType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -1842,6 +1882,8 @@ class LabelType(GeneratedsSuper):
             self.comments = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class LabelType
 
 
@@ -1880,6 +1922,48 @@ class PageType(GeneratedsSuper):
     (lower-level definitions override the page-level definition).
     Confidence value for whole page (between 0 and 1)"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('imageFilename', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('imageWidth', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('imageHeight', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('imageXResolution', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('imageYResolution', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('imageResolutionUnit', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:PageTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('secondaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('textLineOrder', 'pc:TextLineOrderSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
+        MemberSpec_('Border', 'BorderType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Border', 'type': 'BorderType'}, None),
+        MemberSpec_('PrintSpace', 'PrintSpaceType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'PrintSpace', 'type': 'PrintSpaceType'}, None),
+        MemberSpec_('ReadingOrder', 'ReadingOrderType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'ReadingOrder', 'type': 'ReadingOrderType'}, None),
+        MemberSpec_('Layers', 'LayersType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Layers', 'type': 'LayersType'}, None),
+        MemberSpec_('Relations', 'RelationsType', 0, 1, {'minOccurs': '0', 'name': 'Relations', 'type': 'RelationsType'}, None),
+        MemberSpec_('TextStyle', 'TextStyleType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'TextStyle', 'type': 'TextStyleType'}, None),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('TextRegion', 'TextRegionType', 1, 1, {'name': 'TextRegion', 'type': 'TextRegionType'}, 1),
+        MemberSpec_('ImageRegion', 'ImageRegionType', 1, 1, {'name': 'ImageRegion', 'type': 'ImageRegionType'}, 1),
+        MemberSpec_('LineDrawingRegion', 'LineDrawingRegionType', 1, 1, {'name': 'LineDrawingRegion', 'type': 'LineDrawingRegionType'}, 1),
+        MemberSpec_('GraphicRegion', 'GraphicRegionType', 1, 1, {'name': 'GraphicRegion', 'type': 'GraphicRegionType'}, 1),
+        MemberSpec_('TableRegion', 'TableRegionType', 1, 1, {'name': 'TableRegion', 'type': 'TableRegionType'}, 1),
+        MemberSpec_('ChartRegion', 'ChartRegionType', 1, 1, {'name': 'ChartRegion', 'type': 'ChartRegionType'}, 1),
+        MemberSpec_('MapRegion', 'MapRegionType', 1, 1, {'name': 'MapRegion', 'type': 'MapRegionType'}, 1),
+        MemberSpec_('SeparatorRegion', 'SeparatorRegionType', 1, 1, {'name': 'SeparatorRegion', 'type': 'SeparatorRegionType'}, 1),
+        MemberSpec_('MathsRegion', 'MathsRegionType', 1, 1, {'name': 'MathsRegion', 'type': 'MathsRegionType'}, 1),
+        MemberSpec_('ChemRegion', 'ChemRegionType', 1, 1, {'name': 'ChemRegion', 'type': 'ChemRegionType'}, 1),
+        MemberSpec_('MusicRegion', 'MusicRegionType', 1, 1, {'name': 'MusicRegion', 'type': 'MusicRegionType'}, 1),
+        MemberSpec_('AdvertRegion', 'AdvertRegionType', 1, 1, {'name': 'AdvertRegion', 'type': 'AdvertRegionType'}, 1),
+        MemberSpec_('NoiseRegion', 'NoiseRegionType', 1, 1, {'name': 'NoiseRegion', 'type': 'NoiseRegionType'}, 1),
+        MemberSpec_('UnknownRegion', 'UnknownRegionType', 1, 1, {'name': 'UnknownRegion', 'type': 'UnknownRegionType'}, 1),
+        MemberSpec_('CustomRegion', 'CustomRegionType', 1, 1, {'name': 'CustomRegion', 'type': 'CustomRegionType'}, 1),
+    ]
     subclass = None
     superclass = None
     def __init__(self, imageFilename=None, imageWidth=None, imageHeight=None, imageXResolution=None, imageYResolution=None, imageResolutionUnit=None, custom=None, orientation=None, type_=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, textLineOrder=None, conf=None, AlternativeImage=None, Border=None, PrintSpace=None, ReadingOrder=None, Layers=None, Relations=None, TextStyle=None, UserDefined=None, Labels=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, MapRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, gds_collector_=None, **kwargs_):
@@ -2414,7 +2498,7 @@ class PageType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'PageType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -2764,6 +2848,8 @@ class PageType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.CustomRegion.append(obj_)
             obj_.original_tagname_ = 'CustomRegion'
+    def __hash__(self):
+        return hash(self.id)
 # end class PageType
 
 
@@ -2777,6 +2863,10 @@ class CoordsType(GeneratedsSuper):
     Paths must be planar (i.e. must not self-intersect).
     Confidence value (between 0 and 1)"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, points=None, conf=None, gds_collector_=None, **kwargs_):
@@ -2853,7 +2943,7 @@ class CoordsType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'CoordsType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -2901,6 +2991,8 @@ class CoordsType(GeneratedsSuper):
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class CoordsType
 
 
@@ -2917,6 +3009,25 @@ class TextLineType(GeneratedsSuper):
     Position (order number) of this text line within the
     parent text region."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('index', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
+        MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
+        MemberSpec_('Baseline', 'BaselineType', 0, 1, {'minOccurs': '0', 'name': 'Baseline', 'type': 'BaselineType'}, None),
+        MemberSpec_('Word', 'WordType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Word', 'type': 'WordType'}, None),
+        MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
+        MemberSpec_('TextStyle', 'TextStyleType', 0, 1, {'minOccurs': '0', 'name': 'TextStyle', 'type': 'TextStyleType'}, None),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, primaryLanguage=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, index=None, AlternativeImage=None, Coords=None, Baseline=None, Word=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None, gds_collector_=None, **kwargs_):
@@ -3152,7 +3263,7 @@ class TextLineType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'TextLineType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -3318,6 +3429,8 @@ class TextLineType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
+    def __hash__(self):
+        return hash(self.id)
 # end class TextLineType
 
 
@@ -3332,6 +3445,23 @@ class WordType(GeneratedsSuper):
     text line and/or text region.
     For generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('language', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
+        MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
+        MemberSpec_('Glyph', 'GlyphType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Glyph', 'type': 'GlyphType'}, None),
+        MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
+        MemberSpec_('TextStyle', 'TextStyleType', 0, 1, {'minOccurs': '0', 'name': 'TextStyle', 'type': 'TextStyleType'}, None),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, language=None, primaryScript=None, secondaryScript=None, readingDirection=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Glyph=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None, gds_collector_=None, **kwargs_):
@@ -3554,7 +3684,7 @@ class WordType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'WordType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -3705,6 +3835,8 @@ class WordType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
+    def __hash__(self):
+        return hash(self.id)
 # end class WordType
 
 
@@ -3714,6 +3846,22 @@ class GlyphType(GeneratedsSuper):
     word / text line / text region.
     For generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('ligature', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('symbol', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('script', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
+        MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
+        MemberSpec_('Graphemes', 'GraphemesType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Graphemes', 'type': 'GraphemesType'}, None),
+        MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
+        MemberSpec_('TextStyle', 'TextStyleType', 0, 1, {'minOccurs': '0', 'name': 'TextStyle', 'type': 'TextStyleType'}, None),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, ligature=None, symbol=None, script=None, production=None, custom=None, comments=None, AlternativeImage=None, Coords=None, Graphemes=None, TextEquiv=None, TextStyle=None, UserDefined=None, Labels=None, gds_collector_=None, **kwargs_):
@@ -3895,7 +4043,7 @@ class GlyphType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GlyphType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -4046,6 +4194,8 @@ class GlyphType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
+    def __hash__(self):
+        return hash(self.id)
 # end class GlyphType
 
 
@@ -4060,6 +4210,15 @@ class TextEquivType(GeneratedsSuper):
     Refinement for dataType attribute. Can be a regular expression, for
     instance."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('index', 'integer', 0, 1, {'use': 'optional'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('dataType', 'pc:TextDataTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('dataTypeDetails', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('PlainText', 'string', 0, 1, {'minOccurs': '0', 'name': 'PlainText', 'type': 'string'}, None),
+        MemberSpec_('Unicode', 'string', 0, 0, {'name': 'Unicode', 'type': 'string'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, index=None, conf=None, dataType=None, dataTypeDetails=None, comments=None, PlainText=None, Unicode=None, gds_collector_=None, **kwargs_):
@@ -4169,7 +4328,7 @@ class TextEquivType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'TextEquivType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -4261,12 +4420,17 @@ class TextEquivType(GeneratedsSuper):
             value_ = self.gds_validate_string(value_, node, 'Unicode')
             self.Unicode = value_
             self.Unicode_nsprefix_ = child_.prefix
+    def __hash__(self):
+        return hash(self.id)
 # end class TextEquivType
 
 
 class GridType(GeneratedsSuper):
     """Matrix of grid points defining the table grid on the page."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('GridPoints', 'GridPointsType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '2', 'name': 'GridPoints', 'type': 'GridPointsType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, GridPoints=None, gds_collector_=None, **kwargs_):
@@ -4320,7 +4484,7 @@ class GridType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GridType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -4364,6 +4528,8 @@ class GridType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.GridPoints.append(obj_)
             obj_.original_tagname_ = 'GridPoints'
+    def __hash__(self):
+        return hash(self.id)
 # end class GridType
 
 
@@ -4371,6 +4537,10 @@ class GridPointsType(GeneratedsSuper):
     """Points with x,y coordinates.
     The grid row index"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, index=None, points=None, gds_collector_=None, **kwargs_):
@@ -4432,7 +4602,7 @@ class GridPointsType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GridPointsType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -4478,6 +4648,8 @@ class GridPointsType(GeneratedsSuper):
             self.validate_PointsType(self.points)    # validate type PointsType
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class GridPointsType
 
 
@@ -4490,6 +4662,9 @@ class PrintSpaceType(GeneratedsSuper):
     It does not contain pagenumber (if not part of running title),
     marginals, signature mark, preview words."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, Coords=None, gds_collector_=None, **kwargs_):
@@ -4534,7 +4709,7 @@ class PrintSpaceType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'PrintSpaceType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -4578,6 +4753,8 @@ class PrintSpaceType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
+    def __hash__(self):
+        return hash(self.id)
 # end class PrintSpaceType
 
 
@@ -4588,6 +4765,11 @@ class ReadingOrderType(GeneratedsSuper):
     Groups may contain further groups.
     Confidence value (between 0 and 1)"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('OrderedGroup', 'OrderedGroupType', 0, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 2),
+        MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 0, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 2),
+    ]
     subclass = None
     superclass = None
     def __init__(self, conf=None, OrderedGroup=None, UnorderedGroup=None, gds_collector_=None, **kwargs_):
@@ -4660,7 +4842,7 @@ class ReadingOrderType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'ReadingOrderType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -4719,6 +4901,8 @@ class ReadingOrderType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.UnorderedGroup = obj_
             obj_.original_tagname_ = 'UnorderedGroup'
+    def __hash__(self):
+        return hash(self.id)
 # end class ReadingOrderType
 
 
@@ -4726,6 +4910,10 @@ class RegionRefIndexedType(GeneratedsSuper):
     """Numbered regionPosition (order number) of this item within the current
     hierarchy level."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, index=None, regionRef=None, gds_collector_=None, **kwargs_):
@@ -4776,7 +4964,7 @@ class RegionRefIndexedType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'RegionRefIndexedType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -4821,6 +5009,8 @@ class RegionRefIndexedType(GeneratedsSuper):
             self.regionRef = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class RegionRefIndexedType
 
 
@@ -4835,6 +5025,21 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     previous column or page, for example)?
     For generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 3),
+        MemberSpec_('OrderedGroupIndexed', 'OrderedGroupIndexedType', 1, 0, {'name': 'OrderedGroupIndexed', 'type': 'OrderedGroupIndexedType'}, 3),
+        MemberSpec_('UnorderedGroupIndexed', 'UnorderedGroupIndexedType', 1, 0, {'name': 'UnorderedGroupIndexed', 'type': 'UnorderedGroupIndexedType'}, 3),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None, gds_collector_=None, **kwargs_):
@@ -5004,7 +5209,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'OrderedGroupIndexedType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -5140,6 +5345,8 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
+    def __hash__(self):
+        return hash(self.id)
 # end class OrderedGroupIndexedType
 
 
@@ -5154,6 +5361,21 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
     (from previous column or page, for example)?
     For generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 4),
+        MemberSpec_('OrderedGroup', 'OrderedGroupType', 1, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 4),
+        MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 1, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 4),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, regionRef=None, index=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None, gds_collector_=None, **kwargs_):
@@ -5323,7 +5545,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'UnorderedGroupIndexedType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -5459,11 +5681,16 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
+    def __hash__(self):
+        return hash(self.id)
 # end class UnorderedGroupIndexedType
 
 
 class RegionRefType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, regionRef=None, gds_collector_=None, **kwargs_):
@@ -5508,7 +5735,7 @@ class RegionRefType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'RegionRefType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -5546,6 +5773,8 @@ class RegionRefType(GeneratedsSuper):
             self.regionRef = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class RegionRefType
 
 
@@ -5558,6 +5787,20 @@ class OrderedGroupType(GeneratedsSuper):
     (from previous column or page, for example)?
     For generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 5),
+        MemberSpec_('OrderedGroupIndexed', 'OrderedGroupIndexedType', 1, 0, {'name': 'OrderedGroupIndexed', 'type': 'OrderedGroupIndexedType'}, 5),
+        MemberSpec_('UnorderedGroupIndexed', 'UnorderedGroupIndexedType', 1, 0, {'name': 'UnorderedGroupIndexed', 'type': 'UnorderedGroupIndexedType'}, 5),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None, gds_collector_=None, **kwargs_):
@@ -5721,7 +5964,7 @@ class OrderedGroupType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'OrderedGroupType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -5850,6 +6093,8 @@ class OrderedGroupType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
+    def __hash__(self):
+        return hash(self.id)
 # end class OrderedGroupType
 
 
@@ -5862,6 +6107,20 @@ class UnorderedGroupType(GeneratedsSuper):
     (from previous column or page, for example)?
     For generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 6),
+        MemberSpec_('OrderedGroup', 'OrderedGroupType', 1, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 6),
+        MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 1, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 6),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None, gds_collector_=None, **kwargs_):
@@ -6025,7 +6284,7 @@ class UnorderedGroupType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'UnorderedGroupType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -6154,6 +6413,8 @@ class UnorderedGroupType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
+    def __hash__(self):
+        return hash(self.id)
 # end class UnorderedGroupType
 
 
@@ -6161,6 +6422,9 @@ class BorderType(GeneratedsSuper):
     """Border of the actual page (if the scanned image
     contains parts not belonging to the page)."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, Coords=None, gds_collector_=None, **kwargs_):
@@ -6205,7 +6469,7 @@ class BorderType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'BorderType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -6249,6 +6513,8 @@ class BorderType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
+    def __hash__(self):
+        return hash(self.id)
 # end class BorderType
 
 
@@ -6257,6 +6523,9 @@ class LayersType(GeneratedsSuper):
     regions. An element with a greater z-index is always in
     front of another element with lower z-index."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('Layer', 'LayerType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'Layer', 'type': 'LayerType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, Layer=None, gds_collector_=None, **kwargs_):
@@ -6310,7 +6579,7 @@ class LayersType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'LayersType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -6354,11 +6623,19 @@ class LayersType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Layer.append(obj_)
             obj_.original_tagname_ = 'Layer'
+    def __hash__(self):
+        return hash(self.id)
 # end class LayersType
 
 
 class LayerType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('zIndex', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'RegionRef', 'type': 'RegionRefType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, zIndex=None, caption=None, RegionRef=None, gds_collector_=None, **kwargs_):
@@ -6430,7 +6707,7 @@ class LayerType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'LayerType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -6493,12 +6770,18 @@ class LayerType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.RegionRef.append(obj_)
             obj_.original_tagname_ = 'RegionRef'
+    def __hash__(self):
+        return hash(self.id)
 # end class LayerType
 
 
 class BaselineType(GeneratedsSuper):
     """Confidence value (between 0 and 1)"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, points=None, conf=None, gds_collector_=None, **kwargs_):
@@ -6575,7 +6858,7 @@ class BaselineType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'BaselineType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -6623,6 +6906,8 @@ class BaselineType(GeneratedsSuper):
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class BaselineType
 
 
@@ -6631,6 +6916,9 @@ class RelationsType(GeneratedsSuper):
     objects (for example: DropCap - paragraph, caption -
     image)."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('Relation', 'RelationType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'Relation', 'type': 'RelationType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, Relation=None, gds_collector_=None, **kwargs_):
@@ -6684,7 +6972,7 @@ class RelationsType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'RelationsType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -6728,6 +7016,8 @@ class RelationsType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Relation.append(obj_)
             obj_.original_tagname_ = 'Relation'
+    def __hash__(self):
+        return hash(self.id)
 # end class RelationsType
 
 
@@ -6748,6 +7038,15 @@ class RelationType(GeneratedsSuper):
     paragraph)
     For generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('SourceRegionRef', 'RegionRefType', 0, 0, {'maxOccurs': '1', 'minOccurs': '1', 'name': 'SourceRegionRef', 'type': 'RegionRefType'}, None),
+        MemberSpec_('TargetRegionRef', 'RegionRefType', 0, 0, {'maxOccurs': '1', 'minOccurs': '1', 'name': 'TargetRegionRef', 'type': 'RegionRefType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, type_=None, custom=None, comments=None, Labels=None, SourceRegionRef=None, TargetRegionRef=None, gds_collector_=None, **kwargs_):
@@ -6839,7 +7138,7 @@ class RelationType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'RelationType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -6925,6 +7224,8 @@ class RelationType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.TargetRegionRef = obj_
             obj_.original_tagname_ = 'TargetRegionRef'
+    def __hash__(self):
+        return hash(self.id)
 # end class RelationType
 
 
@@ -6951,6 +7252,29 @@ class TextStyleType(GeneratedsSuper):
     reversed against a background colour.
     Line style details if "underlined" is TRUE"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('fontFamily', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('serif', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('monospace', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('fontSize', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('xHeight', 'integer', 0, 1, {'use': 'optional'}),
+        MemberSpec_('kerning', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('textColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('textColourRgb', 'integer', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColourRgb', 'integer', 0, 1, {'use': 'optional'}),
+        MemberSpec_('reverseVideo', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bold', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('italic', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('underlined', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('underlineStyle', 'pc:underlineStyleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('doubleUnderlined', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('subscript', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('superscript', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('strikethrough', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('smallCaps', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('letterSpaced', 'boolean', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, fontFamily=None, serif=None, monospace=None, fontSize=None, xHeight=None, kerning=None, textColour=None, textColourRgb=None, bgColour=None, bgColourRgb=None, reverseVideo=None, bold=None, italic=None, underlined=None, underlineStyle=None, doubleUnderlined=None, subscript=None, superscript=None, strikethrough=None, smallCaps=None, letterSpaced=None, gds_collector_=None, **kwargs_):
@@ -7141,7 +7465,7 @@ class TextStyleType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'TextStyleType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -7383,6 +7707,8 @@ class TextStyleType(GeneratedsSuper):
                 raise_parse_error(node, 'Bad boolean attribute')
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class TextStyleType
 
 
@@ -7391,6 +7717,31 @@ class RegionType(GeneratedsSuper):
     Is this region a continuation of another region
     (in previous column or page, for example)?"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
+        MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('Roles', 'RolesType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Roles', 'type': 'RolesType'}, None),
+        MemberSpec_('TextRegion', 'TextRegionType', 1, 1, {'name': 'TextRegion', 'type': 'TextRegionType'}, 7),
+        MemberSpec_('ImageRegion', 'ImageRegionType', 1, 1, {'name': 'ImageRegion', 'type': 'ImageRegionType'}, 7),
+        MemberSpec_('LineDrawingRegion', 'LineDrawingRegionType', 1, 1, {'name': 'LineDrawingRegion', 'type': 'LineDrawingRegionType'}, 7),
+        MemberSpec_('GraphicRegion', 'GraphicRegionType', 1, 1, {'name': 'GraphicRegion', 'type': 'GraphicRegionType'}, 7),
+        MemberSpec_('TableRegion', 'TableRegionType', 1, 1, {'name': 'TableRegion', 'type': 'TableRegionType'}, 7),
+        MemberSpec_('ChartRegion', 'ChartRegionType', 1, 1, {'name': 'ChartRegion', 'type': 'ChartRegionType'}, 7),
+        MemberSpec_('SeparatorRegion', 'SeparatorRegionType', 1, 1, {'name': 'SeparatorRegion', 'type': 'SeparatorRegionType'}, 7),
+        MemberSpec_('MathsRegion', 'MathsRegionType', 1, 1, {'name': 'MathsRegion', 'type': 'MathsRegionType'}, 7),
+        MemberSpec_('ChemRegion', 'ChemRegionType', 1, 1, {'name': 'ChemRegion', 'type': 'ChemRegionType'}, 7),
+        MemberSpec_('MusicRegion', 'MusicRegionType', 1, 1, {'name': 'MusicRegion', 'type': 'MusicRegionType'}, 7),
+        MemberSpec_('AdvertRegion', 'AdvertRegionType', 1, 1, {'name': 'AdvertRegion', 'type': 'AdvertRegionType'}, 7),
+        MemberSpec_('NoiseRegion', 'NoiseRegionType', 1, 1, {'name': 'NoiseRegion', 'type': 'NoiseRegionType'}, 7),
+        MemberSpec_('UnknownRegion', 'UnknownRegionType', 1, 1, {'name': 'UnknownRegion', 'type': 'UnknownRegionType'}, 7),
+        MemberSpec_('CustomRegion', 'CustomRegionType', 1, 1, {'name': 'CustomRegion', 'type': 'CustomRegionType'}, 7),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, extensiontype_=None, gds_collector_=None, **kwargs_):
@@ -7732,7 +8083,7 @@ class RegionType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'RegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -7963,12 +8314,19 @@ class RegionType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.CustomRegion.append(obj_)
             obj_.original_tagname_ = 'CustomRegion'
+    def __hash__(self):
+        return hash(self.id)
 # end class RegionType
 
 
 class AlternativeImageType(GeneratedsSuper):
     """Confidence value (between 0 and 1)"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('filename', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, filename=None, comments=None, conf=None, gds_collector_=None, **kwargs_):
@@ -8040,7 +8398,7 @@ class AlternativeImageType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'AlternativeImageType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8094,6 +8452,8 @@ class AlternativeImageType(GeneratedsSuper):
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class AlternativeImageType
 
 
@@ -8101,6 +8461,11 @@ class GraphemesType(GeneratedsSuper):
     """Container for graphemes, grapheme groups and
     non-printing characters."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('Grapheme', 'GraphemeType', 1, 0, {'name': 'Grapheme', 'type': 'GraphemeType'}, 8),
+        MemberSpec_('NonPrintingChar', 'NonPrintingCharType', 1, 0, {'name': 'NonPrintingChar', 'type': 'NonPrintingCharType'}, 8),
+        MemberSpec_('GraphemeGroup', 'GraphemeGroupType', 1, 0, {'name': 'GraphemeGroup', 'type': 'GraphemeGroupType'}, 8),
+    ]
     subclass = None
     superclass = None
     def __init__(self, Grapheme=None, NonPrintingChar=None, GraphemeGroup=None, gds_collector_=None, **kwargs_):
@@ -8186,7 +8551,7 @@ class GraphemesType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GraphemesType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8246,6 +8611,8 @@ class GraphemesType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.GraphemeGroup.append(obj_)
             obj_.original_tagname_ = 'GraphemeGroup'
+    def __hash__(self):
+        return hash(self.id)
 # end class GraphemesType
 
 
@@ -8257,6 +8624,15 @@ class GraphemeBaseType(GeneratedsSuper):
     grapheme, group, or non-printing character element.
     For generic useFor generic use"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('ligature', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('charType', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, extensiontype_=None, gds_collector_=None, **kwargs_):
@@ -8349,7 +8725,7 @@ class GraphemeBaseType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GraphemeBaseType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8450,6 +8826,8 @@ class GraphemeBaseType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
+    def __hash__(self):
+        return hash(self.id)
 # end class GraphemeBaseType
 
 
@@ -8458,6 +8836,9 @@ class GraphemeType(GraphemeBaseType):
     Smallest graphical unit that can be
     assigned a Unicode code point."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
+    ]
     subclass = None
     superclass = GraphemeBaseType
     def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, Coords=None, gds_collector_=None, **kwargs_):
@@ -8504,7 +8885,7 @@ class GraphemeType(GraphemeBaseType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GraphemeType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8550,6 +8931,8 @@ class GraphemeType(GraphemeBaseType):
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
         super(GraphemeType, self).buildChildren(child_, node, nodeName_, True)
+    def __hash__(self):
+        return hash(self.id)
 # end class GraphemeType
 
 
@@ -8559,6 +8942,8 @@ class NonPrintingCharType(GraphemeBaseType):
     Non-visual / non-printing / control character.
     Part of grapheme container (of glyph) or grapheme sub group."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+    ]
     subclass = None
     superclass = GraphemeBaseType
     def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, gds_collector_=None, **kwargs_):
@@ -8598,7 +8983,7 @@ class NonPrintingCharType(GraphemeBaseType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'NonPrintingCharType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8633,11 +9018,17 @@ class NonPrintingCharType(GraphemeBaseType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(NonPrintingCharType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class NonPrintingCharType
 
 
 class GraphemeGroupType(GraphemeBaseType):
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('Grapheme', 'GraphemeType', 1, 1, {'name': 'Grapheme', 'type': 'GraphemeType'}, 9),
+        MemberSpec_('NonPrintingChar', 'NonPrintingCharType', 1, 1, {'name': 'NonPrintingChar', 'type': 'NonPrintingCharType'}, 9),
+    ]
     subclass = None
     superclass = GraphemeBaseType
     def __init__(self, id=None, index=None, ligature=None, charType=None, custom=None, comments=None, TextEquiv=None, Grapheme=None, NonPrintingChar=None, gds_collector_=None, **kwargs_):
@@ -8709,7 +9100,7 @@ class GraphemeGroupType(GraphemeBaseType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GraphemeGroupType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8763,12 +9154,17 @@ class GraphemeGroupType(GraphemeBaseType):
             self.NonPrintingChar.append(obj_)
             obj_.original_tagname_ = 'NonPrintingChar'
         super(GraphemeGroupType, self).buildChildren(child_, node, nodeName_, True)
+    def __hash__(self):
+        return hash(self.id)
 # end class GraphemeGroupType
 
 
 class UserDefinedType(GeneratedsSuper):
     """Container for user-defined attributes"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('UserAttribute', 'UserAttributeType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'UserAttribute', 'type': 'UserAttributeType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, UserAttribute=None, gds_collector_=None, **kwargs_):
@@ -8822,7 +9218,7 @@ class UserDefinedType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'UserDefinedType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8866,12 +9262,20 @@ class UserDefinedType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.UserAttribute.append(obj_)
             obj_.original_tagname_ = 'UserAttribute'
+    def __hash__(self):
+        return hash(self.id)
 # end class UserDefinedType
 
 
 class UserAttributeType(GeneratedsSuper):
     """Structured custom data defined by name, type and value."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('name', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('description', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('value', 'string', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, name=None, description=None, type_=None, value=None, gds_collector_=None, **kwargs_):
@@ -8934,7 +9338,7 @@ class UserAttributeType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'UserAttributeType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -8993,6 +9397,8 @@ class UserAttributeType(GeneratedsSuper):
             self.value = value
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class UserAttributeType
 
 
@@ -9002,6 +9408,13 @@ class TableCellRoleType(GeneratedsSuper):
     is 1)Number of columns the cell spans (optional; default is 1)
     Is the cell a column or row header?"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('rowIndex', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('columnIndex', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('rowSpan', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('colSpan', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('header', 'boolean', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = None
     def __init__(self, rowIndex=None, columnIndex=None, rowSpan=None, colSpan=None, header=None, gds_collector_=None, **kwargs_):
@@ -9070,7 +9483,7 @@ class TableCellRoleType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'TableCellRoleType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9141,11 +9554,16 @@ class TableCellRoleType(GeneratedsSuper):
                 raise_parse_error(node, 'Bad boolean attribute')
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class TableCellRoleType
 
 
 class RolesType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('TableCellRole', 'TableCellRoleType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'TableCellRole', 'type': 'TableCellRoleType'}, None),
+    ]
     subclass = None
     superclass = None
     def __init__(self, TableCellRole=None, gds_collector_=None, **kwargs_):
@@ -9190,7 +9608,7 @@ class RolesType(GeneratedsSuper):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'RolesType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9234,6 +9652,8 @@ class RolesType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.TableCellRole = obj_
             obj_.original_tagname_ = 'TableCellRole'
+    def __hash__(self):
+        return hash(self.id)
 # end class RolesType
 
 
@@ -9244,6 +9664,9 @@ class CustomRegionType(RegionType):
     map, music, chem, advert, noise, unknown).
     Information on the type of content represented by this region"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, type_=None, gds_collector_=None, **kwargs_):
@@ -9289,7 +9712,7 @@ class CustomRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'CustomRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9331,12 +9754,16 @@ class CustomRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(CustomRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class CustomRegionType
 
 
 class UnknownRegionType(RegionType):
     """To be used if the region type cannot be ascertained."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, gds_collector_=None, **kwargs_):
@@ -9376,7 +9803,7 @@ class UnknownRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'UnknownRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9411,6 +9838,8 @@ class UnknownRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(UnknownRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class UnknownRegionType
 
 
@@ -9419,6 +9848,8 @@ class NoiseRegionType(RegionType):
     false data created by artifacts on the document or
     scanner noise."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, gds_collector_=None, **kwargs_):
@@ -9458,7 +9889,7 @@ class NoiseRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'NoiseRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9493,6 +9924,8 @@ class NoiseRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(NoiseRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class NoiseRegionType
 
 
@@ -9505,6 +9938,10 @@ class AdvertRegionType(RegionType):
     Range: -179.999,180
     The background colour of the region"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
@@ -9569,7 +10006,7 @@ class AdvertRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'AdvertRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9620,6 +10057,8 @@ class AdvertRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(AdvertRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class AdvertRegionType
 
 
@@ -9632,6 +10071,10 @@ class MusicRegionType(RegionType):
     Range: -179.999,180
     The background colour of the region"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
@@ -9696,7 +10139,7 @@ class MusicRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'MusicRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9747,6 +10190,8 @@ class MusicRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(MusicRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class MusicRegionType
 
 
@@ -9759,6 +10204,9 @@ class MapRegionType(RegionType):
     anti-clockwise rotation). Range:
     -179.999,180"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, gds_collector_=None, **kwargs_):
@@ -9804,7 +10252,7 @@ class MapRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'MapRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9847,6 +10295,8 @@ class MapRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(MapRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class MapRegionType
 
 
@@ -9860,6 +10310,10 @@ class ChemRegionType(RegionType):
     -179.999,180
     The background colour of the region"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
@@ -9924,7 +10378,7 @@ class ChemRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'ChemRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -9975,6 +10429,8 @@ class ChemRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(ChemRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class ChemRegionType
 
 
@@ -9988,6 +10444,10 @@ class MathsRegionType(RegionType):
     Range: -179.999,180
     The background colour of the region"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
@@ -10052,7 +10512,7 @@ class MathsRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'MathsRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -10103,6 +10563,8 @@ class MathsRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(MathsRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class MathsRegionType
 
 
@@ -10117,6 +10579,10 @@ class SeparatorRegionType(RegionType):
     Range: -179.999,180
     The colour of the separator"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('colour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, colour=None, gds_collector_=None, **kwargs_):
@@ -10181,7 +10647,7 @@ class SeparatorRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'SeparatorRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -10232,6 +10698,8 @@ class SeparatorRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(SeparatorRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class SeparatorRegionType
 
 
@@ -10250,6 +10718,13 @@ class ChartRegionType(RegionType):
     Specifies whether the region also contains
     text"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:ChartTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('numColours', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
@@ -10345,7 +10820,7 @@ class ChartRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'ChartRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -10423,6 +10898,8 @@ class ChartRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(ChartRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class ChartRegionType
 
 
@@ -10443,6 +10920,16 @@ class TableRegionType(RegionType):
     Specifies whether the region also contains
     text"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('rows', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('columns', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('lineColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('lineSeparators', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('Grid', 'GridType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Grid', 'type': 'GridType'}, None),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None, gds_collector_=None, **kwargs_):
@@ -10544,7 +11031,7 @@ class TableRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'TableRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -10652,6 +11139,8 @@ class TableRegionType(RegionType):
             self.Grid = obj_
             obj_.original_tagname_ = 'Grid'
         super(TableRegionType, self).buildChildren(child_, node, nodeName_, True)
+    def __hash__(self):
+        return hash(self.id)
 # end class TableRegionType
 
 
@@ -10669,6 +11158,12 @@ class GraphicRegionType(RegionType):
     Specifies whether the region also contains
     text."""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:GraphicsTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('numColours', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, numColours=None, embText=None, gds_collector_=None, **kwargs_):
@@ -10745,7 +11240,7 @@ class GraphicRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'GraphicRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -10815,6 +11310,8 @@ class GraphicRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(GraphicRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class GraphicRegionType
 
 
@@ -10831,6 +11328,12 @@ class LineDrawingRegionType(RegionType):
     Specifies whether the region also contains
     text"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('penColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, penColour=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
@@ -10907,7 +11410,7 @@ class LineDrawingRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'LineDrawingRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -10978,6 +11481,8 @@ class LineDrawingRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(LineDrawingRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class LineDrawingRegionType
 
 
@@ -10994,6 +11499,12 @@ class ImageRegionType(RegionType):
     Specifies whether the region also contains
     text"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('colourDepth', 'pc:ColourDepthSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
@@ -11083,7 +11594,7 @@ class ImageRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'ImageRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -11154,6 +11665,8 @@ class ImageRegionType(RegionType):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         super(ImageRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
+    def __hash__(self):
+        return hash(self.id)
 # end class ImageRegionType
 
 
@@ -11190,6 +11703,24 @@ class TextRegionType(RegionType):
     The primary script used in the region
     The secondary script used in the region"""
     __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'pc:TextTypeSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('leading', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('textLineOrder', 'pc:TextLineOrderSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('readingOrientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('indented', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('align', 'pc:AlignSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('secondaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('TextLine', 'TextLineType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextLine', 'type': 'TextLineType'}, None),
+        MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
+        MemberSpec_('TextStyle', 'TextStyleType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'TextStyle', 'type': 'TextStyleType'}, None),
+    ]
     subclass = None
     superclass = RegionType
     def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None, gds_collector_=None, **kwargs_):
@@ -11437,7 +11968,7 @@ class TextRegionType(RegionType):
             eol_ = '\n'
         else:
             eol_ = ''
-        if self.original_tagname_ is not None:
+        if self.original_tagname_ is not None and name_ == 'TextRegionType':
             name_ = self.original_tagname_
         if UseCapturedNS_ and self.ns_prefix_:
             namespaceprefix_ = self.ns_prefix_ + ':'
@@ -11606,6 +12137,8 @@ class TextRegionType(RegionType):
             self.TextStyle = obj_
             obj_.original_tagname_ = 'TextStyle'
         super(TextRegionType, self).buildChildren(child_, node, nodeName_, True)
+    def __hash__(self):
+        return hash(self.id)
 # end class TextRegionType
 
 
@@ -11681,7 +12214,8 @@ def parse(inFileName, silence=False, print_warnings=True):
     return rootObj
 
 
-def parseEtree(inFileName, silence=False, print_warnings=True):
+def parseEtree(inFileName, silence=False, print_warnings=True,
+               mapping=None, nsmap=None):
     parser = None
     doc = parsexml_(inFileName, parser)
     gds_collector = GdsCollector_()
@@ -11693,8 +12227,10 @@ def parseEtree(inFileName, silence=False, print_warnings=True):
     rootObj = rootClass.factory()
     rootObj.build(rootNode, gds_collector_=gds_collector)
     # Enable Python to collect the space used by the DOM.
-    mapping = {}
-    rootElement = rootObj.to_etree(None, name_=rootTag, mapping_=mapping)
+    if mapping is None:
+        mapping = {}
+    rootElement = rootObj.to_etree(
+        None, name_=rootTag, mapping_=mapping, nsmap_=nsmap)
     reverse_mapping = rootObj.gds_reverse_node_mapping(mapping)
     if not SaveElementTreeNode:
         doc = None

@@ -67,7 +67,7 @@ def to_xml(el):
     """
     sio = StringIO()
     el.export(sio, 0, name_='PcGts',
-            namespacedef_='xmlns="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
+            namespacedef_='xmlns:pc="%s"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
                 NAMESPACES['page'],
                 NAMESPACES['page'],
                 NAMESPACES['page']

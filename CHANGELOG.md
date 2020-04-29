@@ -5,6 +5,45 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.5.2] - 2020-04-29
+
+Fixed:
+
+  * logging: format is spec-conformant again, #466
+
+Added:
+
+  * ocrd_page: generateDS-generated code has `__hash__` method now, #443
+
+## [2.5.1] - 2020-04-23
+
+Fixed:
+
+  * logging: disable propagation for loggers with handler, #463
+
+## [2.5.0] - 2020-04-23
+
+Changed:
+
+  * Logging configuration via configuration file, not script, #460 (HT @M3ssman @bertsky)
+
+Added:
+
+  * Execution of processors is tracked with logger 'orcd.process.profile', #461
+
+## [2.4.4] - 2020-03-17
+
+Fixed:
+
+  * #437 broke simple types in PAGE model, (really) revert 3a0a3a8, #451
+
+## [2.4.3] - 2020-03-12
+
+Fixed:
+
+  * bashlib: ocrd-tool.json-related errors no longer lead to silent exit, #456
+  * #437 broke simple types in PAGE model, revert 3a0a3a8, #451
+
 ## [2.4.2] - 2020-02-20
 
 Fixed:
@@ -763,6 +802,11 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.5.2]: ../../compare/v2.5.2...v2.5.1
+[2.5.1]: ../../compare/v2.5.1...v2.5.0
+[2.5.0]: ../../compare/v2.5.0...v2.4.4
+[2.4.4]: ../../compare/v2.4.4...v2.4.3
+[2.4.3]: ../../compare/v2.4.3...v2.4.2
 [2.4.2]: ../../compare/v2.4.2...v2.4.1
 [2.4.1]: ../../compare/v2.4.1...v2.4.0
 [2.4.0]: ../../compare/v2.4.0...v2.3.1

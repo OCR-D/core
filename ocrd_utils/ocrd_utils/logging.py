@@ -16,7 +16,10 @@ These files will be executed in the context of ocrd/ocrd_logging.py, with `loggi
 from __future__ import absolute_import
 
 import logging
+import logging.config
 import os
+
+from .constants import LOG_FORMAT, LOG_TIMEFMT
 
 __all__ = [
     'logging',
@@ -29,10 +32,23 @@ __all__ = [
 _overrideLogLevel = None
 
 _ocrdLevel2pythonLevel = {
-    'TRACE':    'DEBUG',
-    'OFF':      'CRITICAL',
-    'FATAL':    'ERROR',
+    'TRACE': 'DEBUG',
+    'OFF': 'CRITICAL',
+    'FATAL': 'ERROR',
 }
+
+class PropagationShyLogger(logging.Logger):
+
+    def addHandler(self, hdlr):
+        super().addHandler(hdlr)
+        self.propagate = not self.handlers
+
+    def removeHandler(self, hdlr):
+        super().removeHandler(hdlr)
+        self.propagate = not self.handlers
+
+logging.setLoggerClass(PropagationShyLogger)
+logging.getLogger().propagate = False
 
 def getLevelName(lvl):
     """
@@ -78,12 +94,30 @@ def getLogger(*args, **kwargs):
 
 def initLogging():
     """
-    Sets logging defaults
+    Reset root logger, read logging configuration if exists, otherwise use basicConfig
     """
+
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    global _overrideLogLevel # pylint: disable=global-statement
+    _overrideLogLevel = None
+
+    CONFIG_PATHS = [
+        os.path.curdir,
+        os.path.join(os.path.expanduser('~')),
+        '/etc',
+    ]
+    for p in CONFIG_PATHS:
+        config_file = os.path.join(p, 'ocrd_logging.conf')
+        if os.path.exists(config_file):
+            logging.config.fileConfig(config_file)
+            return
+
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
-        datefmt='%H:%M:%S')
+        format=LOG_FORMAT,
+        datefmt=LOG_TIMEFMT)
     logging.getLogger('').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
     #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
@@ -92,21 +126,5 @@ def initLogging():
     # To cut back on the `Self-intersection at or near point` INFO messages
     logging.getLogger('shapely.geos').setLevel(logging.ERROR)
 
-    # Allow overriding
-
-    CONFIG_PATHS = [
-        os.path.curdir,
-        os.path.join(os.path.expanduser('~')),
-        '/etc',
-    ]
-
-
-    for p in CONFIG_PATHS:
-        config_file = os.path.join(p, 'ocrd_logging.py')
-        if os.path.exists(config_file):
-            logging.debug("Loading logging configuration from '%s'", config_file)
-            with open(config_file) as f:
-                code = compile(f.read(), config_file, 'exec')
-                exec(code, globals(), locals()) # pylint: disable=exec-used
 
 initLogging()

@@ -1,5 +1,6 @@
 from tests.base import TestCase, main, assets
 
+from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
     PcGtsType,
@@ -33,7 +34,7 @@ simple_page = """\
                 <Baseline points="114,429 918,429"/>
                 <Word id="w_w1aab1b1b2b1b1ab1" language="German" custom="readingOrder {index:0;} textStyle {offset:0; length:11;fontFamily:Arial; fontSize:17.0; bold:true;}">
                     <Coords points="114,368 442,368 442,437 114,437"/>
-                    <TextEquiv conf="0.987654321">
+                    <TextEquiv conf="1">
                         <Unicode>Berliniſche</Unicode>
                     </TextEquiv>
                 </Word>
@@ -111,18 +112,18 @@ class TestOcrdPage(TestCase):
         word.add_Glyph(glyph)
         glyph.add_AlternativeImage(AlternativeImageType())
 
-    def test_simpletypes(self):
-        pcgts = parseString(simple_page, silence=True)
-        self.assertTrue(isinstance(pcgts.get_Page().imageWidth, int))
-        el = pcgts.get_Page().get_TextRegion()[0].get_TextLine()[0].get_Word()[0].get_TextEquiv()[0]
-        self.assertTrue(isinstance(el.conf, float))
-        # XXX no validation on setting attributes :-(
-        # c.f. https://www.davekuhlman.org/generateDS.html#simpletype
-        #  el.set_conf('2.0987')
-        #  self.assertTrue(isinstance(el.conf, float))
-        with self.assertRaisesRegex(TypeError, ''):
-            el.set_conf('I AM NOT A FLOAT DEAL WITH IT')
-            parseString(to_xml(pcgts).encode('utf8'))
+    def test_simple_types(self):
+        regions = self.pcgts.get_Page().get_TextRegion()
+        reg = regions[0]
+        # print([l.get_type() for l in regions])
+        self.assertTrue(isinstance(reg.get_type(), str))
+        self.assertEqual(reg.get_type(), TextTypeSimpleType.CREDIT)
+        self.assertTrue(isinstance(TextTypeSimpleType.CREDIT, str))
+        self.assertEqual(reg.get_type(), 'credit')
+        self.assertTrue(isinstance(TextTypeSimpleType.CREDIT, str))
+        reg.set_type(TextTypeSimpleType.PAGENUMBER)
+        self.assertEqual(reg.get_type(), 'page-number')
+        self.assertTrue(isinstance(reg.get_type(), str))
 
 
 if __name__ == '__main__':
