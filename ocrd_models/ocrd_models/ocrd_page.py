@@ -66,8 +66,12 @@ def to_xml(el):
     Serialize ``pc:PcGts`` document
     """
     sio = StringIO()
-    el.export(sio, 0, name_='PcGts',
-            namespacedef_='xmlns:pc="%s"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
+    el.export(
+            outfile=sio,
+            level=0,
+            name_='PcGts',
+            namespaceprefix_='pc:',
+            namespacedef_='xmlns:pc="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
                 NAMESPACES['page'],
                 NAMESPACES['page'],
                 NAMESPACES['page']

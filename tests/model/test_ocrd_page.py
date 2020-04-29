@@ -54,10 +54,12 @@ class TestOcrdPage(TestCase):
             self.pcgts = parseString(self.xml_as_str, silence=True)
 
     def test_to_xml(self):
-        #  with open('/tmp/test.xml', 'w') as f:
-            #  f.write(to_xml(self.pcgts))
+        with open('/tmp/test.xml', 'w') as f:
+            f.write(to_xml(self.pcgts))
+        self.assertIn(' xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', to_xml(self.pcgts)[:1000])
         self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', to_xml(self.pcgts)[:1000])
-        self.assertIn('</TextRegion', to_xml(self.pcgts))
+        self.assertIn('<pc:PcGts', to_xml(self.pcgts)[0:100])
+        self.assertIn('<pc:TextRegion', to_xml(self.pcgts)[1000:2000])
 
     def test_issue_269(self):
         """
