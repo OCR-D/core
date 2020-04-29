@@ -9,7 +9,7 @@ import collections
 from unittest import TestCase as VanillaTestCase, skip, main
 from ocrd_utils import initLogging
 
-from .assets import assets, copy_of_directory
+from tests.assets import assets, copy_of_directory
 
 class TestCase(VanillaTestCase):
 
