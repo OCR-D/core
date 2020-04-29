@@ -10,3 +10,4 @@ atomicwrites
 opencv-python
 deprecated
 click
+twine

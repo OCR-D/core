@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.5.2] - 2020-04-29
+
 Fixed:
 
   * logging: format is spec-conformant again, #466
@@ -800,6 +802,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.5.2]: ../../compare/v2.5.2...v2.5.1
 [2.5.1]: ../../compare/v2.5.1...v2.5.0
 [2.5.0]: ../../compare/v2.5.0...v2.4.4
 [2.4.4]: ../../compare/v2.4.4...v2.4.3
