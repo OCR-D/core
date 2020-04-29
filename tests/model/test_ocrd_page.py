@@ -54,12 +54,24 @@ class TestOcrdPage(TestCase):
             self.pcgts = parseString(self.xml_as_str, silence=True)
 
     def test_to_xml(self):
-        with open('/tmp/test.xml', 'w') as f:
-            f.write(to_xml(self.pcgts))
-        self.assertIn(' xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', to_xml(self.pcgts)[:1000])
-        self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', to_xml(self.pcgts)[:1000])
-        self.assertIn('<pc:PcGts', to_xml(self.pcgts)[0:100])
-        self.assertIn('<pc:TextRegion', to_xml(self.pcgts)[1000:2000])
+        # with open('/tmp/test.xml', 'w') as f:
+        #     f.write(to_xml(self.pcgts))
+        as_xml = to_xml(self.pcgts)
+        self.assertIn(' xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', as_xml[:1000])
+        self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', as_xml[:1000])
+        self.assertIn('<pc:PcGts', as_xml[0:100])
+        self.assertIn('<pc:TextRegion', as_xml[1000:3000])
+
+    # https://github.com/OCR-D/core/pull/474#issuecomment-621477590 for context
+    def test_to_xml_unicode_nsprefix(self):
+        with open(assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-GT-WORD/INPUT_0020.xml'), 'rb') as f:
+            from_xml = f.read()
+            self.assertIn('<Unicode>', from_xml.decode('utf-8'), 'without NS prefix')
+            self.assertIn('<Created', from_xml.decode('utf-8'), 'without NS prefix')
+            pcgts = parseString(from_xml, silence=True)
+            as_xml = to_xml(pcgts)
+            self.assertIn('<pc:Unicode>', as_xml, 'with NS prefix')
+            self.assertIn('<pc:Created>', as_xml, 'with NS prefix')
 
     def test_issue_269(self):
         """

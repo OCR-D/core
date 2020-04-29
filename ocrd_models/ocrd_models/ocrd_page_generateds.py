@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Apr 29 21:14:21 2020 by generateDS.py version 2.35.21.
+# Generated Thu Apr 30 00:28:17 2020 by generateDS.py version 2.35.21.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -1398,23 +1398,23 @@ class MetadataType(GeneratedsSuper):
             value_ = self.gds_parse_string(value_, node, 'Creator')
             value_ = self.gds_validate_string(value_, node, 'Creator')
             self.Creator = value_
-            self.Creator_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'Created':
             sval_ = child_.text
             dval_ = self.gds_parse_datetime(sval_)
             self.Created = dval_
-            self.Created_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'LastChange':
             sval_ = child_.text
             dval_ = self.gds_parse_datetime(sval_)
             self.LastChange = dval_
-            self.LastChange_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'Comments':
             value_ = child_.text
             value_ = self.gds_parse_string(value_, node, 'Comments')
             value_ = self.gds_validate_string(value_, node, 'Comments')
             self.Comments = value_
-            self.Comments_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'UserDefined':
             obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -4418,13 +4418,13 @@ class TextEquivType(GeneratedsSuper):
             value_ = self.gds_parse_string(value_, node, 'PlainText')
             value_ = self.gds_validate_string(value_, node, 'PlainText')
             self.PlainText = value_
-            self.PlainText_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'Unicode':
             value_ = child_.text
             value_ = self.gds_parse_string(value_, node, 'Unicode')
             value_ = self.gds_validate_string(value_, node, 'Unicode')
             self.Unicode = value_
-            self.Unicode_nsprefix_ = child_.prefix
+
     def __hash__(self):
         return hash(self.id)
 # end class TextEquivType
