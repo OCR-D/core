@@ -116,6 +116,14 @@ class OcrdMets(OcrdXmlDocument):
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
+
+
+        The ``ID``, ``fileGrp``, ``pageId``, ``url`` and ``mimetype`` parameters can be
+        either a literal string or a regular expression if the string starts
+        with ``//`` (double slash). If it is a regex, the leading ``//`` is removed
+        and candidates are matched against the regex with ``re.fullmatch``. If it is
+        a literal string, comparison is done with string equality.
+
         Args:
             ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
@@ -129,36 +137,40 @@ class OcrdMets(OcrdXmlDocument):
         """
         ret = []
         REGEX_PREFIX_LEN = len(REGEX_PREFIX)
+        if pageId and pageId.startswith(REGEX_PREFIX):
+            raise Exception("find_files does not support regex search for pageId")
         for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
             if ID:
                 if ID.startswith(REGEX_PREFIX):
-                    if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')):
-                        continue
+                    if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')): continue
                 else:
-                    if not ID == cand.get('ID'):
-                        continue
+                    if not ID == cand.get('ID'): continue
 
             if pageId and not self._tree.getroot().xpath(
                 '//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr[@FILEID="%s"]' % (
                     pageId, cand.get('ID')
                 ), namespaces=NS):
                 continue
+
             if fileGrp:
                 if fileGrp.startswith(REGEX_PREFIX):
-                    if not fullmatch(fileGrp[REGEX_PREFIX_LEN:], cand.getparent().get('USE')):
-                        continue
+                    if not fullmatch(fileGrp[REGEX_PREFIX_LEN:], cand.getparent().get('USE')): continue
                 else:
-                    if cand.getparent().get('USE') != fileGrp:
-                        continue
+                    if cand.getparent().get('USE') != fileGrp: continue
+
             if mimetype:
                 if mimetype.startswith(REGEX_PREFIX):
-                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE')):
-                        continue
+                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE')): continue
                 else:
-                    if cand.get('MIMETYPE') != mimetype:
-                        continue
-            if url and cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink']) != url:
-                continue
+                    if cand.get('MIMETYPE') != mimetype: continue
+
+            if url:
+                cand_url = cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink'])
+                if url.startswith(REGEX_PREFIX):
+                    if not fullmatch(url[REGEX_PREFIX_LEN:], cand_url): continue
+                else:
+                    if cand_url != url: continue
+
             file = OcrdFile(cand, mets=self)
 
             # If only local resources should be returned and file is not a file path: skip the file

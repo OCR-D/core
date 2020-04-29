@@ -21,8 +21,9 @@ class TestOcrdMets(TestCase):
         self.mets.unique_identifier = 'foo'
         self.assertEqual(self.mets.unique_identifier, 'foo', 'Right identifier after change')
 
+    # pylint: disable=no-member
     def test_unique_identifier_from_nothing(self):
-        mets = OcrdMets.empty_mets()
+        mets = OcrdMets.empty_mets(datetime.now().isoformat())
         self.assertEqual(mets.unique_identifier, None, 'no identifier')
         mets.unique_identifier = 'foo'
         self.assertEqual(mets.unique_identifier, 'foo', 'Right identifier after change')
@@ -58,6 +59,10 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.find_files(mimetype='//application/.*')), 22, '22 application/.*')
         self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
+
+    def test_find_files_no_regex_for_pageid(self):
+        with self.assertRaisesRegex(Exception, "not support regex search for pageId"):
+            self.mets.find_files(pageId='//foo')
 
     def test_find_files_local_only(self):
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001', local_only=True)), 3, '3 local files for page "PHYS_0001"')
