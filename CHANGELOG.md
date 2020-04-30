@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.5.3] - 2020-04-30
+
+Fixed:
+
+  * OcrdPage: hacks to make XML namespace output consistent, #474
+
 ## [2.5.2] - 2020-04-29
 
 Fixed:
@@ -802,6 +808,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.5.3]: ../../compare/v2.5.3...v2.5.2
 [2.5.2]: ../../compare/v2.5.2...v2.5.1
 [2.5.1]: ../../compare/v2.5.1...v2.5.0
 [2.5.0]: ../../compare/v2.5.0...v2.4.4
