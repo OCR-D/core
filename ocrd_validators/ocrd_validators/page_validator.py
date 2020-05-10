@@ -77,6 +77,18 @@ _ORDER = [
     (WordType,       None,                'get_readingDirection'), # pylint: disable=bad-whitespace
 ]
 
+# The following parameters control how tolerant we are with respect to
+# polygon path self-validity and parent-child containment. We have to
+# offer this, because most implementations, including PRImA itself,
+# do _not_ offer pixel-precise correctness.
+# How much may polygon paths deviate when simplifying them
+# to avoid self-intersections?
+POLY_TOLERANCE = 1.0
+# How large a margin to increase parent polygons before
+# checking their children are properly contained?
+PARENT_SLACK = 1.5
+
+
 class ConsistencyError(Exception):
     """
     Exception representing a consistency error in textual transcription across levels of a PAGE-XML.
@@ -186,6 +198,8 @@ def make_poly(polygon_points):
     if len(polygon_points) < 4:
         return 'has too few points'
     poly = Polygon(polygon_points)
+    if POLY_TOLERANCE:
+        poly = poly.simplify(POLY_TOLERANCE)
     if not poly.is_valid:
         return explain_validity(poly)
     elif poly.is_empty:
@@ -296,7 +310,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                     # log.debug("Invalid coords of %s %s", child_tag, child.id)
                     # consistent = False
                     pass # already reported in recursive call above
-                elif not child_poly.within(node_poly):
+                elif not child_poly.within(node_poly.buffer(PARENT_SLACK)):
                     # TODO: automatic repair?
                     report.add_error(CoordinateConsistencyError(tag, child.id, file_id,
                                                                 parent_points, child_points))
@@ -310,7 +324,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                                                          baseline_points, baseline_line))
                 log.debug("Invalid coords of baseline in %s", node_id)
                 consistent = False
-            elif not baseline_line.within(node_poly):
+            elif not baseline_line.within(node_poly.buffer(PARENT_SLACK)):
                 report.add_error(CoordinateConsistencyError("Baseline", node_id, file_id,
                                                             parent_points, baseline_points))
                 log.debug("Inconsistent coords of baseline in %s %s", tag, node_id)
