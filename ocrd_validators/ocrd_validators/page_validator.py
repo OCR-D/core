@@ -312,7 +312,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                     pass # already reported in recursive call above
                 elif not child_poly.within(node_poly.buffer(PARENT_SLACK)):
                     # TODO: automatic repair?
-                    report.add_error(CoordinateConsistencyError(tag, child.id, file_id,
+                    report.add_error(CoordinateConsistencyError(child_tag, child.id, file_id,
                                                                 parent_points, child_points))
                     log.debug("Inconsistent coords of %s %s", child_tag, child.id)
                     consistent = False
