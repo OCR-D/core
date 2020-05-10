@@ -273,7 +273,8 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
         children = getattr(node, getter)()
         if (getter == 'get_TextRegion' and children and
             all(child.id in readingOrder for child in children) and
-            isinstance(readingOrder[children[0].id], (OrderedGroupType, OrderedGroupIndexedType))):
+            isinstance(readingOrder[children[0].id].parent_object_,
+                       (OrderedGroupType, OrderedGroupIndexedType))):
             children = sorted(children, key=lambda child:
                               readingOrder[child.id].index)
         elif ((getter == 'get_TextLine' and textLineOrder == _ORDER[0][1]) or
