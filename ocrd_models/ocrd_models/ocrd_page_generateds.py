@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu Apr 30 00:28:17 2020 by generateDS.py version 2.35.21.
-# Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
+# Generated Tue May 12 20:21:26 2020 by generateDS.py version 2.35.20.
+# Python 3.7.6 (default, Jan  8 2020, 19:59:22)  [GCC 7.3.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -16,7 +16,7 @@
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /home/kba/env/py3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
+#   /home/kba/miniconda3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -247,12 +247,7 @@ class GeneratedsSuper(object):
                 raise_parse_error(node, 'Requires sequence of float values')
         return values
     def gds_format_decimal(self, input_data, input_name=''):
-        return_value = '%s' % input_data
-        if '.' in return_value:
-            return_value = return_value.rstrip('0')
-            if return_value.endswith('.'):
-                return_value = return_value.rstrip('.')
-        return return_value
+        return ('%s' % input_data).rstrip('0')
     def gds_parse_decimal(self, input_data, node=None, input_name=''):
         try:
             decimal_value = decimal_.Decimal(input_data)
@@ -266,7 +261,7 @@ class GeneratedsSuper(object):
             raise_parse_error(node, 'Requires decimal value')
         return value
     def gds_format_decimal_list(self, input_data, input_name=''):
-        return ' '.join([self.gds_format_decimal(item) for item in input_data])
+        return '%s' % ' '.join(input_data)
     def gds_validate_decimal_list(
             self, input_data, node=None, input_name=''):
         values = input_data.split()
@@ -6006,26 +6001,6 @@ class OrderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
-        for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        for RegionRefIndexed_ in self.RegionRefIndexed:
-            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
-            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
-        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
-            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
-        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
-            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6100,6 +6075,27 @@ class OrderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
+
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        for RegionRefIndexed_ in sorted(self.RegionRefIndexed, key=lambda rri: rri.index):
+            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
+            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
+        for OrderedGroupIndexed_ in sorted(self.OrderedGroupIndexed, key=lambda ogi: ogi.index):
+            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
+            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
+        for UnorderedGroupIndexed_ in sorted(self.UnorderedGroupIndexed, key=lambda ugi: ugi.index):
+            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
+            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
 # end class OrderedGroupType
 
 

@@ -84,6 +84,34 @@ class MethodSpec():
 # Replace the following method specifications with your own.
 
 #
+# export children sorted by index of the childelement
+#
+sort_children_by_index = MethodSpec(name='exportChildren',
+    source=r'''
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        for RegionRefIndexed_ in sorted(self.RegionRefIndexed, key=lambda rri: rri.index):
+            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
+            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
+        for OrderedGroupIndexed_ in sorted(self.OrderedGroupIndexed, key=lambda ogi: ogi.index):
+            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
+            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
+        for UnorderedGroupIndexed_ in sorted(self.UnorderedGroupIndexed, key=lambda ugi: ugi.index):
+            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
+            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+''',
+    class_names=r'OrderedGroupType$',
+    )
+#
 # Hash by memory adress/id()
 #
 hash_by_id = MethodSpec(name='hash',
@@ -99,6 +127,7 @@ hash_by_id = MethodSpec(name='hash',
 #
 METHOD_SPECS = (
     hash_by_id,
+    sort_children_by_index,
     )
 
 
