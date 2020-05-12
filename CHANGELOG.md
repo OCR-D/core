@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.6.0] - 2020-05-12
+
+Fixed:
+
+  * image files no longer cached in workspace, #446, #448
+
+Added
+
+  * Many mets:file search fields support regex now, #458, #448
+
 ## [2.5.3] - 2020-04-30
 
 Fixed:
@@ -808,6 +818,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.6.0]: ../../compare/v2.6.0...v2.5.3
 [2.5.3]: ../../compare/v2.5.3...v2.5.2
 [2.5.2]: ../../compare/v2.5.2...v2.5.1
 [2.5.1]: ../../compare/v2.5.1...v2.5.0
