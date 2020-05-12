@@ -15,6 +15,7 @@ disable =
     no-self-use,
     superfluous-parens,
     too-few-public-methods,
+    wrong-import-order,
     too-many-arguments,
     too-many-branches,
     too-many-instance-attributes,
