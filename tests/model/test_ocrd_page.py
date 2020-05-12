@@ -139,6 +139,22 @@ class TestOcrdPage(TestCase):
         self.assertEqual(reg.get_type(), 'page-number')
         self.assertTrue(isinstance(reg.get_type(), str))
 
+    def test_orderedgroup_export_order(self):
+        """
+        See https://github.com/OCR-D/core/issues/475
+        """
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            rris = og.get_RegionRefIndexed()
+            self.assertEqual([rri.index for rri in rris], list(range(0, 17)))
+            rris = list(reversed(rris))
+            self.assertEqual([rri.index for rri in rris], list(reversed(range(0, 17))))
+            og.set_RegionRefIndexed(rris)
+            # reverse sort the RegionRefIndexeds
+            pcgts = parseString(to_xml(pcgts).encode('utf8'), silence=True)
+            og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            self.assertEqual([rri.index for rri in rris], list(range(0, 17)))
 
 if __name__ == '__main__':
     main()
