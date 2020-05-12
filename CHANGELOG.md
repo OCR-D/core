@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Improved log message for profiling processors, #477
+
+
 ## [2.6.0] - 2020-05-12
 
 Fixed:
