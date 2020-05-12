@@ -10,12 +10,9 @@ __all__ = [
     'MIME_TO_EXT',
     'PIL_TO_MIME',
     'MIME_TO_PIL',
-<<<<<<< HEAD
     'REGEX_PREFIX',
-=======
     'LOG_FORMAT',
     'LOG_TIMEFMT',
->>>>>>> master
 ]
 
 VERSION = get_distribution('ocrd_utils').version
