@@ -59,12 +59,12 @@ def run_processor(
     t0 = time()
     processor.process()
     t1 = time() - t0
-    logProfile.info('Executing processor "%s" took %fs [--input-file-grp="%s" --output-file-grp="%s" --parameter="%s"]' % (
+    logProfile.info("Executing processor '%s' took %fs [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s']" % (
         ocrd_tool['executable'],
         t1,
         input_file_grp if input_file_grp else '',
         output_file_grp if output_file_grp else '',
-        parameter if parameter else {}
+        json.dumps(parameter) if parameter else {}
     ))
     workspace.mets.add_agent(
         name=name,
