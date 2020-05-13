@@ -84,6 +84,26 @@ class MethodSpec():
 # Replace the following method specifications with your own.
 
 #
+# List all *Regions on the PAGE
+#
+get_AllRegions = MethodSpec(name='get_AllRegions',
+    source=r'''
+    def get_AllRegions(self, regions=None, reading_order=False):
+        """"
+        Get all the *Region element or only those provided by ``regions``.
+        Returned in random order unless ``reading_order`` is set (NOT CURRENTLY IMPLEMENTED)
+        """
+        if reading_order:
+            raise NotImplementedError("Ordering of regions by Reading Order not currently Implemented :(")
+        if not regions:
+            regions = ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image', 'LineDrawing', 'Map', 'Maths', 'Music', 'Noise', 'Table', 'Text']
+        ret = []
+        for region in regions:
+            ret += getattr(self, 'get_{}Region'.format(region))()
+        return ret
+    ''', class_names=r'^(PageType)$')
+
+#
 # List all *Indexed children sorted by @index
 #
 get_AllIndexed = MethodSpec(name='get_AllIndexed',
@@ -167,6 +187,7 @@ METHOD_SPECS = (
     exportChildren,
     get_AllIndexed,
     add_AllIndexed,
+    get_AllRegions,
     clear_AllIndexed,
     )
 

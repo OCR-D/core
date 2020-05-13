@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed May 13 16:09:07 2020 by generateDS.py version 2.35.20.
+# Generated Wed May 13 20:41:21 2020 by generateDS.py version 2.35.20.
 # Python 3.7.6 (default, Jan  8 2020, 19:59:22)  [GCC 7.3.0]
 #
 # Command line options:
@@ -2850,7 +2850,21 @@ class PageType(GeneratedsSuper):
             obj_.original_tagname_ = 'CustomRegion'
     def __hash__(self):
         return hash(self.id)
-# end class PageType
+
+    def get_AllRegions(self, regions=None, reading_order=False):
+        """"
+        Get all the *Region element or only those provided by ``regions``.
+        Returned in random order unless ``reading_order`` is set (NOT CURRENTLY IMPLEMENTED)
+        """
+        if reading_order:
+            raise NotImplementedError("Ordering of regions by Reading Order not currently Implemented :(")
+        if not regions:
+            regions = ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image', 'LineDrawing', 'Map', 'Maths', 'Music', 'Noise', 'Table', 'Text']
+        ret = []
+        for region in regions:
+            ret += getattr(self, 'get_{}Region'.format(region))()
+        return ret
+    # end class PageType
 
 
 class CoordsType(GeneratedsSuper):
