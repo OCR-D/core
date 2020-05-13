@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Tue May 12 20:21:26 2020 by generateDS.py version 2.35.20.
+# Generated Wed May 13 16:09:07 2020 by generateDS.py version 2.35.20.
 # Python 3.7.6 (default, Jan  8 2020, 19:59:22)  [GCC 7.3.0]
 #
 # Command line options:
@@ -5347,6 +5347,47 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
+
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+        eol_ = '\n' if pretty_print else ''
+        namespaceprefix_ = 'pc:'
+        if self.UserDefined is not None:
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                rri = RegionRefIndexedType.factory(parent_object_=self)
+                rri.index = entry.index
+                rri.regionRef = entry.regionRef
+                cleaned.append(rri)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+
+    def get_AllIndexed(self):
+        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) 
+    def add_AllIndexed(self, elements):
+        if not isinstance(elements, list):
+            elements = [elements]
+        for element in sorted(elements, key=lambda x : x.index):
+            if isinstance(element, RegionRefIndexedType):
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType):
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType):
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
 # end class OrderedGroupIndexedType
 
 
@@ -6001,6 +6042,26 @@ class OrderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
+            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
+            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
+            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6077,26 +6138,45 @@ class OrderedGroupType(GeneratedsSuper):
         return hash(self.id)
 
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+        eol_ = '\n' if pretty_print else ''
+        namespaceprefix_ = 'pc:'
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        namespaceprefix_ = ''
-        if UseCapturedNS_:
-            if self.RegionRefIndexed_nsprefix_:
-                namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':'
-            elif self.OrderedGroupIndexed_nsprefix_:
-                namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':'
-            elif self.UnorderedGroupIndexed_nsprefix_:
-                namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':'
-        for entry in sorted(self.RegionRefIndexed + self.OrderedGroupIndexed + self.UnorderedGroupIndexed, key=lambda rri: rri.index):
+        cleaned = []
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                rri = RegionRefIndexedType.factory(parent_object_=self)
+                rri.index = entry.index
+                rri.regionRef = entry.regionRef
+                cleaned.append(rri)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
             entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+
+    def get_AllIndexed(self):
+        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) 
+    def add_AllIndexed(self, elements):
+        if not isinstance(elements, list):
+            elements = [elements]
+        for element in sorted(elements, key=lambda x : x.index):
+            if isinstance(element, RegionRefIndexedType):
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType):
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType):
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
 # end class OrderedGroupType
 
 

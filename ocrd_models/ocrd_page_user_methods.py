@@ -84,34 +84,70 @@ class MethodSpec():
 # Replace the following method specifications with your own.
 
 #
+# List all *Indexed children sorted by @index
+#
+get_AllIndexed = MethodSpec(name='get_AllIndexed',
+    source=r'''
+    def get_AllIndexed(self):
+        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) ''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
+
+#
+# Clear all *Indexed children sorted by @index
+#
+clear_AllIndexed = MethodSpec(name='clear_AllIndexed',
+    source=r'''
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
+''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
+
+#
+# Add all *Indexed children sorted by @index
+#
+add_AllIndexed = MethodSpec(name='add_AllIndexed',
+    source=r'''
+    def add_AllIndexed(self, elements):
+        if not isinstance(elements, list):
+            elements = [elements]
+        for element in sorted(elements, key=lambda x : x.index):
+            if isinstance(element, RegionRefIndexedType):
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType):
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType):
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
+
+
+#
 # export children sorted by index of the childelement
 #
-sort_children_by_index = MethodSpec(name='exportChildren',
+exportChildren = MethodSpec(name='exportChildren',
     source=r'''
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+        eol_ = '\n' if pretty_print else ''
+        namespaceprefix_ = 'pc:'
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-       namespaceprefix_ = ''
-        if UseCapturedNS_:
-            if self.RegionRefIndexed_nsprefix_:
-                namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':'
-            elif self.OrderedGroupIndexed_nsprefix_:
-                namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':'
-            elif self.UnorderedGroupIndexed_nsprefix_:
-                namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':'
-        for entry in sorted(self.RegionRefIndexed + self.OrderedGroupIndexed + self.UnorderedGroupIndexed, key=lambda rri: rri.index):
-entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
-''',
-    class_names=r'OrderedGroupType$',
-    )
+        cleaned = []
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                rri = RegionRefIndexedType.factory(parent_object_=self)
+                rri.index = entry.index
+                rri.regionRef = entry.regionRef
+                cleaned.append(rri)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
 #
 # Hash by memory adress/id()
 #
@@ -128,7 +164,10 @@ hash_by_id = MethodSpec(name='hash',
 #
 METHOD_SPECS = (
     hash_by_id,
-    sort_children_by_index,
+    exportChildren,
+    get_AllIndexed,
+    add_AllIndexed,
+    clear_AllIndexed,
     )
 
 

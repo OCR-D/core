@@ -75,7 +75,7 @@
         <pc:ReadingOrder>
             <pc:OrderedGroup id="reading-order">
                 <pc:RegionRefIndexed index="0" regionRef="Gutachten2-2_region0001"/>
-              <pc:OrderedGroupIndexed id="region0009_group" regionRef="region0009" index="1">
+                <pc:OrderedGroupIndexed id="region0009_group" regionRef="region0009" index="1">
                     <pc:RegionRefIndexed index="0" regionRef="region0009_region0001"/>
                     <pc:RegionRefIndexed index="1" regionRef="region0009_region0002"/>
                     <pc:RegionRefIndexed index="2" regionRef="region0009_region0003"/>
@@ -85,7 +85,7 @@
                     <pc:RegionRefIndexed index="6" regionRef="region0009_region0007"/>
                     <pc:RegionRefIndexed index="7" regionRef="region0009_region0008"/>
                 </pc:OrderedGroupIndexed>
-                  <pc:RegionRefIndexed index="2" regionRef="Gutachten2-2_region0002"/>
+                <pc:RegionRefIndexed index="2" regionRef="Gutachten2-2_region0002"/>
                 <pc:RegionRefIndexed index="3" regionRef="Gutachten2-2_region0003"/>
                 <pc:RegionRefIndexed index="4" regionRef="Gutachten2-2_region0004"/>
                 <pc:RegionRefIndexed index="5" regionRef="Gutachten2-2_region0005"/>

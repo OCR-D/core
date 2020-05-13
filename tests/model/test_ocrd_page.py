@@ -7,6 +7,8 @@ from ocrd_models.ocrd_page import (
     PageType,
     TextRegionType,
     TextLineType,
+    OrderedGroupIndexedType,
+    RegionRefIndexedType,
     WordType,
     GlyphType,
 
@@ -49,6 +51,7 @@ simple_page = """\
 class TestOcrdPage(TestCase):
 
     def setUp(self):
+        self.maxDiff = 5000
         with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'), 'rb') as f:
             self.xml_as_str = f.read()
             self.pcgts = parseString(self.xml_as_str, silence=True)
@@ -146,15 +149,40 @@ class TestOcrdPage(TestCase):
         with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
-            rris = og.get_RegionRefIndexed()
-            self.assertEqual([rri.index for rri in rris], list(range(0, 17)))
-            rris = list(reversed(rris))
-            self.assertEqual([rri.index for rri in rris], list(reversed(range(0, 17))))
-            og.set_RegionRefIndexed(rris)
-            # reverse sort the RegionRefIndexeds
+            xml_before = to_xml(og)
+            children = og.get_AllIndexed()
+            self.assertEqual(len(children), 20)
+            self.assertEqual([c.index for c in children], list(range(0, 20)))
+            # mix up the indexes
+            children[0].index = 11
+            children[11].index = 3
+            children[3].index = 0
+            self.assertEqual([c.index for c in children], [11, 1, 2, 0, 4, 5, 6, 7, 8, 9, 10, 3, 12, 13, 14, 15, 16, 17, 18, 19])
+            self.assertEqual([c.index for c in og.get_AllIndexed()], list(range(0, 20)))
+            self.assertEqual(og.get_AllIndexed()[1].__class__, OrderedGroupIndexedType)
+            # serialize and make sure the correct order was serialized
+            new_pcgts = parseString(to_xml(pcgts).encode('utf8'), silence=True)
+            new_og = new_pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            self.assertEqual([c.index for c in new_og.get_AllIndexed()], list(range(0, 20)))
+            # xml_after = to_xml(new_og)
+            # self.assertEqual(xml_after, xml_before)
+
+    def test_empty_groups_to_regionrefindexed(self):
+        """
+        Corrolary See https://github.com/OCR-D/core/issues/475
+        """
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            children = og.get_AllIndexed()
+            self.assertTrue(isinstance(children[1], OrderedGroupIndexedType))
+            # empty all the elements in the first orederdGroupIndexed
+            children[1].set_RegionRefIndexed([])
+            # serialize apnd parse to see empty group converted
             pcgts = parseString(to_xml(pcgts).encode('utf8'), silence=True)
             og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
-            self.assertEqual([rri.index for rri in rris], list(range(0, 17)))
+            children = og.get_AllIndexed()
+            self.assertTrue(isinstance(children[1], RegionRefIndexedType))
 
 if __name__ == '__main__':
     main()
