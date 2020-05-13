@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu Apr 30 00:28:17 2020 by generateDS.py version 2.35.21.
-# Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
+# Generated Wed May 13 16:09:07 2020 by generateDS.py version 2.35.20.
+# Python 3.7.6 (default, Jan  8 2020, 19:59:22)  [GCC 7.3.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -16,7 +16,7 @@
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /home/kba/env/py3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
+#   /home/kba/miniconda3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -247,12 +247,7 @@ class GeneratedsSuper(object):
                 raise_parse_error(node, 'Requires sequence of float values')
         return values
     def gds_format_decimal(self, input_data, input_name=''):
-        return_value = '%s' % input_data
-        if '.' in return_value:
-            return_value = return_value.rstrip('0')
-            if return_value.endswith('.'):
-                return_value = return_value.rstrip('.')
-        return return_value
+        return ('%s' % input_data).rstrip('0')
     def gds_parse_decimal(self, input_data, node=None, input_name=''):
         try:
             decimal_value = decimal_.Decimal(input_data)
@@ -266,7 +261,7 @@ class GeneratedsSuper(object):
             raise_parse_error(node, 'Requires decimal value')
         return value
     def gds_format_decimal_list(self, input_data, input_name=''):
-        return ' '.join([self.gds_format_decimal(item) for item in input_data])
+        return '%s' % ' '.join(input_data)
     def gds_validate_decimal_list(
             self, input_data, node=None, input_name=''):
         values = input_data.split()
@@ -5352,6 +5347,47 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
+
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+        eol_ = '\n' if pretty_print else ''
+        namespaceprefix_ = 'pc:'
+        if self.UserDefined is not None:
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                rri = RegionRefIndexedType.factory(parent_object_=self)
+                rri.index = entry.index
+                rri.regionRef = entry.regionRef
+                cleaned.append(rri)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+
+    def get_AllIndexed(self):
+        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) 
+    def add_AllIndexed(self, elements):
+        if not isinstance(elements, list):
+            elements = [elements]
+        for element in sorted(elements, key=lambda x : x.index):
+            if isinstance(element, RegionRefIndexedType):
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType):
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType):
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
 # end class OrderedGroupIndexedType
 
 
@@ -6100,6 +6136,47 @@ class OrderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
+
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+        eol_ = '\n' if pretty_print else ''
+        namespaceprefix_ = 'pc:'
+        if self.UserDefined is not None:
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                rri = RegionRefIndexedType.factory(parent_object_=self)
+                rri.index = entry.index
+                rri.regionRef = entry.regionRef
+                cleaned.append(rri)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+
+    def get_AllIndexed(self):
+        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) 
+    def add_AllIndexed(self, elements):
+        if not isinstance(elements, list):
+            elements = [elements]
+        for element in sorted(elements, key=lambda x : x.index):
+            if isinstance(element, RegionRefIndexedType):
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType):
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType):
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
 # end class OrderedGroupType
 
 
