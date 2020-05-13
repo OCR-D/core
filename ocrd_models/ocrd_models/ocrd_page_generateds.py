@@ -6087,15 +6087,16 @@ class OrderedGroupType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        for RegionRefIndexed_ in sorted(self.RegionRefIndexed, key=lambda rri: rri.index):
-            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
-            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
-        for OrderedGroupIndexed_ in sorted(self.OrderedGroupIndexed, key=lambda ogi: ogi.index):
-            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
-            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
-        for UnorderedGroupIndexed_ in sorted(self.UnorderedGroupIndexed, key=lambda ugi: ugi.index):
-            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
-            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+        namespaceprefix_ = ''
+        if UseCapturedNS_:
+            if self.RegionRefIndexed_nsprefix_:
+                namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':'
+            elif self.OrderedGroupIndexed_nsprefix_:
+                namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':'
+            elif self.UnorderedGroupIndexed_nsprefix_:
+                namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':'
+        for entry in sorted(self.RegionRefIndexed + self.OrderedGroupIndexed + self.UnorderedGroupIndexed, key=lambda rri: rri.index):
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
 # end class OrderedGroupType
 
 
