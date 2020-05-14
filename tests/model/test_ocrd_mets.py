@@ -68,13 +68,13 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001', local_only=True)), 3, '3 local files for page "PHYS_0001"')
 
     def test_physical_pages(self):
-        self.assertEqual(len(self.mets.physical_pages), 3, '3 physical pages')
+        self.assertEqual(len(self.mets.physical_pages()), 3, '3 physical pages')
 
     def test_physical_pages_from_empty_mets(self):
         mets = OcrdMets(content="<mets></mets>")
-        self.assertEqual(len(mets.physical_pages), 0, 'no physical page')
+        self.assertEqual(len(mets.physical_pages()), 0, 'no physical page')
         mets.add_file('OUTPUT', ID="foo123", pageId="foobar")
-        self.assertEqual(len(mets.physical_pages), 1, '1 physical page')
+        self.assertEqual(len(mets.physical_pages()), 1, '1 physical page')
 
     def test_add_group(self):
         mets = OcrdMets.empty_mets()
@@ -165,16 +165,16 @@ class TestOcrdMets(TestCase):
     def test_remove_page(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
-            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
+            self.assertEqual(mets.physical_pages(), ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
             mets.remove_physical_page('PHYS_0001')
-            self.assertEqual(mets.physical_pages, ['PHYS_0002', 'PHYS_0005'])
+            self.assertEqual(mets.physical_pages(), ['PHYS_0002', 'PHYS_0005'])
 
     def test_remove_page_after_remove_file(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
-            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
+            self.assertEqual(mets.physical_pages(), ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
             mets.remove_file('FILE_0005_IMAGE')
-            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002'])
+            self.assertEqual(mets.physical_pages(), ['PHYS_0001', 'PHYS_0002'])
 
     def test_remove_file_group(self):
         """
