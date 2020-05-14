@@ -5,13 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.6.1] - 2020-05-14
+
 Changed:
 
   * Improved log message for profiling processors, #477
 
-
 Fixed:
 
+  * Search for `--page-id` now orders of magnitutde faster, ht @bertsky, #481
   * Not all generateDS types were exported by ocrd_page, now they are, #480
 
 
@@ -828,6 +830,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.6.1]: ../../compare/v2.6.1...v2.6.0
 [2.6.0]: ../../compare/v2.6.0...v2.5.3
 [2.5.3]: ../../compare/v2.5.3...v2.5.2
 [2.5.2]: ../../compare/v2.5.2...v2.5.1
