@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed May 13 20:41:21 2020 by generateDS.py version 2.35.20.
-# Python 3.7.6 (default, Jan  8 2020, 19:59:22)  [GCC 7.3.0]
+# Generated Thu May 14 15:35:20 2020 by generateDS.py version 2.35.20.
+# Python 3.6.6 (default, Jul 24 2018, 16:39:20)  [GCC 4.9.2]
 #
 # Command line options:
 #   ('-f', '')
@@ -16,7 +16,7 @@
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /home/kba/miniconda3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
+#   /data/monorepo/venv3.6/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -2857,13 +2857,32 @@ class PageType(GeneratedsSuper):
         Returned in random order unless ``reading_order`` is set (NOT CURRENTLY IMPLEMENTED)
         """
         if reading_order:
-            raise NotImplementedError("Ordering of regions by Reading Order not currently Implemented :(")
+            reading_order = self.get_ReadingOrder()
         if not regions:
-            regions = ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image', 'LineDrawing', 'Map', 'Maths', 'Music', 'Noise', 'Table', 'Text']
+            regions = ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image', 'LineDrawing', 'Map', 'Maths', 'Music', 'Noise', 'Separator', 'Table', 'Text', 'Unknown']
         ret = []
         for region in regions:
             ret += getattr(self, 'get_{}Region'.format(region))()
-        return ret
+        if reading_order:
+            reading_order = reading_order.get_OrderedGroup() or reading_order.get_UnorderedGroup()
+        if reading_order:
+            def get_recursive_reading_order(rogroup):
+                if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)):
+                    elements = rogroup.get_AllIndexed()
+                if isinstance(rogroup, (UnorderedGroupType, UnorderedGroupIndexedType)):
+                    elements = (rogroup.get_RegionRef() + rogroup.get_OrderedGroup() + rogroup.get_UnorderedGroup())
+                regionrefs = list()
+                for elem in elements:
+                    regionrefs.append(elem.get_regionRef())
+                    if not isinstance(elem, (RegionRefType, RegionRefIndexedType)):
+                        regionrefs.extend(get_recursive_reading_order(elem))
+                return regionrefs
+            reading_order = get_recursive_reading_order(reading_order)
+        if reading_order:
+            ret = dict([(region.id, region) for region in ret])
+            return [ret[region_id] for region_id in reading_order if region_id in ret]
+        else:
+            return ret
     # end class PageType
 
 

@@ -117,9 +117,9 @@ get_AllRegions = MethodSpec(name='get_AllRegions',
             reading_order = get_recursive_reading_order(reading_order)
         if reading_order:
             ret = dict([(region.id, region) for region in ret])
-            return [ret[region_id] for region_id in reading_order if region_id in ret]
-        else:
-            return ret
+            ret = [ret[region_id] for region_id in reading_order if region_id in ret]
+        ret = [r in ret if r.__class__.__name__.replace('RegionType', '') in regions
+        return ret
     ''', class_names=r'^(PageType)$')
 
 #
