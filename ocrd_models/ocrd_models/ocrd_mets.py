@@ -137,8 +137,12 @@ class OcrdMets(OcrdXmlDocument):
         """
         ret = []
         REGEX_PREFIX_LEN = len(REGEX_PREFIX)
-        if pageId and pageId.startswith(REGEX_PREFIX):
-            raise Exception("find_files does not support regex search for pageId")
+        if pageId:
+            if pageId.startswith(REGEX_PREFIX):
+                raise Exception("find_files does not support regex search for pageId")
+            pageId = self._tree.getroot().xpath(
+                '//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % (
+                    pageId), namespaces=NS)
         for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
             if ID:
                 if ID.startswith(REGEX_PREFIX):
@@ -146,10 +150,7 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     if not ID == cand.get('ID'): continue
 
-            if pageId and not self._tree.getroot().xpath(
-                '//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr[@FILEID="%s"]' % (
-                    pageId, cand.get('ID')
-                ), namespaces=NS):
+            if pageId is not None and cand.get('ID') not in pageId:
                 continue
 
             if fileGrp:
