@@ -184,14 +184,16 @@ class TestOcrdPage(TestCase):
             children = og.get_AllIndexed()
             self.assertTrue(isinstance(children[1], RegionRefIndexedType))
 
-    def test_all_regions(self):
+    def test_all_regions_without_reading_order(self):
         """
-        Corrolary See https://github.com/OCR-D/core/issues/475
+        https://github.com/OCR-D/core/pull/479
+        https://github.com/OCR-D/core/issues/240#issuecomment-493135797
         """
         with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             pg = pcgts.get_Page()
-            self.assertEqual(len(pg.get_AllRegions()), 20)
+            self.assertEqual(len(pg.get_AllRegions()), 45)
+            self.assertEqual(len(pg.get_AllRegions(['Separator'])), 25)
             self.assertEqual(len(pg.get_AllRegions(['Table'])), 3)
             self.assertEqual(len(pg.get_AllRegions(['Text'])), 17)
 
