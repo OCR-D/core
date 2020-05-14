@@ -10,6 +10,11 @@ Changed:
   * Improved log message for profiling processors, #477
 
 
+Fixed:
+
+  * Not all generateDS types were exported by ocrd_page, now they are, #480
+
+
 ## [2.6.0] - 2020-05-12
 
 Fixed:
