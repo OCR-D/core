@@ -7,6 +7,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [2.6.1] - 2020-05-14
 
+Added:
+
+  * OcrdPage: new method `get_AllIndexed` for OrderedGroup and OrderedGroupIndexed that lists
+    their children, sorted by index, #478
+
 Changed:
 
   * Improved log message for profiling processors, #477
