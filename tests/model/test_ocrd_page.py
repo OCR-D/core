@@ -7,6 +7,8 @@ from ocrd_models.ocrd_page import (
     PageType,
     TextRegionType,
     TextLineType,
+    OrderedGroupIndexedType,
+    RegionRefIndexedType,
     WordType,
     GlyphType,
 
@@ -49,15 +51,30 @@ simple_page = """\
 class TestOcrdPage(TestCase):
 
     def setUp(self):
+        self.maxDiff = 5000
         with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'), 'rb') as f:
             self.xml_as_str = f.read()
             self.pcgts = parseString(self.xml_as_str, silence=True)
 
     def test_to_xml(self):
-        #  with open('/tmp/test.xml', 'w') as f:
-            #  f.write(to_xml(self.pcgts))
-        self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', to_xml(self.pcgts)[:1000])
-        self.assertIn('</TextRegion', to_xml(self.pcgts))
+        # with open('/tmp/test.xml', 'w') as f:
+        #     f.write(to_xml(self.pcgts))
+        as_xml = to_xml(self.pcgts)
+        self.assertIn(' xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', as_xml[:1000])
+        self.assertIn(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd"', as_xml[:1000])
+        self.assertIn('<pc:PcGts', as_xml[0:100])
+        self.assertIn('<pc:TextRegion', as_xml[1000:3000])
+
+    # https://github.com/OCR-D/core/pull/474#issuecomment-621477590 for context
+    def test_to_xml_unicode_nsprefix(self):
+        with open(assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-GT-WORD/INPUT_0020.xml'), 'rb') as f:
+            from_xml = f.read()
+            self.assertIn('<Unicode>', from_xml.decode('utf-8'), 'without NS prefix')
+            self.assertIn('<Created', from_xml.decode('utf-8'), 'without NS prefix')
+            pcgts = parseString(from_xml, silence=True)
+            as_xml = to_xml(pcgts)
+            self.assertIn('<pc:Unicode>', as_xml, 'with NS prefix')
+            self.assertIn('<pc:Created>', as_xml, 'with NS prefix')
 
     def test_issue_269(self):
         """
@@ -125,6 +142,47 @@ class TestOcrdPage(TestCase):
         self.assertEqual(reg.get_type(), 'page-number')
         self.assertTrue(isinstance(reg.get_type(), str))
 
+    def test_orderedgroup_export_order(self):
+        """
+        See https://github.com/OCR-D/core/issues/475
+        """
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            xml_before = to_xml(og)
+            children = og.get_AllIndexed()
+            self.assertEqual(len(children), 20)
+            self.assertEqual([c.index for c in children], list(range(0, 20)))
+            # mix up the indexes
+            children[0].index = 11
+            children[11].index = 3
+            children[3].index = 0
+            self.assertEqual([c.index for c in children], [11, 1, 2, 0, 4, 5, 6, 7, 8, 9, 10, 3, 12, 13, 14, 15, 16, 17, 18, 19])
+            self.assertEqual([c.index for c in og.get_AllIndexed()], list(range(0, 20)))
+            self.assertEqual(og.get_AllIndexed()[1].__class__, OrderedGroupIndexedType)
+            # serialize and make sure the correct order was serialized
+            new_pcgts = parseString(to_xml(pcgts).encode('utf8'), silence=True)
+            new_og = new_pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            self.assertEqual([c.index for c in new_og.get_AllIndexed()], list(range(0, 20)))
+            # xml_after = to_xml(new_og)
+            # self.assertEqual(xml_after, xml_before)
+
+    def test_empty_groups_to_regionrefindexed(self):
+        """
+        Corrolary See https://github.com/OCR-D/core/issues/475
+        """
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            children = og.get_AllIndexed()
+            self.assertTrue(isinstance(children[1], OrderedGroupIndexedType))
+            # empty all the elements in the first orederdGroupIndexed
+            children[1].set_RegionRefIndexed([])
+            # serialize apnd parse to see empty group converted
+            pcgts = parseString(to_xml(pcgts).encode('utf8'), silence=True)
+            og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
+            children = og.get_AllIndexed()
+            self.assertTrue(isinstance(children[1], RegionRefIndexedType))
 
 if __name__ == '__main__':
     main()

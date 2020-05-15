@@ -45,5 +45,8 @@ class TestModelFactory(TestCase):
         with self.assertRaisesRegex(ValueError, "Unsupported mimetype"):
             page_from_file(OcrdFile(None, local_filename=__file__, mimetype='foo/bar'))
 
+    def test_imports_from_generateds(self):
+        from ocrd_models.ocrd_page import MetadataItemType
+
 if __name__ == '__main__':
     main()

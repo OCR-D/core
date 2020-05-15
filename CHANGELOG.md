@@ -5,6 +5,39 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.6.1] - 2020-05-14
+
+Added:
+
+  * OcrdPage: new method `get_AllIndexed` for OrderedGroup and OrderedGroupIndexed that lists
+    their children, sorted by index, #478
+
+Changed:
+
+  * Improved log message for profiling processors, #477
+
+Fixed:
+
+  * Search for `--page-id` now orders of magnitutde faster, ht @bertsky, #481
+  * Not all generateDS types were exported by ocrd_page, now they are, #480
+
+
+## [2.6.0] - 2020-05-12
+
+Fixed:
+
+  * image files no longer cached in workspace, #446, #448
+
+Added
+
+  * Many mets:file search fields support regex now, #458, #448
+
+## [2.5.3] - 2020-04-30
+
+Fixed:
+
+  * OcrdPage: hacks to make XML namespace output consistent, #474
+
 ## [2.5.2] - 2020-04-29
 
 Fixed:
@@ -802,6 +835,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.6.1]: ../../compare/v2.6.1...v2.6.0
+[2.6.0]: ../../compare/v2.6.0...v2.5.3
+[2.5.3]: ../../compare/v2.5.3...v2.5.2
 [2.5.2]: ../../compare/v2.5.2...v2.5.1
 [2.5.1]: ../../compare/v2.5.1...v2.5.0
 [2.5.0]: ../../compare/v2.5.0...v2.4.4

@@ -2,8 +2,9 @@
 API to METS
 """
 from datetime import datetime
+from re import fullmatch
 
-from ocrd_utils import is_local_filename, getLogger, VERSION
+from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX
 
 from .constants import (
     NAMESPACES as NS,
@@ -43,16 +44,11 @@ class OcrdMets(OcrdXmlDocument):
         tpl = tpl.replace('{{ NOW }}', '%s' % now)
         return OcrdMets(content=tpl.encode('utf-8'))
 
-    def __init__(self, file_by_id=None, **kwargs):
+    def __init__(self, **kwargs):
         """
 
-        Arguments:
-            file_by_id (dict): Cache mapping file ID to OcrdFile
         """
         super(OcrdMets, self).__init__(**kwargs)
-        if file_by_id is None:
-            file_by_id = {}
-        self._file_by_id = file_by_id
 
     def __str__(self):
         """
@@ -120,6 +116,14 @@ class OcrdMets(OcrdXmlDocument):
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
+
+
+        The ``ID``, ``fileGrp``, ``url`` and ``mimetype`` parameters can be
+        either a literal string or a regular expression if the string starts
+        with ``//`` (double slash). If it is a regex, the leading ``//`` is removed
+        and candidates are matched against the regex with ``re.fullmatch``. If it is
+        a literal string, comparison is done with string equality.
+
         Args:
             ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
@@ -132,35 +136,48 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
-        fileGrp_clause = '' if fileGrp is None else '[@USE="%s"]' % fileGrp
-        file_clause = ''
-        if ID is not None:
-            file_clause += '[@ID="%s"]' % ID
-        if mimetype is not None:
-            file_clause += '[@MIMETYPE="%s"]' % mimetype
-        if url is not None:
-            file_clause += '[mets:FLocat[@xlink:href = "%s"]]' % url
-        # TODO lxml says invalid predicate. I disagree
-        #  if local_only:
-        #      file_clause += "[mets:FLocat[starts-with(@xlink:href, 'file://')]]"
+        REGEX_PREFIX_LEN = len(REGEX_PREFIX)
+        if pageId:
+            if pageId.startswith(REGEX_PREFIX):
+                raise Exception("find_files does not support regex search for pageId")
+            pageId = self._tree.getroot().xpath(
+                '//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % (
+                    pageId), namespaces=NS)
+        for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
+            if ID:
+                if ID.startswith(REGEX_PREFIX):
+                    if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')): continue
+                else:
+                    if not ID == cand.get('ID'): continue
 
-        # Search
-        file_ids = self._tree.getroot().xpath("//mets:fileGrp%s/mets:file%s/@ID" % (fileGrp_clause, file_clause), namespaces=NS)
-        if pageId is not None:
-            by_pageid = self._tree.getroot().xpath('//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % pageId, namespaces=NS)
-            file_ids = [i for i in by_pageid if i in file_ids]
+            if pageId is not None and cand.get('ID') not in pageId:
+                continue
 
-        # instantiate / get from cache
-        for file_id in file_ids:
-            el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % file_id, NS)
-            if file_id not in self._file_by_id:
-                self._file_by_id[file_id] = OcrdFile(el, mets=self)
+            if fileGrp:
+                if fileGrp.startswith(REGEX_PREFIX):
+                    if not fullmatch(fileGrp[REGEX_PREFIX_LEN:], cand.getparent().get('USE')): continue
+                else:
+                    if cand.getparent().get('USE') != fileGrp: continue
+
+            if mimetype:
+                if mimetype.startswith(REGEX_PREFIX):
+                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE')): continue
+                else:
+                    if cand.get('MIMETYPE') != mimetype: continue
+
+            if url:
+                cand_url = cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink'])
+                if url.startswith(REGEX_PREFIX):
+                    if not fullmatch(url[REGEX_PREFIX_LEN:], cand_url): continue
+                else:
+                    if cand_url != url: continue
+
+            file = OcrdFile(cand, mets=self)
 
             # If only local resources should be returned and file is not a file path: skip the file
-            url = self._file_by_id[file_id].url
-            if local_only and not is_local_filename(url):
+            if local_only and not is_local_filename(file.url):
                 continue
-            ret.append(self._file_by_id[file_id])
+            ret.append(file)
         return ret
 
     def add_file_group(self, fileGrp):
@@ -234,8 +251,6 @@ class OcrdMets(OcrdXmlDocument):
         mets_file.pageId = pageId
         mets_file.local_filename = local_filename
 
-        self._file_by_id[ID] = mets_file
-
         return mets_file
 
     def remove_file(self, ID):
@@ -262,9 +277,6 @@ class OcrdMets(OcrdXmlDocument):
         # pylint: disable=protected-access
         ocrd_file._el.getparent().remove(ocrd_file._el)
 
-        # Uncache
-        if ID in self._file_by_id:
-            del self._file_by_id[ID]
         return ocrd_file
 
     @property

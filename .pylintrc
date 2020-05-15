@@ -17,6 +17,7 @@ disable =
     too-many-nested-blocks,
     superfluous-parens,
     too-few-public-methods,
+    wrong-import-order,
     too-many-arguments,
     too-many-branches,
     too-many-instance-attributes,
