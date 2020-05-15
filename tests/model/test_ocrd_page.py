@@ -193,9 +193,24 @@ class TestOcrdPage(TestCase):
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             pg = pcgts.get_Page()
             self.assertEqual(len(pg.get_AllRegions()), 45)
-            self.assertEqual(len(pg.get_AllRegions(['Separator'])), 25)
-            self.assertEqual(len(pg.get_AllRegions(['Table'])), 3)
-            self.assertEqual(len(pg.get_AllRegions(['Text'])), 17)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Separator'])), 25)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Table'])), 3)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'])), 17)
+
+    def test_all_regions_with_reading_order(self):
+        """
+        https://github.com/OCR-D/core/pull/479
+        https://github.com/OCR-D/core/issues/240#issuecomment-493135797
+        """
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            pg = pcgts.get_Page()
+            with self.assertRaisesRegex(Exception, "Argument 'order' must be either 'document' or 'reading-order', not 'random'"):
+                pg.get_AllRegions(order='random')
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order')), 20)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order')), 17)
 
 if __name__ == '__main__':
     main()
