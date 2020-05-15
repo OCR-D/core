@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: OcrdMets.physical_pages is now a method not a property, #484
+  * OcrdMets/ocrd workspace find: Search for multiple pages by fileid, ht @bertsky, #463, #484
+
 ## [2.6.1] - 2020-05-14
 
 Changed:

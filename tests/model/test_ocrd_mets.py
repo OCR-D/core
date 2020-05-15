@@ -76,6 +76,11 @@ class TestOcrdMets(TestCase):
         mets.add_file('OUTPUT', ID="foo123", pageId="foobar")
         self.assertEqual(len(mets.physical_pages()), 1, '1 physical page')
 
+    def test_physical_pages_for_fileids(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(mets.physical_pages(for_fileIds=['FILE_0002_IMAGE']), ['PHYS_0002'])
+
     def test_add_group(self):
         mets = OcrdMets.empty_mets()
         self.assertEqual(len(mets.file_groups), 0, '0 file groups')

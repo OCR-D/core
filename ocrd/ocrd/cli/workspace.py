@@ -184,7 +184,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     """
     Find files.
     """
-    clobbered = False
+    modified_mets = False
     ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for f in workspace.mets.find_files(
@@ -195,10 +195,10 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         ):
         if download and not f.local_filename:
             workspace.download_file(f)
-            clobbered = True
+            modified_mets = True
         ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
                     for field in output_field])
-    if clobbered:
+    if modified_mets:
         workspace.save_mets()
     if 'pageId' in output_field:
         idx = output_field.index('pageId')
