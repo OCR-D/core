@@ -282,23 +282,29 @@ class OcrdMets(OcrdXmlDocument):
 
         return ocrd_file
 
-    def physical_pages(self, for_fileIds=None):
+    @property
+    def physical_pages(self):
+        """
+        List all page IDs
+        """
+        return self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
+            namespaces=NS)
+
+    def get_physical_pages(self, for_fileIds=None):
         """
         List all page IDs (optionally for a subset of file IDs)
         """
         if for_fileIds is None:
-            return self._tree.getroot().xpath(
-                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
-                namespaces=NS)
-        else:
-            ret = [None] * len(for_fileIds)
-            for page in self._tree.getroot().xpath(
-                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
-                    namespaces=NS):
-                for fptr in page.findall('mets:fptr', NS):
-                    if fptr.get('FILEID') in for_fileIds:
-                        ret[for_fileIds.index(fptr.get('FILEID'))] = page.get('ID')
-            return ret
+            return self.physical_pages
+        ret = [None] * len(for_fileIds)
+        for page in self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                namespaces=NS):
+            for fptr in page.findall('mets:fptr', NS):
+                if fptr.get('FILEID') in for_fileIds:
+                    ret[for_fileIds.index(fptr.get('FILEID'))] = page.get('ID')
+        return ret
 
     def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
         """
