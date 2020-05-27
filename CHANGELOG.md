@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+   * :fire: `Workspace.image_from_page` no longer treats `PrintSpace` as functionally equivalent to `Border`, #490
+
 ## [2.6.1] - 2020-05-14
 
 Added:
