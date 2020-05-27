@@ -203,7 +203,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     if 'pageId' in output_field:
         idx = output_field.index('pageId')
         fileIds = list(map(lambda fields: fields[idx], ret))
-        pages = workspace.mets.physical_pages(for_fileIds=fileIds)
+        pages = workspace.mets.get_physical_pages(for_fileIds=fileIds)
         for fields, page in zip(ret, pages):
             fields[idx] = page or ''
     for fields in ret:
