@@ -184,6 +184,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     """
     Find files.
     """
+    modified_mets = False
+    ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for f in workspace.mets.find_files(
             ID=file_id,
@@ -193,9 +195,19 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         ):
         if download and not f.local_filename:
             workspace.download_file(f)
-            workspace.save_mets()
-        ret = '\t'.join([getattr(f, field) or '' for field in output_field])
-        print(ret)
+            modified_mets = True
+        ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
+                    for field in output_field])
+    if modified_mets:
+        workspace.save_mets()
+    if 'pageId' in output_field:
+        idx = output_field.index('pageId')
+        fileIds = list(map(lambda fields: fields[idx], ret))
+        pages = workspace.mets.physical_pages(for_fileIds=fileIds)
+        for fields, page in zip(ret, pages):
+            fields[idx] = page or ''
+    for fields in ret:
+        print('\t'.join(fields))
 
 # ----------------------------------------------------------------------
 # ocrd workspace remove

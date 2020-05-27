@@ -8,6 +8,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
    * :fire: `Workspace.image_from_page` no longer treats `PrintSpace` as functionally equivalent to `Border`, #490
+  * `OcrdMets.get_physical_pages` method companion to `OcrdMets.physical_pages` property, #484
+  * OcrdMets/ocrd workspace find: Search for multiple pages by fileid, ht @bertsky, #463, #484
 
 ## [2.6.1] - 2020-05-14
 
