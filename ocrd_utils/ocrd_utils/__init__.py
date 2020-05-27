@@ -4,7 +4,7 @@ Utility functions and constants usable in various circumstances.
 * ``coordinates_of_segment``, ``coordinates_for_segment``
 
     These functions convert polygon outlines for PAGE elements on all hierarchy
-    levels below page (i.e. region, line, word, glyph) between relative coordinates
+    levels (i.e. page, region, line, word, glyph) between relative coordinates
     w.r.t. a corresponding image and absolute coordinates w.r.t. the top-level image.
     This includes rotation and offset correction, based on affine transformations.
     (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``)
@@ -96,6 +96,8 @@ __all__ = [
     'points_from_x0y0x1y1',
     'points_from_xywh',
     'points_from_y0x0y1x1',
+    'points_of_segment',
+    'polygon_for_parent',
     'polygon_from_bbox',
     'polygon_from_points',
     'polygon_from_x0y0x1y1',
@@ -131,6 +133,7 @@ import contextlib
 
 import numpy as np
 from PIL import Image, ImageStat, ImageDraw, ImageChops
+from shapely.geometry import Polygon
 
 from .logging import * # pylint: disable=wildcard-import
 from .constants import *  # pylint: disable=wildcard-import
@@ -184,7 +187,7 @@ def xywh_from_polygon(polygon):
     """Construct a numeric dict representing a bounding box from polygon coordinates in numeric list representation."""
     return xywh_from_bbox(*bbox_from_polygon(polygon))
 
-def coordinates_for_segment(polygon, parent_image, parent_coords):
+def coordinates_for_segment(polygon, parent_image, parent_coords, parent_element=None):
     """Convert relative coordinates to absolute.
 
     Given...
@@ -192,6 +195,8 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
     - ``polygon``, a numpy array of points relative to
     - ``parent_image``, a PIL.Image (not used), along with
     - ``parent_coords``, its corresponding affine transformation,
+    - ``parent_element`` (optional), the direct parent element in
+      PAGE-XML's segment hierarchy,
 
     ...calculate the absolute coordinates within the page.
     
@@ -208,6 +213,12 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
        opposite direction, rotated purely, and translated back;
        the latter involves an additional offset from the increase
        in canvas size necessary to accommodate all points).
+    
+    If ``parent_element`` is given, then also see to it that the
+    resulting polygon is fully contained within the polygon of its parent
+    (via intersection). Note that this need not be the same element
+    that was used as "parent" for the image (the latter can be multiple
+    levels up).
 
     Return the rounded numpy array of the resulting polygon.
     """
@@ -215,6 +226,8 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
     # apply inverse of affine transform:
     inv_transform = np.linalg.inv(parent_coords['transform'])
     polygon = transform_coordinates(polygon, inv_transform)
+    if parent_element:
+        polygon = polygon_for_parent(polygon, parent_element)
     return np.round(polygon).astype(np.int32)
 
 def coordinates_of_segment(segment, parent_image, parent_coords):
@@ -222,10 +235,10 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
 
     Given...
 
-    - ``segment``, a PAGE segment object in absolute coordinates
-      (i.e. RegionType / TextLineType / WordType / GlyphType), and
+    - ``segment``, a PAGE segment object with absolute coordinates
+      (i.e. PageType / RegionType / TextLineType / WordType / GlyphType), and
     - ``parent_image``, the PIL.Image of its corresponding parent object
-      (i.e. PageType / RegionType / TextLineType / WordType), (not used),
+      (i.e. PageType / RegionType / TextLineType / WordType), (currently not used),
       along with
     - ``parent_coords``, its corresponding affine transformation,
 
@@ -247,7 +260,7 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
     Return the rounded numpy array of the resulting polygon.
     """
     # get polygon:
-    polygon = np.array(polygon_from_points(segment.get_Coords().points))
+    polygon = np.array(polygon_from_points(points_of_segment(segment)))
     # apply affine transform:
     polygon = transform_coordinates(polygon, parent_coords['transform'])
     return np.round(polygon).astype(np.int32)
@@ -546,6 +559,46 @@ def points_from_x0y0x1y1(xyxy):
         x1, y1,
         x0, y1
     )
+
+def points_of_segment(segment):
+    """Extract the polygon coordinates of a PAGE segment element in page representation
+    
+    Given ``segment``, a PAGE segment object with absolute coordinates
+    (i.e. PageType / RegionType / TextLineType / WordType / GlyphType),
+    return the Coords/@points of that object.
+    
+    (For PageType, either get its Border (if any), or construct a bounding box
+    polygon from its @imageHeight and @imageWidth.)
+    """
+    if segment.__class__.__name__ == 'PageType':
+        if segment.get_Border():
+            return segment.get_Border().get_Coords().points
+        return "%i,%i %i,%i %i,%i %i,%i" % (
+            0,0,
+            0,segment.get_imageHeight(),
+            segment.get_imageWidth(),segment.get_imageHeight(),
+            segment.get_imageWidth(),0)
+    return segment.get_Coords().points
+
+def polygon_for_parent(polygon, parent):
+    """Shrink the given polygon to within the outline of the parent.
+    
+    Given a numpy array ``polygon`` of absolute coordinates, and
+    a PAGE segment object ``parent``, return the intersection of
+    both if ``polygon`` is not fully contained within ``parent``,
+    or ``polygon`` unchanged otherwise.
+    """
+    childp = Polygon(polygon)
+    parentp = Polygon(polygon_from_points(points_of_segment(parent)))
+    if childp.within(parentp):
+        return polygon
+    interp = childp.intersection(parentp)
+    if interp.is_empty:
+        # FIXME: we need a better strategy against this
+        raise Exception("intersection of would-be segment with parent is empty")
+    if interp.type == 'MultiPolygon':
+        interp = interp.convex_hull
+    return interp.exterior.coords[:-1] # keep open
 
 def polygon_from_bbox(minx, miny, maxx, maxy):
     """Construct polygon coordinates in numeric list representation from a numeric list representing a bounding box."""
