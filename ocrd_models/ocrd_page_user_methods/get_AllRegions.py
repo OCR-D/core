@@ -1,7 +1,7 @@
 def get_AllRegions(self, classes=None, order='document'):
     """
     Get all the *Region element or only those provided by ``classes``.
-    Returned in random order unless ``reading_order`` is set (NOT CURRENTLY IMPLEMENTED)
+    Returned in document order unless ``order`` is ``reading-order`` is set (NOT CURRENTLY IMPLEMENTED)
     Arguments:
         classes (list) Classes of regions that shall be returned, e.g. ['Text', 'Image']
         order ("document"|"reading-order") Whether to return regions sorted by document order (default) or by reading order
