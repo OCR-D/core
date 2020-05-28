@@ -15,7 +15,10 @@ def get_FirstTextRegion(self):
   return self.get_TextRegion[0]
 ```
 
-   (Note that the method name and file name must be identical.)
+ **NOTE** The method name and file name must be identical.
+
+ **NOTE** Do not use Python's `%` string interpolation operator, it will break generateDS. Use `"".format(...)` instead.
+
 2. Edit `ocrd_models/ocrd_page_user_methods.py` and append to the `METHOD_SPECS` list:
 
 ```python

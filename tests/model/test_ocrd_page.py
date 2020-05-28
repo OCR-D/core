@@ -193,9 +193,13 @@ class TestOcrdPage(TestCase):
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             pg = pcgts.get_Page()
             self.assertEqual(len(pg.get_AllRegions()), 45)
+            self.assertEqual(len(pg.get_AllRegions(depth=1)), 45)
+            self.assertEqual(len(pg.get_AllRegions(depth=2)), 65)
+            self.assertEqual(len(pg.get_AllRegions(depth=3)), 65)
             self.assertEqual(len(pg.get_AllRegions(classes=['Separator'])), 25)
             self.assertEqual(len(pg.get_AllRegions(classes=['Table'])), 3)
             self.assertEqual(len(pg.get_AllRegions(classes=['Text'])), 17)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], depth=2)), 54)
 
     def test_all_regions_with_reading_order(self):
         """
@@ -207,8 +211,10 @@ class TestOcrdPage(TestCase):
             pg = pcgts.get_Page()
             with self.assertRaisesRegex(Exception, "Argument 'order' must be either 'document' or 'reading-order', not 'random'"):
                 pg.get_AllRegions(order='random')
-            self.assertEqual(len(pg.get_AllRegions(order='reading-order')), 20)
-            self.assertEqual(len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order-only')), 20)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order-only', depth=2)), 40)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=1)), 45)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=2)), 65)
             self.assertEqual(len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3)
             self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order')), 17)
 

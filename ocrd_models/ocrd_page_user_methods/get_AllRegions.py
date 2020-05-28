@@ -8,7 +8,7 @@ def _get_recursive_regions(self, regions, level, classes=None):
         if classes:
             return [r for r in regions if self._region_class(r) in classes]
         # remove the first element (PageType)
-        return regions[1:]
+        return list(set(regions[1:]))
     # find more regions recursively
     more_regions = []
     for region in regions:
@@ -43,19 +43,32 @@ def get_AllRegions(self, classes=None, order='document', depth=1):
     Returned in document order unless ``order`` is ``reading-order``
     Arguments:
         classes (list) Classes of regions that shall be returned, e.g. ``['Text', 'Image']``
-        order ("document"|"reading-order") Whether to return regions sorted by document order (default) or by reading order
+        order ("document"|"reading-order"|"reading-order-only") Whether to
+            return regions sorted by document order (``document``, default) or by
+            reading order with regions not in the reading order at the end of the
+            returned list (``reading-order``) or regions not in the reading order
+            omitted (``reading-order-only``)
         depth (int) Recursive depth to look for regions at. Default: 1
     """
-    if order not in ['document', 'reading-order']:
+    if order not in ['document', 'reading-order', 'reading-order-only']:
         raise Exception("Argument 'order' must be either 'document' or 'reading-order', not '{}'".format(order))
-    ret = self._get_recursive_regions([self], depth + 1 if depth else 0, classes)
-    if order == 'reading-order':
+    ret = self._get_recursive_regions([self], depth + 1, classes)
+    if order.startswith('reading-order'):
         reading_order = self.get_ReadingOrder()
         if reading_order:
             reading_order = reading_order.get_OrderedGroup() or reading_order.get_UnorderedGroup()
         if reading_order:
             reading_order = self._get_recursive_reading_order(reading_order)
         if reading_order:
-            id2region = dict([(region.id, region) for region in ret]) # pylint: disable=consider-using-dict-comprehension
-            ret = [id2region[region_id] for region_id in reading_order if region_id in id2region]
+            id2region = {region.id: region for region in ret}
+            in_reading_order = [id2region[region_id] for region_id in reading_order if region_id in id2region]
+            #  print("ret: {} / in_ro: {} / not-in-ro: {}".format(
+            #      len(ret),
+            #      len([id2region[region_id] for region_id in reading_order if region_id in id2region]),
+            #      len([r for r in ret if r not in in_reading_order])
+            #      ))
+            if order == 'reading-order-only':
+                ret = in_reading_order
+            else:
+                ret = in_reading_order + [r for r in ret if r not in in_reading_order]
     return ret
