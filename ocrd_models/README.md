@@ -11,7 +11,7 @@ Let's say you want to add a method `get_FirstTextRegion` on the pc:Page element:
 1. Create a file `ocrd_models/ocrd_page_user_methods/get_FirstTextRegion.py`
 
 ```python
-def getFirstTextRegion(self)
+def get_FirstTextRegion(self):
   return self.get_TextRegion[0]
 ```
 
