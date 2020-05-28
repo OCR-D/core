@@ -2,9 +2,6 @@
 def _region_class(self, x): # pylint: disable=unused-argument
     return x.__class__.__name__.replace('RegionType', '')
 
-def _region_id(self, x): # pylint: disable=unused-argument
-    return x.id if hasattr(x, 'id') else x.pcGtsId
-
 def _get_recursive_regions(self, regions, level, classes=None):
     if level == 1:
         # stop recursion, filter classes
@@ -59,6 +56,6 @@ def get_AllRegions(self, classes=None, order='document', depth=1):
         if reading_order:
             reading_order = self._get_recursive_reading_order(reading_order)
         if reading_order:
-            id2region = dict([(self._region_id(region), region) for region in ret]) # pylint: disable=consider-using-dict-comprehension
+            id2region = dict([(region.id, region) for region in ret]) # pylint: disable=consider-using-dict-comprehension
             ret = [id2region[region_id] for region_id in reading_order if region_id in id2region]
     return ret
