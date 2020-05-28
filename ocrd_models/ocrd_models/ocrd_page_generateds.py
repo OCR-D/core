@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu May 28 16:10:37 2020 by generateDS.py version 2.35.20.
+# Generated Thu May 28 17:02:23 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -5418,20 +5418,21 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         self.set_UnorderedGroupIndexed([])
         return ret
     
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
     def add_AllIndexed(self, elements):
         if not isinstance(elements, list):
             elements = [elements]
-        for element in sorted(elements, key=lambda x : x.index):
-            if isinstance(element, RegionRefIndexedType):
+        for element in sorted(elements, key=lambda x: x.index):
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
                 self.add_RegionRefIndexed(element)
-            elif isinstance(element, OrderedGroupIndexedType):
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_OrderedGroupIndexed(element)
-            elif isinstance(element, UnorderedGroupIndexedType):
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_UnorderedGroupIndexed(element)
         return self.get_AllIndexed()
     
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        eol_ = '\n' if pretty_print else ''
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
         namespaceprefix_ = 'pc:'
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
@@ -5440,8 +5441,8 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         cleaned = []
         # remove emtpy groups and replace with RegionRefIndexedType
         for entry in self.get_AllIndexed():
-            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
-                rri = RegionRefIndexedType.factory(parent_object_=self)
+            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed(): # pylint: disable=undefined-variable
+                rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
                 rri.index = entry.index
                 rri.regionRef = entry.regionRef
                 cleaned.append(rri)
@@ -5449,7 +5450,6 @@ class OrderedGroupIndexedType(GeneratedsSuper):
                 cleaned.append(entry)
         for entry in cleaned:
             entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
-    
 # end class OrderedGroupIndexedType
 
 
@@ -6208,20 +6208,21 @@ class OrderedGroupType(GeneratedsSuper):
         self.set_UnorderedGroupIndexed([])
         return ret
     
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
     def add_AllIndexed(self, elements):
         if not isinstance(elements, list):
             elements = [elements]
-        for element in sorted(elements, key=lambda x : x.index):
-            if isinstance(element, RegionRefIndexedType):
+        for element in sorted(elements, key=lambda x: x.index):
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
                 self.add_RegionRefIndexed(element)
-            elif isinstance(element, OrderedGroupIndexedType):
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_OrderedGroupIndexed(element)
-            elif isinstance(element, UnorderedGroupIndexedType):
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_UnorderedGroupIndexed(element)
         return self.get_AllIndexed()
     
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        eol_ = '\n' if pretty_print else ''
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
         namespaceprefix_ = 'pc:'
         if self.UserDefined is not None:
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
@@ -6230,8 +6231,8 @@ class OrderedGroupType(GeneratedsSuper):
         cleaned = []
         # remove emtpy groups and replace with RegionRefIndexedType
         for entry in self.get_AllIndexed():
-            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
-                rri = RegionRefIndexedType.factory(parent_object_=self)
+            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed(): # pylint: disable=undefined-variable
+                rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
                 rri.index = entry.index
                 rri.regionRef = entry.regionRef
                 cleaned.append(rri)
@@ -6239,7 +6240,6 @@ class OrderedGroupType(GeneratedsSuper):
                 cleaned.append(entry)
         for entry in cleaned:
             entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
-    
 # end class OrderedGroupType
 
 

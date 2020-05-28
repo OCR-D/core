@@ -1,12 +1,13 @@
+# pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
 def add_AllIndexed(self, elements):
     if not isinstance(elements, list):
         elements = [elements]
-    for element in sorted(elements, key=lambda x : x.index):
-        if isinstance(element, RegionRefIndexedType):
+    for element in sorted(elements, key=lambda x: x.index):
+        if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
             self.add_RegionRefIndexed(element)
-        elif isinstance(element, OrderedGroupIndexedType):
+        elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
             self.add_OrderedGroupIndexed(element)
-        elif isinstance(element, UnorderedGroupIndexedType):
+        elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
             self.add_UnorderedGroupIndexed(element)
     return self.get_AllIndexed()
 
