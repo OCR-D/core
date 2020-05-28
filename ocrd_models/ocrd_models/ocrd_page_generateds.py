@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu May 28 15:57:42 2020 by generateDS.py version 2.35.20.
+# Generated Thu May 28 16:10:37 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -2854,9 +2854,6 @@ class PageType(GeneratedsSuper):
     def _region_class(self, x): # pylint: disable=unused-argument
         return x.__class__.__name__.replace('RegionType', '')
     
-    def _region_id(self, x): # pylint: disable=unused-argument
-        return x.id if hasattr(x, 'id') else x.pcGtsId
-    
     def _get_recursive_regions(self, regions, level, classes=None):
         if level == 1:
             # stop recursion, filter classes
@@ -2895,7 +2892,7 @@ class PageType(GeneratedsSuper):
     def get_AllRegions(self, classes=None, order='document', depth=1):
         """
         Get all the *Region element or only those provided by ``classes``.
-        Returned in document order unless ``order`` is ``reading-order`` is set (NOT CURRENTLY IMPLEMENTED)
+        Returned in document order unless ``order`` is ``reading-order``
         Arguments:
             classes (list) Classes of regions that shall be returned, e.g. ``['Text', 'Image']``
             order ("document"|"reading-order") Whether to return regions sorted by document order (default) or by reading order
@@ -2911,7 +2908,7 @@ class PageType(GeneratedsSuper):
             if reading_order:
                 reading_order = self._get_recursive_reading_order(reading_order)
             if reading_order:
-                id2region = dict([(self._region_id(region), region) for region in ret]) # pylint: disable=consider-using-dict-comprehension
+                id2region = dict([(region.id, region) for region in ret]) # pylint: disable=consider-using-dict-comprehension
                 ret = [id2region[region_id] for region_id in reading_order if region_id in id2region]
         return ret
 # end class PageType
