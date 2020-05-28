@@ -1,5 +1,5 @@
 # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
-def add_AllIndexed(self, elements):
+def extend_AllIndexed(self, elements):
     if not isinstance(elements, list):
         elements = [elements]
     for element in sorted(elements, key=lambda x: x.index):

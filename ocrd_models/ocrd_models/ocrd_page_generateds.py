@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu May 28 17:02:23 2020 by generateDS.py version 2.35.20.
+# Generated Thu May 28 17:07:14 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -5419,7 +5419,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         return ret
     
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
-    def add_AllIndexed(self, elements):
+    def extend_AllIndexed(self, elements):
         if not isinstance(elements, list):
             elements = [elements]
         for element in sorted(elements, key=lambda x: x.index):
@@ -6209,7 +6209,7 @@ class OrderedGroupType(GeneratedsSuper):
         return ret
     
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
-    def add_AllIndexed(self, elements):
+    def extend_AllIndexed(self, elements):
         if not isinstance(elements, list):
             elements = [elements]
         for element in sorted(elements, key=lambda x: x.index):
