@@ -20,7 +20,7 @@ def getFirstTextRegion(self)
 ```python
 METHOD_SPECS = (
   # ...
-  _add_method(r'^PageType$', 'get_TextRegion')
+  _add_method(r'^PageType$', 'get_FirstTextRegion')
   # ...
 )
 ```
