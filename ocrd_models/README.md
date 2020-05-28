@@ -15,6 +15,7 @@ def get_FirstTextRegion(self):
   return self.get_TextRegion[0]
 ```
 
+   (Note that the method name and file name must be identical.)
 2. Edit `ocrd_models/ocrd_page_user_methods.py` and append to the `METHOD_SPECS` list:
 
 ```python
