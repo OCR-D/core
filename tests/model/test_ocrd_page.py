@@ -252,5 +252,26 @@ class TestOcrdPage(TestCase):
             og.sort_AllIndexed()
             self.assertEqual([x.index for x in og.get_AllIndexed(classes=['UnorderedGroup'], index_sort=False)], [20, 21])
 
+    def test_extend_AllIndexed_no_validation(self):
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
+            og.extend_AllIndexed([
+                RegionRefIndexedType(index=3, id='r3'),
+                RegionRefIndexedType(index=2, id='r2'),
+                RegionRefIndexedType(index=1, id='r1'),
+            ])
+            rrs = og.get_RegionRefIndexed()
+            self.assertEqual([x.index for x in rrs][-3:], [22, 23, 24])
+
+    def test_extend_AllIndexed_validate_continuity(self):
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
+            with self.assertRaisesRegex(Exception, "@index already used: 1"):
+                og.extend_AllIndexed([
+                    RegionRefIndexedType(index=3, id='r3'),
+                    RegionRefIndexedType(index=2, id='r2'),
+                    RegionRefIndexedType(index=1, id='r1'),
+                ], validate_continuity=True)
+
 if __name__ == '__main__':
     main()
