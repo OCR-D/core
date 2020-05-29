@@ -224,5 +224,14 @@ class TestOcrdPage(TestCase):
             self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order')), 37)
             self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)), 17)
 
+    def test_get_AllIndexed_classes(self):
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
+            self.assertEqual(len(og.get_AllIndexed(classes=['RegionRef'])), 17)
+            self.assertEqual(len(og.get_AllIndexed(classes=['OrderedGroup'])), 3)
+            self.assertEqual(len(og.get_AllIndexed(classes=['UnorderedGroup'])), 1)
+
+
+
 if __name__ == '__main__':
     main()
