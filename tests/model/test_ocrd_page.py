@@ -8,6 +8,7 @@ from ocrd_models.ocrd_page import (
     TextRegionType,
     TextLineType,
     OrderedGroupIndexedType,
+    UnorderedGroupIndexedType,
     RegionRefIndexedType,
     WordType,
     GlyphType,
@@ -151,19 +152,19 @@ class TestOcrdPage(TestCase):
             og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
             xml_before = to_xml(og)
             children = og.get_AllIndexed()
-            self.assertEqual(len(children), 20)
-            self.assertEqual([c.index for c in children], list(range(0, 20)))
+            self.assertEqual(len(children), 22)
+            self.assertEqual([c.index for c in children], list(range(0, 22)))
             # mix up the indexes
             children[0].index = 11
             children[11].index = 3
             children[3].index = 0
-            self.assertEqual([c.index for c in children], [11, 1, 2, 0, 4, 5, 6, 7, 8, 9, 10, 3, 12, 13, 14, 15, 16, 17, 18, 19])
-            self.assertEqual([c.index for c in og.get_AllIndexed()], list(range(0, 20)))
+            self.assertEqual([c.index for c in children], [11, 1, 2, 0, 4, 5, 6, 7, 8, 9, 10, 3, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
+            self.assertEqual([c.index for c in og.get_AllIndexed()], list(range(0, 22)))
             self.assertEqual(og.get_AllIndexed()[1].__class__, OrderedGroupIndexedType)
             # serialize and make sure the correct order was serialized
             new_pcgts = parseString(to_xml(pcgts).encode('utf8'), silence=True)
             new_og = new_pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
-            self.assertEqual([c.index for c in new_og.get_AllIndexed()], list(range(0, 20)))
+            self.assertEqual([c.index for c in new_og.get_AllIndexed()], list(range(0, 22)))
             # xml_after = to_xml(new_og)
             # self.assertEqual(xml_after, xml_before)
 
@@ -176,6 +177,7 @@ class TestOcrdPage(TestCase):
             og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
             children = og.get_AllIndexed()
             self.assertTrue(isinstance(children[1], OrderedGroupIndexedType))
+            self.assertTrue(isinstance(children[21], UnorderedGroupIndexedType))
             # empty all the elements in the first orederdGroupIndexed
             children[1].set_RegionRefIndexed([])
             # serialize apnd parse to see empty group converted
@@ -183,6 +185,7 @@ class TestOcrdPage(TestCase):
             og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
             children = og.get_AllIndexed()
             self.assertTrue(isinstance(children[1], RegionRefIndexedType))
+            self.assertTrue(isinstance(children[21], RegionRefIndexedType))
 
     def test_all_regions_without_reading_order(self):
         """
@@ -223,6 +226,13 @@ class TestOcrdPage(TestCase):
             self.assertEqual(len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3)
             self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order')), 37)
             self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)), 17)
+
+    def test_get_UnorderdGroupChildren(self):
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            ug = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup().get_UnorderedGroupIndexed()[0]
+            self.assertEqual(len(ug.get_UnorderedGroupChildren()), 1)
+
 
 if __name__ == '__main__':
     main()

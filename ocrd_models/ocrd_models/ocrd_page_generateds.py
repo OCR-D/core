@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri May 29 16:34:32 2020 by generateDS.py version 2.35.20.
+# Generated Fri May 29 22:34:55 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -2908,8 +2908,8 @@ class PageType(GeneratedsSuper):
     
         For example, to get all text anywhere on the page in reading order, use:
         ::
-            '\n'.join(line.get_TextEquiv()[0].Unicode
-                      for region in page.get_AllRegions(classes='Text', depth=0, order='reading-order')
+            '\\n'.join(line.get_TextEquiv()[0].Unicode
+                      for region in page.get_AllRegions(classes=['Text'], depth=0, order='reading-order')
                       for line in region.get_TextLine())
         """
         if order not in ['document', 'reading-order', 'reading-order-only']:
@@ -5434,7 +5434,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     def __hash__(self):
         return hash(self.id)
     def get_AllIndexed(self):
-        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index)
+        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x: x.index)
     
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
@@ -5464,13 +5464,18 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         for Labels_ in self.Labels:
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         cleaned = []
+        def replaceWithRRI(group):
+            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+            rri.index = group.index
+            rri.regionRef = group.regionRef
+            cleaned.append(rri)
         # remove emtpy groups and replace with RegionRefIndexedType
         for entry in self.get_AllIndexed():
-            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed(): # pylint: disable=undefined-variable
-                rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
-                rri.index = entry.index
-                rri.regionRef = entry.regionRef
-                cleaned.append(rri)
+            # pylint: disable=undefined-variable
+            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                replaceWithRRI(entry)
+            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+                replaceWithRRI(entry)
             else:
                 cleaned.append(entry)
         for entry in cleaned:
@@ -5811,6 +5816,13 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
         return hash(self.id)
+    def get_UnorderedGroupChildren(self):
+        """
+        List all non-metadata children of an UnorderedGroup
+        """
+        # TODO: should not change order
+        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
+    
 # end class UnorderedGroupIndexedType
 
 
@@ -6224,7 +6236,7 @@ class OrderedGroupType(GeneratedsSuper):
     def __hash__(self):
         return hash(self.id)
     def get_AllIndexed(self):
-        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index)
+        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x: x.index)
     
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
@@ -6254,13 +6266,18 @@ class OrderedGroupType(GeneratedsSuper):
         for Labels_ in self.Labels:
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         cleaned = []
+        def replaceWithRRI(group):
+            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+            rri.index = group.index
+            rri.regionRef = group.regionRef
+            cleaned.append(rri)
         # remove emtpy groups and replace with RegionRefIndexedType
         for entry in self.get_AllIndexed():
-            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed(): # pylint: disable=undefined-variable
-                rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
-                rri.index = entry.index
-                rri.regionRef = entry.regionRef
-                cleaned.append(rri)
+            # pylint: disable=undefined-variable
+            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                replaceWithRRI(entry)
+            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+                replaceWithRRI(entry)
             else:
                 cleaned.append(entry)
         for entry in cleaned:
@@ -6585,6 +6602,13 @@ class UnorderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
         return hash(self.id)
+    def get_UnorderedGroupChildren(self):
+        """
+        List all non-metadata children of an UnorderedGroup
+        """
+        # TODO: should not change order
+        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
+    
 # end class UnorderedGroupType
 
 

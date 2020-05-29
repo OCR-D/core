@@ -6,13 +6,18 @@ def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xml
     for Labels_ in self.Labels:
         Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
     cleaned = []
+    def replaceWithRRI(group):
+        rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+        rri.index = group.index
+        rri.regionRef = group.regionRef
+        cleaned.append(rri)
     # remove emtpy groups and replace with RegionRefIndexedType
     for entry in self.get_AllIndexed():
-        if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed(): # pylint: disable=undefined-variable
-            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
-            rri.index = entry.index
-            rri.regionRef = entry.regionRef
-            cleaned.append(rri)
+        # pylint: disable=undefined-variable
+        if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+            replaceWithRRI(entry)
+        elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+            replaceWithRRI(entry)
         else:
             cleaned.append(entry)
     for entry in cleaned:
