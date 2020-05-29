@@ -5,6 +5,22 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * OcrdPage: `get_AllRegions`: retrieve all regions, sorted by document or reading order, #479
+  * OcrdPage: `sort_AllIndexed`: sort all children by `@index`  in-place
+  * OcrdPage: `clear_AllIndexed`: clear all `@index` children
+  * OcrdPage: `extend_AllIndexed`: Add elements with incrementing `@index`
+  * OcrdPage: Replace empty reading order groups with equivalent `RegionRef` on export
+  * OcrdPage: `get_UnorderedGroupChildren`: get reading order elements of an `UnorderedGroup`
+
+
+Changed:
+
+  * OcrdPage: `get_AllIndexed`: allow filtering by child type
+  * OcrdPage: `get_AllIndexed`: index_sort parameter to enable/disable sorting
+
+
 ## [2.7.1] - 2020-05-27
 
 Fixed:
