@@ -193,6 +193,7 @@ class TestOcrdPage(TestCase):
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             pg = pcgts.get_Page()
             self.assertEqual(len(pg.get_AllRegions()), 45)
+            self.assertEqual(len(pg.get_AllRegions(depth=0)), 0)
             self.assertEqual(len(pg.get_AllRegions(depth=1)), 45)
             self.assertEqual(len(pg.get_AllRegions(depth=2)), 65)
             self.assertEqual(len(pg.get_AllRegions(depth=3)), 65)
@@ -207,12 +208,14 @@ class TestOcrdPage(TestCase):
         https://github.com/OCR-D/core/issues/240#issuecomment-493135797
         """
         with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
-            pcgts = parseString(f.read().encode('utf8'), silence=True)
-            pg = pcgts.get_Page()
-            with self.assertRaisesRegex(Exception, "Argument 'order' must be either 'document' or 'reading-order', not 'random'"):
+            pg = parseString(f.read().encode('utf8'), silence=True).get_Page()
+            with self.assertRaisesRegex(Exception, "Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not 'random'"):
                 pg.get_AllRegions(order='random')
+            with self.assertRaisesRegex(Exception, "Argument 'depth' must be an integer greater-or-equal 0, not '-1'"):
+                pg.get_AllRegions(depth=-1)
             self.assertEqual(len(pg.get_AllRegions(order='reading-order-only')), 20)
             self.assertEqual(len(pg.get_AllRegions(order='reading-order-only', depth=2)), 40)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=0)), 0)
             self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=1)), 45)
             self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=2)), 65)
             self.assertEqual(len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3)

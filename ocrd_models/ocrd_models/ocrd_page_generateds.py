@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu May 28 20:28:48 2020 by generateDS.py version 2.35.20.
+# Generated Fri May 29 13:39:11 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -2903,7 +2903,9 @@ class PageType(GeneratedsSuper):
             depth (int) Recursive depth to look for regions at. Default: 1
         """
         if order not in ['document', 'reading-order', 'reading-order-only']:
-            raise Exception("Argument 'order' must be either 'document' or 'reading-order', not '{}'".format(order))
+            raise Exception("Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not '{}'".format(order))
+        if depth < 0:
+            raise Exception("Argument 'depth' must be an integer greater-or-equal 0, not '{}'".format(depth))
         ret = self._get_recursive_regions([self], depth + 1, classes)
         if order.startswith('reading-order'):
             reading_order = self.get_ReadingOrder()
