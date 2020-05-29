@@ -192,15 +192,16 @@ class TestOcrdPage(TestCase):
         with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             pg = pcgts.get_Page()
-            self.assertEqual(len(pg.get_AllRegions()), 45)
-            self.assertEqual(len(pg.get_AllRegions(depth=0)), 0)
+            self.assertEqual(len(pg.get_AllRegions()), 65)
+            self.assertEqual(len(pg.get_AllRegions(depth=0)), 65)
             self.assertEqual(len(pg.get_AllRegions(depth=1)), 45)
             self.assertEqual(len(pg.get_AllRegions(depth=2)), 65)
             self.assertEqual(len(pg.get_AllRegions(depth=3)), 65)
             self.assertEqual(len(pg.get_AllRegions(classes=['Separator'])), 25)
             self.assertEqual(len(pg.get_AllRegions(classes=['Table'])), 3)
-            self.assertEqual(len(pg.get_AllRegions(classes=['Text'])), 17)
-            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], depth=2)), 54)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'])), 37)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], depth=1)), 17)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], depth=2)), 37)
 
     def test_all_regions_with_reading_order(self):
         """
@@ -213,13 +214,15 @@ class TestOcrdPage(TestCase):
                 pg.get_AllRegions(order='random')
             with self.assertRaisesRegex(Exception, "Argument 'depth' must be an integer greater-or-equal 0, not '-1'"):
                 pg.get_AllRegions(depth=-1)
-            self.assertEqual(len(pg.get_AllRegions(order='reading-order-only')), 20)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order-only')), 40)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order-only', depth=1)), 20)
             self.assertEqual(len(pg.get_AllRegions(order='reading-order-only', depth=2)), 40)
-            self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=0)), 0)
+            self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=0)), 65)
             self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=1)), 45)
             self.assertEqual(len(pg.get_AllRegions(order='reading-order', depth=2)), 65)
             self.assertEqual(len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3)
-            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order')), 17)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order')), 37)
+            self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)), 17)
 
 if __name__ == '__main__':
     main()

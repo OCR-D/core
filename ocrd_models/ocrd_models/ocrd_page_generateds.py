@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri May 29 14:45:59 2020 by generateDS.py version 2.35.20.
+# Generated Fri May 29 16:34:32 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -2859,8 +2859,9 @@ class PageType(GeneratedsSuper):
             # stop recursion, filter classes
             if classes:
                 return [r for r in regions if self._region_class(r) in classes]
-            # remove the first element (PageType)
-            return list(set(regions[1:]))
+            if regions and regions[0].__class__.__name__ == 'PageType':
+                regions = regions[1:]
+            return regions
         # find more regions recursively
         more_regions = []
         for region in regions:
@@ -2873,9 +2874,12 @@ class PageType(GeneratedsSuper):
                     continue
                 more_regions[-1] += getattr(region, 'get_{}Region'.format(class_))()
         if not any(more_regions):
-            return _get_recursive_regions(regions, 1, classes)
-        regions = [region for r, more in zip(regions, more_regions) for region in [r] + more]
-        return self._get_recursive_regions(regions, level - 1 if level else 0, classes)
+            return self._get_recursive_regions(regions, 1, classes)
+        ret = []
+        for r, more in zip(regions, more_regions):
+            ret.append(r)
+            ret += self._get_recursive_regions(more, level - 1 if level else 0, classes)
+        return self._get_recursive_regions(ret, 1, classes)
     
     def _get_recursive_reading_order(self, rogroup):
         if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)): # pylint: disable=undefined-variable
@@ -2889,7 +2893,7 @@ class PageType(GeneratedsSuper):
                 regionrefs.extend(self._get_recursive_reading_order(elem))
         return regionrefs
     
-    def get_AllRegions(self, classes=None, order='document', depth=1):
+    def get_AllRegions(self, classes=None, order='document', depth=0):
         """
         Get all the *Region element or only those provided by ``classes``.
         Returned in document order unless ``order`` is ``reading-order``
@@ -2900,7 +2904,7 @@ class PageType(GeneratedsSuper):
                 reading order with regions not in the reading order at the end of the
                 returned list (``reading-order``) or regions not in the reading order
                 omitted (``reading-order-only``)
-            depth (int) Recursive depth to look for regions at. Default: 1
+            depth (int) Recursive depth to look for regions at, set to `0` for all regions at any depth. Default: 0
     
         For example, to get all text anywhere on the page in reading order, use:
         ::
@@ -2912,7 +2916,7 @@ class PageType(GeneratedsSuper):
             raise Exception("Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not '{}'".format(order))
         if depth < 0:
             raise Exception("Argument 'depth' must be an integer greater-or-equal 0, not '{}'".format(depth))
-        ret = self._get_recursive_regions([self], depth + 1, classes)
+        ret = self._get_recursive_regions([self], depth + 1 if depth else 0, classes)
         if order.startswith('reading-order'):
             reading_order = self.get_ReadingOrder()
             if reading_order:
