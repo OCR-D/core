@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri May 29 22:47:44 2020 by generateDS.py version 2.35.20.
+# Generated Fri May 29 23:03:43 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -5434,19 +5434,22 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     def __hash__(self):
         return hash(self.id)
     # pylint: disable=invalid-name,missing-module-docstring,line-too-long
-    def get_AllIndexed(self, classes=None):
+    def get_AllIndexed(self, classes=None, index_sort=True):
         """
         Get all indexed children sorted by their ``@index``.
     
         Arguments:
             classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            index_sort (boolean): Whether to sort by ``@index``
         """
         if not classes:
             classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
         ret = []
         for class_ in classes:
             ret += getattr(self, 'get_{}Indexed'.format(class_))()
-        return sorted(ret, key=lambda x: x.index)
+        if index_sort:
+            return sorted(ret, key=lambda x: x.index)
+        return ret
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
         self.set_RegionRefIndexed([])
@@ -6250,19 +6253,22 @@ class OrderedGroupType(GeneratedsSuper):
     def __hash__(self):
         return hash(self.id)
     # pylint: disable=invalid-name,missing-module-docstring,line-too-long
-    def get_AllIndexed(self, classes=None):
+    def get_AllIndexed(self, classes=None, index_sort=True):
         """
         Get all indexed children sorted by their ``@index``.
     
         Arguments:
             classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            index_sort (boolean): Whether to sort by ``@index``
         """
         if not classes:
             classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
         ret = []
         for class_ in classes:
             ret += getattr(self, 'get_{}Indexed'.format(class_))()
-        return sorted(ret, key=lambda x: x.index)
+        if index_sort:
+            return sorted(ret, key=lambda x: x.index)
+        return ret
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
         self.set_RegionRefIndexed([])

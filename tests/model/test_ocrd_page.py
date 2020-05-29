@@ -240,5 +240,15 @@ class TestOcrdPage(TestCase):
             self.assertEqual(len(og.get_AllIndexed(classes=['OrderedGroup'])), 3)
             self.assertEqual(len(og.get_AllIndexed(classes=['UnorderedGroup'])), 2)
 
+    def test_get_AllIndexed_index_sort(self):
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
+            unogs = og.get_UnorderedGroupIndexed()
+            self.assertEqual([x.index for x in unogs], [20, 21])
+            unogs[0].index = 21
+            unogs[1].index = 20
+            self.assertEqual([x.index for x in og.get_AllIndexed(classes=['UnorderedGroup'], index_sort=True)], [20, 21])
+            self.assertEqual([x.index for x in og.get_AllIndexed(classes=['UnorderedGroup'], index_sort=False)], [21, 20])
+
 if __name__ == '__main__':
     main()
