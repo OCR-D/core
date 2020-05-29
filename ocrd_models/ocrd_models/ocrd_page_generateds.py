@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri May 29 22:34:55 2020 by generateDS.py version 2.35.20.
+# Generated Fri May 29 22:47:44 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -5433,9 +5433,20 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
-    def get_AllIndexed(self):
-        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x: x.index)
+    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
+    def get_AllIndexed(self, classes=None):
+        """
+        Get all indexed children sorted by their ``@index``.
     
+        Arguments:
+            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        """
+        if not classes:
+            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        ret = []
+        for class_ in classes:
+            ret += getattr(self, 'get_{}Indexed'.format(class_))()
+        return sorted(ret, key=lambda x: x.index)
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
         self.set_RegionRefIndexed([])
@@ -5443,8 +5454,11 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         self.set_UnorderedGroupIndexed([])
         return ret
     
-    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements):
+        """
+        Add all elements in list ``elements``, respecting ``@index`` order.
+        """
         if not isinstance(elements, list):
             elements = [elements]
         for element in sorted(elements, key=lambda x: x.index):
@@ -6235,9 +6249,20 @@ class OrderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
-    def get_AllIndexed(self):
-        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x: x.index)
+    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
+    def get_AllIndexed(self, classes=None):
+        """
+        Get all indexed children sorted by their ``@index``.
     
+        Arguments:
+            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        """
+        if not classes:
+            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        ret = []
+        for class_ in classes:
+            ret += getattr(self, 'get_{}Indexed'.format(class_))()
+        return sorted(ret, key=lambda x: x.index)
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
         self.set_RegionRefIndexed([])
@@ -6245,8 +6270,11 @@ class OrderedGroupType(GeneratedsSuper):
         self.set_UnorderedGroupIndexed([])
         return ret
     
-    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements):
+        """
+        Add all elements in list ``elements``, respecting ``@index`` order.
+        """
         if not isinstance(elements, list):
             elements = [elements]
         for element in sorted(elements, key=lambda x: x.index):

@@ -233,6 +233,12 @@ class TestOcrdPage(TestCase):
             ug = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup().get_UnorderedGroupIndexed()[0]
             self.assertEqual(len(ug.get_UnorderedGroupChildren()), 1)
 
+    def test_get_AllIndexed_classes(self):
+        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+            og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
+            self.assertEqual(len(og.get_AllIndexed(classes=['RegionRef'])), 17)
+            self.assertEqual(len(og.get_AllIndexed(classes=['OrderedGroup'])), 3)
+            self.assertEqual(len(og.get_AllIndexed(classes=['UnorderedGroup'])), 2)
 
 if __name__ == '__main__':
     main()
