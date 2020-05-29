@@ -101,6 +101,7 @@ METHOD_SPECS = (
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'get_AllIndexed'),
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'clear_AllIndexed'),
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'extend_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'sort_AllIndexed'),
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren'),
     _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
     _add_method(r'^(PageType)$', 'get_AllRegions'),

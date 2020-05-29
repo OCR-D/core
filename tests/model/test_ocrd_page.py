@@ -249,6 +249,8 @@ class TestOcrdPage(TestCase):
             unogs[1].index = 20
             self.assertEqual([x.index for x in og.get_AllIndexed(classes=['UnorderedGroup'], index_sort=True)], [20, 21])
             self.assertEqual([x.index for x in og.get_AllIndexed(classes=['UnorderedGroup'], index_sort=False)], [21, 20])
+            og.sort_AllIndexed()
+            self.assertEqual([x.index for x in og.get_AllIndexed(classes=['UnorderedGroup'], index_sort=False)], [20, 21])
 
 if __name__ == '__main__':
     main()

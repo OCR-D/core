@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri May 29 23:03:43 2020 by generateDS.py version 2.35.20.
+# Generated Fri May 29 23:08:05 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -5473,6 +5473,22 @@ class OrderedGroupIndexedType(GeneratedsSuper):
                 self.add_UnorderedGroupIndexed(element)
         return self.get_AllIndexed()
     
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def sort_AllIndexed(self, validate_uniqueness=True):
+        """
+        Sort all indexed children in-place.
+        """
+        elements = self.get_AllIndexed(index_sort=True)
+        self.clear_AllIndexed()
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
         namespaceprefix_ = 'pc:'
@@ -6284,6 +6300,22 @@ class OrderedGroupType(GeneratedsSuper):
         if not isinstance(elements, list):
             elements = [elements]
         for element in sorted(elements, key=lambda x: x.index):
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def sort_AllIndexed(self, validate_uniqueness=True):
+        """
+        Sort all indexed children in-place.
+        """
+        elements = self.get_AllIndexed(index_sort=True)
+        self.clear_AllIndexed()
+        for element in elements:
             if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
                 self.add_RegionRefIndexed(element)
             elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
