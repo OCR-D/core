@@ -117,6 +117,11 @@
                 </pc:OrderedGroupIndexed>
                 <pc:RegionRefIndexed index="18" regionRef="Gutachten2-2_region0016"/>
                 <pc:RegionRefIndexed index="19" regionRef="Gutachten2-2_region0017"/>
+                <pc:UnorderedGroupIndexed id="unordered-group-for-testing_group" regionRef="unordered-group-for-testing" index="20">
+                    <pc:RegionRef regionRef="unordered-group-for-testing_region0001"/>
+                </pc:UnorderedGroupIndexed>
+                <pc:UnorderedGroupIndexed id="empty-group-for-testing_group" regionRef="empty-group-for-testing" index="21">
+                </pc:UnorderedGroupIndexed>
             </pc:OrderedGroup>
         </pc:ReadingOrder>
         <pc:TextRegion id="Gutachten2-2_region0001">
