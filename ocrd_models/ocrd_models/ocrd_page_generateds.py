@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri May 29 13:39:11 2020 by generateDS.py version 2.35.20.
+# Generated Fri May 29 14:45:59 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -2901,6 +2901,12 @@ class PageType(GeneratedsSuper):
                 returned list (``reading-order``) or regions not in the reading order
                 omitted (``reading-order-only``)
             depth (int) Recursive depth to look for regions at. Default: 1
+    
+        For example, to get all text anywhere on the page in reading order, use:
+        ::
+            '\n'.join(line.get_TextEquiv()[0].Unicode
+                      for region in page.get_AllRegions(classes='Text', depth=0, order='reading-order')
+                      for line in region.get_TextLine())
         """
         if order not in ['document', 'reading-order', 'reading-order-only']:
             raise Exception("Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not '{}'".format(order))

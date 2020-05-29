@@ -49,6 +49,12 @@ def get_AllRegions(self, classes=None, order='document', depth=1):
             returned list (``reading-order``) or regions not in the reading order
             omitted (``reading-order-only``)
         depth (int) Recursive depth to look for regions at. Default: 1
+
+    For example, to get all text anywhere on the page in reading order, use:
+    ::
+        '\n'.join(line.get_TextEquiv()[0].Unicode
+                  for region in page.get_AllRegions(classes='Text', depth=0, order='reading-order')
+                  for line in region.get_TextLine())
     """
     if order not in ['document', 'reading-order', 'reading-order-only']:
         raise Exception("Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not '{}'".format(order))
