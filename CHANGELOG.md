@@ -5,6 +5,21 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.7.1] - 2020-05-27
+
+Fixed:
+
+  * `ocrd workspace find`: Use `OcrdMets.get_physical_pages` method, fix #491
+
+## [2.7.0] - 2020-05-27
+
+Changed:
+
+   * :fire: `Workspace.image_from_page` no longer treats `PrintSpace` as functionally equivalent to `Border`, #490
+  * `OcrdMets.get_physical_pages` method companion to `OcrdMets.physical_pages` property, #484
+  * OcrdMets/ocrd workspace find: Search for multiple pages by fileid, ht @bertsky, #463, #484
+  * PAGE validation: respect reading order in consistency checks, #442
+
 ## [2.6.1] - 2020-05-14
 
 Added:
@@ -835,6 +850,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.7.1]: ../../compare/v2.7.1...v2.7.0
+[2.7.0]: ../../compare/v2.7.0...v2.6.1
 [2.6.1]: ../../compare/v2.6.1...v2.6.0
 [2.6.0]: ../../compare/v2.6.0...v2.5.3
 [2.5.3]: ../../compare/v2.5.3...v2.5.2

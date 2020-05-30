@@ -337,8 +337,7 @@ class Workspace():
         """
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
-        # FIXME: remove PrintSpace here as soon as GT abides by the PAGE standard:
-        border = page.get_Border() or page.get_PrintSpace()
+        border = page.get_Border()
         if (border and
             not 'cropped' in feature_filter.split(',')):
             page_points = border.get_Coords().points

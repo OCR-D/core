@@ -140,9 +140,12 @@ class OcrdMets(OcrdXmlDocument):
         if pageId:
             if pageId.startswith(REGEX_PREFIX):
                 raise Exception("find_files does not support regex search for pageId")
-            pageId = self._tree.getroot().xpath(
-                '//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % (
-                    pageId), namespaces=NS)
+            pageIds, pageId = pageId.split(','), list()
+            for page in self._tree.getroot().xpath(
+                '//mets:div[@TYPE="page"]', namespaces=NS):
+                if page.get('ID') in pageIds:
+                    pageId.extend(
+                        [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)])
         for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
             if ID:
                 if ID.startswith(REGEX_PREFIX):
@@ -287,6 +290,21 @@ class OcrdMets(OcrdXmlDocument):
         return self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
             namespaces=NS)
+
+    def get_physical_pages(self, for_fileIds=None):
+        """
+        List all page IDs (optionally for a subset of file IDs)
+        """
+        if for_fileIds is None:
+            return self.physical_pages
+        ret = [None] * len(for_fileIds)
+        for page in self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                namespaces=NS):
+            for fptr in page.findall('mets:fptr', NS):
+                if fptr.get('FILEID') in for_fileIds:
+                    ret[for_fileIds.index(fptr.get('FILEID'))] = page.get('ID')
+        return ret
 
     def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
         """
