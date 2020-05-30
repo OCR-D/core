@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'ocrd=ocrd.cli:cli',
+            'ocrd-dummy-processor=ocrd.cli.dummy_processor:cli',
         ]
     },
 )
