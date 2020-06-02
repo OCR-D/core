@@ -1,7 +1,10 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from os.path import join, basename
 
+import click
+
 from ocrd import Processor
+from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
 from ocrd_utils import getLogger
 
 DUMMY_TOOL = {
@@ -41,3 +44,8 @@ class DummyProcessor(Processor):
         kwargs['ocrd_tool'] = DUMMY_TOOL
         kwargs['version'] = '0.0.1'
         super(DummyProcessor, self).__init__(*args, **kwargs)
+
+@click.command()
+@ocrd_cli_options
+def cli(*args, **kwargs):
+    return ocrd_cli_wrap_processor(DummyProcessor, *args, **kwargs)
