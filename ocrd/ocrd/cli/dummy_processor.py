@@ -35,7 +35,7 @@ class DummyProcessor(Processor):
                 self.workspace.add_file(
                     ID=file_id,
                     file_grp=self.output_file_grp,
-                    pageId=page_id,
+                    pageId=input_file.pageId,
                     mimetype=input_file.mimetype,
                     local_filename=local_filename,
                     content=content)
