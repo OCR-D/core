@@ -2,6 +2,9 @@
 def extend_AllIndexed(self, elements, validate_continuity=False):
     """
     Add all elements in list ``elements``, respecting ``@index`` order.
+    With ``validate_continuity``, check that all new elements come after all old elements
+    (or raise an exception). 
+    Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
     """
     if not isinstance(elements, list):
         elements = [elements]
@@ -24,4 +27,3 @@ def extend_AllIndexed(self, elements, validate_continuity=False):
         elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
             self.add_UnorderedGroupIndexed(element)
     return self.get_AllIndexed()
-
