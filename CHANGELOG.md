@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Addeed:
+
+  * `ocrd-dummy`, a minimal processor that copies input to output, #468
+
 ## [2.7.1] - 2020-05-27
 
 Fixed:
