@@ -7,6 +7,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
+  * `ocrd-dummy`, a minimal processor that copies input to output, #468
   * OcrdPage: `get_AllRegions`: retrieve all regions, sorted by document or reading order, #479
   * OcrdPage: `sort_AllIndexed`: sort all children by `@index`  in-place
   * OcrdPage: `clear_AllIndexed`: clear all `@index` children
@@ -19,7 +20,6 @@ Changed:
 
   * OcrdPage: `get_AllIndexed`: allow filtering by child type
   * OcrdPage: `get_AllIndexed`: index_sort parameter to enable/disable sorting
-
 
 ## [2.7.1] - 2020-05-27
 
