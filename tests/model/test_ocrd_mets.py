@@ -213,5 +213,17 @@ class TestOcrdMets(TestCase):
             self.assertEqual(len(mets.file_groups), 16)
             self.assertEqual(len(mets.find_files()), 33)
 
+    def test_remove_file_group_regex(self):
+        """
+        Test removal of filegrp
+        """
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(len(mets.file_groups), 17)
+            self.assertEqual(len(mets.find_files()), 35)
+            mets.remove_file_group('//OCR-D-GT-.*', recursive=True)
+            self.assertEqual(len(mets.file_groups), 15)
+            self.assertEqual(len(mets.find_files()), 31)
+
 if __name__ == '__main__':
     main()

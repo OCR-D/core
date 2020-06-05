@@ -3,6 +3,7 @@ API to METS
 """
 from datetime import datetime
 from re import fullmatch
+from lxml import etree as ET
 
 from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX
 
@@ -26,6 +27,7 @@ from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
 log = getLogger('ocrd_models.ocrd_mets')
+REGEX_PREFIX_LEN = len(REGEX_PREFIX)
 
 class OcrdMets(OcrdXmlDocument):
     """
@@ -136,7 +138,6 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
-        REGEX_PREFIX_LEN = len(REGEX_PREFIX)
         if pageId:
             if pageId.startswith(REGEX_PREFIX):
                 raise Exception("find_files does not support regex search for pageId")
@@ -203,20 +204,29 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_file_group(self, USE, recursive=False):
         """
-        Remove a fileGrp.
+        Remove a fileGrp (fixed USE) or fileGrps (USE regex)
 
         Arguments:
-            USE (string): USE attribute of the fileGrp to delete
+            USE (string): USE attribute of the fileGrp to delete. Can be a regex if prefixed with //
             recursive (boolean): Whether to recursively delete all files in the group
         """
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             raise Exception("No fileSec!")
-        el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        if isinstance(USE, str):
+            if USE.startswith(REGEX_PREFIX):
+                for cand in el_fileSec.findall('mets:fileGrp', NS):
+                    if fullmatch(USE[REGEX_PREFIX_LEN:], cand.get('USE')):
+                        self.remove_file_group(cand, recursive=recursive)
+                return
+            else:
+                el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        else:
+            el_fileGrp = USE
         if el_fileGrp is None:   # pylint: disable=len-as-condition
             raise Exception("No such fileGrp: %s" % USE)
         files = el_fileGrp.findall('mets:file', NS)
-        if len(files) > 0:  # pylint: disable=len-as-condition
+        if files:
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
