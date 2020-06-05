@@ -220,7 +220,7 @@ class OcrdMets(OcrdXmlDocument):
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
-                self.remove_file(f.get('ID'))
+                self.remove_one_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
@@ -256,15 +256,32 @@ class OcrdMets(OcrdXmlDocument):
 
         return mets_file
 
-    def remove_file(self, ID):
+    def remove_file(self, *args, **kwargs):
+        """
+        Delete all files matching the query. Same arguments as ``OcrdMets.find_files``
+        """
+        files = self.find_files(*args, **kwargs)
+        if files:
+            for f in files:
+                self.remove_one_file(f)
+            return files[0] # XXX: cannot return full list for backwards-compatibility
+        raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
+
+    def remove_one_file(self, ID):
         """
         Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
         """
-        log.info("remove_file(%s)" % ID)
-        ocrd_file = self.find_files(ID)
+        log.info("remove_one_file(%s)" % ID)
+        if isinstance(ID, OcrdFile):
+            ocrd_file = ID
+            ID = ocrd_file.ID
+        else:
+            ocrd_file = self.find_files(ID=ID)
+            if ocrd_file:
+                ocrd_file = ocrd_file[0]
+
         if not ocrd_file:
             raise FileNotFoundError("File not found: %s" % ID)
-        ocrd_file = ocrd_file[0]
 
         # Delete the physical page ref
         for fptr in self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
