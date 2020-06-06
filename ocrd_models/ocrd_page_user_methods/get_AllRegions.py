@@ -3,6 +3,7 @@ def _region_class(self, x): # pylint: disable=unused-argument
     return x.__class__.__name__.replace('RegionType', '')
 
 def _get_recursive_regions(self, regions, level, classes=None):
+    from .constants import PAGE_REGION_TYPES  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
     if level == 1:
         # stop recursion, filter classes
         if classes:
@@ -14,9 +15,7 @@ def _get_recursive_regions(self, regions, level, classes=None):
     more_regions = []
     for region in regions:
         more_regions.append([])
-        for class_ in ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image',
-                       'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
-                       'Separator', 'Table', 'Text', 'Unknown']:
+        for class_ in PAGE_REGION_TYPES:
             if class_ == 'Map' and not isinstance(region, PageType): # pylint: disable=undefined-variable
                 # 'Map' is not recursive in 2019 schema
                 continue

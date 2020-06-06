@@ -60,3 +60,9 @@ TAG_PAGE_REGIONREFINDEXED = '{%s}RegionRefIndexed' % NAMESPACES['page']
 TAG_PAGE_TEXTLINE         = '{%s}TextLine' % NAMESPACES['page']
 TAG_PAGE_TEXTEQUIV        = '{%s}TextEquiv' % NAMESPACES['page']
 TAG_PAGE_TEXTREGION       = '{%s}TextRegion' % NAMESPACES['page']
+
+PAGE_REGION_TYPES = [
+    'Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image',
+    'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
+    'Separator', 'Table', 'Text', 'Unknown'
+]

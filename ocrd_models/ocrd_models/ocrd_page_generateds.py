@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Sat Jun  6 14:44:44 2020 by generateDS.py version 2.35.20.
+# Generated Sat Jun  6 15:52:02 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -2855,6 +2855,7 @@ class PageType(GeneratedsSuper):
         return x.__class__.__name__.replace('RegionType', '')
     
     def _get_recursive_regions(self, regions, level, classes=None):
+        from .constants import PAGE_REGION_TYPES  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
         if level == 1:
             # stop recursion, filter classes
             if classes:
@@ -2866,9 +2867,7 @@ class PageType(GeneratedsSuper):
         more_regions = []
         for region in regions:
             more_regions.append([])
-            for class_ in ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image',
-                           'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
-                           'Separator', 'Table', 'Text', 'Unknown']:
+            for class_ in PAGE_REGION_TYPES:
                 if class_ == 'Map' and not isinstance(region, PageType): # pylint: disable=undefined-variable
                     # 'Map' is not recursive in 2019 schema
                     continue
