@@ -96,16 +96,6 @@ print('''%s''')
         self.assertEqual(task.parameter_path, '/path/to/param.json')
         self.assertEqual(str(task), task_str)
 
-    def test_parse_ok_page_id(self):
-        task_str = 'sample-processor -I IN -O OUT -p /path/to/param.json -g PHYS_0001,PHYS_0023'
-        task = ProcessorTask.parse(task_str)
-        self.assertEqual(task.executable, 'ocrd-sample-processor')
-        self.assertEqual(task.input_file_grps, ['IN'])
-        self.assertEqual(task.output_file_grps, ['OUT'])
-        self.assertEqual(task.parameter_path, '/path/to/param.json')
-        self.assertEqual(task.page_ids, ['PHYS_0001', 'PHYS_0023'])
-        self.assertEqual(str(task), task_str)
-
     def test_parse_parameter_none(self):
         task_str = 'sample-processor -I IN -O OUT1,OUT2'
         task = ProcessorTask.parse(task_str)
