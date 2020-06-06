@@ -204,7 +204,7 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_file_group(self, USE, recursive=False):
         """
-        Remove a fileGrp (fixed USE) or fileGrps (USE regex)
+        Remove a fileGrp (fixed ``USE``) or fileGrps (regex ``USE``)
 
         Arguments:
             USE (string): USE attribute of the fileGrp to delete. Can be a regex if prefixed with //
@@ -274,7 +274,10 @@ class OcrdMets(OcrdXmlDocument):
         if files:
             for f in files:
                 self.remove_one_file(f)
-            return files[0] # XXX: cannot return full list for backwards-compatibility
+            if len(files) > 1:
+                return files
+            else:
+                return files[0] # for backwards-compatibility
         raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
 
     def remove_one_file(self, ID):
