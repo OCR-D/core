@@ -91,7 +91,7 @@ def _add_method(class_re, method_name, file_name=None):
         file_name = method_name
     with codecs.open(join(dirname(__file__), 'ocrd_page_user_methods', '%s.py' % file_name)) as f:
         for line in f.readlines():
-            source.append('    %s' % line if line else line)
+            source.append('    %s' % line.replace('%', '%%') if line else line)
     return MethodSpec(name=method_name, class_names=class_re, source=''.join(source))
 
 #
