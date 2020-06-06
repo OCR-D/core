@@ -167,6 +167,13 @@ class TestWorkspace(TestCase):
             workspace.remove_file_group('OCR-D-IMG', recursive=True)
             self.assertFalse(exists(join(tempdir, 'OCR-D-IMG')))
 
+    def test_remove_file_page_recursive(self):
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
+            ws = Workspace(self.resolver, directory=tempdir)
+            self.assertEqual(len(ws.mets.find_files()), 119)
+            ws.remove_file('OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001', page_recursive=True)
+            self.assertEqual(len(ws.mets.find_files()), 82)
+
     def test_download_to_directory_from_workspace_download_file(self):
         """
         https://github.com/OCR-D/core/issues/342

@@ -65,10 +65,10 @@ def ocrd_cli_wrap_processor(
                     for page_id in kwargs['page_id'].split(','):
                         LOG.debug("Removing files in output file group %s with page ID %s", grp, page_id)
                         for file in workspace.mets.find_files(pageId=page_id, fileGrp=grp):
-                            workspace.remove_file(file, force=True, keep_file=False)
+                            workspace.remove_file(file, force=True, keep_file=False, page_recursive=True)
                 else:
                     LOG.debug("Removing all files in output file group %s ", grp)
-                    workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False)
+                    workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=True)
         if overwrite and 'page_id' in kwargs:
             # If 'overwrite' and 'page_id' were given, it is possible the output
             # file group is not completely empty

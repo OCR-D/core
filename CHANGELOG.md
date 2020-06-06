@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `Workspace.remove_file`: Optional `page_recursive` parameter to remove images linked in PAGE as well, #434, #471
+
 Added:
 
   * `OcrdPage`: `get_AllImagePaths` to list all images referenced in a PcGts, #434, #471
