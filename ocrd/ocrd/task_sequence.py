@@ -18,27 +18,27 @@ class ProcessorTask():
         input_file_grps = []
         output_file_grps = []
         parameter_path = None
+        page_ids = []
         while tokens:
             if tokens[0] == '-I':
-                for grp in tokens[1].split(','):
-                    input_file_grps.append(grp)
-                tokens = tokens[2:]
+                input_file_grps += tokens[1].split(',')
             elif tokens[0] == '-O':
-                for grp in tokens[1].split(','):
-                    output_file_grps.append(grp)
-                tokens = tokens[2:]
+                output_file_grps += tokens[1].split(',')
             elif tokens[0] == '-p':
                 parameter_path = tokens[1]
-                tokens = tokens[2:]
+            elif tokens[0] in ('-g', '--page-id'):
+                page_ids += tokens[1].split(',')
             else:
                 raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
-        return ProcessorTask(executable, input_file_grps, output_file_grps, parameter_path)
+            tokens = tokens[2:]
+        return ProcessorTask(executable, input_file_grps, output_file_grps, parameter_path, page_ids)
 
-    def __init__(self, executable, input_file_grps, output_file_grps, parameter_path=None):
+    def __init__(self, executable, input_file_grps, output_file_grps, parameter_path=None, page_ids=None):
         self.executable = executable
         self.input_file_grps = input_file_grps
         self.output_file_grps = output_file_grps
         self.parameter_path = parameter_path
+        self.page_ids = page_ids
         self._ocrd_tool_json = None
 
     @property
@@ -72,6 +72,8 @@ class ProcessorTask():
             ','.join(self.output_file_grps))
         if self.parameter_path:
             ret += ' -p %s' % self.parameter_path
+        if self.page_ids:
+            ret += ' -g %s' % ','.join(self.page_ids)
         return ret
 
 def validate_tasks(tasks, workspace):

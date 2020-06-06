@@ -11,6 +11,7 @@ Changed:
   * `Workspace.remove_file`: Optional `page_same_gropup` parameter to remove
     only those images linked in PAGE that are in the same group as the PAGE-XML
   * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
+  * `TaskSequence.Task` can have a `-g`/`--page-id` attribute in addition to input/output file group and parameters
 
 Added:
 
