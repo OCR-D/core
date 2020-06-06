@@ -34,9 +34,8 @@ from ocrd_utils import (
     xywh_from_polygon,
     pushd_popd,
 
-    MIME_TO_EXT,
-    EXT_TO_MIME,
-
+    MIME_TO_EXT, EXT_TO_MIME,
+    MIME_TO_PIL, PIL_TO_MIME,
 )
 from ocrd_models.utils import xmllint_format
 
@@ -185,6 +184,9 @@ class TestUtils(TestCase):
         self.assertEqual(parse_json_string_or_file(' '), {})
         self.assertEqual(parse_json_string_or_file('{}'), {})
         self.assertEqual(parse_json_string_or_file('{"foo": 32}'), {'foo': 32})
+        self.assertEqual(parse_json_string_or_file(
+          '{"dpi": -1, "textequiv_level": "word", "overwrite_words": false, "raw_lines": false, "char_whitelist": "", "char_blacklist": "", "char_unblacklist": ""}'
+        ), {"dpi": -1, "textequiv_level": "word", "overwrite_words": False, "raw_lines": False, "char_whitelist": "", "char_blacklist": "", "char_unblacklist": ""})
 
     def test_parameter_file(self):
         """
@@ -205,8 +207,10 @@ class TestUtils(TestCase):
             parse_json_string_or_file('[}')
 
     def test_mime_ext(self):
-        self.assertEquals(MIME_TO_EXT['image/jp2'], '.jp2')
-        self.assertEquals(EXT_TO_MIME['.jp2'], 'image/jp2')
+        self.assertEqual(MIME_TO_EXT['image/jp2'], '.jp2')
+        self.assertEqual(EXT_TO_MIME['.jp2'], 'image/jp2')
+        self.assertEqual(MIME_TO_PIL['image/jp2'], 'JP2')
+        self.assertEqual(PIL_TO_MIME['JP2'], 'image/jp2')
 
 
 if __name__ == '__main__':

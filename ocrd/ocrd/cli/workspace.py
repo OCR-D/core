@@ -3,13 +3,11 @@ from os.path import relpath, exists
 from pathlib import Path
 import sys
 import re
-from tempfile import mkdtemp
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd_utils import getLogger, pushd_popd
-from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
 
@@ -141,29 +139,27 @@ def workspace_create(ctx, clobber_mets, directory):
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
 @click.option('-g', '--page-id', help="ID of the physical page")
 @click.option('--force', help="If file with ID already exists, replace it", default=False, is_flag=True)
-@click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
+@click.argument('fname', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_filename):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, fname):
     """
-    Add a file LOCAL_FILENAME to METS in a workspace.
+    Add a file FNAME to METS in a workspace.
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
-    #  log.warning(ctx.directory)
-    #  log.error(local_filename)
-    if not local_filename.startswith(ctx.directory):
-        log.debug("File '%s' is not in workspace, copying", local_filename)
-        local_filename = ctx.resolver.download_to_directory(ctx.directory, local_filename, subdir=file_grp)
-    local_filename = relpath(local_filename, ctx.directory)
+    if not fname.startswith(ctx.directory):
+        log.debug("File '%s' is not in workspace, copying", fname)
+        fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
+    fname = relpath(fname, ctx.directory)
 
     workspace.mets.add_file(
         fileGrp=file_grp,
         ID=file_id,
         mimetype=mimetype,
-        url=local_filename,
+        url=fname,
         pageId=page_id,
         force=force,
-        local_filename=local_filename
+        local_filename=fname
     )
     workspace.save_mets()
 
@@ -244,6 +240,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     """
     Find files.
     """
+    modified_mets = False
+    ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for f in workspace.mets.find_files(
             ID=file_id,
@@ -253,9 +251,19 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         ):
         if download and not f.local_filename:
             workspace.download_file(f)
-            workspace.save_mets()
-        ret = '\t'.join([getattr(f, field) or '' for field in output_field])
-        print(ret)
+            modified_mets = True
+        ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
+                    for field in output_field])
+    if modified_mets:
+        workspace.save_mets()
+    if 'pageId' in output_field:
+        idx = output_field.index('pageId')
+        fileIds = list(map(lambda fields: fields[idx], ret))
+        pages = workspace.mets.get_physical_pages(for_fileIds=fileIds)
+        for fields, page in zip(ret, pages):
+            fields[idx] = page or ''
+    for fields in ret:
+        print('\t'.join(fields))
 
 # ----------------------------------------------------------------------
 # ocrd workspace remove

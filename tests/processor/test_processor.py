@@ -31,7 +31,7 @@ class DummyProcessor(Processor):
 class IncompleteProcessor(Processor):
     pass
 
-class TestResolver(TestCase):
+class TestProcessor(TestCase):
 
     def setUp(self):
         self.resolver = Resolver()

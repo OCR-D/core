@@ -1,8 +1,9 @@
 import os
 import json
 from click import wrap_text
+from time import time
 import subprocess
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, VERSION as OCRD_VERSION
 from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
@@ -53,8 +54,18 @@ def run_processor(
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
+    logProfile = getLogger('ocrd.process.profile')
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
+    t0 = time()
     processor.process()
+    t1 = time() - t0
+    logProfile.info("Executing processor '%s' took %fs [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s']" % (
+        ocrd_tool['executable'],
+        t1,
+        input_file_grp if input_file_grp else '',
+        output_file_grp if output_file_grp else '',
+        json.dumps(parameter) if parameter else {}
+    ))
     workspace.mets.add_agent(
         name=name,
         _type='OTHER',
@@ -139,7 +150,7 @@ Default Wiring:
     ocrd_tool['executable'],
     ocrd_tool['description'],
     parameter_help,
-    ocrd_tool['input_file_grp'],
+    ocrd_tool.get('input_file_grp', 'NONE'),
     ocrd_tool.get('output_file_grp', 'NONE')
 )
 
@@ -160,6 +171,7 @@ class Processor():
             output_file_grp="OUTPUT",
             page_id=None,
             show_help=False,
+            show_version=False,
             dump_json=False,
             version=None
     ):
@@ -173,6 +185,9 @@ class Processor():
             self.show_help()
             return
         self.version = version
+        if show_version:
+            self.show_version()
+            return
         self.workspace = workspace
         # FIXME HACK would be better to use pushd_popd(self.workspace.directory)
         # but there is no way to do that in process here since it's an
@@ -190,6 +205,9 @@ class Processor():
 
     def show_help(self):
         print(generate_processor_help(self.ocrd_tool))
+
+    def show_version(self):
+        print("Version %s, ocrd/core %s" % (self.version, OCRD_VERSION))
 
     def verify(self):
         """

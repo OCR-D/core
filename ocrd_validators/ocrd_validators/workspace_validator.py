@@ -257,7 +257,7 @@ class WorkspaceValidator():
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
             self.workspace.download_file(ocrd_file)
             page_report = PageValidator.validate(ocrd_file=ocrd_file,
-                                                 strictness=self.page_strictness,
+                                                 page_textequiv_consistency=self.page_strictness,
                                                  check_coords=self.page_coordinate_consistency in ['poly', 'both'],
                                                  check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
             self.report.merge_report(page_report)

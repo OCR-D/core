@@ -77,12 +77,23 @@ uninstall:
 	for mod in $(BUILD_ORDER);do pip uninstall -y $$mod;done
 
 # Regenerate python code from PAGE XSD
+generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
+generate-page: GDS_PAGE_USER = ocrd_models/ocrd_page_user_methods.py
 generate-page: repo/assets
 	generateDS \
 		-f \
 		--root-element='PcGts' \
-		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
+		-o $(GDS_PAGE) \
+		--disable-generatedssuper-lookup \
+		--user-methods=$(GDS_PAGE_USER) \
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
+	# hack to prevent #451: enum keys will be strings
+	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
+	# hack to ensure output has pc: prefix
+	@#sed -i "s/namespaceprefix_=''/namespaceprefix_='pc:'/" $(GDS_PAGE)
+	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
+	# hack to ensure child nodes also have pc: prefix...
+	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
 
 #
 # Repos
@@ -132,7 +143,8 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	$(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
+	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR) -k TestLogging
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)

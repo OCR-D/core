@@ -409,7 +409,7 @@ def transpose_image(image, method):
       columns become rows (but counted from the bottom),
       i.e. all pixels get mirrored at the opposite diagonal;
       width becomes height and vice versa
- 
+    
     Return a new PIL.Image.
     """
     LOG.debug('transposing image with %s', membername(Image, method))
@@ -799,6 +799,8 @@ def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
             with open(value, 'r') as f:
                 ret = json.load(f)
         except FileNotFoundError:
+            ret = json.loads(value.strip())
+        except OSError:
             ret = json.loads(value.strip())
         if not isinstance(ret, dict):
             err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, ret))
