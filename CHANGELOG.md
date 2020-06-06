@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.8.1] - 2020-06-06
+
 Changed:
 
   * `OcrdMets.remove_file` now supports all the options of `OcrdMets.find_files`, #497, #458
@@ -877,6 +879,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.8.1]: ../../compare/v2.8.1...v2.8.0
 [2.8.0]: ../../compare/v2.8.0...v2.7.1
 [2.7.1]: ../../compare/v2.7.1...v2.7.0
 [2.7.0]: ../../compare/v2.7.0...v2.6.1
