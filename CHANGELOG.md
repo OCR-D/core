@@ -5,6 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `OcrdMets.remove_file` now supports all the options of `OcrdMets.find_files`, #497, #458
+  * `OcrdMets.remove_file_group` now supports the `USE` param being a regex,, #497, #458
+
+Added:
+
+  * `OcrdMets.remove_one_file`: remove a single `OcrdFile`, either directly or by ID, #497, #458
+
 ## [2.8.0] - 2020-06-04
 
 Added:
