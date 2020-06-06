@@ -82,6 +82,7 @@ def run_cli(
         resolver=None,
         workspace=None,
         page_id=None,
+        overwrite=None,
         log_level=None,
         input_file_grp=None,
         output_file_grp=None,
@@ -104,6 +105,8 @@ def run_cli(
         args += ['--output-file-grp', output_file_grp]
     if parameter:
         args += ['--parameter', parameter]
+    if overwrite:
+        args += ['--overwrite', overwrite]
     log.debug("Running subprocess '%s'", ' '.join(args))
     return subprocess.call(args)
 

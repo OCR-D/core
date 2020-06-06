@@ -14,6 +14,7 @@ Changed:
   * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
     output file group is targeted but for pages that aren't in that group, #471
   * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
+  * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
 
 Added:
 
