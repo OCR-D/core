@@ -5,6 +5,35 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.8.1] - 2020-06-06
+
+Changed:
+
+  * `OcrdMets.remove_file` now supports all the options of `OcrdMets.find_files`, #497, #458
+  * `OcrdMets.remove_file_group` now supports the `USE` param being a regex,, #497, #458
+
+Added:
+
+  * `OcrdMets.remove_one_file`: remove a single `OcrdFile`, either directly or by ID, #497, #458
+
+## [2.8.0] - 2020-06-04
+
+Added:
+
+  * `ocrd-dummy`, a minimal processor that copies input to output, #468
+  * OcrdPage: `get_AllRegions`: retrieve all regions, sorted by document or reading order, #479
+  * OcrdPage: `sort_AllIndexed`: sort all children by `@index`  in-place
+  * OcrdPage: `clear_AllIndexed`: clear all `@index` children
+  * OcrdPage: `extend_AllIndexed`: Add elements with incrementing `@index`
+  * OcrdPage: Replace empty reading order groups with equivalent `RegionRef` on export
+  * OcrdPage: `get_UnorderedGroupChildren`: get reading order elements of an `UnorderedGroup`
+
+
+Changed:
+
+  * OcrdPage: `get_AllIndexed`: allow filtering by child type
+  * OcrdPage: `get_AllIndexed`: index_sort parameter to enable/disable sorting
+
 ## [2.7.1] - 2020-05-27
 
 Fixed:
@@ -850,6 +879,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.8.1]: ../../compare/v2.8.1...v2.8.0
+[2.8.0]: ../../compare/v2.8.0...v2.7.1
 [2.7.1]: ../../compare/v2.7.1...v2.7.0
 [2.7.0]: ../../compare/v2.7.0...v2.6.1
 [2.6.1]: ../../compare/v2.6.1...v2.6.0

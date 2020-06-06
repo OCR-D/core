@@ -3,6 +3,8 @@
 # source: https://bitbucket.org/dkuhlman/generateds/src/default/gends_user_methods.py
 
 import re
+import codecs
+from os.path import dirname, join
 
 #
 # You must include the following class definition at the top of
@@ -80,94 +82,29 @@ class MethodSpec():
 #   generated superclass file and also section "User Methods" in
 #   the documentation, as well as the examples below.
 
-#
-# Replace the following method specifications with your own.
+def _add_method(class_re, method_name):
+    """
+    Loads a file ./ocrd_page_user_methods/{{ method_name }}.py and defines a MethodSpec applying to class_re
+    """
+    source = []
+    with codecs.open(join(dirname(__file__), 'ocrd_page_user_methods', '%s.py' % method_name)) as f:
+        for line in f.readlines():
+            source.append('    %s' % line if line else line)
+    return MethodSpec(name=method_name, class_names=class_re, source=''.join(source))
 
-#
-# List all *Indexed children sorted by @index
-#
-get_AllIndexed = MethodSpec(name='get_AllIndexed',
-    source=r'''
-    def get_AllIndexed(self):
-        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) ''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
-
-#
-# Clear all *Indexed children sorted by @index
-#
-clear_AllIndexed = MethodSpec(name='clear_AllIndexed',
-    source=r'''
-    def clear_AllIndexed(self):
-        ret = self.get_AllIndexed()
-        self.set_RegionRefIndexed([])
-        self.set_OrderedGroupIndexed([])
-        self.set_UnorderedGroupIndexed([])
-        return ret
-''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
-
-#
-# Add all *Indexed children sorted by @index
-#
-add_AllIndexed = MethodSpec(name='add_AllIndexed',
-    source=r'''
-    def add_AllIndexed(self, elements):
-        if not isinstance(elements, list):
-            elements = [elements]
-        for element in sorted(elements, key=lambda x : x.index):
-            if isinstance(element, RegionRefIndexedType):
-                self.add_RegionRefIndexed(element)
-            elif isinstance(element, OrderedGroupIndexedType):
-                self.add_OrderedGroupIndexed(element)
-            elif isinstance(element, UnorderedGroupIndexedType):
-                self.add_UnorderedGroupIndexed(element)
-        return self.get_AllIndexed()
-''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
-
-
-#
-# export children sorted by index of the childelement
-#
-exportChildren = MethodSpec(name='exportChildren',
-    source=r'''
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        eol_ = '\n' if pretty_print else ''
-        namespaceprefix_ = 'pc:'
-        if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
-        for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        cleaned = []
-        # remove emtpy groups and replace with RegionRefIndexedType
-        for entry in self.get_AllIndexed():
-            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
-                rri = RegionRefIndexedType.factory(parent_object_=self)
-                rri.index = entry.index
-                rri.regionRef = entry.regionRef
-                cleaned.append(rri)
-            else:
-                cleaned.append(entry)
-        for entry in cleaned:
-            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
-''', class_names=r'^(OrderedGroupType|OrderedGroupIndexedType)$')
-#
-# Hash by memory adress/id()
-#
-hash_by_id = MethodSpec(name='hash',
-    source='''\
-    def __hash__(self):
-        return hash(self.id)
-''',
-    class_names=r'^.*$',
-    )
 #
 # Provide a list of your method specifications.
 #   This list of specifications must be named METHOD_SPECS.
 #
 METHOD_SPECS = (
-    hash_by_id,
-    exportChildren,
-    get_AllIndexed,
-    add_AllIndexed,
-    clear_AllIndexed,
+    _add_method(r'^.*$', '__hash__'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'get_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'clear_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'extend_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'sort_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren'),
+    _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
+    _add_method(r'^(PageType)$', 'get_AllRegions'),
     )
 
 

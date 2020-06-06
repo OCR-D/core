@@ -178,10 +178,25 @@ class TestOcrdMets(TestCase):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
             self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
-            mets.remove_file('FILE_0005_IMAGE')
+            mets.remove_one_file('FILE_0005_IMAGE')
             self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002'])
 
-    def test_remove_file_group(self):
+    def test_remove_file_ocrdfile(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
+            ocrd_file = mets.find_files(ID='FILE_0005_IMAGE')[0]
+            mets.remove_one_file(ocrd_file)
+            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002'])
+
+    def test_remove_file_regex(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
+            mets.remove_file('//FILE_0005.*')
+            self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002'])
+
+    def test_remove_file_group0(self):
         """
         Test removal of filegrp
         """
@@ -197,6 +212,18 @@ class TestOcrdMets(TestCase):
             #  print([x for x in before if x not in sorted([x.ID for x in mets.find_files()])])
             self.assertEqual(len(mets.file_groups), 16)
             self.assertEqual(len(mets.find_files()), 33)
+
+    def test_remove_file_group_regex(self):
+        """
+        Test removal of filegrp
+        """
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(len(mets.file_groups), 17)
+            self.assertEqual(len(mets.find_files()), 35)
+            mets.remove_file_group('//OCR-D-GT-.*', recursive=True)
+            self.assertEqual(len(mets.file_groups), 15)
+            self.assertEqual(len(mets.find_files()), 31)
 
 if __name__ == '__main__':
     main()

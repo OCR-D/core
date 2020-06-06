@@ -3,6 +3,7 @@ API to METS
 """
 from datetime import datetime
 from re import fullmatch
+from lxml import etree as ET
 
 from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX
 
@@ -26,6 +27,7 @@ from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
 log = getLogger('ocrd_models.ocrd_mets')
+REGEX_PREFIX_LEN = len(REGEX_PREFIX)
 
 class OcrdMets(OcrdXmlDocument):
     """
@@ -136,7 +138,6 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
-        REGEX_PREFIX_LEN = len(REGEX_PREFIX)
         if pageId:
             if pageId.startswith(REGEX_PREFIX):
                 raise Exception("find_files does not support regex search for pageId")
@@ -203,24 +204,33 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_file_group(self, USE, recursive=False):
         """
-        Remove a fileGrp.
+        Remove a fileGrp (fixed ``USE``) or fileGrps (regex ``USE``)
 
         Arguments:
-            USE (string): USE attribute of the fileGrp to delete
+            USE (string): USE attribute of the fileGrp to delete. Can be a regex if prefixed with //
             recursive (boolean): Whether to recursively delete all files in the group
         """
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             raise Exception("No fileSec!")
-        el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        if isinstance(USE, str):
+            if USE.startswith(REGEX_PREFIX):
+                for cand in el_fileSec.findall('mets:fileGrp', NS):
+                    if fullmatch(USE[REGEX_PREFIX_LEN:], cand.get('USE')):
+                        self.remove_file_group(cand, recursive=recursive)
+                return
+            else:
+                el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        else:
+            el_fileGrp = USE
         if el_fileGrp is None:   # pylint: disable=len-as-condition
             raise Exception("No such fileGrp: %s" % USE)
         files = el_fileGrp.findall('mets:file', NS)
-        if len(files) > 0:  # pylint: disable=len-as-condition
+        if files:
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
-                self.remove_file(f.get('ID'))
+                self.remove_one_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
@@ -256,15 +266,35 @@ class OcrdMets(OcrdXmlDocument):
 
         return mets_file
 
-    def remove_file(self, ID):
+    def remove_file(self, *args, **kwargs):
+        """
+        Delete all files matching the query. Same arguments as ``OcrdMets.find_files``
+        """
+        files = self.find_files(*args, **kwargs)
+        if files:
+            for f in files:
+                self.remove_one_file(f)
+            if len(files) > 1:
+                return files
+            else:
+                return files[0] # for backwards-compatibility
+        raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
+
+    def remove_one_file(self, ID):
         """
         Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
         """
-        log.info("remove_file(%s)" % ID)
-        ocrd_file = self.find_files(ID)
+        log.info("remove_one_file(%s)" % ID)
+        if isinstance(ID, OcrdFile):
+            ocrd_file = ID
+            ID = ocrd_file.ID
+        else:
+            ocrd_file = self.find_files(ID=ID)
+            if ocrd_file:
+                ocrd_file = ocrd_file[0]
+
         if not ocrd_file:
             raise FileNotFoundError("File not found: %s" % ID)
-        ocrd_file = ocrd_file[0]
 
         # Delete the physical page ref
         for fptr in self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):

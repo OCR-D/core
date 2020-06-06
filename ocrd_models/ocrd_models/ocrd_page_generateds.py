@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed May 13 16:09:07 2020 by generateDS.py version 2.35.20.
-# Python 3.7.6 (default, Jan  8 2020, 19:59:22)  [GCC 7.3.0]
+# Generated Fri May 29 23:29:23 2020 by generateDS.py version 2.35.20.
+# Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -16,7 +16,7 @@
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /home/kba/miniconda3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
+#   /home/kba/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -2850,6 +2850,92 @@ class PageType(GeneratedsSuper):
             obj_.original_tagname_ = 'CustomRegion'
     def __hash__(self):
         return hash(self.id)
+    # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
+    def _region_class(self, x): # pylint: disable=unused-argument
+        return x.__class__.__name__.replace('RegionType', '')
+    
+    def _get_recursive_regions(self, regions, level, classes=None):
+        if level == 1:
+            # stop recursion, filter classes
+            if classes:
+                return [r for r in regions if self._region_class(r) in classes]
+            if regions and regions[0].__class__.__name__ == 'PageType':
+                regions = regions[1:]
+            return regions
+        # find more regions recursively
+        more_regions = []
+        for region in regions:
+            more_regions.append([])
+            for class_ in ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image',
+                           'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
+                           'Separator', 'Table', 'Text', 'Unknown']:
+                if class_ == 'Map' and not isinstance(region, PageType): # pylint: disable=undefined-variable
+                    # 'Map' is not recursive in 2019 schema
+                    continue
+                more_regions[-1] += getattr(region, 'get_{}Region'.format(class_))()
+        if not any(more_regions):
+            return self._get_recursive_regions(regions, 1, classes)
+        ret = []
+        for r, more in zip(regions, more_regions):
+            ret.append(r)
+            ret += self._get_recursive_regions(more, level - 1 if level else 0, classes)
+        return self._get_recursive_regions(ret, 1, classes)
+    
+    def _get_recursive_reading_order(self, rogroup):
+        if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)): # pylint: disable=undefined-variable
+            elements = rogroup.get_AllIndexed()
+        if isinstance(rogroup, (UnorderedGroupType, UnorderedGroupIndexedType)): # pylint: disable=undefined-variable
+            elements = (rogroup.get_RegionRef() + rogroup.get_OrderedGroup() + rogroup.get_UnorderedGroup())
+        regionrefs = list()
+        for elem in elements:
+            regionrefs.append(elem.get_regionRef())
+            if not isinstance(elem, (RegionRefType, RegionRefIndexedType)): # pylint: disable=undefined-variable
+                regionrefs.extend(self._get_recursive_reading_order(elem))
+        return regionrefs
+    
+    def get_AllRegions(self, classes=None, order='document', depth=0):
+        """
+        Get all the *Region element or only those provided by ``classes``.
+        Returned in document order unless ``order`` is ``reading-order``
+        Arguments:
+            classes (list) Classes of regions that shall be returned, e.g. ``['Text', 'Image']``
+            order ("document"|"reading-order"|"reading-order-only") Whether to
+                return regions sorted by document order (``document``, default) or by
+                reading order with regions not in the reading order at the end of the
+                returned list (``reading-order``) or regions not in the reading order
+                omitted (``reading-order-only``)
+            depth (int) Recursive depth to look for regions at, set to `0` for all regions at any depth. Default: 0
+    
+        For example, to get all text anywhere on the page in reading order, use:
+        ::
+            '\\n'.join(line.get_TextEquiv()[0].Unicode
+                      for region in page.get_AllRegions(classes=['Text'], depth=0, order='reading-order')
+                      for line in region.get_TextLine())
+        """
+        if order not in ['document', 'reading-order', 'reading-order-only']:
+            raise Exception("Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not '{}'".format(order))
+        if depth < 0:
+            raise Exception("Argument 'depth' must be an integer greater-or-equal 0, not '{}'".format(depth))
+        ret = self._get_recursive_regions([self], depth + 1 if depth else 0, classes)
+        if order.startswith('reading-order'):
+            reading_order = self.get_ReadingOrder()
+            if reading_order:
+                reading_order = reading_order.get_OrderedGroup() or reading_order.get_UnorderedGroup()
+            if reading_order:
+                reading_order = self._get_recursive_reading_order(reading_order)
+            if reading_order:
+                id2region = {region.id: region for region in ret}
+                in_reading_order = [id2region[region_id] for region_id in reading_order if region_id in id2region]
+                #  print("ret: {} / in_ro: {} / not-in-ro: {}".format(
+                #      len(ret),
+                #      len([id2region[region_id] for region_id in reading_order if region_id in id2region]),
+                #      len([r for r in ret if r not in in_reading_order])
+                #      ))
+                if order == 'reading-order-only':
+                    ret = in_reading_order
+                else:
+                    ret = in_reading_order + [r for r in ret if r not in in_reading_order]
+        return ret
 # end class PageType
 
 
@@ -5347,47 +5433,97 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
-
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        eol_ = '\n' if pretty_print else ''
-        namespaceprefix_ = 'pc:'
-        if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
-        for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        cleaned = []
-        # remove emtpy groups and replace with RegionRefIndexedType
-        for entry in self.get_AllIndexed():
-            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
-                rri = RegionRefIndexedType.factory(parent_object_=self)
-                rri.index = entry.index
-                rri.regionRef = entry.regionRef
-                cleaned.append(rri)
-            else:
-                cleaned.append(entry)
-        for entry in cleaned:
-            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
-
-    def get_AllIndexed(self):
-        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) 
-    def add_AllIndexed(self, elements):
-        if not isinstance(elements, list):
-            elements = [elements]
-        for element in sorted(elements, key=lambda x : x.index):
-            if isinstance(element, RegionRefIndexedType):
-                self.add_RegionRefIndexed(element)
-            elif isinstance(element, OrderedGroupIndexedType):
-                self.add_OrderedGroupIndexed(element)
-            elif isinstance(element, UnorderedGroupIndexedType):
-                self.add_UnorderedGroupIndexed(element)
-        return self.get_AllIndexed()
-
+    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
+    def get_AllIndexed(self, classes=None, index_sort=True):
+        """
+        Get all indexed children sorted by their ``@index``.
+    
+        Arguments:
+            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            index_sort (boolean): Whether to sort by ``@index``
+        """
+        if not classes:
+            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        ret = []
+        for class_ in classes:
+            ret += getattr(self, 'get_{}Indexed'.format(class_))()
+        if index_sort:
+            return sorted(ret, key=lambda x: x.index)
+        return ret
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
         self.set_RegionRefIndexed([])
         self.set_OrderedGroupIndexed([])
         self.set_UnorderedGroupIndexed([])
         return ret
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def extend_AllIndexed(self, elements, validate_continuity=False):
+        """
+        Add all elements in list ``elements``, respecting ``@index`` order.
+        """
+        if not isinstance(elements, list):
+            elements = [elements]
+        siblings = self.get_AllIndexed()
+        highest_sibling_index = siblings[-1].index if siblings else -1
+        if validate_continuity:
+            elements = sorted(elements, key=lambda x: x.index)
+            lowest_element_index = elements[0].index
+            if lowest_element_index <= highest_sibling_index:
+                raise Exception("@index already used: {}".format(lowest_element_index))
+        else:
+            for element in elements:
+                highest_sibling_index += 1
+                element.index = highest_sibling_index
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def sort_AllIndexed(self, validate_uniqueness=True):
+        """
+        Sort all indexed children in-place.
+        """
+        elements = self.get_AllIndexed(index_sort=True)
+        self.clear_AllIndexed()
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
+        namespaceprefix_ = 'pc:'
+        if self.UserDefined is not None:
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        def replaceWithRRI(group):
+            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+            rri.index = group.index
+            rri.regionRef = group.regionRef
+            cleaned.append(rri)
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            # pylint: disable=undefined-variable
+            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                replaceWithRRI(entry)
+            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+                replaceWithRRI(entry)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
 # end class OrderedGroupIndexedType
 
 
@@ -5724,6 +5860,13 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
         return hash(self.id)
+    def get_UnorderedGroupChildren(self):
+        """
+        List all non-metadata children of an UnorderedGroup
+        """
+        # TODO: should not change order
+        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
+    
 # end class UnorderedGroupIndexedType
 
 
@@ -6136,47 +6279,97 @@ class OrderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
-
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        eol_ = '\n' if pretty_print else ''
-        namespaceprefix_ = 'pc:'
-        if self.UserDefined is not None:
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
-        for Labels_ in self.Labels:
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        cleaned = []
-        # remove emtpy groups and replace with RegionRefIndexedType
-        for entry in self.get_AllIndexed():
-            if isinstance(entry, (UnorderedGroupIndexedType, OrderedGroupIndexedType)) and not entry.get_AllIndexed():
-                rri = RegionRefIndexedType.factory(parent_object_=self)
-                rri.index = entry.index
-                rri.regionRef = entry.regionRef
-                cleaned.append(rri)
-            else:
-                cleaned.append(entry)
-        for entry in cleaned:
-            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
-
-    def get_AllIndexed(self):
-        return sorted(self.get_RegionRefIndexed() + self.get_OrderedGroupIndexed() + self.get_UnorderedGroupIndexed(), key=lambda x : x.index) 
-    def add_AllIndexed(self, elements):
-        if not isinstance(elements, list):
-            elements = [elements]
-        for element in sorted(elements, key=lambda x : x.index):
-            if isinstance(element, RegionRefIndexedType):
-                self.add_RegionRefIndexed(element)
-            elif isinstance(element, OrderedGroupIndexedType):
-                self.add_OrderedGroupIndexed(element)
-            elif isinstance(element, UnorderedGroupIndexedType):
-                self.add_UnorderedGroupIndexed(element)
-        return self.get_AllIndexed()
-
+    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
+    def get_AllIndexed(self, classes=None, index_sort=True):
+        """
+        Get all indexed children sorted by their ``@index``.
+    
+        Arguments:
+            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            index_sort (boolean): Whether to sort by ``@index``
+        """
+        if not classes:
+            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        ret = []
+        for class_ in classes:
+            ret += getattr(self, 'get_{}Indexed'.format(class_))()
+        if index_sort:
+            return sorted(ret, key=lambda x: x.index)
+        return ret
     def clear_AllIndexed(self):
         ret = self.get_AllIndexed()
         self.set_RegionRefIndexed([])
         self.set_OrderedGroupIndexed([])
         self.set_UnorderedGroupIndexed([])
         return ret
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def extend_AllIndexed(self, elements, validate_continuity=False):
+        """
+        Add all elements in list ``elements``, respecting ``@index`` order.
+        """
+        if not isinstance(elements, list):
+            elements = [elements]
+        siblings = self.get_AllIndexed()
+        highest_sibling_index = siblings[-1].index if siblings else -1
+        if validate_continuity:
+            elements = sorted(elements, key=lambda x: x.index)
+            lowest_element_index = elements[0].index
+            if lowest_element_index <= highest_sibling_index:
+                raise Exception("@index already used: {}".format(lowest_element_index))
+        else:
+            for element in elements:
+                highest_sibling_index += 1
+                element.index = highest_sibling_index
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def sort_AllIndexed(self, validate_uniqueness=True):
+        """
+        Sort all indexed children in-place.
+        """
+        elements = self.get_AllIndexed(index_sort=True)
+        self.clear_AllIndexed()
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
+        namespaceprefix_ = 'pc:'
+        if self.UserDefined is not None:
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        def replaceWithRRI(group):
+            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+            rri.index = group.index
+            rri.regionRef = group.regionRef
+            cleaned.append(rri)
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            # pylint: disable=undefined-variable
+            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                replaceWithRRI(entry)
+            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+                replaceWithRRI(entry)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
 # end class OrderedGroupType
 
 
@@ -6497,6 +6690,13 @@ class UnorderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
         return hash(self.id)
+    def get_UnorderedGroupChildren(self):
+        """
+        List all non-metadata children of an UnorderedGroup
+        """
+        # TODO: should not change order
+        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
+    
 # end class UnorderedGroupType
 
 
