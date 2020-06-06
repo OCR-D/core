@@ -2,6 +2,7 @@
 Constants for ocrd_models.
 """
 from pkg_resources import resource_string
+import re
 
 __all__ = [
     'IDENTIFIER_PRIORITY',
@@ -24,8 +25,11 @@ __all__ = [
     'TAG_PAGE_REGIONREFINDEXED',
     'TAG_PAGE_TEXTLINE',
     'TAG_PAGE_TEXTEQUIV',
-    'TAG_PAGE_TEXTREGION'
+    'TAG_PAGE_TEXTREGION',
+    'REGEX_FILE_ID',
 ]
+
+REGEX_FILE_ID = re.compile('^[A-Za-z][^:]*$')
 
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 

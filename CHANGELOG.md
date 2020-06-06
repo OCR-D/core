@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `OcrdMets.add_file` now validates file ID syntax, #447
+
+
 ## [2.8.1] - 2020-06-06
 
 Changed:
