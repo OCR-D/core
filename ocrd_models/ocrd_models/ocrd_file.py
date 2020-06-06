@@ -17,7 +17,7 @@ class OcrdFile():
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, loctype='OTHER', instance=None, local_filename=None, mets=None, url=None):
+    def __init__(self, el, mimetype=None, loctype='OTHER', instance=None, local_filename=None, mets=None, url=None, ID=None):
         """
         Args:
             el (LxmlElement):
@@ -34,6 +34,7 @@ class OcrdFile():
         self._instance = instance
         self.mets = mets
         self.loctype = loctype
+        self.ID = ID
 
         if url:
             self.url = url
