@@ -4,6 +4,7 @@ from ocrd_utils import MIMETYPE_PAGE
 from ocrd_models import OcrdFile
 from ocrd_modelfactory import (
     exif_from_filename,
+    page_from_image,
     page_from_file
 )
 
@@ -21,6 +22,7 @@ class TestModelFactory(TestCase):
         f = OcrdFile(None, mimetype='image/tiff', local_filename=SAMPLE_IMG, ID='file1')
         self.assertEqual(f.mimetype, 'image/tiff')
         p = page_from_file(f)
+        self.assertEqual(p.pcGtsId, f.ID)
         self.assertEqual(p.get_Page().imageWidth, 1457)
 
     def test_page_from_file_page(self):

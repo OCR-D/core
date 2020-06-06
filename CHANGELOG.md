@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * `OcrdFile` constructor accepts `ID` parameter
+  * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
 
 ## [2.8.1] - 2020-06-06
 
