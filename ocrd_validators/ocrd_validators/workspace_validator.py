@@ -25,10 +25,16 @@ class WorkspaceValidator():
     """
 
     @staticmethod
-    def check_file_grp(workspace, input_file_grp=None, output_file_grp=None, report=None):
+    def check_file_grp(workspace, input_file_grp=None, output_file_grp=None, page_id=None, report=None):
         """
         Return a report on whether input_file_grp is/are in workspace.mets and output_file_grp is/are not.
         To be run before processing
+
+        Arguments:
+            workspacec (Workspace) the workspace to validate
+            input_file_grp (list|string)  list or comma-separated list of input file groups
+            output_file_grp (list|string) list or comma-separated list of output file groups
+            page_id (list|string) list or comma-separated list of page_ids to write to
         """
         if not report:
             report = ValidationReport()
@@ -36,8 +42,10 @@ class WorkspaceValidator():
             input_file_grp = input_file_grp.split(',')
         if isinstance(output_file_grp, str):
             output_file_grp = output_file_grp.split(',')
+        if page_id and isinstance(page_id, str):
+            page_id = page_id.split(',')
 
-        log.info("input_file_grp=%s output_file_grp=%s" % (input_file_grp, output_file_grp))
+        log.debug("input_file_grp=%s output_file_grp=%s" % (input_file_grp, output_file_grp))
         if input_file_grp:
             for grp in input_file_grp:
                 if grp not in workspace.mets.file_groups:
@@ -45,7 +53,12 @@ class WorkspaceValidator():
         if output_file_grp:
             for grp in output_file_grp:
                 if grp in workspace.mets.file_groups:
-                    report.add_error("Output fileGrp[@USE='%s'] already in METS!" % grp)
+                    if page_id:
+                        for one_page_id in page_id:
+                            if workspace.mets.find_files(fileGrp=grp, pageId=one_page_id):
+                                report.add_error("Output fileGrp[@USE='%s'] already contains output for page %s" % (grp, one_page_id))
+                    else:
+                        report.add_error("Output fileGrp[@USE='%s'] already in METS!" % grp)
         return report
 
     def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False,

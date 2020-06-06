@@ -12,6 +12,8 @@ Changed:
     only those images linked in PAGE that are in the same group as the PAGE-XML
   * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
   * `TaskSequence.Task` can have a `-g`/`--page-id` attribute in addition to input/output file group and parameters
+  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
+    output file group is targeted but for pages that aren't in that group, #471
 
 Added:
 
