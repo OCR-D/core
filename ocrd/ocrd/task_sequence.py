@@ -57,12 +57,21 @@ class ProcessorTask():
         parameters = {}
         if self.parameter_path:
             parameters = parse_json_string_or_file(self.parameter_path)
+        # make implicit input/output groups explicit by defaulting to what is
+        # provided in ocrd-tool.json
+        # TODO adapt once OCR-D/spec#121 lands
+        actual_output_grps = [*self.ocrd_tool_json['output_file_grp']]
+        for i, grp in enumerate(self.output_file_grps):
+            actual_output_grps[i] = grp
+        self.output_file_grps = actual_output_grps
+        actual_input_grps = [*self.ocrd_tool_json['input_file_grp']]
+        for i, grp in enumerate(self.input_file_grps):
+            actual_input_grps[i] = grp
+        self.input_file_grps = actual_input_grps
         param_validator = ParameterValidator(self.ocrd_tool_json)
         report = param_validator.validate(parameters)
         if not report.is_valid:
             raise Exception(report.errors)
-        if 'output_file_grp' in self.ocrd_tool_json and not self.output_file_grps:
-            raise Exception("Processor requires output_file_grp but none was provided.")
         return report
 
     def __str__(self):
