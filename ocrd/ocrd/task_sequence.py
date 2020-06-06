@@ -83,16 +83,18 @@ class ProcessorTask():
             ret += ' -p %s' % self.parameter_path
         return ret
 
-def validate_tasks(tasks, workspace):
+def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     report = ValidationReport()
     prev_output_file_grps = workspace.mets.file_groups
 
-    # first task: check input/output file groups from METS
-    # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
-    WorkspaceValidator.check_file_grp(workspace, tasks[0].input_file_grps, tasks[0].output_file_grps, report)
+    first_task = tasks.pop(0)
+    first_task.validate()
 
-    prev_output_file_grps += tasks[0].output_file_grps
-    for task in tasks[1:]:
+    # first task: check input/output file groups from METS
+    WorkspaceValidator.check_file_grp(workspace, first_task.input_file_grps, first_task.output_file_grps, page_id, report)
+
+    prev_output_file_grps += first_task.output_file_grps
+    for task in tasks:
         task.validate()
         # check either existing fileGrp or output-file group of previous task matches current input_file_group
         for input_file_grp in task.input_file_grps:
@@ -109,13 +111,13 @@ def validate_tasks(tasks, workspace):
     return report
 
 
-def run_tasks(mets, log_level, page_id, task_strs):
+def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
     resolver = Resolver()
     workspace = resolver.workspace_from_url(mets)
     log = getLogger('ocrd.task_sequence.run_tasks')
     tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
-    validate_tasks(tasks, workspace)
+    validate_tasks(tasks, workspace, page_id, overwrite)
 
     # Run the tasks
     for task in tasks:
@@ -130,6 +132,7 @@ def run_tasks(mets, log_level, page_id, task_strs):
             workspace,
             log_level=log_level,
             page_id=page_id,
+            overwrite=overwrite,
             input_file_grp=','.join(task.input_file_grps),
             output_file_grp=','.join(task.output_file_grps),
             parameter=task.parameter_path
