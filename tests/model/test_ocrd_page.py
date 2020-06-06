@@ -273,5 +273,23 @@ class TestOcrdPage(TestCase):
                     RegionRefIndexedType(index=1, id='r1'),
                 ], validate_continuity=True)
 
+    def test_get_AllImagePaths(self):
+        with open(assets.path_to('kant_aufklaerung_1784-complex/data/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001.xml'), 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            self.assertEqual(pcgts.get_AllImagePaths(alternative_images=False, page=True, region=False, line=False), ['OCR-D-IMG/INPUT_0017.tif'])
+            self.assertEqual(pcgts.get_AllImagePaths(alternative_images=True, page=True, region=False, line=False), [
+                'OCR-D-IMG/INPUT_0017.tif',
+                'OCR-D-IMG-BIN/OCR-D-IMG-BINPAGE-sauvola_0001-BIN_sauvola-ms-split.png',
+                'OCR-D-IMG-CROP/OCR-D-IMG-CROP_0001.png',
+                'OCR-D-IMG-BIN/INPUT_0017-BIN_sauvola-ms-split.png',
+                'OCR-D-IMG-DESPECK/OCR-D-IMG-DESPECK_0001.png',
+                'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png',
+                'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png'])
+            self.assertEqual(len(pcgts.get_AllImagePaths(alternative_images=True, page=True, region=True, line=False)), 13)
+            self.assertEqual(len(pcgts.get_AllImagePaths(alternative_images=True, page=True, region=True, line=False)), 13)
+            self.assertEqual(len(pcgts.get_AllImagePaths(alternative_images=True, page=True, region=True, line=True)), 37)
+            # TODO: Test with word/glyph-level AlternativeImages
+            # self.assertEqual(len(pcgts.get_AllImagePaths(word=False)), 37)
+
 if __name__ == '__main__':
     main()

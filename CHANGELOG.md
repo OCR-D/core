@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `OcrdPage`: `get_AllImagePaths` to list all images referenced in a PcGts, #434, #471
+
 ## [2.8.1] - 2020-06-06
 
 Changed:

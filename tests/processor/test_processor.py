@@ -104,7 +104,7 @@ class TestProcessor(TestCase):
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
-        run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace)
+            run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace)
             run_cli(
                 'echo',
                 mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'),
