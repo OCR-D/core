@@ -82,12 +82,14 @@ class MethodSpec():
 #   generated superclass file and also section "User Methods" in
 #   the documentation, as well as the examples below.
 
-def _add_method(class_re, method_name):
+def _add_method(class_re, method_name, file_name=None):
     """
     Loads a file ./ocrd_page_user_methods/{{ method_name }}.py and defines a MethodSpec applying to class_re
     """
     source = []
-    with codecs.open(join(dirname(__file__), 'ocrd_page_user_methods', '%s.py' % method_name)) as f:
+    if not file_name:
+        file_name = method_name
+    with codecs.open(join(dirname(__file__), 'ocrd_page_user_methods', '%s.py' % file_name)) as f:
         for line in f.readlines():
             source.append('    %s' % line if line else line)
     return MethodSpec(name=method_name, class_names=class_re, source=''.join(source))
@@ -102,7 +104,7 @@ METHOD_SPECS = (
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'clear_AllIndexed'),
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'extend_AllIndexed'),
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'sort_AllIndexed'),
-    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren', 'exportChildren_GroupType'),
     _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
     _add_method(r'^(PageType)$', 'get_AllRegions'),
     )

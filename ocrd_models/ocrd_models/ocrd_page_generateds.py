@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri May 29 23:29:23 2020 by generateDS.py version 2.35.20.
+# Generated Sat Jun  6 14:44:44 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -16,7 +16,7 @@
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /home/kba/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
+#   /home/kba/env/py3-disht/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -5461,6 +5461,9 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
         Add all elements in list ``elements``, respecting ``@index`` order.
+        With ``validate_continuity``, check that all new elements come after all old elements
+        (or raise an exception). 
+        Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
         if not isinstance(elements, list):
             elements = [elements]
@@ -5483,7 +5486,6 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_UnorderedGroupIndexed(element)
         return self.get_AllIndexed()
-    
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def sort_AllIndexed(self, validate_uniqueness=True):
         """
@@ -6307,6 +6309,9 @@ class OrderedGroupType(GeneratedsSuper):
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
         Add all elements in list ``elements``, respecting ``@index`` order.
+        With ``validate_continuity``, check that all new elements come after all old elements
+        (or raise an exception). 
+        Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
         if not isinstance(elements, list):
             elements = [elements]
@@ -6329,7 +6334,6 @@ class OrderedGroupType(GeneratedsSuper):
             elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_UnorderedGroupIndexed(element)
         return self.get_AllIndexed()
-    
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def sort_AllIndexed(self, validate_uniqueness=True):
         """
