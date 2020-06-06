@@ -1,5 +1,5 @@
 import os
-from os.path import relpath, exists
+from os.path import relpath, exists, join
 import sys
 
 import click
@@ -130,29 +130,39 @@ def workspace_create(ctx, clobber_mets, directory):
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
 @click.option('-g', '--page-id', help="ID of the physical page")
+@click.option('-C', '--check-file-exists', help="Whether to ensure FNAME exists", is_flag=True, default=False)
 @click.option('--force', help="If file with ID already exists, replace it", default=False, is_flag=True)
-@click.argument('fname', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
+@click.argument('fname', required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, fname):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exists, force, fname):
     """
-    Add a file FNAME to METS in a workspace.
+    Add a file or http(s) URL FNAME to METS in a workspace.
+    If FNAME is not an http(s) URL and is not a workspace-local existing file, try to copy to workspace.
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
-    if not fname.startswith(ctx.directory):
-        log.debug("File '%s' is not in workspace, copying", fname)
-        fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
-    fname = relpath(fname, ctx.directory)
+    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force}
+    if not (fname.startswith('http://') or fname.startswith('https://')):
+        if not fname.startswith(ctx.directory):
+            if exists(join(ctx.directory, fname)):
+                fname = join(ctx.directory, fname)
+            else:
+                log.debug("File '%s' is not in workspace, copying", fname)
+                try:
+                    fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
+                except FileNotFoundError as e:
+                    if check_file_exists:
+                        print("ERROR: File does not exists %s" % fname)
+                        sys.exit(1)
+        if check_file_exists and not exists(fname):
+            print("ERROR: File does not exists %s" % fname)
+            sys.exit(1)
+        if fname.startswith(ctx.directory):
+            fname = relpath(fname, ctx.directory)
+        kwargs['local_filename'] = fname
 
-    workspace.mets.add_file(
-        fileGrp=file_grp,
-        ID=file_id,
-        mimetype=mimetype,
-        url=fname,
-        pageId=page_id,
-        force=force,
-        local_filename=fname
-    )
+    kwargs['url'] = fname
+    workspace.mets.add_file(**kwargs)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
