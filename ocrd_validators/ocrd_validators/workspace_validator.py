@@ -4,7 +4,6 @@ Validating a workspace.
 import re
 from traceback import format_exc
 from pathlib import Path
-from contextlib import contextmanager
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
 from ocrd_modelfactory import page_from_file
@@ -136,7 +135,7 @@ class WorkspaceValidator():
                     self._validate_imagefilename()
                 if 'page' not in self.skip:
                     self._validate_page()
-            except Exception:
+            except Exception: # pylint: disable=broad-except
                 self.report.add_error("Validation aborted with exception: %s" % format_exc())
         return self.report
 

@@ -14,6 +14,7 @@ Changed:
   * `TaskSequence.Task` can have a `-g`/`--page-id` attribute in addition to input/output file group and parameters
   * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
     output file group is targeted but for pages that aren't in that group, #471
+  * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
 
 Added:
 
