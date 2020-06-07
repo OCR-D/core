@@ -7,9 +7,9 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 
 # pylint: disable=import-error, no-name-in-module
-from tests.base import TestCase, main, assets, copy_of_directory
+from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory, main
 
-from ocrd_utils import initLogging, pushd_popd
+from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel
 from ocrd.cli.workspace import workspace_cli
 from ocrd import Resolver
 
@@ -180,7 +180,7 @@ class TestCli(TestCase):
         with TemporaryDirectory() as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.save_mets()
-            result = self.runner.invoke(workspace_cli, [
+            exit_code, out, err = self.invoke_cli(workspace_cli, [
                 '-d', tempdir,
                 'add',
                 '-C',
@@ -189,8 +189,8 @@ class TestCli(TestCase):
                 '--file-id', ID,
                 '--mimetype', mimetype,
                 'does-not-exist.xml'])
-            self.assertEqual(result.exit_code, 1)
-            self.assertIn('File does not exist', result.stdout)
+            self.assertEqual(exit_code, 1)
+            self.assertIn("File 'does-not-exist.xml' does not exist, halt execution!", err)
 
     def test_add_existing_checked(self):
         ID = 'foo123file'
@@ -347,4 +347,4 @@ class TestCli(TestCase):
                 self.assertFalse(exists('mets.xml'))
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

@@ -142,6 +142,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exi
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
     kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force}
+    log = getLogger('ocrd.cli.workspace.add')
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
             if exists(join(ctx.directory, fname)):
@@ -152,10 +153,10 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exi
                     fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
                 except FileNotFoundError as e:
                     if check_file_exists:
-                        print("ERROR: File does not exists %s" % fname)
+                        log.error("File '%s' does not exist, halt execution!" % fname)
                         sys.exit(1)
         if check_file_exists and not exists(fname):
-            print("ERROR: File does not exists %s" % fname)
+            log.error("File '%s' does not exist, halt execution!" % fname)
             sys.exit(1)
         if fname.startswith(ctx.directory):
             fname = relpath(fname, ctx.directory)
