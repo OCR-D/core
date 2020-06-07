@@ -292,6 +292,7 @@ class TestCli(TestCase):
                     ws = self.resolver.workspace_from_nothing(directory=wsdir)
                     exit_code, out, err = self.invoke_cli(workspace_cli, [
                         'bulk-add',
+                        '--ignore',
                         '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^\.]*$',
                         '--url', '{{ fileGrp }}/FILE_{{ pageid }}.tif',
                         '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',

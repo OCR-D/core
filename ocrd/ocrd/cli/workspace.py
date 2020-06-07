@@ -140,10 +140,11 @@ def workspace_create(ctx, clobber_mets, directory):
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
 @click.option('-g', '--page-id', help="ID of the physical page")
-@click.option('--force', help="If file with ID already exists, replace it", default=False, is_flag=True)
+@click.option('--ignore', help="Do not check whether file exists.", default=False, is_flag=True)
+@click.option('--force', help="If file with ID already exists, replace it. No effect if --ignore is set.", default=False, is_flag=True)
 @click.argument('fname', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, fname):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, force, fname):
     """
     Add a file FNAME to METS in a workspace.
     """
@@ -161,6 +162,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, fname):
         url=fname,
         pageId=page_id,
         force=force,
+        ignore=ignore,
         local_filename=fname
     )
     workspace.save_mets()
@@ -178,11 +180,12 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, fname):
 @click.option('-u', '--url', help="URL of the file", required=True)
 @click.option('-G', '--file-grp', help="File group of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anythin, just preview", default=False, is_flag=True)
-@click.option('-f', '--force', help="Replace exiting mets:files with the same @ID", default=False, is_flag=True)
+@click.option('-I', '--ignore', help="Whether to disable checks for existing files. Improves performance.", default=False, is_flag=True)
+@click.option('-f', '--force', help="Replace exiting mets:files with the same @ID. No effect if --ignore is set as well", default=False, is_flag=True)
 @click.option('-o', '--overwrite', help="Remove fileGrp before adding", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, force, overwrite):
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, overwrite):
     r"""
     Add files in bulk to an OCR-D workspace.
 
@@ -261,7 +264,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         if dry_run:
             log.info('workspace.add_file(%s)' % file_dict)
         else:
-            workspace.add_file(fileGrp, force=force, **file_dict)
+            workspace.add_file(fileGrp, ignore=ignore, force=force, **file_dict)
 
     # save changes to disk
     workspace.save_mets()

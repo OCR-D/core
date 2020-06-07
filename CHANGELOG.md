@@ -5,12 +5,17 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
+  * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
+  * `ocrd workspace add` / `ocrd workspace bulk-add` support `--ignore`
+
 Changed:
 
   * `OcrdFile` constructor accepts `ID` parameter
   * `OcrdFile` constructor: removed long-obsolete `instance` parameter
   * `OcrdFile` constructor: accepts `pageId` parameter
-  * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
 
 ## [2.8.1] - 2020-06-06
 
