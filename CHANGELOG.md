@@ -9,6 +9,7 @@ Changed:
 
   * `OcrdFile` constructor accepts `ID` parameter
   * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+  * METS: reorder elements according to schema in empty METS, #487
 
 ## [2.8.1] - 2020-06-06
 
