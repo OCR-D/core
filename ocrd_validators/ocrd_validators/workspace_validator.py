@@ -12,6 +12,8 @@ from ocrd_modelfactory import page_from_file
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .report import ValidationReport
 from .page_validator import PageValidator
+from .xsd_page_validator import XsdPageValidator
+from .xsd_mets_validator import XsdMetsValidator
 
 log = getLogger('ocrd.workspace_validator')
 
@@ -123,7 +125,11 @@ class WorkspaceValidator():
                     self._validate_imagefilename()
                 if 'page' not in self.skip:
                     self._validate_page()
-            except Exception:
+                if 'page_xsd' not in self.skip:
+                    self._validate_page_xsd()
+                if 'mets_xsd' not in self.skip:
+                    self._validate_mets_xsd()
+            except Exception: # pylint: disable=broad-except
                 self.report.add_error("Validation aborted with exception: %s" % format_exc())
         return self.report
 
@@ -261,3 +267,23 @@ class WorkspaceValidator():
                                                  check_coords=self.page_coordinate_consistency in ['poly', 'both'],
                                                  check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
             self.report.merge_report(page_report)
+
+    def _validate_page_xsd(self):
+        """
+        Validate all PAGE-XML files against PAGE XSD schema
+        """
+        log.info("Validating all PAGE-XML files against XSD")
+        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
+            self.workspace.download_file(ocrd_file)
+            for err in XsdPageValidator.validate(Path(ocrd_file.local_filename)).errors:
+                self.report.add_error("%s: %s" % (ocrd_file.ID, err))
+        log.info("Finished alidating all PAGE-XML files against XSD")
+
+    def _validate_mets_xsd(self):
+        """
+        Validate METS against METS XSD schema
+        """
+        log.info("Validating METS %s against XSD" % self.workspace.mets_target)
+        for err in XsdMetsValidator.validate(Path(self.workspace.mets_target)).errors:
+            self.report.add_error("%s: %s" % (self.workspace.mets_target, err))
+        log.info("Finished Validating METS against XSD")
