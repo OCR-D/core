@@ -9,6 +9,7 @@ Changed:
 
   * `OcrdFile` constructor accepts `ID` parameter
   * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+  * `OcrdFile` constructor: accepts `pageId` parameter
 
 ## [2.8.1] - 2020-06-06
 
