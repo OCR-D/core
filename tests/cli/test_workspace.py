@@ -293,8 +293,8 @@ class TestCli(TestCase):
                     exit_code, out, err = self.invoke_cli(workspace_cli, [
                         'bulk-add',
                         '--ignore',
-                        '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^\.]*$',
-                        '--url', '{{ fileGrp }}/FILE_{{ pageid }}.tif',
+                        '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$',
+                        '--url', '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}',
                         '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',
                         '--page-id', 'PHYS_{{ pageid }}',
                         '--file-grp', '{{ fileGrp }}',
@@ -310,6 +310,7 @@ class TestCli(TestCase):
                     self.assertEqual(len(ws.mets.find_files(ID='//FILE_OCR-D-IMG_000.*')), 10)
                     self.assertEqual(len(ws.mets.find_files(ID='//FILE_.*_000.*')), 20)
                     self.assertEqual(len(ws.mets.find_files(pageId='PHYS_0001')), 2)
+                    self.assertEqual(ws.mets.find_files(ID='FILE_OCR-D-PAGE_0001')[0].url, 'OCR-D-PAGE/FILE_0001.xml')
 
 if __name__ == '__main__':
     main(__file__)

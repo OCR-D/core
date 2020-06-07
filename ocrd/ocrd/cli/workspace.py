@@ -186,7 +186,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, force,
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
 def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, overwrite):
-    r"""
+    """
     Add files in bulk to an OCR-D workspace.
 
     FILE_GLOB can either be a shell glob expression or a list of files.
@@ -195,13 +195,14 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
     define named groups that can be used in --page-id, --file-id, --mimetype, --url and
     --file-grp by referencing the named group 'grp' in the regex as '{{ grp }}'.
 
+    \b
     Example:
-        ocrd workspace bulk-add \
-                --regex '^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^\.]*$' \
-                --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \
-                --page-id 'PHYS_{{ pageid }}' \
-                --file-grp "{{ fileGrp }}" \
-                --url '{{ fileGrp }}/FILE_{{ pageid }}.tif' \
+        ocrd workspace bulk-add \\
+                --regex '^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$' \\
+                --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
+                --page-id 'PHYS_{{ pageid }}' \\
+                --file-grp "{{ fileGrp }}" \\
+                --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
                 path/to/files/*/*.*
 
     """
