@@ -115,6 +115,10 @@ class TestOcrdMets(TestCase):
         f2 = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
         self.assertEqual(f._el, f2._el)
 
+    def test_add_file_ignore(self):
+        f = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
+        self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", ignore=True)
+
     def test_filegrp_from_file(self):
         f = self.mets.find_files(fileGrp='OCR-D-IMG')[0]
         self.assertEqual(f.fileGrp, 'OCR-D-IMG')

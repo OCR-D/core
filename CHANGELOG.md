@@ -10,6 +10,7 @@ Changed:
   * `OcrdFile` constructor accepts `ID` parameter
   * `OcrdFile` constructor: removed long-obsolete `instance` parameter
   * `OcrdFile` constructor: accepts `pageId` parameter
+  * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
 
 ## [2.8.1] - 2020-06-06
 
