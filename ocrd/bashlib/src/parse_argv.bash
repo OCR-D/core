@@ -36,7 +36,8 @@ ocrd__parse_argv () {
     done
 
     if [[ ! -r "${ocrd__argv[mets_file]:=$PWD/mets.xml}" ]];then
-        ocrd__raise "METS '${ocrd__argv[mets_file]}' not readable. Use -m/--mets-file to set correctly"
+        ocrd__usage
+        exit 1
     fi
 
     if [[ ! -d "${ocrd__argv[working_dir]:=$(dirname "${ocrd__argv[mets_file]}")}" ]];then

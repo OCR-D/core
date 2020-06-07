@@ -1,4 +1,5 @@
 from os.path import isfile
+import sys
 
 import click
 
@@ -31,19 +32,17 @@ def ocrd_cli_wrap_processor(processorClass, ocrd_tool=None, mets=None, working_d
     LOG = getLogger('ocrd_cli_wrap_processor')
     if dump_json:
         processorClass(workspace=None, dump_json=True)
+        sys.exit()
     elif help:
         processorClass(workspace=None, show_help=True)
+        sys.exit()
     elif version:
         processorClass(workspace=None, show_version=True)
-    elif mets is None:
-        msg = 'Error: Missing option "-m" / "--mets".'
-        LOG.error(msg)
-        raise Exception(msg)
+        sys.exit()
     else:
-        if is_local_filename(mets) and not isfile(get_local_filename(mets)):
-            msg = "File does not exist: %s" % mets
-            LOG.error(msg)
-            raise Exception(msg)
+        if not mets or (is_local_filename(mets) and not isfile(get_local_filename(mets))):
+            processorClass(workspace=None, show_help=True)
+            sys.exit(1)
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)
         # TODO once we implement 'overwrite' CLI option and mechanism, disable the

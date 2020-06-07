@@ -2,7 +2,7 @@
 import click
 from click.testing import CliRunner
 
-from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
+from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 
 from ocrd import Processor
 from ocrd.decorators import (
@@ -26,8 +26,11 @@ def cli_with_ocrd_loglevel(*args, **kwargs):         # pylint: disable=unused-ar
 DUMMY_TOOL = {
     'executable': 'ocrd-test',
     'steps': ['recognition/post-correction'],
+    'description': 'A dummy processor for testing sigh',
     'parameters': {
         'foo': {
+            'type': 'number',
+            'description': 'dummy parameter for a dummy procesor',
             'required': True
         }
     }
@@ -73,6 +76,15 @@ class TestDecorators(TestCase):
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.DEBUG)
         initLogging()
 
+    def test_processor_no_mets(self):
+        """
+        https://github.com/OCR-D/spec/pull/156
+        """
+        _, out_help, _ = self.invoke_cli(cli_dummy_processor, ['--help'])
+        exit_code, out_none, _ = self.invoke_cli(cli_dummy_processor, [])
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(out_help, out_none)
+
     def test_processor_dump_json(self):
         result = self.runner.invoke(cli_dummy_processor, ['--dump-json'])
         self.assertEqual(result.exit_code, 0)
@@ -91,9 +103,9 @@ class TestDecorators(TestCase):
     def test_processor_run(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(cli_dummy_processor, ['-p', '{"foo": 42}', '--mets', 'mets.xml', '-I', 'OCR-D-IMG'])
-                self.assertEqual(result.exit_code, 0)
+                exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['-p', '{"foo": 42}', '--mets', 'mets.xml', '-I', 'OCR-D-IMG'])
+                self.assertEqual(exit_code, 0)
 
 
 if __name__ == '__main__':
-    main()
+    main(__file__)
