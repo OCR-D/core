@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * METS: reorder elements according to schema in empty METS, #487
+
 ## [2.8.1] - 2020-06-06
 
 Changed:
