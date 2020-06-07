@@ -15,14 +15,14 @@ class XsdValidator():
     """
     XML Schema validator.
     """
-    _instance = None
+    _instances = {}
 
     @classmethod
     def instance(cls, schema_url):
-        if cls._instance:
-            return cls._instance
-        cls._instance = cls(schema_url)
-        return cls._instance
+        if schema_url in cls._instances:
+            return cls._instances[schema_url]
+        cls._instances[schema_url] = cls(schema_url)
+        return cls._instances[schema_url]
 
     @classmethod
     def validate(cls, schema_url, doc):
@@ -64,6 +64,7 @@ class XsdValidator():
             doc = ET.fromstring(doc)
         try:
             self._xmlschema.assertValid(doc)
-        except ET.DocumentInvalid as err:
-            report.add_error("%s" % err)
+        except ET.DocumentInvalid as fail:
+            for err in fail.error_log:  # pylint: disable=no-member
+                report.add_error("Line %s: %s" % (err.line, err.message))
         return report
