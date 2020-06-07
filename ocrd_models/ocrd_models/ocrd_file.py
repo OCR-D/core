@@ -17,23 +17,25 @@ class OcrdFile():
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, loctype='OTHER', instance=None, local_filename=None, mets=None, url=None):
+    def __init__(self, el, mimetype=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None):
         """
         Args:
-            el (LxmlElement):
-            mimetype (string):
-            instance (OcrdFile):
-            local_filename (string):
-            mets (OcrdMets):
+            el (LxmlElement): etree Element of the mets:file this represents. Create new if not provided
+            mimetype (string): MIME type of the file
+            loctype (string): METS @LOCTYPE
+            local_filename (string): Local filename
+            mets (OcrdMets): Containing OcrdMets
+            url (string): xlink:href of the file
+            ID (string): @ID of the mets:file
         """
         if el is None:
             el = ET.Element(TAG_METS_FILE)
         self._el = el
         self.mimetype = mimetype
         self.local_filename = local_filename
-        self._instance = instance
         self.mets = mets
         self.loctype = loctype
+        self.ID = ID
 
         if url:
             self.url = url

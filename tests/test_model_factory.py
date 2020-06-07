@@ -17,13 +17,8 @@ class TestModelFactory(TestCase):
         with self.assertRaisesRegex(Exception, "Must pass 'image_filename' to 'exif_from_filename'"):
             exif_from_filename(None)
 
-    def test_page_from_image(self):
-        exif_from_filename(SAMPLE_IMG)
-        with self.assertRaisesRegex(Exception, "Must pass 'image_filename' to 'exif_from_filename'"):
-            exif_from_filename(None)
-
     def test_page_from_file(self):
-        f = OcrdFile(None, mimetype='image/tiff', local_filename=SAMPLE_IMG)
+        f = OcrdFile(None, mimetype='image/tiff', local_filename=SAMPLE_IMG, ID='file1')
         self.assertEqual(f.mimetype, 'image/tiff')
         p = page_from_file(f)
         self.assertEqual(p.get_Page().imageWidth, 1457)
