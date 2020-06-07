@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * `OcrdFile` constructor accepts `ID` parameter
+  * `OcrdFile` constructor: removed long-obsolete `instance` parameter
 
 ## [2.8.1] - 2020-06-06
 
