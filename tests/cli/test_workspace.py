@@ -7,14 +7,13 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 
 # pylint: disable=import-error, no-name-in-module
-from tests.base import TestCase, main, assets, copy_of_directory
+from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 from ocrd_utils import initLogging, pushd_popd
 from ocrd.cli.workspace import workspace_cli
 from ocrd import Resolver, Workspace
 
 class TestCli(TestCase):
-
 
     def setUp(self):
         self.maxDiff = None
@@ -280,5 +279,36 @@ class TestCli(TestCase):
                 self.assertTrue(exists('foo.xml'))
                 self.assertFalse(exists('mets.xml'))
 
+    def test_bulk_add(self):
+        with TemporaryDirectory() as srcdir:
+            Path(srcdir, "OCR-D-IMG").mkdir()
+            Path(srcdir, "OCR-D-PAGE").mkdir()
+            for i in range(500):
+                Path(srcdir, "OCR-D-IMG", "page_%04d.tif" % i).write_text('')
+            for i in range(500):
+                Path(srcdir, "OCR-D-PAGE", "page_%04d.xml" % i).write_text('')
+            with TemporaryDirectory() as wsdir:
+                with pushd_popd(wsdir):
+                    ws = self.resolver.workspace_from_nothing(directory=wsdir)
+                    exit_code, out, err = self.invoke_cli(workspace_cli, [
+                        'bulk-add',
+                        '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^\.]*$',
+                        '--url', '{{ fileGrp }}/FILE_{{ pageid }}.tif',
+                        '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',
+                        '--page-id', 'PHYS_{{ pageid }}',
+                        '--file-grp', '{{ fileGrp }}',
+                        '%s/*/*' % srcdir
+                    ])
+                    # print('exit_code', exit_code)
+                    # print('out', out)
+                    # print('err', err)
+                    ws.reload_mets()
+                    self.assertEqual(len(ws.mets.file_groups), 2)
+                    self.assertEqual(len(ws.mets.find_files()), 1000)
+                    self.assertEqual(len(ws.mets.find_files(mimetype='image/tiff')), 500)
+                    self.assertEqual(len(ws.mets.find_files(ID='//FILE_OCR-D-IMG_000.*')), 10)
+                    self.assertEqual(len(ws.mets.find_files(ID='//FILE_.*_000.*')), 20)
+                    self.assertEqual(len(ws.mets.find_files(pageId='PHYS_0001')), 2)
+
 if __name__ == '__main__':
-    main()
+    main(__file__)

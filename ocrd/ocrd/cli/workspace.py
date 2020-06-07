@@ -2,12 +2,14 @@ import os
 from os.path import relpath, exists
 from pathlib import Path
 import sys
+from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, pushd_popd
+from ocrd_models import OcrdFile
+from ocrd_utils import getLogger, pushd_popd, EXT_TO_MIME
 
 log = getLogger('ocrd.cli.workspace')
 
@@ -164,52 +166,106 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, fname):
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
-# ocrd workspace add-group
+# ocrd workspace add-bulk
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('add-group')
-@click.option('-m', '--mimetype', help="Media type of the file", required=True)
-@click.option('-f', '--force', help="Continue even if mets:file same ID already exists", default=False, is_flag=True)
-@click.argument('file_grp_dir', type=click.Path(dir_okay=True, file_okay=False, readable=True, resolve_path=True), required=True)
+# pylint: disable=bad-whitespace, broad-except
+@workspace_cli.command('bulk-add')
+@click.option('-r', '--regex', help="Regular expression to define the named captures used in the parametes", required=True)
+@click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
+@click.option('-g', '--page-id', help="ID of the physical page", required=False)
+@click.option('-i', '--file-id', help="ID of the file", required=True)
+@click.option('-u', '--url', help="URL of the file", required=True)
+@click.option('-G', '--file-grp', help="File group of the file", required=True)
+@click.option('-n', '--dry-run', help="Don't actually do anythin, just preview", default=False, is_flag=True)
+@click.option('-f', '--force', help="Replace exiting mets:files with the same @ID", default=False, is_flag=True)
+@click.option('-o', '--overwrite', help="Remove fileGrp before adding", default=False, is_flag=True)
+@click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_add_file_group(ctx, mimetype, force, file_grp_dir):
-    """
-    Add a directory of files as a fileGrp to METS.
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, force, overwrite):
+    r"""
+    Add files in bulk to an OCR-D workspace.
 
-    Convention:
-        FILEGRP_DIR must reside within the workspacee
-        fileGrp ID = last folder name component
-        page ID = filename sans extension
-        file ID = sanitized concatenation of fileGrp ID and page ID
+    FILE_GLOB can either be a shell glob expression or a list of files.
+
+    --regex is applied to the absolute path of every file in FILE_GLOB and can
+    define named groups that can be used in --page-id, --file-id, --mimetype, --url and
+    --file-grp by referencing the named group 'grp' in the regex as '{{ grp }}'.
+
+    Example:
+        ocrd workspace bulk-add \
+                --regex '^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^\.]*$' \
+                --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \
+                --page-id 'PHYS_{{ pageid }}' \
+                --file-grp "{{ fileGrp }}" \
+                --url '{{ fileGrp }}/FILE_{{ pageid }}.tif' \
+                path/to/files/*/*.*
+
     """
+    log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
-    file_grp_dir = Path(file_grp_dir).resolve()
+    try:
+        pat = re.compile(regex)
+    except Exception as e:
+        log.error("Invalid regex: %s" % e)
+        sys.exit(1)
 
-    ws_dir = Path(ctx.directory).resolve()
-    print(file_grp_dir)
+    file_paths = []
+    for fglob in file_glob:
+        file_paths += [Path(x).resolve() for x in glob(fglob)]
 
-    # XXX will raise ValueError if file_grp_dir isn't relative to ctx.directory
-    file_grp_dir.relative_to(ws_dir)
-    file_grp = clean_id(file_grp_dir.name)
+    _groups_seen = set()
 
-    for f in file_grp_dir.iterdir():
-        page_id = f.name
-        if f.suffix:
-            page_id = page_id[0:-len(f.suffix)]
-        page_id = clean_id(page_id)
-        file_id = clean_id('_'.join([file_grp, page_id]))
-        local_filename = str(f.relative_to(ws_dir))
-        workspace.mets.add_file(
-            fileGrp=file_grp,
-            ID=file_id,
-            mimetype=mimetype,
-            url=local_filename,
-            pageId=page_id,
-            force=force,
-            local_filename=local_filename
-        )
+    for i, file_path in enumerate(file_paths):
+        log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
+
+        # match regex
+        m = pat.match(str(file_path))
+        if not m:
+            log.error("File not matched by regex: '%s'" % file_path)
+            sys.exit(1)
+        group_dict = m.groupdict()
+
+        # set up file info
+        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id, 'pageId': page_id, 'fileGrp': file_grp}
+
+        # guess mime type
+        if not file_dict['mimetype']:
+            try:
+                file_dict['mimetype'] = EXT_TO_MIME[file_path.suffix]
+            except KeyError:
+                log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
+                sys.exit(1)
+
+        # expand templates
+        for param_name in file_dict:
+            for group_name in group_dict:
+                file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
+
+        # copy files
+        if file_dict['url']:
+            urlpath = Path(workspace.directory, file_dict['url'])
+            if not dry_run and not urlpath.exists():
+                if not urlpath.parent.is_dir():
+                    urlpath.parent.mkdir()
+                urlpath.write_bytes(file_path.read_bytes())
+
+        # Honor --overwrite
+        fileGrp = file_dict.pop('fileGrp')
+        if not dry_run and overwrite and fileGrp not in _groups_seen:
+            workspace.remove_file_group(fileGrp, recursive=True, force=True, keep_files=False)
+            _groups_seen.add(fileGrp)
+
+        # Add to workspace (or not)
+        if dry_run:
+            log.info('workspace.add_file(%s)' % file_dict)
+        else:
+            workspace.add_file(fileGrp, force=force, **file_dict)
+
+    # save changes to disk
     workspace.save_mets()
+
 
 # ----------------------------------------------------------------------
 # ocrd workspace find
