@@ -6,18 +6,12 @@ class XsdMetsValidator(XsdValidator):
     XML Schema validator.
     """
 
-    @staticmethod
-    def validate(doc):  # pylint: disable=arguments-differ
+    @classmethod
+    def validate(cls, doc):  # pylint: disable=arguments-differ
         """
         Validate an XML document against a schema
 
         Args:
             doc (etree.ElementTree|str|bytes):
         """
-        return XsdMetsValidator()._validate(doc) # pylint: disable=protected-access
-
-    def __init__(self):
-        """
-        Construct an XsdMetsValidator.
-        """
-        super().__init__(XSD_METS_URL)
+        return cls.instance(XSD_METS_URL)._validate(doc) # pylint: disable=protected-access
