@@ -3,6 +3,8 @@
 # source: https://bitbucket.org/dkuhlman/generateds/src/default/gends_user_methods.py
 
 import re
+import codecs
+from os.path import dirname, join
 
 #
 # You must include the following class definition at the top of
@@ -80,25 +82,31 @@ class MethodSpec():
 #   generated superclass file and also section "User Methods" in
 #   the documentation, as well as the examples below.
 
-#
-# Replace the following method specifications with your own.
+def _add_method(class_re, method_name, file_name=None):
+    """
+    Loads a file ./ocrd_page_user_methods/{{ method_name }}.py and defines a MethodSpec applying to class_re
+    """
+    source = []
+    if not file_name:
+        file_name = method_name
+    with codecs.open(join(dirname(__file__), 'ocrd_page_user_methods', '%s.py' % file_name)) as f:
+        for line in f.readlines():
+            source.append('    %s' % line.replace('%', '%%') if line else line)
+    return MethodSpec(name=method_name, class_names=class_re, source=''.join(source))
 
-#
-# Hash by memory adress/id()
-#
-hash_by_id = MethodSpec(name='hash',
-    source='''\
-    def __hash__(self):
-        return hash(self.id)
-''',
-    class_names=r'^.*$',
-    )
 #
 # Provide a list of your method specifications.
 #   This list of specifications must be named METHOD_SPECS.
 #
 METHOD_SPECS = (
-    hash_by_id,
+    _add_method(r'^.*$', '__hash__'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'get_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'clear_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'extend_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'sort_AllIndexed'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren', 'exportChildren_GroupType'),
+    _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
+    _add_method(r'^(PageType)$', 'get_AllRegions'),
     )
 
 

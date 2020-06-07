@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu Apr 23 15:06:47 2020 by generateDS.py version 2.35.20.
+# Generated Sat Jun  6 14:44:44 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -16,7 +16,7 @@
 #   repo/assets/data/schema/data/2019.xsd
 #
 # Command line:
-#   /home/kba/env/py3/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
+#   /home/kba/env/py3-disht/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1101,11 +1101,11 @@ class PcGtsType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.pcGtsId = _cast(None, pcGtsId)
-        self.pcGtsId_nsprefix_ = None
+        self.pcGtsId_nsprefix_ = "pc"
         self.Metadata = Metadata
-        self.Metadata_nsprefix_ = None
+        self.Metadata_nsprefix_ = "pc"
         self.Page = Page
-        self.Page_nsprefix_ = None
+        self.Page_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1232,30 +1232,30 @@ class MetadataType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.externalRef = _cast(None, externalRef)
-        self.externalRef_nsprefix_ = None
+        self.externalRef_nsprefix_ = "pc"
         self.Creator = Creator
-        self.Creator_nsprefix_ = None
+        self.Creator_nsprefix_ = "pc"
         if isinstance(Created, BaseStrType_):
             initvalue_ = datetime_.datetime.strptime(Created, '%Y-%m-%dT%H:%M:%S')
         else:
             initvalue_ = Created
         self.Created = initvalue_
-        self.Created_nsprefix_ = None
+        self.Created_nsprefix_ = "pc"
         if isinstance(LastChange, BaseStrType_):
             initvalue_ = datetime_.datetime.strptime(LastChange, '%Y-%m-%dT%H:%M:%S')
         else:
             initvalue_ = LastChange
         self.LastChange = initvalue_
-        self.LastChange_nsprefix_ = None
+        self.LastChange_nsprefix_ = "pc"
         self.Comments = Comments
-        self.Comments_nsprefix_ = None
+        self.Comments_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if MetadataItem is None:
             self.MetadataItem = []
         else:
             self.MetadataItem = MetadataItem
-        self.MetadataItem_nsprefix_ = None
+        self.MetadataItem_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1393,23 +1393,23 @@ class MetadataType(GeneratedsSuper):
             value_ = self.gds_parse_string(value_, node, 'Creator')
             value_ = self.gds_validate_string(value_, node, 'Creator')
             self.Creator = value_
-            self.Creator_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'Created':
             sval_ = child_.text
             dval_ = self.gds_parse_datetime(sval_)
             self.Created = dval_
-            self.Created_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'LastChange':
             sval_ = child_.text
             dval_ = self.gds_parse_datetime(sval_)
             self.LastChange = dval_
-            self.LastChange_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'Comments':
             value_ = child_.text
             value_ = self.gds_parse_string(value_, node, 'Comments')
             value_ = self.gds_validate_string(value_, node, 'Comments')
             self.Comments = value_
-            self.Comments_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'UserDefined':
             obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -1446,11 +1446,11 @@ class MetadataItemType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.name = _cast(None, name)
-        self.name_nsprefix_ = None
+        self.name_nsprefix_ = "pc"
         self.value = _cast(None, value)
-        self.value_nsprefix_ = None
+        self.value_nsprefix_ = "pc"
         if isinstance(date, BaseStrType_):
             initvalue_ = datetime_.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
         else:
@@ -1460,7 +1460,7 @@ class MetadataItemType(GeneratedsSuper):
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1617,18 +1617,18 @@ class LabelsType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.externalModel = _cast(None, externalModel)
-        self.externalModel_nsprefix_ = None
+        self.externalModel_nsprefix_ = "pc"
         self.externalId = _cast(None, externalId)
-        self.externalId_nsprefix_ = None
+        self.externalId_nsprefix_ = "pc"
         self.prefix = _cast(None, prefix)
-        self.prefix_nsprefix_ = None
+        self.prefix_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         if Label is None:
             self.Label = []
         else:
             self.Label = Label
-        self.Label_nsprefix_ = None
+        self.Label_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1783,11 +1783,11 @@ class LabelType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.value = _cast(None, value)
-        self.value_nsprefix_ = None
+        self.value_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -1973,136 +1973,136 @@ class PageType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.imageFilename = _cast(None, imageFilename)
-        self.imageFilename_nsprefix_ = None
+        self.imageFilename_nsprefix_ = "pc"
         self.imageWidth = _cast(int, imageWidth)
-        self.imageWidth_nsprefix_ = None
+        self.imageWidth_nsprefix_ = "pc"
         self.imageHeight = _cast(int, imageHeight)
-        self.imageHeight_nsprefix_ = None
+        self.imageHeight_nsprefix_ = "pc"
         self.imageXResolution = _cast(float, imageXResolution)
-        self.imageXResolution_nsprefix_ = None
+        self.imageXResolution_nsprefix_ = "pc"
         self.imageYResolution = _cast(float, imageYResolution)
-        self.imageYResolution_nsprefix_ = None
+        self.imageYResolution_nsprefix_ = "pc"
         self.imageResolutionUnit = _cast(None, imageResolutionUnit)
-        self.imageResolutionUnit_nsprefix_ = None
+        self.imageResolutionUnit_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.primaryLanguage = _cast(None, primaryLanguage)
-        self.primaryLanguage_nsprefix_ = None
+        self.primaryLanguage_nsprefix_ = "pc"
         self.secondaryLanguage = _cast(None, secondaryLanguage)
-        self.secondaryLanguage_nsprefix_ = None
+        self.secondaryLanguage_nsprefix_ = "pc"
         self.primaryScript = _cast(None, primaryScript)
-        self.primaryScript_nsprefix_ = None
+        self.primaryScript_nsprefix_ = "pc"
         self.secondaryScript = _cast(None, secondaryScript)
-        self.secondaryScript_nsprefix_ = None
+        self.secondaryScript_nsprefix_ = "pc"
         self.readingDirection = _cast(None, readingDirection)
-        self.readingDirection_nsprefix_ = None
+        self.readingDirection_nsprefix_ = "pc"
         self.textLineOrder = _cast(None, textLineOrder)
-        self.textLineOrder_nsprefix_ = None
+        self.textLineOrder_nsprefix_ = "pc"
         self.conf = _cast(float, conf)
-        self.conf_nsprefix_ = None
+        self.conf_nsprefix_ = "pc"
         if AlternativeImage is None:
             self.AlternativeImage = []
         else:
             self.AlternativeImage = AlternativeImage
-        self.AlternativeImage_nsprefix_ = None
+        self.AlternativeImage_nsprefix_ = "pc"
         self.Border = Border
-        self.Border_nsprefix_ = None
+        self.Border_nsprefix_ = "pc"
         self.PrintSpace = PrintSpace
-        self.PrintSpace_nsprefix_ = None
+        self.PrintSpace_nsprefix_ = "pc"
         self.ReadingOrder = ReadingOrder
-        self.ReadingOrder_nsprefix_ = None
+        self.ReadingOrder_nsprefix_ = "pc"
         self.Layers = Layers
-        self.Layers_nsprefix_ = None
+        self.Layers_nsprefix_ = "pc"
         self.Relations = Relations
-        self.Relations_nsprefix_ = None
+        self.Relations_nsprefix_ = "pc"
         self.TextStyle = TextStyle
-        self.TextStyle_nsprefix_ = None
+        self.TextStyle_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
         if TextRegion is None:
             self.TextRegion = []
         else:
             self.TextRegion = TextRegion
-        self.TextRegion_nsprefix_ = None
+        self.TextRegion_nsprefix_ = "pc"
         if ImageRegion is None:
             self.ImageRegion = []
         else:
             self.ImageRegion = ImageRegion
-        self.ImageRegion_nsprefix_ = None
+        self.ImageRegion_nsprefix_ = "pc"
         if LineDrawingRegion is None:
             self.LineDrawingRegion = []
         else:
             self.LineDrawingRegion = LineDrawingRegion
-        self.LineDrawingRegion_nsprefix_ = None
+        self.LineDrawingRegion_nsprefix_ = "pc"
         if GraphicRegion is None:
             self.GraphicRegion = []
         else:
             self.GraphicRegion = GraphicRegion
-        self.GraphicRegion_nsprefix_ = None
+        self.GraphicRegion_nsprefix_ = "pc"
         if TableRegion is None:
             self.TableRegion = []
         else:
             self.TableRegion = TableRegion
-        self.TableRegion_nsprefix_ = None
+        self.TableRegion_nsprefix_ = "pc"
         if ChartRegion is None:
             self.ChartRegion = []
         else:
             self.ChartRegion = ChartRegion
-        self.ChartRegion_nsprefix_ = None
+        self.ChartRegion_nsprefix_ = "pc"
         if MapRegion is None:
             self.MapRegion = []
         else:
             self.MapRegion = MapRegion
-        self.MapRegion_nsprefix_ = None
+        self.MapRegion_nsprefix_ = "pc"
         if SeparatorRegion is None:
             self.SeparatorRegion = []
         else:
             self.SeparatorRegion = SeparatorRegion
-        self.SeparatorRegion_nsprefix_ = None
+        self.SeparatorRegion_nsprefix_ = "pc"
         if MathsRegion is None:
             self.MathsRegion = []
         else:
             self.MathsRegion = MathsRegion
-        self.MathsRegion_nsprefix_ = None
+        self.MathsRegion_nsprefix_ = "pc"
         if ChemRegion is None:
             self.ChemRegion = []
         else:
             self.ChemRegion = ChemRegion
-        self.ChemRegion_nsprefix_ = None
+        self.ChemRegion_nsprefix_ = "pc"
         if MusicRegion is None:
             self.MusicRegion = []
         else:
             self.MusicRegion = MusicRegion
-        self.MusicRegion_nsprefix_ = None
+        self.MusicRegion_nsprefix_ = "pc"
         if AdvertRegion is None:
             self.AdvertRegion = []
         else:
             self.AdvertRegion = AdvertRegion
-        self.AdvertRegion_nsprefix_ = None
+        self.AdvertRegion_nsprefix_ = "pc"
         if NoiseRegion is None:
             self.NoiseRegion = []
         else:
             self.NoiseRegion = NoiseRegion
-        self.NoiseRegion_nsprefix_ = None
+        self.NoiseRegion_nsprefix_ = "pc"
         if UnknownRegion is None:
             self.UnknownRegion = []
         else:
             self.UnknownRegion = UnknownRegion
-        self.UnknownRegion_nsprefix_ = None
+        self.UnknownRegion_nsprefix_ = "pc"
         if CustomRegion is None:
             self.CustomRegion = []
         else:
             self.CustomRegion = CustomRegion
-        self.CustomRegion_nsprefix_ = None
+        self.CustomRegion_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -2850,6 +2850,92 @@ class PageType(GeneratedsSuper):
             obj_.original_tagname_ = 'CustomRegion'
     def __hash__(self):
         return hash(self.id)
+    # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
+    def _region_class(self, x): # pylint: disable=unused-argument
+        return x.__class__.__name__.replace('RegionType', '')
+    
+    def _get_recursive_regions(self, regions, level, classes=None):
+        if level == 1:
+            # stop recursion, filter classes
+            if classes:
+                return [r for r in regions if self._region_class(r) in classes]
+            if regions and regions[0].__class__.__name__ == 'PageType':
+                regions = regions[1:]
+            return regions
+        # find more regions recursively
+        more_regions = []
+        for region in regions:
+            more_regions.append([])
+            for class_ in ['Advert', 'Chart', 'Chem', 'Custom', 'Graphic', 'Image',
+                           'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
+                           'Separator', 'Table', 'Text', 'Unknown']:
+                if class_ == 'Map' and not isinstance(region, PageType): # pylint: disable=undefined-variable
+                    # 'Map' is not recursive in 2019 schema
+                    continue
+                more_regions[-1] += getattr(region, 'get_{}Region'.format(class_))()
+        if not any(more_regions):
+            return self._get_recursive_regions(regions, 1, classes)
+        ret = []
+        for r, more in zip(regions, more_regions):
+            ret.append(r)
+            ret += self._get_recursive_regions(more, level - 1 if level else 0, classes)
+        return self._get_recursive_regions(ret, 1, classes)
+    
+    def _get_recursive_reading_order(self, rogroup):
+        if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)): # pylint: disable=undefined-variable
+            elements = rogroup.get_AllIndexed()
+        if isinstance(rogroup, (UnorderedGroupType, UnorderedGroupIndexedType)): # pylint: disable=undefined-variable
+            elements = (rogroup.get_RegionRef() + rogroup.get_OrderedGroup() + rogroup.get_UnorderedGroup())
+        regionrefs = list()
+        for elem in elements:
+            regionrefs.append(elem.get_regionRef())
+            if not isinstance(elem, (RegionRefType, RegionRefIndexedType)): # pylint: disable=undefined-variable
+                regionrefs.extend(self._get_recursive_reading_order(elem))
+        return regionrefs
+    
+    def get_AllRegions(self, classes=None, order='document', depth=0):
+        """
+        Get all the *Region element or only those provided by ``classes``.
+        Returned in document order unless ``order`` is ``reading-order``
+        Arguments:
+            classes (list) Classes of regions that shall be returned, e.g. ``['Text', 'Image']``
+            order ("document"|"reading-order"|"reading-order-only") Whether to
+                return regions sorted by document order (``document``, default) or by
+                reading order with regions not in the reading order at the end of the
+                returned list (``reading-order``) or regions not in the reading order
+                omitted (``reading-order-only``)
+            depth (int) Recursive depth to look for regions at, set to `0` for all regions at any depth. Default: 0
+    
+        For example, to get all text anywhere on the page in reading order, use:
+        ::
+            '\\n'.join(line.get_TextEquiv()[0].Unicode
+                      for region in page.get_AllRegions(classes=['Text'], depth=0, order='reading-order')
+                      for line in region.get_TextLine())
+        """
+        if order not in ['document', 'reading-order', 'reading-order-only']:
+            raise Exception("Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not '{}'".format(order))
+        if depth < 0:
+            raise Exception("Argument 'depth' must be an integer greater-or-equal 0, not '{}'".format(depth))
+        ret = self._get_recursive_regions([self], depth + 1 if depth else 0, classes)
+        if order.startswith('reading-order'):
+            reading_order = self.get_ReadingOrder()
+            if reading_order:
+                reading_order = reading_order.get_OrderedGroup() or reading_order.get_UnorderedGroup()
+            if reading_order:
+                reading_order = self._get_recursive_reading_order(reading_order)
+            if reading_order:
+                id2region = {region.id: region for region in ret}
+                in_reading_order = [id2region[region_id] for region_id in reading_order if region_id in id2region]
+                #  print("ret: {} / in_ro: {} / not-in-ro: {}".format(
+                #      len(ret),
+                #      len([id2region[region_id] for region_id in reading_order if region_id in id2region]),
+                #      len([r for r in ret if r not in in_reading_order])
+                #      ))
+                if order == 'reading-order-only':
+                    ret = in_reading_order
+                else:
+                    ret = in_reading_order + [r for r in ret if r not in in_reading_order]
+        return ret
 # end class PageType
 
 
@@ -2876,9 +2962,9 @@ class CoordsType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.points = _cast(None, points)
-        self.points_nsprefix_ = None
+        self.points_nsprefix_ = "pc"
         self.conf = _cast(float, conf)
-        self.conf_nsprefix_ = None
+        self.conf_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -3037,51 +3123,51 @@ class TextLineType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.primaryLanguage = _cast(None, primaryLanguage)
-        self.primaryLanguage_nsprefix_ = None
+        self.primaryLanguage_nsprefix_ = "pc"
         self.primaryScript = _cast(None, primaryScript)
-        self.primaryScript_nsprefix_ = None
+        self.primaryScript_nsprefix_ = "pc"
         self.secondaryScript = _cast(None, secondaryScript)
-        self.secondaryScript_nsprefix_ = None
+        self.secondaryScript_nsprefix_ = "pc"
         self.readingDirection = _cast(None, readingDirection)
-        self.readingDirection_nsprefix_ = None
+        self.readingDirection_nsprefix_ = "pc"
         self.production = _cast(None, production)
-        self.production_nsprefix_ = None
+        self.production_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.index = _cast(int, index)
-        self.index_nsprefix_ = None
+        self.index_nsprefix_ = "pc"
         if AlternativeImage is None:
             self.AlternativeImage = []
         else:
             self.AlternativeImage = AlternativeImage
-        self.AlternativeImage_nsprefix_ = None
+        self.AlternativeImage_nsprefix_ = "pc"
         self.Coords = Coords
-        self.Coords_nsprefix_ = None
+        self.Coords_nsprefix_ = "pc"
         self.Baseline = Baseline
-        self.Baseline_nsprefix_ = None
+        self.Baseline_nsprefix_ = "pc"
         if Word is None:
             self.Word = []
         else:
             self.Word = Word
-        self.Word_nsprefix_ = None
+        self.Word_nsprefix_ = "pc"
         if TextEquiv is None:
             self.TextEquiv = []
         else:
             self.TextEquiv = TextEquiv
-        self.TextEquiv_nsprefix_ = None
+        self.TextEquiv_nsprefix_ = "pc"
         self.TextStyle = TextStyle
-        self.TextStyle_nsprefix_ = None
+        self.TextStyle_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -3471,47 +3557,47 @@ class WordType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.language = _cast(None, language)
-        self.language_nsprefix_ = None
+        self.language_nsprefix_ = "pc"
         self.primaryScript = _cast(None, primaryScript)
-        self.primaryScript_nsprefix_ = None
+        self.primaryScript_nsprefix_ = "pc"
         self.secondaryScript = _cast(None, secondaryScript)
-        self.secondaryScript_nsprefix_ = None
+        self.secondaryScript_nsprefix_ = "pc"
         self.readingDirection = _cast(None, readingDirection)
-        self.readingDirection_nsprefix_ = None
+        self.readingDirection_nsprefix_ = "pc"
         self.production = _cast(None, production)
-        self.production_nsprefix_ = None
+        self.production_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         if AlternativeImage is None:
             self.AlternativeImage = []
         else:
             self.AlternativeImage = AlternativeImage
-        self.AlternativeImage_nsprefix_ = None
+        self.AlternativeImage_nsprefix_ = "pc"
         self.Coords = Coords
-        self.Coords_nsprefix_ = None
+        self.Coords_nsprefix_ = "pc"
         if Glyph is None:
             self.Glyph = []
         else:
             self.Glyph = Glyph
-        self.Glyph_nsprefix_ = None
+        self.Glyph_nsprefix_ = "pc"
         if TextEquiv is None:
             self.TextEquiv = []
         else:
             self.TextEquiv = TextEquiv
-        self.TextEquiv_nsprefix_ = None
+        self.TextEquiv_nsprefix_ = "pc"
         self.TextStyle = TextStyle
-        self.TextStyle_nsprefix_ = None
+        self.TextStyle_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -3871,42 +3957,42 @@ class GlyphType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.ligature = _cast(bool, ligature)
-        self.ligature_nsprefix_ = None
+        self.ligature_nsprefix_ = "pc"
         self.symbol = _cast(bool, symbol)
-        self.symbol_nsprefix_ = None
+        self.symbol_nsprefix_ = "pc"
         self.script = _cast(None, script)
-        self.script_nsprefix_ = None
+        self.script_nsprefix_ = "pc"
         self.production = _cast(None, production)
-        self.production_nsprefix_ = None
+        self.production_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         if AlternativeImage is None:
             self.AlternativeImage = []
         else:
             self.AlternativeImage = AlternativeImage
-        self.AlternativeImage_nsprefix_ = None
+        self.AlternativeImage_nsprefix_ = "pc"
         self.Coords = Coords
-        self.Coords_nsprefix_ = None
+        self.Coords_nsprefix_ = "pc"
         self.Graphemes = Graphemes
-        self.Graphemes_nsprefix_ = None
+        self.Graphemes_nsprefix_ = "pc"
         if TextEquiv is None:
             self.TextEquiv = []
         else:
             self.TextEquiv = TextEquiv
-        self.TextEquiv_nsprefix_ = None
+        self.TextEquiv_nsprefix_ = "pc"
         self.TextStyle = TextStyle
-        self.TextStyle_nsprefix_ = None
+        self.TextStyle_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4228,19 +4314,19 @@ class TextEquivType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.index = _cast(int, index)
-        self.index_nsprefix_ = None
+        self.index_nsprefix_ = "pc"
         self.conf = _cast(float, conf)
-        self.conf_nsprefix_ = None
+        self.conf_nsprefix_ = "pc"
         self.dataType = _cast(None, dataType)
-        self.dataType_nsprefix_ = None
+        self.dataType_nsprefix_ = "pc"
         self.dataTypeDetails = _cast(None, dataTypeDetails)
-        self.dataTypeDetails_nsprefix_ = None
+        self.dataTypeDetails_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.PlainText = PlainText
-        self.PlainText_nsprefix_ = None
+        self.PlainText_nsprefix_ = "pc"
         self.Unicode = Unicode
-        self.Unicode_nsprefix_ = None
+        self.Unicode_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4413,13 +4499,13 @@ class TextEquivType(GeneratedsSuper):
             value_ = self.gds_parse_string(value_, node, 'PlainText')
             value_ = self.gds_validate_string(value_, node, 'PlainText')
             self.PlainText = value_
-            self.PlainText_nsprefix_ = child_.prefix
+
         elif nodeName_ == 'Unicode':
             value_ = child_.text
             value_ = self.gds_parse_string(value_, node, 'Unicode')
             value_ = self.gds_validate_string(value_, node, 'Unicode')
             self.Unicode = value_
-            self.Unicode_nsprefix_ = child_.prefix
+
     def __hash__(self):
         return hash(self.id)
 # end class TextEquivType
@@ -4443,7 +4529,7 @@ class GridType(GeneratedsSuper):
             self.GridPoints = []
         else:
             self.GridPoints = GridPoints
-        self.GridPoints_nsprefix_ = None
+        self.GridPoints_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4550,9 +4636,9 @@ class GridPointsType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.index = _cast(int, index)
-        self.index_nsprefix_ = None
+        self.index_nsprefix_ = "pc"
         self.points = _cast(None, points)
-        self.points_nsprefix_ = None
+        self.points_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4674,7 +4760,7 @@ class PrintSpaceType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.Coords = Coords
-        self.Coords_nsprefix_ = None
+        self.Coords_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4779,11 +4865,11 @@ class ReadingOrderType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.conf = _cast(float, conf)
-        self.conf_nsprefix_ = None
+        self.conf_nsprefix_ = "pc"
         self.OrderedGroup = OrderedGroup
-        self.OrderedGroup_nsprefix_ = None
+        self.OrderedGroup_nsprefix_ = "pc"
         self.UnorderedGroup = UnorderedGroup
-        self.UnorderedGroup_nsprefix_ = None
+        self.UnorderedGroup_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -4923,9 +5009,9 @@ class RegionRefIndexedType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.index = _cast(int, index)
-        self.index_nsprefix_ = None
+        self.index_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = None
+        self.regionRef_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5049,43 +5135,43 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = None
+        self.regionRef_nsprefix_ = "pc"
         self.index = _cast(int, index)
-        self.index_nsprefix_ = None
+        self.index_nsprefix_ = "pc"
         self.caption = _cast(None, caption)
-        self.caption_nsprefix_ = None
+        self.caption_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.continuation = _cast(bool, continuation)
-        self.continuation_nsprefix_ = None
+        self.continuation_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
         if RegionRefIndexed is None:
             self.RegionRefIndexed = []
         else:
             self.RegionRefIndexed = RegionRefIndexed
-        self.RegionRefIndexed_nsprefix_ = None
+        self.RegionRefIndexed_nsprefix_ = "pc"
         if OrderedGroupIndexed is None:
             self.OrderedGroupIndexed = []
         else:
             self.OrderedGroupIndexed = OrderedGroupIndexed
-        self.OrderedGroupIndexed_nsprefix_ = None
+        self.OrderedGroupIndexed_nsprefix_ = "pc"
         if UnorderedGroupIndexed is None:
             self.UnorderedGroupIndexed = []
         else:
             self.UnorderedGroupIndexed = UnorderedGroupIndexed
-        self.UnorderedGroupIndexed_nsprefix_ = None
+        self.UnorderedGroupIndexed_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5347,6 +5433,99 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
+    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
+    def get_AllIndexed(self, classes=None, index_sort=True):
+        """
+        Get all indexed children sorted by their ``@index``.
+    
+        Arguments:
+            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            index_sort (boolean): Whether to sort by ``@index``
+        """
+        if not classes:
+            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        ret = []
+        for class_ in classes:
+            ret += getattr(self, 'get_{}Indexed'.format(class_))()
+        if index_sort:
+            return sorted(ret, key=lambda x: x.index)
+        return ret
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def extend_AllIndexed(self, elements, validate_continuity=False):
+        """
+        Add all elements in list ``elements``, respecting ``@index`` order.
+        With ``validate_continuity``, check that all new elements come after all old elements
+        (or raise an exception). 
+        Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
+        """
+        if not isinstance(elements, list):
+            elements = [elements]
+        siblings = self.get_AllIndexed()
+        highest_sibling_index = siblings[-1].index if siblings else -1
+        if validate_continuity:
+            elements = sorted(elements, key=lambda x: x.index)
+            lowest_element_index = elements[0].index
+            if lowest_element_index <= highest_sibling_index:
+                raise Exception("@index already used: {}".format(lowest_element_index))
+        else:
+            for element in elements:
+                highest_sibling_index += 1
+                element.index = highest_sibling_index
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def sort_AllIndexed(self, validate_uniqueness=True):
+        """
+        Sort all indexed children in-place.
+        """
+        elements = self.get_AllIndexed(index_sort=True)
+        self.clear_AllIndexed()
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
+        namespaceprefix_ = 'pc:'
+        if self.UserDefined is not None:
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        def replaceWithRRI(group):
+            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+            rri.index = group.index
+            rri.regionRef = group.regionRef
+            cleaned.append(rri)
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            # pylint: disable=undefined-variable
+            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                replaceWithRRI(entry)
+            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+                replaceWithRRI(entry)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
 # end class OrderedGroupIndexedType
 
 
@@ -5385,43 +5564,43 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = None
+        self.regionRef_nsprefix_ = "pc"
         self.index = _cast(int, index)
-        self.index_nsprefix_ = None
+        self.index_nsprefix_ = "pc"
         self.caption = _cast(None, caption)
-        self.caption_nsprefix_ = None
+        self.caption_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.continuation = _cast(bool, continuation)
-        self.continuation_nsprefix_ = None
+        self.continuation_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
         if RegionRef is None:
             self.RegionRef = []
         else:
             self.RegionRef = RegionRef
-        self.RegionRef_nsprefix_ = None
+        self.RegionRef_nsprefix_ = "pc"
         if OrderedGroup is None:
             self.OrderedGroup = []
         else:
             self.OrderedGroup = OrderedGroup
-        self.OrderedGroup_nsprefix_ = None
+        self.OrderedGroup_nsprefix_ = "pc"
         if UnorderedGroup is None:
             self.UnorderedGroup = []
         else:
             self.UnorderedGroup = UnorderedGroup
-        self.UnorderedGroup_nsprefix_ = None
+        self.UnorderedGroup_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5683,6 +5862,13 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
         return hash(self.id)
+    def get_UnorderedGroupChildren(self):
+        """
+        List all non-metadata children of an UnorderedGroup
+        """
+        # TODO: should not change order
+        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
+    
 # end class UnorderedGroupIndexedType
 
 
@@ -5700,7 +5886,7 @@ class RegionRefType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = None
+        self.regionRef_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -5810,41 +5996,41 @@ class OrderedGroupType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = None
+        self.regionRef_nsprefix_ = "pc"
         self.caption = _cast(None, caption)
-        self.caption_nsprefix_ = None
+        self.caption_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.continuation = _cast(bool, continuation)
-        self.continuation_nsprefix_ = None
+        self.continuation_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
         if RegionRefIndexed is None:
             self.RegionRefIndexed = []
         else:
             self.RegionRefIndexed = RegionRefIndexed
-        self.RegionRefIndexed_nsprefix_ = None
+        self.RegionRefIndexed_nsprefix_ = "pc"
         if OrderedGroupIndexed is None:
             self.OrderedGroupIndexed = []
         else:
             self.OrderedGroupIndexed = OrderedGroupIndexed
-        self.OrderedGroupIndexed_nsprefix_ = None
+        self.OrderedGroupIndexed_nsprefix_ = "pc"
         if UnorderedGroupIndexed is None:
             self.UnorderedGroupIndexed = []
         else:
             self.UnorderedGroupIndexed = UnorderedGroupIndexed
-        self.UnorderedGroupIndexed_nsprefix_ = None
+        self.UnorderedGroupIndexed_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6095,6 +6281,99 @@ class OrderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
         return hash(self.id)
+    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
+    def get_AllIndexed(self, classes=None, index_sort=True):
+        """
+        Get all indexed children sorted by their ``@index``.
+    
+        Arguments:
+            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            index_sort (boolean): Whether to sort by ``@index``
+        """
+        if not classes:
+            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        ret = []
+        for class_ in classes:
+            ret += getattr(self, 'get_{}Indexed'.format(class_))()
+        if index_sort:
+            return sorted(ret, key=lambda x: x.index)
+        return ret
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def extend_AllIndexed(self, elements, validate_continuity=False):
+        """
+        Add all elements in list ``elements``, respecting ``@index`` order.
+        With ``validate_continuity``, check that all new elements come after all old elements
+        (or raise an exception). 
+        Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
+        """
+        if not isinstance(elements, list):
+            elements = [elements]
+        siblings = self.get_AllIndexed()
+        highest_sibling_index = siblings[-1].index if siblings else -1
+        if validate_continuity:
+            elements = sorted(elements, key=lambda x: x.index)
+            lowest_element_index = elements[0].index
+            if lowest_element_index <= highest_sibling_index:
+                raise Exception("@index already used: {}".format(lowest_element_index))
+        else:
+            for element in elements:
+                highest_sibling_index += 1
+                element.index = highest_sibling_index
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def sort_AllIndexed(self, validate_uniqueness=True):
+        """
+        Sort all indexed children in-place.
+        """
+        elements = self.get_AllIndexed(index_sort=True)
+        self.clear_AllIndexed()
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
+        namespaceprefix_ = 'pc:'
+        if self.UserDefined is not None:
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        def replaceWithRRI(group):
+            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+            rri.index = group.index
+            rri.regionRef = group.regionRef
+            cleaned.append(rri)
+        # remove emtpy groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            # pylint: disable=undefined-variable
+            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                replaceWithRRI(entry)
+            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+                replaceWithRRI(entry)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
 # end class OrderedGroupType
 
 
@@ -6130,41 +6409,41 @@ class UnorderedGroupType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = None
+        self.regionRef_nsprefix_ = "pc"
         self.caption = _cast(None, caption)
-        self.caption_nsprefix_ = None
+        self.caption_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.continuation = _cast(bool, continuation)
-        self.continuation_nsprefix_ = None
+        self.continuation_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
         if RegionRef is None:
             self.RegionRef = []
         else:
             self.RegionRef = RegionRef
-        self.RegionRef_nsprefix_ = None
+        self.RegionRef_nsprefix_ = "pc"
         if OrderedGroup is None:
             self.OrderedGroup = []
         else:
             self.OrderedGroup = OrderedGroup
-        self.OrderedGroup_nsprefix_ = None
+        self.OrderedGroup_nsprefix_ = "pc"
         if UnorderedGroup is None:
             self.UnorderedGroup = []
         else:
             self.UnorderedGroup = UnorderedGroup
-        self.UnorderedGroup_nsprefix_ = None
+        self.UnorderedGroup_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6415,6 +6694,13 @@ class UnorderedGroupType(GeneratedsSuper):
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
         return hash(self.id)
+    def get_UnorderedGroupChildren(self):
+        """
+        List all non-metadata children of an UnorderedGroup
+        """
+        # TODO: should not change order
+        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
+    
 # end class UnorderedGroupType
 
 
@@ -6434,7 +6720,7 @@ class BorderType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.Coords = Coords
-        self.Coords_nsprefix_ = None
+        self.Coords_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6538,7 +6824,7 @@ class LayersType(GeneratedsSuper):
             self.Layer = []
         else:
             self.Layer = Layer
-        self.Layer_nsprefix_ = None
+        self.Layer_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6645,16 +6931,16 @@ class LayerType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.zIndex = _cast(int, zIndex)
-        self.zIndex_nsprefix_ = None
+        self.zIndex_nsprefix_ = "pc"
         self.caption = _cast(None, caption)
-        self.caption_nsprefix_ = None
+        self.caption_nsprefix_ = "pc"
         if RegionRef is None:
             self.RegionRef = []
         else:
             self.RegionRef = RegionRef
-        self.RegionRef_nsprefix_ = None
+        self.RegionRef_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6791,9 +7077,9 @@ class BaselineType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.points = _cast(None, points)
-        self.points_nsprefix_ = None
+        self.points_nsprefix_ = "pc"
         self.conf = _cast(float, conf)
-        self.conf_nsprefix_ = None
+        self.conf_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -6931,7 +7217,7 @@ class RelationsType(GeneratedsSuper):
             self.Relation = []
         else:
             self.Relation = Relation
-        self.Relation_nsprefix_ = None
+        self.Relation_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -7056,22 +7342,22 @@ class RelationType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
         self.SourceRegionRef = SourceRegionRef
-        self.SourceRegionRef_nsprefix_ = None
+        self.SourceRegionRef_nsprefix_ = "pc"
         self.TargetRegionRef = TargetRegionRef
-        self.TargetRegionRef_nsprefix_ = None
+        self.TargetRegionRef_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -7284,47 +7570,47 @@ class TextStyleType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.fontFamily = _cast(None, fontFamily)
-        self.fontFamily_nsprefix_ = None
+        self.fontFamily_nsprefix_ = "pc"
         self.serif = _cast(bool, serif)
-        self.serif_nsprefix_ = None
+        self.serif_nsprefix_ = "pc"
         self.monospace = _cast(bool, monospace)
-        self.monospace_nsprefix_ = None
+        self.monospace_nsprefix_ = "pc"
         self.fontSize = _cast(float, fontSize)
-        self.fontSize_nsprefix_ = None
+        self.fontSize_nsprefix_ = "pc"
         self.xHeight = _cast(int, xHeight)
-        self.xHeight_nsprefix_ = None
+        self.xHeight_nsprefix_ = "pc"
         self.kerning = _cast(int, kerning)
-        self.kerning_nsprefix_ = None
+        self.kerning_nsprefix_ = "pc"
         self.textColour = _cast(None, textColour)
-        self.textColour_nsprefix_ = None
+        self.textColour_nsprefix_ = "pc"
         self.textColourRgb = _cast(int, textColourRgb)
-        self.textColourRgb_nsprefix_ = None
+        self.textColourRgb_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
         self.bgColourRgb = _cast(int, bgColourRgb)
-        self.bgColourRgb_nsprefix_ = None
+        self.bgColourRgb_nsprefix_ = "pc"
         self.reverseVideo = _cast(bool, reverseVideo)
-        self.reverseVideo_nsprefix_ = None
+        self.reverseVideo_nsprefix_ = "pc"
         self.bold = _cast(bool, bold)
-        self.bold_nsprefix_ = None
+        self.bold_nsprefix_ = "pc"
         self.italic = _cast(bool, italic)
-        self.italic_nsprefix_ = None
+        self.italic_nsprefix_ = "pc"
         self.underlined = _cast(bool, underlined)
-        self.underlined_nsprefix_ = None
+        self.underlined_nsprefix_ = "pc"
         self.underlineStyle = _cast(None, underlineStyle)
-        self.underlineStyle_nsprefix_ = None
+        self.underlineStyle_nsprefix_ = "pc"
         self.doubleUnderlined = _cast(bool, doubleUnderlined)
-        self.doubleUnderlined_nsprefix_ = None
+        self.doubleUnderlined_nsprefix_ = "pc"
         self.subscript = _cast(bool, subscript)
-        self.subscript_nsprefix_ = None
+        self.subscript_nsprefix_ = "pc"
         self.superscript = _cast(bool, superscript)
-        self.superscript_nsprefix_ = None
+        self.superscript_nsprefix_ = "pc"
         self.strikethrough = _cast(bool, strikethrough)
-        self.strikethrough_nsprefix_ = None
+        self.strikethrough_nsprefix_ = "pc"
         self.smallCaps = _cast(bool, smallCaps)
-        self.smallCaps_nsprefix_ = None
+        self.smallCaps_nsprefix_ = "pc"
         self.letterSpaced = _cast(bool, letterSpaced)
-        self.letterSpaced_nsprefix_ = None
+        self.letterSpaced_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -7751,99 +8037,99 @@ class RegionType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.continuation = _cast(bool, continuation)
-        self.continuation_nsprefix_ = None
+        self.continuation_nsprefix_ = "pc"
         if AlternativeImage is None:
             self.AlternativeImage = []
         else:
             self.AlternativeImage = AlternativeImage
-        self.AlternativeImage_nsprefix_ = None
+        self.AlternativeImage_nsprefix_ = "pc"
         self.Coords = Coords
-        self.Coords_nsprefix_ = None
+        self.Coords_nsprefix_ = "pc"
         self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = None
+        self.UserDefined_nsprefix_ = "pc"
         if Labels is None:
             self.Labels = []
         else:
             self.Labels = Labels
-        self.Labels_nsprefix_ = None
+        self.Labels_nsprefix_ = "pc"
         self.Roles = Roles
-        self.Roles_nsprefix_ = None
+        self.Roles_nsprefix_ = "pc"
         if TextRegion is None:
             self.TextRegion = []
         else:
             self.TextRegion = TextRegion
-        self.TextRegion_nsprefix_ = None
+        self.TextRegion_nsprefix_ = "pc"
         if ImageRegion is None:
             self.ImageRegion = []
         else:
             self.ImageRegion = ImageRegion
-        self.ImageRegion_nsprefix_ = None
+        self.ImageRegion_nsprefix_ = "pc"
         if LineDrawingRegion is None:
             self.LineDrawingRegion = []
         else:
             self.LineDrawingRegion = LineDrawingRegion
-        self.LineDrawingRegion_nsprefix_ = None
+        self.LineDrawingRegion_nsprefix_ = "pc"
         if GraphicRegion is None:
             self.GraphicRegion = []
         else:
             self.GraphicRegion = GraphicRegion
-        self.GraphicRegion_nsprefix_ = None
+        self.GraphicRegion_nsprefix_ = "pc"
         if TableRegion is None:
             self.TableRegion = []
         else:
             self.TableRegion = TableRegion
-        self.TableRegion_nsprefix_ = None
+        self.TableRegion_nsprefix_ = "pc"
         if ChartRegion is None:
             self.ChartRegion = []
         else:
             self.ChartRegion = ChartRegion
-        self.ChartRegion_nsprefix_ = None
+        self.ChartRegion_nsprefix_ = "pc"
         if SeparatorRegion is None:
             self.SeparatorRegion = []
         else:
             self.SeparatorRegion = SeparatorRegion
-        self.SeparatorRegion_nsprefix_ = None
+        self.SeparatorRegion_nsprefix_ = "pc"
         if MathsRegion is None:
             self.MathsRegion = []
         else:
             self.MathsRegion = MathsRegion
-        self.MathsRegion_nsprefix_ = None
+        self.MathsRegion_nsprefix_ = "pc"
         if ChemRegion is None:
             self.ChemRegion = []
         else:
             self.ChemRegion = ChemRegion
-        self.ChemRegion_nsprefix_ = None
+        self.ChemRegion_nsprefix_ = "pc"
         if MusicRegion is None:
             self.MusicRegion = []
         else:
             self.MusicRegion = MusicRegion
-        self.MusicRegion_nsprefix_ = None
+        self.MusicRegion_nsprefix_ = "pc"
         if AdvertRegion is None:
             self.AdvertRegion = []
         else:
             self.AdvertRegion = AdvertRegion
-        self.AdvertRegion_nsprefix_ = None
+        self.AdvertRegion_nsprefix_ = "pc"
         if NoiseRegion is None:
             self.NoiseRegion = []
         else:
             self.NoiseRegion = NoiseRegion
-        self.NoiseRegion_nsprefix_ = None
+        self.NoiseRegion_nsprefix_ = "pc"
         if UnknownRegion is None:
             self.UnknownRegion = []
         else:
             self.UnknownRegion = UnknownRegion
-        self.UnknownRegion_nsprefix_ = None
+        self.UnknownRegion_nsprefix_ = "pc"
         if CustomRegion is None:
             self.CustomRegion = []
         else:
             self.CustomRegion = CustomRegion
-        self.CustomRegion_nsprefix_ = None
+        self.CustomRegion_nsprefix_ = "pc"
         self.extensiontype_ = extensiontype_
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -8336,11 +8622,11 @@ class AlternativeImageType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.filename = _cast(None, filename)
-        self.filename_nsprefix_ = None
+        self.filename_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         self.conf = _cast(float, conf)
-        self.conf_nsprefix_ = None
+        self.conf_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -8478,17 +8764,17 @@ class GraphemesType(GeneratedsSuper):
             self.Grapheme = []
         else:
             self.Grapheme = Grapheme
-        self.Grapheme_nsprefix_ = None
+        self.Grapheme_nsprefix_ = "pc"
         if NonPrintingChar is None:
             self.NonPrintingChar = []
         else:
             self.NonPrintingChar = NonPrintingChar
-        self.NonPrintingChar_nsprefix_ = None
+        self.NonPrintingChar_nsprefix_ = "pc"
         if GraphemeGroup is None:
             self.GraphemeGroup = []
         else:
             self.GraphemeGroup = GraphemeGroup
-        self.GraphemeGroup_nsprefix_ = None
+        self.GraphemeGroup_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -8642,22 +8928,22 @@ class GraphemeBaseType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.id = _cast(None, id)
-        self.id_nsprefix_ = None
+        self.id_nsprefix_ = "pc"
         self.index = _cast(int, index)
-        self.index_nsprefix_ = None
+        self.index_nsprefix_ = "pc"
         self.ligature = _cast(bool, ligature)
-        self.ligature_nsprefix_ = None
+        self.ligature_nsprefix_ = "pc"
         self.charType = _cast(None, charType)
-        self.charType_nsprefix_ = None
+        self.charType_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = None
+        self.custom_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = None
+        self.comments_nsprefix_ = "pc"
         if TextEquiv is None:
             self.TextEquiv = []
         else:
             self.TextEquiv = TextEquiv
-        self.TextEquiv_nsprefix_ = None
+        self.TextEquiv_nsprefix_ = "pc"
         self.extensiontype_ = extensiontype_
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
@@ -8849,7 +9135,7 @@ class GraphemeType(GraphemeBaseType):
         self.ns_prefix_ = None
         super(GraphemeType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
         self.Coords = Coords
-        self.Coords_nsprefix_ = None
+        self.Coords_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -9042,12 +9328,12 @@ class GraphemeGroupType(GraphemeBaseType):
             self.Grapheme = []
         else:
             self.Grapheme = Grapheme
-        self.Grapheme_nsprefix_ = None
+        self.Grapheme_nsprefix_ = "pc"
         if NonPrintingChar is None:
             self.NonPrintingChar = []
         else:
             self.NonPrintingChar = NonPrintingChar
-        self.NonPrintingChar_nsprefix_ = None
+        self.NonPrintingChar_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -9177,7 +9463,7 @@ class UserDefinedType(GeneratedsSuper):
             self.UserAttribute = []
         else:
             self.UserAttribute = UserAttribute
-        self.UserAttribute_nsprefix_ = None
+        self.UserAttribute_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -9285,13 +9571,13 @@ class UserAttributeType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.name = _cast(None, name)
-        self.name_nsprefix_ = None
+        self.name_nsprefix_ = "pc"
         self.description = _cast(None, description)
-        self.description_nsprefix_ = None
+        self.description_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.value = _cast(None, value)
-        self.value_nsprefix_ = None
+        self.value_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -9424,15 +9710,15 @@ class TableCellRoleType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.rowIndex = _cast(int, rowIndex)
-        self.rowIndex_nsprefix_ = None
+        self.rowIndex_nsprefix_ = "pc"
         self.columnIndex = _cast(int, columnIndex)
-        self.columnIndex_nsprefix_ = None
+        self.columnIndex_nsprefix_ = "pc"
         self.rowSpan = _cast(int, rowSpan)
-        self.rowSpan_nsprefix_ = None
+        self.rowSpan_nsprefix_ = "pc"
         self.colSpan = _cast(int, colSpan)
-        self.colSpan_nsprefix_ = None
+        self.colSpan_nsprefix_ = "pc"
         self.header = _cast(bool, header)
-        self.header_nsprefix_ = None
+        self.header_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -9573,7 +9859,7 @@ class RolesType(GeneratedsSuper):
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
         self.TableCellRole = TableCellRole
-        self.TableCellRole_nsprefix_ = None
+        self.TableCellRole_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -9677,7 +9963,7 @@ class CustomRegionType(RegionType):
         self.ns_prefix_ = None
         super(CustomRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -9952,9 +10238,9 @@ class AdvertRegionType(RegionType):
         self.ns_prefix_ = None
         super(AdvertRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10085,9 +10371,9 @@ class MusicRegionType(RegionType):
         self.ns_prefix_ = None
         super(MusicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10217,7 +10503,7 @@ class MapRegionType(RegionType):
         self.ns_prefix_ = None
         super(MapRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10324,9 +10610,9 @@ class ChemRegionType(RegionType):
         self.ns_prefix_ = None
         super(ChemRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10458,9 +10744,9 @@ class MathsRegionType(RegionType):
         self.ns_prefix_ = None
         super(MathsRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10593,9 +10879,9 @@ class SeparatorRegionType(RegionType):
         self.ns_prefix_ = None
         super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.colour = _cast(None, colour)
-        self.colour_nsprefix_ = None
+        self.colour_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10735,15 +11021,15 @@ class ChartRegionType(RegionType):
         self.ns_prefix_ = None
         super(ChartRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.numColours = _cast(int, numColours)
-        self.numColours_nsprefix_ = None
+        self.numColours_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
         self.embText = _cast(bool, embText)
-        self.embText_nsprefix_ = None
+        self.embText_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10940,21 +11226,21 @@ class TableRegionType(RegionType):
         self.ns_prefix_ = None
         super(TableRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.rows = _cast(int, rows)
-        self.rows_nsprefix_ = None
+        self.rows_nsprefix_ = "pc"
         self.columns = _cast(int, columns)
-        self.columns_nsprefix_ = None
+        self.columns_nsprefix_ = "pc"
         self.lineColour = _cast(None, lineColour)
-        self.lineColour_nsprefix_ = None
+        self.lineColour_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
         self.lineSeparators = _cast(bool, lineSeparators)
-        self.lineSeparators_nsprefix_ = None
+        self.lineSeparators_nsprefix_ = "pc"
         self.embText = _cast(bool, embText)
-        self.embText_nsprefix_ = None
+        self.embText_nsprefix_ = "pc"
         self.Grid = Grid
-        self.Grid_nsprefix_ = None
+        self.Grid_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -11174,13 +11460,13 @@ class GraphicRegionType(RegionType):
         self.ns_prefix_ = None
         super(GraphicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.numColours = _cast(int, numColours)
-        self.numColours_nsprefix_ = None
+        self.numColours_nsprefix_ = "pc"
         self.embText = _cast(bool, embText)
-        self.embText_nsprefix_ = None
+        self.embText_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -11344,13 +11630,13 @@ class LineDrawingRegionType(RegionType):
         self.ns_prefix_ = None
         super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.penColour = _cast(None, penColour)
-        self.penColour_nsprefix_ = None
+        self.penColour_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
         self.embText = _cast(bool, embText)
-        self.embText_nsprefix_ = None
+        self.embText_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -11515,13 +11801,13 @@ class ImageRegionType(RegionType):
         self.ns_prefix_ = None
         super(ImageRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.colourDepth = _cast(None, colourDepth)
-        self.colourDepth_nsprefix_ = None
+        self.colourDepth_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
-        self.bgColour_nsprefix_ = None
+        self.bgColour_nsprefix_ = "pc"
         self.embText = _cast(bool, embText)
-        self.embText_nsprefix_ = None
+        self.embText_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -11731,43 +12017,43 @@ class TextRegionType(RegionType):
         self.ns_prefix_ = None
         super(TextRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
-        self.orientation_nsprefix_ = None
+        self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = None
+        self.type__nsprefix_ = "pc"
         self.leading = _cast(int, leading)
-        self.leading_nsprefix_ = None
+        self.leading_nsprefix_ = "pc"
         self.readingDirection = _cast(None, readingDirection)
-        self.readingDirection_nsprefix_ = None
+        self.readingDirection_nsprefix_ = "pc"
         self.textLineOrder = _cast(None, textLineOrder)
-        self.textLineOrder_nsprefix_ = None
+        self.textLineOrder_nsprefix_ = "pc"
         self.readingOrientation = _cast(float, readingOrientation)
-        self.readingOrientation_nsprefix_ = None
+        self.readingOrientation_nsprefix_ = "pc"
         self.indented = _cast(bool, indented)
-        self.indented_nsprefix_ = None
+        self.indented_nsprefix_ = "pc"
         self.align = _cast(None, align)
-        self.align_nsprefix_ = None
+        self.align_nsprefix_ = "pc"
         self.primaryLanguage = _cast(None, primaryLanguage)
-        self.primaryLanguage_nsprefix_ = None
+        self.primaryLanguage_nsprefix_ = "pc"
         self.secondaryLanguage = _cast(None, secondaryLanguage)
-        self.secondaryLanguage_nsprefix_ = None
+        self.secondaryLanguage_nsprefix_ = "pc"
         self.primaryScript = _cast(None, primaryScript)
-        self.primaryScript_nsprefix_ = None
+        self.primaryScript_nsprefix_ = "pc"
         self.secondaryScript = _cast(None, secondaryScript)
-        self.secondaryScript_nsprefix_ = None
+        self.secondaryScript_nsprefix_ = "pc"
         self.production = _cast(None, production)
-        self.production_nsprefix_ = None
+        self.production_nsprefix_ = "pc"
         if TextLine is None:
             self.TextLine = []
         else:
             self.TextLine = TextLine
-        self.TextLine_nsprefix_ = None
+        self.TextLine_nsprefix_ = "pc"
         if TextEquiv is None:
             self.TextEquiv = []
         else:
             self.TextEquiv = TextEquiv
-        self.TextEquiv_nsprefix_ = None
+        self.TextEquiv_nsprefix_ = "pc"
         self.TextStyle = TextStyle
-        self.TextStyle_nsprefix_ = None
+        self.TextStyle_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(

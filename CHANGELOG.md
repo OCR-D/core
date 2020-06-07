@@ -5,6 +5,88 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `OcrdFile` constructor accepts `ID` parameter
+  * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+
+## [2.8.1] - 2020-06-06
+
+Changed:
+
+  * `OcrdMets.remove_file` now supports all the options of `OcrdMets.find_files`, #497, #458
+  * `OcrdMets.remove_file_group` now supports the `USE` param being a regex,, #497, #458
+
+Added:
+
+  * `OcrdMets.remove_one_file`: remove a single `OcrdFile`, either directly or by ID, #497, #458
+
+## [2.8.0] - 2020-06-04
+
+Added:
+
+  * `ocrd-dummy`, a minimal processor that copies input to output, #468
+  * OcrdPage: `get_AllRegions`: retrieve all regions, sorted by document or reading order, #479
+  * OcrdPage: `sort_AllIndexed`: sort all children by `@index`  in-place
+  * OcrdPage: `clear_AllIndexed`: clear all `@index` children
+  * OcrdPage: `extend_AllIndexed`: Add elements with incrementing `@index`
+  * OcrdPage: Replace empty reading order groups with equivalent `RegionRef` on export
+  * OcrdPage: `get_UnorderedGroupChildren`: get reading order elements of an `UnorderedGroup`
+
+
+Changed:
+
+  * OcrdPage: `get_AllIndexed`: allow filtering by child type
+  * OcrdPage: `get_AllIndexed`: index_sort parameter to enable/disable sorting
+
+## [2.7.1] - 2020-05-27
+
+Fixed:
+
+  * `ocrd workspace find`: Use `OcrdMets.get_physical_pages` method, fix #491
+
+## [2.7.0] - 2020-05-27
+
+Changed:
+
+   * :fire: `Workspace.image_from_page` no longer treats `PrintSpace` as functionally equivalent to `Border`, #490
+  * `OcrdMets.get_physical_pages` method companion to `OcrdMets.physical_pages` property, #484
+  * OcrdMets/ocrd workspace find: Search for multiple pages by fileid, ht @bertsky, #463, #484
+  * PAGE validation: respect reading order in consistency checks, #442
+
+## [2.6.1] - 2020-05-14
+
+Added:
+
+  * OcrdPage: new method `get_AllIndexed` for OrderedGroup and OrderedGroupIndexed that lists
+    their children, sorted by index, #478
+
+Changed:
+
+  * Improved log message for profiling processors, #477
+
+Fixed:
+
+  * Search for `--page-id` now orders of magnitutde faster, ht @bertsky, #481
+  * Not all generateDS types were exported by ocrd_page, now they are, #480
+
+
+## [2.6.0] - 2020-05-12
+
+Fixed:
+
+  * image files no longer cached in workspace, #446, #448
+
+Added
+
+  * Many mets:file search fields support regex now, #458, #448
+
+## [2.5.3] - 2020-04-30
+
+Fixed:
+
+  * OcrdPage: hacks to make XML namespace output consistent, #474
+
 ## [2.5.2] - 2020-04-29
 
 Fixed:
@@ -802,6 +884,13 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.8.1]: ../../compare/v2.8.1...v2.8.0
+[2.8.0]: ../../compare/v2.8.0...v2.7.1
+[2.7.1]: ../../compare/v2.7.1...v2.7.0
+[2.7.0]: ../../compare/v2.7.0...v2.6.1
+[2.6.1]: ../../compare/v2.6.1...v2.6.0
+[2.6.0]: ../../compare/v2.6.0...v2.5.3
+[2.5.3]: ../../compare/v2.5.3...v2.5.2
 [2.5.2]: ../../compare/v2.5.2...v2.5.1
 [2.5.1]: ../../compare/v2.5.1...v2.5.0
 [2.5.0]: ../../compare/v2.5.0...v2.4.4
