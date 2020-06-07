@@ -6,10 +6,18 @@ import sys
 import logging
 import io
 import collections
-from unittest import TestCase as VanillaTestCase, skip, main
+from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
+import pytest
 from ocrd_utils import initLogging
 
 from .assets import assets, copy_of_directory
+
+def main(fn):
+    if fn:
+        sys.exit(pytest.main([fn]))
+    else:
+        unittests_main()
+
 
 class TestCase(VanillaTestCase):
 
