@@ -5,10 +5,6 @@
             <mets:name>ocrd/core v{{ VERSION }}</mets:name>
         </mets:agent>
     </mets:metsHdr>
-    <mets:structMap TYPE="PHYSICAL">
-        <mets:div TYPE="physSequence">
-        </mets:div>
-    </mets:structMap>
     <mets:dmdSec ID="DMDLOG_0001">
         <mets:mdWrap MDTYPE="MODS">
             <mets:xmlData>
@@ -21,5 +17,9 @@
     </mets:amdSec>
     <mets:fileSec>
     </mets:fileSec>
+    <mets:structMap TYPE="PHYSICAL">
+        <mets:div TYPE="physSequence">
+        </mets:div>
+    </mets:structMap>
 </mets:mets>
 
