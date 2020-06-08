@@ -260,4 +260,7 @@ class WorkspaceValidator():
                                                  page_textequiv_consistency=self.page_strictness,
                                                  check_coords=self.page_coordinate_consistency in ['poly', 'both'],
                                                  check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
+            pg = page_from_file(ocrd_file)
+            if pg.pcGtsId != ocrd_file.ID:
+                page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pg.pcGtsId or '', ocrd_file.ID or ''))
             self.report.merge_report(page_report)
