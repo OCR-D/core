@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * URL of the bagit profile is now `https://ocr-d.de/bagit-profile.json`
+
 ## [2.8.2] - 2020-06-08
 
 Changed:
