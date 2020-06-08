@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.8.3] - 2020-06-08
+
 Fixed:
 
   * workspace.remove_file: fix for list-valued results, #507
@@ -900,6 +902,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.8.3]: ../../compare/v2.8.3...v2.8.2
+[2.8.2]: ../../compare/v2.8.2...v2.8.1
 [2.8.1]: ../../compare/v2.8.1...v2.8.0
 [2.8.0]: ../../compare/v2.8.0...v2.7.1
 [2.7.1]: ../../compare/v2.7.1...v2.7.0
