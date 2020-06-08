@@ -797,7 +797,7 @@ class Workspace():
                         file_grp,
                         page_id=None,
                         mimetype='image/png',
-                        force=True):
+                        force=False):
         """Store and reference an image as file into the workspace.
 
         Given a PIL.Image `image`, and an ID `file_id` to use in METS,
