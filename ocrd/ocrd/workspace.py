@@ -128,17 +128,19 @@ class Workspace():
         """
         log.debug('Deleting mets:file %s', ID)
         try:
-            ocrd_file = self.mets.remove_file(ID)
+            ocrd_file_ = self.mets.remove_file(ID)
+            ocrd_files = [ocrd_file_] if isinstance(ocrd_file_, OcrdFile) else ocrd_file_
             if not keep_file:
-                if not ocrd_file.local_filename:
-                    log.warning("File not locally available %s", ocrd_file)
-                    if not force:
-                        raise Exception("File not locally available %s" % ocrd_file)
-                else:
-                    with pushd_popd(self.directory):
-                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
-                        unlink(ocrd_file.local_filename)
-            return ocrd_file
+                with pushd_popd(self.directory):
+                    for ocrd_file in ocrd_files:
+                        if not ocrd_file.local_filename:
+                            log.warning("File not locally available %s", ocrd_file)
+                            if not force:
+                                raise Exception("File not locally available %s" % ocrd_file)
+                        else:
+                            log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                            unlink(ocrd_file.local_filename)
+            return ocrd_file_
         except FileNotFoundError as e:
             if not force:
                 raise e
