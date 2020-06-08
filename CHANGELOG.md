@@ -5,6 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * workspace.remove_file: fix for list-valued results, #507
+
+Changed:
+
+  * workspace prune-files CLI: support filtering (like workspace find), #507
+  * workspace CLI: update help strings (documenting regex support), #507
+
 ## [2.8.2] - 2020-06-08
 
 Changed:
