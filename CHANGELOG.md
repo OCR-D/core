@@ -10,6 +10,8 @@ Changed:
   * `OcrdFile` constructor accepts `ID` parameter
   * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
   * `WorkspaceValidator`:  check `pc:PcGts/@pcGtsId` == `mets:file/@ID`, #378
+  * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+  * METS: reorder elements according to schema in empty METS, #487
 
 ## [2.8.1] - 2020-06-06
 
