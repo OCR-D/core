@@ -106,7 +106,7 @@ def run_cli(
     if parameter:
         args += ['--parameter', parameter]
     if overwrite:
-        args += ['--overwrite', overwrite]
+        args += ['--overwrite']
     log.debug("Running subprocess '%s'", ' '.join(args))
     return subprocess.call(args)
 

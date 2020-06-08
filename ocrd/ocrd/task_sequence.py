@@ -91,7 +91,7 @@ def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     first_task.validate()
 
     # first task: check input/output file groups from METS
-    WorkspaceValidator.check_file_grp(workspace, first_task.input_file_grps, first_task.output_file_grps, page_id, report)
+    WorkspaceValidator.check_file_grp(workspace, first_task.input_file_grps, '' if overwrite else first_task.output_file_grps, page_id, report)
 
     prev_output_file_grps += first_task.output_file_grps
     for task in tasks:
@@ -151,4 +151,3 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
         for output_file_grp in task.output_file_grps:
             if not output_file_grp in workspace.mets.file_groups:
                 raise Exception("Invalid state: expected output file group not in mets: %s" % output_file_grp)
-

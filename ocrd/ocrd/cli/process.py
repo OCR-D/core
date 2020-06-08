@@ -16,7 +16,7 @@ from ..decorators import ocrd_loglevel
 @ocrd_loglevel
 @click.option('-m', '--mets', help="METS to process", default="mets.xml")
 @click.option('-g', '--page-id', help="ID(s) of the pages to process")
-@click.option('--overwrite', help="ID(s) of the pages to process")
+@click.option('--overwrite', is_flag=True, default=False, help="Remove output pages/images if they already exist")
 @click.argument('tasks', nargs=-1, required=True)
 def process_cli(log_level, mets, page_id, tasks, overwrite):
     """
