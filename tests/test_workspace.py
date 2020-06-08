@@ -172,7 +172,7 @@ class TestWorkspace(TestCase):
             ws = Workspace(self.resolver, directory=tempdir)
             self.assertEqual(len(ws.mets.find_files()), 119)
             ws.remove_file('OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001', page_recursive=True)
-            self.assertEqual(len(ws.mets.find_files()), 82)
+            self.assertEqual(len(ws.mets.find_files()), 83)
 
     def test_download_to_directory_from_workspace_download_file(self):
         """

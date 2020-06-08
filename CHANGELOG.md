@@ -22,7 +22,7 @@ Changed:
 
 Added:
 
-  * `OcrdPage`: `get_AllImagePaths` to list all images referenced in a PcGts, #434, #471
+  * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
 
 ## [2.8.2] - 2020-06-08
 

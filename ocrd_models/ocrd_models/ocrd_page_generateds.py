@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Sat Jun  6 16:03:42 2020 by generateDS.py version 2.35.20.
+# Generated Mon Jun  8 13:37:37 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -13,10 +13,10 @@
 #   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
 # Command line arguments:
-#   repo/assets/data/schema/data/2019.xsd
+#   ocrd_validators/ocrd_validators/xsd/page.xsd
 #
 # Command line:
-#   /home/kba/env/py3-disht/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" repo/assets/data/schema/data/2019.xsd
+#   /home/kba/env/py3-disht/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/xsd/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1079,7 +1079,7 @@ class TextTypeSimpleType(str, Enum):
     OTHER='other'
 
 
-class underlineStyleType(str, Enum):
+class UnderlineStyleSimpleType(str, Enum):
     SINGLE_LINE='singleLine'
     DOUBLE_LINE='doubleLine'
     OTHER='other'
@@ -1208,9 +1208,9 @@ class PcGtsType(GeneratedsSuper):
             obj_.original_tagname_ = 'Page'
     def __hash__(self):
         return hash(self.id)
-    def get_AllImagePaths(self, page=True, region=True, line=True, word=True, glyph=True, alternative_images=True):
+    def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
-        Get all the image paths referenced in the PAGE-XML document.
+        Get all the pc:AlternativeImage/@filename paths referenced in the PAGE-XML document.
     
     
         page (boolean): Get pc:Page level images
@@ -1218,44 +1218,40 @@ class PcGtsType(GeneratedsSuper):
         line (boolean) Get images on pc:TextLine level
         word (boolean) Get images on pc:Word level
         glyph (boolean) Get images on pc:Glyph level
-        alternative_images (boolean): Get AlternativeImages as well.
         """
         from .constants import NAMESPACES, PAGE_REGION_TYPES # pylint: disable=relative-beyond-top-level,import-outside-toplevel
         from io import StringIO  # pylint: disable=import-outside-toplevel
         ret = []
-        if page:
-            ret.append(self.get_Page().imageFilename)
-        if alternative_images:
-            # XXX Since we're only interested in the **paths** of the images,
-            # export, parse and xpath are less convoluted than traversing
-            # the generateDS API. Quite possibly not as efficient as could be.
-            sio = StringIO()
-            self.export(
-                    outfile=sio,
-                    level=0,
-                    name_='PcGts',
-                    namespaceprefix_='pc:',
-                    namespacedef_='xmlns:pc="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
-                        NAMESPACES['page'],
-                        NAMESPACES['page'],
-                        NAMESPACES['page']
-                    ))
-            doc = parsexmlstring_(sio.getvalue())  # pylint: disable=undefined-variable
-            # shortcut
-            if page and region and line and word and glyph:
-                ret += doc.xpath('//page:AlternativeImage/@filename', namespaces=NAMESPACES)
-            else:
-                if page:
-                    ret += doc.xpath('/page:PcGts/page:Page/page:AlternativeImage/@filename', namespaces=NAMESPACES)
-                if region:
-                    for class_ in PAGE_REGION_TYPES:
-                        ret += doc.xpath('//page:%sRegion/page:AlternativeImage/@filename' % class_, namespaces=NAMESPACES)
-                if line:
-                    ret += doc.xpath('//page:TextLine/page:AlternativeImage/@filename', namespaces=NAMESPACES)
-                if word:
-                    ret += doc.xpath('//page:Word/page:AlternativeImage/@filename', namespaces=NAMESPACES)
-                if glyph:
-                    ret += doc.xpath('//page:Glyph/page:AlternativeImage/@filename', namespaces=NAMESPACES)
+        # XXX Since we're only interested in the **paths** of the images,
+        # export, parse and xpath are less convoluted than traversing
+        # the generateDS API. Quite possibly not as efficient as could be.
+        sio = StringIO()
+        self.export(
+                outfile=sio,
+                level=0,
+                name_='PcGts',
+                namespaceprefix_='pc:',
+                namespacedef_='xmlns:pc="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
+                    NAMESPACES['page'],
+                    NAMESPACES['page'],
+                    NAMESPACES['page']
+                ))
+        doc = parsexmlstring_(sio.getvalue())  # pylint: disable=undefined-variable
+        # shortcut
+        if page and region and line and word and glyph:
+            ret += doc.xpath('//page:AlternativeImage/@filename', namespaces=NAMESPACES)
+        else:
+            if page:
+                ret += doc.xpath('/page:PcGts/page:Page/page:AlternativeImage/@filename', namespaces=NAMESPACES)
+            if region:
+                for class_ in PAGE_REGION_TYPES:
+                    ret += doc.xpath('//page:%sRegion/page:AlternativeImage/@filename' % class_, namespaces=NAMESPACES)
+            if line:
+                ret += doc.xpath('//page:TextLine/page:AlternativeImage/@filename', namespaces=NAMESPACES)
+            if word:
+                ret += doc.xpath('//page:Word/page:AlternativeImage/@filename', namespaces=NAMESPACES)
+            if glyph:
+                ret += doc.xpath('//page:Glyph/page:AlternativeImage/@filename', namespaces=NAMESPACES)
     
         return ret
 # end class PcGtsType
@@ -7602,8 +7598,7 @@ class TextStyleType(GeneratedsSuper):
         MemberSpec_('bold', 'boolean', 0, 1, {'use': 'optional'}),
         MemberSpec_('italic', 'boolean', 0, 1, {'use': 'optional'}),
         MemberSpec_('underlined', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('underlineStyle', 'pc:underlineStyleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('doubleUnderlined', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('underlineStyle', 'pc:UnderlineStyleSimpleType', 0, 1, {'use': 'optional'}),
         MemberSpec_('subscript', 'boolean', 0, 1, {'use': 'optional'}),
         MemberSpec_('superscript', 'boolean', 0, 1, {'use': 'optional'}),
         MemberSpec_('strikethrough', 'boolean', 0, 1, {'use': 'optional'}),
@@ -7612,7 +7607,7 @@ class TextStyleType(GeneratedsSuper):
     ]
     subclass = None
     superclass = None
-    def __init__(self, fontFamily=None, serif=None, monospace=None, fontSize=None, xHeight=None, kerning=None, textColour=None, textColourRgb=None, bgColour=None, bgColourRgb=None, reverseVideo=None, bold=None, italic=None, underlined=None, underlineStyle=None, doubleUnderlined=None, subscript=None, superscript=None, strikethrough=None, smallCaps=None, letterSpaced=None, gds_collector_=None, **kwargs_):
+    def __init__(self, fontFamily=None, serif=None, monospace=None, fontSize=None, xHeight=None, kerning=None, textColour=None, textColourRgb=None, bgColour=None, bgColourRgb=None, reverseVideo=None, bold=None, italic=None, underlined=None, underlineStyle=None, subscript=None, superscript=None, strikethrough=None, smallCaps=None, letterSpaced=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
@@ -7648,8 +7643,6 @@ class TextStyleType(GeneratedsSuper):
         self.underlined_nsprefix_ = "pc"
         self.underlineStyle = _cast(None, underlineStyle)
         self.underlineStyle_nsprefix_ = "pc"
-        self.doubleUnderlined = _cast(bool, doubleUnderlined)
-        self.doubleUnderlined_nsprefix_ = "pc"
         self.subscript = _cast(bool, subscript)
         self.subscript_nsprefix_ = "pc"
         self.superscript = _cast(bool, superscript)
@@ -7735,10 +7728,6 @@ class TextStyleType(GeneratedsSuper):
         return self.underlineStyle
     def set_underlineStyle(self, underlineStyle):
         self.underlineStyle = underlineStyle
-    def get_doubleUnderlined(self):
-        return self.doubleUnderlined
-    def set_doubleUnderlined(self, doubleUnderlined):
-        self.doubleUnderlined = doubleUnderlined
     def get_subscript(self):
         return self.subscript
     def set_subscript(self, subscript):
@@ -7772,8 +7761,8 @@ class TextStyleType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def validate_underlineStyleType(self, value):
-        # Validate type pc:underlineStyleType, a restriction on string.
+    def validate_UnderlineStyleSimpleType(self, value):
+        # Validate type pc:UnderlineStyleSimpleType, a restriction on string.
         if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
             if not isinstance(value, str):
                 lineno = self.gds_get_node_lineno_()
@@ -7783,7 +7772,7 @@ class TextStyleType(GeneratedsSuper):
             enumerations = ['singleLine', 'doubleLine', 'other']
             if value not in enumerations:
                 lineno = self.gds_get_node_lineno_()
-                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on underlineStyleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on UnderlineStyleSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
     def hasContent_(self):
         if (
@@ -7860,9 +7849,6 @@ class TextStyleType(GeneratedsSuper):
         if self.underlineStyle is not None and 'underlineStyle' not in already_processed:
             already_processed.add('underlineStyle')
             outfile.write(' underlineStyle=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.underlineStyle), input_name='underlineStyle')), ))
-        if self.doubleUnderlined is not None and 'doubleUnderlined' not in already_processed:
-            already_processed.add('doubleUnderlined')
-            outfile.write(' doubleUnderlined="%s"' % self.gds_format_boolean(self.doubleUnderlined, input_name='doubleUnderlined'))
         if self.subscript is not None and 'subscript' not in already_processed:
             already_processed.add('subscript')
             outfile.write(' subscript="%s"' % self.gds_format_boolean(self.subscript, input_name='subscript'))
@@ -7985,16 +7971,7 @@ class TextStyleType(GeneratedsSuper):
         if value is not None and 'underlineStyle' not in already_processed:
             already_processed.add('underlineStyle')
             self.underlineStyle = value
-            self.validate_underlineStyleType(self.underlineStyle)    # validate type underlineStyleType
-        value = find_attr_value_('doubleUnderlined', node)
-        if value is not None and 'doubleUnderlined' not in already_processed:
-            already_processed.add('doubleUnderlined')
-            if value in ('true', '1'):
-                self.doubleUnderlined = True
-            elif value in ('false', '0'):
-                self.doubleUnderlined = False
-            else:
-                raise_parse_error(node, 'Bad boolean attribute')
+            self.validate_UnderlineStyleSimpleType(self.underlineStyle)    # validate type UnderlineStyleSimpleType
         value = find_attr_value_('subscript', node)
         if value is not None and 'subscript' not in already_processed:
             already_processed.add('subscript')

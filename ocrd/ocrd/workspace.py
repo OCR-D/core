@@ -138,7 +138,7 @@ class Workspace():
             if ocrd_file.mimetype == MIMETYPE_PAGE and page_recursive:
                 with pushd_popd(self.directory):
                     ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
-                    for img_url in ocrd_page.get_AllImagePaths():
+                    for img_url in ocrd_page.get_AllAlternativeImagePaths():
                         img_kwargs = {'url': img_url}
                         if page_same_group:
                             img_kwargs['fileGrp'] = ocrd_file.fileGrp

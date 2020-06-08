@@ -107,7 +107,7 @@ METHOD_SPECS = (
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren', 'exportChildren_GroupType'),
     _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
     _add_method(r'^(PageType)$', 'get_AllRegions'),
-    _add_method(r'^(PcGtsType)$', 'get_AllImagePaths'),
+    _add_method(r'^(PcGtsType)$', 'get_AllAlternativeImagePaths'),
     )
 
 
