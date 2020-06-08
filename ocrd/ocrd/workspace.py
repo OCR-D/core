@@ -134,26 +134,31 @@ class Workspace():
         if isinstance(ID, OcrdFile):
             ID = ID.ID
         try:
-            ocrd_file = self.mets.remove_file(ID)
-            if ocrd_file.mimetype == MIMETYPE_PAGE and page_recursive:
+            ocrd_file_ = self.mets.remove_file(ID)
+            ocrd_files = [ocrd_file_] if isinstance(ocrd_file_, OcrdFile) else ocrd_file_
+            if page_recursive:
                 with pushd_popd(self.directory):
-                    ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
-                    for img_url in ocrd_page.get_AllAlternativeImagePaths():
-                        img_kwargs = {'url': img_url}
-                        if page_same_group:
-                            img_kwargs['fileGrp'] = ocrd_file.fileGrp
-                        for img_file in self.mets.find_files(**img_kwargs):
-                            self.remove_file(img_file, keep_file=keep_file, force=force)
+                    for ocrd_file in ocrd_files:
+                        if ocrd_file.mimetype != MIMETYPE_PAGE:
+                            continue
+                        ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
+                        for img_url in ocrd_page.get_AllAlternativeImagePaths():
+                            img_kwargs = {'url': img_url}
+                            if page_same_group:
+                                img_kwargs['fileGrp'] = ocrd_file.fileGrp
+                            for img_file in self.mets.find_files(**img_kwargs):
+                                self.remove_file(img_file, keep_file=keep_file, force=force)
             if not keep_file:
-                if not ocrd_file.local_filename:
-                    log.warning("File not locally available %s", ocrd_file)
-                    if not force:
-                        raise Exception("File not locally available %s" % ocrd_file)
-                else:
-                    with pushd_popd(self.directory):
-                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
-                        unlink(ocrd_file.local_filename)
-            return ocrd_file
+                with pushd_popd(self.directory):
+                    for ocrd_file in ocrd_files:
+                        if not ocrd_file.local_filename:
+                            log.warning("File not locally available %s", ocrd_file)
+                            if not force:
+                                raise Exception("File not locally available %s" % ocrd_file)
+                        else:
+                            log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                            unlink(ocrd_file.local_filename)
+            return ocrd_file_
         except FileNotFoundError as e:
             if not force:
                 raise e
