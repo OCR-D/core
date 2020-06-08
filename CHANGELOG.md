@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * bashlib: check bash version to be >= 4.4, #445, OCR-D/ocrd_olena#30
+  * `ocrd workspace add` supports `-C`/`--check-file-exists` to validate that `FNAME` is an existing local file, #495
   * `OcrdFile` constructor accepts `ID` parameter
   * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
   * `WorkspaceValidator`:  check `pc:PcGts/@pcGtsId` == `mets:file/@ID`, #378

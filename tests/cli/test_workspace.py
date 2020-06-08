@@ -7,11 +7,11 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 
 # pylint: disable=import-error, no-name-in-module
-from tests.base import TestCase, main, assets, copy_of_directory
+from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory, main
 
-from ocrd_utils import initLogging, pushd_popd
+from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel
 from ocrd.cli.workspace import workspace_cli
-from ocrd import Resolver, Workspace
+from ocrd import Resolver
 
 class TestCli(TestCase):
 
@@ -20,7 +20,7 @@ class TestCli(TestCase):
         self.maxDiff = None
         self.resolver = Resolver()
         initLogging()
-        self.runner = CliRunner()
+        self.runner = CliRunner(mix_stderr=False)
 
     def test_add(self):
         """
@@ -145,12 +145,78 @@ class TestCli(TestCase):
                 '--force',
                 ID
             ])
-            print(result)
-            print(result.output)
             self.assertEqual(result.exit_code, 0)
 
             # File should have been deleted
             self.assertFalse(exists(content_file))
+
+    def test_add_url(self):
+        ID = 'foo123file'
+        page_id = 'foo123page'
+        file_grp = 'TEST_GROUP'
+        mimetype = 'image/tiff'
+        url = 'http://remote/file.tif'
+        with TemporaryDirectory() as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.save_mets()
+            result = self.runner.invoke(workspace_cli, [
+                '-d', tempdir,
+                'add',
+                '--file-grp', file_grp,
+                '--page-id', page_id,
+                '--file-id', ID,
+                '--mimetype', mimetype,
+                url])
+            self.assertEqual(result.exit_code, 0)
+            ws.reload_mets()
+            f = ws.mets.find_files()[0]
+            self.assertEqual(f.url, url)
+
+    def test_add_nonexisting_checked(self):
+        ID = 'foo123file'
+        page_id = 'foo123page'
+        file_grp = 'TEST_GROUP'
+        mimetype = 'image/tiff'
+        with TemporaryDirectory() as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.save_mets()
+            exit_code, out, err = self.invoke_cli(workspace_cli, [
+                '-d', tempdir,
+                'add',
+                '-C',
+                '--file-grp', file_grp,
+                '--page-id', page_id,
+                '--file-id', ID,
+                '--mimetype', mimetype,
+                'does-not-exist.xml'])
+            self.assertEqual(exit_code, 1)
+            self.assertIn("File 'does-not-exist.xml' does not exist, halt execution!", err)
+
+    def test_add_existing_checked(self):
+        ID = 'foo123file'
+        page_id = 'foo123page'
+        file_grp = 'TEST_GROUP'
+        mimetype = 'image/tiff'
+        with TemporaryDirectory() as tempdir:
+            content_file = join(tempdir, 'test.tif')
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.save_mets()
+            with open(content_file, 'w') as f:
+                f.write('x')
+            result = self.runner.invoke(workspace_cli, [
+                '-d', tempdir,
+                'add',
+                '-C',
+                '--file-grp', file_grp,
+                '--page-id', page_id,
+                '--file-id', ID,
+                '--mimetype', mimetype,
+                content_file])
+            self.assertEqual(result.exit_code, 0)
+            ws.reload_mets()
+            f = ws.mets.find_files()[0]
+            self.assertEqual(f.url, 'test.tif')
+
 
     def test_find_files(self):
         with TemporaryDirectory() as tempdir:
@@ -281,4 +347,4 @@ class TestCli(TestCase):
                 self.assertFalse(exists('mets.xml'))
 
 if __name__ == '__main__':
-    main()
+    main(__file__)
