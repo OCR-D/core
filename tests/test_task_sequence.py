@@ -79,8 +79,11 @@ print('''%s''')
     def test_parse_implicit_after_validate(self):
         task = ProcessorTask.parse('%s -I IN -O OUT -p \'{"param1": true}\'' % SAMPLE_NAME_REQUIRED_PARAM)
         task.validate()
-        self.assertEqual(task.input_file_grps, ['IN', 'SECOND_IN'])
-        self.assertEqual(task.output_file_grps, ['OUT', 'SECOND_OUT'])
+        # TODO uncomment and adapt once OCR-D/spec#121 lands
+        # self.assertEqual(task.input_file_grps, ['IN', 'SECOND_IN'])
+        # self.assertEqual(task.output_file_grps, ['OUT', 'SECOND_OUT'])
+        self.assertEqual(task.input_file_grps, ['IN'])
+        self.assertEqual(task.output_file_grps, ['OUT'])
 
     def test_parse_unknown(self):
         with self.assertRaisesRegex(Exception, 'Failed parsing task description'):
