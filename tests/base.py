@@ -6,10 +6,19 @@ import sys
 import logging
 import io
 import collections
-from unittest import TestCase as VanillaTestCase, skip, main
+from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
+import pytest
 from ocrd_utils import initLogging
 
 from .assets import assets, copy_of_directory
+
+
+def main(fn=None):
+    if fn:
+        sys.exit(pytest.main([fn]))
+    else:
+        unittests_main()
+
 
 class TestCase(VanillaTestCase):
 
@@ -19,6 +28,30 @@ class TestCase(VanillaTestCase):
 
     def tearDown(self):
         initLogging()
+
+class CapturingTestCase(TestCase):
+    """
+    A TestCase that needs to capture stderr/stdout and invoke click CLI.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _setup_pytest_capfd(self, capfd):
+        self.capfd = capfd
+
+    def invoke_cli(self, cli, args):
+        """
+        Substitution for click.CliRunner.invooke that works together nicely
+        with unittests/pytest capturing stdout/stderr.
+        """
+        self.capture_out_err()  # XXX snapshot just before executing the CLI
+        try:
+            cli.main(args=args)
+        except SystemExit as e:
+            out, err = self.capture_out_err()
+            return e.code, out, err
+
+    def capture_out_err(self):
+        return self.capfd.readouterr()
 
 #  import traceback
 #  import warnings

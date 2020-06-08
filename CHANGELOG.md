@@ -5,6 +5,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+
 Changed:
 
   * `Workspace.remove_file`: Optional `page_recursive` parameter to remove images linked in PAGE as well, #434, #471
@@ -22,6 +23,19 @@ Changed:
 Added:
 
   * `OcrdPage`: `get_AllImagePaths` to list all images referenced in a PcGts, #434, #471
+
+## [2.8.2] - 2020-06-08
+
+Changed:
+
+  * bashlib: check bash version to be >= 4.4, #445, OCR-D/ocrd_olena#30
+  * `ocrd workspace add` supports `-C`/`--check-file-exists` to validate that `FNAME` is an existing local file, #495
+  * `OcrdFile` constructor accepts `ID` parameter
+  * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
+  * `WorkspaceValidator`:  check `pc:PcGts/@pcGtsId` == `mets:file/@ID`, #378
+  * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+  * METS: reorder elements according to schema in empty METS, #487
+
 
 ## [2.8.1] - 2020-06-06
 
