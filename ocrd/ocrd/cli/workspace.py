@@ -171,10 +171,10 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exi
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('find')
-@click.option('-G', '--file-grp', help="fileGrp USE")
-@click.option('-m', '--mimetype', help="Media type to look for")
-@click.option('-g', '--page-id', help="Page ID")
-@click.option('-i', '--file-id', help="ID")
+@click.option('-G', '--file-grp', help="fileGrp USE", metavar='FILTER')
+@click.option('-m', '--mimetype', help="Media type to look for", metavar='FILTER')
+@click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
+@click.option('-i', '--file-id', help="ID", metavar='FILTER')
 # pylint: disable=bad-continuation
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
         default=['url'],
@@ -194,6 +194,9 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exi
 def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download):
     """
     Find files.
+
+    (If any ``FILTER`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
     """
     modified_mets = False
     ret = list()
@@ -231,7 +234,10 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
 @pass_workspace
 def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefined-builtin
     """
-    Delete file by ID from mets.xml
+    Delete files (given by their ID attribute ``ID``).
+    
+    (If any ``ID`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     for i in id:
@@ -243,17 +249,19 @@ def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefin
 # ocrd workspace remove-group
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('remove-group', help="""
-
-    Delete a file group
-
-""")
+@workspace_cli.command('remove-group')
 @click.option('-r', '--recursive', help="Delete any files in the group before the group itself", default=False, is_flag=True)
 @click.option('-f', '--force', help="Continue removing even if group or containing files not found in METS", default=False, is_flag=True)
 @click.option('-k', '--keep-files', help="Do not delete files from file system", default=False, is_flag=True)
 @click.argument('GROUP', nargs=-1)
 @pass_workspace
 def remove_group(ctx, group, recursive, force, keep_files):
+    """
+    Delete fileGrps (given by their USE attribute ``GROUP``).
+    
+    (If any ``GROUP`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
+    """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for g in group:
         workspace.remove_file_group(g, recursive=recursive, force=force, keep_files=keep_files)
