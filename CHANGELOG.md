@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.8.2] - 2020-06-08
+
 Changed:
 
   * bashlib: check bash version to be >= 4.4, #445, OCR-D/ocrd_olena#30
