@@ -271,16 +271,27 @@ def remove_group(ctx, group, recursive, force, keep_files):
 # ocrd workspace prune-files
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('prune-files', help="""
-
+@workspace_cli.command('prune-files')
+@click.option('-G', '--file-grp', help="fileGrp USE", metavar='FILTER')
+@click.option('-m', '--mimetype', help="Media type to look for", metavar='FILTER')
+@click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
+@click.option('-i', '--file-id', help="ID", metavar='FILTER')
+@pass_workspace
+def prune_files(ctx, file_grp, mimetype, page_id, file_id):
+    """
     Removes mets:files that point to non-existing local files
 
-""")
-@pass_workspace
-def prune_files(ctx):
+    (If any ``FILTER`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
+    """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     with pushd_popd(workspace.directory):
-        for f in workspace.mets.find_files():
+        for f in workspace.mets.find_files(
+            ID=file_id,
+            fileGrp=file_grp,
+            mimetype=mimetype,
+            pageId=page_id,
+        ):
             try:
                 if not f.local_filename or not exists(f.local_filename):
                     workspace.mets.remove_file(f.ID)
