@@ -12,7 +12,8 @@ from ocrd_utils import initLogging
 
 from .assets import assets, copy_of_directory
 
-def main(fn):
+
+def main(fn=None):
     if fn:
         sys.exit(pytest.main([fn]))
     else:
