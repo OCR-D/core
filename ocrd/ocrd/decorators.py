@@ -60,7 +60,7 @@ def ocrd_cli_wrap_processor(
         if overwrite:
             if 'output_file_grp' not in kwargs or not kwargs['output_file_grp']:
                 raise Exception("--overwrite requires --output-file-grp")
-            LOG.debug("Removing files because of --overwrite")
+            LOG.info("Removing files because of --overwrite")
             for grp in kwargs['output_file_grp'].split(','):
                 if page_id:
                     for one_page_id in kwargs['page_id'].split(','):
@@ -69,7 +69,9 @@ def ocrd_cli_wrap_processor(
                             workspace.remove_file(file, force=True, keep_file=False, page_recursive=True)
                 else:
                     LOG.debug("Removing all files in output file group %s ", grp)
-                    workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=True)
+                    # TODO: can be reduced to `page_same_group=True` as soon as core#505 has landed (in all processors)
+                    workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=False)
+            workspace.save_mets()
         report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], kwargs['output_file_grp'], page_id)
         if not report.is_valid:
             raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
