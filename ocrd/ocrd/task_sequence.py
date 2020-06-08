@@ -103,6 +103,8 @@ def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
         for input_file_grp in task.input_file_grps:
             if not input_file_grp in prev_output_file_grps:
                 report.add_error("Input file group not contained in METS or produced by previous steps: %s" % input_file_grp)
+        if not overwrite:
+            WorkspaceValidator.check_file_grp(workspace, [], task.output_file_grps, page_id, report)
         # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
         # XXX Thu Jan 16 20:14:17 CET 2020 still not sufficiently clever.
         #  if len(prev_output_file_grps) != len(set(prev_output_file_grps)):

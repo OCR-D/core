@@ -17,6 +17,7 @@ Changed:
   * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
   * <del>`Task.validate`: set implicit input/output groups from ocrd-tool.json, #471</del> blocked by OCR-D/spec#121
   * `ocrd process`: support --overwrite and pass on to processor calls, #471
+  * `TaskSequencec.validate_tasks`: Check output file groups are not in METS unless overwrite for every task, ht @bersky
 
 Added:
 

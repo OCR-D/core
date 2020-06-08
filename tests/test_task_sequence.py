@@ -151,5 +151,27 @@ print('''%s''')
                 "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
             ]], workspace)
 
+    def test_overwrite(self):
+        resolver = Resolver()
+        with TemporaryDirectory() as tempdir:
+            workspace = resolver.workspace_from_url(assets.path_to('kant_aufklaerung_1784/data/mets.xml'), dst_dir=tempdir)
+            # should fail at step 3
+            workspace.mets.add_file('OCR-D-SEG-WORD', url='foo/bar', ID='foo', pageId='page1', mimetype='image/tif')
+            with self.assertRaisesRegex(Exception, "Invalid task sequence input/output file groups: \[\"Output fileGrp\[@USE='OCR-D-SEG-WORD'\] already in METS!\"\]"):
+                validate_tasks([ProcessorTask.parse(x) for x in [
+                    "sample-processor -I OCR-D-IMG       -O OCR-D-SEG-BLOCK",
+                    "sample-processor -I OCR-D-SEG-BLOCK -O OCR-D-SEG-LINE",
+                    "sample-processor -I OCR-D-SEG-LINE  -O OCR-D-SEG-WORD",
+                    "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
+                ]], workspace)
+            # should succeed b/c overwrite
+            validate_tasks([ProcessorTask.parse(x) for x in [
+                "sample-processor -I OCR-D-IMG       -O OCR-D-SEG-BLOCK",
+                "sample-processor -I OCR-D-SEG-BLOCK -O OCR-D-SEG-LINE",
+                "sample-processor -I OCR-D-SEG-LINE  -O OCR-D-SEG-WORD",
+                "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
+            ]], workspace, overwrite=True)
+
+
 if __name__ == '__main__':
     main()

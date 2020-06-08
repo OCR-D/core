@@ -38,9 +38,9 @@ class WorkspaceValidator():
         if not report:
             report = ValidationReport()
         if isinstance(input_file_grp, str):
-            input_file_grp = input_file_grp.split(',')
+            input_file_grp = input_file_grp.split(',') if input_file_grp else []
         if isinstance(output_file_grp, str):
-            output_file_grp = output_file_grp.split(',')
+            output_file_grp = output_file_grp.split(',') if output_file_grp else []
         if page_id and isinstance(page_id, str):
             page_id = page_id.split(',')
 
