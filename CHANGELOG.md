@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.9.0] - 2020-06-09
+
 Changed:
 
   * `OcrdMets.add_file` now validates file ID syntax, #447
@@ -12,6 +14,7 @@ Changed:
 Added:
 
   * `ocrd log`, CLI to OCR-D's logging mechanism, #472
+  * XML Schma validation of PAGE-XML and METS, #470
 
 ## [2.8.3] - 2020-06-08
 
@@ -910,6 +913,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.9.0]: ../../compare/v2.9.0..v2.8.3
 [2.8.3]: ../../compare/v2.8.3...v2.8.2
 [2.8.2]: ../../compare/v2.8.2...v2.8.1
 [2.8.1]: ../../compare/v2.8.1...v2.8.0
