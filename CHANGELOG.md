@@ -5,7 +5,6 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-
 Changed:
 
   * `Workspace.remove_file`: Optional `page_recursive` parameter to remove images linked in PAGE as well, #434, #471
@@ -23,6 +22,18 @@ Changed:
 Added:
 
   * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
+
+## [2.8.3] - 2020-06-08
+
+Fixed:
+
+  * workspace.remove_file: fix for list-valued results, #507
+
+Changed:
+
+  * workspace prune-files CLI: support filtering (like workspace find), #507
+  * workspace CLI: update help strings (documenting regex support), #507
+
 
 ## [2.8.2] - 2020-06-08
 
@@ -911,6 +922,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.8.3]: ../../compare/v2.8.3...v2.8.2
+[2.8.2]: ../../compare/v2.8.2...v2.8.1
 [2.8.1]: ../../compare/v2.8.1...v2.8.0
 [2.8.0]: ../../compare/v2.8.0...v2.7.1
 [2.7.1]: ../../compare/v2.7.1...v2.7.0
