@@ -120,48 +120,60 @@ class TestDecorators(TestCase):
                     input_file_grp='IN-GRP',
                     output_file_grp='OUT-GRP',
                 )
-
-    def test_overwrite_group(self):
-        with self._sample_ws_for_overwrite() as ws:
-            self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
-            self.assertTrue(exists(join(ws.directory, 'ID2.tif')), 'files exist')
-            self.assertTrue(exists(join(ws.directory, 'ID3.tif')), 'files exist')
-            self.assertTrue(exists(join(ws.directory, 'ID4.tif')), 'files exist')
+            # with overwrite, it shouldn't fail
             ocrd_cli_wrap_processor(
                 DummyProcessor,
                 ocrd_tool=DUMMY_TOOL,
                 mets=ws.mets_target,
-                parameter={"foo": 42},
                 input_file_grp='IN-GRP',
                 output_file_grp='OUT-GRP',
-                overwrite=True,
+                overwrite=True
             )
-            self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
-            self.assertFalse(exists(join(ws.directory, 'ID2.tif')), 'files deleted')
-            self.assertFalse(exists(join(ws.directory, 'ID3.tif')), 'files deleted')
-            self.assertFalse(exists(join(ws.directory, 'ID4.tif')), 'files deleted')
 
-    def test_overwrite_group_page_id(self):
-        with self._sample_ws_for_overwrite() as ws:
-            self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
-            self.assertTrue(exists(join(ws.directory, 'ID2.tif')), 'files exist')
-            self.assertTrue(exists(join(ws.directory, 'ID3.tif')), 'files exist')
-            self.assertTrue(exists(join(ws.directory, 'ID4.tif')), 'files exist')
-            ocrd_cli_wrap_processor(
-                DummyProcessor,
-                ocrd_tool=DUMMY_TOOL,
-                mets=ws.mets_target,
-                parameter={"foo": 42},
-                input_file_grp='IN-GRP',
-                output_file_grp='OUT-GRP',
-                overwrite=True,
-                page_id='pID2,pID4'
-            )
-            self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
-            self.assertFalse(exists(join(ws.directory, 'ID2.tif')), 'files deleted')
-            self.assertTrue(exists(join(ws.directory, 'ID3.tif')), 'files exist')
-            self.assertFalse(exists(join(ws.directory, 'ID4.tif')), 'files deleted')
+    # XXX We cannot currently pre-emptively delete files because #505
+    # def test_overwrite_group(self):
+    #     with self._sample_ws_for_overwrite() as ws:
+    #         self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
+    #         self.assertTrue(exists(join(ws.directory, 'ID2.tif')), 'files exist')
+    #         self.assertTrue(exists(join(ws.directory, 'ID3.tif')), 'files exist')
+    #         self.assertTrue(exists(join(ws.directory, 'ID4.tif')), 'files exist')
+    #         ocrd_cli_wrap_processor(
+    #             DummyProcessor,
+    #             ocrd_tool=DUMMY_TOOL,
+    #             mets=ws.mets_target,
+    #             parameter={"foo": 42},
+    #             input_file_grp='IN-GRP',
+    #             output_file_grp='OUT-GRP',
+    #             overwrite=True,
+    #         )
+    #         self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
+    #         # self.assertFalse(exists(join(ws.directory, 'ID2.tif')), 'files deleted')
+    #         # self.assertFalse(exists(join(ws.directory, 'ID3.tif')), 'files deleted')
+    #         # self.assertFalse(exists(join(ws.directory, 'ID4.tif')), 'files deleted')
+
+    # XXX We cannot currently pre-emptively delete files because #505
+    # as it is the test therefore makes no sense
+    # def test_overwrite_group_page_id(self):
+    #     with self._sample_ws_for_overwrite() as ws:
+    #         self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
+    #         self.assertTrue(exists(join(ws.directory, 'ID2.tif')), 'files exist')
+    #         self.assertTrue(exists(join(ws.directory, 'ID3.tif')), 'files exist')
+    #         self.assertTrue(exists(join(ws.directory, 'ID4.tif')), 'files exist')
+    #         ocrd_cli_wrap_processor(
+    #             DummyProcessor,
+    #             ocrd_tool=DUMMY_TOOL,
+    #             mets=ws.mets_target,
+    #             parameter={"foo": 42},
+    #             input_file_grp='IN-GRP',
+    #             output_file_grp='OUT-GRP',
+    #             overwrite=True,
+    #             page_id='pID2,pID4'
+    #         )
+    #         self.assertTrue(exists(join(ws.directory, 'ID1.tif')), 'files exist')
+    #         self.assertFalse(exists(join(ws.directory, 'ID2.tif')), 'files deleted')
+    #         self.assertTrue(exists(join(ws.directory, 'ID3.tif')), 'files exist')
+    #         self.assertFalse(exists(join(ws.directory, 'ID4.tif')), 'files deleted')
 
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

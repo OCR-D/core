@@ -33,7 +33,7 @@ def ocrd_cli_wrap_processor(
     mets=None,
     working_dir=None,
     dump_json=False,
-    help=False,
+    help=False, # pylint: disable=redefined-builtin
     version=False,
     overwrite=False,
     **kwargs
@@ -57,20 +57,24 @@ def ocrd_cli_wrap_processor(
         resolver = Resolver()
         workspace = resolver.workspace_from_url(mets, working_dir)
         page_id = kwargs.get('page_id')
+        # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
+        # if overwrite:
+        #     if 'output_file_grp' not in kwargs or not kwargs['output_file_grp']:
+        #         raise Exception("--overwrite requires --output-file-grp")
+        #     LOG.debug("Removing files because of --overwrite")
+        #     for grp in kwargs['output_file_grp'].split(','):
+        #         if page_id:
+        #             for one_page_id in kwargs['page_id'].split(','):
+        #                 LOG.debug("Removing files in output file group %s with page ID %s", grp, one_page_id)
+        #                 for file in workspace.mets.find_files(pageId=one_page_id, fileGrp=grp):
+        #                     workspace.remove_file(file, force=True, keep_file=False, page_recursive=True)
+        #         else:
+        #             LOG.debug("Removing all files in output file group %s ", grp)
+        #             workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=True)
+        # XXX While https://github.com/OCR-D/core/issues/505 is open, set 'overwrite_mode' globally on the workspace
         if overwrite:
-            if 'output_file_grp' not in kwargs or not kwargs['output_file_grp']:
-                raise Exception("--overwrite requires --output-file-grp")
-            LOG.debug("Removing files because of --overwrite")
-            for grp in kwargs['output_file_grp'].split(','):
-                if page_id:
-                    for one_page_id in kwargs['page_id'].split(','):
-                        LOG.debug("Removing files in output file group %s with page ID %s", grp, one_page_id)
-                        for file in workspace.mets.find_files(pageId=one_page_id, fileGrp=grp):
-                            workspace.remove_file(file, force=True, keep_file=False, page_recursive=True)
-                else:
-                    LOG.debug("Removing all files in output file group %s ", grp)
-                    workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=True)
-        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], kwargs['output_file_grp'], page_id)
+            workspace.overwrite_mode = True
+        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
         if not report.is_valid:
             raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)

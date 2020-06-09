@@ -47,6 +47,7 @@ class Workspace():
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
+        overwrite_mode (boolean) : Whether to force add operations on this workspace globally
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
@@ -54,6 +55,7 @@ class Workspace():
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
+        self.overwrite_mode = False
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -131,6 +133,8 @@ class Workspace():
             page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
         log.debug('Deleting mets:file %s', ID)
+        if not force and self.overwrite_mode:
+            force = True
         if isinstance(ID, OcrdFile):
             ID = ID.ID
         try:
@@ -170,6 +174,8 @@ class Workspace():
             page_recursive (boolean): Whether to remove all images referenced in the file if the file is a PAGE-XML document.
             page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
+        if not force and self.overwrite_mode:
+            force = True
         if USE not in self.mets.file_groups and not force:
             raise Exception("No such fileGrp: %s" % USE)
         if recursive:
@@ -807,6 +813,8 @@ class Workspace():
 
         Return the (absolute) path of the created file.
         """
+        if not force and self.overwrite_mode:
+            force = True
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
