@@ -52,7 +52,7 @@ logging.getLogger().propagate = False
 
 def getLevelName(lvl):
     """
-    Get (numerical) python logging level for (string) spec-defined log level name.
+    Get (string) python logging level for (string) spec-defined log level name.
     """
     lvl = _ocrdLevel2pythonLevel.get(lvl, lvl)
     return logging.getLevelName(lvl)

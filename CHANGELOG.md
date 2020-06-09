@@ -9,6 +9,32 @@ Changed:
 
   * `OcrdMets.add_file` now validates file ID syntax, #447
 
+Added:
+
+  * `ocrd log`, CLI to OCR-D's logging mechanism, #472
+
+## [2.8.3] - 2020-06-08
+
+Fixed:
+
+  * workspace.remove_file: fix for list-valued results, #507
+
+Changed:
+
+  * workspace prune-files CLI: support filtering (like workspace find), #507
+  * workspace CLI: update help strings (documenting regex support), #507
+
+## [2.8.2] - 2020-06-08
+
+Changed:
+
+  * bashlib: check bash version to be >= 4.4, #445, OCR-D/ocrd_olena#30
+  * `ocrd workspace add` supports `-C`/`--check-file-exists` to validate that `FNAME` is an existing local file, #495
+  * `OcrdFile` constructor accepts `ID` parameter
+  * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
+  * `WorkspaceValidator`:  check `pc:PcGts/@pcGtsId` == `mets:file/@ID`, #378
+  * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+  * METS: reorder elements according to schema in empty METS, #487
 
 ## [2.8.1] - 2020-06-06
 
@@ -884,6 +910,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.8.3]: ../../compare/v2.8.3...v2.8.2
+[2.8.2]: ../../compare/v2.8.2...v2.8.1
 [2.8.1]: ../../compare/v2.8.1...v2.8.0
 [2.8.0]: ../../compare/v2.8.0...v2.7.1
 [2.7.1]: ../../compare/v2.7.1...v2.7.0

@@ -19,7 +19,7 @@ from ocrd_models.ocrd_page import (
 )
 
 simple_page = """\
-<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">
     <Metadata>
         <Creator>OCR-D</Creator>
         <Created>2016-09-20T11:09:27.041+02:00</Created>
@@ -147,7 +147,7 @@ class TestOcrdPage(TestCase):
         """
         See https://github.com/OCR-D/core/issues/475
         """
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
             xml_before = to_xml(og)
@@ -172,7 +172,7 @@ class TestOcrdPage(TestCase):
         """
         Corrolary See https://github.com/OCR-D/core/issues/475
         """
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             og = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup()
             children = og.get_AllIndexed()
@@ -192,7 +192,7 @@ class TestOcrdPage(TestCase):
         https://github.com/OCR-D/core/pull/479
         https://github.com/OCR-D/core/issues/240#issuecomment-493135797
         """
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             pg = pcgts.get_Page()
             self.assertEqual(len(pg.get_AllRegions()), 65)
@@ -211,7 +211,7 @@ class TestOcrdPage(TestCase):
         https://github.com/OCR-D/core/pull/479
         https://github.com/OCR-D/core/issues/240#issuecomment-493135797
         """
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             pg = parseString(f.read().encode('utf8'), silence=True).get_Page()
             with self.assertRaisesRegex(Exception, "Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not 'random'"):
                 pg.get_AllRegions(order='random')
@@ -228,20 +228,20 @@ class TestOcrdPage(TestCase):
             self.assertEqual(len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)), 17)
 
     def test_get_UnorderdGroupChildren(self):
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             ug = pcgts.get_Page().get_ReadingOrder().get_OrderedGroup().get_UnorderedGroupIndexed()[0]
             self.assertEqual(len(ug.get_UnorderedGroupChildren()), 1)
 
     def test_get_AllIndexed_classes(self):
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
             self.assertEqual(len(og.get_AllIndexed(classes=['RegionRef'])), 17)
             self.assertEqual(len(og.get_AllIndexed(classes=['OrderedGroup'])), 3)
             self.assertEqual(len(og.get_AllIndexed(classes=['UnorderedGroup'])), 2)
 
     def test_get_AllIndexed_index_sort(self):
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
             unogs = og.get_UnorderedGroupIndexed()
             self.assertEqual([x.index for x in unogs], [20, 21])
@@ -253,7 +253,7 @@ class TestOcrdPage(TestCase):
             self.assertEqual([x.index for x in og.get_AllIndexed(classes=['UnorderedGroup'], index_sort=False)], [20, 21])
 
     def test_extend_AllIndexed_no_validation(self):
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
             og.extend_AllIndexed([
                 RegionRefIndexedType(index=3, id='r3'),
@@ -264,7 +264,7 @@ class TestOcrdPage(TestCase):
             self.assertEqual([x.index for x in rrs][-3:], [22, 23, 24])
 
     def test_extend_AllIndexed_validate_continuity(self):
-        with open('tests/model/TEMP1_Gutachten2-2.xml', 'r') as f:
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
             with self.assertRaisesRegex(Exception, "@index already used: 1"):
                 og.extend_AllIndexed([
