@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd log`, CLI to OCR-D's logging mechanism, #472
+
 ## [2.5.2] - 2020-04-29
 
 Fixed:
