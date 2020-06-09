@@ -10,6 +10,7 @@ __all__ = [
     'MIME_TO_EXT',
     'PIL_TO_MIME',
     'MIME_TO_PIL',
+    'REGEX_PREFIX',
     'LOG_FORMAT',
     'LOG_TIMEFMT',
 ]
@@ -75,6 +76,9 @@ MIME_TO_PIL = {
     'image/x-portable-pixmap': 'PPM',
     'image/tiff': 'TIFF',
 }
+
+# Prefix to denote query is regular expression not fixed string
+REGEX_PREFIX = '//'
 
 # Log level format implementing https://ocr-d.de/en/spec/cli#logging
 LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'

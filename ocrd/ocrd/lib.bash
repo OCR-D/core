@@ -1,3 +1,13 @@
+# BEGIN-INCLUDE ./src/bash_version_check.bash 
+((BASH_VERSINFO<4 || BASH_VERSINFO==4 && BASH_VERSINFO[1]<4)) && \
+    echo >&2 "bash $BASH_VERSION is too old. Please install bash 4.4 or newer." && \
+    exit 1
+
+# END-INCLUDE 
+# BEGIN-INCLUDE ./src/raise.bash 
+
+
+# END-INCLUDE 
 # BEGIN-INCLUDE ./src/dumpjson.bash 
 ## ### `ocrd__dumpjson`
 ## 

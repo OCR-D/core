@@ -1,13 +1,11 @@
 import os
-from os.path import relpath, exists
+from os.path import relpath, exists, join
 import sys
-from tempfile import mkdtemp
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd_utils import getLogger, pushd_popd
-from ..constants import TMP_PREFIX
 
 log = getLogger('ocrd.cli.workspace')
 
@@ -132,31 +130,40 @@ def workspace_create(ctx, clobber_mets, directory):
 @click.option('-i', '--file-id', help="ID for the file", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
 @click.option('-g', '--page-id', help="ID of the physical page")
+@click.option('-C', '--check-file-exists', help="Whether to ensure FNAME exists", is_flag=True, default=False)
 @click.option('--force', help="If file with ID already exists, replace it", default=False, is_flag=True)
-@click.argument('local_filename', type=click.Path(dir_okay=False, readable=True, resolve_path=True), required=True)
+@click.argument('fname', required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_filename):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exists, force, fname):
     """
-    Add a file LOCAL_FILENAME to METS in a workspace.
+    Add a file or http(s) URL FNAME to METS in a workspace.
+    If FNAME is not an http(s) URL and is not a workspace-local existing file, try to copy to workspace.
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
-    #  log.warning(ctx.directory)
-    #  log.error(local_filename)
-    if not local_filename.startswith(ctx.directory):
-        log.debug("File '%s' is not in workspace, copying", local_filename)
-        local_filename = ctx.resolver.download_to_directory(ctx.directory, local_filename, subdir=file_grp)
-    local_filename = relpath(local_filename, ctx.directory)
+    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force}
+    log = getLogger('ocrd.cli.workspace.add')
+    if not (fname.startswith('http://') or fname.startswith('https://')):
+        if not fname.startswith(ctx.directory):
+            if exists(join(ctx.directory, fname)):
+                fname = join(ctx.directory, fname)
+            else:
+                log.debug("File '%s' is not in workspace, copying", fname)
+                try:
+                    fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
+                except FileNotFoundError as e:
+                    if check_file_exists:
+                        log.error("File '%s' does not exist, halt execution!" % fname)
+                        sys.exit(1)
+        if check_file_exists and not exists(fname):
+            log.error("File '%s' does not exist, halt execution!" % fname)
+            sys.exit(1)
+        if fname.startswith(ctx.directory):
+            fname = relpath(fname, ctx.directory)
+        kwargs['local_filename'] = fname
 
-    workspace.mets.add_file(
-        fileGrp=file_grp,
-        ID=file_id,
-        mimetype=mimetype,
-        url=local_filename,
-        pageId=page_id,
-        force=force,
-        local_filename=local_filename
-    )
+    kwargs['url'] = fname
+    workspace.mets.add_file(**kwargs)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
@@ -164,10 +171,10 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('find')
-@click.option('-G', '--file-grp', help="fileGrp USE")
-@click.option('-m', '--mimetype', help="Media type to look for")
-@click.option('-g', '--page-id', help="Page ID")
-@click.option('-i', '--file-id', help="ID")
+@click.option('-G', '--file-grp', help="fileGrp USE", metavar='FILTER')
+@click.option('-m', '--mimetype', help="Media type to look for", metavar='FILTER')
+@click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
+@click.option('-i', '--file-id', help="ID", metavar='FILTER')
 # pylint: disable=bad-continuation
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
         default=['url'],
@@ -187,7 +194,12 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, force, local_f
 def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download):
     """
     Find files.
+
+    (If any ``FILTER`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
     """
+    modified_mets = False
+    ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for f in workspace.mets.find_files(
             ID=file_id,
@@ -197,9 +209,19 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         ):
         if download and not f.local_filename:
             workspace.download_file(f)
-            workspace.save_mets()
-        ret = '\t'.join([getattr(f, field) or '' for field in output_field])
-        print(ret)
+            modified_mets = True
+        ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
+                    for field in output_field])
+    if modified_mets:
+        workspace.save_mets()
+    if 'pageId' in output_field:
+        idx = output_field.index('pageId')
+        fileIds = list(map(lambda fields: fields[idx], ret))
+        pages = workspace.mets.get_physical_pages(for_fileIds=fileIds)
+        for fields, page in zip(ret, pages):
+            fields[idx] = page or ''
+    for fields in ret:
+        print('\t'.join(fields))
 
 # ----------------------------------------------------------------------
 # ocrd workspace remove
@@ -212,7 +234,10 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
 @pass_workspace
 def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefined-builtin
     """
-    Delete file by ID from mets.xml
+    Delete files (given by their ID attribute ``ID``).
+    
+    (If any ``ID`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     for i in id:
@@ -224,17 +249,19 @@ def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefin
 # ocrd workspace remove-group
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('remove-group', help="""
-
-    Delete a file group
-
-""")
+@workspace_cli.command('remove-group')
 @click.option('-r', '--recursive', help="Delete any files in the group before the group itself", default=False, is_flag=True)
 @click.option('-f', '--force', help="Continue removing even if group or containing files not found in METS", default=False, is_flag=True)
 @click.option('-k', '--keep-files', help="Do not delete files from file system", default=False, is_flag=True)
 @click.argument('GROUP', nargs=-1)
 @pass_workspace
 def remove_group(ctx, group, recursive, force, keep_files):
+    """
+    Delete fileGrps (given by their USE attribute ``GROUP``).
+    
+    (If any ``GROUP`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
+    """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     for g in group:
         workspace.remove_file_group(g, recursive=recursive, force=force, keep_files=keep_files)
@@ -244,16 +271,27 @@ def remove_group(ctx, group, recursive, force, keep_files):
 # ocrd workspace prune-files
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('prune-files', help="""
-
+@workspace_cli.command('prune-files')
+@click.option('-G', '--file-grp', help="fileGrp USE", metavar='FILTER')
+@click.option('-m', '--mimetype', help="Media type to look for", metavar='FILTER')
+@click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
+@click.option('-i', '--file-id', help="ID", metavar='FILTER')
+@pass_workspace
+def prune_files(ctx, file_grp, mimetype, page_id, file_id):
+    """
     Removes mets:files that point to non-existing local files
 
-""")
-@pass_workspace
-def prune_files(ctx):
+    (If any ``FILTER`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
+    """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     with pushd_popd(workspace.directory):
-        for f in workspace.mets.find_files():
+        for f in workspace.mets.find_files(
+            ID=file_id,
+            fileGrp=file_grp,
+            mimetype=mimetype,
+            pageId=page_id,
+        ):
             try:
                 if not f.local_filename or not exists(f.local_filename):
                     workspace.mets.remove_file(f.ID)

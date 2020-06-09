@@ -1,4 +1,3 @@
-from lxml import etree as ET
 from tests.base import TestCase, main
 from ocrd_models import OcrdFile
 

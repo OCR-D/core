@@ -2,8 +2,10 @@
 API to METS
 """
 from datetime import datetime
+from re import fullmatch
+from lxml import etree as ET
 
-from ocrd_utils import is_local_filename, getLogger, VERSION
+from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX
 
 from .constants import (
     NAMESPACES as NS,
@@ -25,6 +27,7 @@ from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
 log = getLogger('ocrd_models.ocrd_mets')
+REGEX_PREFIX_LEN = len(REGEX_PREFIX)
 
 class OcrdMets(OcrdXmlDocument):
     """
@@ -43,16 +46,11 @@ class OcrdMets(OcrdXmlDocument):
         tpl = tpl.replace('{{ NOW }}', '%s' % now)
         return OcrdMets(content=tpl.encode('utf-8'))
 
-    def __init__(self, file_by_id=None, **kwargs):
+    def __init__(self, **kwargs):
         """
 
-        Arguments:
-            file_by_id (dict): Cache mapping file ID to OcrdFile
         """
         super(OcrdMets, self).__init__(**kwargs)
-        if file_by_id is None:
-            file_by_id = {}
-        self._file_by_id = file_by_id
 
     def __str__(self):
         """
@@ -120,6 +118,14 @@ class OcrdMets(OcrdXmlDocument):
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
+
+
+        The ``ID``, ``fileGrp``, ``url`` and ``mimetype`` parameters can be
+        either a literal string or a regular expression if the string starts
+        with ``//`` (double slash). If it is a regex, the leading ``//`` is removed
+        and candidates are matched against the regex with ``re.fullmatch``. If it is
+        a literal string, comparison is done with string equality.
+
         Args:
             ID (string) : ID of the file
             fileGrp (string) : USE of the fileGrp to list files of
@@ -132,35 +138,50 @@ class OcrdMets(OcrdXmlDocument):
             List of files.
         """
         ret = []
-        fileGrp_clause = '' if fileGrp is None else '[@USE="%s"]' % fileGrp
-        file_clause = ''
-        if ID is not None:
-            file_clause += '[@ID="%s"]' % ID
-        if mimetype is not None:
-            file_clause += '[@MIMETYPE="%s"]' % mimetype
-        if url is not None:
-            file_clause += '[mets:FLocat[@xlink:href = "%s"]]' % url
-        # TODO lxml says invalid predicate. I disagree
-        #  if local_only:
-        #      file_clause += "[mets:FLocat[starts-with(@xlink:href, 'file://')]]"
+        if pageId:
+            if pageId.startswith(REGEX_PREFIX):
+                raise Exception("find_files does not support regex search for pageId")
+            pageIds, pageId = pageId.split(','), list()
+            for page in self._tree.getroot().xpath(
+                '//mets:div[@TYPE="page"]', namespaces=NS):
+                if page.get('ID') in pageIds:
+                    pageId.extend(
+                        [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)])
+        for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
+            if ID:
+                if ID.startswith(REGEX_PREFIX):
+                    if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')): continue
+                else:
+                    if not ID == cand.get('ID'): continue
 
-        # Search
-        file_ids = self._tree.getroot().xpath("//mets:fileGrp%s/mets:file%s/@ID" % (fileGrp_clause, file_clause), namespaces=NS)
-        if pageId is not None:
-            by_pageid = self._tree.getroot().xpath('//mets:div[@TYPE="page"][@ID="%s"]/mets:fptr/@FILEID' % pageId, namespaces=NS)
-            file_ids = [i for i in by_pageid if i in file_ids]
+            if pageId is not None and cand.get('ID') not in pageId:
+                continue
 
-        # instantiate / get from cache
-        for file_id in file_ids:
-            el = self._tree.getroot().find('.//mets:file[@ID="%s"]' % file_id, NS)
-            if file_id not in self._file_by_id:
-                self._file_by_id[file_id] = OcrdFile(el, mets=self)
+            if fileGrp:
+                if fileGrp.startswith(REGEX_PREFIX):
+                    if not fullmatch(fileGrp[REGEX_PREFIX_LEN:], cand.getparent().get('USE')): continue
+                else:
+                    if cand.getparent().get('USE') != fileGrp: continue
+
+            if mimetype:
+                if mimetype.startswith(REGEX_PREFIX):
+                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE')): continue
+                else:
+                    if cand.get('MIMETYPE') != mimetype: continue
+
+            if url:
+                cand_url = cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink'])
+                if url.startswith(REGEX_PREFIX):
+                    if not fullmatch(url[REGEX_PREFIX_LEN:], cand_url): continue
+                else:
+                    if cand_url != url: continue
+
+            file = OcrdFile(cand, mets=self)
 
             # If only local resources should be returned and file is not a file path: skip the file
-            url = self._file_by_id[file_id].url
-            if local_only and not is_local_filename(url):
+            if local_only and not is_local_filename(file.url):
                 continue
-            ret.append(self._file_by_id[file_id])
+            ret.append(file)
         return ret
 
     def add_file_group(self, fileGrp):
@@ -183,24 +204,33 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_file_group(self, USE, recursive=False):
         """
-        Remove a fileGrp.
+        Remove a fileGrp (fixed ``USE``) or fileGrps (regex ``USE``)
 
         Arguments:
-            USE (string): USE attribute of the fileGrp to delete
+            USE (string): USE attribute of the fileGrp to delete. Can be a regex if prefixed with //
             recursive (boolean): Whether to recursively delete all files in the group
         """
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             raise Exception("No fileSec!")
-        el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        if isinstance(USE, str):
+            if USE.startswith(REGEX_PREFIX):
+                for cand in el_fileSec.findall('mets:fileGrp', NS):
+                    if fullmatch(USE[REGEX_PREFIX_LEN:], cand.get('USE')):
+                        self.remove_file_group(cand, recursive=recursive)
+                return
+            else:
+                el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
+        else:
+            el_fileGrp = USE
         if el_fileGrp is None:   # pylint: disable=len-as-condition
             raise Exception("No such fileGrp: %s" % USE)
         files = el_fileGrp.findall('mets:file', NS)
-        if len(files) > 0:  # pylint: disable=len-as-condition
+        if files:
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
-                self.remove_file(f.get('ID'))
+                self.remove_one_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
@@ -234,19 +264,37 @@ class OcrdMets(OcrdXmlDocument):
         mets_file.pageId = pageId
         mets_file.local_filename = local_filename
 
-        self._file_by_id[ID] = mets_file
-
         return mets_file
 
-    def remove_file(self, ID):
+    def remove_file(self, *args, **kwargs):
+        """
+        Delete all files matching the query. Same arguments as ``OcrdMets.find_files``
+        """
+        files = self.find_files(*args, **kwargs)
+        if files:
+            for f in files:
+                self.remove_one_file(f)
+            if len(files) > 1:
+                return files
+            else:
+                return files[0] # for backwards-compatibility
+        raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
+
+    def remove_one_file(self, ID):
         """
         Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
         """
-        log.info("remove_file(%s)" % ID)
-        ocrd_file = self.find_files(ID)
+        log.info("remove_one_file(%s)" % ID)
+        if isinstance(ID, OcrdFile):
+            ocrd_file = ID
+            ID = ocrd_file.ID
+        else:
+            ocrd_file = self.find_files(ID=ID)
+            if ocrd_file:
+                ocrd_file = ocrd_file[0]
+
         if not ocrd_file:
             raise FileNotFoundError("File not found: %s" % ID)
-        ocrd_file = ocrd_file[0]
 
         # Delete the physical page ref
         for fptr in self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
@@ -262,9 +310,6 @@ class OcrdMets(OcrdXmlDocument):
         # pylint: disable=protected-access
         ocrd_file._el.getparent().remove(ocrd_file._el)
 
-        # Uncache
-        if ID in self._file_by_id:
-            del self._file_by_id[ID]
         return ocrd_file
 
     @property
@@ -275,6 +320,21 @@ class OcrdMets(OcrdXmlDocument):
         return self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
             namespaces=NS)
+
+    def get_physical_pages(self, for_fileIds=None):
+        """
+        List all page IDs (optionally for a subset of file IDs)
+        """
+        if for_fileIds is None:
+            return self.physical_pages
+        ret = [None] * len(for_fileIds)
+        for page in self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                namespaces=NS):
+            for fptr in page.findall('mets:fptr', NS):
+                if fptr.get('FILEID') in for_fileIds:
+                    ret[for_fileIds.index(fptr.get('FILEID'))] = page.get('ID')
+        return ret
 
     def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
         """

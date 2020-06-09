@@ -89,6 +89,11 @@ generate-page: repo/assets
 		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
 	# hack to prevent #451: enum keys will be strings
 	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
+	# hack to ensure output has pc: prefix
+	@#sed -i "s/namespaceprefix_=''/namespaceprefix_='pc:'/" $(GDS_PAGE)
+	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
+	# hack to ensure child nodes also have pc: prefix...
+	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
 
 #
 # Repos
