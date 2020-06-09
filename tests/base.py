@@ -10,7 +10,7 @@ from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
 from ocrd_utils import initLogging
 
-from .assets import assets, copy_of_directory
+from tests.assets import assets, copy_of_directory
 
 
 def main(fn=None):
