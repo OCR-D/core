@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 from os.path import join, exists
 
 from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
+from tests.processor.test_processor import DummyProcessor, DUMMY_TOOL
 
 from ocrd import Processor, Resolver
 from ocrd.decorators import (
@@ -25,27 +26,6 @@ def cli_with_ocrd_cli_options(*args, **kwargs):      # pylint: disable=unused-ar
 @ocrd_loglevel
 def cli_with_ocrd_loglevel(*args, **kwargs):         # pylint: disable=unused-argument
     pass
-
-DUMMY_TOOL = {
-    'executable': 'ocrd-test',
-    'steps': ['recognition/post-correction'],
-    'parameters': {
-        'foo': {
-            'required': True
-        }
-    }
-}
-
-class DummyProcessor(Processor):
-
-    def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = DUMMY_TOOL
-        kwargs['version'] = '0.0.1'
-        super(DummyProcessor, self).__init__(*args, **kwargs)
-
-    def process(self):
-        #  print('# nope')
-        pass
 
 @click.command()
 @ocrd_cli_options
@@ -94,7 +74,7 @@ class TestDecorators(TestCase):
     def test_processor_run(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(cli_dummy_processor, ['-p', '{"foo": 42}', '--mets', 'mets.xml', '-I', 'OCR-D-IMG'])
+                result = self.runner.invoke(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', '-I', 'OCR-D-IMG'])
                 self.assertEqual(result.exit_code, 0)
 
 

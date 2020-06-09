@@ -58,10 +58,10 @@ def ocrd_cli_wrap_processor(
         workspace = resolver.workspace_from_url(mets, working_dir)
         page_id = kwargs.get('page_id')
         # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
-        # if overwrite:
+        # if overwrite
         #     if 'output_file_grp' not in kwargs or not kwargs['output_file_grp']:
         #         raise Exception("--overwrite requires --output-file-grp")
-        #     LOG.debug("Removing files because of --overwrite")
+        #     LOG.info("Removing files because of --overwrite")
         #     for grp in kwargs['output_file_grp'].split(','):
         #         if page_id:
         #             for one_page_id in kwargs['page_id'].split(','):
@@ -70,7 +70,9 @@ def ocrd_cli_wrap_processor(
         #                     workspace.remove_file(file, force=True, keep_file=False, page_recursive=True)
         #         else:
         #             LOG.debug("Removing all files in output file group %s ", grp)
-        #             workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=True)
+        #             # TODO: can be reduced to `page_same_group=True` as soon as core#505 has landed (in all processors)
+        #             workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=False)
+        #     workspace.save_mets()
         # XXX While https://github.com/OCR-D/core/issues/505 is open, set 'overwrite_mode' globally on the workspace
         if overwrite:
             workspace.overwrite_mode = True
