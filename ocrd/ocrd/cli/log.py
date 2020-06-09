@@ -2,7 +2,7 @@
 Logging CLI
 """
 import click
-from ocrd_utils import getLogger, initLogging, getLevelName, setOverrideLogLevel
+from ocrd_utils import getLogger, getLevelName
 
 class LogCtx():
 
@@ -10,7 +10,6 @@ class LogCtx():
         self.logger = getLogger(name)
 
     def log(self, lvl, *args, **kwargs):
-        setOverrideLogLevel(lvl) # XXX without the override, DEBUG msgs never appear
         self.logger.log(getLevelName(lvl), *args, **kwargs)
 
 pass_log = click.make_pass_decorator(LogCtx)
@@ -28,7 +27,6 @@ def _bind_log_command(lvl):
     @click.argument('msgs', nargs=-1)
     @pass_log
     def _log_wrapper(ctx, msgs):
-        initLogging()
         ctx.log(lvl.upper(), *list(msgs))
     return _log_wrapper
 
