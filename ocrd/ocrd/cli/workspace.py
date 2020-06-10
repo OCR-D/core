@@ -253,10 +253,12 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         # copy files
         if file_dict['url']:
             urlpath = Path(workspace.directory, file_dict['url'])
-            if not dry_run and not urlpath.exists():
-                if not urlpath.parent.is_dir():
-                    urlpath.parent.mkdir()
-                urlpath.write_bytes(file_path.read_bytes())
+            if not urlpath.exists():
+                log.info("cp '%s' '%s'", file_path, urlpath)
+                if not dry_run:
+                    if not urlpath.parent.is_dir():
+                        urlpath.parent.mkdir()
+                    urlpath.write_bytes(file_path.read_bytes())
 
         # Honor --overwrite
         fileGrp = file_dict.pop('fileGrp')
