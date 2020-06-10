@@ -115,15 +115,19 @@ def generate_processor_help(ocrd_tool):
     if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
         parameter_help = '  NONE\n'
     else:
+        def wrap(s):
+            return wrap_text(s, initial_indent=' '*3,
+                             subsequent_indent=' '*4,
+                             width=72, preserve_paragraphs=True)
         for param_name, param in ocrd_tool['parameters'].items():
-            parameter_help += wrap_text('  "%s" [%s%s] %s%s' % (
+            parameter_help += wrap('"%s" [%s%s]' % (
                 param_name,
                 param['type'],
                 ' - REQUIRED' if 'required' in param and param['required'] else
-                ' - %s' % param['default'] if 'default' in param else '',
-                param['description'],
-                ' Possible values: %s' % json.dumps(param['enum']) if 'enum' in param else ''
-            ), subsequent_indent='    ', width=72, preserve_paragraphs=True)
+                ' - %s' % json.dumps(param['default']) if 'default' in param else ''))
+            parameter_help += '\n ' + wrap(param['description'])
+            if 'enum' in param:
+                parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
             parameter_help += "\n"
     return '''
 Usage: %s [OPTIONS]
@@ -131,18 +135,20 @@ Usage: %s [OPTIONS]
   %s
 
 Options:
-  -V, --version                   Show version
+  -I, --input-file-grp USE        File group(s) used as input
+  -O, --output-file-grp USE       File group(s) used as output
+  -g, --page-id ID                Physical page ID(s) to process
+  --overwrite                     Remove existing output pages/images
+                                  (with --page-id, remove only those)
+  -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
+                                  or JSON file path
+  -m, --mets URL-PATH             URL or file path of METS to process
+  -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Log level
   -J, --dump-json                 Dump tool description as JSON and exit
-  -p, --parameter TEXT            Parameters, either JSON string or path 
-                                  JSON file
-  -g, --page-id TEXT              ID(s) of the pages to process
-  -O, --output-file-grp TEXT      File group(s) used as output.
-  -I, --input-file-grp TEXT       File group(s) used as input.
-  -w, --working-dir TEXT          Working Directory
-  -m, --mets TEXT                 METS to process
   -h, --help                      This help message
+  -V, --version                   Show version
 
 Parameters:
 %s
