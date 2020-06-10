@@ -173,15 +173,15 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, force,
 
 # pylint: disable=bad-whitespace, broad-except
 @workspace_cli.command('bulk-add')
-@click.option('-r', '--regex', help="Regular expression to define the named captures used in the parametes", required=True)
+@click.option('-r', '--regex', help="Regular expression matching the FILE_GLOB filesystem paths to define named captures usable in the other parameters", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
-@click.option('-g', '--page-id', help="ID of the physical page", required=False)
+@click.option('-g', '--page-id', help="physical page ID of the file", required=False)
 @click.option('-i', '--file-id', help="ID of the file", required=True)
-@click.option('-u', '--url', help="URL of the file", required=True)
-@click.option('-G', '--file-grp', help="File group of the file", required=True)
-@click.option('-n', '--dry-run', help="Don't actually do anythin, just preview", default=False, is_flag=True)
-@click.option('-I', '--ignore', help="Whether to disable checks for existing files. Improves performance.", default=False, is_flag=True)
-@click.option('-f', '--force', help="Replace exiting mets:files with the same @ID. No effect if --ignore is set as well", default=False, is_flag=True)
+@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=True)
+@click.option('-G', '--file-grp', help="File group USE of the file", required=True)
+@click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
+@click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
+@click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
 @click.option('-o', '--overwrite', help="Remove fileGrp before adding", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
