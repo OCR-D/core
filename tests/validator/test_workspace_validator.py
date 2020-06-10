@@ -68,13 +68,13 @@ class TestWorkspaceValidator(TestCase):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 2)
+            self.assertEqual(len(report.errors), 3) # no-files, missing id, missing fileGrp
             self.assertIn('no unique identifier', report.errors[0])
             self.assertIn('No files', report.errors[1])
             workspace.mets.unique_identifier = 'foobar'
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(len(report.errors), 2)
 
     def test_validate_file_groups_non_ocrd(self):
         with TemporaryDirectory() as tempdir:
@@ -178,6 +178,7 @@ class TestWorkspaceValidator(TestCase):
                 'imagefilename',
             ]
         )
+        print(report.errors)
         self.assertTrue(report.is_valid)
 
     def test_dimensions(self):
@@ -190,7 +191,7 @@ class TestWorkspaceValidator(TestCase):
                     self.resolver,
                     join(wsdir, 'mets.xml'),
                     src_dir=wsdir,
-                    skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename'],
+                    skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename', 'page_xsd', 'mets_xsd'],
                     download=True
                 )
                 self.assertIn("PAGE 'PAGE_0017_PAGE': @imageHeight != image's actual height (1234 != 2083)", report.errors)
@@ -199,7 +200,7 @@ class TestWorkspaceValidator(TestCase):
                 self.assertEqual(report.is_valid, False)
                 report2 = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'), src_dir=wsdir, skip=[
                     'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename',
-                    'dimension'
+                    'dimension', 'page_xsd', 'mets_xsd'
                     ], download=False)
             self.assertEqual(report2.is_valid, True)
 
@@ -215,7 +216,7 @@ class TestWorkspaceValidator(TestCase):
     def test_imagefilename(self):
         report = WorkspaceValidator.validate(
             self.resolver, None, src_dir=assets.path_to('kant_aufklaerung_1784/data'),
-            skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density'],
+            skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page_xsd', 'mets_xsd'],
             download=False,
         )
         self.assertEqual(len(report.errors), 0)
@@ -226,4 +227,4 @@ class TestWorkspaceValidator(TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

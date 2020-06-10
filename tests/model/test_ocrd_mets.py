@@ -106,14 +106,17 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f2.pageId, 'barfoo', 'pageId changed')
         self.assertEqual(len(mets.file_groups), 1, '1 file group')
 
-    def test_add_file_ID_fail(self):
+    def test_add_file_ID_already_exists(self):
         f = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
         self.assertEqual(f.ID, 'best-id-ever', "ID kept")
-        with self.assertRaises(Exception) as cm:
+        with self.assertRaisesRegex(Exception, "File with ID='best-id-ever' already exists"):
             self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep")
-        self.assertEqual(str(cm.exception), "File with ID='best-id-ever' already exists")
         f2 = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
         self.assertEqual(f._el, f2._el)
+
+    def test_add_file_ID_invalid(self):
+        with self.assertRaisesRegex(Exception, "Invalid syntax for mets:file/@ID 1234:::"):
+            self.mets.add_file('OUTPUT', ID='1234:::', mimetype="beep/boop")
 
     def test_filegrp_from_file(self):
         f = self.mets.find_files(fileGrp='OCR-D-IMG')[0]

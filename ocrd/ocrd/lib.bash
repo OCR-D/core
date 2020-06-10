@@ -5,12 +5,7 @@
 
 # END-INCLUDE 
 # BEGIN-INCLUDE ./src/raise.bash 
-## ### `ocrd__raise`
-## 
-## Raise an error and exit.
-ocrd__raise () {
-    echo >&2 "ERROR: $1"; exit 127
-}
+
 
 # END-INCLUDE 
 # BEGIN-INCLUDE ./src/dumpjson.bash 
