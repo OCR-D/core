@@ -183,9 +183,10 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, force,
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
 @click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
 @click.option('-o', '--overwrite', help="Remove fileGrp before adding", default=False, is_flag=True)
+@click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, overwrite):
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, overwrite, skip):
     """
     Add files in bulk to an OCR-D workspace.
 
@@ -227,6 +228,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         # match regex
         m = pat.match(str(file_path))
         if not m:
+            if skip:
+                continue
             log.error("File not matched by regex: '%s'" % file_path)
             sys.exit(1)
         group_dict = m.groupdict()
