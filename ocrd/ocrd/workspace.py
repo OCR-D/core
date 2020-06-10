@@ -206,6 +206,8 @@ class Workspace():
             content is not None)
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
+        if self.overwrite_mode:
+            kwargs['force'] = True
 
         with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
