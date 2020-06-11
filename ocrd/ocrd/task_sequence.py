@@ -57,10 +57,22 @@ class ProcessorTask():
         parameters = {}
         if self.parameter_path:
             parameters = parse_json_string_or_file(self.parameter_path)
+        # TODO uncomment and adapt once OCR-D/spec#121 lands
+        # # make implicit input/output groups explicit by defaulting to what is
+        # # provided in ocrd-tool.json
+        # actual_output_grps = [*self.ocrd_tool_json['output_file_grp']]
+        # for i, grp in enumerate(self.output_file_grps):
+            # actual_output_grps[i] = grp
+        # self.output_file_grps = actual_output_grps
+        # actual_input_grps = [*self.ocrd_tool_json['input_file_grp']]
+        # for i, grp in enumerate(self.input_file_grps):
+            # actual_input_grps[i] = grp
+        # self.input_file_grps = actual_input_grps
         param_validator = ParameterValidator(self.ocrd_tool_json)
         report = param_validator.validate(parameters)
         if not report.is_valid:
             raise Exception(report.errors)
+        # TODO remove once OCR-D/spec#121 lands
         if 'output_file_grp' in self.ocrd_tool_json and not self.output_file_grps:
             raise Exception("Processor requires output_file_grp but none was provided.")
         return report
@@ -74,21 +86,25 @@ class ProcessorTask():
             ret += ' -p %s' % self.parameter_path
         return ret
 
-def validate_tasks(tasks, workspace):
+def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     report = ValidationReport()
     prev_output_file_grps = workspace.mets.file_groups
 
-    # first task: check input/output file groups from METS
-    # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
-    WorkspaceValidator.check_file_grp(workspace, tasks[0].input_file_grps, tasks[0].output_file_grps, report)
+    first_task = tasks.pop(0)
+    first_task.validate()
 
-    prev_output_file_grps += tasks[0].output_file_grps
-    for task in tasks[1:]:
+    # first task: check input/output file groups from METS
+    WorkspaceValidator.check_file_grp(workspace, first_task.input_file_grps, '' if overwrite else first_task.output_file_grps, page_id, report)
+
+    prev_output_file_grps += first_task.output_file_grps
+    for task in tasks:
         task.validate()
         # check either existing fileGrp or output-file group of previous task matches current input_file_group
         for input_file_grp in task.input_file_grps:
             if not input_file_grp in prev_output_file_grps:
                 report.add_error("Input file group not contained in METS or produced by previous steps: %s" % input_file_grp)
+        if not overwrite:
+            WorkspaceValidator.check_file_grp(workspace, [], task.output_file_grps, page_id, report)
         # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
         # XXX Thu Jan 16 20:14:17 CET 2020 still not sufficiently clever.
         #  if len(prev_output_file_grps) != len(set(prev_output_file_grps)):
@@ -100,13 +116,13 @@ def validate_tasks(tasks, workspace):
     return report
 
 
-def run_tasks(mets, log_level, page_id, task_strs):
+def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
     resolver = Resolver()
     workspace = resolver.workspace_from_url(mets)
     log = getLogger('ocrd.task_sequence.run_tasks')
     tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
-    validate_tasks(tasks, workspace)
+    validate_tasks(tasks, workspace, page_id, overwrite)
 
     # Run the tasks
     for task in tasks:
@@ -121,6 +137,7 @@ def run_tasks(mets, log_level, page_id, task_strs):
             workspace,
             log_level=log_level,
             page_id=page_id,
+            overwrite=overwrite,
             input_file_grp=','.join(task.input_file_grps),
             output_file_grp=','.join(task.output_file_grps),
             parameter=task.parameter_path
@@ -139,4 +156,3 @@ def run_tasks(mets, log_level, page_id, task_strs):
         for output_file_grp in task.output_file_grps:
             if not output_file_grp in workspace.mets.file_groups:
                 raise Exception("Invalid state: expected output file group not in mets: %s" % output_file_grp)
-

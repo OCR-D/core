@@ -5,20 +5,70 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-Added:
+Fixed:
 
-  * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
-  * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
-  * `ocrd workspace add` / `ocrd workspace bulk-add` support `--ignore`
+  * `--help`: Improve formatting of parameters, document `--overwrite`, ht @bersky
 
 Changed:
 
+  * `Workspace.remove_file`: Optional `page_recursive` parameter to remove images linked in PAGE as well, #434, #471
+  * `Workspace.remove_file`: Optional `page_same_gropup` parameter to remove
+    only those images linked in PAGE that are in the same group as the PAGE-XML
+  * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
+  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
+    output file group is targeted but for pages that aren't in that group, #471
+  * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
+  * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
+  * <del>`Task.validate`: set implicit input/output groups from ocrd-tool.json, #471</del> blocked by OCR-D/spec#121
+  * `ocrd process`: support --overwrite and pass on to processor calls, #471
+  * `TaskSequencec.validate_tasks`: Check output file groups are not in METS unless overwrite for every task, ht @bersky
+  * `ocrd workspace add` / `ocrd workspace bulk-add` support `--ignore`
+
+
+Added:
+
+  * Workspace: Optional `overwrite_mode` that sets `force` for all operations
+  * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
+  * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
+  * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
+
+## [2.9.0] - 2020-06-09
+
+Changed:
+
+  * `OcrdMets.add_file` now validates file ID syntax, #447
+
+Added:
+
+  * `ocrd log`, CLI to OCR-D's logging mechanism, #472
+  * XML Schma validation of PAGE-XML and METS, #470
+
+## [2.8.3] - 2020-06-08
+
+Fixed:
+
+  * workspace.remove_file: fix for list-valued results, #507
+
+
+Changed:
+
+  * workspace prune-files CLI: support filtering (like workspace find), #507
+  * workspace CLI: update help strings (documenting regex support), #507
+
+
+## [2.8.2] - 2020-06-08
+
+Changed:
+
+  * bashlib: check bash version to be >= 4.4, #445, OCR-D/ocrd_olena#30
+  * `ocrd workspace add` supports `-C`/`--check-file-exists` to validate that `FNAME` is an existing local file, #495
   * `OcrdFile` constructor accepts `ID` parameter
   * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
   * `WorkspaceValidator`:  check `pc:PcGts/@pcGtsId` == `mets:file/@ID`, #378
   * `OcrdFile` constructor: removed long-obsolete `instance` parameter
   * `OcrdFile` constructor: accepts `pageId` parameter
   * METS: reorder elements according to schema in empty METS, #487
+
 
 ## [2.8.1] - 2020-06-06
 
@@ -894,6 +944,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.9.0]: ../../compare/v2.9.0..v2.8.3
+[2.8.3]: ../../compare/v2.8.3...v2.8.2
+[2.8.2]: ../../compare/v2.8.2...v2.8.1
 [2.8.1]: ../../compare/v2.8.1...v2.8.0
 [2.8.0]: ../../compare/v2.8.0...v2.7.1
 [2.7.1]: ../../compare/v2.7.1...v2.7.0

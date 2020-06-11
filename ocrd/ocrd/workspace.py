@@ -9,6 +9,7 @@ from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif, OcrdFile
+from ocrd_models.ocrd_page import parse
 from ocrd_utils import (
     getLogger,
     image_from_polygon,
@@ -27,6 +28,7 @@ from ocrd_utils import (
     pushd_popd,
     MIME_TO_EXT,
     MIME_TO_PIL,
+    MIMETYPE_PAGE
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -45,6 +47,7 @@ class Workspace():
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
+        overwrite_mode (boolean) : Whether to force add operations on this workspace globally
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
@@ -52,6 +55,7 @@ class Workspace():
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
+        self.overwrite_mode = False
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -117,7 +121,7 @@ class Workspace():
             f.local_filename = f.url
             return f
 
-    def remove_file(self, ID, force=False, keep_file=False):
+    def remove_file(self, ID, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """
         Remove a file from the workspace.
 
@@ -125,25 +129,45 @@ class Workspace():
             ID (string|OcrdFile): ID of the file to delete or the file itself
             force (boolean): Continue removing even if file not found in METS
             keep_file (boolean): Whether to keep files on disk
+            page_recursive (boolean): Whether to remove all images referenced in the file if the file is a PAGE-XML document.
+            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
         log.debug('Deleting mets:file %s', ID)
+        if not force and self.overwrite_mode:
+            force = True
+        if isinstance(ID, OcrdFile):
+            ID = ID.ID
         try:
-            ocrd_file = self.mets.remove_file(ID)
+            ocrd_file_ = self.mets.remove_file(ID)
+            ocrd_files = [ocrd_file_] if isinstance(ocrd_file_, OcrdFile) else ocrd_file_
+            if page_recursive:
+                with pushd_popd(self.directory):
+                    for ocrd_file in ocrd_files:
+                        if ocrd_file.mimetype != MIMETYPE_PAGE:
+                            continue
+                        ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
+                        for img_url in ocrd_page.get_AllAlternativeImagePaths():
+                            img_kwargs = {'url': img_url}
+                            if page_same_group:
+                                img_kwargs['fileGrp'] = ocrd_file.fileGrp
+                            for img_file in self.mets.find_files(**img_kwargs):
+                                self.remove_file(img_file, keep_file=keep_file, force=force)
             if not keep_file:
-                if not ocrd_file.local_filename:
-                    log.warning("File not locally available %s", ocrd_file)
-                    if not force:
-                        raise Exception("File not locally available %s" % ocrd_file)
-                else:
-                    with pushd_popd(self.directory):
-                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
-                        unlink(ocrd_file.local_filename)
-            return ocrd_file
+                with pushd_popd(self.directory):
+                    for ocrd_file in ocrd_files:
+                        if not ocrd_file.local_filename:
+                            log.warning("File not locally available %s", ocrd_file)
+                            if not force:
+                                raise Exception("File not locally available %s" % ocrd_file)
+                        else:
+                            log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                            unlink(ocrd_file.local_filename)
+            return ocrd_file_
         except FileNotFoundError as e:
             if not force:
                 raise e
 
-    def remove_file_group(self, USE, recursive=False, force=False, keep_files=False):
+    def remove_file_group(self, USE, recursive=False, force=False, keep_files=False, page_recursive=False, page_same_group=False):
         """
         Remove a fileGrp.
 
@@ -152,12 +176,16 @@ class Workspace():
             recursive (boolean): Whether to recursively delete all files in the group
             force (boolean): Continue removing even if group or containing files not found in METS
             keep_files (boolean): When deleting recursively whether to keep files on disk
+            page_recursive (boolean): Whether to remove all images referenced in the file if the file is a PAGE-XML document.
+            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
+        if not force and self.overwrite_mode:
+            force = True
         if USE not in self.mets.file_groups and not force:
             raise Exception("No such fileGrp: %s" % USE)
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
-                self.remove_file(f.ID, force=force, keep_file=keep_files)
+                self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
         if USE in self.mets.file_groups:
             self.mets.remove_file_group(USE)
         # XXX this only removes directories in the workspace if they are empty
@@ -178,6 +206,8 @@ class Workspace():
             content is not None)
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
+        if self.overwrite_mode:
+            kwargs['force'] = True
 
         with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
@@ -780,7 +810,7 @@ class Workspace():
                         file_grp,
                         page_id=None,
                         mimetype='image/png',
-                        force=True):
+                        force=False):
         """Store and reference an image as file into the workspace.
 
         Given a PIL.Image `image`, and an ID `file_id` to use in METS,
@@ -790,6 +820,8 @@ class Workspace():
 
         Return the (absolute) path of the created file.
         """
+        if not force and self.overwrite_mode:
+            force = True
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))

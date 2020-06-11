@@ -21,6 +21,6 @@ setup(
     install_requires=install_requires,
     packages=['ocrd_validators'],
     include_package_data=True,
-    package_data={'': ['*.yml']},
+    package_data={'': ['*.yml', '*.xsd']},
     keywords=['OCR', 'OCR-D']
 )

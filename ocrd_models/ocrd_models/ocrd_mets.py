@@ -20,6 +20,7 @@ from .constants import (
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
     METS_XML_EMPTY,
+    REGEX_FILE_ID
 )
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
@@ -250,6 +251,8 @@ class OcrdMets(OcrdXmlDocument):
         """
         if not ID:
             raise Exception("Must set ID of the mets:file")
+        elif not REGEX_FILE_ID.fullmatch(ID):
+            raise Exception("Invalid syntax for mets:file/@ID %s" % ID)
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)

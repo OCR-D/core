@@ -7,9 +7,6 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
-# PAGE schema version to use. Default: '$(PAGE_VERSION)'
-PAGE_VERSION = 2019
-
 SPHINX_APIDOC = 
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
@@ -46,10 +43,9 @@ help:
 	@echo ""
 	@echo "  Variables"
 	@echo ""
-	@echo "    PAGE_VERSION  PAGE schema version to use. Default: '$(PAGE_VERSION)'"
-	@echo "    DOCKER_ARGS   Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
-	@echo "    DOCKER_TAG    Docker tag."
-	@echo "    PIP_INSTALL   pip install command. Default: $(PIP_INSTALL)"
+	@echo "    DOCKER_ARGS  Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
+	@echo "    DOCKER_TAG   Docker tag."
+	@echo "    PIP_INSTALL  pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
 
@@ -86,7 +82,7 @@ generate-page: repo/assets
 		-o $(GDS_PAGE) \
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
-		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
+		ocrd_validators/ocrd_validators/xsd/page.xsd
 	# hack to prevent #451: enum keys will be strings
 	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
 	# hack to ensure output has pc: prefix
