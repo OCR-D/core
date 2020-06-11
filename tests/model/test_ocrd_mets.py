@@ -114,6 +114,10 @@ class TestOcrdMets(TestCase):
         f2 = self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
         self.assertEqual(f._el, f2._el)
 
+    def test_add_file_ignore(self):
+        self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
+        self.mets.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", ignore=True)
+
     def test_add_file_ID_invalid(self):
         with self.assertRaisesRegex(Exception, "Invalid syntax for mets:file/@ID 1234:::"):
             self.mets.add_file('OUTPUT', ID='1234:::', mimetype="beep/boop")

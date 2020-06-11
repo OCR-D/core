@@ -1,13 +1,23 @@
 import os
 from os.path import relpath, exists, join
+from pathlib import Path
 import sys
+from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
+import re
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, pushd_popd
+from ocrd_models import OcrdFile
+from ocrd_utils import getLogger, pushd_popd, EXT_TO_MIME
 
 log = getLogger('ocrd.cli.workspace')
+
+def clean_id(dirty):
+    if re.match('^[0-9]', dirty):
+        raise ValueError("Make sure files and directories do not begin with a numeral which will lead to invalid XML identifiers")
+    return re.sub('[^A-Za-z0-9-_]+', '_', dirty)
+
 
 class WorkspaceCtx():
 
@@ -131,17 +141,18 @@ def workspace_create(ctx, clobber_mets, directory):
 @click.option('-m', '--mimetype', help="Media type of the file", required=True)
 @click.option('-g', '--page-id', help="ID of the physical page")
 @click.option('-C', '--check-file-exists', help="Whether to ensure FNAME exists", is_flag=True, default=False)
-@click.option('--force', help="If file with ID already exists, replace it", default=False, is_flag=True)
+@click.option('--ignore', help="Do not check whether file exists.", default=False, is_flag=True)
+@click.option('--force', help="If file with ID already exists, replace it. No effect if --ignore is set.", default=False, is_flag=True)
 @click.argument('fname', required=True)
 @pass_workspace
-def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exists, force, fname):
+def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_file_exists, force, fname):
     """
     Add a file or http(s) URL FNAME to METS in a workspace.
     If FNAME is not an http(s) URL and is not a workspace-local existing file, try to copy to workspace.
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
 
-    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force}
+    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
     log = getLogger('ocrd.cli.workspace.add')
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
@@ -165,6 +176,106 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, check_file_exi
     kwargs['url'] = fname
     workspace.mets.add_file(**kwargs)
     workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace add-bulk
+# ----------------------------------------------------------------------
+
+# pylint: disable=bad-whitespace, broad-except
+@workspace_cli.command('bulk-add')
+@click.option('-r', '--regex', help="Regular expression matching the FILE_GLOB filesystem paths to define named captures usable in the other parameters", required=True)
+@click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
+@click.option('-g', '--page-id', help="physical page ID of the file", required=False)
+@click.option('-i', '--file-id', help="ID of the file", required=True)
+@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=True)
+@click.option('-G', '--file-grp', help="File group USE of the file", required=True)
+@click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
+@click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
+@click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
+@click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
+@click.argument('file_glob', nargs=-1, required=True)
+@pass_workspace
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, skip):
+    r"""
+    Add files in bulk to an OCR-D workspace.
+
+    FILE_GLOB can either be a shell glob expression or a list of files.
+
+    --regex is applied to the absolute path of every file in FILE_GLOB and can
+    define named groups that can be used in --page-id, --file-id, --mimetype, --url and
+    --file-grp by referencing the named group 'grp' in the regex as '{{ grp }}'.
+
+    \b
+    Example:
+        ocrd workspace bulk-add \\
+                --regex '^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$' \\
+                --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
+                --page-id 'PHYS_{{ pageid }}' \\
+                --file-grp "{{ fileGrp }}" \\
+                --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
+                path/to/files/*/*.*
+
+    """
+    log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+
+    try:
+        pat = re.compile(regex)
+    except Exception as e:
+        log.error("Invalid regex: %s" % e)
+        sys.exit(1)
+
+    file_paths = []
+    for fglob in file_glob:
+        file_paths += [Path(x).resolve() for x in glob(fglob)]
+
+    for i, file_path in enumerate(file_paths):
+        log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
+
+        # match regex
+        m = pat.match(str(file_path))
+        if not m:
+            if skip:
+                continue
+            log.error("File not matched by regex: '%s'" % file_path)
+            sys.exit(1)
+        group_dict = m.groupdict()
+
+        # set up file info
+        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id, 'pageId': page_id, 'fileGrp': file_grp}
+
+        # guess mime type
+        if not file_dict['mimetype']:
+            try:
+                file_dict['mimetype'] = EXT_TO_MIME[file_path.suffix]
+            except KeyError:
+                log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
+
+        # expand templates
+        for param_name in file_dict:
+            for group_name in group_dict:
+                file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
+
+        # copy files
+        if file_dict['url']:
+            urlpath = Path(workspace.directory, file_dict['url'])
+            if not urlpath.exists():
+                log.info("cp '%s' '%s'", file_path, urlpath)
+                if not dry_run:
+                    if not urlpath.parent.is_dir():
+                        urlpath.parent.mkdir()
+                    urlpath.write_bytes(file_path.read_bytes())
+
+        # Add to workspace (or not)
+        fileGrp = file_dict.pop('fileGrp')
+        if dry_run:
+            log.info('workspace.add_file(%s)' % file_dict)
+        else:
+            workspace.add_file(fileGrp, ignore=ignore, force=force, **file_dict)
+
+    # save changes to disk
+    workspace.save_mets()
+
 
 # ----------------------------------------------------------------------
 # ocrd workspace find

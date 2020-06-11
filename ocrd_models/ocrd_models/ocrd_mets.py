@@ -234,7 +234,7 @@ class OcrdMets(OcrdXmlDocument):
                 self.remove_one_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
         """
         Add a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
 
@@ -245,6 +245,7 @@ class OcrdMets(OcrdXmlDocument):
             ID (string):
             pageId (string):
             force (boolean): Whether to add the file even if a ``mets:file`` with the same ``ID`` already exists.
+            ignore (boolean): Don't look for existing files. Shift responsibility for preventing errors from duplicate ID to the user.
             local_filename (string):
             mimetype (string):
         """
@@ -255,7 +256,7 @@ class OcrdMets(OcrdXmlDocument):
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
-        if ID is not None and self.find_files(ID=ID) != []:
+        if ID and not ignore and self.find_files(ID=ID) != []:
             if not force:
                 raise Exception("File with ID='%s' already exists" % ID)
             mets_file = self.find_files(ID=ID)[0]

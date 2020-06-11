@@ -22,11 +22,15 @@ Changed:
   * <del>`Task.validate`: set implicit input/output groups from ocrd-tool.json, #471</del> blocked by OCR-D/spec#121
   * `ocrd process`: support --overwrite and pass on to processor calls, #471
   * `TaskSequencec.validate_tasks`: Check output file groups are not in METS unless overwrite for every task, ht @bersky
+  * `ocrd workspace add` / `ocrd workspace bulk-add` support `--ignore`
+
 
 Added:
 
   * Workspace: Optional `overwrite_mode` that sets `force` for all operations
   * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
+  * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
+  * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
 
 ## [2.9.0] - 2020-06-09
 
@@ -45,6 +49,7 @@ Fixed:
 
   * workspace.remove_file: fix for list-valued results, #507
 
+
 Changed:
 
   * workspace prune-files CLI: support filtering (like workspace find), #507
@@ -61,6 +66,7 @@ Changed:
   * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
   * `WorkspaceValidator`:  check `pc:PcGts/@pcGtsId` == `mets:file/@ID`, #378
   * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+  * `OcrdFile` constructor: accepts `pageId` parameter
   * METS: reorder elements according to schema in empty METS, #487
 
 
