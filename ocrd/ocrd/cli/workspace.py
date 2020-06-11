@@ -192,12 +192,11 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
 @click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
-@click.option('-o', '--overwrite', help="Force all workspace operations", default=False, is_flag=True)
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, overwrite, skip):
-    """
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, skip):
+    r"""
     Add files in bulk to an OCR-D workspace.
 
     FILE_GLOB can either be a shell glob expression or a list of files.
@@ -225,10 +224,6 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
     except Exception as e:
         log.error("Invalid regex: %s" % e)
         sys.exit(1)
-
-    # Honor --overwrite
-    if overwrite:
-        workspace.overwrite_mode = True
 
     file_paths = []
     for fglob in file_glob:
