@@ -192,7 +192,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
 @click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
-@click.option('-o', '--overwrite', help="Remove fileGrp before adding", default=False, is_flag=True)
+@click.option('-o', '--overwrite', help="Force all workspace operations", default=False, is_flag=True)
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
@@ -226,11 +226,13 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         log.error("Invalid regex: %s" % e)
         sys.exit(1)
 
+    # Honor --overwrite
+    if overwrite:
+        workspace.overwrite_mode = True
+
     file_paths = []
     for fglob in file_glob:
         file_paths += [Path(x).resolve() for x in glob(fglob)]
-
-    _groups_seen = set()
 
     for i, file_path in enumerate(file_paths):
         log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
@@ -253,7 +255,6 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 file_dict['mimetype'] = EXT_TO_MIME[file_path.suffix]
             except KeyError:
                 log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
-                sys.exit(1)
 
         # expand templates
         for param_name in file_dict:
@@ -270,13 +271,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                         urlpath.parent.mkdir()
                     urlpath.write_bytes(file_path.read_bytes())
 
-        # Honor --overwrite
-        fileGrp = file_dict.pop('fileGrp')
-        if not dry_run and overwrite and fileGrp not in _groups_seen:
-            workspace.remove_file_group(fileGrp, recursive=True, force=True, keep_files=False)
-            _groups_seen.add(fileGrp)
-
         # Add to workspace (or not)
+        fileGrp = file_dict.pop('fileGrp')
         if dry_run:
             log.info('workspace.add_file(%s)' % file_dict)
         else:
