@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `--help`: Improve formatting of parameters, document `--overwrite`, ht @bersky
+
 Changed:
 
   * `Workspace.remove_file`: Optional `page_recursive` parameter to remove images linked in PAGE as well, #434, #471
@@ -21,6 +25,7 @@ Changed:
 
 Added:
 
+  * Workspace: Optional `overwrite_mode` that sets `force` for all operations
   * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
 
 ## [2.9.0] - 2020-06-09
