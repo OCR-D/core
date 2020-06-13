@@ -24,6 +24,38 @@ ocrd__log () {
     fi
 }
 
+
+## ### `ocrd__minversion`
+## 
+## Ensure minimum version
+# ht https://stackoverflow.com/posts/4025065
+ocrd__minversion () {
+    set -x
+    local minversion="$1"
+    local version=$(ocrd --version|sed 's/ocrd, version //')
+    echo "$minversion < $version?"
+    if [[ $minversion == $version ]];then
+        return 0
+    fi
+    local IFS=.
+    version=($version)
+    minversion=($minversion)
+    # fill empty fields in version with zeros
+    for ((i=${#version[@]}; i<${#minversion[@]}; i++));do
+        version[i]=0
+    done
+    for ((i=0; i<${#version[@]}; i++));do
+        if [[ -z ${minversion[i]} ]];then
+            # fill empty fields in minversion with zeros
+            minversion[i]=0
+        fi
+        if ((10#${version[i]} < 10#${minversion[i]}));then
+            ocrd__raise "ocrd/core is too old (${version[*]} < ${minversion[*]}). Please update OCR-D/core"
+        fi
+    done
+    return 0
+}
+
 # END-INCLUDE 
 # BEGIN-INCLUDE ./src/dumpjson.bash 
 ## ### `ocrd__dumpjson`
