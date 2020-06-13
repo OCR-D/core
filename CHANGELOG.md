@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.10.1] - 2020-06-13
+
 Changed:
 * bashlib: Make `input-file-grp` and `output-file-grp` mandatory, #512
 * bashlib: Add a function `ocrd__minversion` that will check whether `ocrd --version` is new enough for the processor., #512
@@ -955,6 +957,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.10.1]: ../../compare/v2.10.1..v2.10.0
 [2.10.0]: ../../compare/v2.10.0..v2.9.0
 [2.9.0]: ../../compare/v2.9.0..v2.8.3
 [2.8.3]: ../../compare/v2.8.3...v2.8.2
