@@ -15,5 +15,5 @@ OCRD_BAGIT_PROFILE_URL = 'https://ocr-d.github.io/bagit-profile.json'
 XSD_METS_URL = 'https://www.loc.gov/standards/mets/mets.xsd'
 XSD_PAGE_URL = 'http://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
 XSD_PATHS = {}
-XSD_PATHS[XSD_METS_URL] = resource_filename(__name__, 'xsd/mets.xsd')
-XSD_PATHS[XSD_PAGE_URL] = resource_filename(__name__, 'xsd/page.xsd')
+XSD_PATHS[XSD_METS_URL] = resource_filename(__name__, 'mets.xsd')
+XSD_PATHS[XSD_PAGE_URL] = resource_filename(__name__, 'page.xsd')
