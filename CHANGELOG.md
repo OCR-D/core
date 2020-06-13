@@ -5,6 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+* bashlib: Make `input-file-grp` and `output-file-grp` mandatory, #512
+* bashlib: Add a function `ocrd__minversion` that will check whether `ocrd --version` is new enough for the processor., #512
+
+Fixed:
+
+* Re-introduce `ocrd__raise`, #511
+* Move XSD into root package of `ocrd_validators`, #513
+
 ## [2.10.0] - 2020-06-11
 
 Fixed:
