@@ -9,7 +9,7 @@ ocrd__raise () {
 ## 
 ## Delegate logging to `ocrd log`
 ocrd__log () {
-    local log_level="${script_args[log_level]:-}"
+    local log_level="${ocrd__argv[log_level]:-}"
     if [[ -n "$log_level" ]];then
         ocrd -l "$log_level" log "$@"
     else
