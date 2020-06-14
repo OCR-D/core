@@ -43,7 +43,7 @@ Changed:
 Added:
 
   * `ocrd log`, CLI to OCR-D's logging mechanism, #472
-  * XML Schma validation of PAGE-XML and METS, #470
+  * XML Schema validation of PAGE-XML and METS, #470
 
 ## [2.8.3] - 2020-06-08
 

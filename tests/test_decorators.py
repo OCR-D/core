@@ -1,11 +1,11 @@
-
+import json
 import click
 from contextlib import contextmanager
 from click.testing import CliRunner
 from tempfile import TemporaryDirectory
 from os.path import join, exists
 
-from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
+from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from tests.processor.test_processor import DummyProcessor, DUMMY_TOOL
 
 from ocrd import Processor, Resolver
@@ -21,6 +21,11 @@ from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
 @ocrd_cli_options
 def cli_with_ocrd_cli_options(*args, **kwargs):      # pylint: disable=unused-argument
     pass
+
+@click.command()
+@ocrd_cli_options
+def cli_param_dumper(*args, **kwargs):      # pylint: disable=unused-argument
+    print(json.dumps(kwargs['parameter']))
 
 @click.command()
 @ocrd_loglevel
@@ -57,8 +62,9 @@ class TestDecorators(TestCase):
         initLogging()
 
     def test_processor_dump_json(self):
-        result = self.runner.invoke(cli_dummy_processor, ['--dump-json'])
-        self.assertEqual(result.exit_code, 0)
+        exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['--dump-json'])
+        print("exit_code=%s\nout=%s\nerr=%s" % (exit_code, out, err))
+        self.assertEqual(exit_code, 0)
 
     def test_processor_version(self):
         result = self.runner.invoke(cli_dummy_processor, ['--version'])
@@ -76,6 +82,12 @@ class TestDecorators(TestCase):
             with pushd_popd(tempdir):
                 result = self.runner.invoke(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', '-I', 'OCR-D-IMG'])
                 self.assertEqual(result.exit_code, 0)
+
+    def test_param_merging(self):
+        json1 = '{"foo": 23, "bar": 100}'
+        json2 = '{"foo": 42}'
+        _, out, _ = self.invoke_cli(cli_param_dumper, ['-p', json1, '-p', json2])
+        self.assertEqual(out, '{"foo": 42, "bar": 100}\n')
 
 
     @contextmanager

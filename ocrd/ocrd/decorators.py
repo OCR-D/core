@@ -22,10 +22,14 @@ loglevel_option = click.option('-l', '--log-level', help="Log level",
                                type=click.Choice(['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']),
                                default=None, callback=_set_root_logger_version)
 
+def _handle_param_option(ctx, param, value):
+    return parse_json_string_or_file(*list(value))
+
 parameter_option = click.option('-p', '--parameter',
                                 help="Parameters, either JSON string or path to JSON file",
-                                default='{}',
-                                callback=lambda ctx, param, value: parse_json_string_or_file(value))
+                                multiple=True,
+                                default=['{}'],
+                                callback=_handle_param_option)
 
 def ocrd_cli_wrap_processor(
     processorClass,

@@ -784,28 +784,31 @@ def xywh_from_points(points):
     """
     return xywh_from_bbox(*bbox_from_points(points))
 
-def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
+def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
     """
     Parse a string as either the path to a JSON object or a literal JSON object.
 
     Empty strings are equivalent to '{}'
     """
-    ret = None
-    err = None
-    if re.fullmatch(r"\s*", value):
-        return {}
-    try:
+    ret = {}
+    for value in values:
+        err = None
+        value_parsed = None
+        if re.fullmatch(r"\s*", value):
+            continue
         try:
-            with open(value, 'r') as f:
-                ret = json.load(f)
-        except FileNotFoundError:
-            ret = json.loads(value.strip())
-        except OSError:
-            ret = json.loads(value.strip())
-        if not isinstance(ret, dict):
-            err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, ret))
-    except json.decoder.JSONDecodeError as e:
-        err = ValueError("Error parsing '%s': %s" % (value, e))
-    if err:
-        raise err       # pylint: disable=raising-bad-type
+            try:
+                with open(value, 'r') as f:
+                    value_parsed = json.load(f)
+            except FileNotFoundError:
+                value_parsed = json.loads(value.strip())
+            except OSError:
+                value_parsed = json.loads(value.strip())
+            if not isinstance(value_parsed, dict):
+                err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, value_parsed))
+        except json.decoder.JSONDecodeError as e:
+            err = ValueError("Error parsing '%s': %s" % (value, e))
+        if err:
+            raise err       # pylint: disable=raising-bad-type
+        ret = {**ret, **value_parsed}
     return ret
