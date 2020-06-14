@@ -200,6 +200,18 @@ class TestUtils(TestCase):
             # $PWD/{"foo":23} -- does not exist, parse as json
             self.assertEqual(parse_json_string_or_file(paramfile.name), {'foo': 23})
 
+    def test_parameter_file_comments(self):
+        with TemporaryDirectory() as tempdir:
+            jsonpath = Path(tempdir, 'test.json')
+            jsonpath.write_text("""\
+                    {
+                        # Metasyntactical variables are rarely imaginative
+                        "foo": 42,
+                        # case in point:
+                        "bar": 23
+                    }""")
+            self.assertEqual(parse_json_string_or_file(str(jsonpath)), {'foo': 42, 'bar': 23})
+
     def test_parameters_invalid(self):
         with self.assertRaisesRegex(ValueError, 'Not a valid JSON object'):
             parse_json_string_or_file('[]')

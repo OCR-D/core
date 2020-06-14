@@ -51,7 +51,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_or_file``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_with_comments``, ``parse_json_string_or_file``
 
     String and OOP utilities
 
@@ -90,6 +90,7 @@ __all__ = [
     'logging',
     'membername',
     'image_from_polygon',
+    'parse_json_string_with_comments',
     'parse_json_string_or_file',
     'points_from_bbox',
     'points_from_polygon',
@@ -784,6 +785,13 @@ def xywh_from_points(points):
     """
     return xywh_from_bbox(*bbox_from_points(points))
 
+def parse_json_string_with_comments(val):
+    """
+    Parse a string of JSON interspersed with #-prefixed full-line comments
+    """
+    jsonstr = re.sub('^\s*#.*$', '', val, flags=re.MULTILINE)
+    return json.loads(jsonstr)
+
 def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
     """
     Parse a string as either the path to a JSON object or a literal JSON object.
@@ -799,11 +807,11 @@ def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
         try:
             try:
                 with open(value, 'r') as f:
-                    value_parsed = json.load(f)
+                    value_parsed = parse_json_string_with_comments(f.read())
             except FileNotFoundError:
-                value_parsed = json.loads(value.strip())
+                value_parsed = parse_json_string_with_comments(value.strip())
             except OSError:
-                value_parsed = json.loads(value.strip())
+                value_parsed = parse_json_string_with_comments(value.strip())
             if not isinstance(value_parsed, dict):
                 err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, value_parsed))
         except json.decoder.JSONDecodeError as e:
