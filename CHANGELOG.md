@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.10.2] - 2020-06-14
+
+Fixed:
+
+  * bashlib: Typo, #516
+
 ## [2.10.1] - 2020-06-13
 
 Changed:
@@ -957,6 +963,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.10.2]: ../../compare/v2.10.2..v2.10.1
 [2.10.1]: ../../compare/v2.10.1..v2.10.0
 [2.10.0]: ../../compare/v2.10.0..v2.9.0
 [2.9.0]: ../../compare/v2.9.0..v2.8.3
