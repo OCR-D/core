@@ -48,22 +48,25 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 # ocrd workspace validate
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('validate', help='''
-
-    Validate a workspace
-
-''')
+@workspace_cli.command('validate')
 @pass_workspace
 @click.option('-a', '--download', is_flag=True, help="Download all files")
 @click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'url']))
 @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
-@click.argument('mets_url', nargs=-1)
+@click.argument('mets_url', default=None, required=False)
 def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
+    """
+    Validate a workspace
+    
+    METS_URL can be a URL, an absolute path or a path relative to $PWD.
+    If not given, use the concatenation of --directory and --mets-basename.
+    
+    Check that the METS and its referenced file contents
+    abide by the OCR-D specifications.
+    """
     if not mets_url:
-        mets_url = 'mets.xml'
-    else:
-        mets_url = mets_url[0]
+        mets_url = str(Path(ctx.directory, ctx.mets_basename))
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
