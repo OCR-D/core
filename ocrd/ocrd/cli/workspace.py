@@ -88,18 +88,20 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
+# should be deprecated:
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
 def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     """
-    Create a workspace from a METS_URL and return the directory
+    Create a workspace from METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
 
-    If WORKSPACE_DIR is not provided, use the current working directory
+    If WORKSPACE_DIR is not provided, the new workspace will
+    use --directory accordingly.
     """
     if not workspace_dir:
-        workspace_dir = '.'
+        workspace_dir = ctx.directory
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
         dst_dir=os.path.abspath(workspace_dir),
@@ -116,16 +118,18 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
 @workspace_cli.command('init')
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
-@click.argument('directory', required=False)
+# should be deprecated:
+@click.argument('directory', default=None, required=False)
 @pass_workspace
 def workspace_create(ctx, clobber_mets, directory):
     """
     Create a workspace with an empty METS file in DIRECTORY.
 
-    Use '.' for $PWD"
+    If DIRECTORY is not provided, the new workspace will
+    use --directory accordingly.
     """
     if not directory:
-        directory = '.'
+        directory = ctx.directory
     workspace = ctx.resolver.workspace_from_nothing(
         directory=os.path.abspath(directory),
         mets_basename=ctx.mets_basename,
