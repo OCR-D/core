@@ -415,42 +415,39 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
 # ocrd workspace list-group
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('list-group', help="""
-
-    List fileGrp USE attributes
-
-""")
+@workspace_cli.command('list-group')
 @pass_workspace
 def list_groups(ctx):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    """
+    List fileGrp USE attributes
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-pages
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('list-page', help="""
-
-    List page IDs
-
-""")
+@workspace_cli.command('list-page')
 @pass_workspace
 def list_pages(ctx):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    """
+    List physical page IDs
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     print("\n".join(workspace.mets.physical_pages))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('get-id', help="""
-
-    Get METS id if any
-
-""")
+@workspace_cli.command('get-id')
 @pass_workspace
 def get_id(ctx):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    """
+    Get METS id if any
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     ID = workspace.mets.unique_identifier
     if ID:
         print(ID)
@@ -459,18 +456,18 @@ def get_id(ctx):
 # ocrd workspace set-id
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('set-id', help="""
-
+@workspace_cli.command('set-id')
+@click.argument('ID')
+@pass_workspace
+def set_id(ctx, id):   # pylint: disable=redefined-builtin
+    """
     Set METS ID.
 
     If one of the supported identifier mechanisms is used, will set this identifier.
 
     Otherwise will create a new <mods:identifier type="purl">{{ ID }}</mods:identifier>.
-""")
-@click.argument('ID')
-@pass_workspace
-def set_id(ctx, id):   # pylint: disable=redefined-builtin
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     workspace.mets.unique_identifier = id
     workspace.save_mets()
 
