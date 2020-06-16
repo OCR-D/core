@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Regression in `ocrd workspace add` that prevented files from being copied, #519
+
 ## [2.10.2] - 2020-06-14
 
 Fixed:
