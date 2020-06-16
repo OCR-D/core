@@ -191,6 +191,32 @@ class TestCli(TestCase):
             self.assertEqual(exit_code, 1)
             self.assertIn("File 'does-not-exist.xml' does not exist, halt execution!", err)
 
+    def test_add_519(self):
+        """
+        https://github.com/OCR-D/core/issues/519
+        """
+        with TemporaryDirectory() as tempdir:
+            wsdir = Path(tempdir, "workspace")
+            wsdir.mkdir()
+            srcdir = Path(tempdir, "source")
+            srcdir.mkdir()
+            srcfile = Path(srcdir, "srcfile.jpg")
+            srcfile_content = 'foo'
+            srcfile.write_text(srcfile_content)
+            with pushd_popd(wsdir):
+                exit_code, out, err = self.invoke_cli(workspace_cli, ['init'])
+                exit_code, out, err = self.invoke_cli(workspace_cli, [
+                    'add',
+                    '-m', 'image/jpg',
+                    '-G', 'MAX',
+                    '-i', 'IMG_MAX_1818975',
+                    '-C',
+                    str(srcfile)
+                    ])
+                self.assertEqual(exit_code, 0)
+                self.assertTrue(Path(wsdir, 'MAX', 'srcfile.jpg').exists())
+                self.assertEquals(Path(wsdir, 'MAX', 'srcfile.jpg').read_text(), srcfile_content)
+
     def test_add_existing_checked(self):
         ID = 'foo123file'
         page_id = 'foo123page'
