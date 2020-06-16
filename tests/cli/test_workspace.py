@@ -203,7 +203,7 @@ class TestCli(TestCase):
             srcfile = Path(srcdir, "srcfile.jpg")
             srcfile_content = 'foo'
             srcfile.write_text(srcfile_content)
-            with pushd_popd(wsdir):
+            with pushd_popd(str(wsdir)):
                 exit_code, out, err = self.invoke_cli(workspace_cli, ['init'])
                 exit_code, out, err = self.invoke_cli(workspace_cli, [
                     'add',
@@ -213,9 +213,10 @@ class TestCli(TestCase):
                     '-C',
                     str(srcfile)
                     ])
+                # print(out, err)
                 self.assertEqual(exit_code, 0)
                 self.assertTrue(Path(wsdir, 'MAX', 'srcfile.jpg').exists())
-                self.assertEquals(Path(wsdir, 'MAX', 'srcfile.jpg').read_text(), srcfile_content)
+                self.assertEqual(Path(wsdir, 'MAX', 'srcfile.jpg').read_text(), srcfile_content)
 
     def test_add_existing_checked(self):
         ID = 'foo123file'

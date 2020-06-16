@@ -1,5 +1,5 @@
 import os
-from os.path import relpath, exists, join
+from os.path import relpath, exists, join, isabs
 from pathlib import Path
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
@@ -157,10 +157,10 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     log.debug("Adding '%s' (%s)", fname, kwargs)
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
-            if exists(ctx.directory + '/' + fname):
-                fname = ctx.directory + '/' + fname
+            if not isabs(fname) and exists(join(ctx.directory, fname)):
+                fname = join(ctx.directory, fname)
             else:
-                log.info("File '%s' is not in workspace, copying", fname)
+                log.debug("File '%s' is not in workspace, copying", fname)
                 try:
                     fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
                 except FileNotFoundError:
