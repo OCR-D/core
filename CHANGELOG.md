@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `bashlib`: support --overwrite flag, #522
+
 ## [2.10.3] - 2020-06-16
 
 Fixed:
