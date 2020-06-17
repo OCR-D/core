@@ -106,6 +106,8 @@ ocrd__parse_argv () {
         ocrd__raise "Must set \$params (declare -A params)"
     fi
 
+    ocrd__argv[overwrite]=false
+
     while [[ "${1:-}" = -* ]];do
         case "$1" in
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
@@ -117,6 +119,7 @@ ocrd__parse_argv () {
             -I|--input-file-grp) ocrd__argv[input_file_grp]=$2 ; shift ;;
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
+            --overwrite) ocrd__argv[overwrite]=true ;;
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
@@ -176,7 +179,7 @@ ocrd__wrap () {
         ocrd__raise "Cannot read \$OCRD_TOOL_JSON: '$OCRD_TOOL_JSON'"
     fi
 
-    if [[ -z "$OCRD_TOOL_NAME" ]];then
+   if [[ -z "$OCRD_TOOL_NAME" ]];then
         ocrd__raise "Must set \$OCRD_TOOL_NAME"
     elif ! ocrd ocrd-tool "$OCRD_TOOL_JSON" list-tools|grep -q "$OCRD_TOOL_NAME";then
         ocrd__raise "No such command \$OCRD_TOOL_NAME: $OCRD_TOOL_NAME"
