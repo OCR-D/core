@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.10.4] - 2020-06-17
+
 Added:
 
   * `bashlib`: support --overwrite flag, #522
@@ -973,6 +975,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.10.4]: ../../compare/v2.10.4..v2.10.3
 [2.10.3]: ../../compare/v2.10.3..v2.10.2
 [2.10.2]: ../../compare/v2.10.2..v2.10.1
 [2.10.1]: ../../compare/v2.10.1..v2.10.0
