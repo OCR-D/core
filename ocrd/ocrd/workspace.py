@@ -18,6 +18,7 @@ from ocrd_utils import (
     adjust_canvas_to_transposition,
     shift_coordinates,
     rotate_coordinates,
+    transform_coordinates,
     transpose_coordinates,
     crop_image,
     rotate_image,
@@ -365,8 +366,15 @@ class Workspace():
         """
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
-        border = page.get_Border()
+        page_coords = dict()
+        # use identity as initial affine coordinate transform:
+        page_coords['transform'] = np.eye(3)
+        # interim bbox (updated with each change to the transform):
+        page_bbox = [0, 0, page_image.width, page_image.height]
+        page_xywh = {'x': 0, 'y': 0,
+                     'w': page_image.width, 'h': page_image.height}
         
+        border = page.get_Border()
         # page angle: PAGE @orientation is defined clockwise,
         # whereas PIL/ndimage rotation is in mathematical direction:
         page_coords['angle'] = -(page.get_orientation() or 0)
@@ -377,12 +385,11 @@ class Workspace():
         skew = (page_coords['angle'] % 360) - orientation
         skew = 180 - (180 - skew) % 360 # map to [-45,45]
         page_coords['angle'] = 0 # nothing applied yet (depends on filters)
-        log.debug("page '%s' has orientation=%d skew=%.2f",
-                  page_id, orientation, skew)
+        log.debug("page '%s' has %s orientation=%d skew=%.2f",
+                  page_id, "border," if border else "", orientation, skew)
         
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
-        
         alternative_image = None
         alternative_images = page.get_AlternativeImage()
         if alternative_images:
@@ -410,114 +417,124 @@ class Workspace():
                 page_image = self._resolve_image_as_pil(alternative_image.get_filename())
                 page_coords['features'] = features
         
-        if (border and
-            not 'cropped' in feature_filter.split(',')):
-            page_points = border.get_Coords().points
-            log.debug("Using explicitly set page border '%s' for page '%s'",
-                      page_points, page_id)
-            # get polygon outline of page border:
-            page_polygon = np.array(polygon_from_points(page_points), dtype=np.int32)
-            page_bbox = bbox_from_polygon(page_polygon)
-            # get size of the page after cropping but before rotation:
-            page_xywh = xywh_from_bbox(*page_bbox)
-            # subtract offset in affine coordinate transform:
-            # (consistent with image cropping or AlternativeImage below)
-            page_coords = {
-                'transform': shift_coordinates(
-                    np.eye(3),
-                    np.array([-page_bbox[0],
-                              -page_bbox[1]]))
-            }
-            # crop, if (still) necessary:
-            if not 'cropped' in page_coords['features']:
-                log.debug("Cropping %s for page '%s' to border", 
-                          "AlternativeImage" if alternative_image else "image",
-                          page_id)
-                # create a mask from the page polygon:
-                page_image = image_from_polygon(page_image, page_polygon,
-                                                fill=fill, transparency=transparency)
-                # recrop into page rectangle:
-                page_image = crop_image(page_image, box=page_bbox)
-                page_coords['features'] += ',cropped'
-            # FIXME we should enforce consistency here
-            if not (page_image.width == page_xywh['w'] and
-                    page_image.height == page_xywh['h']):
+        # adjust the coord transformation to the steps applied on the image,
+        # and apply steps on the existing image in case it is missing there,
+        # but traverse all steps (crop/reflect/rotate) in a particular order:
+        # - existing image features take priority (in the order annotated),
+        # - next is cropping (if necessary but not already applied),
+        # - next is reflection (if necessary but not already applied),
+        # - next is rotation (if necessary but not already applied).
+        # This helps deal with arbitrary workflows (e.g. crop then deskew,
+        # or deskew then crop), regardless of where images are generated.
+        alternative_image_features = page_coords['features'].split(',')
+        for i, feature in enumerate(alternative_image_features +
+                                    (['cropped']
+                                     if (border and
+                                         not 'cropped' in page_coords['features'] and
+                                         not 'cropped' in feature_filter.split(','))
+                                     else []) +
+                                    (['rotated-%d' % orientation]
+                                     if (orientation and
+                                         not 'rotated-%d' % orientation in page_coords['features'] and
+                                         not 'rotated-%d' % orientation in feature_filter.split(','))
+                                     else []) +
+                                    (['deskewed']
+                                     if (skew and
+                                         not 'deskewed' in page_coords['features'] and
+                                         not 'deskewed' in feature_filter.split(','))
+                                     else []) +
+                                    # not a feature to be added, but merely as a fallback position
+                                    # to always enter loop at i == len(alternative_image_features)
+                                    ['_check']):
+            # image geometry vs feature consistency can only be checked
+            # after all features on the existing AlternativeImage have
+            # been adjusted for in the transform, and when there is a mismatch,
+            # additional steps applied here would only repeat the respective
+            # error message; so we only check once at the boundary between
+            # existing and new features
+            # FIXME we should check/enforce consistency when _adding_ AlternativeImage
+            if (i == len(alternative_image_features) and
+                not (page_xywh['w'] - 2 < page_image.width < page_xywh['w'] + 2 and
+                     page_xywh['h'] - 2 < page_image.height < page_xywh['h'] + 2)):
                 log.error('page "%s" image (%s; %dx%d) has not been cropped properly (%dx%d)',
                           page_id, page_coords['features'],
                           page_image.width, page_image.height,
                           page_xywh['w'], page_xywh['h'])
-        else:
-            page_bbox = [0, 0, page_image.width, page_image.height]
-            page_xywh = {'w:' page_image.width, 'h': page_image.height}
-            # use identity as affine coordinate transform:
-            page_coords = {
-                'transform': np.eye(3)
-            }
-        
-        if (orientation and
-            not 'rotated-%d' % orientation in feature_filter.split(',')):
-            # Transpose in affine coordinate transform:
-            # (consistent with image transposition or AlternativeImage below)
-            transposition = { 90: Image.ROTATE_90,
-                              180: Image.ROTATE_180,
-                              270: Image.ROTATE_270
-            }.get(orientation) # no default
-            page_coords['transform'] = transpose_coordinates(
-                page_coords['transform'],
-                transposition,
-                np.array([0.5 * page_xywh['w'],
-                          0.5 * page_xywh['h']]))
-            page_xywh['w'], page_xywh['h'] = adjust_canvas_to_transposition(
-                [page_xywh['w'], page_xywh['h']], transposition)
-            page_coords['angle'] = orientation
-            # transpose, if (still) necessary:
-            if not 'rotated-%d' % orientation in page_coords['features']:
-                log.info("Transposing %s for page '%s' by %d°",
-                         "AlternativeImage" if alternative_image else
-                         "image", page_id, orientation)
-                page_image = transpose_image(page_image, {
-                    90: Image.ROTATE_90,
-                    180: Image.ROTATE_180,
-                    270: Image.ROTATE_270
-                }.get(orientation)) # no default
-                page_coords['features'] += ',rotated-%d' % orientation
-            # FIXME we should enforce consistency here (i.e. split into transposition
-            #       and minimal rotation)
-            if not (page_image.width == page_xywh['w'] and
-                    page_image.height == page_xywh['h']):
-                log.error('page "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during reflection',
-                          page_id, page_coords['features'],
-                          page_image.width, page_image.height,
-                          page_xywh['w'], page_xywh['h'])
+            # adjust transform to feature, possibly apply feature to image
+            if feature == 'cropped':
+                page_points = border.get_Coords().points
+                log.debug("Using explicitly set page border '%s' for page '%s'",
+                          page_points, page_id)
+                # get polygon outline of page border:
+                page_polygon = np.array(polygon_from_points(page_points), dtype=np.int32)
+                page_polygon = transform_coordinates(page_polygon, page_coords['transform'])
+                page_polygon = np.round(page_polygon).astype(np.int32)
+                page_bbox = bbox_from_polygon(page_polygon)
+                # get size of the page after cropping but before rotation:
+                page_xywh = xywh_from_bbox(*page_bbox)
+                # subtract offset in affine coordinate transform:
+                # (consistent with image cropping or AlternativeImage below)
+                page_coords['transform'] = shift_coordinates(
+                    page_coords['transform'],
+                    np.array([-page_xywh['x'],
+                              -page_xywh['y']]))
+                # crop, if (still) necessary:
+                if not 'cropped' in page_coords['features']:
+                    log.debug("Cropping %s for page '%s' to border", 
+                              "AlternativeImage" if alternative_image else "image",
+                              page_id)
+                    # create a mask from the page polygon:
+                    page_image = image_from_polygon(page_image, page_polygon,
+                                                    fill=fill, transparency=transparency)
+                    # recrop into page rectangle:
+                    page_image = crop_image(page_image, box=page_bbox)
+                    page_coords['features'] += ',cropped'
 
-        if (skew and
-            not 'deskewed' in feature_filter.split(',')):
-            # Rotate around center in affine coordinate transform:
-            # (consistent with image rotation or AlternativeImage below)
-            page_coords['transform'] = rotate_coordinates(
-                page_coords['transform'],
-                skew,
-                np.array([0.5 * page_xywh['w'],
-                          0.5 * page_xywh['h']]))
-            page_coords['angle'] += skew
-            # deskew, if (still) necessary:
-            if not 'deskewed' in page_coords['features']:
-                log.info("Rotating %s for page '%s' by %.2f°",
-                         "AlternativeImage" if alternative_image else
-                         "image", page_id, skew)
-                page_image = rotate_image(page_image, skew,
-                                          fill=fill, transparency=transparency)
-                page_coords['features'] += ',deskewed'
-            w_new, h_new = adjust_canvas_to_rotation(
-                [page_xywh['w'], page_xywh['h']], skew)
-            # FIXME we should enforce consistency here (i.e. rotation always reshapes,
-            #       and rescaling never happens)
-            if not (w_new - 2 < page_image.width < w_new + 2 and
-                    h_new - 2 < page_image.height < h_new + 2):
-                log.error('page "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during rotation',
-                          page_id, page_coords['features'],
-                          page_image.width, page_image.height,
-                          w_new, h_new)
+            elif feature == 'rotated-%d' % orientation:
+                # Transpose in affine coordinate transform:
+                # (consistent with image transposition or AlternativeImage below)
+                transposition = { 90: Image.ROTATE_90,
+                                  180: Image.ROTATE_180,
+                                  270: Image.ROTATE_270
+                }.get(orientation) # no default
+                page_coords['transform'] = transpose_coordinates(
+                    page_coords['transform'],
+                    transposition,
+                    np.array([0.5 * page_xywh['w'],
+                              0.5 * page_xywh['h']]))
+                (page_xywh['w'], page_xywh['h']) = adjust_canvas_to_transposition(
+                    [page_xywh['w'], page_xywh['h']], transposition)
+                page_coords['angle'] = orientation
+                # transpose, if (still) necessary:
+                if not 'rotated-%d' % orientation in page_coords['features']:
+                    log.info("Transposing %s for page '%s' by %d°",
+                             "AlternativeImage" if alternative_image else
+                             "image", page_id, orientation)
+                    page_image = transpose_image(page_image, {
+                        90: Image.ROTATE_90,
+                        180: Image.ROTATE_180,
+                        270: Image.ROTATE_270
+                    }.get(orientation)) # no default
+                    page_coords['features'] += ',rotated-%d' % orientation
+            elif feature == 'deskewed':
+                # Rotate around center in affine coordinate transform:
+                # (consistent with image rotation or AlternativeImage below)
+                page_coords['transform'] = rotate_coordinates(
+                    page_coords['transform'],
+                    skew,
+                    np.array([0.5 * page_xywh['w'],
+                              0.5 * page_xywh['h']]))
+                page_coords['angle'] += skew
+                # deskew, if (still) necessary:
+                if not 'deskewed' in page_coords['features']:
+                    log.info("Rotating %s for page '%s' by %.2f°",
+                             "AlternativeImage" if alternative_image else
+                             "image", page_id, skew)
+                    page_image = rotate_image(page_image, skew,
+                                              fill=fill, transparency=transparency)
+                    page_coords['features'] += ',deskewed'
+                (page_xywh['w'], page_xywh['h']) = adjust_canvas_to_rotation(
+                    [page_xywh['w'], page_xywh['h']], skew)
         
         # verify constraints again:
         if not all(feature in page_coords['features']
