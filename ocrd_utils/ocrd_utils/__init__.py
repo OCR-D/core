@@ -51,7 +51,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_or_file``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_or_file``, ``assert_file_grp_cardinality``
 
     String and OOP utilities
 
@@ -72,6 +72,7 @@ __all__ = [
     'abspath',
     'adjust_canvas_to_rotation',
     'adjust_canvas_to_transposition',
+    'assert_file_grp_cardinality',
     'bbox_from_points',
     'bbox_from_xywh',
     'bbox_from_polygon',
@@ -809,3 +810,13 @@ def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
     if err:
         raise err       # pylint: disable=raising-bad-type
     return ret
+
+def assert_file_grp_cardinality(grps, n):
+    """
+    Assert that a string of comma-separated fileGrps contains exactly ``n`` entries.
+    """
+    if isinstance(grps, str):
+        grps = grps.split(',')
+    assert len(grps) == n, \
+            "Expected exactly %d output file group%s, but '%s' has %d" % (
+                n, '' if n == 1 else 's', grps, len(grps))

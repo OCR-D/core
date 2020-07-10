@@ -8,6 +8,8 @@ from tests.base import TestCase, main, assets
 from ocrd_utils import (
     abspath,
 
+    assert_file_grp_cardinality,
+
     bbox_from_points,
     bbox_from_xywh,
 
@@ -212,6 +214,13 @@ class TestUtils(TestCase):
         self.assertEqual(MIME_TO_PIL['image/jp2'], 'JP2')
         self.assertEqual(PIL_TO_MIME['JP2'], 'image/jp2')
 
+    def test_assert_file_grp_cardinality(self):
+        with self.assertRaisesRegex(AssertionError, "Expected exactly 5 output file groups, but '.'FOO', 'BAR'.' has 2"):
+            assert_file_grp_cardinality('FOO,BAR', 5)
+        with self.assertRaisesRegex(AssertionError, "Expected exactly 1 output file group, but '.'FOO', 'BAR'.' has 2"):
+            assert_file_grp_cardinality('FOO,BAR', 1)
+        assert_file_grp_cardinality('FOO,BAR', 2)
+
 
 if __name__ == '__main__':
-    main()
+    main(__file__)
