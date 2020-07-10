@@ -51,7 +51,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_or_file``, ``assert_file_grp_cardinality``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_or_file``, ``assert_file_grp_cardinality``, ``make_file_id``
 
     String and OOP utilities
 
@@ -89,6 +89,7 @@ __all__ = [
     'nth_url_segment',
     'remove_non_path_from_url',
     'logging',
+    'make_file_id',
     'membername',
     'image_from_polygon',
     'parse_json_string_or_file',
@@ -820,3 +821,16 @@ def assert_file_grp_cardinality(grps, n):
     assert len(grps) == n, \
             "Expected exactly %d output file group%s, but '%s' has %d" % (
                 n, '' if n == 1 else 's', grps, len(grps))
+
+
+def make_file_id(ocrd_file, output_file_grp, n):
+    """
+    Derive the file ID of an output file from an input file, the ``output_file_grp`` and a fallback counter ``n``.
+    """
+    ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
+    if ret == ocrd_file.ID:
+        m = re.match(r'.*?(\d{3,}).*', ret)
+        if m:
+            n = m[1]
+        ret = concat_padded(output_file_grp, n)
+    return ret

@@ -9,6 +9,7 @@ from ocrd_utils import (
     abspath,
 
     assert_file_grp_cardinality,
+    make_file_id,
 
     bbox_from_points,
     bbox_from_xywh,
@@ -40,6 +41,22 @@ from ocrd_utils import (
     MIME_TO_PIL, PIL_TO_MIME,
 )
 from ocrd_models.utils import xmllint_format
+from ocrd_models import OcrdFile
+
+class MockOcrdFile(OcrdFile):
+    """
+    OcrdFile with mocked fileGrp access
+    """
+    @property
+    def fileGrp(self):
+        return self.__filegrp
+    @fileGrp.setter
+    def fileGrp(self, fileGrp):
+        self.__filegrp = fileGrp
+    def __init__(self, *args, fileGrp=None, **kwargs):
+        super(MockOcrdFile, self).__init__(*args, **kwargs)
+        if fileGrp:
+            self.fileGrp = fileGrp
 
 class TestUtils(TestCase):
 
@@ -220,6 +237,15 @@ class TestUtils(TestCase):
         with self.assertRaisesRegex(AssertionError, "Expected exactly 1 output file group, but '.'FOO', 'BAR'.' has 2"):
             assert_file_grp_cardinality('FOO,BAR', 1)
         assert_file_grp_cardinality('FOO,BAR', 2)
+
+    def test_mock_file(self):
+        f = MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX')
+        self.assertEqual(f.fileGrp, 'MAX')
+
+    def test_make_file_id(self):
+        self.assertEqual(make_file_id(MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX'), 'FOO', 0), 'FOO_0012')
+        self.assertEqual(make_file_id(MockOcrdFile(None, ID="MAX_0012", fileGrp='BAR'), 'FOO', 0), 'FOO_0012')
+        self.assertEqual(make_file_id(MockOcrdFile(None, ID="MAXMAXMAX", fileGrp='BAR'), 'FOO', 11), 'FOO_0012')
 
 
 if __name__ == '__main__':
