@@ -87,7 +87,11 @@ class TestDecorators(TestCase):
         json1 = '{"foo": 23, "bar": 100}'
         json2 = '{"foo": 42}'
         _, out, _ = self.invoke_cli(cli_param_dumper, ['-p', json1, '-p', json2])
-        self.assertEqual(out, '{"foo": 42, "bar": 100}\n')
+        try:
+            self.assertEqual(out, '{"foo": 42, "bar": 100}\n')
+        except AssertionError:
+            self.assertEqual(out, '{"bar": 100, "foo": 42}\n')
+
 
 
     @contextmanager
