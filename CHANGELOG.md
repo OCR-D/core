@@ -8,6 +8,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * Blacklist PIL versions with PNG issues, #527
+  * `ocrd workspace validate`: Allow skipping `page_xsd` and `mets_xsd`, #531
+  * Fix import of `xlink` XSD in `mets` XSD, #531
 
 ## [2.10.4] - 2020-06-17
 
