@@ -831,6 +831,6 @@ def make_file_id(ocrd_file, output_file_grp, n):
     if ret == ocrd_file.ID:
         m = re.match(r'.*?(\d{3,}).*', ret)
         if m:
-            n = m[1]
+            n = m.group(1)
         ret = concat_padded(output_file_grp, n)
     return ret
