@@ -82,7 +82,7 @@ generate-page: repo/assets
 		-o $(GDS_PAGE) \
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
-		ocrd_validators/ocrd_validators/xsd/page.xsd
+		ocrd_validators/ocrd_validators/page.xsd
 	# hack to prevent #451: enum keys will be strings
 	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
 	# hack to ensure output has pc: prefix

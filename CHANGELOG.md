@@ -5,6 +5,43 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.10.5] - 2020-07-11
+
+Fixed:
+
+  * Blacklist PIL versions with PNG issues, #527
+  * `ocrd workspace validate`: Allow skipping `page_xsd` and `mets_xsd`, #531
+  * Fix import of `xlink` XSD in `mets` XSD, #531
+
+## [2.10.4] - 2020-06-17
+
+Added:
+
+  * `bashlib`: support --overwrite flag, #522
+
+## [2.10.3] - 2020-06-16
+
+Fixed:
+
+  * Regression in `ocrd workspace add` that prevented files from being copied, #519
+
+## [2.10.2] - 2020-06-14
+
+Fixed:
+
+  * bashlib: Typo, #516
+
+## [2.10.1] - 2020-06-13
+
+Changed:
+* bashlib: Make `input-file-grp` and `output-file-grp` mandatory, #512
+* bashlib: Add a function `ocrd__minversion` that will check whether `ocrd --version` is new enough for the processor., #512
+
+Fixed:
+
+* Re-introduce `ocrd__raise`, #511
+* Move XSD into root package of `ocrd_validators`, #513
+
 ## [2.10.0] - 2020-06-11
 
 Fixed:
@@ -946,6 +983,11 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.10.5]: ../../compare/v2.10.5..v2.10.4
+[2.10.4]: ../../compare/v2.10.4..v2.10.3
+[2.10.3]: ../../compare/v2.10.3..v2.10.2
+[2.10.2]: ../../compare/v2.10.2..v2.10.1
+[2.10.1]: ../../compare/v2.10.1..v2.10.0
 [2.10.0]: ../../compare/v2.10.0..v2.9.0
 [2.9.0]: ../../compare/v2.9.0..v2.8.3
 [2.8.3]: ../../compare/v2.8.3...v2.8.2

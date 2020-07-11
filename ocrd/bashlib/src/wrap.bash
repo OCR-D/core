@@ -19,7 +19,7 @@ ocrd__wrap () {
         ocrd__raise "Cannot read \$OCRD_TOOL_JSON: '$OCRD_TOOL_JSON'"
     fi
 
-    if [[ -z "$OCRD_TOOL_NAME" ]];then
+   if [[ -z "$OCRD_TOOL_NAME" ]];then
         ocrd__raise "Must set \$OCRD_TOOL_NAME"
     elif ! ocrd ocrd-tool "$OCRD_TOOL_JSON" list-tools|grep -q "$OCRD_TOOL_NAME";then
         ocrd__raise "No such command \$OCRD_TOOL_NAME: $OCRD_TOOL_NAME"
