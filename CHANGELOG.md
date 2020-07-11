@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Blacklist PIL versions with PNG issues, #527
+
 ## [2.10.4] - 2020-06-17
 
 Added:
