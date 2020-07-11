@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.10.5] - 2020-07-11
+
+Fixed:
+
+  * Blacklist PIL versions with PNG issues, #527
+  * `ocrd workspace validate`: Allow skipping `page_xsd` and `mets_xsd`, #531
+  * Fix import of `xlink` XSD in `mets` XSD, #531
+
 ## [2.10.4] - 2020-06-17
 
 Added:
@@ -975,6 +983,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.10.5]: ../../compare/v2.10.5..v2.10.4
 [2.10.4]: ../../compare/v2.10.4..v2.10.3
 [2.10.3]: ../../compare/v2.10.3..v2.10.2
 [2.10.2]: ../../compare/v2.10.2..v2.10.1
