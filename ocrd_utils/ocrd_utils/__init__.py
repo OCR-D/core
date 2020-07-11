@@ -823,14 +823,21 @@ def assert_file_grp_cardinality(grps, n):
                 n, '' if n == 1 else 's', grps, len(grps))
 
 
-def make_file_id(ocrd_file, output_file_grp, n):
+def make_file_id(ocrd_file, output_file_grp):
     """
-    Derive the file ID of an output file from an input file, the ``output_file_grp`` and a fallback counter ``n``.
+    Derive a new file ID for an output file from an existing input file ``ocrd_file``
+    and the name of the output file's ``fileGrp/@USE``, ``output_file_grp``.
+    If ``ocrd_file``'s ID contains the input file's fileGrp name, then replace it by ``output_file_grp``.
+    Otherwise use ``output_file_grp`` together with the position of ``ocrd_file`` within the input fileGrp
+    (as a fallback counter).
     """
     ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
     if ret == ocrd_file.ID:
-        m = re.match(r'.*?(\d{3,}).*', ret)
+        m = re.match(r'.*?(\d{3,}).*', ocrd_file.pageId or '')
         if m:
             n = m.group(1)
+        else:
+            files = ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)
+            n = files.index(ocrd_file)
         ret = concat_padded(output_file_grp, n)
     return ret
