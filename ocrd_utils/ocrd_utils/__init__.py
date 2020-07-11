@@ -808,9 +808,7 @@ def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
             try:
                 with open(value, 'r') as f:
                     value_parsed = parse_json_string_with_comments(f.read())
-            except FileNotFoundError:
-                value_parsed = parse_json_string_with_comments(value.strip())
-            except OSError:
+            except (FileNotFoundError, OSError):
                 value_parsed = parse_json_string_with_comments(value.strip())
             if not isinstance(value_parsed, dict):
                 err = ValueError("Not a valid JSON object: '%s' (parsed as '%s')" % (value, value_parsed))
