@@ -165,6 +165,7 @@ class TestDecorators(TestCase):
                     '-P', 'baz', 'two',
                     '-I', 'OCR-D-IMG',
                 ])
+                print(result)
                 self.assertEqual(result.stdout, '{"baz": "two"}\n')
 
     def test_parameter_override_wo_param(self):
@@ -174,6 +175,7 @@ class TestDecorators(TestCase):
                     '-P', 'baz', 'two',
                     '-I', 'OCR-D-IMG',
                 ])
+                print(result)
                 self.assertEqual(result.stdout, '{"baz": "two"}\n')
 
 if __name__ == '__main__':

@@ -7,6 +7,7 @@ from ocrd_utils import (
     get_local_filename,
     setOverrideLogLevel,
     parse_json_string_or_file,
+    set_json_key_value_overrides
 )
 
 from ocrd_utils import getLogger
@@ -60,8 +61,7 @@ def ocrd_cli_wrap_processor(
         # LOG.info('kwargs=%s' % kwargs)
         # Merge parameter overrides and parameters
         if 'parameter_override' in kwargs:
-            for kv in list(kwargs['parameter_override']):
-                kwargs['parameter'][kv[0]] = kv[1]
+            set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
         if is_local_filename(mets) and not isfile(get_local_filename(mets)):
             msg = "File does not exist: %s" % mets
             LOG.error(msg)
