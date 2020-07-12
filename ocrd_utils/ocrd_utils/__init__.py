@@ -829,7 +829,7 @@ def make_file_id(ocrd_file, output_file_grp):
     and the name of the output file's ``fileGrp/@USE``, ``output_file_grp``.
     If ``ocrd_file``'s ID contains the input file's fileGrp name, then replace it by ``output_file_grp``.
     Otherwise use ``output_file_grp`` together with the position of ``ocrd_file`` within the input fileGrp
-    (as a fallback counter).
+    (as a fallback counter). Increment counter until there is no more ID conflict.
     """
     ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
     if ret == ocrd_file.ID:
@@ -837,7 +837,13 @@ def make_file_id(ocrd_file, output_file_grp):
         if m:
             n = m.group(1)
         else:
-            files = ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)
-            n = files.index(ocrd_file)
+            ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
+            try:
+                n = ids.index(ocrd_file.ID)
+            except ValueError:
+                n = len(ids)
         ret = concat_padded(output_file_grp, n)
+        while ocrd_file.mets.find_files(ID=ret):
+            n += 1
+            ret = concat_padded(output_file_grp, n)
     return ret
