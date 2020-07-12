@@ -61,6 +61,13 @@ class OcrdFile():
         ])
         return '<OcrdFile ' + props + ']/> '
 
+    def __eq__(self, other):
+        print(self, other)
+        return self.ID == other.ID and \
+               self.url == other.url and \
+               self.mimetype == other.mimetype and \
+               self.fileGrp == other.fileGrp
+
     @property
     def basename(self):
         """

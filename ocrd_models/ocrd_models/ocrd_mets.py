@@ -116,6 +116,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
+    # pylint: disable=multiple-statements
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
@@ -177,12 +178,12 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     if cand_url != url: continue
 
-            file = OcrdFile(cand, mets=self)
+            f = OcrdFile(cand, mets=self)
 
-            # If only local resources should be returned and file is not a file path: skip the file
-            if local_only and not is_local_filename(file.url):
+            # If only local resources should be returned and f is not a file path: skip the file
+            if local_only and not is_local_filename(f.url):
                 continue
-            ret.append(file)
+            ret.append(f)
         return ret
 
     def add_file_group(self, fileGrp):
