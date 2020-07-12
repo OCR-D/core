@@ -105,6 +105,7 @@ __all__ = [
     'rotate_image',
     'safe_filename',
     'setOverrideLogLevel',
+    'set_json_key_value_overrides',
     'shift_coordinates',
     'transform_coordinates',
     'transpose_coordinates',
@@ -813,7 +814,8 @@ def parse_json_string_or_file(value='{}'):    # pylint: disable=unused-argument
 def set_json_key_value_overrides(obj, *kvpairs):
     for kv in kvpairs:
         k, v = kv
-        obj[k] = v
-        # TODO or better like this?
-        # obj[k] = json.loads(v)
-
+        try:
+            obj[k] = json.loads(v)
+        except json.decoder.JSONDecodeError:
+            obj[k] = v
+    return obj
