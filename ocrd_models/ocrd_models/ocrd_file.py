@@ -3,7 +3,7 @@ API to ``mets:file``
 """
 from os.path import splitext, basename
 
-from ocrd_utils import is_local_filename, get_local_filename
+from ocrd_utils import is_local_filename, get_local_filename, MIME_TO_EXT, EXT_TO_MIME
 
 from .ocrd_xml_base import ET
 from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
@@ -65,7 +65,7 @@ class OcrdFile():
         print(self, other)
         return self.ID == other.ID and \
                self.url == other.url and \
-               self.mimetype == other.mimetype and \
+               EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and \
                self.fileGrp == other.fileGrp
 
     @property

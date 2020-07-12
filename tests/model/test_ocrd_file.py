@@ -78,8 +78,8 @@ class TestOcrdFile(TestCase):
         self.assertEqual(f1 == f2, False)
         f3 = OcrdFile(None, ID='TEMP_1', mimetype='image/tiff')
         f4 = OcrdFile(None, ID='TEMP_1', mimetype='image/tif')
-        # TODO probably makes sense to be tolerant of different equivalent mimetypes
-        # self.assertEqual(f3 == f4, True)
+        # be tolerant of different equivalent mimetypes
+        self.assertEqual(f3 == f4, True)
         f5 = mets.add_file('TEMP', ID='TEMP_1', mimetype='image/tiff')
         self.assertEqual(f3 == f5, True)
 
