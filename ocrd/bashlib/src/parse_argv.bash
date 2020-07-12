@@ -19,6 +19,7 @@ ocrd__parse_argv () {
     fi
 
     ocrd__argv[overwrite]=false
+    ocrd__argv[parameter_override]=""
 
     while [[ "${1:-}" = -* ]];do
         case "$1" in
@@ -26,6 +27,7 @@ ocrd__parse_argv () {
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
             -p|--parameter) ocrd__argv[parameter]="$2" ; shift ;;
+            -P|--parameter-override) ocrd__argv[parameter_override]+=" -P $2 $3" ; shift ; shift ;;
             -g|--page-id) ocrd__argv[page_id]=$2 ; shift ;;
             -O|--output-file-grp) ocrd__argv[output_file_grp]=$2 ; shift ;;
             -I|--input-file-grp) ocrd__argv[input_file_grp]=$2 ; shift ;;
@@ -59,7 +61,9 @@ ocrd__parse_argv () {
     fi
 
     local params_parsed retval
-    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]:-{\}}")" || {
+    # XXX: ${ocrd_argv[parameter_override]} must be unquoted to pass on as-is
+    #ocrd log info "${ocrd__argv[parameter_override]}"
+    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]:-{\}}" ${ocrd__argv[parameter_override]})" || {
         retval=$?
         ocrd__raise "Failed to parse parameters (retval $retval):
 $params_parsed"
