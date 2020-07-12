@@ -62,6 +62,7 @@ class TestDecorators(TestCase):
 
     def test_processor_version(self):
         result = self.runner.invoke(cli_dummy_processor, ['--version'])
+        print(result)
         self.assertEqual(result.output, 'Version 0.0.1, ocrd/core %s\n' % OCRD_VERSION)
         self.assertEqual(result.exit_code, 0)
 
@@ -75,6 +76,7 @@ class TestDecorators(TestCase):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
                 result = self.runner.invoke(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', '-I', 'OCR-D-IMG'])
+                print(result)
                 self.assertEqual(result.exit_code, 0)
 
 
@@ -154,6 +156,25 @@ class TestDecorators(TestCase):
     #         self.assertTrue(exists(join(ws.directory, 'ID3.tif')), 'files exist')
     #         self.assertFalse(exists(join(ws.directory, 'ID4.tif')), 'files deleted')
 
+    def test_parameter_override_basic(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            with pushd_popd(tempdir):
+                result = self.runner.invoke(cli_dummy_processor, [
+                    '-p', '{"baz": "forty-two"}',
+                    '-P', 'baz', 'one',
+                    '-P', 'baz', 'two',
+                    '-I', 'OCR-D-IMG',
+                ])
+                self.assertEqual(result.stdout, '{"baz": "two"}\n')
+
+    def test_parameter_override_wo_param(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            with pushd_popd(tempdir):
+                result = self.runner.invoke(cli_dummy_processor, [
+                    '-P', 'baz', 'two',
+                    '-I', 'OCR-D-IMG',
+                ])
+                self.assertEqual(result.stdout, '{"baz": "two"}\n')
 
 if __name__ == '__main__':
     main(__file__)

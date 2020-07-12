@@ -20,13 +20,13 @@ DUMMY_TOOL = {
 
 class DummyProcessor(Processor):
 
-    def process(self):
-        pass
-
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = DUMMY_TOOL
         kwargs['version'] = '0.0.1'
         super(DummyProcessor, self).__init__(*args, **kwargs)
+
+    def process(self):
+        print(json.dumps(self.parameter))
 
 class DummyProcessorWithRequiredParameters(Processor):
     def process(self): pass
