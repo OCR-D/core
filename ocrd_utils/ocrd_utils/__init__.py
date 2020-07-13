@@ -51,7 +51,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_with_comments``, ``parse_json_string_or_file``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_with_comments``, ``parse_json_string_or_file``, ``set_json_key_value_overrides``
 
     String and OOP utilities
 
@@ -106,6 +106,7 @@ __all__ = [
     'rotate_image',
     'safe_filename',
     'setOverrideLogLevel',
+    'set_json_key_value_overrides',
     'shift_coordinates',
     'transform_coordinates',
     'transpose_coordinates',
@@ -818,3 +819,12 @@ def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
             raise err       # pylint: disable=raising-bad-type
         ret = {**ret, **value_parsed}
     return ret
+
+def set_json_key_value_overrides(obj, *kvpairs):
+    for kv in kvpairs:
+        k, v = kv
+        try:
+            obj[k] = json.loads(v)
+        except json.decoder.JSONDecodeError:
+            obj[k] = v
+    return obj

@@ -7,6 +7,7 @@ from ocrd_utils import (
     get_local_filename,
     setOverrideLogLevel,
     parse_json_string_or_file,
+    set_json_key_value_overrides
 )
 
 from ocrd_utils import getLogger
@@ -31,6 +32,13 @@ parameter_option = click.option('-p', '--parameter',
                                 default=['{}'],
                                 callback=_handle_param_option)
 
+parameter_override_option = click.option('-P', '--parameter-override',
+                                help="Parameter override",
+                                nargs=2,
+                                multiple=True,
+                                callback=lambda ctx, param, kv: kv)
+                                # callback=lambda ctx, param, kv: {kv[0]: kv[1]})
+
 def ocrd_cli_wrap_processor(
     processorClass,
     ocrd_tool=None,
@@ -54,6 +62,10 @@ def ocrd_cli_wrap_processor(
         LOG.error(msg)
         raise Exception(msg)
     else:
+        # LOG.info('kwargs=%s' % kwargs)
+        # Merge parameter overrides and parameters
+        if 'parameter_override' in kwargs:
+            set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
         if is_local_filename(mets) and not isfile(get_local_filename(mets)):
             msg = "File does not exist: %s" % mets
             LOG.error(msg)
@@ -113,6 +125,7 @@ def ocrd_cli_options(f):
         click.option('-g', '--page-id', help="ID(s) of the pages to process"),
         click.option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
         parameter_option,
+        parameter_override_option,
         click.option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
         loglevel_option,
         click.option('-V', '--version', help="Show version", is_flag=True, default=False),

@@ -20,12 +20,16 @@ ocrd__parse_argv () {
 
     ocrd__argv[overwrite]=false
 
+    local __parameters=()
+    local __parameter_overrides=()
+
     while [[ "${1:-}" = -* ]];do
         case "$1" in
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
-            -p|--parameter) ocrd__argv[parameter]="$2" ; shift ;;
+            -p|--parameter) __parameters+=(-p "$2") ; shift ;;
+            -P|--parameter-override) __parameter_overrides+=(-P "$2" "$3") ; shift ; shift ;;
             -g|--page-id) ocrd__argv[page_id]=$2 ; shift ;;
             -O|--output-file-grp) ocrd__argv[output_file_grp]=$2 ; shift ;;
             -I|--input-file-grp) ocrd__argv[input_file_grp]=$2 ; shift ;;
@@ -59,7 +63,7 @@ ocrd__parse_argv () {
     fi
 
     local params_parsed retval
-    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params -p "${ocrd__argv[parameter]:-{\}}")" || {
+    params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params "${__parameters[@]}" "${__parameter_overrides[@]}")" || {
         retval=$?
         ocrd__raise "Failed to parse parameters (retval $retval):
 $params_parsed"

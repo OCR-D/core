@@ -21,6 +21,7 @@ from ocrd_utils import (
     remove_non_path_from_url,
 
     parse_json_string_or_file,
+    set_json_key_value_overrides,
 
     points_from_bbox,
     points_from_x0y0x1y1,
@@ -223,6 +224,16 @@ class TestUtils(TestCase):
         self.assertEqual(EXT_TO_MIME['.jp2'], 'image/jp2')
         self.assertEqual(MIME_TO_PIL['image/jp2'], 'JP2')
         self.assertEqual(PIL_TO_MIME['JP2'], 'image/jp2')
+
+    def test_set_json_key_value_overrides(self):
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', 'true')), {'foo': True})
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', 'false')), {'foo': False})
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', '42')), {'foo': 42})
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', '42.3')), {'foo': 42.3})
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', '["one", 2, 3.33]')), {'foo': ['one', 2, 3.33]})
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', '{"one": 2}')), {'foo': {'one': 2}})
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', '"a string"')), {'foo': 'a string'})
+        self.assertEqual(set_json_key_value_overrides({}, ('foo', 'a string')), {'foo': 'a string'})
 
 
 if __name__ == '__main__':

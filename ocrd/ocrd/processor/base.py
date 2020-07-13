@@ -28,6 +28,7 @@ def run_processor(
         input_file_grp=None,
         output_file_grp=None,
         parameter=None,
+        parameter_override=None,
         working_dir=None,
 ): # pylint: disable=too-many-locals
     """
@@ -142,6 +143,8 @@ Options:
                                   (with --page-id, remove only those)
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
                                   or JSON file path
+  -P, --param-override KEY VAL    Override a single JSON object key-value pair,
+                                  taking precedence over --parameter
   -m, --mets URL-PATH             URL or file path of METS to process
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
