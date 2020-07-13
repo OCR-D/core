@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.11.0] - 2020-07-13
+
 Fixed:
 
   * OcrdFile now has `__eq__` implementation to allow for `==`/`!=` comparisons, #532
@@ -1002,6 +1004,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.11.0]: ../../compare/v2.11.0..v2.10.5
 [2.10.5]: ../../compare/v2.10.5..v2.10.4
 [2.10.4]: ../../compare/v2.10.4..v2.10.3
 [2.10.3]: ../../compare/v2.10.3..v2.10.2
