@@ -641,7 +641,6 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     
     Return a numpy array of the resulting affine transformation matrix.
     """
-    LOG.debug('rotating coordinates by %.2f° around %s', angle, str(orig))
     rad = np.deg2rad(angle)
     cos = np.cos(rad)
     sin = np.sin(rad)
@@ -649,14 +648,19 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     rot = np.array([[+cos, sin, 0],
                     [-sin, cos, 0],
                     [0, 0, 1]])
-    return shift_coordinates(
-        np.dot(rot,
-               shift_coordinates(transform,
-                                 -orig)),
+    # shift to center of rotation
+    transform = shift_coordinates(transform, -orig)
+    # apply pure rotation
+    LOG.debug('rotating coordinates by %.2f° around %s', angle, str(orig))
+    transform = np.dot(rot, transform)
+    # shift back
+    transform = shift_coordinates(
+        transform,
         #orig)
         # the image (bounding box) increases with rotation,
         # so we must translate back to the new upper left:
         adjust_canvas_to_rotation(orig, angle))
+    return transform
 
 def shift_coordinates(transform, offset):
     """Compose an affine coordinate transformation with a translation.
