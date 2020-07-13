@@ -4,15 +4,15 @@ Constants for ocrd_utils.
 from pkg_resources import get_distribution
 
 __all__ = [
-    'VERSION',
-    'MIMETYPE_PAGE',
     'EXT_TO_MIME',
-    'MIME_TO_EXT',
-    'PIL_TO_MIME',
-    'MIME_TO_PIL',
-    'REGEX_PREFIX',
     'LOG_FORMAT',
     'LOG_TIMEFMT',
+    'MIMETYPE_PAGE',
+    'MIME_TO_EXT',
+    'MIME_TO_PIL',
+    'PIL_TO_MIME',
+    'REGEX_PREFIX',
+    'VERSION',
 ]
 
 VERSION = get_distribution('ocrd_utils').version
