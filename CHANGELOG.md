@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * OcrdFile now has `__eq__` implementation to allow for `==`/`!=` comparisons, #532
+  * `Workspace.image_from_page`: Respect the order of feature annotation on `page:AlternativeImage`, #525
 
 Changed:
 
