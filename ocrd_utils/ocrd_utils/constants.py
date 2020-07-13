@@ -38,6 +38,7 @@ EXT_TO_MIME = {
 
 MIME_TO_EXT = {
     'image/tiff': '.tif',
+    'image/tif': '.tif',
     'image/png': '.png',
     'image/jpg': '.jpg',
     'image/jpeg': '.jpg',

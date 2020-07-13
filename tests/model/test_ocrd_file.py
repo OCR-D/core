@@ -1,5 +1,5 @@
 from tests.base import TestCase, main
-from ocrd_models import OcrdFile
+from ocrd_models import OcrdFile, OcrdMets
 
 class TestOcrdFile(TestCase):
 
@@ -69,5 +69,19 @@ class TestOcrdFile(TestCase):
         f = OcrdFile(None)
         self.assertEqual(f.fileGrp, 'TEMP')
 
+    def test_ocrd_file_eq(self):
+        mets = OcrdMets.empty_mets()
+        f1 = mets.add_file('FOO', ID='FOO_1', mimetype='image/tiff')
+        self.assertEqual(f1 == f1, True)
+        self.assertEqual(f1 != f1, False)
+        f2 = mets.add_file('FOO', ID='FOO_2', mimetype='image/tiff')
+        self.assertEqual(f1 == f2, False)
+        f3 = OcrdFile(None, ID='TEMP_1', mimetype='image/tiff')
+        f4 = OcrdFile(None, ID='TEMP_1', mimetype='image/tif')
+        # be tolerant of different equivalent mimetypes
+        self.assertEqual(f3 == f4, True)
+        f5 = mets.add_file('TEMP', ID='TEMP_1', mimetype='image/tiff')
+        self.assertEqual(f3 == f5, True)
+
 if __name__ == '__main__':
-    main()
+    main(__file__)
