@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+* processors: `-p` is now repeatable and the referenced JSON may contain comments, #514, #533
+
+Added:
+
+* processors: `-P/--parameter-override` to override individual key-value pair of the parameter JSON, #533
+
 ## [2.10.5] - 2020-07-11
 
 Fixed:
