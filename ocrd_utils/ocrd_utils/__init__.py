@@ -51,7 +51,7 @@ Utility functions and constants usable in various circumstances.
 
     FS-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_with_comments``, ``parse_json_string_or_file``, ``set_json_key_value_overrides``
+* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_with_comments``, ``parse_json_string_or_file``, ``set_json_key_value_overrides``, ``assert_file_grp_cardinality``, ``make_file_id``
 
     String and OOP utilities
 
@@ -72,6 +72,7 @@ __all__ = [
     'abspath',
     'adjust_canvas_to_rotation',
     'adjust_canvas_to_transposition',
+    'assert_file_grp_cardinality',
     'bbox_from_points',
     'bbox_from_xywh',
     'bbox_from_polygon',
@@ -88,6 +89,7 @@ __all__ = [
     'nth_url_segment',
     'remove_non_path_from_url',
     'logging',
+    'make_file_id',
     'membername',
     'image_from_polygon',
     'parse_json_string_with_comments',
@@ -820,6 +822,7 @@ def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
         ret = {**ret, **value_parsed}
     return ret
 
+
 def set_json_key_value_overrides(obj, *kvpairs):
     for kv in kvpairs:
         k, v = kv
@@ -828,3 +831,39 @@ def set_json_key_value_overrides(obj, *kvpairs):
         except json.decoder.JSONDecodeError:
             obj[k] = v
     return obj
+
+def assert_file_grp_cardinality(grps, n):
+    """
+    Assert that a string of comma-separated fileGrps contains exactly ``n`` entries.
+    """
+    if isinstance(grps, str):
+        grps = grps.split(',')
+    assert len(grps) == n, \
+            "Expected exactly %d output file group%s, but '%s' has %d" % (
+                n, '' if n == 1 else 's', grps, len(grps))
+
+
+def make_file_id(ocrd_file, output_file_grp):
+    """
+    Derive a new file ID for an output file from an existing input file ``ocrd_file``
+    and the name of the output file's ``fileGrp/@USE``, ``output_file_grp``.
+    If ``ocrd_file``'s ID contains the input file's fileGrp name, then replace it by ``output_file_grp``.
+    Otherwise use ``output_file_grp`` together with the position of ``ocrd_file`` within the input fileGrp
+    (as a fallback counter). Increment counter until there is no more ID conflict.
+    """
+    ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
+    if ret == ocrd_file.ID:
+        m = re.match(r'.*?(\d{3,}).*', ocrd_file.pageId or '')
+        if m:
+            n = m.group(1)
+        else:
+            ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
+            try:
+                n = ids.index(ocrd_file.ID)
+            except ValueError:
+                n = len(ids)
+        ret = concat_padded(output_file_grp, n)
+        while ocrd_file.mets.find_files(ID=ret):
+            n += 1
+            ret = concat_padded(output_file_grp, n)
+    return ret

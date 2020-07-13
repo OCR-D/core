@@ -8,6 +8,9 @@ from tests.base import TestCase, main, assets
 from ocrd_utils import (
     abspath,
 
+    assert_file_grp_cardinality,
+    make_file_id,
+
     bbox_from_points,
     bbox_from_xywh,
 
@@ -39,6 +42,22 @@ from ocrd_utils import (
     MIME_TO_PIL, PIL_TO_MIME,
 )
 from ocrd_models.utils import xmllint_format
+from ocrd_models import OcrdFile, OcrdMets
+
+class MockOcrdFile(OcrdFile):
+    """
+    OcrdFile with mocked fileGrp access
+    """
+    @property
+    def fileGrp(self):
+        return self.__filegrp
+    @fileGrp.setter
+    def fileGrp(self, fileGrp):
+        self.__filegrp = fileGrp
+    def __init__(self, *args, fileGrp=None, ocrd_mets=None, **kwargs):
+        super(MockOcrdFile, self).__init__(*args, **kwargs)
+        self.fileGrp = fileGrp if fileGrp else None
+        self.ocrd_mets = ocrd_mets if ocrd_mets else None
 
 class TestUtils(TestCase):
 
@@ -225,6 +244,7 @@ class TestUtils(TestCase):
         self.assertEqual(MIME_TO_PIL['image/jp2'], 'JP2')
         self.assertEqual(PIL_TO_MIME['JP2'], 'image/jp2')
 
+
     def test_set_json_key_value_overrides(self):
         self.assertEqual(set_json_key_value_overrides({}, ('foo', 'true')), {'foo': True})
         self.assertEqual(set_json_key_value_overrides({}, ('foo', 'false')), {'foo': False})
@@ -235,6 +255,33 @@ class TestUtils(TestCase):
         self.assertEqual(set_json_key_value_overrides({}, ('foo', '"a string"')), {'foo': 'a string'})
         self.assertEqual(set_json_key_value_overrides({}, ('foo', 'a string')), {'foo': 'a string'})
 
+    def test_assert_file_grp_cardinality(self):
+        with self.assertRaisesRegex(AssertionError, "Expected exactly 5 output file groups, but '.'FOO', 'BAR'.' has 2"):
+            assert_file_grp_cardinality('FOO,BAR', 5)
+        with self.assertRaisesRegex(AssertionError, "Expected exactly 1 output file group, but '.'FOO', 'BAR'.' has 2"):
+            assert_file_grp_cardinality('FOO,BAR', 1)
+        assert_file_grp_cardinality('FOO,BAR', 2)
+
+    def test_mock_file(self):
+        f = MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX')
+        self.assertEqual(f.fileGrp, 'MAX')
+
+    def test_make_file_id_simple(self):
+        self.assertEqual(make_file_id(MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX'), 'FOO'), 'FOO_0012')
+
+    def test_make_file_id_mets(self):
+        mets = OcrdMets.empty_mets()
+        for i in range(1, 10):
+            mets.add_file('FOO', ID="FOO_%04d" % (i), mimetype="image/tiff")
+            mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff")
+        self.assertEqual(make_file_id(mets.find_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
+        f = mets.add_file('ABC', ID="BAR_7", mimetype="image/tiff")
+        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0010')
+        mets.remove_file(fileGrp='FOO')
+        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0001')
+        mets.add_file('FOO', ID="FOO_0001", mimetype="image/tiff")
+        # print('\n'.join(['%s' % of for of in mets.find_files()]))
+        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0002')
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

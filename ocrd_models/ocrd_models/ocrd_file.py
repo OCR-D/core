@@ -57,7 +57,7 @@ class OcrdFile():
         #  return 'OcrdFile[' + '\n\t' + props + '\n\t]'
         props = ', '.join([
             '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
-            for k in ['mimetype', 'ID', 'url', 'local_filename']
+            for k in ['fileGrp', 'ID', 'mimetype', 'url', 'local_filename']
         ])
         return '<OcrdFile ' + props + ']/> '
 
