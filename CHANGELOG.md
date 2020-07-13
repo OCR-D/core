@@ -12,13 +12,17 @@ Fixed:
 
 Changed:
 
-* processors: `-p` is now repeatable and the referenced JSON may contain comments, #514, #533
+  * processors: `-p` is now repeatable and the referenced JSON may contain comments, #514, #533
+  * `ocrd workspace validate`: `METS_URL` argument now optional as redundant to `--directory`/`--mets-basename`, #518
+  * `ocrd workspace clone`: `WORKSPACE_DIR` argument now optional as redundant to `--directory`, #518
+  * `ocrd workspace init`: `DIRECTORY` argument now optional as redundant to `--directory`, #518
+  * `ocrd workpace *`: Pass `--mets-basename` on to resolver, #518
 
 Added:
 
-* processors: `-P/--parameter-override` to override individual key-value pair of the parameter JSON, #533
-* utils: `make_file_id` to generate new `mets:file/@ID` from existing OcrdFiles, #530
-* utils: `assert_file_grp_cardinality` to assert the correct number of comma-separated fileGrps were passed, #530
+  * processors: `-P/--parameter-override` to override individual key-value pair of the parameter JSON, #533
+  * utils: `make_file_id` to generate new `mets:file/@ID` from existing OcrdFiles, #530
+  * utils: `assert_file_grp_cardinality` to assert the correct number of comma-separated fileGrps were passed, #530
 
 ## [2.10.5] - 2020-07-11
 
