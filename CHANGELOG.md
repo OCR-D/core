@@ -12,6 +12,8 @@ Changed:
 Added:
 
 * processors: `-P/--parameter-override` to override individual key-value pair of the parameter JSON, #533
+* utils: `make_file_id` to generate new `mets:file/@ID` from existing OcrdFiles, #530
+* utils: `assert_file_grp_cardinality` to assert the correct number of comma-separated fileGrps were passed, #530
 
 ## [2.10.5] - 2020-07-11
 
