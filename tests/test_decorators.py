@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from os.path import join, exists
 
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
-from tests.processor.test_processor import DummyProcessor, DUMMY_TOOL
+from tests.data import DummyProcessor, DUMMY_TOOL
 
 from ocrd import Processor, Resolver
 from ocrd.decorators import (
@@ -14,8 +14,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils.logging import initLogging
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
+from ocrd_utils import initLogging, pushd_popd, VERSION as OCRD_VERSION
 
 @click.command()
 @ocrd_cli_options
@@ -48,7 +47,7 @@ class TestDecorators(TestCase):
     def test_minimal(self):
         exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
         print(out, err)
-        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(exit_code, 0)
 
     def test_loglevel_invalid(self):
         result = self.runner.invoke(cli_with_ocrd_loglevel, ['--log-level', 'foo'])

@@ -3,7 +3,7 @@ from re import match
 from tempfile import TemporaryDirectory
 
 from tests.base import TestCase, main, FIFOIO, assets
-from tests.processor.test_processor import DummyProcessor
+from tests.data import DummyProcessor
 from ocrd import Resolver, run_processor
 
 from ocrd_utils import (
