@@ -63,10 +63,10 @@ class OcrdFile():
 
     def __eq__(self, other):
         print(self, other)
-        return self.ID == other.ID and \
-               self.url == other.url and \
-               EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and \
-               self.fileGrp == other.fileGrp
+        return self.ID == other.ID # and \
+               # self.url == other.url and \
+               # EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and \
+               # self.fileGrp == other.fileGrp
 
     @property
     def basename(self):
