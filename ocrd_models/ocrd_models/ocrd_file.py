@@ -62,7 +62,6 @@ class OcrdFile():
         return '<OcrdFile ' + props + ']/> '
 
     def __eq__(self, other):
-        print(self, other)
         return self.ID == other.ID # and \
                # self.url == other.url and \
                # EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and \
