@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * OcrdFile now has `__eq__` implementation to allow for `==`/`!=` comparisons, #532
+
 Changed:
 
 * processors: `-p` is now repeatable and the referenced JSON may contain comments, #514, #533
