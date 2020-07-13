@@ -179,6 +179,9 @@ class Processor():
             workspace,
             ocrd_tool=None,
             parameter=None,
+            # TODO OCR-D/core#274
+            # input_file_grp=None,
+            # output_file_grp=None,
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             page_id=None,
