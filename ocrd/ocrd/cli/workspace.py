@@ -48,22 +48,25 @@ def workspace_cli(ctx, directory, mets_basename, backup):
 # ocrd workspace validate
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('validate', help='''
-
-    Validate a workspace
-
-''')
+@workspace_cli.command('validate')
 @pass_workspace
 @click.option('-a', '--download', is_flag=True, help="Download all files")
 @click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'page_xsd', 'mets_xsd', 'url']))
 @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
-@click.argument('mets_url', nargs=-1)
+@click.argument('mets_url', default=None, required=False)
 def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
+    """
+    Validate a workspace
+    
+    METS_URL can be a URL, an absolute path or a path relative to $PWD.
+    If not given, use the concatenation of --directory and --mets-basename.
+    
+    Check that the METS and its referenced file contents
+    abide by the OCR-D specifications.
+    """
     if not mets_url:
-        mets_url = 'mets.xml'
-    else:
-        mets_url = mets_url[0]
+        mets_url = str(Path(ctx.directory, ctx.mets_basename))
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
@@ -85,18 +88,20 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
+# should be deprecated:
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
 def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     """
-    Create a workspace from a METS_URL and return the directory
+    Create a workspace from METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
 
-    If WORKSPACE_DIR is not provided, use the current working directory
+    If WORKSPACE_DIR is not provided, the new workspace will
+    use --directory accordingly.
     """
     if not workspace_dir:
-        workspace_dir = '.'
+        workspace_dir = ctx.directory
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
         dst_dir=os.path.abspath(workspace_dir),
@@ -113,16 +118,18 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
 @workspace_cli.command('init')
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
-@click.argument('directory', required=False)
+# should be deprecated:
+@click.argument('directory', default=None, required=False)
 @pass_workspace
 def workspace_create(ctx, clobber_mets, directory):
     """
     Create a workspace with an empty METS file in DIRECTORY.
 
-    Use '.' for $PWD"
+    If DIRECTORY is not provided, the new workspace will
+    use --directory accordingly.
     """
     if not directory:
-        directory = '.'
+        directory = ctx.directory
     workspace = ctx.resolver.workspace_from_nothing(
         directory=os.path.abspath(directory),
         mets_basename=ctx.mets_basename,
@@ -416,42 +423,39 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
 # ocrd workspace list-group
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('list-group', help="""
-
-    List fileGrp USE attributes
-
-""")
+@workspace_cli.command('list-group')
 @pass_workspace
 def list_groups(ctx):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    """
+    List fileGrp USE attributes
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-pages
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('list-page', help="""
-
-    List page IDs
-
-""")
+@workspace_cli.command('list-page')
 @pass_workspace
 def list_pages(ctx):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    """
+    List physical page IDs
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     print("\n".join(workspace.mets.physical_pages))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('get-id', help="""
-
-    Get METS id if any
-
-""")
+@workspace_cli.command('get-id')
 @pass_workspace
 def get_id(ctx):
-    workspace = Workspace(ctx.resolver, directory=ctx.directory)
+    """
+    Get METS id if any
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     ID = workspace.mets.unique_identifier
     if ID:
         print(ID)
@@ -460,18 +464,18 @@ def get_id(ctx):
 # ocrd workspace set-id
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('set-id', help="""
-
+@workspace_cli.command('set-id')
+@click.argument('ID')
+@pass_workspace
+def set_id(ctx, id):   # pylint: disable=redefined-builtin
+    """
     Set METS ID.
 
     If one of the supported identifier mechanisms is used, will set this identifier.
 
     Otherwise will create a new <mods:identifier type="purl">{{ ID }}</mods:identifier>.
-""")
-@click.argument('ID')
-@pass_workspace
-def set_id(ctx, id):   # pylint: disable=redefined-builtin
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     workspace.mets.unique_identifier = id
     workspace.save_mets()
 
