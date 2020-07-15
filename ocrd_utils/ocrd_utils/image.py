@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from PIL import Image, ImageStat, ImageDraw, ImageChops
 
-from .log import getLogger
+from .logging import getLogger
 from .introspect import membername
 
 __all__ = [

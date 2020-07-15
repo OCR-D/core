@@ -116,7 +116,7 @@ from .introspect import (
     set_json_key_value_overrides,
     membername)
 
-from .log import (
+from .logging import (
     logging,
     getLogger,
     getLevelName,
