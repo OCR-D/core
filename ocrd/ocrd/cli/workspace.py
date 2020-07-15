@@ -100,8 +100,12 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     If WORKSPACE_DIR is not provided, the new workspace will
     use --directory accordingly.
     """
-    if not workspace_dir:
-        workspace_dir = ctx.directory
+    LOG = getLogger('ocrd.cli.workspace.clone')
+    workspace_dir = ctx.directory
+    if workspace_dir:
+        LOG.warning(DeprecationWarning("Use `ocrd workspace --directory DIR clone instead of argument '%s'.`)"))
+        ctx.directory = workspace_dir
+
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
         dst_dir=os.path.abspath(workspace_dir),
