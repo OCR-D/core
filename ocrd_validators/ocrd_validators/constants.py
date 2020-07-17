@@ -9,7 +9,7 @@ OCRD_BAGIT_PROFILE = yaml.safe_load(resource_string(__name__, 'bagit-profile.yml
 
 BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'
 FILE_GROUP_PREFIX = 'OCR-D-'
-FILE_GROUP_CATEGORIES = ['IMG', 'SEG', 'OCR', 'COR', 'GT']
+FILE_GROUP_CATEGORIES = ['IMG', 'PRE', 'SEG', 'OCR', 'COR', 'GT']
 TMP_BAGIT_PREFIX = 'ocrd-bagit-'
 OCRD_BAGIT_PROFILE_URL = 'https://ocr-d.github.io/bagit-profile.json'
 XSD_METS_URL = 'https://www.loc.gov/standards/mets/mets.xsd'

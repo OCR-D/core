@@ -96,8 +96,8 @@ class TestWorkspaceValidator(TestCase):
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
             self.assertEqual(len(report.errors), 1)
-            self.assertEqual(len(report.warnings), 1)
-            self.assertEqual(report.warnings[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
+            self.assertEqual(len(report.notices), 1)
+            self.assertEqual(report.notices[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
             self.assertIn('No files', report.errors[0])
 
     def test_validate_file_groups_bad_name(self):
@@ -108,8 +108,8 @@ class TestWorkspaceValidator(TestCase):
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
             self.assertEqual(len(report.errors), 1)
-            self.assertEqual(len(report.warnings), 1)
-            self.assertIn("Invalid USE name 'X' in fileGrp", report.warnings[0])
+            self.assertEqual(len(report.notices), 1)
+            self.assertIn("Invalid USE name 'X' in fileGrp", report.notices[0])
             self.assertIn('No files', report.errors[0])
 
     def test_validate_files_nopageid(self):
