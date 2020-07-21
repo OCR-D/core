@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Refactoring of `ocrd_utils.__init__` into thematic submodules, #536
+
+Fixed:
+
+  * bashlib: Don't set `-x` in `ocrd__minversion`, #535
+
 ## [2.11.0] - 2020-07-13
 
 Fixed:
