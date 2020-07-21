@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.12.1] - 2020-07-21
+
 Fixed:
 
   * `ocrd process`: first task was ignored, #529, #542
@@ -1021,6 +1023,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.12.1]: ../../compare/v2.12.1..v2.12.0
 [2.12.0]: ../../compare/v2.12.0..v2.11.0
 [2.11.0]: ../../compare/v2.11.0..v2.10.5
 [2.10.5]: ../../compare/v2.10.5..v2.10.4
