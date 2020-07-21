@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * Refactoring of `ocrd_utils.__init__` into thematic submodules, #536
+  * validation of file groups downgraded to notice, allow PRE fileGrp/USE prefix, #541
 
 Fixed:
 
