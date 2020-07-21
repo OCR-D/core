@@ -66,6 +66,12 @@ def ocrd_cli_wrap_processor(
         # Merge parameter overrides and parameters
         if 'parameter_override' in kwargs:
             set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
+        # TODO OCR-D/core#274
+        # Assert -I / -O
+        # if not kwargs['input_file_grp']:
+        #     raise ValueError('-I/--input-file-grp is required')
+        # if not kwargs['output_file_grp']:
+        #     raise ValueError('-O/--output-file-grp is required')
         if is_local_filename(mets) and not isfile(get_local_filename(mets)):
             msg = "File does not exist: %s" % mets
             LOG.error(msg)
@@ -120,6 +126,9 @@ def ocrd_cli_options(f):
     params = [
         click.option('-m', '--mets', help="METS to process", default="mets.xml"),
         click.option('-w', '--working-dir', help="Working Directory"),
+        # TODO OCR-D/core#274
+        # click.option('-I', '--input-file-grp', help='File group(s) used as input. **required**'),
+        # click.option('-O', '--output-file-grp', help='File group(s) used as output. **required**'),
         click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
         click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         click.option('-g', '--page-id', help="ID(s) of the pages to process"),
