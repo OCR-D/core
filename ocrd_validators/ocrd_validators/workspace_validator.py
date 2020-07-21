@@ -243,9 +243,9 @@ class WorkspaceValidator():
                 if '-' in category:
                     category, name = category.split('-', 1)
                 if category not in FILE_GROUP_CATEGORIES:
-                    self.report.add_warning("Unspecified USE category '%s' in fileGrp '%s'" % (category, fileGrp))
+                    self.report.add_notice("Unspecified USE category '%s' in fileGrp '%s'" % (category, fileGrp))
                 if name is not None and not re.match(r'^[A-Z0-9-]{3,}$', name):
-                    self.report.add_warning("Invalid USE name '%s' in fileGrp '%s'" % (name, fileGrp))
+                    self.report.add_notice("Invalid USE name '%s' in fileGrp '%s'" % (name, fileGrp))
 
     def _validate_mets_files(self):
         """
