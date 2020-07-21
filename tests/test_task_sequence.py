@@ -7,8 +7,9 @@ from pathlib import Path
 
 from tests.base import TestCase, main, assets
 
+from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
-from ocrd.task_sequence import ProcessorTask, validate_tasks
+from ocrd.task_sequence import ProcessorTask, validate_tasks, run_tasks
 
 SAMPLE_NAME = 'ocrd-sample-processor'
 SAMPLE_OCRD_TOOL_JSON = '''{
@@ -173,5 +174,21 @@ print('''%s''')
             ]], workspace, overwrite=True)
 
 
+    def test_task_run(self):
+        resolver = Resolver()
+        with TemporaryDirectory() as tempdir:
+            with pushd_popd(tempdir):
+                # def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
+                ws = resolver.workspace_from_nothing(tempdir)
+                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0')
+                ws.save_mets()
+                run_tasks('mets.xml', 'DEBUG', None, [
+                    "dummy -I GRP0 -O GRP1",
+                    "dummy -I GRP1 -O GRP2",
+                    "dummy -I GRP2 -O GRP3",
+                    "dummy -I GRP3 -O GRP4"
+                ])
+
+
 if __name__ == '__main__':
-    main()
+    main(__file__)
