@@ -9,6 +9,7 @@ from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif, OcrdFile
+from ocrd_models.ocrd_page import parse
 from ocrd_utils import (
     getLogger,
     image_from_polygon,
@@ -17,6 +18,7 @@ from ocrd_utils import (
     adjust_canvas_to_transposition,
     shift_coordinates,
     rotate_coordinates,
+    transform_coordinates,
     transpose_coordinates,
     crop_image,
     rotate_image,
@@ -27,6 +29,7 @@ from ocrd_utils import (
     pushd_popd,
     MIME_TO_EXT,
     MIME_TO_PIL,
+    MIMETYPE_PAGE
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -45,6 +48,7 @@ class Workspace():
         directory (string) : Folder to work in
         mets (:class:`OcrdMets`) : OcrdMets representing this workspace. Loaded from 'mets.xml' if ``None``.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
+        overwrite_mode (boolean) : Whether to force add operations on this workspace globally
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
@@ -52,6 +56,7 @@ class Workspace():
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
+        self.overwrite_mode = False
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -117,7 +122,7 @@ class Workspace():
             f.local_filename = f.url
             return f
 
-    def remove_file(self, ID, force=False, keep_file=False):
+    def remove_file(self, ID, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """
         Remove a file from the workspace.
 
@@ -125,25 +130,45 @@ class Workspace():
             ID (string|OcrdFile): ID of the file to delete or the file itself
             force (boolean): Continue removing even if file not found in METS
             keep_file (boolean): Whether to keep files on disk
+            page_recursive (boolean): Whether to remove all images referenced in the file if the file is a PAGE-XML document.
+            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
         log.debug('Deleting mets:file %s', ID)
+        if not force and self.overwrite_mode:
+            force = True
+        if isinstance(ID, OcrdFile):
+            ID = ID.ID
         try:
-            ocrd_file = self.mets.remove_file(ID)
+            ocrd_file_ = self.mets.remove_file(ID)
+            ocrd_files = [ocrd_file_] if isinstance(ocrd_file_, OcrdFile) else ocrd_file_
+            if page_recursive:
+                with pushd_popd(self.directory):
+                    for ocrd_file in ocrd_files:
+                        if ocrd_file.mimetype != MIMETYPE_PAGE:
+                            continue
+                        ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
+                        for img_url in ocrd_page.get_AllAlternativeImagePaths():
+                            img_kwargs = {'url': img_url}
+                            if page_same_group:
+                                img_kwargs['fileGrp'] = ocrd_file.fileGrp
+                            for img_file in self.mets.find_files(**img_kwargs):
+                                self.remove_file(img_file, keep_file=keep_file, force=force)
             if not keep_file:
-                if not ocrd_file.local_filename:
-                    log.warning("File not locally available %s", ocrd_file)
-                    if not force:
-                        raise Exception("File not locally available %s" % ocrd_file)
-                else:
-                    with pushd_popd(self.directory):
-                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
-                        unlink(ocrd_file.local_filename)
-            return ocrd_file
+                with pushd_popd(self.directory):
+                    for ocrd_file in ocrd_files:
+                        if not ocrd_file.local_filename:
+                            log.warning("File not locally available %s", ocrd_file)
+                            if not force:
+                                raise Exception("File not locally available %s" % ocrd_file)
+                        else:
+                            log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                            unlink(ocrd_file.local_filename)
+            return ocrd_file_
         except FileNotFoundError as e:
             if not force:
                 raise e
 
-    def remove_file_group(self, USE, recursive=False, force=False, keep_files=False):
+    def remove_file_group(self, USE, recursive=False, force=False, keep_files=False, page_recursive=False, page_same_group=False):
         """
         Remove a fileGrp.
 
@@ -152,12 +177,16 @@ class Workspace():
             recursive (boolean): Whether to recursively delete all files in the group
             force (boolean): Continue removing even if group or containing files not found in METS
             keep_files (boolean): When deleting recursively whether to keep files on disk
+            page_recursive (boolean): Whether to remove all images referenced in the file if the file is a PAGE-XML document.
+            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
+        if not force and self.overwrite_mode:
+            force = True
         if USE not in self.mets.file_groups and not force:
             raise Exception("No such fileGrp: %s" % USE)
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
-                self.remove_file(f.ID, force=force, keep_file=keep_files)
+                self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
         if USE in self.mets.file_groups:
             self.mets.remove_file_group(USE)
         # XXX this only removes directories in the workspace if they are empty
@@ -178,6 +207,8 @@ class Workspace():
             content is not None)
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
+        if self.overwrite_mode:
+            kwargs['force'] = True
 
         with pushd_popd(self.directory):
             if 'local_filename' in kwargs:
@@ -335,32 +366,15 @@ class Workspace():
         """
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
-        border = page.get_Border()
-        if (border and
-            not 'cropped' in feature_filter.split(',')):
-            page_points = border.get_Coords().points
-            log.debug("Using explicitly set page border '%s' for page '%s'",
-                      page_points, page_id)
-            # get polygon outline of page border:
-            page_polygon = np.array(polygon_from_points(page_points), dtype=np.int32)
-            page_bbox = bbox_from_polygon(page_polygon)
-            # subtract offset in affine coordinate transform:
-            # (consistent with image cropping or AlternativeImage below)
-            page_coords = {
-                'transform': shift_coordinates(
-                    np.eye(3),
-                    np.array([-page_bbox[0],
-                              -page_bbox[1]]))
-            }
-        else:
-            page_bbox = [0, 0, page_image.width, page_image.height]
-            # use identity as affine coordinate transform:
-            page_coords = {
-                'transform': np.eye(3)
-            }
-        # get size of the page after cropping but before rotation:
-        page_xywh = xywh_from_bbox(*page_bbox)
+        page_coords = dict()
+        # use identity as initial affine coordinate transform:
+        page_coords['transform'] = np.eye(3)
+        # interim bbox (updated with each change to the transform):
+        page_bbox = [0, 0, page_image.width, page_image.height]
+        page_xywh = {'x': 0, 'y': 0,
+                     'w': page_image.width, 'h': page_image.height}
         
+        border = page.get_Border()
         # page angle: PAGE @orientation is defined clockwise,
         # whereas PIL/ndimage rotation is in mathematical direction:
         page_coords['angle'] = -(page.get_orientation() or 0)
@@ -371,39 +385,11 @@ class Workspace():
         skew = (page_coords['angle'] % 360) - orientation
         skew = 180 - (180 - skew) % 360 # map to [-45,45]
         page_coords['angle'] = 0 # nothing applied yet (depends on filters)
-        log.debug("page '%s' has orientation=%d skew=%.2f",
-                  page_id, orientation, skew)
+        log.debug("page '%s' has %s orientation=%d skew=%.2f",
+                  page_id, "border," if border else "", orientation, skew)
         
-        if (orientation and
-            not 'rotated-%d' % orientation in feature_filter.split(',')):
-            # Transpose in affine coordinate transform:
-            # (consistent with image transposition or AlternativeImage below)
-            transposition = { 90: Image.ROTATE_90,
-                              180: Image.ROTATE_180,
-                              270: Image.ROTATE_270
-            }.get(orientation) # no default
-            page_coords['transform'] = transpose_coordinates(
-                page_coords['transform'],
-                transposition,
-                np.array([0.5 * page_xywh['w'],
-                          0.5 * page_xywh['h']]))
-            page_xywh['w'], page_xywh['h'] = adjust_canvas_to_transposition(
-                [page_xywh['w'], page_xywh['h']], transposition)
-            page_coords['angle'] = orientation
-        if (skew and
-            not 'deskewed' in feature_filter.split(',')):
-            # Rotate around center in affine coordinate transform:
-            # (consistent with image rotation or AlternativeImage below)
-            page_coords['transform'] = rotate_coordinates(
-                page_coords['transform'],
-                skew,
-                np.array([0.5 * page_xywh['w'],
-                          0.5 * page_xywh['h']]))
-            page_coords['angle'] += skew
-            
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
-        
         alternative_image = None
         alternative_images = page.get_AlternativeImage()
         if alternative_images:
@@ -431,64 +417,124 @@ class Workspace():
                 page_image = self._resolve_image_as_pil(alternative_image.get_filename())
                 page_coords['features'] = features
         
-        # crop, if (still) necessary:
-        if (border and
-            not 'cropped' in page_coords['features'] and
-            not 'cropped' in feature_filter.split(',')):
-            log.debug("Cropping %s for page '%s' to border", 
-                      "AlternativeImage" if alternative_image else "image",
-                      page_id)
-            # create a mask from the page polygon:
-            page_image = image_from_polygon(page_image, page_polygon,
-                                            fill=fill, transparency=transparency)
-            # recrop into page rectangle:
-            page_image = crop_image(page_image, box=page_bbox)
-            page_coords['features'] += ',cropped'
-        # transpose, if (still) necessary:
-        if (orientation and
-            not 'rotated-%d' % orientation in page_coords['features'] and
-            not 'rotated-%d' % orientation in feature_filter.split(',')):
-            log.info("Transposing %s for page '%s' by %d°",
-                     "AlternativeImage" if alternative_image else
-                     "image", page_id, orientation)
-            page_image = transpose_image(page_image, {
-                90: Image.ROTATE_90,
-                180: Image.ROTATE_180,
-                270: Image.ROTATE_270
-            }.get(orientation)) # no default
-            page_coords['features'] += ',rotated-%d' % orientation
-        if (orientation and
-            not 'rotated-%d' % orientation in feature_filter.split(',')):
-            # FIXME we should enforce consistency here (i.e. split into transposition
-            #       and minimal rotation)
-            if not (page_image.width == page_xywh['w'] and
-                    page_image.height == page_xywh['h']):
-                log.error('page "%s" image (%s; %dx%d) has not been transposed properly (%dx%d) during rotation',
+        # adjust the coord transformation to the steps applied on the image,
+        # and apply steps on the existing image in case it is missing there,
+        # but traverse all steps (crop/reflect/rotate) in a particular order:
+        # - existing image features take priority (in the order annotated),
+        # - next is cropping (if necessary but not already applied),
+        # - next is reflection (if necessary but not already applied),
+        # - next is rotation (if necessary but not already applied).
+        # This helps deal with arbitrary workflows (e.g. crop then deskew,
+        # or deskew then crop), regardless of where images are generated.
+        alternative_image_features = page_coords['features'].split(',')
+        for i, feature in enumerate(alternative_image_features +
+                                    (['cropped']
+                                     if (border and
+                                         not 'cropped' in page_coords['features'] and
+                                         not 'cropped' in feature_filter.split(','))
+                                     else []) +
+                                    (['rotated-%d' % orientation]
+                                     if (orientation and
+                                         not 'rotated-%d' % orientation in page_coords['features'] and
+                                         not 'rotated-%d' % orientation in feature_filter.split(','))
+                                     else []) +
+                                    (['deskewed']
+                                     if (skew and
+                                         not 'deskewed' in page_coords['features'] and
+                                         not 'deskewed' in feature_filter.split(','))
+                                     else []) +
+                                    # not a feature to be added, but merely as a fallback position
+                                    # to always enter loop at i == len(alternative_image_features)
+                                    ['_check']):
+            # image geometry vs feature consistency can only be checked
+            # after all features on the existing AlternativeImage have
+            # been adjusted for in the transform, and when there is a mismatch,
+            # additional steps applied here would only repeat the respective
+            # error message; so we only check once at the boundary between
+            # existing and new features
+            # FIXME we should check/enforce consistency when _adding_ AlternativeImage
+            if (i == len(alternative_image_features) and
+                not (page_xywh['w'] - 2 < page_image.width < page_xywh['w'] + 2 and
+                     page_xywh['h'] - 2 < page_image.height < page_xywh['h'] + 2)):
+                log.error('page "%s" image (%s; %dx%d) has not been cropped properly (%dx%d)',
                           page_id, page_coords['features'],
                           page_image.width, page_image.height,
                           page_xywh['w'], page_xywh['h'])
-        # deskew, if (still) necessary:
-        if (skew and
-            not 'deskewed' in page_coords['features'] and
-            not 'deskewed' in feature_filter.split(',')):
-            log.info("Rotating %s for page '%s' by %.2f°",
-                     "AlternativeImage" if alternative_image else
-                     "image", page_id, skew)
-            page_image = rotate_image(page_image, skew,
-                                      fill=fill, transparency=transparency)
-            page_coords['features'] += ',deskewed'
-        if (skew and
-            not 'deskewed' in feature_filter.split(',')):
-            w_new, h_new = adjust_canvas_to_rotation(
-                [page_xywh['w'], page_xywh['h']], skew)
-            # FIXME we should enforce consistency here (i.e. rotation always reshapes,
-            #       and rescaling never happens)
-            if not (w_new - 2 < page_image.width < w_new + 2 and
-                    h_new - 2 < page_image.height < h_new + 2):
-                log.error('page "%s" image (%s; %dx%d) has not been reshaped properly (%dx%d) during rotation',
-                          page_id, page_coords['features'],
-                          page_image.width, page_image.height,
-                          w_new, h_new)
+            # adjust transform to feature, possibly apply feature to image
+            if feature == 'cropped':
+                page_points = border.get_Coords().points
+                log.debug("Using explicitly set page border '%s' for page '%s'",
+                          page_points, page_id)
+                # get polygon outline of page border:
+                page_polygon = np.array(polygon_from_points(page_points), dtype=np.int32)
+                page_polygon = transform_coordinates(page_polygon, page_coords['transform'])
+                page_polygon = np.round(page_polygon).astype(np.int32)
+                page_bbox = bbox_from_polygon(page_polygon)
+                # get size of the page after cropping but before rotation:
+                page_xywh = xywh_from_bbox(*page_bbox)
+                # subtract offset in affine coordinate transform:
+                # (consistent with image cropping or AlternativeImage below)
+                page_coords['transform'] = shift_coordinates(
+                    page_coords['transform'],
+                    np.array([-page_xywh['x'],
+                              -page_xywh['y']]))
+                # crop, if (still) necessary:
+                if not 'cropped' in page_coords['features']:
+                    log.debug("Cropping %s for page '%s' to border", 
+                              "AlternativeImage" if alternative_image else "image",
+                              page_id)
+                    # create a mask from the page polygon:
+                    page_image = image_from_polygon(page_image, page_polygon,
+                                                    fill=fill, transparency=transparency)
+                    # recrop into page rectangle:
+                    page_image = crop_image(page_image, box=page_bbox)
+                    page_coords['features'] += ',cropped'
+
+            elif feature == 'rotated-%d' % orientation:
+                # Transpose in affine coordinate transform:
+                # (consistent with image transposition or AlternativeImage below)
+                transposition = { 90: Image.ROTATE_90,
+                                  180: Image.ROTATE_180,
+                                  270: Image.ROTATE_270
+                }.get(orientation) # no default
+                page_coords['transform'] = transpose_coordinates(
+                    page_coords['transform'],
+                    transposition,
+                    np.array([0.5 * page_xywh['w'],
+                              0.5 * page_xywh['h']]))
+                (page_xywh['w'], page_xywh['h']) = adjust_canvas_to_transposition(
+                    [page_xywh['w'], page_xywh['h']], transposition)
+                page_coords['angle'] = orientation
+                # transpose, if (still) necessary:
+                if not 'rotated-%d' % orientation in page_coords['features']:
+                    log.info("Transposing %s for page '%s' by %d°",
+                             "AlternativeImage" if alternative_image else
+                             "image", page_id, orientation)
+                    page_image = transpose_image(page_image, {
+                        90: Image.ROTATE_90,
+                        180: Image.ROTATE_180,
+                        270: Image.ROTATE_270
+                    }.get(orientation)) # no default
+                    page_coords['features'] += ',rotated-%d' % orientation
+            elif feature == 'deskewed':
+                # Rotate around center in affine coordinate transform:
+                # (consistent with image rotation or AlternativeImage below)
+                page_coords['transform'] = rotate_coordinates(
+                    page_coords['transform'],
+                    skew,
+                    np.array([0.5 * page_xywh['w'],
+                              0.5 * page_xywh['h']]))
+                page_coords['angle'] += skew
+                # deskew, if (still) necessary:
+                if not 'deskewed' in page_coords['features']:
+                    log.info("Rotating %s for page '%s' by %.2f°",
+                             "AlternativeImage" if alternative_image else
+                             "image", page_id, skew)
+                    page_image = rotate_image(page_image, skew,
+                                              fill=fill, transparency=transparency)
+                    page_coords['features'] += ',deskewed'
+                (page_xywh['w'], page_xywh['h']) = adjust_canvas_to_rotation(
+                    [page_xywh['w'], page_xywh['h']], skew)
         
         # verify constraints again:
         if not all(feature in page_coords['features']
@@ -780,7 +826,7 @@ class Workspace():
                         file_grp,
                         page_id=None,
                         mimetype='image/png',
-                        force=True):
+                        force=False):
         """Store and reference an image as file into the workspace.
 
         Given a PIL.Image `image`, and an ID `file_id` to use in METS,
@@ -790,6 +836,8 @@ class Workspace():
 
         Return the (absolute) path of the created file.
         """
+        if not force and self.overwrite_mode:
+            force = True
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))

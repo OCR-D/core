@@ -7,20 +7,19 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 
 # pylint: disable=import-error, no-name-in-module
-from tests.base import TestCase, main, assets, copy_of_directory
+from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory, main
 
-from ocrd_utils import initLogging, pushd_popd
+from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel
 from ocrd.cli.workspace import workspace_cli
-from ocrd import Resolver, Workspace
+from ocrd import Resolver
 
 class TestCli(TestCase):
-
 
     def setUp(self):
         self.maxDiff = None
         self.resolver = Resolver()
         initLogging()
-        self.runner = CliRunner()
+        self.runner = CliRunner(mix_stderr=False)
 
     def test_add(self):
         """
@@ -145,12 +144,105 @@ class TestCli(TestCase):
                 '--force',
                 ID
             ])
-            print(result)
-            print(result.output)
             self.assertEqual(result.exit_code, 0)
 
             # File should have been deleted
             self.assertFalse(exists(content_file))
+
+    def test_add_url(self):
+        ID = 'foo123file'
+        page_id = 'foo123page'
+        file_grp = 'TEST_GROUP'
+        mimetype = 'image/tiff'
+        url = 'http://remote/file.tif'
+        with TemporaryDirectory() as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.save_mets()
+            result = self.runner.invoke(workspace_cli, [
+                '-d', tempdir,
+                'add',
+                '--file-grp', file_grp,
+                '--page-id', page_id,
+                '--file-id', ID,
+                '--mimetype', mimetype,
+                url])
+            self.assertEqual(result.exit_code, 0)
+            ws.reload_mets()
+            f = ws.mets.find_files()[0]
+            self.assertEqual(f.url, url)
+
+    def test_add_nonexisting_checked(self):
+        ID = 'foo123file'
+        page_id = 'foo123page'
+        file_grp = 'TEST_GROUP'
+        mimetype = 'image/tiff'
+        with TemporaryDirectory() as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.save_mets()
+            exit_code, out, err = self.invoke_cli(workspace_cli, [
+                '-d', tempdir,
+                'add',
+                '-C',
+                '--file-grp', file_grp,
+                '--page-id', page_id,
+                '--file-id', ID,
+                '--mimetype', mimetype,
+                'does-not-exist.xml'])
+            self.assertEqual(exit_code, 1)
+            self.assertIn("File 'does-not-exist.xml' does not exist, halt execution!", err)
+
+    def test_add_519(self):
+        """
+        https://github.com/OCR-D/core/issues/519
+        """
+        with TemporaryDirectory() as tempdir:
+            wsdir = Path(tempdir, "workspace")
+            wsdir.mkdir()
+            srcdir = Path(tempdir, "source")
+            srcdir.mkdir()
+            srcfile = Path(srcdir, "srcfile.jpg")
+            srcfile_content = 'foo'
+            srcfile.write_text(srcfile_content)
+            with pushd_popd(str(wsdir)):
+                exit_code, out, err = self.invoke_cli(workspace_cli, ['init'])
+                exit_code, out, err = self.invoke_cli(workspace_cli, [
+                    'add',
+                    '-m', 'image/jpg',
+                    '-G', 'MAX',
+                    '-i', 'IMG_MAX_1818975',
+                    '-C',
+                    str(srcfile)
+                    ])
+                # print(out, err)
+                self.assertEqual(exit_code, 0)
+                self.assertTrue(Path(wsdir, 'MAX', 'srcfile.jpg').exists())
+                self.assertEqual(Path(wsdir, 'MAX', 'srcfile.jpg').read_text(), srcfile_content)
+
+    def test_add_existing_checked(self):
+        ID = 'foo123file'
+        page_id = 'foo123page'
+        file_grp = 'TEST_GROUP'
+        mimetype = 'image/tiff'
+        with TemporaryDirectory() as tempdir:
+            content_file = join(tempdir, 'test.tif')
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.save_mets()
+            with open(content_file, 'w') as f:
+                f.write('x')
+            result = self.runner.invoke(workspace_cli, [
+                '-d', tempdir,
+                'add',
+                '-C',
+                '--file-grp', file_grp,
+                '--page-id', page_id,
+                '--file-id', ID,
+                '--mimetype', mimetype,
+                content_file])
+            self.assertEqual(result.exit_code, 0)
+            ws.reload_mets()
+            f = ws.mets.find_files()[0]
+            self.assertEqual(f.url, 'test.tif')
+
 
     def test_find_files(self):
         with TemporaryDirectory() as tempdir:
@@ -280,5 +372,38 @@ class TestCli(TestCase):
                 self.assertTrue(exists('foo.xml'))
                 self.assertFalse(exists('mets.xml'))
 
+    def test_bulk_add(self):
+        with TemporaryDirectory() as srcdir:
+            Path(srcdir, "OCR-D-IMG").mkdir()
+            Path(srcdir, "OCR-D-PAGE").mkdir()
+            for i in range(500):
+                Path(srcdir, "OCR-D-IMG", "page_%04d.tif" % i).write_text('')
+            for i in range(500):
+                Path(srcdir, "OCR-D-PAGE", "page_%04d.xml" % i).write_text('')
+            with TemporaryDirectory() as wsdir:
+                with pushd_popd(wsdir):
+                    ws = self.resolver.workspace_from_nothing(directory=wsdir)
+                    exit_code, out, err = self.invoke_cli(workspace_cli, [
+                        'bulk-add',
+                        '--ignore',
+                        '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$',
+                        '--url', '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}',
+                        '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',
+                        '--page-id', 'PHYS_{{ pageid }}',
+                        '--file-grp', '{{ fileGrp }}',
+                        '%s/*/*' % srcdir
+                    ])
+                    # print('exit_code', exit_code)
+                    # print('out', out)
+                    # print('err', err)
+                    ws.reload_mets()
+                    self.assertEqual(len(ws.mets.file_groups), 2)
+                    self.assertEqual(len(ws.mets.find_files()), 1000)
+                    self.assertEqual(len(ws.mets.find_files(mimetype='image/tiff')), 500)
+                    self.assertEqual(len(ws.mets.find_files(ID='//FILE_OCR-D-IMG_000.*')), 10)
+                    self.assertEqual(len(ws.mets.find_files(ID='//FILE_.*_000.*')), 20)
+                    self.assertEqual(len(ws.mets.find_files(pageId='PHYS_0001')), 2)
+                    self.assertEqual(ws.mets.find_files(ID='FILE_OCR-D-PAGE_0001')[0].url, 'OCR-D-PAGE/FILE_0001.xml')
+
 if __name__ == '__main__':
-    main()
+    main(__file__)

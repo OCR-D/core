@@ -15,7 +15,7 @@ class TestWorkspaceValidator(TestCase):
     def setUp(self):
         self.resolver = Resolver()
 
-    def test_check_file_grp(self):
+    def test_check_file_grp_basic(self):
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
         report = WorkspaceValidator.check_file_grp(workspace, 'foo', 'bar')
         self.assertFalse(report.is_valid)
@@ -36,6 +36,24 @@ class TestWorkspaceValidator(TestCase):
         report = WorkspaceValidator.check_file_grp(workspace, None, '')
         self.assertTrue(report.is_valid)
 
+    def test_check_file_grp_page_id_str(self):
+        workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0003,PHYS_0001')
+        self.assertFalse(report.is_valid)
+        self.assertEqual(len(report.errors), 1)
+        self.assertEqual(report.errors[0], "Output fileGrp[@USE='OCR-D-IMG-BIN'] already contains output for page PHYS_0001")
+
+    def test_check_file_grp_page_id_list(self):
+        workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id=['PHYS_0003','PHYS_0001'])
+        self.assertFalse(report.is_valid)
+        self.assertEqual(len(report.errors), 1)
+
+    def test_check_file_grp_page_id_valid(self):
+        workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0004')
+        self.assertTrue(report.is_valid)
+
     def test_simple(self):
         report = WorkspaceValidator.validate(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), download=True)
         self.assertTrue(report.is_valid)
@@ -50,13 +68,13 @@ class TestWorkspaceValidator(TestCase):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 2)
+            self.assertEqual(len(report.errors), 3) # no-files, missing id, missing fileGrp
             self.assertIn('no unique identifier', report.errors[0])
             self.assertIn('No files', report.errors[1])
             workspace.mets.unique_identifier = 'foobar'
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 1)
+            self.assertEqual(len(report.errors), 2)
 
     def test_validate_file_groups_non_ocrd(self):
         with TemporaryDirectory() as tempdir:
@@ -78,8 +96,8 @@ class TestWorkspaceValidator(TestCase):
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
             self.assertEqual(len(report.errors), 1)
-            self.assertEqual(len(report.warnings), 1)
-            self.assertEqual(report.warnings[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
+            self.assertEqual(len(report.notices), 1)
+            self.assertEqual(report.notices[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
             self.assertIn('No files', report.errors[0])
 
     def test_validate_file_groups_bad_name(self):
@@ -90,8 +108,8 @@ class TestWorkspaceValidator(TestCase):
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
             self.assertEqual(len(report.errors), 1)
-            self.assertEqual(len(report.warnings), 1)
-            self.assertIn("Invalid USE name 'X' in fileGrp", report.warnings[0])
+            self.assertEqual(len(report.notices), 1)
+            self.assertIn("Invalid USE name 'X' in fileGrp", report.notices[0])
             self.assertIn('No files', report.errors[0])
 
     def test_validate_files_nopageid(self):
@@ -160,6 +178,7 @@ class TestWorkspaceValidator(TestCase):
                 'imagefilename',
             ]
         )
+        print(report.errors)
         self.assertTrue(report.is_valid)
 
     def test_dimensions(self):
@@ -172,7 +191,7 @@ class TestWorkspaceValidator(TestCase):
                     self.resolver,
                     join(wsdir, 'mets.xml'),
                     src_dir=wsdir,
-                    skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename'],
+                    skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename', 'page_xsd', 'mets_xsd'],
                     download=True
                 )
                 self.assertIn("PAGE 'PAGE_0017_PAGE': @imageHeight != image's actual height (1234 != 2083)", report.errors)
@@ -181,7 +200,7 @@ class TestWorkspaceValidator(TestCase):
                 self.assertEqual(report.is_valid, False)
                 report2 = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'), src_dir=wsdir, skip=[
                     'page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'imagefilename',
-                    'dimension'
+                    'dimension', 'page_xsd', 'mets_xsd'
                     ], download=False)
             self.assertEqual(report2.is_valid, True)
 
@@ -197,11 +216,15 @@ class TestWorkspaceValidator(TestCase):
     def test_imagefilename(self):
         report = WorkspaceValidator.validate(
             self.resolver, None, src_dir=assets.path_to('kant_aufklaerung_1784/data'),
-            skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density'],
+            skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page_xsd', 'mets_xsd'],
             download=False,
         )
         self.assertEqual(len(report.errors), 0)
 
+    def test_pcgtsid(self):
+        report = WorkspaceValidator.validate(self.resolver, assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
+        self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "" !== "PAGE_0017_PAGE"', report.warnings)
+
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

@@ -20,6 +20,7 @@ from .constants import (
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
     METS_XML_EMPTY,
+    REGEX_FILE_ID
 )
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
@@ -115,6 +116,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
+    # pylint: disable=multiple-statements
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
         Search ``mets:file`` in this METS document.
@@ -176,12 +178,12 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     if cand_url != url: continue
 
-            file = OcrdFile(cand, mets=self)
+            f = OcrdFile(cand, mets=self)
 
-            # If only local resources should be returned and file is not a file path: skip the file
-            if local_only and not is_local_filename(file.url):
+            # If only local resources should be returned and f is not a file path: skip the file
+            if local_only and not is_local_filename(f.url):
                 continue
-            ret.append(file)
+            ret.append(f)
         return ret
 
     def add_file_group(self, fileGrp):
@@ -233,7 +235,7 @@ class OcrdMets(OcrdXmlDocument):
                 self.remove_one_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, **kwargs):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
         """
         Add a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
 
@@ -244,15 +246,18 @@ class OcrdMets(OcrdXmlDocument):
             ID (string):
             pageId (string):
             force (boolean): Whether to add the file even if a ``mets:file`` with the same ``ID`` already exists.
+            ignore (boolean): Don't look for existing files. Shift responsibility for preventing errors from duplicate ID to the user.
             local_filename (string):
             mimetype (string):
         """
         if not ID:
             raise Exception("Must set ID of the mets:file")
+        elif not REGEX_FILE_ID.fullmatch(ID):
+            raise Exception("Invalid syntax for mets:file/@ID %s" % ID)
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
-        if ID is not None and self.find_files(ID=ID) != []:
+        if ID and not ignore and self.find_files(ID=ID) != []:
             if not force:
                 raise Exception("File with ID='%s' already exists" % ID)
             mets_file = self.find_files(ID=ID)[0]

@@ -96,8 +96,8 @@ class TestCli(TestTaskSequence):
 
         # with workspace
         result = self.runner.invoke(validate_cli, ['tasks', '--workspace', assets.path_to('kant_aufklaerung_1784/data'),
-            "sample-processor-required-param -I OCR-D-IMG -O OUT1 -p '{\"param1\": true}'",
-            "sample-processor-required-param -I OCR-D-IMG -O OUT2 -p '{\"param1\": true}'",
+            "sample-processor-required-param -I OCR-D-IMG,OCR-D-GT-PAGE -O OUT1 -p '{\"param1\": true}'",
+            "sample-processor-required-param -I OCR-D-IMG,OCR-D-GT-PAGE -O OUT2 -p '{\"param1\": true}'",
         ])
         print(result)
         print(result.stdout)

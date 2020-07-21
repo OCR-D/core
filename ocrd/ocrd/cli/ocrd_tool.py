@@ -4,9 +4,11 @@ import sys
 
 import click
 
-from ocrd.decorators import parameter_option
+from ocrd.decorators import parameter_option, parameter_override_option
 from ocrd.processor import generate_processor_help
-from ocrd_utils import VERSION as OCRD_VERSION
+from ocrd_utils import (
+        set_json_key_value_overrides,
+        VERSION as OCRD_VERSION)
 from ocrd_validators import ParameterValidator, OcrdToolValidator
 
 class OcrdToolCtx():
@@ -119,12 +121,14 @@ def ocrd_tool_tool_dump(ctx):
 
 @ocrd_tool_tool.command('parse-params')
 @parameter_option
+@parameter_override_option
 @click.option('-j', '--json', help='Output JSON instead of shell variables', is_flag=True, default=False)
 @pass_ocrd_tool
-def ocrd_tool_tool_parse_params(ctx, parameter, json):
+def ocrd_tool_tool_parse_params(ctx, parameter, parameter_override, json):
     """
     Parse parameters with fallback to defaults and output as shell-eval'able assignments to params var.
     """
+    set_json_key_value_overrides(parameter, *parameter_override)
     parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
     report = parameterValidator.validate(parameter)
     if not report.is_valid:

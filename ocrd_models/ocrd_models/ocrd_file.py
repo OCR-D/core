@@ -3,7 +3,7 @@ API to ``mets:file``
 """
 from os.path import splitext, basename
 
-from ocrd_utils import is_local_filename, get_local_filename
+from ocrd_utils import is_local_filename, get_local_filename, MIME_TO_EXT, EXT_TO_MIME
 
 from .ocrd_xml_base import ET
 from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
@@ -17,23 +17,27 @@ class OcrdFile():
     #  def create(mimetype, ID, url, local_filename):
     #      el_fileGrp.SubElement('file')
 
-    def __init__(self, el, mimetype=None, loctype='OTHER', instance=None, local_filename=None, mets=None, url=None):
+    def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None):
         """
         Args:
-            el (LxmlElement):
-            mimetype (string):
-            instance (OcrdFile):
-            local_filename (string):
-            mets (OcrdMets):
+            el (LxmlElement): etree Element of the mets:file this represents. Create new if not provided
+            mimetype (string): MIME type of the file
+            pageId (string): ID of the physical page
+            loctype (string): METS @LOCTYPE
+            local_filename (string): Local filename
+            mets (OcrdMets): Containing OcrdMets
+            url (string): xlink:href of the file
+            ID (string): @ID of the mets:file
         """
         if el is None:
             el = ET.Element(TAG_METS_FILE)
         self._el = el
+        self.mets = mets
+        self.ID = ID
         self.mimetype = mimetype
         self.local_filename = local_filename
-        self._instance = instance
-        self.mets = mets
         self.loctype = loctype
+        self.pageId = pageId
 
         if url:
             self.url = url
@@ -53,9 +57,15 @@ class OcrdFile():
         #  return 'OcrdFile[' + '\n\t' + props + '\n\t]'
         props = ', '.join([
             '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
-            for k in ['mimetype', 'ID', 'url', 'local_filename']
+            for k in ['fileGrp', 'ID', 'mimetype', 'url', 'local_filename']
         ])
         return '<OcrdFile ' + props + ']/> '
+
+    def __eq__(self, other):
+        return self.ID == other.ID # and \
+               # self.url == other.url and \
+               # EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and \
+               # self.fileGrp == other.fileGrp
 
     @property
     def basename(self):

@@ -17,7 +17,7 @@ SAMPLE_OCRD_TOOL_JSON = '''{
     "categories": ["Image foobaring"],
     "steps": ["preprocessing/optimization/foobarization"],
     "input_file_grp": ["OCR-D-IMG"],
-    "output_file_grp": ["OCR-D-IMG-BIN"],
+    "output_file_grp": ["OCR-D-IMG-BIN", "SECOND_OUT"],
     "parameters": {
         "param1": {
             "type": "boolean",
@@ -26,15 +26,13 @@ SAMPLE_OCRD_TOOL_JSON = '''{
         }
     }
 }'''
-SAMPLE_NAME_WITHOUT_OUTPUT_FILE_GRP = 'ocrd-sample-processor-without-file-grp'
-SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP = json.loads(SAMPLE_OCRD_TOOL_JSON)
-del SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP['output_file_grp']
-SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP = json.dumps(SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP)
 
-SAMPLE_NAME_REQUIRED_PARAM = 'ocrd-sample-processor-required-param'
+SAMPLE_NAME_REQUIRED_PARAM = 'sample-processor-required-param'
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM = json.loads(SAMPLE_OCRD_TOOL_JSON)
 del SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['parameters']['param1']['default']
+SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['executable'] = 'ocrd-' + SAMPLE_NAME_REQUIRED_PARAM
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['parameters']['param1']['required'] = True
+SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['input_file_grp'] += ['SECOND_IN']
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM = json.dumps(SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM)
 
 class TestTaskSequence(TestCase):
@@ -52,14 +50,7 @@ print('''%s''')
         """ % SAMPLE_OCRD_TOOL_JSON)
         p.chmod(0o777)
 
-        p = Path(self.tempdir, SAMPLE_NAME_WITHOUT_OUTPUT_FILE_GRP)
-        p.write_text("""\
-#!/usr/bin/env python
-print('''%s''')
-        """ % SAMPLE_OCRD_TOOL_JSON_WITHOUT_OUTPUT_FILE_GRP)
-        p.chmod(0o777)
-
-        p = Path(self.tempdir, SAMPLE_NAME_REQUIRED_PARAM)
+        p = Path(self.tempdir, 'ocrd-' + SAMPLE_NAME_REQUIRED_PARAM)
         p.write_text("""\
 #!/usr/bin/env python
 print('''%s''')
@@ -75,13 +66,24 @@ print('''%s''')
         with self.assertRaisesRegex(Exception, 'must have input file group'):
             task.validate()
 
-    def test_parse_no_out(self):
-        task = ProcessorTask.parse('sample-processor -I IN')
-        with self.assertRaisesRegex(Exception, 'Processor requires output_file_grp but none was provided.'):
-            task.validate()
-        # this should validate
-        task2 = ProcessorTask.parse('sample-processor-without-file-grp -I IN')
-        self.assertTrue(task2.validate())
+    # XXX no longer an error since we're relying on ocrd-tool.json info for
+    # output file groups
+    # def test_parse_no_out(self):
+    #     task = ProcessorTask.parse('sample-processor -I IN')
+    #     with self.assertRaisesRegex(Exception, 'Processor requires output_file_grp but none was provided.'):
+    #         task.validate()
+    #     # this should validate
+    #     task2 = ProcessorTask.parse('sample-processor-without-file-grp -I IN')
+    #     self.assertTrue(task2.validate())
+
+    def test_parse_implicit_after_validate(self):
+        task = ProcessorTask.parse('%s -I IN -O OUT -p \'{"param1": true}\'' % SAMPLE_NAME_REQUIRED_PARAM)
+        task.validate()
+        # TODO uncomment and adapt once OCR-D/spec#121 lands
+        # self.assertEqual(task.input_file_grps, ['IN', 'SECOND_IN'])
+        # self.assertEqual(task.output_file_grps, ['OUT', 'SECOND_OUT'])
+        self.assertEqual(task.input_file_grps, ['IN'])
+        self.assertEqual(task.output_file_grps, ['OUT'])
 
     def test_parse_unknown(self):
         with self.assertRaisesRegex(Exception, 'Failed parsing task description'):
@@ -113,7 +115,7 @@ print('''%s''')
             task.validate()
 
     def test_required_param(self):
-        task = ProcessorTask.parse('sample-processor-required-param -I IN -O OUT')
+        task = ProcessorTask.parse('%s -I IN -O OUT' % SAMPLE_NAME_REQUIRED_PARAM)
         with self.assertRaisesRegex(Exception, "'param1' is a required property"):
             task.validate()
 
@@ -126,13 +128,13 @@ print('''%s''')
 
             with self.assertRaisesRegex(Exception, "Input file group not contained in METS or produced by previous steps: FOO'"):
                 validate_tasks([ProcessorTask.parse(x) for x in [
-                    'sample-processor-required-param -I OCR-D-IMG -O OUT1 -p %s' % params_path,
-                    'sample-processor-required-param -I FOO -O OUT2 -p %s' % params_path
+                    '%s -I OCR-D-IMG -O OUT1 -p %s' % (SAMPLE_NAME_REQUIRED_PARAM, params_path),
+                    '%s -I FOO -O OUT2 -p %s' % (SAMPLE_NAME_REQUIRED_PARAM, params_path)
                 ]], workspace)
 
             with self.assertRaisesRegex(Exception, "Input fileGrp.@USE='IN'. not in METS!"):
                 validate_tasks([ProcessorTask.parse(x) for x in [
-                    'sample-processor-required-param -I IN -O OUT1 -p %s' % params_path,
+                    '%s -I IN -O OUT1 -p %s' % (SAMPLE_NAME_REQUIRED_PARAM, params_path),
                 ]], workspace)
 
     def test_422(self):
@@ -148,6 +150,28 @@ print('''%s''')
                 "sample-processor -I OCR-D-SEG-LINE  -O OCR-D-SEG-WORD",
                 "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
             ]], workspace)
+
+    def test_overwrite(self):
+        resolver = Resolver()
+        with TemporaryDirectory() as tempdir:
+            workspace = resolver.workspace_from_url(assets.path_to('kant_aufklaerung_1784/data/mets.xml'), dst_dir=tempdir)
+            # should fail at step 3
+            workspace.mets.add_file('OCR-D-SEG-WORD', url='foo/bar', ID='foo', pageId='page1', mimetype='image/tif')
+            with self.assertRaisesRegex(Exception, "Invalid task sequence input/output file groups: \[\"Output fileGrp\[@USE='OCR-D-SEG-WORD'\] already in METS!\"\]"):
+                validate_tasks([ProcessorTask.parse(x) for x in [
+                    "sample-processor -I OCR-D-IMG       -O OCR-D-SEG-BLOCK",
+                    "sample-processor -I OCR-D-SEG-BLOCK -O OCR-D-SEG-LINE",
+                    "sample-processor -I OCR-D-SEG-LINE  -O OCR-D-SEG-WORD",
+                    "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
+                ]], workspace)
+            # should succeed b/c overwrite
+            validate_tasks([ProcessorTask.parse(x) for x in [
+                "sample-processor -I OCR-D-IMG       -O OCR-D-SEG-BLOCK",
+                "sample-processor -I OCR-D-SEG-BLOCK -O OCR-D-SEG-LINE",
+                "sample-processor -I OCR-D-SEG-LINE  -O OCR-D-SEG-WORD",
+                "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
+            ]], workspace, overwrite=True)
+
 
 if __name__ == '__main__':
     main()
