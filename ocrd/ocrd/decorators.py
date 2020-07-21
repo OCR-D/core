@@ -1,4 +1,5 @@
 from os.path import isfile
+import sys
 
 import click
 
@@ -53,15 +54,17 @@ def ocrd_cli_wrap_processor(
     LOG = getLogger('ocrd_cli_wrap_processor')
     if dump_json:
         processorClass(workspace=None, dump_json=True)
+        sys.exit()
     elif help:
         processorClass(workspace=None, show_help=True)
+        sys.exit()
     elif version:
         processorClass(workspace=None, show_version=True)
-    elif mets is None:
-        msg = 'Error: Missing option "-m" / "--mets".'
-        LOG.error(msg)
-        raise Exception(msg)
+        sys.exit()
     else:
+        if not mets or (is_local_filename(mets) and not isfile(get_local_filename(mets))):
+            processorClass(workspace=None, show_help=True)
+            sys.exit(1)
         # LOG.info('kwargs=%s' % kwargs)
         # Merge parameter overrides and parameters
         if 'parameter_override' in kwargs:

@@ -9,10 +9,12 @@ Changed:
 
   * Refactoring of `ocrd_utils.__init__` into thematic submodules, #536
   * validation of file groups downgraded to notice, allow PRE fileGrp/USE prefix, #541
+  * BaseProcessor: :fire: show help if no METS was specified, OCR-D/spec#156, #438, #503
 
 Fixed:
 
   * bashlib: Don't set `-x` in `ocrd__minversion`, #535
+  * bashlib: `ocrd__minversion` logic was broken
 
 ## [2.11.0] - 2020-07-13
 

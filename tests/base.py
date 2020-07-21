@@ -48,7 +48,7 @@ class CapturingTestCase(TestCase):
             cli.main(args=args)
         except SystemExit as e:
             out, err = self.capture_out_err()
-            return e.code, out, err
+            return e.code or 0, out, err
 
     def capture_out_err(self):
         return self.capfd.readouterr()

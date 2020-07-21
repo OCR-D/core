@@ -63,6 +63,15 @@ class TestDecorators(TestCase):
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.DEBUG)
         initLogging()
 
+    def test_processor_no_mets(self):
+        """
+        https://github.com/OCR-D/spec/pull/156
+        """
+        _, out_help, _ = self.invoke_cli(cli_dummy_processor, ['--help'])
+        exit_code, out_none, _ = self.invoke_cli(cli_dummy_processor, [])
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(out_help, out_none)
+
     def test_processor_dump_json(self):
         exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['--dump-json'])
         print("exit_code=%s\nout=%s\nerr=%s" % (exit_code, out, err))
@@ -83,9 +92,8 @@ class TestDecorators(TestCase):
     def test_processor_run(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', *DEFAULT_IN_OUT])
-                print(result)
-                self.assertEqual(result.exit_code, 0)
+                exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', *DEFAULT_IN_OUT])
+                self.assertEqual(exit_code, 0)
 
     def test_param_merging(self):
         json1 = '{"foo": 23, "bar": 100}'

@@ -3,11 +3,13 @@ from ocrd import Processor
 
 DUMMY_TOOL = {
     'executable': 'ocrd-test',
+    'description': 'dolor sit',
     'steps': ['recognition/post-correction'],
     'parameters': {
         'baz': {
             'type': 'string',
-            'default': 'bla'
+            'default': 'bla',
+            'description': 'lorem ipsum'
         }
     }
 }
