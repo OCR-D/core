@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.12.0] - 2020-07-21
+
 Changed:
 
   * Refactoring of `ocrd_utils.__init__` into thematic submodules, #536
@@ -1015,6 +1017,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.12.0]: ../../compare/v2.12.0..v2.11.0
 [2.11.0]: ../../compare/v2.11.0..v2.10.5
 [2.10.5]: ../../compare/v2.10.5..v2.10.4
 [2.10.4]: ../../compare/v2.10.4..v2.10.3
