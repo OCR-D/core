@@ -30,7 +30,6 @@ ocrd__log () {
 ## Ensure minimum version
 # ht https://stackoverflow.com/posts/4025065
 ocrd__minversion () {
-    set -x
     local minversion="$1"
     local version=$(ocrd --version|sed 's/ocrd, version //')
     echo "$minversion < $version?"
