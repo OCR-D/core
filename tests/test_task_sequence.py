@@ -185,9 +185,9 @@ print('''%s''')
                 run_tasks('mets.xml', 'DEBUG', None, [
                     "dummy -I GRP0 -O GRP1",
                     "dummy -I GRP1 -O GRP2",
-                    "dummy -I GRP2 -O GRP3",
-                    "dummy -I GRP3 -O GRP4"
                 ])
+                ws.reload_mets()
+                self.assertEquals(len(ws.mets.find_files()), 3)
 
 
 if __name__ == '__main__':

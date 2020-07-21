@@ -90,14 +90,14 @@ def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     report = ValidationReport()
     prev_output_file_grps = workspace.mets.file_groups
 
-    first_task = tasks.pop(0)
+    first_task = tasks[0]
     first_task.validate()
 
     # first task: check input/output file groups from METS
     WorkspaceValidator.check_file_grp(workspace, first_task.input_file_grps, '' if overwrite else first_task.output_file_grps, page_id, report)
 
     prev_output_file_grps += first_task.output_file_grps
-    for task in tasks:
+    for task in tasks[1:]:
         task.validate()
         # check either existing fileGrp or output-file group of previous task matches current input_file_group
         for input_file_grp in task.input_file_grps:
