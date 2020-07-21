@@ -32,26 +32,27 @@ ocrd__log () {
 ocrd__minversion () {
     local minversion="$1"
     local version=$(ocrd --version|sed 's/ocrd, version //')
-    echo "$minversion < $version?"
-    if [[ $minversion == $version ]];then
-        return 0
-    fi
+    #echo "$minversion < $version?"
     local IFS=.
     version=($version)
     minversion=($minversion)
-    # fill empty fields in version with zeros
-    for ((i=${#version[@]}; i<${#minversion[@]}; i++));do
-        version[i]=0
-    done
-    for ((i=0; i<${#version[@]}; i++));do
-        if [[ -z ${minversion[i]} ]];then
-            # fill empty fields in minversion with zeros
-            minversion[i]=0
+    # MAJOR > MAJOR
+    if (( ${version[0]} > ${minversion[0]} ));then
+        return
+    # MAJOR == MAJOR
+    elif (( ${version[0]} == ${minversion[0]} ));then
+        # MINOR > MINOR
+        if (( ${version[1]} > ${minversion[1]} ));then
+            return
+        # MINOR == MINOR
+        elif (( ${version[1]} == ${minversion[1]} ));then
+            # PATCH > PATCH
+            if (( ${version[2]} >= ${minversion[2]} ));then
+                return
+            fi
         fi
-        if ((10#${version[i]} < 10#${minversion[i]}));then
-            ocrd__raise "ocrd/core is too old (${version[*]} < ${minversion[*]}). Please update OCR-D/core"
-        fi
-    done
+    fi
+    ocrd__raise "ocrd/core is too old (${version[*]} < ${minversion[*]}). Please update OCR-D/core"
 }
 
 # END-INCLUDE 
