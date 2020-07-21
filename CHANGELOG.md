@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd process`: first task was ignored, #529, #542
+
 ## [2.12.0] - 2020-07-21
 
 Changed:
