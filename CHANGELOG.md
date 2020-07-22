@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.12.2] - 2020-07-22
+
 Fixed:
 
   * `ocrd_validators`: adapt ocrd-tool schema to include OCR-D/spec#152
@@ -1027,6 +1029,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.12.2]: ../../compare/v2.12.2..v2.12.1
 [2.12.1]: ../../compare/v2.12.1..v2.12.0
 [2.12.0]: ../../compare/v2.12.0..v2.11.0
 [2.11.0]: ../../compare/v2.11.0..v2.10.5
