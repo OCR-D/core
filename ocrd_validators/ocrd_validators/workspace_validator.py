@@ -272,7 +272,7 @@ class WorkspaceValidator():
         """
         Run PageValidator on the PAGE-XML documents referenced in the METS.
         """
-        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
+        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
             self.workspace.download_file(ocrd_file)
             page_report = PageValidator.validate(ocrd_file=ocrd_file,
                                                  page_textequiv_consistency=self.page_strictness,
@@ -288,7 +288,7 @@ class WorkspaceValidator():
         Validate all PAGE-XML files against PAGE XSD schema
         """
         log.debug("Validating all PAGE-XML files against XSD")
-        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
+        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
             self.workspace.download_file(ocrd_file)
             for err in XsdPageValidator.validate(Path(ocrd_file.local_filename)).errors:
                 self.report.add_error("%s: %s" % (ocrd_file.ID, err))
