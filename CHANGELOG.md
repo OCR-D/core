@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd_validators`: adapt ocrd-tool schema to include OCR-D/spec#152
+
 ## [2.12.1] - 2020-07-21
 
 Fixed:
