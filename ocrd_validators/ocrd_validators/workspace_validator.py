@@ -183,7 +183,7 @@ class WorkspaceValidator():
         Validate image height and PAGE imageHeight match
         """
         for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not self.download:
+            if not f.local_filename and not self.download:
                 self.report.add_notice("_validate_dimension: Not executed because --download wasn't set and PAGE might reference remote (Alternatve)Images <%s>" % f.url)
                 continue
             page = page_from_file(f).get_Page()
@@ -287,18 +287,18 @@ class WorkspaceValidator():
         """
         Validate all PAGE-XML files against PAGE XSD schema
         """
-        log.info("Validating all PAGE-XML files against XSD")
+        log.debug("Validating all PAGE-XML files against XSD")
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
             self.workspace.download_file(ocrd_file)
             for err in XsdPageValidator.validate(Path(ocrd_file.local_filename)).errors:
                 self.report.add_error("%s: %s" % (ocrd_file.ID, err))
-        log.info("Finished alidating all PAGE-XML files against XSD")
+        log.debug("Finished alidating all PAGE-XML files against XSD")
 
     def _validate_mets_xsd(self):
         """
         Validate METS against METS XSD schema
         """
-        log.info("Validating METS %s against XSD" % self.workspace.mets_target)
+        log.debug("Validating METS %s against XSD" % self.workspace.mets_target)
         for err in XsdMetsValidator.validate(Path(self.workspace.mets_target)).errors:
             self.report.add_error("%s: %s" % (self.workspace.mets_target, err))
-        log.info("Finished Validating METS against XSD")
+        log.debug("Finished Validating METS against XSD")
