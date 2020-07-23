@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace validate`: properly check whether AlternativeImage are available locally, #450, 543
+  * `ocrd workspace validate`: reduce `INFO` log messages
+
 ## [2.12.2] - 2020-07-22
 
 Fixed:
