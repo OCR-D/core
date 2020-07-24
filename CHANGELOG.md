@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.12.4] - 2020-07-22
+
 Fixed:
 
   * logging no longer intereferes with `--dump-json`/`--help`/`--version`, #540, #546
@@ -1040,6 +1042,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.12.4]: ../../compare/v2.12.4..v2.12.3
 [2.12.3]: ../../compare/v2.12.3..v2.12.2
 [2.12.2]: ../../compare/v2.12.2..v2.12.1
 [2.12.1]: ../../compare/v2.12.1..v2.12.0
