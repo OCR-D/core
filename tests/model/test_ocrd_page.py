@@ -92,7 +92,7 @@ class TestOcrdPage(TestCase):
         #  self.assertTrue(True)
 
     def test_pcGtsId(self):
-        self.assertEqual(self.pcgts.pcGtsId, 'glyph-test')
+        self.assertEqual(self.pcgts.pcGtsId, 'FAULTY_GLYPHS_FILE')
 
     def test_delete_region(self):
         pcgts = parseString(simple_page, silence=True)
