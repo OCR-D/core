@@ -221,9 +221,10 @@ class TestWorkspaceValidator(TestCase):
         )
         self.assertEqual(len(report.errors), 0)
 
-    def test_pcgtsid(self):
-        report = WorkspaceValidator.validate(self.resolver, assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
-        self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "" !== "PAGE_0017_PAGE"', report.warnings)
+    # TODO fixed in assets, need a new test page file
+    # def test_pcgtsid(self):
+        # report = WorkspaceValidator.validate(self.resolver, assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
+        # self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "" !== "PAGE_0017_PAGE"', report.warnings)
 
 
 if __name__ == '__main__':
