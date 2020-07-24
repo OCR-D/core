@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * logging no longer intereferes with `--dump-json`/`--help`/`--version`, #540, #546
+
 ## [2.12.3] - 2020-07-23
 
 Fixed:
