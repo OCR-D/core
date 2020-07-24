@@ -9,7 +9,6 @@ from ocrd_utils import (
     setOverrideLogLevel,
     parse_json_string_or_file,
     set_json_key_value_overrides,
-    logging
 )
 
 from ocrd_utils import getLogger
@@ -53,7 +52,7 @@ def ocrd_cli_wrap_processor(
     **kwargs
 ):
     if dump_json or help or version:
-        logging.disable(logging.CRITICAL)
+        setOverrideLogLevel('OFF')
         processorClass(workspace=None, dump_json=dump_json, show_help=help, show_version=version)
         sys.exit()
     else:
