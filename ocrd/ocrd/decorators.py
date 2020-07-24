@@ -8,7 +8,8 @@ from ocrd_utils import (
     get_local_filename,
     setOverrideLogLevel,
     parse_json_string_or_file,
-    set_json_key_value_overrides
+    set_json_key_value_overrides,
+    logging
 )
 
 from ocrd_utils import getLogger
@@ -51,17 +52,12 @@ def ocrd_cli_wrap_processor(
     overwrite=False,
     **kwargs
 ):
-    LOG = getLogger('ocrd_cli_wrap_processor')
-    if dump_json:
-        processorClass(workspace=None, dump_json=True)
-        sys.exit()
-    elif help:
-        processorClass(workspace=None, show_help=True)
-        sys.exit()
-    elif version:
-        processorClass(workspace=None, show_version=True)
+    if dump_json or help or version:
+        logging.disable(logging.CRITICAL)
+        processorClass(workspace=None, dump_json=dump_json, show_help=help, show_version=version)
         sys.exit()
     else:
+        LOG = getLogger('ocrd_cli_wrap_processor')
         if not mets or (is_local_filename(mets) and not isfile(get_local_filename(mets))):
             processorClass(workspace=None, show_help=True)
             sys.exit(1)
