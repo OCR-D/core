@@ -8,7 +8,7 @@ from ocrd.resolver import Resolver
 from ocrd_validators import WorkspaceValidator
 from ocrd_validators.page_validator import ConsistencyError
 
-from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
+from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error,no-name-in-module
 
 class TestWorkspaceValidator(TestCase):
 
@@ -221,10 +221,13 @@ class TestWorkspaceValidator(TestCase):
         )
         self.assertEqual(len(report.errors), 0)
 
-    # TODO fixed in assets, need a new test page file
-    # def test_pcgtsid(self):
-        # report = WorkspaceValidator.validate(self.resolver, assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
-        # self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "" !== "PAGE_0017_PAGE"', report.warnings)
+    def test_pcgtsid(self):
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
+            with pushd_popd(wsdir):
+                # remove the @pcGtsId attribute for testing
+                os.system("""sed -i 's,pcGtsId.*,pcGtsId="foo">,' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
+                report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'))
+                self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "foo" !== "PAGE_0017_PAGE"', report.warnings)
 
 
 if __name__ == '__main__':
