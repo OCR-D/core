@@ -9,6 +9,7 @@ from PIL import Image
 
 from tests.base import TestCase, assets, main, copy_of_directory
 
+from ocrd_models.ocrd_page import parseString
 from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
@@ -261,6 +262,15 @@ class TestWorkspace(TestCase):
             img = ws.resolve_image_as_pil('OCR-D-IMG/INPUT_0017.tif', coords=([100, 100], [50, 50]))
             self.assertEqual(img.width, 50)
 
+    def test_image_from_page_basic(self):
+        with pushd_popd(assets.path_to('gutachten/data')):
+            ws = self.resolver.workspace_from_url('mets.xml')
+            with open('TEMP1/PAGE_TEMP1.xml', 'r') as f:
+                pcgts = parseString(f.read().encode('utf8'), silence=True)
+            img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017', feature_selector='clipped', feature_filter='cropped')
+            self.assertEquals(info['features'], 'binarized,clipped')
+            img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
+            self.assertEquals(info['features'], 'binarized,clipped')
 
 
 if __name__ == '__main__':
