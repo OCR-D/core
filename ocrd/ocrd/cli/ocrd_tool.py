@@ -1,4 +1,4 @@
-from json import dumps, loads
+from json import dumps
 import codecs
 import sys
 
@@ -8,7 +8,9 @@ from ocrd.decorators import parameter_option, parameter_override_option
 from ocrd.processor import generate_processor_help
 from ocrd_utils import (
         set_json_key_value_overrides,
-        VERSION as OCRD_VERSION)
+        VERSION as OCRD_VERSION,
+        parse_json_string_with_comments as loads
+        )
 from ocrd_validators import ParameterValidator, OcrdToolValidator
 
 class OcrdToolCtx():
