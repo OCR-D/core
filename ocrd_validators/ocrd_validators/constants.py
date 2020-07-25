@@ -4,6 +4,19 @@ Constants for ocrd_validators.
 import yaml
 from pkg_resources import resource_string, resource_filename
 
+__all__ = [
+    'OCRD_TOOL_SCHEMA',
+    'OCRD_BAGIT_PROFILE',
+    'BAGIT_TXT',
+    'FILE_GROUP_PREFIX',
+    'FILE_GROUP_CATEGORIES',
+    'TMP_BAGIT_PREFIX',
+    'OCRD_BAGIT_PROFILE_URL',
+    'XSD_METS_URL',
+    'XSD_PAGE_URL',
+    'XSD_PATHS',
+]
+
 OCRD_TOOL_SCHEMA = yaml.safe_load(resource_string(__name__, 'ocrd_tool.schema.yml'))
 OCRD_BAGIT_PROFILE = yaml.safe_load(resource_string(__name__, 'bagit-profile.yml'))
 

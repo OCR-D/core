@@ -3,8 +3,10 @@ import sys
 import click
 
 from ocrd.constants import BASHLIB_FILENAME
+import ocrd.constants
 import ocrd_utils.constants
 import ocrd_models.constants
+import ocrd_validators.constants
 
 # ----------------------------------------------------------------------
 # ocrd bashlib
@@ -33,23 +35,19 @@ def bashlib_constants(name):
     """
     Query constants from ocrd_utils and ocrd_models
     """
+    all_constants = {}
+    for src in [ocrd.constants, ocrd_utils.constants, ocrd_models.constants, ocrd_validators.constants]:
+        for k in src.__all__:
+            all_constants[k] = src.__dict__[k]
     if name in ['*', 'KEYS', '__all__']:
-        for symbol in ocrd_utils.constants.__all__:
-            print(symbol)
-        for symbol in ocrd_models.constants.__all__:
-            print(symbol)
-    elif (name in ocrd_utils.constants.__all__ or
-          name in ocrd_models.constants.__all__):
-        if name in ocrd_utils.constants.__all__:
-            constant = ocrd_utils.constants.__dict__[name]
-        else:
-            constant = ocrd_models.constants.__dict__[name]
-        if isinstance(constant, dict):
-            # make this bash-friendly (show initialization for associative array)
-            for key in constant:
-                print("[%s]=%s" % (key, constant[key]), end=' ')
-        else:
-            print(constant)
-    else:
+        print(sorted(all_constants.keys()))
+    if name not in all_constants:
         print("ERROR: name '%s' is not a known constant" % name, file=sys.stderr)
         sys.exit(1)
+    val = all_constants[name]
+    if isinstance(val, dict):
+        # make this bash-friendly (show initialization for associative array)
+        for key in val:
+            print("[%s]=%s" % (key, val[key]), end=' ')
+    else:
+        print(val)
