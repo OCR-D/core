@@ -21,9 +21,6 @@ setup(
     packages=find_packages(exclude=('tests', 'docs')),
     include_package_data=True,
     install_requires=install_requires,
-    package_data={
-        '': ['*.json', '*.yml', '*.yaml', '*.bash', '*.xml'],
-    },
     entry_points={
         'console_scripts': [
             'ocrd=ocrd.cli:cli',
