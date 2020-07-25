@@ -1,5 +1,7 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from os.path import join, basename
+from pkg_resources import resource_string
+import json
 
 import click
 
@@ -7,14 +9,7 @@ from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
 from ocrd_utils import getLogger, assert_file_grp_cardinality, make_file_id, MIME_TO_EXT
 
-DUMMY_TOOL = {
-    'executable': 'ocrd-dummy',
-    'description': 'Bare-bones processor that copies file from input group to output group',
-    'steps': ['preprocessing/optimization'],
-    'categories': ['Image preprocessing'],
-    'input_file_grp': 'DUMMY_INPUT',
-    'output_file_grp': 'DUMMY_OUTPUT',
-}
+OCRD_TOOL = json.loads(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
 
 LOG = getLogger('ocrd.dummy')
 
@@ -43,7 +38,7 @@ class DummyProcessor(Processor):
                     content=content)
 
     def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = DUMMY_TOOL
+        kwargs['ocrd_tool'] = OCRD_TOOL
         kwargs['version'] = '0.0.1'
         super(DummyProcessor, self).__init__(*args, **kwargs)
 
