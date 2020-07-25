@@ -1,15 +1,20 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from os.path import join, basename
 from pkg_resources import resource_string
-import json
 
 import click
 
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
-from ocrd_utils import getLogger, assert_file_grp_cardinality, make_file_id, MIME_TO_EXT
+from ocrd_utils import (
+    getLogger,
+    assert_file_grp_cardinality,
+    make_file_id,
+    MIME_TO_EXT,
+    parse_json_string_with_comments
+)
 
-OCRD_TOOL = json.loads(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
+OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
 
 LOG = getLogger('ocrd.dummy')
 
