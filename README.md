@@ -15,6 +15,10 @@
 
 <!-- BEGIN-MARKDOWN-TOC -->
 * [Introduction](#introduction)
+* [Installation](#installation)
+* [Command line tools](#command-line-tools)
+	* [`ocrd` CLI](#ocrd-cli)
+	* [`ocrd-dummy` CLI](#ocrd-dummy-cli)
 * [Packages](#packages)
 	* [ocrd_utils](#ocrd_utils)
 	* [ocrd_models](#ocrd_models)
@@ -33,6 +37,12 @@ This repository contains the python packages that form the base for tools within
 
 All packages are also published to [PyPI](https://pypi.org/search/?q=ocrd).
 
+## Installation
+
+**NOTE** Unless you want to contribute to OCR-D/core, we recommend installation
+as part of [ocrd_all](https://github.com/OCR-D/ocrd_all) which installs a
+complete stack of OCR-D-related software.
+
 The easiest way to install is via `pip`:
 
 ```sh
@@ -44,6 +54,20 @@ pip install ocrd_modelfactory
 ```
 
 All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.5 or higher.
+
+## Command line tools
+
+**NOTE:** All OCR-D CLI tools support a `--help` flag which shows usage and
+supported flags, options and arguments.
+
+### `ocrd` CLI
+
+* [OCR-D user guide](https://ocr-d.de/en/use)
+* [Introduction to `ocrd workspace`](https://github.com/OCR-D/ocrd-website/wiki/Intro-ocrd-workspace-CLI)
+
+### `ocrd-dummy` CLI
+
+A minimal [OCR-D processor](https://ocr-d.de/en/user_guide#using-the-ocr-d-processors) that copies from `-I/-input-file-grp` to `-O/-output-file-grp`
 
 ## Packages
 
