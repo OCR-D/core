@@ -4,7 +4,7 @@
 from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from ocrd import Resolver, Workspace
 from ocrd.processor.base import run_processor
-from ocrd.cli.dummy_processor import DummyProcessor
+from ocrd.processor.builtin.dummy_processor import DummyProcessor
 
 class TestDummyProcessor(TestCase):
 
@@ -22,8 +22,10 @@ class TestDummyProcessor(TestCase):
                 workspace=workspace
             )
             output_files = workspace.mets.find_files(fileGrp='OUTPUT')
+            # print([str(s) for s in output_files])
+            self.assertEqual(output_files[0].url, 'OUTPUT/OUTPUT_0001.tif')
             self.assertEqual(len(output_files), 3)
-            self.assertEqual(len(workspace.mets.find_files(ID='//COPY_OF.*')), 3)
+            self.assertEqual(len(workspace.mets.find_files(ID='//OUTPUT.*')), 3)
 
 if __name__ == "__main__":
     main()
