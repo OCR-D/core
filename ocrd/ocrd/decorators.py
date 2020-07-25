@@ -52,7 +52,7 @@ def ocrd_cli_wrap_processor(
     **kwargs
 ):
     if dump_json or help or version:
-        setOverrideLogLevel('OFF')
+        setOverrideLogLevel('OFF', silent=True)
         processorClass(workspace=None, dump_json=dump_json, show_help=help, show_version=version)
         sys.exit()
     else:

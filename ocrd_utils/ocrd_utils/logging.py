@@ -57,7 +57,7 @@ def getLevelName(lvl):
     lvl = _ocrdLevel2pythonLevel.get(lvl, lvl)
     return logging.getLevelName(lvl)
 
-def setOverrideLogLevel(lvl):
+def setOverrideLogLevel(lvl, silent=False):
     """
     Override all logger filter levels to include lvl and above.
 
@@ -67,10 +67,12 @@ def setOverrideLogLevel(lvl):
 
     Args:
         lvl (string): Log level name.
+        silent (boolean): Whether to log the override call
     """
     if lvl is None:
         return
-    logging.info('Overriding log level globally to %s', lvl)
+    if not silent:
+        logging.info('Overriding log level globally to %s', lvl)
     lvl = getLevelName(lvl)
     global _overrideLogLevel # pylint: disable=global-statement
     _overrideLogLevel = lvl
