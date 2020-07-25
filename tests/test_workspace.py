@@ -1,11 +1,15 @@
 from os import walk
+from subprocess import run, PIPE
 from os.path import join, exists, abspath, basename, dirname
 from tempfile import TemporaryDirectory, mkdtemp
 from shutil import copyfile
 from pathlib import Path
 
+from PIL import Image
+
 from tests.base import TestCase, assets, main, copy_of_directory
 
+from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 
@@ -16,6 +20,10 @@ SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
 SAMPLE_FILE_FILEGRP = 'OCR-D-IMG'
 SAMPLE_FILE_ID = 'INPUT_0017'
 SAMPLE_FILE_URL = join(SAMPLE_FILE_FILEGRP, '%s.tif' % SAMPLE_FILE_ID)
+
+def count_files():
+    result = run(['find'], stdout=PIPE)
+    return len(result.stdout.decode('utf-8').split('\n'))
 
 class TestWorkspace(TestCase):
 
@@ -140,6 +148,9 @@ class TestWorkspace(TestCase):
                 workspace.remove_file('non-existing-id')
             # should succeed
             workspace.remove_file('non-existing-id', force=True)
+            # should also succeed
+            workspace.overwrite_mode = True
+            workspace.remove_file('non-existing-id', force=False)
 
     def test_remove_file_remote(self):
         with TemporaryDirectory() as tempdir:
@@ -150,15 +161,21 @@ class TestWorkspace(TestCase):
                 ws.remove_file('page1_img')
             # should succeed
             ws.remove_file('page1_img', force=True)
+            # should also succeed
+            ws.overwrite_mode = True
+            ws.remove_file('page1_img', force=False)
 
     def test_remove_file_group_force(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             workspace = Workspace(self.resolver, directory=tempdir)
             with self.assertRaisesRegex(Exception, "No such fileGrp"):
-                # raise error unless force
+                # should fail
                 workspace.remove_file_group('I DO NOT EXIST')
-            # no error
+            # should succeed
             workspace.remove_file_group('I DO NOT EXIST', force=True)
+            # should also succeed
+            workspace.overwrite_mode = True
+            workspace.remove_file_group('I DO NOT EXIST', force=False)
 
     def test_remove_file_group_rmdir(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
@@ -169,10 +186,30 @@ class TestWorkspace(TestCase):
 
     def test_remove_file_page_recursive(self):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
-            ws = Workspace(self.resolver, directory=tempdir)
-            self.assertEqual(len(ws.mets.find_files()), 119)
-            ws.remove_file('OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001', page_recursive=True)
-            self.assertEqual(len(ws.mets.find_files()), 83)
+            with pushd_popd(tempdir):
+                ws = Workspace(self.resolver, directory=tempdir)
+                self.assertEqual(len(ws.mets.find_files()), 119)
+                ws.remove_file('OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001', page_recursive=True, page_same_group=False, keep_file=True)
+                self.assertEqual(len(ws.mets.find_files()), 83)
+                ws.remove_file('PAGE_0017_ALTO', page_recursive=True)
+
+    def test_remove_file_page_recursive_keep_file(self):
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
+            with pushd_popd(tempdir):
+                ws = Workspace(self.resolver, directory=tempdir)
+                before = count_files()
+                ws.remove_file('OCR-D-IMG-BINPAGE-sauvola_0001', page_recursive=True, page_same_group=False, force=True)
+                after = count_files()
+                self.assertEqual(after, before - 2, '2 files deleted')
+
+    def test_remove_file_page_recursive_same_group(self):
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
+            with pushd_popd(tempdir):
+                ws = Workspace(self.resolver, directory=tempdir)
+                before = count_files()
+                ws.remove_file('OCR-D-IMG-BINPAGE-sauvola_0001', page_recursive=True, page_same_group=True, force=False)
+                after = count_files()
+                self.assertEqual(after, before - 1, '2 file deleted')
 
     def test_download_to_directory_from_workspace_download_file(self):
         """
@@ -196,7 +233,6 @@ class TestWorkspace(TestCase):
             self.assertEqual(f2.url, 'test.xml')
 
     def test_save_image_file(self):
-        from PIL import Image
         img = Image.new('RGB', (1000, 1000))
         with TemporaryDirectory() as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
@@ -204,7 +240,28 @@ class TestWorkspace(TestCase):
                 ws.save_image_file(img, 'page1_img', 'IMG', 'page1', 'ceci/nest/pas/une/mimetype')
             ws.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg')
             self.assertTrue(exists(join(tempdir, 'IMG', 'page1_img.jpg')))
+            # should succeed
+            ws.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg', force=True)
+            # should also succeed
+            ws.overwrite_mode = True
+            ws.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg')
+
+    def test_resolve_image_exif(self):
+        with pushd_popd(assets.path_to('kant_aufklaerung_1784/data/')):
+            ws = self.resolver.workspace_from_url('mets.xml')
+            exif = ws.resolve_image_exif('OCR-D-IMG/INPUT_0017.tif')
+            self.assertEqual(exif.compression, 'jpeg')
+            self.assertEqual(exif.width, 1457)
+
+    def test_resolve_image_as_pil(self):
+        with pushd_popd(assets.path_to('kant_aufklaerung_1784/data/')):
+            ws = self.resolver.workspace_from_url('mets.xml')
+            img = ws.resolve_image_as_pil('OCR-D-IMG/INPUT_0017.tif')
+            self.assertEqual(img.width, 1457)
+            img = ws.resolve_image_as_pil('OCR-D-IMG/INPUT_0017.tif', coords=([100, 100], [50, 50]))
+            self.assertEqual(img.width, 50)
+
 
 
 if __name__ == '__main__':
-    main()
+    main(__file__)
