@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `setOverrideLoglevel` now accepts a `silent` parameter, #548
+
+Fixed:
+
+  * No more logging output interfering with `--dump-json` et al. #540
+
 ## [2.12.4] - 2020-07-22
 
 Fixed:
