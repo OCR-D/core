@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.12.6] - 2020-07-28
+
 Fixed:
 
   * Vulnerabilities in Pillow < 7.2.0, #550
@@ -1056,6 +1058,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.12.6]: ../../compare/v2.12.6..v2.12.5
 [2.12.5]: ../../compare/v2.12.5..v2.12.4
 [2.12.4]: ../../compare/v2.12.4..v2.12.3
 [2.12.3]: ../../compare/v2.12.3..v2.12.2
