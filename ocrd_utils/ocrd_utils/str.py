@@ -17,7 +17,6 @@ __all__ = [
     'parse_json_string_with_comments',
     'remove_non_path_from_url',
     'safe_filename',
-    'set_json_key_value_overrides',
 ]
 
 

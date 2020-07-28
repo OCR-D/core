@@ -25,6 +25,7 @@ help:
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
+	@echo "    install-dev    Install with pip install -e"
 	@echo "    uninstall      Uninstall the tool"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
@@ -67,6 +68,10 @@ deps-test:
 install: spec
 	$(PIP) install -U "pip>=19.0.0" wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+
+# Install with pip install -e
+install-dev: uninstall
+	$(MAKE) install PIP_INSTALL="pip install -e"
 
 # Uninstall the tool
 uninstall:
