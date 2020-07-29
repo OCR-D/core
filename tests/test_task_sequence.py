@@ -4,6 +4,7 @@ from tempfile import mkdtemp, TemporaryDirectory
 from shutil import rmtree
 
 from pathlib import Path
+from os.path import join
 
 from tests.base import TestCase, main, assets
 
@@ -36,6 +37,8 @@ SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['parameters']['param1']['required'] = True
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['input_file_grp'] += ['SECOND_IN']
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM = json.dumps(SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM)
 
+PARAM_JSON = '{"foo": 42}'
+
 class TestTaskSequence(TestCase):
 
     def tearDown(self):
@@ -43,6 +46,9 @@ class TestTaskSequence(TestCase):
 
     def setUp(self):
         self.tempdir = mkdtemp(prefix='ocrd-task-sequence-')
+        self.param_fname = join(self.tempdir, 'params.json')
+        with open(self.param_fname, 'w') as f:
+            f.write(PARAM_JSON)
 
         p = Path(self.tempdir, SAMPLE_NAME)
         p.write_text("""\
@@ -91,23 +97,28 @@ print('''%s''')
             ProcessorTask.parse('sample-processor -x wrong wrong wrong')
 
     def test_parse_ok(self):
-        task_str = 'sample-processor -I IN -O OUT -p /path/to/param.json'
+        task_str = 'sample-processor -I IN -O OUT -p %s' % self.param_fname
         task = ProcessorTask.parse(task_str)
         self.assertEqual(task.executable, 'ocrd-sample-processor')
         self.assertEqual(task.input_file_grps, ['IN'])
         self.assertEqual(task.output_file_grps, ['OUT'])
-        self.assertEqual(task.parameter_path, '/path/to/param.json')
-        self.assertEqual(str(task), task_str)
+        self.assertEqual(json.dumps(task.parameters), PARAM_JSON)
+        self.assertEqual(str(task), task_str.replace(self.param_fname, "'%s'" % PARAM_JSON))
+
+    def test_parse_repeated_params(self):
+        task_str = 'sample-processor -I IN -O OUT -p %s -P foo 23' % self.param_fname
+        task = ProcessorTask.parse(task_str)
+        self.assertEqual(task.parameters, {'foo': 23})
 
     def test_parse_parameter_none(self):
         task_str = 'sample-processor -I IN -O OUT1,OUT2'
         task = ProcessorTask.parse(task_str)
-        self.assertEqual(task.parameter_path, None)
+        self.assertEqual(task.parameters, {})
         self.assertEqual(str(task), task_str)
 
     def test_fail_validate_param(self):
-        task = ProcessorTask.parse('sample-processor -I IN -O OUT -p /path/to/param.json')
-        with self.assertRaisesRegex(Exception, 'Error parsing'):
+        task = ProcessorTask.parse('sample-processor -I IN -O OUT -p %s' % self.param_fname)
+        with self.assertRaisesRegex(Exception, r"Additional properties are not allowed \('foo' was unexpected\)"):
             task.validate()
 
     def test_fail_validate_executable(self):
@@ -158,7 +169,7 @@ print('''%s''')
             workspace = resolver.workspace_from_url(assets.path_to('kant_aufklaerung_1784/data/mets.xml'), dst_dir=tempdir)
             # should fail at step 3
             workspace.mets.add_file('OCR-D-SEG-WORD', url='foo/bar', ID='foo', pageId='page1', mimetype='image/tif')
-            with self.assertRaisesRegex(Exception, "Invalid task sequence input/output file groups: \[\"Output fileGrp\[@USE='OCR-D-SEG-WORD'\] already in METS!\"\]"):
+            with self.assertRaisesRegex(Exception, r"Invalid task sequence input/output file groups: \[\"Output fileGrp\[@USE='OCR-D-SEG-WORD'\] already in METS!\"\]"):
                 validate_tasks([ProcessorTask.parse(x) for x in [
                     "sample-processor -I OCR-D-IMG       -O OCR-D-SEG-BLOCK",
                     "sample-processor -I OCR-D-SEG-BLOCK -O OCR-D-SEG-LINE",
@@ -187,7 +198,7 @@ print('''%s''')
                     "dummy -I GRP1 -O GRP2",
                 ])
                 ws.reload_mets()
-                self.assertEquals(len(ws.mets.find_files()), 3)
+                self.assertEqual(len(ws.mets.find_files()), 3)
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ from distutils.spawn import find_executable as which # pylint: disable=import-er
 from subprocess import run, PIPE
 from collections import Counter
 
-from ocrd_utils import getLogger, parse_json_string_or_file
+from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides
 from ocrd.processor.base import run_cli
 from ocrd.resolver import Resolver
 from ocrd_validators import ParameterValidator, WorkspaceValidator, ValidationReport
@@ -17,7 +17,7 @@ class ProcessorTask():
         executable = 'ocrd-%s' % tokens.pop(0)
         input_file_grps = []
         output_file_grps = []
-        parameter_path = None
+        parameters = {}
         while tokens:
             if tokens[0] == '-I':
                 for grp in tokens[1].split(','):
@@ -28,17 +28,20 @@ class ProcessorTask():
                     output_file_grps.append(grp)
                 tokens = tokens[2:]
             elif tokens[0] == '-p':
-                parameter_path = tokens[1]
+                parameters = {**parameters, **parse_json_string_or_file(tokens[1])}
                 tokens = tokens[2:]
+            elif tokens[0] == '-P':
+                set_json_key_value_overrides(parameters, tokens[1:3])
+                tokens = tokens[3:]
             else:
                 raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
-        return ProcessorTask(executable, input_file_grps, output_file_grps, parameter_path)
+        return ProcessorTask(executable, input_file_grps, output_file_grps, parameters)
 
-    def __init__(self, executable, input_file_grps, output_file_grps, parameter_path=None):
+    def __init__(self, executable, input_file_grps, output_file_grps, parameters):
         self.executable = executable
         self.input_file_grps = input_file_grps
         self.output_file_grps = output_file_grps
-        self.parameter_path = parameter_path
+        self.parameters = parameters
         self._ocrd_tool_json = None
 
     @property
@@ -54,9 +57,6 @@ class ProcessorTask():
             raise Exception("Executable not found in PATH: %s" % self.executable)
         if not self.input_file_grps:
             raise Exception("Task must have input file group")
-        parameters = {}
-        if self.parameter_path:
-            parameters = parse_json_string_or_file(self.parameter_path)
         # TODO uncomment and adapt once OCR-D/spec#121 lands
         # # make implicit input/output groups explicit by defaulting to what is
         # # provided in ocrd-tool.json
@@ -69,7 +69,7 @@ class ProcessorTask():
             # actual_input_grps[i] = grp
         # self.input_file_grps = actual_input_grps
         param_validator = ParameterValidator(self.ocrd_tool_json)
-        report = param_validator.validate(parameters)
+        report = param_validator.validate(self.parameters)
         if not report.is_valid:
             raise Exception(report.errors)
         # TODO remove once OCR-D/spec#121 lands
@@ -82,8 +82,8 @@ class ProcessorTask():
             self.executable.replace('ocrd-', '', 1),
             ','.join(self.input_file_grps),
             ','.join(self.output_file_grps))
-        if self.parameter_path:
-            ret += ' -p %s' % self.parameter_path
+        if self.parameters:
+            ret += " -p '%s'" % json.dumps(self.parameters)
         return ret
 
 def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
@@ -140,7 +140,7 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
             overwrite=overwrite,
             input_file_grp=','.join(task.input_file_grps),
             output_file_grp=','.join(task.output_file_grps),
-            parameter=task.parameter_path
+            parameter=json.dumps(task.parameters)
         )
 
         # check return code
