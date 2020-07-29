@@ -1,14 +1,16 @@
 import json
-import click
+import logging
 from contextlib import contextmanager
-from click.testing import CliRunner
 from tempfile import TemporaryDirectory
-from os.path import join, exists
+from os.path import join
+
+import click
+from click.testing import CliRunner
 
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DUMMY_TOOL
 
-from ocrd import Processor, Resolver
+from ocrd import Resolver
 from ocrd.decorators import (
     ocrd_cli_options,
     ocrd_loglevel,
@@ -51,7 +53,6 @@ class TestDecorators(TestCase):
         self.assertIn('invalid choice: foo', err)
 
     def test_loglevel_override(self):
-        import logging
         self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.INFO)
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.INFO)
         code, _, _ = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'DEBUG'])
@@ -62,12 +63,12 @@ class TestDecorators(TestCase):
         """
         https://github.com/OCR-D/spec/pull/156
         """
-        _, out_help, _ = self.invoke_cli(cli_dummy_processor, ['--help'])
-        exit_code, out_none, err = self.invoke_cli(cli_dummy_processor, [])
-        print("exit_code=%s\nout=%s\nerr=%s" % (exit_code, out_none, err))
-        #  assert 0
-        self.assertEqual(exit_code, 1)
-        self.assertEqual(out_help, out_none)
+        with TemporaryDirectory() as tempdir:
+            with pushd_popd(tempdir):
+                _, out_help, _ = self.invoke_cli(cli_dummy_processor, ['--help'])
+                exit_code, out_none, _ = self.invoke_cli(cli_dummy_processor, [])
+                self.assertEqual(exit_code, 1)
+                self.assertEqual(out_help, out_none)
 
     def test_processor_dump_json(self):
         exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['--dump-json'])
