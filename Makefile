@@ -91,8 +91,6 @@ generate-page: repo/assets
 		--export="write etree validate" \
 		--user-methods=$(GDS_PAGE_USER) \
 		ocrd_validators/ocrd_validators/page.xsd
-	# hack to prevent #451: enum keys will be strings
-	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
 	# hack to ensure output has pc: prefix
 	@#sed -i "s/namespaceprefix_=''/namespaceprefix_='pc:'/" $(GDS_PAGE)
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
