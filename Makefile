@@ -88,8 +88,7 @@ generate-page: repo/assets
 		-f \
 		--root-element='PcGts' \
 		-o $(GDS_PAGE) \
-		--export="write etree" \
-		--disable-generatedssuper-lookup \
+		--export="write etree validate" \
 		--user-methods=$(GDS_PAGE_USER) \
 		ocrd_validators/ocrd_validators/page.xsd
 	# hack to prevent #451: enum keys will be strings
