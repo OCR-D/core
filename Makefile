@@ -88,7 +88,7 @@ generate-page: repo/assets
 		-f \
 		--root-element='PcGts' \
 		-o $(GDS_PAGE) \
-		--export="etree" \
+		--export="write etree" \
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
 		ocrd_validators/ocrd_validators/page.xsd
