@@ -103,6 +103,7 @@ generate-page: repo/assets
 		-e '/def parseString(/,/return rootObj/ d' \
 		$(GDS_PAGE)
 	cat ocrd_models/ocrd_page_parse.py >> $(GDS_PAGE)
+	sed -i 's,from generatedscollector import,from .generatedscollector import,' $(GDS_PAGE)
 
 
 #
