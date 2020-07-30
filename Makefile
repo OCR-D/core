@@ -96,6 +96,14 @@ generate-page: repo/assets
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
 	# hack to ensure child nodes also have pc: prefix...
 	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
+	#
+	# hack to replace parse, parseString and error collection logic
+	sed -i \
+		-e '/def parse(/,/return rootObj/ d' \
+		-e '/def parseString(/,/return rootObj/ d' \
+		$(GDS_PAGE)
+	cat ocrd_models/ocrd_page_parse.py >> $(GDS_PAGE)
+
 
 #
 # Repos
