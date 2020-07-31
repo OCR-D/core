@@ -5,6 +5,7 @@ from os.path import join
 from tests.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, IncompleteProcessor, DUMMY_TOOL
 
+from ocrd_utils import MIMETYPE_PAGE
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
 
@@ -29,7 +30,8 @@ class TestProcessor(TestCase):
 
     def test_with_mets_url_input_files(self):
         processor = run_processor(DummyProcessor, resolver=self.resolver, mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        self.assertEqual(len(processor.input_files), 35)
+        self.assertEqual(len(processor.input_files), 20)
+        self.assertTrue(all([f.mimetype == MIMETYPE_PAGE for f in processor.input_files]))
 
     def test_parameter(self):
         with TemporaryDirectory() as tempdir:
@@ -43,7 +45,7 @@ class TestProcessor(TestCase):
                     resolver=self.resolver,
                     mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml')
                 )
-            self.assertEqual(len(processor.input_files), 35)
+            self.assertEqual(len(processor.input_files), 20)
 
     def test_verify(self):
         proc = DummyProcessor(self.workspace)

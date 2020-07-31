@@ -8,7 +8,7 @@ from os.path import join
 
 from tests.base import TestCase, main, assets
 
-from ocrd_utils import pushd_popd
+from ocrd_utils import pushd_popd, MIMETYPE_PAGE
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask, validate_tasks, run_tasks
 
@@ -191,7 +191,7 @@ print('''%s''')
             with pushd_popd(tempdir):
                 # def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
                 ws = resolver.workspace_from_nothing(tempdir)
-                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0')
+                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE)
                 ws.save_mets()
                 run_tasks('mets.xml', 'DEBUG', None, [
                     "dummy -I GRP0 -O GRP1",

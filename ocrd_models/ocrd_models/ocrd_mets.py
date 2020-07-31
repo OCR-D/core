@@ -167,7 +167,7 @@ class OcrdMets(OcrdXmlDocument):
 
             if mimetype:
                 if mimetype.startswith(REGEX_PREFIX):
-                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE')): continue
+                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE') or ''): continue
                 else:
                     if cand.get('MIMETYPE') != mimetype: continue
 
