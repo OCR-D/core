@@ -3,7 +3,7 @@ import json
 from click import wrap_text
 from time import time
 import subprocess
-from ocrd_utils import getLogger, VERSION as OCRD_VERSION
+from ocrd_utils import getLogger, VERSION as OCRD_VERSION, MIMETYPE_PAGE
 from ocrd_validators import ParameterValidator
 
 log = getLogger('ocrd.processor')
@@ -239,6 +239,26 @@ class Processor():
     @property
     def input_files(self):
         """
-        List the input files
+        List the input files.
+
+        - If there's a PAGE-XML for the page, take it (and forget about all
+          other files for that page)
+        - Else if there's only one image, take it (and forget about all other
+          files for that page)
+        - Otherwise raise an error (complaining that only PAGE-XML warrants
+
+          having multiple images for a single page)
+        (https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593)
         """
-        return self.workspace.mets.find_files(fileGrp=self.input_file_grp, pageId=self.page_id)
+        ret = self.workspace.mets.find_files(
+            fileGrp=self.input_file_grp, pageId=self.page_id, mimetype=MIMETYPE_PAGE)
+        if ret:
+            return ret
+        ret = self.workspace.mets.find_files(
+            fileGrp=self.input_file_grp, pageId=self.page_id, mimetype="//image/.*")
+        if self.page_id and len(ret) > 1:
+            raise ValueError("No PAGE-XML %s in fileGrp '%s' but multiple images." % (
+                "for page '%s'" % self.page_id if self.page_id else '',
+                self.input_file_grp
+                ))
+        return ret
