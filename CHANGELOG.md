@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.12.7] - 2020-07-31
+
 Changed:
 
   `ocrd process` also supports `-P`, #552
@@ -1062,6 +1064,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.12.7]: ../../compare/v2.12.7..v2.12.6
 [2.12.6]: ../../compare/v2.12.6..v2.12.5
 [2.12.5]: ../../compare/v2.12.5..v2.12.4
 [2.12.4]: ../../compare/v2.12.4..v2.12.3
