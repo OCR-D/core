@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  `ocrd process` also supports `-P`, #552
+
 ## [2.12.6] - 2020-07-28
 
 Fixed:
