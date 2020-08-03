@@ -42,7 +42,7 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.photometricInterpretation, '1')
 
     def test_png2(self):
-        with Image.open(assets.path_to('scribo-test/data/OCR-D-IMG-BIN-SAUVOLA/OCR-D-SEG-PAGE-SAUVOLA-orig_tiff-BIN_sauvola.png')) as img:
+        with Image.open(assets.path_to('scribo-test/data/OCR-D-PRE-BIN-SAUVOLA/OCR-D-PRE-BIN-SAUVOLA_0001-BIN_sauvola.png')) as img:
             exif = OcrdExif(img)
         self.assertEqual(exif.width, 2097)
         self.assertEqual(exif.height, 3062)
@@ -76,4 +76,4 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.resolutionUnit, 'inches')
 
 if __name__ == '__main__':
-    main()
+    main(__file__)
