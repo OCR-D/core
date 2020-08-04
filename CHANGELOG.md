@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.13.0] - 2020-08-04
+
 Changed:
 
   * `Processor.input_files` can handle images mixed with PAGE-XML in a file group, OCR-D/spec#164, #554
@@ -1068,6 +1070,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.13.0]: ../../compare/v2.13.0..v2.12.7
 [2.12.7]: ../../compare/v2.12.7..v2.12.6
 [2.12.6]: ../../compare/v2.12.6..v2.12.5
 [2.12.5]: ../../compare/v2.12.5..v2.12.4
