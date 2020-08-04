@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `Processor.input_files` can handle images mixed with PAGE-XML in a file group, OCR-D/spec#164, #554
+
 ## [2.12.7] - 2020-07-31
 
 Changed:
