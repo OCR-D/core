@@ -20,15 +20,20 @@ __all__ = [
 ]
 
 
-def assert_file_grp_cardinality(grps, n):
+def assert_file_grp_cardinality(grps, n, msg=None):
     """
     Assert that a string of comma-separated fileGrps contains exactly ``n`` entries.
     """
     if isinstance(grps, str):
         grps = grps.split(',')
     assert len(grps) == n, \
-            "Expected exactly %d output file group%s, but '%s' has %d" % (
-                n, '' if n == 1 else 's', grps, len(grps))
+            "Expected exactly %d output file group%s%s, but '%s' has %d" % (
+                n,
+                '' if n == 1 else 's',
+                ' (%s)' % msg if msg else '',
+                grps,
+                len(grps)
+            )
 
 def concat_padded(base, *args):
     """

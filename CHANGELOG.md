@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `assert_file_grp_cardinality` accepts a third `msg` parameter
+
 ## [2.13.0] - 2020-08-04
 
 Changed:

@@ -261,6 +261,8 @@ class TestUtils(TestCase):
         with self.assertRaisesRegex(AssertionError, "Expected exactly 1 output file group, but '.'FOO', 'BAR'.' has 2"):
             assert_file_grp_cardinality('FOO,BAR', 1)
         assert_file_grp_cardinality('FOO,BAR', 2)
+        with self.assertRaisesRegex(AssertionError, r"Expected exactly 1 output file group .foo bar., but '.'FOO', 'BAR'.' has 2"):
+            assert_file_grp_cardinality('FOO,BAR', 1, 'foo bar')
 
     def test_mock_file(self):
         f = MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX')
