@@ -6,16 +6,16 @@ __all__ = [
     'Processor',
     'generate_processor_help',
     'run_cli',
-    'run_processo'
+    'run_processor'
 ]
 
 from os import makedirs
 from os.path import exists, isdir, join
-from pkg_resources import resource_filename
 from shutil import copyfileobj
 import json
 import os
 import re
+from pkg_resources import resource_filename
 
 import requests
 
@@ -149,11 +149,7 @@ class Processor():
                     with open(cache_fpath, 'wb') as f:
                         copyfileobj(r.raw, f)
             return cache_fpath
-        ret = next([cand
-                     for cand
-                     in list_resource_candidates(executable, param, val)
-                     if exists(cand)
-                    ])
+        ret = next([cand for cand in list_resource_candidates(executable, val) if exists(cand)])
         if ret:
             return ret
         bundled_fpath = resource_filename(__name__, val)
