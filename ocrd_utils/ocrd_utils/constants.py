@@ -17,6 +17,7 @@ __all__ = [
     'VERSION',
     'XDG_CONFIG_HOME',
     'XDG_DATA_HOME',
+    'XDG_CACHE_HOME',
 ]
 
 VERSION = get_distribution('ocrd_utils').version
@@ -92,3 +93,4 @@ LOG_TIMEFMT = r'%H:%M:%S'
 # See https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 XDG_DATA_HOME = os.environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in os.environ else join(expanduser('~'), '.local', 'share')
 XDG_CONFIG_HOME = os.environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in os.environ else join(expanduser('~'), '.config')
+XDG_CACHE_HOME = os.environ['XDG_CACHE_HOME'] if 'XDG_CACHE_HOME' in os.environ else join(expanduser('~'), '.cache')

@@ -69,15 +69,18 @@ Utility functions and constants usable in various circumstances.
 """
 
 from .constants import (
-    VERSION,
-    MIMETYPE_PAGE,
     EXT_TO_MIME,
-    MIME_TO_EXT,
-    PIL_TO_MIME,
-    MIME_TO_PIL,
-    REGEX_PREFIX,
     LOG_FORMAT,
-    LOG_TIMEFMT)
+    LOG_TIMEFMT,
+    MIMETYPE_PAGE,
+    MIME_TO_EXT,
+    MIME_TO_PIL,
+    PIL_TO_MIME,
+    REGEX_PREFIX,
+    VERSION,
+    XDG_CACHE_HOME,
+    XDG_CONFIG_HOME,
+    XDG_DATA_HOME)
 
 from .deprecate import (
     deprecated_alias)
