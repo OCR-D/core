@@ -125,6 +125,7 @@ from .logging import (
 
 from .os import (
     abspath,
+    list_resource_candidates,
     pushd_popd,
     unzip_file_to_dir)
 

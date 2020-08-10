@@ -2,6 +2,8 @@
 Constants for ocrd_utils.
 """
 from pkg_resources import get_distribution
+import os
+from os.path import join, expanduser
 
 __all__ = [
     'EXT_TO_MIME',
@@ -13,6 +15,8 @@ __all__ = [
     'PIL_TO_MIME',
     'REGEX_PREFIX',
     'VERSION',
+    'XDG_CONFIG_HOME',
+    'XDG_DATA_HOME',
 ]
 
 VERSION = get_distribution('ocrd_utils').version
@@ -84,3 +88,7 @@ REGEX_PREFIX = '//'
 # Log level format implementing https://ocr-d.de/en/spec/cli#logging
 LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'
 LOG_TIMEFMT = r'%H:%M:%S'
+
+# See https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+XDG_DATA_HOME = os.environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in os.environ else join(expanduser('~'), '.local', 'share')
+XDG_CONFIG_HOME = os.environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in os.environ else join(expanduser('~'), '.config')
