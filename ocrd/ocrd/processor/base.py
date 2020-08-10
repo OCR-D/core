@@ -2,11 +2,31 @@
 Processor base class and helper functions
 """
 
-__all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processo']
+__all__ = [
+    'Processor',
+    'generate_processor_help',
+    'run_cli',
+    'run_processo'
+]
 
-import os
+from os import makedirs
+from os.path import exists, isdir, join
+from pkg_resources import resource_filename
+from shutil import copyfileobj
 import json
-from ocrd_utils import getLogger, VERSION as OCRD_VERSION, MIMETYPE_PAGE
+import os
+import re
+
+import requests
+
+from ocrd_utils import (
+    getLogger,
+    VERSION as OCRD_VERSION,
+    MIMETYPE_PAGE,
+    list_resource_candidates,
+    list_all_resources,
+    XDG_CACHE_HOME
+)
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
@@ -84,6 +104,7 @@ class Processor():
         """
         raise Exception("Must be implemented")
 
+
     def add_metadata(self, pcgts):
         """
         Adds PAGE-XML MetadataItem describing the processing step
@@ -98,6 +119,54 @@ class Processor():
                         Label=[LabelType(type_=name,
                             value=self.parameter[name])
                             for name in self.parameter.keys()])]))
+
+    def resolve_resource(self, parameter_name, val):
+        """
+        Resolve a resource name with the algorithm in
+        https://ocr-d.de/en/spec/ocrd_tool#file-parameters
+
+        Args:
+            parameter_name (string): name of parameter to resolve resource for
+            val (string): resource value to resolve
+        """
+        executable = self.ocrd_tool['executable']
+        try:
+            param = self.ocrd_tool['parameter'][parameter_name]
+        except KeyError:
+            raise ValueError("Parameter '%s' not defined in ocrd-tool.json" % parameter_name)
+        if not param['mimetype']:
+            raise ValueError("Parameter '%s' is not a file parameter (has no 'mimetype' field)" %
+                             parameter_name)
+        if val.startswith('http:') or val.startswith('https:'):
+            cache_dir = join(XDG_CACHE_HOME, executable)
+            cache_key = re.sub('[^A-Za-z0-9]', '', val)
+            cache_fpath = join(cache_dir, cache_key)
+            # TODO Proper caching (make head request for size, If-Modified etc)
+            if not exists(cache_fpath):
+                if not isdir(cache_dir):
+                    makedirs(cache_dir)
+                with requests.get(val, stream=True) as r:
+                    with open(cache_fpath, 'wb') as f:
+                        copyfileobj(r.raw, f)
+            return cache_fpath
+        ret = next([cand
+                     for cand
+                     in list_resource_candidates(executable, param, val)
+                     if exists(cand)
+                    ])
+        if ret:
+            return ret
+        bundled_fpath = resource_filename(__name__, val)
+        if exists(bundled_fpath):
+            return bundled_fpath
+        raise FileNotFoundError("Could not resolve '%s' file parameter value '%s'" %
+                                (parameter_name, val))
+
+    def list_all_resources(self):
+        """
+        List all resources found in the filesystem
+        """
+        return list_all_resources(self.ocrd_tool['executable'])
 
     @property
     def input_files(self):
