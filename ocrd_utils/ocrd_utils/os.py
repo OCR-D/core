@@ -10,7 +10,7 @@ __all__ = [
 
 import contextlib
 from os import getcwd, chdir
-from os.path import join, expanduser
+from os.path import join, expanduser, isdir, exists
 import os.path
 from zipfile import ZipFile
 
@@ -48,10 +48,10 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
-def list_resource_candidates(executable, param, fname, cwd=os.getcwd()):
+def list_resource_candidates(executable, fname, cwd=os.getcwd()):
     """
     Generate candidates for processor resources according to
-    https://ocr-d.de/en/spec/ocrd_tool#file-parameters
+    https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
     """
     candidates = []
     candidates.append(join(cwd, fname))
@@ -62,4 +62,30 @@ def list_resource_candidates(executable, param, fname, cwd=os.getcwd()):
         candidates.append(join(os.environ['VIRTUAL_ENV'], 'share', executable, fname))
     candidates.append(join(XDG_DATA_HOME), executable, fname)
     candidates.append(join(XDG_CONFIG_HOME), executable, fname)
+    return candidates
+
+def list_all_resources(executable):
+    """
+    List all processor resources in the filesystem according to
+    https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
+    """
+    candidates = []
+    # XXX this will produce too many false positives
+    # for root, dirs, files in os.walk(cwd):
+    #     candidates += files
+    processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
+    if processor_path_var in os.environ:
+        for processor_path in os.environ[processor_path_var].split(':'):
+            if isdir(processor_path):
+                for root, dirs, files in os.walk(processor_path):
+                    candidates += files
+    if 'VIRTUAL_ENV' in os.environ:
+        sharedir = join(os.environ['VIRTUAL_ENV'], 'share', executable)
+        if isdir(sharedir):
+            for root, dirs, files in os.walk(sharedir):
+                candidates += files
+    for xdgdir in [join(d, executable) for d in [XDG_DATA_HOME, XDG_CONFIG_HOME]]:
+        if isdir(xdgdir):
+            for root, dirs, files in os.walk(xdgdir):
+                candidates += files
     return candidates
