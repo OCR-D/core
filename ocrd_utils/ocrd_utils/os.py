@@ -14,7 +14,7 @@ from os.path import join, expanduser, isdir, exists
 import os.path
 from zipfile import ZipFile
 
-from .constants import XDG_DATA_HOME, XDG_CONFIG_HOME
+from .constants import XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_CACHE_HOME
 
 def abspath(url):
     """
@@ -84,7 +84,7 @@ def list_all_resources(executable):
         if isdir(sharedir):
             for root, dirs, files in os.walk(sharedir):
                 candidates += files
-    for xdgdir in [join(d, executable) for d in [XDG_DATA_HOME, XDG_CONFIG_HOME]]:
+    for xdgdir in [join(d, executable) for d in [XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_CACHE_HOME]]:
         if isdir(xdgdir):
             for root, dirs, files in os.walk(xdgdir):
                 candidates += files
