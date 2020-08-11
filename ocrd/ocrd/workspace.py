@@ -205,6 +205,8 @@ class Workspace():
             file_grp,
             kwargs.get('local_filename'),
             content is not None)
+        if 'pageId' not in kwargs:
+            raise ValueError("workspace.add_file must be passed a 'pageId' kwarg, even if it is None.")
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
