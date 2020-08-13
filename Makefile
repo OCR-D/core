@@ -62,6 +62,7 @@ deps-ubuntu:
 
 # Install test python deps via pip
 deps-test:
+	$(PIP) install -U "pip>=19.0.0"
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
