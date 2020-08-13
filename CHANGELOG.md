@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * workspace: Possible source of "too many open files" closed, #564
+
 ## [2.13.1] - 2020-08-07
 
 Changed:
