@@ -40,6 +40,7 @@ class TestWorkspace(TestCase):
                 ID='ID1',
                 mimetype='image/tiff',
                 content='CONTENT',
+                pageId=None,
                 local_filename=fpath
             )
             f = ws1.mets.find_files()[0]
@@ -52,7 +53,7 @@ class TestWorkspace(TestCase):
     def test_workspace_add_file_basename_no_content(self):
         with TemporaryDirectory() as tempdir:
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws1.add_file('GRP', ID='ID1', mimetype='image/tiff')
+            ws1.add_file('GRP', ID='ID1', mimetype='image/tiff', pageId=None)
             f = ws1.mets.find_files()[0]
             self.assertEqual(f.url, None)
 
@@ -60,14 +61,14 @@ class TestWorkspace(TestCase):
         with TemporaryDirectory() as tempdir:
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
             fpath = join(tempdir, 'subdir', 'ID1.tif')
-            ws1.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar')
+            ws1.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar', pageId=None)
             self.assertTrue(exists(fpath))
 
     def test_workspacec_add_file_content_wo_local_filename(self):
         with TemporaryDirectory() as tempdir:
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
             with self.assertRaisesRegex(Exception, "'content' was set but no 'local_filename'"):
-                ws1.add_file('GRP', ID='ID1', content=b'CONTENT')
+                ws1.add_file('GRP', ID='ID1', content=b'CONTENT', pageId='foo1234')
 
 
     def test_workspace_str(self):
@@ -156,7 +157,7 @@ class TestWorkspace(TestCase):
     def test_remove_file_remote(self):
         with TemporaryDirectory() as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('IMG', ID='page1_img', mimetype='image/tiff', url='http://remote')
+            ws.add_file('IMG', ID='page1_img', mimetype='image/tiff', url='http://remote', pageId=None)
             with self.assertRaisesRegex(Exception, "not locally available"):
                 # should fail
                 ws.remove_file('page1_img')
@@ -220,8 +221,8 @@ class TestWorkspace(TestCase):
         with TemporaryDirectory() as tempdir:
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
 
-            f1 = ws1.add_file('IMG', ID='page1_img', mimetype='image/tiff', local_filename='test.tif', content='')
-            f2 = ws1.add_file('GT', ID='page1_gt', mimetype='text/xml', local_filename='test.xml', content='')
+            f1 = ws1.add_file('IMG', ID='page1_img', mimetype='image/tiff', local_filename='test.tif', content='', pageId=None)
+            f2 = ws1.add_file('GT', ID='page1_gt', mimetype='text/xml', local_filename='test.xml', content='', pageId=None)
 
             self.assertEqual(f1.url, 'test.tif')
             self.assertEqual(f2.url, 'test.xml')

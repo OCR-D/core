@@ -139,6 +139,8 @@ class TestOcrdWfStep(TestCase):
             with pushd_popd(wsdir):
                 ws = resolver.workspace_from_url('mets.xml')
                 files_before = len(ws.mets.find_files())
+                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE, pageId=None)
+                ws.save_mets()
                 run_tasks('mets.xml', 'DEBUG', None, [
                     "dummy -I OCR-D-IMG -O GRP1",
                     "dummy -I GRP1 -O GRP2",
