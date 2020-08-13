@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.13.2] - 2020-08-13
+
 Fixed:
 
   * workspace: Possible source of "too many open files" closed, #564
@@ -1080,6 +1082,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.13.2]: ../../compare/v2.13.2..v2.13.1
 [2.13.1]: ../../compare/v2.13.1..v2.13.0
 [2.13.0]: ../../compare/v2.13.0..v2.12.7
 [2.12.7]: ../../compare/v2.12.7..v2.12.6
