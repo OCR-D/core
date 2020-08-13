@@ -278,6 +278,7 @@ class Workspace():
 
         with pushd_popd(self.directory):
             pil_image = Image.open(image_filename)
+            pil_image.load() # alloc and give up the FD
 
         if coords is None:
             return pil_image
