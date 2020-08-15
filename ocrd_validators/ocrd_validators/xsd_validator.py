@@ -4,7 +4,9 @@ Validating XML Schema
 
 from pathlib import Path
 from lxml import etree as ET
-from .report import ValidationReport
+
+from ocrd_models import ValidationReport
+
 from .constants import XSD_PATHS
 
 #

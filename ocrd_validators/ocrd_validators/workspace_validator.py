@@ -6,10 +6,10 @@ from traceback import format_exc
 from pathlib import Path
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
+from ocrd_models import ValidationReport
 from ocrd_modelfactory import page_from_file
 
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
-from .report import ValidationReport
 from .page_validator import PageValidator
 from .xsd_page_validator import XsdPageValidator
 from .xsd_mets_validator import XsdMetsValidator

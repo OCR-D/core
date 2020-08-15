@@ -7,13 +7,11 @@ __all__ = [
     'PageValidator',
     'OcrdToolValidator',
     'OcrdZipValidator',
-    'ValidationReport',
     'XsdValidator',
     'XsdMetsValidator',
     'XsdPageValidator',
 ]
 
-from .report import ValidationReport
 from .parameter_validator import ParameterValidator
 from .workspace_validator import WorkspaceValidator
 from .page_validator import PageValidator

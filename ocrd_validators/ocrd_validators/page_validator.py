@@ -29,7 +29,7 @@ from ocrd_models.ocrd_page_generateds import (
     UnorderedGroupType,
     UnorderedGroupIndexedType,
 )
-from .report import ValidationReport
+from ocrd_models import ValidationReport
 
 log = getLogger('ocrd.page_validator')
 
