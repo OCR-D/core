@@ -13,7 +13,9 @@ class OcrdWfStep():
     @classmethod
     def parse(cls, argstr):
         tokens = shlex_split(argstr)
-        executable = 'ocrd-%s' % tokens.pop(0)
+        executable = tokens.pop(0)
+        if not executable.startswith('ocrd-'):
+            executable = 'ocrd-%s' % executable
         input_file_grps = []
         output_file_grps = []
         parameters = {}
