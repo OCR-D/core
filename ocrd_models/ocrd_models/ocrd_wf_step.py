@@ -1,5 +1,7 @@
 import json
-from shlex import split as shlex_split
+from shlex import split as shlex_split, quote
+# only in 3.8+ :(
+# from shlex import join as shlex_join
 from subprocess import run, PIPE
 
 from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides
@@ -50,11 +52,12 @@ class OcrdWfStep():
         return self._ocrd_tool_json
 
     def __str__(self):
-        ret = '%s -I %s -O %s' % (
-            self.executable.replace('ocrd-', '', 1),
-            ','.join(self.input_file_grps),
-            ','.join(self.output_file_grps))
-        if self.parameters:
-            ret += " -p '%s'" % json.dumps(self.parameters)
-        return ret
+        ret = [self.executable]
+        if self.input_file_grps:
+            ret += ['-I', ','.join(self.input_file_grps)]
+        if self.output_file_grps:
+            ret += ['-O', ','.join(self.output_file_grps)]
+        for k in self.parameters:
+            ret += ['-P', k, json.dumps(self.parameters[k])]
+        return ' '.join([quote(s) for s in ret])
 
