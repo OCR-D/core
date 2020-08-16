@@ -1,3 +1,6 @@
+from os.path import join
+from tempfile import TemporaryDirectory
+
 from tests.base import main
 from tests.data.wf_testcase import (
     TestCase,
@@ -48,6 +51,23 @@ class TestOcrdWf(TestCase):
             'ocrd-sample-processor',
             "ocrd-sample-processor -P foo '\"bar\"' -P bar '\"foo\"'"
             ])
+
+    def test_parse_line_continuation_from_file(self):
+        with TemporaryDirectory() as tempdir:
+            fname = join(tempdir, 'test.ocrd.wf')
+            with open(fname, 'w') as f:
+                f.write(OCRD_WF_SHEBANG + "\n" +
+                "ocrd-sample-processor\n" +
+                "sample-processor \\\n" +
+                "  -P foo bar \\\n" +
+                "  # a comment interspersed\n" +
+                "  -P bar foo\n")
+            wf = OcrdWf.parse_file(fname)
+            self.assertEqual([str(x) for x in wf.steps], [
+                'ocrd-sample-processor',
+                "ocrd-sample-processor -P foo '\"bar\"' -P bar '\"foo\"'"
+                ])
+
 
 if __name__ == "__main__":
     main(__file__)

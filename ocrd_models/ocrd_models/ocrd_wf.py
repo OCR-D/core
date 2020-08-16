@@ -1,3 +1,4 @@
+import io
 import re
 
 from .constants import OCRD_WF_SHEBANG
@@ -8,6 +9,11 @@ class OcrdWf():
     def __init__(self, steps=None, assignments=None):
         self.steps = steps if steps else []
         self.assignments = assignments if assignments else {}
+
+    @staticmethod
+    def parse_file(fname):
+        with io.open(fname, mode='r', encoding='utf-8') as f:
+            return OcrdWf.parse(f.read())
 
     @staticmethod
     def parse(src):
