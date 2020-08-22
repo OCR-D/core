@@ -34,6 +34,15 @@ class TestDummyProcessor(TestCase):
             self.assertEqual(len(workspace.mets.find_files(ID='//OUTPUT.*')), 6)
             self.assertEqual(len(workspace.mets.find_files(ID='//OUTPUT.*_PAGE')), 3)
             self.assertEqual(len(workspace.mets.find_files(fileGrp='OUTPUT', mimetype=MIMETYPE_PAGE)), 3)
+            run_processor(
+                DummyProcessor,
+                input_file_grp='OUTPUT',
+                output_file_grp='OUTPUT2',
+                workspace=workspace
+            )
+            output2_files = workspace.mets.find_files(fileGrp='OUTPUT2')
+            output2_files.sort(key=lambda x: x.url)
+            self.assertEqual(len(output2_files), 3)
 
 if __name__ == "__main__":
     main(__file__)
