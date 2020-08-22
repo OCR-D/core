@@ -44,7 +44,7 @@ def concat_padded(base, *args):
         if is_string(n):
             ret = "%s_%s" % (ret, n)
         else:
-            ret = "%s_%04i"  % (ret, n + 1)
+            ret = "%s_%04i"  % (ret, n)
     return ret
 
 def remove_non_path_from_url(url):
