@@ -8,6 +8,7 @@ import os
 import json
 from ocrd_utils import getLogger, VERSION as OCRD_VERSION, MIMETYPE_PAGE
 from ocrd_validators import ParameterValidator
+from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
@@ -82,6 +83,21 @@ class Processor():
         Process the workspace
         """
         raise Exception("Must be implemented")
+
+    def add_metadata(self, pcgts):
+        """
+        Adds PAGE-XML MetadataItem describing the processing step
+        """
+        pcgts.get_Metadata().add_MetadataItem(
+                MetadataItemType(type_="processingStep",
+                    name=self.ocrd_tool['steps'][0],
+                    value=self.ocrd_tool['executable'],
+                    Labels=[LabelsType(
+                        externalModel="ocrd-tool",
+                        externalId="parameters",
+                        Label=[LabelType(type_=name,
+                            value=self.parameter[name])
+                            for name in self.parameter.keys()])]))
 
     @property
     def input_files(self):
