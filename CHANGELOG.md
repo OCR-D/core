@@ -9,6 +9,10 @@ Fixed:
 
   * `make_file_id` ID incrementation algorithm failed under certain conditions, #570
 
+Changed:
+
+  * ValidationReport is now in ocrd_models, not ocrd_validators
+
 ## [2.13.2] - 2020-08-13
 
 Fixed:
