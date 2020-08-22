@@ -12,7 +12,7 @@ from bagit import Bag, BagValidationError # pylint: disable=no-name-in-module
 from bagit_profile import Profile, ProfileValidationError # pylint: disable=no-name-in-module
 
 from .constants import OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
-from .report import ValidationReport
+from ocrd_models import ValidationReport
 
 log = getLogger('ocrd.ocrd_zip_validator')
 

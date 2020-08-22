@@ -5,7 +5,7 @@ import json
 
 from jsonschema import Draft4Validator, validators # pylint: disable=import-error
 
-from .report import ValidationReport
+from ocrd_models import ValidationReport
 
 # http://python-jsonschema.readthedocs.io/en/latest/faq/
 def extend_with_default(validator_class):

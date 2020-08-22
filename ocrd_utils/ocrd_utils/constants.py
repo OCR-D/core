@@ -4,12 +4,15 @@ Constants for ocrd_utils.
 from pkg_resources import get_distribution
 
 __all__ = [
-    'VERSION',
-    'MIMETYPE_PAGE',
     'EXT_TO_MIME',
+    'LOG_FORMAT',
+    'LOG_TIMEFMT',
+    'MIMETYPE_PAGE',
     'MIME_TO_EXT',
-    'PIL_TO_MIME',
     'MIME_TO_PIL',
+    'PIL_TO_MIME',
+    'REGEX_PREFIX',
+    'VERSION',
 ]
 
 VERSION = get_distribution('ocrd_utils').version
@@ -35,6 +38,7 @@ EXT_TO_MIME = {
 
 MIME_TO_EXT = {
     'image/tiff': '.tif',
+    'image/tif': '.tif',
     'image/png': '.png',
     'image/jpg': '.jpg',
     'image/jpeg': '.jpg',
@@ -73,3 +77,10 @@ MIME_TO_PIL = {
     'image/x-portable-pixmap': 'PPM',
     'image/tiff': 'TIFF',
 }
+
+# Prefix to denote query is regular expression not fixed string
+REGEX_PREFIX = '//'
+
+# Log level format implementing https://ocr-d.de/en/spec/cli#logging
+LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'
+LOG_TIMEFMT = r'%H:%M:%S'

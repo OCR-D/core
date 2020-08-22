@@ -1,0 +1,8 @@
+{
+  "executable": "ocrd-dummy",
+  "description": "Bare-bones processor that copies file from input group to output group",
+  "steps": ["preprocessing/optimization"],
+  "categories": ["Image preprocessing"],
+  "input_file_grp": "DUMMY_INPUT",
+  "output_file_grp": "DUMMY_OUTPUT"
+}

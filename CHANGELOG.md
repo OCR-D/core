@@ -5,6 +5,342 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.14.0] - 2020-08-22
+
+Fixed:
+
+  * `make_file_id` ID incrementation algorithm failed under certain conditions, #570
+
+Changed:
+
+  * ValidationReport is now in ocrd_models, not ocrd_validators, #573
+  * `run_cli` now returns `exitcode, stdout, stderr`, not just `exit_code`, #574
+  * `ocrd-dummy` will create PAGE-XML for images on-the-fly, #574
+
+Added:
+
+  * processors can `self.add_metada(pcgts)` to add a self-describing `pg:MetadataItem`, #574
+
+
+## [2.13.2] - 2020-08-13
+
+Fixed:
+
+  * workspace: Possible source of "too many open files" closed, #564
+
+## [2.13.1] - 2020-08-07
+
+Changed:
+
+  * `assert_file_grp_cardinality` accepts a third `msg` parameter
+
+## [2.13.0] - 2020-08-04
+
+Changed:
+
+  * `Processor.input_files` can handle images mixed with PAGE-XML in a file group, OCR-D/spec#164, #554
+
+## [2.12.7] - 2020-07-31
+
+Changed:
+
+  `ocrd process` also supports `-P`, #552
+
+## [2.12.6] - 2020-07-28
+
+Fixed:
+
+  * Vulnerabilities in Pillow < 7.2.0, #550
+
+## [2.12.5] - 2020-07-25
+
+Changed:
+
+  * `setOverrideLoglevel` now accepts a `silent` parameter, #548
+
+Fixed:
+
+  * No more logging output interfering with `--dump-json` et al. #540
+
+## [2.12.4] - 2020-07-22
+
+Fixed:
+
+  * logging no longer intereferes with `--dump-json`/`--help`/`--version`, #540, #546
+
+## [2.12.3] - 2020-07-23
+
+Fixed:
+
+  * `ocrd workspace validate`: properly check whether AlternativeImage are available locally, #450, 543
+  * `ocrd workspace validate`: reduce `INFO` log messages
+
+## [2.12.2] - 2020-07-22
+
+Fixed:
+
+  * `ocrd_validators`: adapt ocrd-tool schema to include OCR-D/spec#152
+
+## [2.12.1] - 2020-07-21
+
+Fixed:
+
+  * `ocrd process`: first task was ignored, #529, #542
+
+## [2.12.0] - 2020-07-21
+
+Changed:
+
+  * Refactoring of `ocrd_utils.__init__` into thematic submodules, #536
+  * validation of file groups downgraded to notice, allow PRE fileGrp/USE prefix, #541
+  * BaseProcessor: :fire: show help if no METS was specified, OCR-D/spec#156, #438, #503
+
+Fixed:
+
+  * bashlib: Don't set `-x` in `ocrd__minversion`, #535
+  * bashlib: `ocrd__minversion` logic was broken
+
+## [2.11.0] - 2020-07-13
+
+Fixed:
+
+  * OcrdFile now has `__eq__` implementation to allow for `==`/`!=` comparisons, #532
+  * `Workspace.image_from_page`: Respect the order of feature annotation on `page:AlternativeImage`, #525
+
+Changed:
+
+  * processors: `-p` is now repeatable and the referenced JSON may contain comments, #514, #533
+  * `ocrd workspace validate`: `METS_URL` argument now optional as redundant to `--directory`/`--mets-basename`, #518
+  * `ocrd workspace clone`: `WORKSPACE_DIR` argument now optional as redundant to `--directory`, #518
+  * `ocrd workspace init`: `DIRECTORY` argument now optional as redundant to `--directory`, #518
+  * `ocrd workpace *`: Pass `--mets-basename` on to resolver, #518
+
+Added:
+
+  * processors: `-P/--parameter-override` to override individual key-value pair of the parameter JSON, #533
+  * utils: `make_file_id` to generate new `mets:file/@ID` from existing OcrdFiles, #530
+  * utils: `assert_file_grp_cardinality` to assert the correct number of comma-separated fileGrps were passed, #530
+
+## [2.10.5] - 2020-07-11
+
+Fixed:
+
+  * Blacklist PIL versions with PNG issues, #527
+  * `ocrd workspace validate`: Allow skipping `page_xsd` and `mets_xsd`, #531
+  * Fix import of `xlink` XSD in `mets` XSD, #531
+
+## [2.10.4] - 2020-06-17
+
+Added:
+
+  * `bashlib`: support --overwrite flag, #522
+
+## [2.10.3] - 2020-06-16
+
+Fixed:
+
+  * Regression in `ocrd workspace add` that prevented files from being copied, #519
+
+## [2.10.2] - 2020-06-14
+
+Fixed:
+
+  * bashlib: Typo, #516
+
+## [2.10.1] - 2020-06-13
+
+Changed:
+* bashlib: Make `input-file-grp` and `output-file-grp` mandatory, #512
+* bashlib: Add a function `ocrd__minversion` that will check whether `ocrd --version` is new enough for the processor., #512
+
+Fixed:
+
+* Re-introduce `ocrd__raise`, #511
+* Move XSD into root package of `ocrd_validators`, #513
+
+## [2.10.0] - 2020-06-11
+
+Fixed:
+
+  * `--help`: Improve formatting of parameters, document `--overwrite`, ht @bersky
+
+Changed:
+
+  * `Workspace.remove_file`: Optional `page_recursive` parameter to remove images linked in PAGE as well, #434, #471
+  * `Workspace.remove_file`: Optional `page_same_gropup` parameter to remove
+    only those images linked in PAGE that are in the same group as the PAGE-XML
+  * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
+  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
+    output file group is targeted but for pages that aren't in that group, #471
+  * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
+  * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
+  * <del>`Task.validate`: set implicit input/output groups from ocrd-tool.json, #471</del> blocked by OCR-D/spec#121
+  * `ocrd process`: support --overwrite and pass on to processor calls, #471
+  * `TaskSequencec.validate_tasks`: Check output file groups are not in METS unless overwrite for every task, ht @bersky
+  * `ocrd workspace add` / `ocrd workspace bulk-add` support `--ignore`
+
+
+Added:
+
+  * Workspace: Optional `overwrite_mode` that sets `force` for all operations
+  * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
+  * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
+  * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
+
+## [2.9.0] - 2020-06-09
+
+Changed:
+
+  * `OcrdMets.add_file` now validates file ID syntax, #447
+
+Added:
+
+  * `ocrd log`, CLI to OCR-D's logging mechanism, #472
+  * XML Schema validation of PAGE-XML and METS, #470
+
+## [2.8.3] - 2020-06-08
+
+Fixed:
+
+  * workspace.remove_file: fix for list-valued results, #507
+
+
+Changed:
+
+  * workspace prune-files CLI: support filtering (like workspace find), #507
+  * workspace CLI: update help strings (documenting regex support), #507
+
+
+## [2.8.2] - 2020-06-08
+
+Changed:
+
+  * bashlib: check bash version to be >= 4.4, #445, OCR-D/ocrd_olena#30
+  * `ocrd workspace add` supports `-C`/`--check-file-exists` to validate that `FNAME` is an existing local file, #495
+  * `OcrdFile` constructor accepts `ID` parameter
+  * `model_factory.page_from_image` now sets the `@pcGtsId` attribute tot the file's `@ID`, #378
+  * `WorkspaceValidator`:  check `pc:PcGts/@pcGtsId` == `mets:file/@ID`, #378
+  * `OcrdFile` constructor: removed long-obsolete `instance` parameter
+  * `OcrdFile` constructor: accepts `pageId` parameter
+  * METS: reorder elements according to schema in empty METS, #487
+
+
+## [2.8.1] - 2020-06-06
+
+Changed:
+
+  * `OcrdMets.remove_file` now supports all the options of `OcrdMets.find_files`, #497, #458
+  * `OcrdMets.remove_file_group` now supports the `USE` param being a regex,, #497, #458
+
+Added:
+
+  * `OcrdMets.remove_one_file`: remove a single `OcrdFile`, either directly or by ID, #497, #458
+
+## [2.8.0] - 2020-06-04
+
+Added:
+
+  * `ocrd-dummy`, a minimal processor that copies input to output, #468
+  * OcrdPage: `get_AllRegions`: retrieve all regions, sorted by document or reading order, #479
+  * OcrdPage: `sort_AllIndexed`: sort all children by `@index`  in-place
+  * OcrdPage: `clear_AllIndexed`: clear all `@index` children
+  * OcrdPage: `extend_AllIndexed`: Add elements with incrementing `@index`
+  * OcrdPage: Replace empty reading order groups with equivalent `RegionRef` on export
+  * OcrdPage: `get_UnorderedGroupChildren`: get reading order elements of an `UnorderedGroup`
+
+
+Changed:
+
+  * OcrdPage: `get_AllIndexed`: allow filtering by child type
+  * OcrdPage: `get_AllIndexed`: index_sort parameter to enable/disable sorting
+
+## [2.7.1] - 2020-05-27
+
+Fixed:
+
+  * `ocrd workspace find`: Use `OcrdMets.get_physical_pages` method, fix #491
+
+## [2.7.0] - 2020-05-27
+
+Changed:
+
+   * :fire: `Workspace.image_from_page` no longer treats `PrintSpace` as functionally equivalent to `Border`, #490
+  * `OcrdMets.get_physical_pages` method companion to `OcrdMets.physical_pages` property, #484
+  * OcrdMets/ocrd workspace find: Search for multiple pages by fileid, ht @bertsky, #463, #484
+  * PAGE validation: respect reading order in consistency checks, #442
+
+## [2.6.1] - 2020-05-14
+
+Added:
+
+  * OcrdPage: new method `get_AllIndexed` for OrderedGroup and OrderedGroupIndexed that lists
+    their children, sorted by index, #478
+
+Changed:
+
+  * Improved log message for profiling processors, #477
+
+Fixed:
+
+  * Search for `--page-id` now orders of magnitutde faster, ht @bertsky, #481
+  * Not all generateDS types were exported by ocrd_page, now they are, #480
+
+
+## [2.6.0] - 2020-05-12
+
+Fixed:
+
+  * image files no longer cached in workspace, #446, #448
+
+Added
+
+  * Many mets:file search fields support regex now, #458, #448
+
+## [2.5.3] - 2020-04-30
+
+Fixed:
+
+  * OcrdPage: hacks to make XML namespace output consistent, #474
+
+## [2.5.2] - 2020-04-29
+
+Fixed:
+
+  * logging: format is spec-conformant again, #466
+
+Added:
+
+  * ocrd_page: generateDS-generated code has `__hash__` method now, #443
+
+## [2.5.1] - 2020-04-23
+
+Fixed:
+
+  * logging: disable propagation for loggers with handler, #463
+
+## [2.5.0] - 2020-04-23
+
+Changed:
+
+  * Logging configuration via configuration file, not script, #460 (HT @M3ssman @bertsky)
+
+Added:
+
+  * Execution of processors is tracked with logger 'orcd.process.profile', #461
+
+## [2.4.4] - 2020-03-17
+
+Fixed:
+
+  * #437 broke simple types in PAGE model, (really) revert 3a0a3a8, #451
+
+## [2.4.3] - 2020-03-12
+
+Fixed:
+
+  * bashlib: ocrd-tool.json-related errors no longer lead to silent exit, #456
+  * #437 broke simple types in PAGE model, revert 3a0a3a8, #451
+
 ## [2.4.2] - 2020-02-20
 
 Fixed:
@@ -763,6 +1099,40 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.14.0]: ../../compare/v2.14.0..v2.13.2
+[2.13.2]: ../../compare/v2.13.2..v2.13.1
+[2.13.1]: ../../compare/v2.13.1..v2.13.0
+[2.13.0]: ../../compare/v2.13.0..v2.12.7
+[2.12.7]: ../../compare/v2.12.7..v2.12.6
+[2.12.6]: ../../compare/v2.12.6..v2.12.5
+[2.12.5]: ../../compare/v2.12.5..v2.12.4
+[2.12.4]: ../../compare/v2.12.4..v2.12.3
+[2.12.3]: ../../compare/v2.12.3..v2.12.2
+[2.12.2]: ../../compare/v2.12.2..v2.12.1
+[2.12.1]: ../../compare/v2.12.1..v2.12.0
+[2.12.0]: ../../compare/v2.12.0..v2.11.0
+[2.11.0]: ../../compare/v2.11.0..v2.10.5
+[2.10.5]: ../../compare/v2.10.5..v2.10.4
+[2.10.4]: ../../compare/v2.10.4..v2.10.3
+[2.10.3]: ../../compare/v2.10.3..v2.10.2
+[2.10.2]: ../../compare/v2.10.2..v2.10.1
+[2.10.1]: ../../compare/v2.10.1..v2.10.0
+[2.10.0]: ../../compare/v2.10.0..v2.9.0
+[2.9.0]: ../../compare/v2.9.0..v2.8.3
+[2.8.3]: ../../compare/v2.8.3...v2.8.2
+[2.8.2]: ../../compare/v2.8.2...v2.8.1
+[2.8.1]: ../../compare/v2.8.1...v2.8.0
+[2.8.0]: ../../compare/v2.8.0...v2.7.1
+[2.7.1]: ../../compare/v2.7.1...v2.7.0
+[2.7.0]: ../../compare/v2.7.0...v2.6.1
+[2.6.1]: ../../compare/v2.6.1...v2.6.0
+[2.6.0]: ../../compare/v2.6.0...v2.5.3
+[2.5.3]: ../../compare/v2.5.3...v2.5.2
+[2.5.2]: ../../compare/v2.5.2...v2.5.1
+[2.5.1]: ../../compare/v2.5.1...v2.5.0
+[2.5.0]: ../../compare/v2.5.0...v2.4.4
+[2.4.4]: ../../compare/v2.4.4...v2.4.3
+[2.4.3]: ../../compare/v2.4.3...v2.4.2
 [2.4.2]: ../../compare/v2.4.2...v2.4.1
 [2.4.1]: ../../compare/v2.4.1...v2.4.0
 [2.4.0]: ../../compare/v2.4.0...v2.3.1

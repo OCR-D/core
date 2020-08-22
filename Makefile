@@ -7,9 +7,6 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
-# PAGE schema version to use. Default: '$(PAGE_VERSION)'
-PAGE_VERSION = 2019
-
 SPHINX_APIDOC = 
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
@@ -31,6 +28,7 @@ help:
 	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
 	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
+	@echo "    install-dev    Install with pip install -e"
 	@echo "    uninstall      Uninstall the tool"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
@@ -50,7 +48,6 @@ help:
 	@echo ""
 	@echo "  Variables"
 	@echo ""
-	@echo "    PAGE_VERSION           PAGE schema version to use. Default: '$(PAGE_VERSION)'"
 	@echo "    DOCKER_ARGS            Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
 	@echo "    DOCKER_GPU_BASE_IMAGE  Base image to use for the ocrd/core-gpu variant. Default: $(DOCKER_GPU_BASE_IMAGE)"
 	@echo "    DOCKER_TAG             Docker tag."
@@ -70,6 +67,7 @@ deps-ubuntu:
 
 # Install test python deps via pip
 deps-test:
+	$(PIP) install -U "pip>=19.0.0"
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
@@ -77,17 +75,32 @@ install: spec
 	$(PIP) install -U "pip>=19.0.0" wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
+# Install with pip install -e
+install-dev: uninstall
+	$(MAKE) install PIP_INSTALL="pip install -e"
+
 # Uninstall the tool
 uninstall:
 	for mod in $(BUILD_ORDER);do pip uninstall -y $$mod;done
 
 # Regenerate python code from PAGE XSD
+generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
+generate-page: GDS_PAGE_USER = ocrd_models/ocrd_page_user_methods.py
 generate-page: repo/assets
 	generateDS \
 		-f \
 		--root-element='PcGts' \
-		-o ocrd_models/ocrd_models/ocrd_page_generateds.py \
-		repo/assets/data/schema/data/$(PAGE_VERSION).xsd
+		-o $(GDS_PAGE) \
+		--disable-generatedssuper-lookup \
+		--user-methods=$(GDS_PAGE_USER) \
+		ocrd_validators/ocrd_validators/page.xsd
+	# hack to prevent #451: enum keys will be strings
+	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
+	# hack to ensure output has pc: prefix
+	@#sed -i "s/namespaceprefix_=''/namespaceprefix_='pc:'/" $(GDS_PAGE)
+	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
+	# hack to ensure child nodes also have pc: prefix...
+	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
 
 #
 # Repos
@@ -137,7 +150,8 @@ assets-clean:
 .PHONY: test
 # Run all unit tests
 test: spec assets
-	$(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
+	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR) -k TestLogging
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)

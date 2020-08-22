@@ -1,148 +1,19 @@
+"""
+Processor base class and helper functions
+"""
+
+__all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processo']
+
 import os
 import json
-from click import wrap_text
-import subprocess
-from ocrd_utils import getLogger, VERSION as OCRD_VERSION
+from ocrd_utils import getLogger, VERSION as OCRD_VERSION, MIMETYPE_PAGE
 from ocrd_validators import ParameterValidator
+from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
+
+# XXX imports must remain for backwards-compatibilty
+from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
 
 log = getLogger('ocrd.processor')
-
-def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
-    if workspace is None:
-        if resolver is None:
-            raise Exception("Need to pass a resolver to create a workspace")
-        if mets_url is None:
-            raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir)
-    return workspace
-
-def run_processor(
-        processorClass,
-        ocrd_tool=None,
-        mets_url=None,
-        resolver=None,
-        workspace=None,
-        page_id=None,
-        log_level=None,         # TODO actually use this!
-        input_file_grp=None,
-        output_file_grp=None,
-        parameter=None,
-        working_dir=None,
-): # pylint: disable=too-many-locals
-    """
-    Create a workspace for mets_url and run processor through it
-
-    Args:
-        parameter (string): URL to the parameter
-    """
-    workspace = _get_workspace(
-        workspace,
-        resolver,
-        mets_url,
-        working_dir
-    )
-    log.debug("Running processor %s", processorClass)
-    processor = processorClass(
-        workspace,
-        ocrd_tool=ocrd_tool,
-        page_id=page_id,
-        input_file_grp=input_file_grp,
-        output_file_grp=output_file_grp,
-        parameter=parameter
-    )
-    ocrd_tool = processor.ocrd_tool
-    name = '%s v%s' % (ocrd_tool['executable'], processor.version)
-    otherrole = ocrd_tool['steps'][0]
-    log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
-    processor.process()
-    workspace.mets.add_agent(
-        name=name,
-        _type='OTHER',
-        othertype='SOFTWARE',
-        role='OTHER',
-        otherrole=otherrole
-    )
-    workspace.save_mets()
-    return processor
-
-def run_cli(
-        executable,
-        mets_url=None,
-        resolver=None,
-        workspace=None,
-        page_id=None,
-        log_level=None,
-        input_file_grp=None,
-        output_file_grp=None,
-        parameter=None,
-        working_dir=None,
-):
-    """
-    Create a workspace for mets_url and run MP CLI through it
-    """
-    workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
-    args = [executable, '--working-dir', workspace.directory]
-    args += ['--mets', mets_url]
-    if log_level:
-        args += ['--log-level', log_level]
-    if page_id:
-        args += ['--page-id', page_id]
-    if input_file_grp:
-        args += ['--input-file-grp', input_file_grp]
-    if output_file_grp:
-        args += ['--output-file-grp', output_file_grp]
-    if parameter:
-        args += ['--parameter', parameter]
-    log.debug("Running subprocess '%s'", ' '.join(args))
-    return subprocess.call(args)
-
-def generate_processor_help(ocrd_tool):
-    parameter_help = ''
-    if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
-        parameter_help = '  NONE\n'
-    else:
-        for param_name, param in ocrd_tool['parameters'].items():
-            parameter_help += wrap_text('  "%s" [%s%s] %s%s' % (
-                param_name,
-                param['type'],
-                ' - REQUIRED' if 'required' in param and param['required'] else
-                ' - %s' % param['default'] if 'default' in param else '',
-                param['description'],
-                ' Possible values: %s' % json.dumps(param['enum']) if 'enum' in param else ''
-            ), subsequent_indent='    ', width=72, preserve_paragraphs=True)
-            parameter_help += "\n"
-    return '''
-Usage: %s [OPTIONS]
-
-  %s
-
-Options:
-  -V, --version                   Show version
-  -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
-                                  Log level
-  -J, --dump-json                 Dump tool description as JSON and exit
-  -p, --parameter TEXT            Parameters, either JSON string or path 
-                                  JSON file
-  -g, --page-id TEXT              ID(s) of the pages to process
-  -O, --output-file-grp TEXT      File group(s) used as output.
-  -I, --input-file-grp TEXT       File group(s) used as input.
-  -w, --working-dir TEXT          Working Directory
-  -m, --mets TEXT                 METS to process
-  -h, --help                      This help message
-
-Parameters:
-%s
-Default Wiring:
-  %s -> %s
-
-''' % (
-    ocrd_tool['executable'],
-    ocrd_tool['description'],
-    parameter_help,
-    ocrd_tool.get('input_file_grp', 'NONE'),
-    ocrd_tool.get('output_file_grp', 'NONE')
-)
-
 
 class Processor():
     """
@@ -156,6 +27,9 @@ class Processor():
             workspace,
             ocrd_tool=None,
             parameter=None,
+            # TODO OCR-D/core#274
+            # input_file_grp=None,
+            # output_file_grp=None,
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             page_id=None,
@@ -210,9 +84,44 @@ class Processor():
         """
         raise Exception("Must be implemented")
 
+    def add_metadata(self, pcgts):
+        """
+        Adds PAGE-XML MetadataItem describing the processing step
+        """
+        pcgts.get_Metadata().add_MetadataItem(
+                MetadataItemType(type_="processingStep",
+                    name=self.ocrd_tool['steps'][0],
+                    value=self.ocrd_tool['executable'],
+                    Labels=[LabelsType(
+                        externalModel="ocrd-tool",
+                        externalId="parameters",
+                        Label=[LabelType(type_=name,
+                            value=self.parameter[name])
+                            for name in self.parameter.keys()])]))
+
     @property
     def input_files(self):
         """
-        List the input files
+        List the input files.
+
+        - If there's a PAGE-XML for the page, take it (and forget about all
+          other files for that page)
+        - Else if there's only one image, take it (and forget about all other
+          files for that page)
+        - Otherwise raise an error (complaining that only PAGE-XML warrants
+
+          having multiple images for a single page)
+        (https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593)
         """
-        return self.workspace.mets.find_files(fileGrp=self.input_file_grp, pageId=self.page_id)
+        ret = self.workspace.mets.find_files(
+            fileGrp=self.input_file_grp, pageId=self.page_id, mimetype=MIMETYPE_PAGE)
+        if ret:
+            return ret
+        ret = self.workspace.mets.find_files(
+            fileGrp=self.input_file_grp, pageId=self.page_id, mimetype="//image/.*")
+        if self.page_id and len(ret) > 1:
+            raise ValueError("No PAGE-XML %s in fileGrp '%s' but multiple images." % (
+                "for page '%s'" % self.page_id if self.page_id else '',
+                self.input_file_grp
+                ))
+        return ret
