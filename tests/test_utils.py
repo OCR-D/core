@@ -285,5 +285,14 @@ class TestUtils(TestCase):
         # print('\n'.join(['%s' % of for of in mets.find_files()]))
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0002')
 
+    def test_make_file_id_570(self):
+        """
+        https://github.com/OCR-D/core/pull/570
+        """
+        mets = OcrdMets.empty_mets()
+        f = mets.add_file('GRP', ID='FOO_0001', pageId='phys0001')
+        mets.add_file('GRP', ID='GRP2_0001', pageId='phys0002')
+        self.assertEqual(make_file_id(f, 'GRP2'), 'GRP2_0002')
+
 if __name__ == '__main__':
     main(__file__)
