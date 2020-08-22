@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `make_file_id` ID incrementation algorithm failed under certain conditions, #570
+
 ## [2.13.2] - 2020-08-13
 
 Fixed:
