@@ -11,7 +11,14 @@ Fixed:
 
 Changed:
 
-  * ValidationReport is now in ocrd_models, not ocrd_validators
+  * ValidationReport is now in ocrd_models, not ocrd_validators, #573
+  * `run_cli` now returns `exitcode, stdout, stderr`, not just `exit_code`, #574
+  * `ocrd-dummy` will create PAGE-XML for images on-the-fly, #574
+
+Added:
+
+  * processors can `self.add_metada(pcgts)` to add a self-describing `pg:MetadataItem`, #574
+
 
 ## [2.13.2] - 2020-08-13
 
