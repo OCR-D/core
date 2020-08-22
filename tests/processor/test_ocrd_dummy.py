@@ -22,6 +22,7 @@ class TestDummyProcessor(TestCase):
                 workspace=workspace
             )
             output_files = workspace.mets.find_files(fileGrp='OUTPUT')
+            output_files.sort(key=lambda x: x.url)
             # print([str(s) for s in output_files])
             self.assertEqual(output_files[0].url, 'OUTPUT/OUTPUT_0001.tif')
             self.assertEqual(len(output_files), 3)
