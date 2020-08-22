@@ -2,7 +2,7 @@ import json
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
-from tests.base import main, assets
+from tests.base import main, assets, copy_of_directory
 from tests.data.wf_testcase import (
     TestCase,
 
@@ -135,18 +135,18 @@ class TestOcrdWfStep(TestCase):
 
     def test_task_run(self):
         resolver = Resolver()
-        with TemporaryDirectory() as tempdir:
-            with pushd_popd(tempdir):
-                # def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
-                ws = resolver.workspace_from_nothing(tempdir)
-                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE)
-                ws.save_mets()
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
+            with pushd_popd(wsdir):
+                ws = resolver.workspace_from_url('mets.xml')
+                files_before = len(ws.mets.find_files())
                 run_tasks('mets.xml', 'DEBUG', None, [
-                    "dummy -I GRP0 -O GRP1",
+                    "dummy -I OCR-D-IMG -O GRP1",
                     "dummy -I GRP1 -O GRP2",
                 ])
                 ws.reload_mets()
-                self.assertEqual(len(ws.mets.find_files()), 3)
+                # step 1: 2 images in OCR-D-IMG -> 2 images 2 PAGEXML in GRP1
+                # step 2: 2 images and 2 PAGEXML in GRP1 -> process just the PAGEXML
+                self.assertEqual(len(ws.mets.find_files()), files_before + 6)
 
 
 if __name__ == '__main__':
