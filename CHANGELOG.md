@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.14.0] - 2020-08-22
+
 Fixed:
 
   * `make_file_id` ID incrementation algorithm failed under certain conditions, #570
@@ -1097,6 +1099,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.14.0]: ../../compare/v2.14.0..v2.13.2
 [2.13.2]: ../../compare/v2.13.2..v2.13.1
 [2.13.1]: ../../compare/v2.13.1..v2.13.0
 [2.13.0]: ../../compare/v2.13.0..v2.12.7
