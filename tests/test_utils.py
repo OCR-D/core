@@ -119,9 +119,9 @@ class TestUtils(TestCase):
             [[100, 100], [200, 100], [200, 200], [100, 200]])
 
     def test_concat_padded(self):
-        self.assertEqual(concat_padded('x', 0), 'x_0001')
-        self.assertEqual(concat_padded('x', 0, 1, 2), 'x_0001_0002_0003')
-        self.assertEqual(concat_padded('x', 0, '1', 2), 'x_0001_1_0003')
+        self.assertEqual(concat_padded('x', 1), 'x_0001')
+        self.assertEqual(concat_padded('x', 1, 2, 3), 'x_0001_0002_0003')
+        self.assertEqual(concat_padded('x', 1, '2', 3), 'x_0001_2_0003')
 
     def test_is_string(self):
         self.assertTrue(is_string('x'))

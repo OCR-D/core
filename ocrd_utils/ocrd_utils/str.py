@@ -72,7 +72,7 @@ def make_file_id(ocrd_file, output_file_grp):
         else:
             ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
             try:
-                n = ids.index(ocrd_file.ID)
+                n = ids.index(ocrd_file.ID) + 1
             except ValueError:
                 n = len(ids)
         ret = concat_padded(output_file_grp, n)
