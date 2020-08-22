@@ -3,7 +3,7 @@ Helper methods for running and documenting processors
 """
 from time import time
 import json
-import subprocess
+from subprocess import run, PIPE
 
 from click import wrap_text
 from ocrd_utils import getLogger
@@ -117,7 +117,8 @@ def run_cli(
     if overwrite:
         args += ['--overwrite']
     log.debug("Running subprocess '%s'", ' '.join(args))
-    return subprocess.call(args)
+    result = run(args, check=False, stdout=PIPE, stderr=PIPE)
+    return result.returncode, result.stdout, result.stderr
 
 def generate_processor_help(ocrd_tool):
     parameter_help = ''

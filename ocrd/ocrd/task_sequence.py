@@ -135,7 +135,7 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
         log.info("Start processing task '%s'", task)
 
         # execute cli
-        returncode = run_cli(
+        returncode, out, err = run_cli(
             task.executable,
             mets,
             resolver,
@@ -150,7 +150,7 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
 
         # check return code
         if returncode != 0:
-            raise Exception("%s exited with non-zero return value %s" % (task.executable, returncode))
+            raise Exception("%s exited with non-zero return value %s. STDOUT:\n%s\nSTDERR:\n%s" % (task.executable, returncode, out, err))
 
         log.info("Finished processing task '%s'", task)
 
@@ -160,4 +160,4 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
         # check output file groups are in mets
         for output_file_grp in task.output_file_grps:
             if not output_file_grp in workspace.mets.file_groups:
-                raise Exception("Invalid state: expected output file group not in mets: %s" % output_file_grp)
+                raise Exception("Invalid state: expected output file group not in mets: %s\nSTDOUT:\n%s\nSTDERR:\n%s" % (output_file_grp, out, err))
