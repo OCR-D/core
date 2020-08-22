@@ -44,7 +44,7 @@ def concat_padded(base, *args):
         if is_string(n):
             ret = "%s_%s" % (ret, n)
         else:
-            ret = "%s_%04i"  % (ret, n + 1)
+            ret = "%s_%04i"  % (ret, n)
     return ret
 
 def remove_non_path_from_url(url):
@@ -68,11 +68,11 @@ def make_file_id(ocrd_file, output_file_grp):
     if ret == ocrd_file.ID:
         m = re.match(r'.*?(\d{3,}).*', ocrd_file.pageId or '')
         if m:
-            n = m.group(1)
+            n = int(m.group(1))
         else:
             ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
             try:
-                n = ids.index(ocrd_file.ID)
+                n = ids.index(ocrd_file.ID) + 1
             except ValueError:
                 n = len(ids)
         ret = concat_padded(output_file_grp, n)

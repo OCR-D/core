@@ -119,9 +119,9 @@ class TestUtils(TestCase):
             [[100, 100], [200, 100], [200, 200], [100, 200]])
 
     def test_concat_padded(self):
-        self.assertEqual(concat_padded('x', 0), 'x_0001')
-        self.assertEqual(concat_padded('x', 0, 1, 2), 'x_0001_0002_0003')
-        self.assertEqual(concat_padded('x', 0, '1', 2), 'x_0001_1_0003')
+        self.assertEqual(concat_padded('x', 1), 'x_0001')
+        self.assertEqual(concat_padded('x', 1, 2, 3), 'x_0001_0002_0003')
+        self.assertEqual(concat_padded('x', 1, '2', 3), 'x_0001_2_0003')
 
     def test_is_string(self):
         self.assertTrue(is_string('x'))
@@ -284,6 +284,15 @@ class TestUtils(TestCase):
         mets.add_file('FOO', ID="FOO_0001", mimetype="image/tiff")
         # print('\n'.join(['%s' % of for of in mets.find_files()]))
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0002')
+
+    def test_make_file_id_570(self):
+        """
+        https://github.com/OCR-D/core/pull/570
+        """
+        mets = OcrdMets.empty_mets()
+        f = mets.add_file('GRP', ID='FOO_0001', pageId='phys0001')
+        mets.add_file('GRP', ID='GRP2_0001', pageId='phys0002')
+        self.assertEqual(make_file_id(f, 'GRP2'), 'GRP2_0002')
 
 if __name__ == '__main__':
     main(__file__)
