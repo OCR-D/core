@@ -184,7 +184,7 @@ class WorkspaceValidator():
         """
         for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
             if not is_local_filename(f.url) and not self.download:
-                self.report.add_notice("_validate_dimension: Not executed because --download wasn't set and PAGE might reference remote (Alternatve)Images <%s>" % f.url)
+                self.report.add_notice("_validate_dimension: Not executed because --download wasn't set and PAGE might reference remote (Alternative)Images <%s>" % f.url)
                 continue
             page = page_from_file(f).get_Page()
             _, _, exif = self.workspace.image_from_page(page, f.pageId)
