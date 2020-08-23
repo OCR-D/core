@@ -204,7 +204,7 @@ pyclean:
 #
 
 # Build docker image
-docker%:
+docker docker-cuda:
 	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build docker GPU / CUDA image
