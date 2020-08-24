@@ -70,6 +70,11 @@ class TestWorkspace(TestCase):
             with self.assertRaisesRegex(Exception, "'content' was set but no 'local_filename'"):
                 ws1.add_file('GRP', ID='ID1', content=b'CONTENT', pageId='foo1234')
 
+    def test_workspacec_add_file_content_wo_pageid(self):
+        with TemporaryDirectory() as tempdir:
+            ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
+            with self.assertRaisesRegex(ValueError, "workspace.add_file must be passed a 'pageId' kwarg, even if it is None."):
+                ws1.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename='foo')
 
     def test_workspace_str(self):
         with TemporaryDirectory() as tempdir:
