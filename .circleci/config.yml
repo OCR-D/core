@@ -13,7 +13,7 @@ jobs:
 
   build-python36:
     docker:
-      - image: python:3.6.0
+      - image: python:3.6.12
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -22,7 +22,16 @@ jobs:
 
   build-python37:
     docker:
-      - image: python:3.7.1
+      - image: python:3.7.9
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: make deps-test install
+      - run: make test
+
+  build-python38:
+    docker:
+      - image: python:3.8.5
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -37,3 +46,4 @@ workflows:
       - build-python35
       - build-python36
       - build-python37
+      - build-python38
