@@ -1,7 +1,7 @@
 class OcrdGdsCollector(object):
 
-    def __init__(self, messages=None):
-        print('GdsCollector.__init__', self)
+    def __init__(self, filename=None, messages=None):
+        self.filename = filename
         if messages is None:
             self.messages = []
         else:

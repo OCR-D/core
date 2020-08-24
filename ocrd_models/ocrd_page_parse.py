@@ -1,6 +1,8 @@
 def parse(inFileName, silence=False, print_warnings=True):
     global CapturedNsmap_
-    gds_collector = GdsCollector_()
+    if not filename:
+        filename=inFilename
+    gds_collector = GdsCollector_(filename=filenmae)
     parser = None
     doc = parsexml_(inFileName, parser)
     rootNode = doc.getroot()
@@ -29,7 +31,7 @@ def parse(inFileName, silence=False, print_warnings=True):
         sys.stderr.write(separator)
     return rootObj
 
-def parseString(inString, silence=False, print_warnings=True):
+def parseString(inString, filename=None, silence=False, print_warnings=True):
     '''Parse a string, create the object tree, and export it.
 
     Arguments:
@@ -40,7 +42,7 @@ def parseString(inString, silence=False, print_warnings=True):
     '''
     parser = None
     rootNode= parsexmlstring_(inString, parser)
-    gds_collector = GdsCollector_()
+    gds_collector = GdsCollector_(filename=filename)
     rootTag, rootClass = get_root_tag(rootNode)
     if rootClass is None:
         rootTag = 'PcGts'

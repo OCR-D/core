@@ -321,5 +321,18 @@ class TestOcrdPage(TestCase):
             gdc = pcgts.gds_collector_
             self.assertTrue(isinstance(gdc, OcrdGdsCollector))
 
+    def test_gdscollector_info(self):
+        filename = assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml')
+        with open(filename, 'r') as f:
+            s = f.read()
+            s = s.replace('pc:Page', 'pc:Foo')
+            s = s.encode('utf-8')
+            pcgts = parseString(s, silence=True, filename=filename)
+            gdsc = pcgts.gds_collector_
+            self.assertEqual(gdsc.messages, [])
+            self.assertEqual(gdsc.filename, filename)
+            pcgts.validate_(gdsc, True)
+            self.assertEqual(gdsc.messages, ['Number of values for Page near line 2 is below the minimum allowed, expected at least 1, found 0'])
+
 if __name__ == '__main__':
     main(__file__)
