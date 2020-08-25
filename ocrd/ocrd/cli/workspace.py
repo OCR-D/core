@@ -1,5 +1,6 @@
 import os
-from os.path import relpath, exists, join, isabs
+from os import getcwd
+from os.path import relpath, exists, join, isabs, dirname, basename, abspath
 from pathlib import Path
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
@@ -21,10 +22,20 @@ def clean_id(dirty):
 
 class WorkspaceCtx():
 
-    def __init__(self, directory, mets_basename, automatic_backup):
-        self.directory = directory
+    def __init__(self, directory, mets_url, automatic_backup):
+        if directory and not mets_url:
+            mets_url = join(directory, 'mets.xml')
+        elif not directory and mets_url:
+            if mets_url.startswith('http') or mets_url.startswith('https:'):
+                raise ValueError("--mets is an http(s) URL but no --directory was given")
+            directory = dirname(mets_url) or getcwd()
+        else:
+            directory = getcwd()
+            mets_url = join(directory, 'mets.xml')
+        self.directory = abspath(directory)
         self.resolver = Resolver()
-        self.mets_basename = mets_basename
+        self.mets_url = mets_url
+        self.mets_basename = basename(mets_url)
         self.automatic_backup = automatic_backup
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
@@ -34,15 +45,15 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 # ----------------------------------------------------------------------
 
 @click.group("workspace")
-@click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
-@click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
+@click.option('-m', '--mets', default=None, help='The path/URL of the METS file.')
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename, backup):
+def workspace_cli(ctx, directory, mets, backup):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, automatic_backup=backup)
+    ctx.obj = WorkspaceCtx(directory, mets_url=mets, automatic_backup=backup)
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
@@ -60,16 +71,16 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
     Validate a workspace
     
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
-    If not given, use the concatenation of --directory and --mets-basename.
+    If not given, use --mets accordingly.
     
     Check that the METS and its referenced file contents
     abide by the OCR-D specifications.
     """
-    log = getLogger('ocrd.cli.workspace.validate')
+    LOG = getLogger('ocrd.cli.workspace.validate')
     if mets_url:
-        LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR --mets-basename METS_BASENAME init' instead of argument 'METS_URL' ('%s')" % mets_url))
+        LOG.warning(DeprecationWarning("Use 'ocrd workspace --mets METS init' instead of argument 'METS_URL' ('%s')" % mets_url))
     else:
-        mets_url = str(Path(ctx.directory, ctx.mets_basename))
+        mets_url = ctx.mets_url
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
@@ -99,12 +110,12 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     Create a workspace from METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
+    If METS_URL is not provided, use --mets accordingly.
 
     If WORKSPACE_DIR is not provided, the new workspace will
     use --directory accordingly.
     """
     LOG = getLogger('ocrd.cli.workspace.clone')
-    workspace_dir = ctx.directory
     if workspace_dir:
         LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR clone' instead of argument 'WORKSPACE_DIR' ('%s')" % workspace_dir))
         ctx.directory = workspace_dir

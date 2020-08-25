@@ -367,7 +367,7 @@ class TestCli(TestCase):
     def test_mets_basename(self):
         with TemporaryDirectory() as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(workspace_cli, ['-M', 'foo.xml', 'init', '.'])
+                result = self.runner.invoke(workspace_cli, ['-m', 'foo.xml', 'init'])
                 self.assertEqual(result.exit_code, 0)
                 self.assertTrue(exists('foo.xml'))
                 self.assertFalse(exists('mets.xml'))
