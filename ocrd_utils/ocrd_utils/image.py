@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 from PIL import Image, ImageStat, ImageDraw, ImageChops
+from shapely.geometry import Polygon
 
 from .logging import getLogger
 from .introspect import membername
@@ -20,6 +21,7 @@ __all__ = [
     'points_from_x0y0x1y1',
     'points_from_xywh',
     'points_from_y0x0y1x1',
+    'polygon_for_parent',
     'polygon_from_bbox',
     'polygon_from_points',
     'polygon_from_x0y0x1y1',
@@ -540,6 +542,33 @@ def points_from_x0y0x1y1(xyxy):
         x1, y1,
         x0, y1
     )
+
+def polygon_for_parent(polygon, parent):
+    """
+    Clip polygon to parent polygon range.
+    """
+    childp = Polygon(polygon)
+    # XXX better test would be
+    # if isinstance(parent, PageType):
+    # but that would require ocrd_utils to circularly depened on ocrd_utils
+    if parent.__class__.__name__ == 'PageType':
+        if parent.get_Border():
+            parentp = Polygon(polygon_from_points(parent.get_Border().get_Coords().points))
+        else:
+            parentp = Polygon([[0,0], [0,parent.get_imageHeight()],
+                               [parent.get_imageWidth(),parent.get_imageHeight()],
+                               [parent.get_imageWidth(),0]])
+    else:
+        parentp = Polygon(polygon_from_points(parent.get_Coords().points))
+    if childp.within(parentp):
+        return polygon
+    interp = childp.intersection(parentp)
+    if interp.is_empty:
+        # FIXME: we need a better strategy against this
+        raise Exception("intersection of would-be segment with parent is empty")
+    if interp.type == 'MultiPolygon':
+        interp = interp.convex_hull
+    return interp.exterior.coords[:-1] # keep open
 
 def polygon_from_bbox(minx, miny, maxx, maxy):
     """Construct polygon coordinates in numeric list representation from a numeric list representing a bounding box."""
