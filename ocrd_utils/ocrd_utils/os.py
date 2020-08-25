@@ -60,9 +60,9 @@ def list_resource_candidates(executable, fname, cwd=os.getcwd()):
         candidates += [join(x, fname) for x in os.environ[processor_path_var].split(':')]
     if 'VIRTUAL_ENV' in os.environ:
         candidates.append(join(os.environ['VIRTUAL_ENV'], 'share', executable, fname))
-    candidates.append(join(XDG_DATA_HOME), executable, fname)
-    candidates.append(join(XDG_CONFIG_HOME), executable, fname)
-    candidates.append(join(XDG_CACHE_HOME), executable, fname)
+    candidates.append(join(XDG_DATA_HOME, executable, fname))
+    candidates.append(join(XDG_CONFIG_HOME, executable, fname))
+    candidates.append(join(XDG_CACHE_HOME, executable, fname))
     return candidates
 
 def list_all_resources(executable):
