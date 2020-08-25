@@ -88,7 +88,7 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
-# should be deprecated:
+# XXX deprecated
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
 def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
@@ -103,12 +103,12 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     LOG = getLogger('ocrd.cli.workspace.clone')
     workspace_dir = ctx.directory
     if workspace_dir:
-        LOG.warning(DeprecationWarning("Use `ocrd workspace --directory DIR clone instead of argument '%s'.`)"))
+        LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR clone' instead of argument 'WORKSPACE_DIR' ('%s')" % workspace_dir))
         ctx.directory = workspace_dir
 
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
-        dst_dir=os.path.abspath(workspace_dir),
+        dst_dir=os.path.abspath(ctx.directory),
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
@@ -122,7 +122,7 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
 @workspace_cli.command('init')
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
-# should be deprecated:
+# XXX deprecated
 @click.argument('directory', default=None, required=False)
 @pass_workspace
 def workspace_create(ctx, clobber_mets, directory):
@@ -132,10 +132,12 @@ def workspace_create(ctx, clobber_mets, directory):
     If DIRECTORY is not provided, the new workspace will
     use --directory accordingly.
     """
-    if not directory:
-        directory = ctx.directory
+    LOG = getLogger('ocrd.cli.workspace.init')
+    if directory:
+        LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR init' instead of argument 'DIRECTORY' ('%s')" % directory))
+        ctx.directory = directory
     workspace = ctx.resolver.workspace_from_nothing(
-        directory=os.path.abspath(directory),
+        directory=os.path.abspath(ctx.directory),
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets
     )
