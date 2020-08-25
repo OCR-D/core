@@ -65,7 +65,10 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
     Check that the METS and its referenced file contents
     abide by the OCR-D specifications.
     """
-    if not mets_url:
+    log = getLogger('ocrd.cli.workspace.validate')
+    if mets_url:
+        LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR --mets-basename METS_BASENAME init' instead of argument 'METS_URL' ('%s')" % mets_url))
+    else:
         mets_url = str(Path(ctx.directory, ctx.mets_basename))
     report = WorkspaceValidator.validate(
         ctx.resolver,
