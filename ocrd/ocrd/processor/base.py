@@ -2,7 +2,7 @@
 Processor base class and helper functions
 """
 
-__all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processo']
+__all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processor']
 
 import os
 import json

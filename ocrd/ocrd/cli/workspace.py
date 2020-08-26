@@ -9,7 +9,6 @@ import re
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_models import OcrdFile
 from ocrd_utils import getLogger, pushd_popd, EXT_TO_MIME
 
 log = getLogger('ocrd.cli.workspace')
@@ -23,16 +22,20 @@ def clean_id(dirty):
 class WorkspaceCtx():
 
     def __init__(self, directory, mets_url, automatic_backup):
-        if directory and not mets_url:
-            mets_url = join(directory, 'mets.xml')
+        if directory and mets_url:
+            directory = abspath(directory)
+            if not abspath(mets_url).startswith(directory):
+                raise ValueError("--mets has a directory part inconsistent with --directory")
         elif not directory and mets_url:
             if mets_url.startswith('http') or mets_url.startswith('https:'):
                 raise ValueError("--mets is an http(s) URL but no --directory was given")
-            directory = dirname(mets_url) or getcwd()
+            directory = dirname(abspath(mets_url)) or getcwd()
+        elif directory and not mets_url:
+            mets_url = join(directory, 'mets.xml')
         else:
             directory = getcwd()
             mets_url = join(directory, 'mets.xml')
-        self.directory = abspath(directory)
+        self.directory = directory
         self.resolver = Resolver()
         self.mets_url = mets_url
         self.mets_basename = basename(mets_url)
