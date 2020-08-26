@@ -21,7 +21,11 @@ def clean_id(dirty):
 
 class WorkspaceCtx():
 
-    def __init__(self, directory, mets_url, automatic_backup):
+    def __init__(self, directory, mets_url, mets_basename, automatic_backup):
+        if mets_basename:
+            log.warning(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+            if mets_url:
+                raise ValueError("Use either --mets or --mets-basename, not both")
         if directory and mets_url:
             directory = abspath(directory)
             if not abspath(mets_url).startswith(directory):
@@ -38,7 +42,7 @@ class WorkspaceCtx():
         self.directory = directory
         self.resolver = Resolver()
         self.mets_url = mets_url
-        self.mets_basename = basename(mets_url)
+        self.mets_basename = mets_basename if mets_basename else basename(mets_url)
         self.automatic_backup = automatic_backup
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
@@ -49,14 +53,15 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
 @click.group("workspace")
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
+@click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
 @click.option('-m', '--mets', default=None, help='The path/URL of the METS file.')
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets, backup):
+def workspace_cli(ctx, directory, mets, mets_basename, backup):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(directory, mets_url=mets, automatic_backup=backup)
+    ctx.obj = WorkspaceCtx(directory, mets_url=mets, mets_basename=mets_basename, automatic_backup=backup)
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
@@ -110,13 +115,10 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
 @pass_workspace
 def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     """
-    Create a workspace from METS_URL and return the directory
+    Create a workspace from --mets and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
     If METS_URL is not provided, use --mets accordingly.
-
-    If WORKSPACE_DIR is not provided, the new workspace will
-    use --directory accordingly.
     """
     LOG = getLogger('ocrd.cli.workspace.clone')
     if workspace_dir:
@@ -144,10 +146,8 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 @pass_workspace
 def workspace_create(ctx, clobber_mets, directory):
     """
-    Create a workspace with an empty METS file in DIRECTORY.
+    Create a workspace with an empty METS file in --directory.
 
-    If DIRECTORY is not provided, the new workspace will
-    use --directory accordingly.
     """
     LOG = getLogger('ocrd.cli.workspace.init')
     if directory:
