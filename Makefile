@@ -146,6 +146,7 @@ assets-clean:
 # Run all unit tests
 test: spec assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
 
 test-profile:
