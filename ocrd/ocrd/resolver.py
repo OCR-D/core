@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 
 import requests
+import lxml.etree as ET
 
 from ocrd.constants import TMP_PREFIX
 from ocrd_utils import (
@@ -176,3 +177,21 @@ class Resolver():
         mets_path.write_bytes(mets.to_xml(xmllint=True))
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
+
+def handle_response(data):
+    """
+    In case of an OAI-Response, extract METS-Subtree as new root
+    """
+
+    try:
+        xml_root = ET.fromstring(data)
+        root_tag = xml_root.tag   
+        print(f"[DEBUG] having root tag : {root_tag}")
+        if str(root_tag).endswith('OAI-PMH'):
+            mets_root_el = xml_root.find('.//{http://www.loc.gov/METS/}mets')
+            if mets_root_el is not None:
+                return ET.ElementTree(mets_root_el).getroot()
+    except Exception as exc:
+        log.error(exc)
+
+    return None

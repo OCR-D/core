@@ -1,10 +1,15 @@
+# -*- coding: utf-8 -*-
+
 from os.path import join as pjoin
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from tests.base import TestCase, assets, main, copy_of_directory
 
-from ocrd.resolver import Resolver
+from ocrd.resolver import ( 
+    Resolver, 
+    handle_response
+)
 from ocrd_utils import pushd_popd
 
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
@@ -146,6 +151,21 @@ class TestResolver(TestCase):
                 fn = self.resolver.download_to_directory(dst, pjoin(src, 'data/mets.xml'), subdir='baz')
                 self.assertEqual(fn, pjoin('baz', 'mets.xml'))
                 self.assertTrue(Path(dst, fn).exists())
+
+    def test_handle_response_oai(self):
+        with open('./tests/data/response/oai_get_record_2200909.xml', 'rb') as f:
+            content = f.read()
+            result = handle_response(content)
+            expected_start = b'<mets:mets'
+            self.assertTrue(result.startswith(expected_start))
+            self.assertTrue(b'OAI-PHM' not in result)
+
+    def test_handle_response_mets(self):
+        with open('./tests/data/response/mets_kant_aufklaerung_1784.xml', 'rb') as f:
+            content = f.read()
+            result = handle_response(content)
+            expected_start = b'<?xml version="1.0"'
+            self.assertTrue(result.startswith(expected_start))
 
 if __name__ == '__main__':
     main()
