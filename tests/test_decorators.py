@@ -75,7 +75,7 @@ class TestDecorators(TestCase):
     def test_processor_dump_json(self):
         exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['--dump-json'])
         print("exit_code=%s\nout=%s\nerr=%s" % (exit_code, out, err))
-        self.assertEqual(exit_code, 0)
+        self.assertFalse(exit_code)
 
     def test_processor_version(self):
         result = self.runner.invoke(cli_dummy_processor, ['--version'])
@@ -83,11 +83,12 @@ class TestDecorators(TestCase):
         self.assertEqual(result.output, 'Version 0.0.1, ocrd/core %s\n' % OCRD_VERSION)
         self.assertEqual(result.exit_code, 0)
 
-    # XXX cannot be tested in this way because logging is reused and not part of output
-    #  def test_processor_non_existing_mets(self):
-    #      result = self.runner.invoke(cli_dummy_processor, ['--mets', 'file:///does/not/exist.xml'])
-    #      #  self.assertIn('File does not exist: file:///does/not/exist.xml', result.output)
-    #      self.assertEqual(result.exit_code, 1)
+    # TODO cannot be tested in this way because logging is reused and not part of output
+    # def test_processor_non_existing_mets(self):
+    #     code, out, err = self.invoke_cli(cli_dummy_processor, ['-m', 'exist.xml', *DEFAULT_IN_OUT])
+    #     print("code=%s\nout=%s\nerr=%s" % (code, out, err))
+    #     self.assertIn('File does not exist: /does/not/exist.xml', out)
+    #     self.assertEqual(code, 1)
 
     def test_processor_run(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:

@@ -13,12 +13,6 @@ from ocrd_utils import getLogger, pushd_popd, EXT_TO_MIME
 
 log = getLogger('ocrd.cli.workspace')
 
-def clean_id(dirty):
-    if re.match('^[0-9]', dirty):
-        raise ValueError("Make sure files and directories do not begin with a numeral which will lead to invalid XML identifiers")
-    return re.sub('[^A-Za-z0-9-_]+', '_', dirty)
-
-
 class WorkspaceCtx():
 
     def __init__(self, directory, mets_url, mets_basename, automatic_backup):
