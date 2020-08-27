@@ -99,7 +99,8 @@ class Resolver():
             response = requests.get(url)
             if response.status_code != 200:
                 raise Exception("HTTP request failed: %s (HTTP %d)" % (url, response.status_code))
-            dst_path.write_bytes(response.content)
+            contents = handle_response(response.content)
+            dst_path.write_bytes(contents)
 
         return ret
 
@@ -180,18 +181,19 @@ class Resolver():
 
 def handle_response(data):
     """
-    In case of an OAI-Response, extract METS-Subtree as new root
+    In case of an OAI-Response, extract first METS-Entry-Data
     """
 
     try:
         xml_root = ET.fromstring(data)
         root_tag = xml_root.tag   
-        print(f"[DEBUG] having root tag : {root_tag}")
         if str(root_tag).endswith('OAI-PMH'):
             mets_root_el = xml_root.find('.//{http://www.loc.gov/METS/}mets')
             if mets_root_el is not None:
-                return ET.ElementTree(mets_root_el).getroot()
+                new_tree = ET.ElementTree(mets_root_el)
+                return ET.tostring(new_tree, pretty_print=True, encoding='UTF-8')
     except Exception as exc:
         log.error(exc)
 
-    return None
+    return data
+

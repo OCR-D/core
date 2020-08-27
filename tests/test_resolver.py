@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import os, shutil
 from os.path import join as pjoin
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest import mock
+
+import pytest
 
 from tests.base import TestCase, assets, main, copy_of_directory
 
@@ -167,5 +171,39 @@ class TestResolver(TestCase):
             expected_start = b'<?xml version="1.0"'
             self.assertTrue(result.startswith(expected_start))
 
+
+@pytest.fixture(name="response_dir")
+def fixture_oai_2200909(tmpdir):
+    src = './tests/data/response/oai_get_record_2200909.xml'
+    target_file = str(tmpdir.mkdir('oai_response').join('oai_get_record_2200909.xml'))
+    shutil.copy(src, target_file)
+    return os.path.dirname(target_file)
+
+
+@pytest.fixture(name="oai_response_content")
+def fixture_oai_2200909_content(response_dir):
+    data_path = os.path.join(response_dir, 'oai_get_record_2200909.xml')
+    with open(data_path, 'rb') as f:
+        return f.read()
+
+
+@mock.patch("requests.get")
+def test_mock_response(mock_get, response_dir, oai_response_content):
+
+    # arrange
+    url = 'http://digital.bibliothek.uni-halle.de/hd/oai/?verb=GetRecord&metadataPrefix=mets&mode=xml&identifier=9049'
+    resolver = Resolver()
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.content = oai_response_content
+
+    # act
+    result = resolver.download_to_directory(response_dir, url)
+
+    # assert
+    mock_get.assert_called_once_with(url)
+    assert result == 'oai'
+
+
 if __name__ == '__main__':
     main()
+
