@@ -179,6 +179,7 @@ class Resolver():
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
 
+
 def handle_response(data):
     """
     In case of an OAI-Response, extract first METS-Entry-Data
@@ -188,12 +189,12 @@ def handle_response(data):
         xml_root = ET.fromstring(data)
         root_tag = xml_root.tag   
         if str(root_tag).endswith('OAI-PMH'):
+            log.info("detected root.tag '%s'" % root_tag)
             mets_root_el = xml_root.find('.//{http://www.loc.gov/METS/}mets')
             if mets_root_el is not None:
                 new_tree = ET.ElementTree(mets_root_el)
                 return ET.tostring(new_tree, pretty_print=True, encoding='UTF-8')
-    except Exception as exc:
+    except ET.LxmlError as exc:
         log.error(exc)
 
     return data
-
