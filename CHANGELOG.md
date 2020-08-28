@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: Finish deprecations on workspace CLI begun in 2.11.0, #578
+    * `--mets-basename` is deprecated now, use `--mets` and `--directory`
+    * Deprecated arguments are hidden in `--help`
+    * some internal function name changes
+
 ## [2.14.0] - 2020-08-22
 
 Fixed:
