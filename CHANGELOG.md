@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.15.0] - 2020-08-28
+
 Changed:
 
   * :fire: Finish deprecations on workspace CLI begun in 2.11.0, #578
@@ -1106,6 +1108,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.15.0]: ../../compare/v2.15.0..v2.14.0
 [2.14.0]: ../../compare/v2.14.0..v2.13.2
 [2.13.2]: ../../compare/v2.13.2..v2.13.1
 [2.13.1]: ../../compare/v2.13.1..v2.13.0
