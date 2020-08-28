@@ -1,5 +1,6 @@
 import os
-from os.path import relpath, exists, join, isabs
+from os import getcwd
+from os.path import relpath, exists, join, isabs, dirname, basename, abspath
 from pathlib import Path
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
@@ -8,23 +9,35 @@ import re
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_models import OcrdFile
 from ocrd_utils import getLogger, pushd_popd, EXT_TO_MIME
+from . import command_with_replaced_help
 
 log = getLogger('ocrd.cli.workspace')
 
-def clean_id(dirty):
-    if re.match('^[0-9]', dirty):
-        raise ValueError("Make sure files and directories do not begin with a numeral which will lead to invalid XML identifiers")
-    return re.sub('[^A-Za-z0-9-_]+', '_', dirty)
-
-
 class WorkspaceCtx():
 
-    def __init__(self, directory, mets_basename, automatic_backup):
+    def __init__(self, directory, mets_url, mets_basename, automatic_backup):
+        if mets_basename and mets_url:
+            raise ValueError("Use either --mets or --mets-basename, not both")
+        if mets_basename and not mets_url:
+            log.warning(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+        mets_basename = mets_basename if mets_basename else 'mets.xml'
+        if directory and mets_url:
+            directory = abspath(directory)
+            if not abspath(mets_url).startswith(directory):
+                raise ValueError("--mets has a directory part inconsistent with --directory")
+        elif not directory and mets_url:
+            if mets_url.startswith('http') or mets_url.startswith('https:'):
+                raise ValueError("--mets is an http(s) URL but no --directory was given")
+            directory = dirname(abspath(mets_url)) or getcwd()
+        elif directory and not mets_url:
+            mets_url = join(directory, mets_basename)
+        else:
+            directory = getcwd()
+            mets_url = join(directory, mets_basename)
         self.directory = directory
         self.resolver = Resolver()
-        self.mets_basename = mets_basename
+        self.mets_url = mets_url
         self.automatic_backup = automatic_backup
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
@@ -34,39 +47,44 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 # ----------------------------------------------------------------------
 
 @click.group("workspace")
-@click.option('-d', '--directory', envvar='WORKSPACE_DIR', default='.', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location.', show_default=True)
-@click.option('-M', '--mets-basename', default="mets.xml", help='The basename of the METS file.', show_default=True)
+@click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location [default: METS_URL directory or .]"')
+@click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
+@click.option('-m', '--mets', default=None, help='The path/URL of the METS file [default: WORKSPACE_DIR/mets.xml]', metavar="METS_URL")
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets_basename, backup):
+def workspace_cli(ctx, directory, mets, mets_basename, backup):
     """
     Working with workspace
     """
-    ctx.obj = WorkspaceCtx(os.path.abspath(directory), mets_basename, automatic_backup=backup)
+    ctx.obj = WorkspaceCtx(directory, mets_url=mets, mets_basename=mets_basename, automatic_backup=backup)
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('validate')
+@workspace_cli.command('validate', cls=command_with_replaced_help(
+    (r' \[METS_URL\]', ''))) # XXX deprecated argument
 @pass_workspace
 @click.option('-a', '--download', is_flag=True, help="Download all files")
 @click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'page_xsd', 'mets_xsd', 'url']))
 @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
 @click.argument('mets_url', default=None, required=False)
-def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
+def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
     """
     Validate a workspace
     
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
-    If not given, use the concatenation of --directory and --mets-basename.
+    If not given, use --mets accordingly.
     
     Check that the METS and its referenced file contents
     abide by the OCR-D specifications.
     """
-    if not mets_url:
-        mets_url = str(Path(ctx.directory, ctx.mets_basename))
+    LOG = getLogger('ocrd.cli.workspace.validate')
+    if mets_url:
+        LOG.warning(DeprecationWarning("Use 'ocrd workspace --mets METS init' instead of argument 'METS_URL' ('%s')" % mets_url))
+    else:
+        mets_url = ctx.mets_url
     report = WorkspaceValidator.validate(
         ctx.resolver,
         mets_url,
@@ -84,11 +102,12 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
 # ocrd workspace clone
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('clone')
+@workspace_cli.command('clone', cls=command_with_replaced_help(
+    (r' \[WORKSPACE_DIR\]', ''))) # XXX deprecated argument
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
-# should be deprecated:
+# XXX deprecated
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
 def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
@@ -96,16 +115,17 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     Create a workspace from METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
-
-    If WORKSPACE_DIR is not provided, the new workspace will
-    use --directory accordingly.
+    If METS_URL is not provided, use --mets accordingly.
     """
-    if not workspace_dir:
-        workspace_dir = ctx.directory
+    LOG = getLogger('ocrd.cli.workspace.clone')
+    if workspace_dir:
+        LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR clone' instead of argument 'WORKSPACE_DIR' ('%s')" % workspace_dir))
+        ctx.directory = workspace_dir
+
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
-        dst_dir=os.path.abspath(workspace_dir),
-        mets_basename=ctx.mets_basename,
+        dst_dir=os.path.abspath(ctx.directory),
+        mets_basename=basename(ctx.mets_url),
         clobber_mets=clobber_mets,
         download=download,
     )
@@ -116,23 +136,24 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 # ocrd workspace init
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('init')
+@workspace_cli.command('init', cls=command_with_replaced_help(
+    (r' \[DIRECTORY\]', ''))) # XXX deprecated argument
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
-# should be deprecated:
+# XXX deprecated
 @click.argument('directory', default=None, required=False)
 @pass_workspace
-def workspace_create(ctx, clobber_mets, directory):
+def workspace_init(ctx, clobber_mets, directory):
     """
-    Create a workspace with an empty METS file in DIRECTORY.
+    Create a workspace with an empty METS file in --directory.
 
-    If DIRECTORY is not provided, the new workspace will
-    use --directory accordingly.
     """
-    if not directory:
-        directory = ctx.directory
+    LOG = getLogger('ocrd.cli.workspace.init')
+    if directory:
+        LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR init' instead of argument 'DIRECTORY' ('%s')" % directory))
+        ctx.directory = directory
     workspace = ctx.resolver.workspace_from_nothing(
-        directory=os.path.abspath(directory),
-        mets_basename=ctx.mets_basename,
+        directory=os.path.abspath(ctx.directory),
+        mets_basename=basename(ctx.mets_url),
         clobber_mets=clobber_mets
     )
     workspace.save_mets()
@@ -157,7 +178,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     Add a file or http(s) URL FNAME to METS in a workspace.
     If FNAME is not an http(s) URL and is not a workspace-local existing file, try to copy to workspace.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
 
     kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
     log = getLogger('ocrd.cli.workspace.add')
@@ -225,7 +246,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
 
     try:
         pat = re.compile(regex)
@@ -319,7 +340,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     """
     modified_mets = False
     ret = list()
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
     for f in workspace.mets.find_files(
             ID=file_id,
             fileGrp=file_grp,
@@ -358,7 +379,7 @@ def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefin
     (If any ``ID`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
     for i in id:
         workspace.remove_file(i, force=force, keep_file=keep_file)
     workspace.save_mets()
@@ -381,7 +402,7 @@ def remove_group(ctx, group, recursive, force, keep_files):
     (If any ``GROUP`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
     for g in group:
         workspace.remove_file_group(g, recursive=recursive, force=force, keep_files=keep_files)
     workspace.save_mets()
@@ -403,7 +424,7 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
     (If any ``FILTER`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
     with pushd_popd(workspace.directory):
         for f in workspace.mets.find_files(
             ID=file_id,
@@ -429,7 +450,7 @@ def list_groups(ctx):
     """
     List fileGrp USE attributes
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
@@ -442,7 +463,7 @@ def list_pages(ctx):
     """
     List physical page IDs
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
     print("\n".join(workspace.mets.physical_pages))
 
 # ----------------------------------------------------------------------
@@ -455,7 +476,7 @@ def get_id(ctx):
     """
     Get METS id if any
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
     ID = workspace.mets.unique_identifier
     if ID:
         print(ID)
@@ -475,7 +496,7 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 
     Otherwise will create a new <mods:identifier type="purl">{{ ID }}</mods:identifier>.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
     workspace.mets.unique_identifier = id
     workspace.save_mets()
 
@@ -496,7 +517,7 @@ def workspace_backup_add(ctx):
     """
     Create a new backup
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup))
     backup_manager.add()
 
 @workspace_backup_cli.command('list')
@@ -505,7 +526,7 @@ def workspace_backup_list(ctx):
     """
     List backups
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup))
     for b in backup_manager.list():
         print(b)
 
@@ -517,7 +538,7 @@ def workspace_backup_restore(ctx, choose_first, bak):
     """
     Restore backup BAK
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup))
     backup_manager.restore(bak, choose_first)
 
 @workspace_backup_cli.command('undo')
@@ -526,5 +547,5 @@ def workspace_backup_undo(ctx):
     """
     Restore the last backup
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup))
     backup_manager.undo()

@@ -1,4 +1,17 @@
+import re
 import click
+
+def command_with_replaced_help(*replacements):
+
+    class CommandWithReplacedHelp(click.Command):
+        def get_help(self, ctx):
+            help = super().get_help(ctx)
+            for replacement in replacements:
+                help = re.sub(*replacement, help)
+            # print(help)
+            return help
+
+    return CommandWithReplacedHelp
 
 from ocrd.cli.ocrd_tool import ocrd_tool_cli
 from ocrd.cli.workspace import workspace_cli

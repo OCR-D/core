@@ -1,5 +1,5 @@
 from os import getcwd
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, gettempdir
 from pathlib import Path
 
 from PIL import Image
@@ -158,11 +158,23 @@ class TestUtils(TestCase):
             pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470.tif'))
             pil_image.crop(box=[1539, 202, 1626, 271])
 
-    def test_pushd_popd(self):
+    def test_pushd_popd_newcwd(self):
         cwd = getcwd()
         with pushd_popd('/tmp'):
             self.assertEqual(getcwd(), '/tmp')
         self.assertEqual(getcwd(), cwd)
+
+    def test_pushd_popd_tempdir(self):
+        cwd = getcwd()
+        with pushd_popd(tempdir=True) as newcwd:
+            self.assertEqual(getcwd(), newcwd)
+            self.assertTrue(newcwd.startswith(gettempdir()))
+        self.assertEqual(getcwd(), cwd)
+
+    def test_pushd_popd_bad_call(self):
+        with self.assertRaisesRegex(Exception, 'pushd_popd can accept either newcwd or tempdir, not both'):
+            with pushd_popd('/foo/bar', True):
+                pass
 
     def test_is_local_filename(self):
         self.assertTrue(is_local_filename('/foo/bar'))

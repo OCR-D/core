@@ -44,11 +44,13 @@ class CapturingTestCase(TestCase):
         with unittests/pytest capturing stdout/stderr.
         """
         self.capture_out_err()  # XXX snapshot just before executing the CLI
+        code = 0
         try:
             cli.main(args=args)
         except SystemExit as e:
-            out, err = self.capture_out_err()
-            return e.code or 0, out, err
+            code = e.code
+        out, err = self.capture_out_err()
+        return code, out, err
 
     def capture_out_err(self):
         return self.capfd.readouterr()

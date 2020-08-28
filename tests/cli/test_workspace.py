@@ -367,18 +367,48 @@ class TestCli(TestCase):
     def test_mets_basename(self):
         with TemporaryDirectory() as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(workspace_cli, ['-M', 'foo.xml', 'init', '.'])
+                result = self.runner.invoke(workspace_cli, ['-m', 'foo.xml', 'init'])
                 self.assertEqual(result.exit_code, 0)
                 self.assertTrue(exists('foo.xml'))
                 self.assertFalse(exists('mets.xml'))
 
+    def test_mets_basename_and_mets(self):
+        with pushd_popd(tempdir=True) as tempdir:
+            with self.assertRaisesRegex(ValueError, "Use either --mets or --mets-basename, not both"):
+                self.invoke_cli(workspace_cli, ['-m', 'foo.xml', '-M', 'not-foo.xml', 'init'])
+
+    def test_mets_basename_and_not_mets(self):
+        with pushd_popd(tempdir=True) as tempdir:
+            _, out, err = self.invoke_cli(workspace_cli, ['-d', 'foo', '-M', 'not-foo.xml', 'init'])
+            self.assertEqual(out, join(tempdir, 'foo') + '\n')
+            self.assertIn('--mets-basename is deprecated. Use --mets/--directory instead', err)
+
+    def test_mets_get_id_set_id(self):
+        with pushd_popd(tempdir=True):
+            self.invoke_cli(workspace_cli, ['init'])
+            mets_id = 'foo123'
+            self.invoke_cli(workspace_cli, ['set-id', mets_id])
+            _, out, _ = self.invoke_cli(workspace_cli, ['get-id'])
+            self.assertEqual(out, mets_id + '\n')
+
+    def test_mets_directory_incompatible(self):
+          with pushd_popd(tempdir=True) as tempdir:
+            with self.assertRaisesRegex(ValueError, "--mets has a directory part inconsistent with --directory"):
+                self.invoke_cli(workspace_cli, ['-d', 'foo', '-m', '/somewhere/else', 'init'])
+
+    def test_mets_directory_html(self):
+          with pushd_popd(tempdir=True) as tempdir:
+            with self.assertRaisesRegex(ValueError, r"--mets is an http\(s\) URL but no --directory was given"):
+                self.invoke_cli(workspace_cli, ['-m', 'https://foo.bar/bla', 'init'])
+
     def test_bulk_add(self):
+        NO_FILES=100
         with TemporaryDirectory() as srcdir:
             Path(srcdir, "OCR-D-IMG").mkdir()
             Path(srcdir, "OCR-D-PAGE").mkdir()
-            for i in range(500):
+            for i in range(NO_FILES):
                 Path(srcdir, "OCR-D-IMG", "page_%04d.tif" % i).write_text('')
-            for i in range(500):
+            for i in range(NO_FILES):
                 Path(srcdir, "OCR-D-PAGE", "page_%04d.xml" % i).write_text('')
             with TemporaryDirectory() as wsdir:
                 with pushd_popd(wsdir):
@@ -398,8 +428,8 @@ class TestCli(TestCase):
                     # print('err', err)
                     ws.reload_mets()
                     self.assertEqual(len(ws.mets.file_groups), 2)
-                    self.assertEqual(len(ws.mets.find_files()), 1000)
-                    self.assertEqual(len(ws.mets.find_files(mimetype='image/tiff')), 500)
+                    self.assertEqual(len(ws.mets.find_files()), 2 * NO_FILES)
+                    self.assertEqual(len(ws.mets.find_files(mimetype='image/tiff')), NO_FILES)
                     self.assertEqual(len(ws.mets.find_files(ID='//FILE_OCR-D-IMG_000.*')), 10)
                     self.assertEqual(len(ws.mets.find_files(ID='//FILE_.*_000.*')), 20)
                     self.assertEqual(len(ws.mets.find_files(pageId='PHYS_0001')), 2)
