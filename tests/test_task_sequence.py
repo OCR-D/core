@@ -6,7 +6,7 @@ from shutil import rmtree
 from pathlib import Path
 from os.path import join
 
-from tests.base import TestCase, main, assets
+from tests.base import TestCase, main, assets, copy_of_directory
 
 from ocrd_utils import pushd_popd, MIMETYPE_PAGE
 from ocrd.resolver import Resolver
@@ -107,13 +107,13 @@ print('''%s''')
             OcrdWfStep.parse('sample-processor -x wrong wrong wrong')
 
     def test_parse_ok(self):
-        task_str = 'sample-processor -I IN -O OUT -p %s' % self.param_fname
+        task_str = 'ocrd-sample-processor -I IN -O OUT -p %s' % self.param_fname
         task = OcrdWfStep.parse(task_str)
         self.assertEqual(task.executable, 'ocrd-sample-processor')
         self.assertEqual(task.input_file_grps, ['IN'])
         self.assertEqual(task.output_file_grps, ['OUT'])
         self.assertEqual(json.dumps(task.parameters), PARAM_JSON)
-        self.assertEqual(str(task), task_str.replace(self.param_fname, "'%s'" % PARAM_JSON))
+        self.assertEqual(str(task), task_str.replace('-p %s' % self.param_fname, "-P foo 42"))
 
     def test_parse_repeated_params(self):
         task_str = 'sample-processor -I IN -O OUT -p %s -P foo 23' % self.param_fname
@@ -121,7 +121,7 @@ print('''%s''')
         self.assertEqual(task.parameters, {'foo': 23})
 
     def test_parse_parameter_none(self):
-        task_str = 'sample-processor -I IN -O OUT1,OUT2'
+        task_str = 'ocrd-sample-processor -I IN -O OUT1,OUT2'
         task = OcrdWfStep.parse(task_str)
         self.assertEqual(task.parameters, {})
         self.assertEqual(str(task), task_str)
@@ -197,21 +197,20 @@ print('''%s''')
                 "sample-processor -I OCR-D-SEG-WORD  -O OCR-D-OCR-TESS",
             ]]), workspace, overwrite=True)
 
-
     def test_task_run(self):
         resolver = Resolver()
-        with TemporaryDirectory() as tempdir:
-            with pushd_popd(tempdir):
-                # def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
-                ws = resolver.workspace_from_nothing(tempdir)
-                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE)
-                ws.save_mets()
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
+            with pushd_popd(wsdir):
+                ws = resolver.workspace_from_url('mets.xml')
+                files_before = len(ws.mets.find_files())
                 run_tasks('mets.xml', 'DEBUG', None, [
-                    "dummy -I GRP0 -O GRP1",
+                    "dummy -I OCR-D-IMG -O GRP1",
                     "dummy -I GRP1 -O GRP2",
                 ])
                 ws.reload_mets()
-                self.assertEqual(len(ws.mets.find_files()), 3)
+                # step 1: 2 images in OCR-D-IMG -> 2 images 2 PAGEXML in GRP1
+                # step 2: 2 images and 2 PAGEXML in GRP1 -> process just the PAGEXML
+                self.assertEqual(len(ws.mets.find_files()), files_before + 6)
 
 
 if __name__ == '__main__':
