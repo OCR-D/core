@@ -116,6 +116,7 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
     If METS_URL is not provided, use --mets accordingly.
+    METS_URL can also be an OAI-PMH GetRecord URL wrapping a METS file.
     """
     LOG = getLogger('ocrd.cli.workspace.clone')
     if workspace_dir:
