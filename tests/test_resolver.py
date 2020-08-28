@@ -243,10 +243,9 @@ def test_handle_response_for_invalid_content(mock_log_warning, mock_get, respons
 
     # assert behavior
     mock_get.assert_called_once_with(url)
-    mock_log_warning.assert_called_once()
+    assert mock_log_warning.call_count == 1
 
 
 
 if __name__ == '__main__':
     main()
-
