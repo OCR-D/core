@@ -1,5 +1,5 @@
 from os import getcwd
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, gettempdir
 from pathlib import Path
 
 from PIL import Image
@@ -168,7 +168,7 @@ class TestUtils(TestCase):
         cwd = getcwd()
         with pushd_popd(tempdir=True) as newcwd:
             self.assertEqual(getcwd(), newcwd)
-            self.assertTrue(newcwd.startswith('/tmp'))
+            self.assertTrue(newcwd.startswith(gettempdir()))
         self.assertEqual(getcwd(), cwd)
 
     def test_pushd_popd_bad_call(self):
