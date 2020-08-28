@@ -2,7 +2,6 @@ import tempfile
 from pathlib import Path
 
 import requests
-import lxml.etree as ET
 
 from ocrd.constants import TMP_PREFIX
 from ocrd_utils import (
@@ -15,6 +14,7 @@ from ocrd_utils import (
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
 from ocrd_models.constants import NAMESPACES as NS
+from ocrd_models.utils import handle_oai_response
 
 log = getLogger('ocrd.resolver')
 
@@ -100,7 +100,7 @@ class Resolver():
             response = requests.get(url)
             if response.status_code != 200:
                 raise Exception("HTTP request failed: %s (HTTP %d)" % (url, response.status_code))
-            contents = handle_response(response)
+            contents = handle_oai_response(response)
             dst_path.write_bytes(contents)
 
         return ret
@@ -180,49 +180,3 @@ class Resolver():
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
 
-
-def handle_response(response):
-    """
-    In case of a valid OAI-Response, extract first METS-Entry-Data
-    """
-
-    content_type = response.headers['Content-Type']
-    if 'xml' in content_type or 'text' in content_type:
-        content = response.content
-
-        try:
-            if is_oai_response(content):
-                return extract_mets(content)
-        except ET.LxmlError as exc:
-            log.warning("textual response but no xml: %s (%s)", content, exc)
-
-    return response.content
-
-
-def is_oai_response(data):
-    """
-    Return True if data is an OAI-PMH request/response
-    """
-    xml_root = ET.fromstring(data)
-    root_tag = xml_root.tag
-    log.info("response data root.tag: '%s'" % root_tag)
-    return str(root_tag).endswith('OAI-PMH')
-
-
-def extract_mets(data, preamble='<?xml version="1.0" encoding="UTF-8"?>'):
-    """
-    Extract METS from an OAI-PMH GetRecord response
-    """
-    xml_root = ET.fromstring(data)
-    if 'mets' in xml_root.tag:
-        return data
-    mets_root_el = xml_root.find('.//{%s}mets' % NS['mets'])
-    if mets_root_el is not None:
-        new_tree = ET.ElementTree(mets_root_el)
-        xml_formatted = ET.tostring(new_tree,
-                                pretty_print=True,
-                                encoding='UTF-8').decode('UTF-8')
-        formatted_content = '{}\n{}'.format(preamble, xml_formatted)
-        return formatted_content.encode('UTF-8').replace(b'\n', b'\r\n')
-
-    raise Exception("Missing mets-section in %s" % data)

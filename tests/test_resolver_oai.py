@@ -5,7 +5,8 @@ from os.path import join, dirname
 
 from tests.base import main
 
-from ocrd.resolver import Resolver, extract_mets
+from ocrd.resolver import Resolver
+from ocrd_models.utils import extract_mets_from_oai_content
 
 @fixture(name="response_dir")
 def fixture_response_dir(tmpdir):
@@ -34,20 +35,17 @@ def fixture_xml_kant_content(response_dir):
 def test_extract_mets_from_oai_content(oai_response_content):
     """Ensure that OAI-prelude gets dropped"""
 
-    result = extract_mets(oai_response_content)
+    result = extract_mets_from_oai_content(oai_response_content)
     expected_start = b'<?xml version="1.0" encoding="UTF-8"?>\r\n<mets:mets'
     assert result.startswith(expected_start)
     assert b'OAI-PHM' not in result
 
-
-
 def test_handle_response_mets(plain_xml_response_content):
     """Ensure plain XML/Text Response is not broken"""
 
-    result = extract_mets(plain_xml_response_content)
+    result = extract_mets_from_oai_content(plain_xml_response_content)
     expected_start = b'<?xml version="1.0"'
     assert result.startswith(expected_start)
-
 
 @mock.patch("requests.get")
 def test_handle_common_oai_response(mock_get, response_dir, oai_response_content):
@@ -70,7 +68,7 @@ def test_handle_common_oai_response(mock_get, response_dir, oai_response_content
 
 
 @mock.patch("requests.get")
-@mock.patch("ocrd.resolver.log.warning")
+@mock.patch("ocrd_models.utils.log.warning")
 def test_handle_response_for_invalid_content(mock_log_warning, mock_get, response_dir):
     """If invalid content is returned, store warning log entry"""
 
@@ -88,8 +86,6 @@ def test_handle_response_for_invalid_content(mock_log_warning, mock_get, respons
     # assert behavior
     mock_get.assert_called_once_with(url)
     assert mock_log_warning.call_count == 1
-
-
 
 if __name__ == '__main__':
     main(__file__)
