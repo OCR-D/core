@@ -10,6 +10,7 @@ import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd_utils import getLogger, pushd_popd, EXT_TO_MIME
+from . import command_with_replaced_help
 
 log = getLogger('ocrd.cli.workspace')
 
@@ -61,14 +62,15 @@ def workspace_cli(ctx, directory, mets, mets_basename, backup):
 # ocrd workspace validate
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('validate')
+@workspace_cli.command('validate', cls=command_with_replaced_help(
+    (r' \[METS_URL\]', ''))) # XXX deprecated argument
 @pass_workspace
 @click.option('-a', '--download', is_flag=True, help="Download all files")
 @click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'page_xsd', 'mets_xsd', 'url']))
 @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
 @click.argument('mets_url', default=None, required=False)
-def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
+def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
     """
     Validate a workspace
     
@@ -100,7 +102,8 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
 # ocrd workspace clone
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('clone')
+@workspace_cli.command('clone', cls=command_with_replaced_help(
+    (r' \[WORKSPACE_DIR\]', ''))) # XXX deprecated argument
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
@@ -109,7 +112,7 @@ def validate_workspace(ctx, mets_url, download, skip, page_textequiv_consistency
 @pass_workspace
 def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
     """
-    Create a workspace from --mets and return the directory
+    Create a workspace from METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
     If METS_URL is not provided, use --mets accordingly.
@@ -133,12 +136,13 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
 # ocrd workspace init
 # ----------------------------------------------------------------------
 
-@workspace_cli.command('init')
+@workspace_cli.command('init', cls=command_with_replaced_help(
+    (r' \[DIRECTORY\]', ''))) # XXX deprecated argument
 @click.option('-f', '--clobber-mets', help="Clobber mets.xml if it exists", is_flag=True, default=False)
 # XXX deprecated
 @click.argument('directory', default=None, required=False)
 @pass_workspace
-def workspace_create(ctx, clobber_mets, directory):
+def workspace_init(ctx, clobber_mets, directory):
     """
     Create a workspace with an empty METS file in --directory.
 
