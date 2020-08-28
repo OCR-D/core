@@ -14,6 +14,7 @@ from ocrd_utils import (
 )
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
+from ocrd_models.constants import NAMESPACES as NS
 
 log = getLogger('ocrd.resolver')
 
@@ -199,15 +200,23 @@ def handle_response(response):
 
 
 def is_oai_response(data):
+    """
+    Return True if data is an OAI-PMH request/response
+    """
     xml_root = ET.fromstring(data)
-    root_tag = xml_root.tag   
+    root_tag = xml_root.tag
     log.info("response data root.tag: '%s'" % root_tag)
     return str(root_tag).endswith('OAI-PMH')
 
 
 def extract_mets(data, preamble='<?xml version="1.0" encoding="UTF-8"?>'):
+    """
+    Extract METS from an OAI-PMH GetRecord response
+    """
     xml_root = ET.fromstring(data)
-    mets_root_el = xml_root.find('.//{http://www.loc.gov/METS/}mets')
+    if 'mets' in xml_root.tag:
+        return data
+    mets_root_el = xml_root.find('.//{%s}mets' % NS['mets'])
     if mets_root_el is not None:
         new_tree = ET.ElementTree(mets_root_el)
         xml_formatted = ET.tostring(new_tree,
@@ -215,8 +224,5 @@ def extract_mets(data, preamble='<?xml version="1.0" encoding="UTF-8"?>'):
                                 encoding='UTF-8').decode('UTF-8')
         formatted_content = '{}\n{}'.format(preamble, xml_formatted)
         return formatted_content.encode('UTF-8').replace(b'\n', b'\r\n')
-
-    if 'mets' in xml_root.tag:
-        return data
 
     raise Exception("Missing mets-section in %s" % data)
