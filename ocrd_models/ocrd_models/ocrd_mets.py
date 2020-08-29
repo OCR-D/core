@@ -51,7 +51,7 @@ class OcrdMets(OcrdXmlDocument):
         """
 
         """
-        super(OcrdMets, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __str__(self):
         """
@@ -67,7 +67,7 @@ class OcrdMets(OcrdXmlDocument):
         See `specs <https://ocr-d.github.io/mets#unique-id-for-the-document-processed>`_ for details.
         """
         for t in IDENTIFIER_PRIORITY:
-            found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
+            found = self.etree_find('.//mods:identifier[@type="%s"]' % t)
             if found is not None:
                 return found.text
 
@@ -80,11 +80,11 @@ class OcrdMets(OcrdXmlDocument):
         """
         id_el = None
         for t in IDENTIFIER_PRIORITY:
-            id_el = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
+            id_el = self.etree_find('.//mods:identifier[@type="%s"]' % t)
             if id_el is not None:
                 break
         if id_el is None:
-            mods = self._tree.getroot().find('.//mods:mods', NS)
+            mods = self.etree_find('.//mods:mods')
             id_el = ET.SubElement(mods, TAG_MODS_IDENTIFIER)
             id_el.set('type', 'purl')
         id_el.text = purl
@@ -94,16 +94,16 @@ class OcrdMets(OcrdXmlDocument):
         """
         List all `OcrdAgent </../../ocrd_models/ocrd_models.ocrd_agent.html>`_
         """
-        return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('mets:metsHdr/mets:agent', NS)]
+        return [OcrdAgent(el_agent) for el_agent in self.etree_findall('mets:metsHdr/mets:agent')]
 
     def add_agent(self, *args, **kwargs):
         """
         Add an `OcrdAgent </../../ocrd_models/ocrd_models.ocrd_agent.html>`_ to the list of agents in the metsHdr.
         """
-        el_metsHdr = self._tree.getroot().find('.//mets:metsHdr', NS)
+        el_metsHdr = self.etree_find('.//mets:metsHdr')
         if el_metsHdr is None:
             el_metsHdr = ET.Element(TAG_METS_METSHDR)
-            self._tree.getroot().insert(0, el_metsHdr)
+            self.etree_root.insert(0, el_metsHdr)
         #  assert(el_metsHdr is not None)
         el_agent = ET.SubElement(el_metsHdr, TAG_METS_AGENT)
         #  print(ET.tostring(el_metsHdr))
@@ -114,7 +114,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         List the ``USE`` attributes of all ``mets:fileGrp``.
         """
-        return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
+        return [el.get('USE') for el in self.etree_findall('.//mets:fileGrp')]
 
     # pylint: disable=multiple-statements
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
@@ -144,12 +144,11 @@ class OcrdMets(OcrdXmlDocument):
             if pageId.startswith(REGEX_PREFIX):
                 raise Exception("find_files does not support regex search for pageId")
             pageIds, pageId = pageId.split(','), list()
-            for page in self._tree.getroot().xpath(
-                '//mets:div[@TYPE="page"]', namespaces=NS):
+            for page in self.etree_xpath('//mets:div[@TYPE="page"]'):
                 if page.get('ID') in pageIds:
                     pageId.extend(
-                        [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)])
-        for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
+                        [fptr.get('FILEID') for fptr in self.etree_findall('mets:fptr', page)])
+        for cand in self.etree_xpath('//mets:file'):
             if ID:
                 if ID.startswith(REGEX_PREFIX):
                     if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')): continue
@@ -195,9 +194,9 @@ class OcrdMets(OcrdXmlDocument):
         """
         if ',' in fileGrp:
             raise Exception('fileGrp must not contain commas')
-        el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
+        el_fileSec = self.etree_find('mets:fileSec')
         if el_fileSec is None:
-            el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)
+            el_fileSec = ET.SubElement(self.etree_root, TAG_METS_FILESEC)
         el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % fileGrp, NS)
         if el_fileGrp is None:
             el_fileGrp = ET.SubElement(el_fileSec, TAG_METS_FILEGRP)
@@ -212,7 +211,7 @@ class OcrdMets(OcrdXmlDocument):
             USE (string): USE attribute of the fileGrp to delete. Can be a regex if prefixed with //
             recursive (boolean): Whether to recursively delete all files in the group
         """
-        el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
+        el_fileSec = self.etree_find('mets:fileSec')
         if el_fileSec is None:
             raise Exception("No fileSec!")
         if isinstance(USE, str):
@@ -252,9 +251,9 @@ class OcrdMets(OcrdXmlDocument):
         """
         if not ID:
             raise Exception("Must set ID of the mets:file")
-        elif not REGEX_FILE_ID.fullmatch(ID):
+        if not REGEX_FILE_ID.fullmatch(ID):
             raise Exception("Invalid syntax for mets:file/@ID %s" % ID)
-        el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
+        el_fileGrp = self.etree_find(".//mets:fileGrp[@USE='%s']" % fileGrp)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
         if ID and not ignore and self.find_files(ID=ID) != []:
@@ -302,7 +301,7 @@ class OcrdMets(OcrdXmlDocument):
             raise FileNotFoundError("File not found: %s" % ID)
 
         # Delete the physical page ref
-        for fptr in self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
+        for fptr in self.etree_findall('.//mets:fptr[@FILEID="%s"]' % ID):
             log.info("Delete fptr element %s for page '%s'", fptr, ID)
             page_div = fptr.getparent()
             page_div.remove(fptr)
@@ -322,9 +321,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         List all page IDs
         """
-        return self._tree.getroot().xpath(
-            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
-            namespaces=NS)
+        return self.etree_xpath('mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID')
 
     def get_physical_pages(self, for_fileIds=None):
         """
@@ -333,9 +330,8 @@ class OcrdMets(OcrdXmlDocument):
         if for_fileIds is None:
             return self.physical_pages
         ret = [None] * len(for_fileIds)
-        for page in self._tree.getroot().xpath(
-            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
-                namespaces=NS):
+        for page in self.etree_xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]'):
             for fptr in page.findall('mets:fptr', NS):
                 if fptr.get('FILEID') in for_fileIds:
                     ret[for_fileIds.index(fptr.get('FILEID'))] = page.get('ID')
@@ -347,15 +343,15 @@ class OcrdMets(OcrdXmlDocument):
         """
         #  print(pageId, ocrd_file)
         # delete any page mapping for this file.ID
-        for el_fptr in self._tree.getroot().findall(
+        for el_fptr in self.etree_findall(
                 'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' %
-                ocrd_file.ID, namespaces=NS):
+                ocrd_file.ID):
             el_fptr.getparent().remove(el_fptr)
 
         # find/construct as necessary
-        el_structmap = self._tree.getroot().find('mets:structMap[@TYPE="PHYSICAL"]', NS)
+        el_structmap = self.etree_find('mets:structMap[@TYPE="PHYSICAL"]')
         if el_structmap is None:
-            el_structmap = ET.SubElement(self._tree.getroot(), TAG_METS_STRUCTMAP)
+            el_structmap = ET.SubElement(self.etree_root, TAG_METS_STRUCTMAP)
             el_structmap.set('TYPE', 'PHYSICAL')
         el_seqdiv = el_structmap.find('mets:div[@TYPE="physSequence"]', NS)
         if el_seqdiv is None:
@@ -377,15 +373,14 @@ class OcrdMets(OcrdXmlDocument):
         """
         Get the pageId for a ocrd_file
         """
-        ret = self._tree.getroot().xpath(
+        ret = self.etree_xpath(
             '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@ID' %
-            ocrd_file.ID, namespaces=NS)
+            ocrd_file.ID)
         if ret:
             return ret[0]
 
     def remove_physical_page(self, ID):
-        mets_div = self._tree.getroot().xpath(
-            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % ID,
-            namespaces=NS)
+        mets_div = self.etree_xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % ID)
         if mets_div:
             mets_div[0].getparent().remove(mets_div[0])
