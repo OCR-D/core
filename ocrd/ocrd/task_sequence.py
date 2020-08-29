@@ -2,7 +2,6 @@ import json
 from shlex import split as shlex_split
 from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
 from subprocess import run, PIPE
-from collections import Counter
 
 from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides
 # from collections import Counter
@@ -87,9 +86,6 @@ class ProcessorTask():
         if self.parameters:
             ret += " -p '%s'" % json.dumps(self.parameters)
         return ret
-from ocrd_validators import WorkspaceValidator
-from ocrd_utils import getLogger
-from ocrd_models import ValidationReport
 
 def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     report = ValidationReport()
