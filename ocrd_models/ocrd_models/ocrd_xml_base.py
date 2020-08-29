@@ -45,19 +45,19 @@ class OcrdXmlDocument():
         """
         ET.xpath from ``el`` or root element
         """
-        return (el if el else self.etree_root).xpath(xpath, namespaces=NS)
+        return (el if el is not None else self.etree_root).xpath(xpath, namespaces=NS)
 
     def etree_find(self, xpath, el=None):
         """
         ET.find from ``el`` or root element
         """
-        return (el if el else self.etree_root).find(xpath, namespaces=NS)
+        return (el if el is not None else self.etree_root).find(xpath, namespaces=NS)
 
     def etree_findall(self, xpath, el=None):
         """
         ET.findall from ``el`` or root elemen
         """
-        return (el if el else self.etree_root).findall(xpath, namespaces=NS)
+        return (el if el is not None else self.etree_root).findall(xpath, namespaces=NS)
 
     def to_xml(self, xmllint=False):
         """
