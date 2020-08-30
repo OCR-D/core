@@ -24,6 +24,7 @@ from .constants import (
 )
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
+from .ocrd_mets_filter import OcrdMetsFilter
 from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
@@ -116,74 +117,8 @@ class OcrdMets(OcrdXmlDocument):
         """
         return [el.get('USE') for el in self.etree_findall('.//mets:fileGrp')]
 
-    # pylint: disable=multiple-statements
-    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
-        """
-        Search ``mets:file`` in this METS document.
-
-
-        The ``ID``, ``fileGrp``, ``url`` and ``mimetype`` parameters can be
-        either a literal string or a regular expression if the string starts
-        with ``//`` (double slash). If it is a regex, the leading ``//`` is removed
-        and candidates are matched against the regex with ``re.fullmatch``. If it is
-        a literal string, comparison is done with string equality.
-
-        Args:
-            ID (string) : ID of the file
-            fileGrp (string) : USE of the fileGrp to list files of
-            pageId (string) : ID of physical page manifested by matching files
-            url (string) : @xlink:href of mets:Flocat of mets:file
-            mimetype (string) : MIMETYPE of matching files
-            local (boolean) : Whether to restrict results to local files
-
-        Return:
-            List of files.
-        """
-        ret = []
-        if pageId:
-            if pageId.startswith(REGEX_PREFIX):
-                raise Exception("find_files does not support regex search for pageId")
-            pageIds, pageId = pageId.split(','), list()
-            for page in self.etree_xpath('//mets:div[@TYPE="page"]'):
-                if page.get('ID') in pageIds:
-                    pageId.extend(
-                        [fptr.get('FILEID') for fptr in self.etree_findall('mets:fptr', page)])
-        for cand in self.etree_xpath('//mets:file'):
-            if ID:
-                if ID.startswith(REGEX_PREFIX):
-                    if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')): continue
-                else:
-                    if not ID == cand.get('ID'): continue
-
-            if pageId is not None and cand.get('ID') not in pageId:
-                continue
-
-            if fileGrp:
-                if fileGrp.startswith(REGEX_PREFIX):
-                    if not fullmatch(fileGrp[REGEX_PREFIX_LEN:], cand.getparent().get('USE')): continue
-                else:
-                    if cand.getparent().get('USE') != fileGrp: continue
-
-            if mimetype:
-                if mimetype.startswith(REGEX_PREFIX):
-                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE') or ''): continue
-                else:
-                    if cand.get('MIMETYPE') != mimetype: continue
-
-            if url:
-                cand_url = cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink'])
-                if url.startswith(REGEX_PREFIX):
-                    if not fullmatch(url[REGEX_PREFIX_LEN:], cand_url): continue
-                else:
-                    if cand_url != url: continue
-
-            f = OcrdFile(cand, mets=self)
-
-            # If only local resources should be returned and f is not a file path: skip the file
-            if local_only and not is_local_filename(f.url):
-                continue
-            ret.append(f)
-        return ret
+    def find_files(self, **kwargs):
+        return OcrdMetsFilter(**kwargs).find_files(self)
 
     def add_file_group(self, fileGrp):
         """
@@ -274,7 +209,10 @@ class OcrdMets(OcrdXmlDocument):
         """
         Delete all files matching the query. Same arguments as ``OcrdMets.find_files``
         """
-        files = self.find_files(*args, **kwargs)
+        # XXX must be retained for backwards-compatibility
+        if args:
+            kwargs['ID'] = args[0]
+        files = self.find_files(**kwargs)
         if files:
             for f in files:
                 self.remove_one_file(f)

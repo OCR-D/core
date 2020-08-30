@@ -7,6 +7,7 @@ from tests.base import main
 
 from ocrd import Resolver
 from ocrd_models import OcrdMetsFilter
+from ocrd_utils import setOverrideLogLevel; setOverrideLogLevel('DEBUG')
 
 @fixture(name="sample_workspace")
 def fixture_sample_workspace(tmpdir):
@@ -57,11 +58,10 @@ def test_ocrd_mets_filter_nested_regex(sample_workspace):
 
 def test_ocrd_mets_filter_lowercase(sample_workspace):
     """lowercase alternatives should be accepted"""
-    # from ocrd_utils import setOverrideLogLevel; setOverrideLogLevel('DEBUG')
-    mets_filter = OcrdMetsFilter(pageid_exclude='//.*1', ID_exclude='GRP1_IMG2')
+    mets_filter = OcrdMetsFilter(filegrp_exclude='GRP3', ID_exclude='GRP1_IMG2')
     files = mets_filter.find_files(sample_workspace)
     # print([str(f) for f  in files])
-    assert len(files) == 2
+    assert len(files) == 3
 
 def test_ocrd_mets_filter_include_aliases(sample_workspace):
     """field without _ implies field_include"""
