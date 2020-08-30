@@ -159,6 +159,9 @@ coverage: assets-clean assets
 	coverage report
 	coverage html
 
+benchmark:
+	$(PYTHON) benchmarks/test_mets.py --benchmark-autosave=True
+
 #
 # Documentation
 #
