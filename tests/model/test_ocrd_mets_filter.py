@@ -7,7 +7,7 @@ from tests.base import main
 
 from ocrd import Resolver
 from ocrd_models import OcrdMetsFilter
-from ocrd_utils import setOverrideLogLevel; setOverrideLogLevel('DEBUG')
+# from ocrd_utils import setOverrideLogLevel; setOverrideLogLevel('DEBUG')
 
 @fixture(name="sample_workspace")
 def fixture_sample_workspace(tmpdir):

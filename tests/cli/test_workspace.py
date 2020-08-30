@@ -361,11 +361,12 @@ class TestCli(TestCase):
 
     def test_find_files_multiple_physical_pages_for_fileids(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0005', '-k', 'url'])
-            self.assertEqual(result.stdout, 'OCR-D-IMG/FILE_0005_IMAGE.tif\n')
-            self.assertEqual(result.exit_code, 0)
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0001', '-k', 'url'])
-            self.assertEqual(len(result.stdout.split('\n')), 19)
+            code, out, err = self.invoke_cli(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0005', '-k', 'url'])
+            print(code, out, err)
+            assert out == 'OCR-D-IMG/FILE_0005_IMAGE.tif\n'
+            assert not code
+            _, out, _ = self.invoke_cli(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0001', '-k', 'url'])
+            self.assertEqual(len(out.split('\n')), 19)
 
     def test_mets_basename(self):
         with TemporaryDirectory() as tempdir:

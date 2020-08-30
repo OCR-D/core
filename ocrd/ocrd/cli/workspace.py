@@ -3,6 +3,7 @@ from os import getcwd
 from os.path import relpath, exists, join, isabs, dirname, basename, abspath
 from pathlib import Path
 import sys
+from itertools import product
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
 
@@ -170,6 +171,7 @@ def workspace_init(ctx, clobber_mets, directory):
 @workspace_cli.command('add')
 @ocrd_mets_filter_options(
     operators=['in'],
+    fields=['ID', 'mimetype', 'fileGrp', 'pageId'],
     help_field=dict(
         fileGrp='fileGrp USE',
         mimetype='Media type',
@@ -187,7 +189,8 @@ def workspace_init(ctx, clobber_mets, directory):
         fileGrp_include='file_grp',
         ID_include='file_id',
         mimetype_include='mimetype',
-        pageId_include='page_id'))
+        pageId_include='page_id',
+    ))
 @click.option('-C', '--check-file-exists', help="Whether to ensure FNAME exists", is_flag=True, default=False)
 @click.option('--ignore', help="Do not check whether file exists.", default=False, is_flag=True)
 @click.option('--force', help="If file with ID already exists, replace it. No effect if --ignore is set.", default=False, is_flag=True)
@@ -250,7 +253,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         fileGrp_include='file_grp',
         ID_include='file_id',
         mimetype_include='mimetype',
-        pageId_include='page_id'))
+        pageId_include='page_id',
+        url_include='url'))
 @click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
@@ -315,10 +319,9 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
 
         # expand templates
-        for param_name in file_dict:
-            for group_name in group_dict:
-                file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
-
+        for field, (found_field, found_val) in product(file_dict.keys(), group_dict.items()):
+            file_dict[field] = file_dict[field].replace('{{ %s }}' % found_field,
+                    found_val if not isinstance(found_val, list) else '-'.join(found_val))
         # copy files
         if file_dict['url']:
             urlpath = Path(workspace.directory, file_dict['url'])
@@ -446,7 +449,7 @@ def remove_group(ctx, group, recursive, force, keep_files):
 
 @workspace_cli.command('prune-files')
 @ocrd_mets_filter_options(
-    Help_field=dict(
+    help_field=dict(
         fileGrp='fileGrp USE',
         mimetype='Media type',
         pageId='ID of physical page',
@@ -460,7 +463,8 @@ def remove_group(ctx, group, recursive, force, keep_files):
         fileGrp_include='file_grp',
         ID_include='file_id',
         mimetype_include='mimetype',
-        pageId_include='page_id'))
+        pageId_include='page_id',
+        url_include='url'))
 @pass_workspace
 def prune_files(ctx, **filter_args):
     """

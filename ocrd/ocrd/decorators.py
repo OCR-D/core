@@ -198,6 +198,7 @@ class ocrd_mets_filter_options():
             args = [_tpl('parameter')()]
             kwargs = dict(
                 default=None,
+                callback=lambda ctx, param, value: value.split(',') if value and ',' in value else value,
                 required=_tpl('required')(),
                 metavar=_tpl('metavar')(),
                 help=_tpl('help')(
