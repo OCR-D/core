@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `METS_URL` can also be an OAI-PMH GetRecord request, ht @m3ssman, #581
+
 ## [2.15.0] - 2020-08-28
 
 Changed:
