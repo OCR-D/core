@@ -4,6 +4,7 @@ import os
 import shutil
 
 import lxml.etree as ET
+from tests.base import main
 
 import pytest
 
@@ -28,7 +29,7 @@ def test_workspace_init_missing_mets():
 @pytest.fixture(name="workspace_directory")
 def fixture_workspace_directory(tmpdir):
     src_data_kant = './tests/assets/kant_aufklaerung_1784/data'
-    target_data_kant = tmpdir.join('kant_aufklaerung_1784').join('data')
+    target_data_kant = str(tmpdir.join('kant_aufklaerung_1784').join('data'))
     shutil.copytree(src_data_kant, target_data_kant)
     return str(target_data_kant)
 
@@ -79,6 +80,9 @@ def test_workspace_remove_groups_unforce(workspace_directory):
 
     # assert
     written_data = ET.parse(os.path.join(workspace_directory, 'mets.xml')).getroot()
-    assert written_data
+    assert written_data is not None
     groups_new = written_data.findall('.//{http://www.loc.gov/METS/}fileGrp[@USE="OCR-D-GT-ALTO"]')
     assert not groups_new
+
+if __name__ == '__main__':
+    main(__file__)

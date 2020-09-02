@@ -193,7 +193,7 @@ class Workspace():
                 self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
                 file_dirs.append(path.dirname(f.local_filename))
 
-        self.mets.remove_file_group(USE)
+        self.mets.remove_file_group(USE, force=force)
 
         # PLEASE NOTE: this only removes directories in the workspace if they are empty
         # and named after the fileGrp which is a convention in OCR-D.
