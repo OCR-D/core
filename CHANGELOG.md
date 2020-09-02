@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd process`: better-readable output on failure, #583
+
 Added:
 
   * `METS_URL` can also be an OAI-PMH GetRecord request, ht @m3ssman, #581
