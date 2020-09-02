@@ -204,13 +204,14 @@ class OcrdMets(OcrdXmlDocument):
             el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
-    def remove_file_group(self, USE, recursive=False):
+    def remove_file_group(self, USE, recursive=False, force=False):
         """
         Remove a fileGrp (fixed ``USE``) or fileGrps (regex ``USE``)
 
         Arguments:
             USE (string): USE attribute of the fileGrp to delete. Can be a regex if prefixed with //
             recursive (boolean): Whether to recursively delete all files in the group
+            force (boolean): do not raise an exception if file group doesn't exist
         """
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
@@ -226,7 +227,12 @@ class OcrdMets(OcrdXmlDocument):
         else:
             el_fileGrp = USE
         if el_fileGrp is None:   # pylint: disable=len-as-condition
+            msg = "No such fileGrp: %s" % USE
+            if force:
+                LOG.warning(msg)
+                return
             raise Exception("No such fileGrp: %s" % USE)
+        elif el_fileGrp 
         files = el_fileGrp.findall('mets:file', NS)
         if files:
             if not recursive:
