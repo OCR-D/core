@@ -68,7 +68,9 @@ class TestDecorators(TestCase):
         https://github.com/OCR-D/spec/pull/156
         """
         _, out_help, _ = self.invoke_cli(cli_dummy_processor, ['--help'])
-        exit_code, out_none, _ = self.invoke_cli(cli_dummy_processor, [])
+        exit_code, out_none, err = self.invoke_cli(cli_dummy_processor, [])
+        print("exit_code=%s\nout=%s\nerr=%s" % (exit_code, out_none, err))
+        #  assert 0
         self.assertEqual(exit_code, 1)
         self.assertEqual(out_help, out_none)
 

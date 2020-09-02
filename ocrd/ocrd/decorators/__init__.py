@@ -30,6 +30,11 @@ def ocrd_cli_wrap_processor(
     overwrite=False,
     **kwargs
 ):
+    if not (dump_json or help or version or overwrite) and \
+            mets == 'mets.xml' and \
+            not (kwargs['input_file_grp'] or kwargs['output_file_grp']):
+        processorClass(workspace=None, show_help=True)
+        sys.exit(1)
     if dump_json or help or version:
         processorClass(workspace=None, dump_json=dump_json, show_help=help, show_version=version)
         sys.exit()
