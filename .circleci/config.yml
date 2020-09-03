@@ -29,7 +29,7 @@ jobs:
       - run: make deps-test install
       - run: make test
 
-  build-python38:
+  test-python38:
     docker:
       - image: python:3.8.5
     working_directory: ~/ocrd-core
@@ -45,12 +45,12 @@ jobs:
       - checkout
       - setup_remote_docker      # https://circleci.com/docs/2.0/building-docker-images/
       - run: make docker
-      - run: make docker-gpu
+      - run: make docker-cuda
       - run:
           name: Login to Docker Hub
           command: echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
       - run: docker push ocrd/core
-      - run: docker push ocrd/core-gpu
+      - run: docker push ocrd/core-cuda
 
 workflows:
   version: 2
@@ -62,7 +62,7 @@ workflows:
               only: master
   test-pull-request:
     jobs:
-      - build-python35
-      - build-python36
-      - build-python37
-      - build-python38
+      - test-python35
+      - test-python36
+      - test-python37
+      - test-python38
