@@ -1,5 +1,5 @@
 import io
-from os import makedirs, unlink, listdir
+from os import makedirs, unlink, listdir, path
 from pathlib import Path
 
 import cv2
@@ -29,7 +29,8 @@ from ocrd_utils import (
     pushd_popd,
     MIME_TO_EXT,
     MIME_TO_PIL,
-    MIMETYPE_PAGE
+    MIMETYPE_PAGE,
+    REGEX_PREFIX
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -182,18 +183,28 @@ class Workspace():
         """
         if not force and self.overwrite_mode:
             force = True
-        if USE not in self.mets.file_groups and not force:
+            
+        if (not USE.startswith(REGEX_PREFIX)) and (USE not in self.mets.file_groups) and (not force):
             raise Exception("No such fileGrp: %s" % USE)
+        
+        file_dirs = []
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
                 self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
-        if USE in self.mets.file_groups:
-            self.mets.remove_file_group(USE)
-        # XXX this only removes directories in the workspace if they are empty
+                file_dirs.append(path.dirname(f.local_filename))
+
+        self.mets.remove_file_group(USE, force=force)
+
+        # PLEASE NOTE: this only removes directories in the workspace if they are empty
         # and named after the fileGrp which is a convention in OCR-D.
         with pushd_popd(self.directory):
             if Path(USE).is_dir() and not listdir(USE):
                 Path(USE).rmdir()
+            if file_dirs:
+                for file_dir in set(file_dirs):
+                    if Path(file_dir).is_dir() and not listdir(file_dir):
+                        Path(file_dir).rmdir()
+
 
     def add_file(self, file_grp, content=None, **kwargs):
         """
