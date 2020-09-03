@@ -13,9 +13,6 @@ BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
 
 FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
 
-# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
-
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
@@ -39,19 +36,27 @@ help:
 	@echo "    docs-clean     Clean docs"
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
+	@echo "    docker-cuda    Build docker GPU / CUDA image"
 	@echo "    bashlib        Build bash library"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
-	@echo "    DOCKER_ARGS  Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
-	@echo "    DOCKER_TAG   Docker tag."
-	@echo "    PIP_INSTALL  pip install command. Default: $(PIP_INSTALL)"
+	@echo "    DOCKER_TAG         Docker tag. Default: '$(DOCKER_TAG)'."
+	@echo "    DOCKER_BASE_IMAGE  Docker base image. Default: '$(DOCKER_BASE_IMAGE)'."
+	@echo "    DOCKER_ARGS        Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
+	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
 
-# Docker tag.
-DOCKER_TAG = 'ocrd/core'
+# Docker tag. Default: '$(DOCKER_TAG)'.
+DOCKER_TAG = ocrd/core
+
+# Docker base image. Default: '$(DOCKER_BASE_IMAGE)'.
+DOCKER_BASE_IMAGE = ubuntu:18.04
+
+# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
+DOCKER_ARGS = 
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL = pip install
@@ -200,8 +205,12 @@ pyclean:
 #
 
 # Build docker image
-docker:
-	docker build -t $(DOCKER_TAG) $(DOCKER_ARGS) .
+docker docker-cuda:
+	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+
+# Build docker GPU / CUDA image
+docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.0-runtime-ubuntu18.04
+docker-cuda: DOCKER_TAG = ocrd/core-cuda
 
 #
 # bash library
