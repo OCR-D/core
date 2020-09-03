@@ -8,10 +8,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd process`: better-readable output on failure, #583
+  * `ocrd log` no longer produces "Logging errors" for multi-arg call, #588
+  * `ocrd workspace remove-group`: remove empty file groups on disk, #584, #569
 
 Added:
 
   * `METS_URL` can also be an OAI-PMH GetRecord request, ht @m3ssman, #581
+  * Additional docker base image for Nvidia CUDA, ht @sepastian, #452
 
 ## [2.15.0] - 2020-08-28
 
