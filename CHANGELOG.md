@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.16.0] - 2020-09-03
+
 Fixed:
 
   * `ocrd process`: better-readable output on failure, #583
@@ -1119,6 +1121,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.16.0]: ../../compare/v2.16.0..v2.15.0
 [2.15.0]: ../../compare/v2.15.0..v2.14.0
 [2.14.0]: ../../compare/v2.14.0..v2.13.2
 [2.13.2]: ../../compare/v2.13.2..v2.13.1
