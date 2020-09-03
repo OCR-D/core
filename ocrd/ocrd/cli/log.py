@@ -27,7 +27,11 @@ def _bind_log_command(lvl):
     @click.argument('msgs', nargs=-1)
     @pass_log
     def _log_wrapper(ctx, msgs):
-        ctx.log(lvl.upper(), *list(msgs))
+        if not msgs:
+            ctx.log(lvl.upper(), '')
+        else:
+            msg = list(msgs) if '%s' in msgs[0] else ' '.join([x.replace('%', '%%') for x in msgs])
+            ctx.log(lvl.upper(), msg)
     return _log_wrapper
 
 for lvl in ['trace', 'debug', 'info', 'warning', 'error', 'critical']:

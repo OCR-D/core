@@ -53,6 +53,12 @@ class TestLogCli(TestCase):
         self.assertIn('ERROR ocrd.foo - foo', self.invoke_cli(log_cli, ['error', 'foo'])[2])
         self.assertIn('CRITICAL ocrd.foo - foo', self.invoke_cli(log_cli, ['critical', 'foo'])[2])
 
+    def test_log_name_levels(self):
+        code, out, err  = self.invoke_cli(log_cli, ['-n', 'foo',  'info', 'foo bar', 'foo bar'])
+        print('code=%s out=%s err=%s' % (code, out, err))
+        assert 'Logging error' not in err
+
+
 
 if __name__ == '__main__':
     main(__file__)
