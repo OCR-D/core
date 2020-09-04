@@ -32,7 +32,7 @@ class TestOcrdWfStep(TestCase):
     #     self.assertTrue(task2.validate())
 
     def test_parse_implicit_after_validate(self):
-        task = ProcessorTask.parse('%s -I IN -O OUT -p \'{"param1": true}\'' % SAMPLE_NAME_REQUIRED_PARAM)
+        task = ProcessorTask.parse('%s -I IN -O OUT -P param1 true' % SAMPLE_NAME_REQUIRED_PARAM)
         task.validate()
         # TODO uncomment and adapt once OCR-D/spec#121 lands
         # self.assertEqual(task.input_file_grps, ['IN', 'SECOND_IN'])

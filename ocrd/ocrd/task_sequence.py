@@ -6,7 +6,7 @@ from collections import Counter
 
 from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides
 # from collections import Counter
-from ocrd.processor.base import run_cli
+from ocrd.processor.helpers import run_cli, run_dump_json
 from ocrd.resolver import Resolver
 from ocrd_validators import ParameterValidator, WorkspaceValidator
 from ocrd_models import ValidationReport
@@ -16,7 +16,9 @@ class ProcessorTask():
     @classmethod
     def parse(cls, argstr):
         tokens = shlex_split(argstr)
-        executable = 'ocrd-%s' % tokens.pop(0)
+        executable = tokens.pop(0)
+        if not executable.startswith('ocrd-'):
+            executable = 'ocrd-' + executable
         input_file_grps = []
         output_file_grps = []
         parameters = {}
@@ -50,8 +52,7 @@ class ProcessorTask():
     def ocrd_tool_json(self):
         if self._ocrd_tool_json:
             return self._ocrd_tool_json
-        result = run([self.executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
-        self._ocrd_tool_json = json.loads(result.stdout)
+        self._ocrd_tool_json = run_dump_json(self.executable)
         return self._ocrd_tool_json
 
     def validate(self):

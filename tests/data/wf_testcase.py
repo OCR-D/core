@@ -24,13 +24,19 @@ SAMPLE_OCRD_TOOL_JSON = '''{
     }
 }'''
 
-SAMPLE_NAME_REQUIRED_PARAM = 'sample-processor-required-param'
+SAMPLE_NAME_REQUIRED_PARAM = SAMPLE_NAME + '-required-param'
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM = json.loads(SAMPLE_OCRD_TOOL_JSON)
 del SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['parameters']['param1']['default']
-SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['executable'] = 'ocrd-' + SAMPLE_NAME_REQUIRED_PARAM
+SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['executable'] = SAMPLE_NAME_REQUIRED_PARAM
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['parameters']['param1']['required'] = True
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM['input_file_grp'] += ['SECOND_IN']
 SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM = json.dumps(SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM)
+print(SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM)
+
+SAMPLE_NAME_TOO_VERBOSE = SAMPLE_NAME + '-too-verbose'
+SAMPLE_OCRD_TOOL_JSON_TOO_VERBOSE = json.loads(SAMPLE_OCRD_TOOL_JSON)
+SAMPLE_OCRD_TOOL_JSON_TOO_VERBOSE['executable'] = SAMPLE_NAME_TOO_VERBOSE
+SAMPLE_OCRD_TOOL_JSON_TOO_VERBOSE = json.dumps(SAMPLE_OCRD_TOOL_JSON_TOO_VERBOSE)
 
 PARAM_JSON = '{"foo": 42}'
 
@@ -52,11 +58,20 @@ print('''%s''')
         """ % SAMPLE_OCRD_TOOL_JSON)
         p.chmod(0o777)
 
-        p = Path(self.tempdir, 'ocrd-' + SAMPLE_NAME_REQUIRED_PARAM)
+        p = Path(self.tempdir, SAMPLE_NAME_REQUIRED_PARAM)
         p.write_text("""\
 #!/usr/bin/env python
 print('''%s''')
         """ % SAMPLE_OCRD_TOOL_JSON_REQUIRED_PARAM)
+        p.chmod(0o777)
+
+        p = Path(self.tempdir, SAMPLE_NAME_TOO_VERBOSE)
+        p.write_text("""\
+#!/usr/bin/env python
+print("00 HAHA I'M MESSING WITH YOUR OUTPUT")
+print('''%s''')
+print("11 GOOD LUCK PARSING THIS AS JSON")
+        """ % SAMPLE_OCRD_TOOL_JSON_TOO_VERBOSE)
         p.chmod(0o777)
 
         os.environ['PATH'] = os.pathsep.join([self.tempdir, os.environ['PATH']])

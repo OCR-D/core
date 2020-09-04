@@ -2,7 +2,8 @@
 Helper methods for running and documenting processors
 """
 from time import time
-import json
+from re import sub
+from json import dumps, loads
 from subprocess import run, PIPE
 
 from click import wrap_text
@@ -73,7 +74,7 @@ def run_processor(
         t1,
         input_file_grp if input_file_grp else '',
         output_file_grp if output_file_grp else '',
-        json.dumps(parameter) if parameter else {}
+        dumps(parameter) if parameter else {}
     ))
     workspace.mets.add_agent(
         name=name,
@@ -84,6 +85,16 @@ def run_processor(
     )
     workspace.save_mets()
     return processor
+
+def run_dump_json(executable):
+    """
+    Run an executable with --dump-json flag, clean up the output and return parsed JSON.
+    """
+    result = run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
+    stdout = result.stdout
+    stdout = sub(r'^[^\{]*', '', stdout)
+    stdout = sub(r'[^\}]*$', '', stdout)
+    return loads(stdout)
 
 def run_cli(
         executable,
@@ -121,6 +132,9 @@ def run_cli(
     return result.returncode, result.stdout, result.stderr
 
 def generate_processor_help(ocrd_tool):
+    """
+    Generate the --help info for a processor
+    """
     parameter_help = ''
     if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
         parameter_help = '  NONE\n'
@@ -134,10 +148,10 @@ def generate_processor_help(ocrd_tool):
                 param_name,
                 param['type'],
                 ' - REQUIRED' if 'required' in param and param['required'] else
-                ' - %s' % json.dumps(param['default']) if 'default' in param else ''))
+                ' - %s' % dumps(param['default']) if 'default' in param else ''))
             parameter_help += '\n ' + wrap(param['description'])
             if 'enum' in param:
-                parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
+                parameter_help += '\n ' + wrap('Possible values: %s' % dumps(param['enum']))
             parameter_help += "\n"
     return '''
 Usage: %s [OPTIONS]
