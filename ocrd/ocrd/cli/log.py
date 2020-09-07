@@ -2,7 +2,9 @@
 Logging CLI
 """
 import click
-from ocrd_utils import getLogger, getLevelName
+from ocrd_utils import initLogging, getLogger, getLevelName
+
+initLogging()
 
 class LogCtx():
 

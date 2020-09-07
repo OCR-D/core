@@ -11,7 +11,7 @@ from ocrd_utils import (
     set_json_key_value_overrides,
 )
 
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, initLogging
 from .resolver import Resolver
 from .processor.base import run_processor
 from ocrd_validators import WorkspaceValidator
@@ -52,7 +52,6 @@ def ocrd_cli_wrap_processor(
     **kwargs
 ):
     if dump_json or help or version:
-        setOverrideLogLevel('OFF', silent=True)
         processorClass(workspace=None, dump_json=dump_json, show_help=help, show_version=version)
         sys.exit()
     else:
@@ -60,6 +59,7 @@ def ocrd_cli_wrap_processor(
         if not mets or (is_local_filename(mets) and not isfile(get_local_filename(mets))):
             processorClass(workspace=None, show_help=True)
             sys.exit(1)
+        initLogging()
         # LOG.info('kwargs=%s' % kwargs)
         # Merge parameter overrides and parameters
         if 'parameter_override' in kwargs:

@@ -8,7 +8,8 @@ from ocrd import Resolver, Workspace
 from ocrd.task_sequence import ProcessorTask, validate_tasks
 
 from ocrd_utils import (
-    parse_json_string_or_file
+    parse_json_string_or_file,
+    initLogging
 )
 from ocrd_validators import (
     OcrdToolValidator,
@@ -17,6 +18,8 @@ from ocrd_validators import (
     ParameterValidator,
     WorkspaceValidator,
 )
+
+initLogging()
 
 def _inform_of_result(report):
     if not report.is_valid:

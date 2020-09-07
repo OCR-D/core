@@ -3,11 +3,12 @@ CLI for task_sequence
 """
 import click
 
-from ocrd_utils import getLogger
+from ocrd_utils import initLogging, getLogger
 from ocrd.task_sequence import run_tasks
 
 from ..decorators import ocrd_loglevel
 
+initLogging()
 
 # ----------------------------------------------------------------------
 # ocrd process

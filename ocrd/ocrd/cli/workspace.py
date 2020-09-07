@@ -9,9 +9,10 @@ import re
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, pushd_popd, EXT_TO_MIME
+from ocrd_utils import initLogging, getLogger, pushd_popd, EXT_TO_MIME
 from . import command_with_replaced_help
 
+initLogging()
 log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx():

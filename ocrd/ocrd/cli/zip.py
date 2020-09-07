@@ -2,11 +2,14 @@ import sys
 
 import click
 
+from ocrd_utils import initLogging
 from ocrd_validators import OcrdZipValidator
 
 from ..resolver import Resolver
 from ..workspace import Workspace
 from ..workspace_bagger import WorkspaceBagger
+
+initLogging()
 
 @click.group("zip")
 def zip_cli():
