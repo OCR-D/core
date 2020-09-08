@@ -84,6 +84,8 @@ class TestDecorators(TestCase):
         self.assertEqual(result.exit_code, 0)
 
     # TODO cannot be tested in this way because logging is reused and not part of output
+    # (but perhaps one could use runner.invoke() instead;
+    #  anyway, now calling with non-existing local METS paths will only show the help text)
     # def test_processor_non_existing_mets(self):
     #     code, out, err = self.invoke_cli(cli_dummy_processor, ['-m', 'exist.xml', *DEFAULT_IN_OUT])
     #     print("code=%s\nout=%s\nerr=%s" % (code, out, err))
@@ -186,24 +188,24 @@ class TestDecorators(TestCase):
     def test_parameter_override_basic(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(cli_dummy_processor, [
+                code, out, err = self.invoke_cli(cli_dummy_processor, [
                     '-p', '{"baz": "forty-two"}',
                     '-P', 'baz', 'one',
                     '-P', 'baz', 'two',
                     *DEFAULT_IN_OUT
                 ])
-                print(result)
-                self.assertEqual(result.stdout, '{"baz": "two"}\n')
+                print(out)
+                self.assertEqual(out, '{"baz": "two"}\n')
 
     def test_parameter_override_wo_param(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
-                result = self.runner.invoke(cli_dummy_processor, [
+                code, out, err = self.invoke_cli(cli_dummy_processor, [
                     '-P', 'baz', 'two',
                     *DEFAULT_IN_OUT
                 ])
-                print(result)
-                self.assertEqual(result.stdout, '{"baz": "two"}\n')
+                print(out)
+                self.assertEqual(out, '{"baz": "two"}\n')
 
 if __name__ == '__main__':
     main(__file__)

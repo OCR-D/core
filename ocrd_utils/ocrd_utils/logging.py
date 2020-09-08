@@ -129,4 +129,13 @@ def initLogging():
     logging.getLogger('shapely.geos').setLevel(logging.ERROR)
 
 
-initLogging()
+# Initializing stream handlers at module level
+# would cause message output in all runtime contexts,
+# including those which are already run for std output
+# (--dump-json, --version, ocrd-tool, bashlib etc).
+# So this needs to be an opt-in from the CLIs/decorators:
+#initLogging()
+# Also, we even have to block log output for libraries
+# (like matplotlib/tensorflow) which set up logging
+# themselves already:
+logging.basicConfig(level=logging.CRITICAL)
