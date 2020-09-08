@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd_utils` on module-level, *disable* logging less than CRITICAL, call initLogging explicitly in CLI, #594
+
 ## [2.16.0] - 2020-09-03
 
 Fixed:
