@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.16.1] - 2020-09-08
+
 Fixed:
 
   * `ocrd_utils` on module-level, *disable* logging less than CRITICAL, call initLogging explicitly in CLI, #594
@@ -1125,6 +1127,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.16.1]: ../../compare/v2.16.1..v2.16.0
 [2.16.0]: ../../compare/v2.16.0..v2.15.0
 [2.15.0]: ../../compare/v2.15.0..v2.14.0
 [2.14.0]: ../../compare/v2.14.0..v2.13.2
