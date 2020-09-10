@@ -25,8 +25,6 @@ help:
 	@echo "    install-dev    Install with pip install -e"
 	@echo "    uninstall      Uninstall the tool"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
-	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
-	@echo "    repo/spec      Clone OCR-D/spec to ./repo/spec"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
@@ -35,7 +33,6 @@ help:
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
 	@echo "    docs-coverage  Calculate docstring coverage"
-	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker GPU / CUDA image"
 	@echo "    bashlib        Build bash library"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
@@ -106,15 +103,9 @@ generate-page: repo/assets
 # Repos
 #
 
-# Clone OCR-D/assets to ./repo/assets
-repo/assets:
-	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/assets "$@"
-
-# Clone OCR-D/spec to ./repo/spec
-repo/spec:
-	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/spec "$@"
+# Update OCR-D/assets and OCR-D/spec resp.
+repo/assets repo/spec:
+	git submodule update --init
 
 #
 # Spec
