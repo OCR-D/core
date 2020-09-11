@@ -8,7 +8,7 @@ import io
 import collections
 from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
-from ocrd_utils import initLogging
+from ocrd_utils import disableLogging, initLogging
 
 from tests.assets import assets, copy_of_directory
 
@@ -26,8 +26,11 @@ class TestCase(VanillaTestCase):
     def setUpClass(cls):
         chdir(dirname(realpath(__file__)) + '/..')
 
-    def tearDown(self):
-        initLogging()
+    def setUp(self):
+        initLogging(True)
+
+    # def tearDown(self):
+    #     disableLogging()
 
 class CapturingTestCase(TestCase):
     """

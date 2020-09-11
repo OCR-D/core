@@ -16,9 +16,9 @@ from ocrd import Resolver
 class TestCli(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.maxDiff = None
         self.resolver = Resolver()
-        initLogging()
         self.runner = CliRunner(mix_stderr=False)
 
     def test_add(self):

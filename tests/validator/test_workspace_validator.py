@@ -13,6 +13,7 @@ from tests.base import TestCase, assets, main, copy_of_directory # pylint: disab
 class TestWorkspaceValidator(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
 
     def test_check_file_grp_basic(self):

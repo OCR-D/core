@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 from tests.base import TestCase, assets, main, copy_of_directory
 
 from ocrd.resolver import Resolver
-from ocrd_utils import pushd_popd
+from ocrd_utils import pushd_popd, initLogging
 
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
@@ -17,6 +17,7 @@ FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 class TestResolver(TestCase):
 
     def setUp(self):
+        initLogging(True)
         self.resolver = Resolver()
 
     def test_workspace_from_url_bad(self):

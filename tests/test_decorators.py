@@ -14,7 +14,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import initLogging, pushd_popd, VERSION as OCRD_VERSION
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
 
 @click.command()
 @ocrd_cli_options
@@ -40,28 +40,23 @@ DEFAULT_IN_OUT = ('-I', 'OCR-D-IMG', '-O', 'OUTPUT')
 
 class TestDecorators(TestCase):
 
-    def setUp(self):
-        initLogging()
-        self.runner = CliRunner()
-
     def test_minimal(self):
         exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
         print(out, err)
-        self.assertEqual(exit_code, 0)
+        assert not exit_code
 
     def test_loglevel_invalid(self):
-        result = self.runner.invoke(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
-        self.assertNotEqual(result.exit_code, 0)
-        self.assertIn('invalid choice: foo', result.output)
+        code, _, err = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
+        assert code
+        self.assertIn('invalid choice: foo', err)
 
     def test_loglevel_override(self):
         import logging
         self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.INFO)
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.INFO)
-        result = self.runner.invoke(cli_with_ocrd_loglevel, ['--log-level', 'DEBUG'])
-        self.assertEqual(result.exit_code, 0)
+        code, _, _ = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'DEBUG'])
+        assert not code
         self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.DEBUG)
-        initLogging()
 
     def test_processor_no_mets(self):
         """
@@ -78,13 +73,13 @@ class TestDecorators(TestCase):
         self.assertFalse(exit_code)
 
     def test_processor_version(self):
-        result = self.runner.invoke(cli_dummy_processor, ['--version'])
-        print(result)
-        self.assertEqual(result.output, 'Version 0.0.1, ocrd/core %s\n' % OCRD_VERSION)
-        self.assertEqual(result.exit_code, 0)
+        code, out, err = self.invoke_cli(cli_dummy_processor, ['--version'])
+        print(code, out, err)
+        self.assertEqual(out, 'Version 0.0.1, ocrd/core %s\n' % OCRD_VERSION)
+        assert not code
 
     # TODO cannot be tested in this way because logging is reused and not part of output
-    # (but perhaps one could use runner.invoke() instead;
+    # (but perhaps one could use.invoke_cli() instead;
     #  anyway, now calling with non-existing local METS paths will only show the help text)
     # def test_processor_non_existing_mets(self):
     #     code, out, err = self.invoke_cli(cli_dummy_processor, ['-m', 'exist.xml', *DEFAULT_IN_OUT])
@@ -96,7 +91,7 @@ class TestDecorators(TestCase):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             with pushd_popd(tempdir):
                 exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', *DEFAULT_IN_OUT])
-                self.assertEqual(exit_code, 0)
+                assert not exit_code
 
     def test_param_merging(self):
         json1 = '{"foo": 23, "bar": 100}'

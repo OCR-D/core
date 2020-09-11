@@ -3,7 +3,6 @@ from os.path import join
 from tests.base import TestCase, main, assets, copy_of_directory
 
 from ocrd_utils import (
-    initLogging,
     VERSION,
     MIMETYPE_PAGE
 )
@@ -13,8 +12,8 @@ from ocrd_models import OcrdMets
 class TestOcrdMets(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        initLogging()
 
     def test_unique_identifier(self):
         self.assertEqual(self.mets.unique_identifier, 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier')
@@ -233,4 +232,4 @@ class TestOcrdMets(TestCase):
             self.assertEqual(len(mets.find_files()), 31)
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

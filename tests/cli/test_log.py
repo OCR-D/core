@@ -16,10 +16,6 @@ mock_ocrd_cli.add_command(log_cli)
 
 class TestLogCli(TestCase):
 
-    # def setUp(self):
-    #     initLogging()
-    #     setOverrideLogLevel('DEBUG')
-
     def _get_log_output(self, *args):
         disableLogging()
         code, out, err = self.invoke_cli(mock_ocrd_cli, args)
