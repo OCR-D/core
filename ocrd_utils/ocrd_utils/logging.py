@@ -93,12 +93,10 @@ def getLogger(*args, **kwargs):
     """
     logger = logging.getLogger(*args, **kwargs)
     if not _initialized_flag:
-        raise Exception("No initLogging() before getLogger()")
         # initLogging()
+        raise Exception("No initLogging() before getLogger()")
     if _overrideLogLevel:
         logger.setLevel(logging.NOTSET)
-    with open('/tmp/debug.log', 'a') as f:
-        f.write('getLogger(%s) level=%s\n' % (args[0], logger.level))
     return logger
 
 # Default logging config
@@ -119,28 +117,28 @@ def initLogging(reinit=False):
         os.path.join(os.path.expanduser('~')),
         '/etc',
     ]
-    for p in CONFIG_PATHS:
-        config_file = os.path.join(p, 'ocrd_logging.conf')
-        if os.path.exists(config_file):
-            logging.info("Picked up logging config at %s" % config_file)
-            logging.config.fileConfig(config_file)
-            return
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format=LOG_FORMAT,
-        datefmt=LOG_TIMEFMT)
-    logging.getLogger('').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
-    logging.getLogger('PIL').setLevel(logging.INFO)
-    # To cut back on the `Self-intersection at or near point` INFO messages
-    logging.getLogger('shapely.geos').setLevel(logging.ERROR)
+    config_file = next((f for f \
+            in [os.path.join(p, 'ocrd_logging.conf') for p in CONFIG_PATHS] \
+            if os.path.exists(f)),
+            None)
+    if config_file:
+        logging.info("Picked up logging config at %s" % config_file)
+        logging.config.fileConfig(config_file)
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format=LOG_FORMAT,
+            datefmt=LOG_TIMEFMT)
+        logging.getLogger('').setLevel(logging.INFO)
+        #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
+        #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
+        #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
+        logging.getLogger('PIL').setLevel(logging.INFO)
+        # To cut back on the `Self-intersection at or near point` INFO messages
+        logging.getLogger('shapely.geos').setLevel(logging.ERROR)
 
     if _overrideLogLevel:
         setOverrideLogLevel(_overrideLogLevel)
-
     _initialized_flag = True
 
 def disableLogging():

@@ -26,11 +26,10 @@ class TestLogging(TestCase):
         disableLogging()
 
     def test_setOverrideLogLevel(self):
+        initLogging()
         rootLogger = logging.getLogger('')
         somelogger = getLogger('foo.bar')
         somelogger.setLevel(getLevelName('ERROR'))
-        self.assertEqual(rootLogger.getEffectiveLevel(), logging.INFO)
-        self.assertEqual(somelogger.getEffectiveLevel(), logging.ERROR)
         setOverrideLogLevel('ERROR')
         self.assertEqual(rootLogger.getEffectiveLevel(), logging.ERROR)
         self.assertEqual(somelogger.getEffectiveLevel(), logging.ERROR)
@@ -45,6 +44,7 @@ class TestLogging(TestCase):
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
 
     def test_logging_really_non_duplicate(self):
+        initLogging()
         child_logger = getLogger('a.b')
         print(child_logger)
         parent_logger = getLogger('a')
@@ -86,6 +86,7 @@ class TestLogging(TestCase):
         """
         Verify that child loggers don't propagate a log message they handle
         """
+        initLogging()
 
         root_logger = logging.getLogger('')
         self.assertTrue(root_logger.handlers, 'root logger has at least 1 handler')
@@ -134,6 +135,7 @@ class TestLogging(TestCase):
                 'child received second error and debug but not first error and debug')
 
     def testProcessorProfiling(self):
+        initLogging()
         log_capture_string = FIFOIO(256)
         ch = logging.StreamHandler(log_capture_string)
         ch.setFormatter(logging.Formatter(LOG_FORMAT))
@@ -149,38 +151,35 @@ class TestLogging(TestCase):
         # Check whether profile information has been logged. Dummy should finish in under 0.1s
         self.assertTrue(match(r'.*Executing processor \'ocrd-test\' took 0.\d+s.*', log_contents))
 
-class TestLoggingConfiguration(TestCase):
-
     def test_tmpConfigfile(self):
         self.assertNotEqual(logging.getLogger('').getEffectiveLevel(), logging.NOTSET)
-        with TemporaryDirectory() as tempdir:
-            with pushd_popd(tempdir):
-                with open('ocrd_logging.conf', 'w') as f:
-                    # write logging configuration file (MWE)
-                    f.write('''
-                        [loggers]
-                        keys=root
+        with pushd_popd(tempdir=True) as tempdir:
+            with open('ocrd_logging.conf', 'w') as f:
+                # write logging configuration file (MWE)
+                f.write('''
+                    [loggers]
+                    keys=root
 
-                        [handlers]
-                        keys=consoleHandler
+                    [handlers]
+                    keys=consoleHandler
 
-                        [formatters]
-                        keys=
+                    [formatters]
+                    keys=
 
-                        [logger_root]
-                        level=ERROR
-                        handlers=consoleHandler
+                    [logger_root]
+                    level=ERROR
+                    handlers=consoleHandler
 
-                        [handler_consoleHandler]
-                        class=StreamHandler
-                        formatter=
-                        args=(sys.stdout,)
-                        ''')
-                # this will call logging.config.fileConfig with disable_existing_loggers=True,
-                # so the defaults from the import-time initLogging should be invalided
-                initLogging(True)
-                # ensure log level is set from temporary config file
-                self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
+                    [handler_consoleHandler]
+                    class=StreamHandler
+                    formatter=
+                    args=(sys.stdout,)
+                    ''')
+            # this will call logging.config.fileConfig with disable_existing_loggers=True,
+            # so the defaults from the import-time initLogging should be invalided
+            initLogging(True)
+            # ensure log level is set from temporary config file
+            self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
 
 if __name__ == '__main__':
     main(__file__)
