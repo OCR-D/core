@@ -72,6 +72,8 @@ class TestLogging(TestCase):
 
         root_str = root_capture.getvalue()
         parent_str = parent_capture.getvalue()
+        print('root_str=%s' % root_str)
+        print('parent_str=%s' % parent_str)
 
         self.assertEqual(root_str.count('\n'), 0)
         self.assertEqual(parent_str.count('\n'), 1)

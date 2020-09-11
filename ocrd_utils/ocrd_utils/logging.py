@@ -92,6 +92,9 @@ def getLogger(*args, **kwargs):
     Wrapper around ``logging.getLogger`` that respects `overrideLogLevel <#setOverrideLogLevel>`_.
     """
     logger = logging.getLogger(*args, **kwargs)
+    if not _initialized_flag:
+        raise Exception("No initLogging() before getLogger()")
+        # initLogging()
     if _overrideLogLevel:
         logger.setLevel(logging.NOTSET)
     with open('/tmp/debug.log', 'a') as f:
