@@ -22,7 +22,8 @@ class TestLogCli(TestCase):
 
     def _get_log_output(self, *args):
         disableLogging()
-        _, _, err = self.invoke_cli(mock_ocrd_cli, args)
+        code, out, err = self.invoke_cli(mock_ocrd_cli, args)
+        print(code, out, err)
         return err
 
     def tearDown(self):

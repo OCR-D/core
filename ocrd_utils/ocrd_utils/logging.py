@@ -71,31 +71,30 @@ def setOverrideLogLevel(lvl, silent=False):
         lvl (string): Log level name.
         silent (boolean): Whether to log the override call
     """
-    global _initialized_flag # pylint: disable=global-statement
-    global _overrideLogLevel # pylint: disable=global-statement
     if lvl is None:
         return
     root_logger = logging.getLogger('')
     if not silent:
         root_logger.info('Overriding log level globally to %s', lvl)
     lvl = getLevelName(lvl)
+    global _overrideLogLevel # pylint: disable=global-statement
     _overrideLogLevel = lvl
-    root_logger.setLevel(lvl)
     for loggerName in logging.Logger.manager.loggerDict:
         logger = logging.Logger.manager.loggerDict[loggerName]
         if isinstance(logger, logging.PlaceHolder):
             continue
         logger.setLevel(logging.NOTSET)
+    root_logger.setLevel(lvl)
 
 def getLogger(*args, **kwargs):
     """
     Wrapper around ``logging.getLogger`` that respects `overrideLogLevel <#setOverrideLogLevel>`_.
     """
-    logger = logging.getLogger(*args, **kwargs)
     if not _initialized_flag:
-        # initLogging()
         raise Exception("No initLogging() before getLogger()")
-    if _overrideLogLevel:
+    name = args[0]
+    logger = logging.getLogger(*args, **kwargs)
+    if _overrideLogLevel and name:
         logger.setLevel(logging.NOTSET)
     return logger
 
@@ -125,10 +124,7 @@ def initLogging(reinit=False):
         logging.info("Picked up logging config at %s" % config_file)
         logging.config.fileConfig(config_file)
     else:
-        logging.basicConfig(
-            level=logging.INFO,
-            format=LOG_FORMAT,
-            datefmt=LOG_TIMEFMT)
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIMEFMT)
         logging.getLogger('').setLevel(logging.INFO)
         #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
         #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
