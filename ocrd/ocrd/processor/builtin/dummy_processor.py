@@ -19,14 +19,13 @@ from ocrd_modelfactory import page_from_file
 
 OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
 
-LOG = getLogger('ocrd.dummy')
-
 class DummyProcessor(Processor):
     """
     Bare-bones processor that copies mets:file from input group to output group.
     """
 
     def process(self):
+        LOG = getLogger('ocrd.dummy')
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
         for input_file in self.input_files:

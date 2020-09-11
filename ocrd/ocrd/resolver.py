@@ -16,8 +16,6 @@ from ocrd_models import OcrdMets
 from ocrd_models.constants import NAMESPACES as NS
 from ocrd_models.utils import handle_oai_response
 
-log = getLogger('ocrd.resolver')
-
 class Resolver():
     """
     Handle Uploads, Downloads, Repository access and manage temporary directories
@@ -121,6 +119,7 @@ class Resolver():
         Returns:
             Workspace
         """
+        log = getLogger('ocrd.resolver.workspace_from_url')
 
         if mets_url is None:
             raise ValueError("Must pass 'mets_url' workspace_from_url")
@@ -168,6 +167,7 @@ class Resolver():
         """
         Create an empty workspace.
         """
+        log = getLogger('ocrd.resolver.workspace_from_nothing')
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
         Path(directory).mkdir(parents=True, exist_ok=True)

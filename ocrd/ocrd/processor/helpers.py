@@ -14,8 +14,6 @@ __all__ = [
     'run_processor'
 ]
 
-log = getLogger('ocrd.processor')
-
 def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
     if workspace is None:
         if resolver is None:
@@ -51,6 +49,7 @@ def run_processor(
         mets_url,
         working_dir
     )
+    log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
     processor = processorClass(
         workspace,
@@ -116,6 +115,7 @@ def run_cli(
         args += ['--parameter', parameter]
     if overwrite:
         args += ['--overwrite']
+    log = getLogger('ocrd.processor.helpers.run_cli')
     log.debug("Running subprocess '%s'", ' '.join(args))
     result = run(args, check=False, stdout=PIPE, stderr=PIPE)
     return result.returncode, result.stdout.decode('utf-8'), result.stderr.decode('utf-8')

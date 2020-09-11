@@ -14,8 +14,6 @@ from .page_validator import PageValidator
 from .xsd_page_validator import XsdPageValidator
 from .xsd_mets_validator import XsdMetsValidator
 
-log = getLogger('ocrd.workspace_validator')
-
 #
 # -------------------------------------------------
 #
@@ -46,6 +44,7 @@ class WorkspaceValidator():
         if page_id and isinstance(page_id, str):
             page_id = page_id.split(',')
 
+        log = getLogger('ocrd.workspace_validator')
         log.debug("input_file_grp=%s output_file_grp=%s" % (input_file_grp, output_file_grp))
         if input_file_grp:
             for grp in input_file_grp:
@@ -78,6 +77,7 @@ class WorkspaceValidator():
         """
         self.report = ValidationReport()
         self.skip = skip if skip else []
+        log = getLogger('ocrd.workspace_validator')
         log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
         if mets_url is None and src_dir is not None:
@@ -113,6 +113,7 @@ class WorkspaceValidator():
         """
         Actual validation.
         """
+        log = getLogger('ocrd.workspace_validator')
         try:
             self._resolve_workspace()
         except Exception as e: # pylint: disable=broad-except
@@ -287,6 +288,7 @@ class WorkspaceValidator():
         """
         Validate all PAGE-XML files against PAGE XSD schema
         """
+        log = getLogger('ocrd.workspace_validator')
         log.debug("Validating all PAGE-XML files against XSD")
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
             self.workspace.download_file(ocrd_file)
@@ -298,6 +300,7 @@ class WorkspaceValidator():
         """
         Validate METS against METS XSD schema
         """
+        log = getLogger('ocrd.workspace_validator')
         log.debug("Validating METS %s against XSD" % self.workspace.mets_target)
         for err in XsdMetsValidator.validate(Path(self.workspace.mets_target)).errors:
             self.report.add_error("%s: %s" % (self.workspace.mets_target, err))

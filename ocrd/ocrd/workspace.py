@@ -35,9 +35,6 @@ from ocrd_utils import (
 
 from .workspace_backup import WorkspaceBackupManager
 
-log = getLogger('ocrd.workspace')
-
-
 class Workspace():
     """
     A workspace is a temporary directory set up for a processor. It's the
@@ -101,6 +98,7 @@ class Workspace():
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
+        log = getLogger('ocrd.workspace.download_file')
         log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
             try:
@@ -134,6 +132,7 @@ class Workspace():
             page_recursive (boolean): Whether to remove all images referenced in the file if the file is a PAGE-XML document.
             page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
+        log = getLogger('ocrd.workspace.remove_file')
         log.debug('Deleting mets:file %s', ID)
         if not force and self.overwrite_mode:
             force = True
@@ -183,10 +182,10 @@ class Workspace():
         """
         if not force and self.overwrite_mode:
             force = True
-            
+
         if (not USE.startswith(REGEX_PREFIX)) and (USE not in self.mets.file_groups) and (not force):
             raise Exception("No such fileGrp: %s" % USE)
-        
+
         file_dirs = []
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
@@ -211,6 +210,7 @@ class Workspace():
         Add an output file. Creates an :class:`OcrdFile` to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
+        log = getLogger('ocrd.workspace.add_file')
         log.debug(
             'outputfile file_grp=%s local_filename=%s content=%s',
             file_grp,
@@ -245,6 +245,7 @@ class Workspace():
         """
         Write out the current state of the METS file.
         """
+        log = getLogger('ocrd.workspace.save_mets')
         log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
@@ -283,6 +284,7 @@ class Workspace():
             Image or region in image as PIL.Image
 
         """
+        log = getLogger('ocrd.workspace._resolve_image_as_pil')
         files = self.mets.find_files(url=image_url)
         f = files[0] if files else OcrdFile(None, url=image_url)
         image_filename = self.download_file(f).local_filename
@@ -376,6 +378,7 @@ class Workspace():
                  feature_filter='binarized,grayscale_normalized')
            ``
         """
+        log = getLogger('ocrd.workspace.image_from_page')
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
         page_coords = dict()
@@ -385,7 +388,7 @@ class Workspace():
         page_bbox = [0, 0, page_image.width, page_image.height]
         page_xywh = {'x': 0, 'y': 0,
                      'w': page_image.width, 'h': page_image.height}
-        
+
         border = page.get_Border()
         # page angle: PAGE @orientation is defined clockwise,
         # whereas PIL/ndimage rotation is in mathematical direction:
@@ -399,7 +402,7 @@ class Workspace():
         page_coords['angle'] = 0 # nothing applied yet (depends on filters)
         log.debug("page '%s' has %s orientation=%d skew=%.2f",
                   page_id, "border," if border else "", orientation, skew)
-        
+
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
         alternative_image = None
@@ -428,7 +431,7 @@ class Workspace():
                           features, page_id)
                 page_image = self._resolve_image_as_pil(alternative_image.get_filename())
                 page_coords['features'] = features
-        
+
         # adjust the coord transformation to the steps applied on the image,
         # and apply steps on the existing image in case it is missing there,
         # but traverse all steps (crop/reflect/rotate) in a particular order:
@@ -492,7 +495,7 @@ class Workspace():
                               -page_xywh['y']]))
                 # crop, if (still) necessary:
                 if not 'cropped' in page_coords['features']:
-                    log.debug("Cropping %s for page '%s' to border", 
+                    log.debug("Cropping %s for page '%s' to border",
                               "AlternativeImage" if alternative_image else "image",
                               page_id)
                     # create a mask from the page polygon:
@@ -547,7 +550,7 @@ class Workspace():
                     page_coords['features'] += ',deskewed'
                 (page_xywh['w'], page_xywh['h']) = adjust_canvas_to_rotation(
                     [page_xywh['w'], page_xywh['h']], skew)
-        
+
         # verify constraints again:
         if not all(feature in page_coords['features']
                    for feature in feature_selector.split(',') if feature):
@@ -644,6 +647,7 @@ class Workspace():
                  feature_selector='deskewed,cropped',
                  feature_filter='binarized,grayscale_normalized')``
         """
+        log = getLogger('ocrd.workspace.image_from_segment')
         # note: We should mask overlapping neighbouring segments here,
         # but finding the right clipping rules can be difficult if operating
         # on the raw (non-binary) image data alone: for each intersection, it
@@ -658,7 +662,7 @@ class Workspace():
         # on some ad-hoc binarization method. Thus, it is preferable to use
         # a dedicated processor for this (which produces clipped AlternativeImage
         # or reduced polygon coordinates).
-        
+
         # get polygon outline of segment relative to parent image:
         segment_polygon = coordinates_of_segment(segment, parent_image, parent_coords)
         # get relative bounding box:
@@ -680,7 +684,7 @@ class Workspace():
                 np.array([-segment_bbox[0],
                           -segment_bbox[1]]))
         }
-        
+
         if 'orientation' in segment.__dict__:
             # region angle: PAGE @orientation is defined clockwise,
             # whereas PIL/ndimage rotation is in mathematical direction:
@@ -730,14 +734,14 @@ class Workspace():
                 np.array([0.5 * segment_xywh['w'],
                           0.5 * segment_xywh['h']]))
             segment_coords['angle'] += skew
-            
+
         # initialize AlternativeImage@comments classes from parent, except
         # for those operations that can apply on multiple hierarchy levels:
         segment_coords['features'] = ','.join(
             [feature for feature in parent_coords['features'].split(',')
              if feature in ['binarized', 'grayscale_normalized',
                             'despeckled', 'dewarped']])
-        
+
         alternative_image = None
         alternative_images = segment.get_AlternativeImage()
         if alternative_images:
@@ -817,7 +821,7 @@ class Workspace():
                           segment.id, segment_coords['features'],
                           segment_image.width, segment_image.height,
                           segment_xywh['w'], segment_xywh['h'])
-            
+
         # verify constraints again:
         if not all(feature in segment_coords['features']
                    for feature in feature_selector.split(',') if feature):
@@ -848,6 +852,7 @@ class Workspace():
 
         Return the (absolute) path of the created file.
         """
+        log = getLogger('ocrd.workspace.save_image_file')
         if not force and self.overwrite_mode:
             force = True
         image_bytes = io.BytesIO()

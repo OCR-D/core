@@ -13,8 +13,6 @@ __all__ = [
     'extract_mets_from_oai_content'
 ]
 
-log = getLogger('ocrd_models.utils')
-
 def xmllint_format(xml):
     """
     Pretty-print XML like ``xmllint`` does.
@@ -22,6 +20,7 @@ def xmllint_format(xml):
     Arguments:
         xml (string): Serialized XML
     """
+    log = getLogger('ocrd_models.utils.xmllint_format')
     parser = ET.XMLParser(resolve_entities=False, strip_cdata=False, remove_blank_text=True)
     document = ET.fromstring(xml, parser)
     return ('%s\n%s' % ('<?xml version="1.0" encoding="UTF-8"?>',
@@ -31,6 +30,7 @@ def handle_oai_response(response):
     """
     In case of a valid OAI-Response, extract first METS-Entry-Data
     """
+    log = getLogger('ocrd_models.utils.handle_oai_response')
     content_type = response.headers['Content-Type']
     if 'xml' in content_type or 'text' in content_type:
         content = response.content
@@ -46,6 +46,7 @@ def is_oai_content(data):
     """
     Return True if data is an OAI-PMH request/response
     """
+    log = getLogger('ocrd_models.utils.is_oai_content')
     xml_root = ET.fromstring(data)
     root_tag = xml_root.tag
     log.info("response data root.tag: '%s'" % root_tag)

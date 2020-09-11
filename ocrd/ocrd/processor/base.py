@@ -6,14 +6,12 @@ __all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processor']
 
 import os
 import json
-from ocrd_utils import getLogger, VERSION as OCRD_VERSION, MIMETYPE_PAGE
+from ocrd_utils import VERSION as OCRD_VERSION, MIMETYPE_PAGE
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
-
-log = getLogger('ocrd.processor')
 
 class Processor():
     """

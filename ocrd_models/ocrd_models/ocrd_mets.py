@@ -27,7 +27,6 @@ from .ocrd_xml_base import OcrdXmlDocument, ET
 from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
-log = getLogger('ocrd_models.ocrd_mets')
 REGEX_PREFIX_LEN = len(REGEX_PREFIX)
 
 class OcrdMets(OcrdXmlDocument):
@@ -213,6 +212,7 @@ class OcrdMets(OcrdXmlDocument):
             recursive (boolean): Whether to recursively delete all files in the group
             force (boolean): Do not raise an exception if file group doesn't exist
         """
+        log = getLogger('ocrd_models.ocrd_mets.remove_file_group')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             raise Exception("No fileSec!")
@@ -294,6 +294,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
         """
+        log = getLogger('ocrd_models.ocrd_mets.remove_one_file')
         log.info("remove_one_file(%s)" % ID)
         if isinstance(ID, OcrdFile):
             ocrd_file = ID

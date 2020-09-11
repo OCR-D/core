@@ -14,8 +14,6 @@ from bagit_profile import Profile, ProfileValidationError # pylint: disable=no-n
 from .constants import OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
 from ocrd_models import ValidationReport
 
-log = getLogger('ocrd.ocrd_zip_validator')
-
 #
 # -------------------------------------------------
 #
@@ -58,6 +56,7 @@ class OcrdZipValidator():
         except BagValidationError as e:
             failed = e
             #  for d in e.details:
+            #      log = getLogger('ocrd.ocrd_zip_validator')
             #      if isinstance(d, ChecksumMismatch):
             #          log.error("Validation Error: expected %s to have %s checksum of %s but found %s", d.path, d.algorithm, d.expected, d.found)
             #      else:
