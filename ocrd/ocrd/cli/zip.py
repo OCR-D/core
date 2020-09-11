@@ -9,13 +9,12 @@ from ..resolver import Resolver
 from ..workspace import Workspace
 from ..workspace_bagger import WorkspaceBagger
 
-initLogging()
-
 @click.group("zip")
 def zip_cli():
     """
     Bag/Spill/Validate OCRD-ZIP bags
     """
+    initLogging(True)
 
 # ----------------------------------------------------------------------
 # ocrd zip bag

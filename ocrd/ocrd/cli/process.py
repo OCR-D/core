@@ -3,12 +3,10 @@ CLI for task_sequence
 """
 import click
 
-from ocrd_utils import initLogging, getLogger
+from ocrd_utils import getLogger, initLogging
 from ocrd.task_sequence import run_tasks
 
 from ..decorators import ocrd_loglevel
-
-initLogging()
 
 # ----------------------------------------------------------------------
 # ocrd process
@@ -23,7 +21,7 @@ def process_cli(log_level, mets, page_id, tasks, overwrite):
     """
     Process a series of tasks
     """
+    initLogging(True)
     log = getLogger('ocrd.cli.process')
-
     run_tasks(mets, log_level, page_id, tasks, overwrite)
     log.info("Finished")

@@ -9,7 +9,6 @@ class LogCtx():
 
     def __init__(self, name):
         self.name = name
-        initLogging(True)  # reinit because setOverrideLogLevel may have come before
 
     def log(self, lvl, *args, **kwargs):
         logger = getLogger(self.name)
@@ -24,6 +23,7 @@ def log_cli(ctx, name, *args, **kwargs):
     """
     Logging
     """
+    initLogging(True)  # reinit because setOverrideLogLevel may have come before
     ctx.obj = LogCtx(name)
 
 def _bind_log_command(lvl):

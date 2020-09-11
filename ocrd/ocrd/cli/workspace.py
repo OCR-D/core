@@ -9,19 +9,18 @@ import re
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import initLogging, getLogger, pushd_popd, EXT_TO_MIME
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME
 from . import command_with_replaced_help
 
-initLogging()
-log = getLogger('ocrd.cli.workspace')
 
 class WorkspaceCtx():
 
     def __init__(self, directory, mets_url, mets_basename, automatic_backup):
+        self.log = getLogger('ocrd.cli.workspace')
         if mets_basename and mets_url:
             raise ValueError("Use either --mets or --mets-basename, not both")
         if mets_basename and not mets_url:
-            log.warning(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+            self.log.warning(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
         mets_basename = mets_basename if mets_basename else 'mets.xml'
         if directory and mets_url:
             directory = abspath(directory)
@@ -57,6 +56,7 @@ def workspace_cli(ctx, directory, mets, mets_basename, backup):
     """
     Working with workspace
     """
+    initLogging(True)
     ctx.obj = WorkspaceCtx(directory, mets_url=mets, mets_basename=mets_basename, automatic_backup=backup)
 
 # ----------------------------------------------------------------------
@@ -212,7 +212,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 # ocrd workspace add-bulk
 # ----------------------------------------------------------------------
 
-# pylint: disable=bad-whitespace, broad-except
+# pylint: disable=broad-except
 @workspace_cli.command('bulk-add')
 @click.option('-r', '--regex', help="Regular expression matching the FILE_GLOB filesystem paths to define named captures usable in the other parameters", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
@@ -317,7 +317,6 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 @click.option('-m', '--mimetype', help="Media type to look for", metavar='FILTER')
 @click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
 @click.option('-i', '--file-id', help="ID", metavar='FILTER')
-# pylint: disable=bad-continuation
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
         default=['url'],
         multiple=True,
@@ -438,7 +437,7 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
                 if not f.local_filename or not exists(f.local_filename):
                     workspace.mets.remove_file(f.ID)
             except Exception as e:
-                log.exception("Error removing %f: %s", f, e)
+                ctx.log.exception("Error removing %f: %s", f, e)
                 raise(e)
         workspace.save_mets()
 
