@@ -4,11 +4,10 @@ Logging CLI
 import click
 from ocrd_utils import initLogging, getLogger, getLevelName
 
-initLogging()
-
 class LogCtx():
 
     def __init__(self, name):
+        initLogging()
         self.logger = getLogger(name)
 
     def log(self, lvl, *args, **kwargs):

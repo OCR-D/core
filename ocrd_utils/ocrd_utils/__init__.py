@@ -117,11 +117,13 @@ from .introspect import (
     membername)
 
 from .logging import (
-    logging,
-    getLogger,
+    disableLogging,
     getLevelName,
+    getLogger,
     initLogging,
-    setOverrideLogLevel)
+    logging,
+    setOverrideLogLevel,
+    )
 
 from .os import (
     abspath,

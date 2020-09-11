@@ -15,7 +15,7 @@ from ocrd_validators import WorkspaceValidator
 from ..resolver import Resolver
 from ..processor.base import run_processor
 
-from .loglevel_option import loglevel_option, ocrd_loglevel
+from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 

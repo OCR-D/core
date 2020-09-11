@@ -10,6 +10,7 @@ from ocrd_utils import (
     pushd_popd,
     getLevelName,
     setOverrideLogLevel,
+    disableLogging,
     initLogging,
     getLogger,
     LOG_FORMAT,
@@ -22,7 +23,7 @@ TIMEFMT_RE = r'\d\d:\d\d:\d\d\.(\d+)? '
 class TestLogging(TestCase):
 
     def setUp(self):
-        initLogging()
+        disableLogging()
 
     def test_setOverrideLogLevel(self):
         rootLogger = logging.getLogger('')
@@ -175,9 +176,9 @@ class TestLoggingConfiguration(TestCase):
                         ''')
                 # this will call logging.config.fileConfig with disable_existing_loggers=True,
                 # so the defaults from the import-time initLogging should be invalided
-                initLogging()
+                initLogging(True)
                 # ensure log level is set from temporary config file
                 self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
 
 if __name__ == '__main__':
-    main()
+    main(__file__)
