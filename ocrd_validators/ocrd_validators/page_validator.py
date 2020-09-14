@@ -182,6 +182,7 @@ def page_get_reading_order(ro, rogroup):
     and an object ``rogroup`` with additional ReadingOrder element objects,
     add all references to the dict, traversing the group recursively.
     """
+    regionrefs = list()
     if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)):
         regionrefs = (rogroup.get_RegionRefIndexed() +
                       rogroup.get_OrderedGroupIndexed() +
