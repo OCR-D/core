@@ -97,6 +97,7 @@ from .image import (
     points_from_x0y0x1y1,
     points_from_xywh,
     points_from_y0x0y1x1,
+    polygon_for_parent,
     polygon_from_bbox,
     polygon_from_points,
     polygon_from_x0y0x1y1,
