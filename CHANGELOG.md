@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.16.3] - 2020-09-09
+
 Fixed:
 
   * Prune empty reading order when serializing, #602
@@ -1137,6 +1139,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.16.3]: ../../compare/v2.16.3..v2.16.2
 [2.16.2]: ../../compare/v2.16.2..v2.16.1
 [2.16.1]: ../../compare/v2.16.1..v2.16.0
 [2.16.0]: ../../compare/v2.16.0..v2.15.0
