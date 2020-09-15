@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Prune empty reading order when serializing, #602
+
 ## [2.16.2] - 2020-09-08
 
 Fixed:
