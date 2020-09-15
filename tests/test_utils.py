@@ -5,6 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 from tests.base import TestCase, main, assets
+from tests.data.mock_file import MockOcrdFile
 from ocrd_utils import (
     abspath,
 
@@ -43,21 +44,6 @@ from ocrd_utils import (
 )
 from ocrd_models.utils import xmllint_format
 from ocrd_models import OcrdFile, OcrdMets
-
-class MockOcrdFile(OcrdFile):
-    """
-    OcrdFile with mocked fileGrp access
-    """
-    @property
-    def fileGrp(self):
-        return self.__filegrp
-    @fileGrp.setter
-    def fileGrp(self, fileGrp):
-        self.__filegrp = fileGrp
-    def __init__(self, *args, fileGrp=None, ocrd_mets=None, **kwargs):
-        super(MockOcrdFile, self).__init__(*args, **kwargs)
-        self.fileGrp = fileGrp if fileGrp else None
-        self.ocrd_mets = ocrd_mets if ocrd_mets else None
 
 class TestUtils(TestCase):
 
