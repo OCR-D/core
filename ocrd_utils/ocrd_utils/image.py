@@ -259,10 +259,14 @@ def rotate_image(image, angle, fill='background', transparency=False):
         image = image.copy()
         image.putalpha(255)
     if fill == 'background':
-        background = ImageStat.Stat(image).median
-        if image.mode in ['RGBA', 'LA']:
-            background[-1] = 0 # fully transparent
-        background = tuple(background)
+        background = ImageStat.Stat(image)
+        if len(background.bands) > 1:
+            background = background.median
+            if image.mode in ['RGBA', 'LA']:
+                background[-1] = 0 # fully transparent
+            background = tuple(background)
+        else:
+            background = background.median[0]
     else:
         background = fill
     new_image = image.rotate(angle,
@@ -443,7 +447,11 @@ def crop_image(image, box=None):
                     str(box), image.width, image.height)
     LOG.debug('cropping image to %s', str(box))
     xywh = xywh_from_bbox(*box)
-    background = tuple(ImageStat.Stat(image).median)
+    background = ImageStat.Stat(image)
+    if len(background.bands) > 1:
+        background = tuple(background.median)
+    else:
+        background = background.median[0]
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
                           background) # or 'white'
     new_image.paste(image, (-xywh['x'], -xywh['y']))
@@ -471,7 +479,11 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     """
     mask = polygon_mask(image, polygon)
     if fill == 'background':
-        background = tuple(ImageStat.Stat(image).median)
+        background = ImageStat.Stat(image)
+        if len(background.bands) > 1:
+            background = tuple(background.median)
+        else:
+            background = background.median[0]
     else:
         background = fill
     new_image = Image.new(image.mode, image.size, background)
