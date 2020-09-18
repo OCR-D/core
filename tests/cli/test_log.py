@@ -7,7 +7,7 @@ from os import environ as ENV
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 from ocrd.decorators import ocrd_loglevel
-from ocrd_utils import setOverrideLogLevel, initLogging
+from ocrd_utils import initLogging
 
 @click.group()
 @ocrd_loglevel
@@ -53,11 +53,10 @@ class TestLogCli(TestCase):
         self.assertIn('ERROR ocrd.foo - foo', self.invoke_cli(log_cli, ['error', 'foo'])[2])
         self.assertIn('CRITICAL ocrd.foo - foo', self.invoke_cli(log_cli, ['critical', 'foo'])[2])
 
-    def test_log_name_levels(self):
+    def test_log_error(self):
         code, out, err  = self.invoke_cli(log_cli, ['-n', 'foo',  'info', 'foo bar', 'foo bar'])
         print('code=%s out=%s err=%s' % (code, out, err))
         assert 'Logging error' not in err
-
 
 
 if __name__ == '__main__':
