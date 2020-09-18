@@ -33,6 +33,7 @@ help:
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
 	@echo "    docs-coverage  Calculate docstring coverage"
+	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker GPU / CUDA image"
 	@echo "    bashlib        Build bash library"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
@@ -68,7 +69,7 @@ deps-test:
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
-install: spec
+install:
 	$(PIP) install -U "pip>=19.0.0" wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
@@ -140,7 +141,7 @@ assets-clean:
 
 .PHONY: test
 # Run all unit tests
-test: spec assets
+test: assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
