@@ -25,12 +25,9 @@ help:
 	@echo "    install-dev    Install with pip install -e"
 	@echo "    uninstall      Uninstall the tool"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
-	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
-	@echo "    repo/spec      Clone OCR-D/spec to ./repo/spec"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
-	@echo "    assets-clean   Remove symlinks in $(TESTDIR)/assets"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
@@ -71,7 +68,7 @@ deps-test:
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
-install: spec
+install:
 	$(PIP) install -U "pip>=19.0.0" wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
@@ -105,16 +102,17 @@ generate-page: repo/assets
 #
 # Repos
 #
+.PHONY: repos always-update
+repos: repo/assets repo/spec
 
-# Clone OCR-D/assets to ./repo/assets
-repo/assets:
-	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/assets "$@"
 
-# Clone OCR-D/spec to ./repo/spec
-repo/spec:
-	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/spec "$@"
+# Update OCR-D/assets and OCR-D/spec resp.
+repo/assets repo/spec: always-update
+	git submodule sync --recursive $@
+	if git submodule status --recursive $@ | grep -qv '^ '; then \
+		git submodule update --init --recursive $@ && \
+		touch $@; \
+	fi
 
 #
 # Spec
@@ -132,6 +130,7 @@ spec: repo/spec
 
 # Setup test assets
 assets: repo/assets
+	rm -rf $(TESTDIR)/assets
 	mkdir -p $(TESTDIR)/assets
 	cp -r -t $(TESTDIR)/assets repo/assets/data/*
 
@@ -139,9 +138,6 @@ assets: repo/assets
 assets-server:
 	cd assets && make start
 
-# Remove symlinks in $(TESTDIR)/assets
-assets-clean:
-	rm -rf $(TESTDIR)/assets
 
 #
 # Tests
@@ -149,7 +145,7 @@ assets-clean:
 
 .PHONY: test
 # Run all unit tests
-test: spec assets
+test: assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
@@ -158,7 +154,7 @@ test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
-coverage: assets-clean assets
+coverage: assets
 	coverage erase
 	make test PYTHON="coverage run"
 	coverage report

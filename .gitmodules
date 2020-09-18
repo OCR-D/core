@@ -1,0 +1,6 @@
+[submodule "repo/assets"]
+	path = repo/assets
+	url = https://github.com/OCR-D/assets
+[submodule "repo/spec"]
+	path = repo/spec
+	url = https://github.com/OCR-D/spec
