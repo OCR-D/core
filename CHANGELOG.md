@@ -5,6 +5,22 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd_utils.image` handles 16/32-bit images correctly, #606, python-pillow/Pillow#4925
+
+## [2.16.3] - 2020-09-09
+
+Fixed:
+
+  * Prune empty reading order when serializing, #602
+
+## [2.16.2] - 2020-09-08
+
+Fixed:
+
+  * handle empty reading order in PAGE gracefully, #600
+
 ## [2.16.1] - 2020-09-08
 
 Fixed:
@@ -1127,6 +1143,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.16.3]: ../../compare/v2.16.3..v2.16.2
+[2.16.2]: ../../compare/v2.16.2..v2.16.1
 [2.16.1]: ../../compare/v2.16.1..v2.16.0
 [2.16.0]: ../../compare/v2.16.0..v2.15.0
 [2.15.0]: ../../compare/v2.15.0..v2.14.0

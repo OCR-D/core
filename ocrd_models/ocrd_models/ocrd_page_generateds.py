@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Jun  8 13:37:37 2020 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
+# Generated Tue Sep 15 10:34:03 2020 by generateDS.py version 2.35.20.
+# Python 3.6.9 (default, Jul 17 2020, 12:50:27)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -13,10 +13,10 @@
 #   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
 # Command line arguments:
-#   ocrd_validators/ocrd_validators/xsd/page.xsd
+#   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/env/py3-disht/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/xsd/page.xsd
+#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1254,6 +1254,13 @@ class PcGtsType(GeneratedsSuper):
                 ret += doc.xpath('//page:Glyph/page:AlternativeImage/@filename', namespaces=NAMESPACES)
     
         return ret
+    def prune_ReadingOrder(self):
+        """
+        Remove any empty ReadingOrder elements
+        """
+        ro = self.get_Page().get_ReadingOrder()
+        if ro and not ro.get_OrderedGroup() and not ro.get_UnorderedGroup():
+            self.get_Page().set_ReadingOrder(None)
 # end class PcGtsType
 
 
