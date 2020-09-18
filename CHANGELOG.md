@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd_utils.image` handles 16/32-bit images correctly, #606, python-pillow/Pillow#4925
+
 ## [2.16.3] - 2020-09-09
 
 Fixed:
