@@ -109,7 +109,6 @@ ocrd.egg-info
 .pytest_cache
 /src
 /profile
-/repo
 .~lock*
 .pynative
 venv3
