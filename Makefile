@@ -28,7 +28,6 @@ help:
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
-	@echo "    assets-clean   Remove symlinks in $(TESTDIR)/assets"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
@@ -131,6 +130,7 @@ spec: repo/spec
 
 # Setup test assets
 assets: repo/assets
+	rm -rf $(TESTDIR)/assets
 	mkdir -p $(TESTDIR)/assets
 	cp -r -t $(TESTDIR)/assets repo/assets/data/*
 
@@ -138,9 +138,6 @@ assets: repo/assets
 assets-server:
 	cd assets && make start
 
-# Remove symlinks in $(TESTDIR)/assets
-assets-clean:
-	rm -rf $(TESTDIR)/assets
 
 #
 # Tests
@@ -157,7 +154,7 @@ test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
-coverage: assets-clean assets
+coverage: assets
 	coverage erase
 	make test PYTHON="coverage run"
 	coverage report
