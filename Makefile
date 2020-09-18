@@ -103,10 +103,17 @@ generate-page: repo/assets
 #
 # Repos
 #
+.PHONY: repos always-update
+repos: repo/assets repo/spec
+
 
 # Update OCR-D/assets and OCR-D/spec resp.
-repo/assets repo/spec:
-	git submodule update --init
+repo/assets repo/spec: always-update
+	git submodule sync --recursive $@
+	if git submodule status --recursive $@ | grep -qv '^ '; then \
+		git submodule update --init --recursive $@ && \
+		touch $@; \
+	fi
 
 #
 # Spec
