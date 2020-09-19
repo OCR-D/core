@@ -1,5 +1,5 @@
 import io
-from os import makedirs, unlink, listdir, path
+from os import chmod, makedirs, umask, unlink, listdir, path
 from pathlib import Path
 
 import cv2
@@ -248,8 +248,13 @@ class Workspace():
         log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
+
+        mask = umask(0)
+        umask(mask)
+        mode = 0o666 & ~mask
         with atomic_write(self.mets_target, overwrite=True) as f:
             f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
+        chmod(self.mets_target, mode)
 
     def resolve_image_exif(self, image_url):
         """
