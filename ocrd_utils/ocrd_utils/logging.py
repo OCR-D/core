@@ -115,6 +115,7 @@ def initLogging(reinit=False):
     if _initialized_flag and not reinit:
         raise Exception("initLogging called multiple times")
 
+    logging.disable(logging.NOTSET)
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
@@ -151,6 +152,7 @@ def disableLogging():
     global _overrideLogLevel # pylint: disable=global-statement
     _overrideLogLevel = None
     logging.basicConfig(level=logging.CRITICAL)
+    logging.disable(logging.CRITICAL)
 
 # Initializing stream handlers at module level
 # would cause message output in all runtime contexts,
