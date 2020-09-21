@@ -14,6 +14,7 @@ These files will be executed in the context of ocrd/ocrd_logging.py, with `loggi
 # pylint: disable=no-member
 
 from __future__ import absolute_import
+from traceback import format_stack
 
 import logging
 import logging.config
@@ -91,7 +92,13 @@ def getLogger(*args, **kwargs):
     Wrapper around ``logging.getLogger`` that respects `overrideLogLevel <#setOverrideLogLevel>`_.
     """
     if not _initialized_flag:
-        raise Exception("No initLogging() before getLogger()")
+        # XXX logger.exception may only be called in an except clause
+        initLogging()
+        logging.getLogger('').critical('*** getLogger was called before initLogging ***')
+        logging.getLogger('').critical('*** If you encounter this when running a processor, open an issue about it in the resp. project on GitHub ***')
+        for x in format_stack(limit=2):
+            for y in x.split('\n'):
+                logging.getLogger('').critical(y)
     name = args[0]
     logger = logging.getLogger(*args, **kwargs)
     if _overrideLogLevel and name:
