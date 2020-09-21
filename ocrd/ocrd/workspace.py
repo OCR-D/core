@@ -836,6 +836,7 @@ class Workspace():
     def save_image_file(self, image,
                         file_id,
                         file_grp,
+                        dpi=None,
                         page_id=None,
                         mimetype='image/png',
                         force=False):
@@ -851,7 +852,15 @@ class Workspace():
         if not force and self.overwrite_mode:
             force = True
         image_bytes = io.BytesIO()
-        image.save(image_bytes, format=MIME_TO_PIL[mimetype])
+        if dpi and not isinstance(dpi, tuple):
+            dpi = (dpi, dpi)
+        elif not dpi:
+            # TODO - brittle, will this always find the original image?
+            orig_img_file = self.mets.find_files(pageId=page_id, mimetype='//^image')[0]
+            orig_img_pil = self.resolve_image_exif(orig_img_file.url)
+            exif = OcrdExif(orig_img_pil)
+            dpi = (exif.xResolution, exif.yResolution)
+        image.save(image_bytes, dpi=dpi, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
             ID=file_id,
