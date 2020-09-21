@@ -139,6 +139,7 @@ def initLogging(reinit=False):
         logging.getLogger('PIL').setLevel(logging.INFO)
         # To cut back on the `Self-intersection at or near point` INFO messages
         logging.getLogger('shapely.geos').setLevel(logging.ERROR)
+        logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
     if _overrideLogLevel:
         setOverrideLogLevel(_overrideLogLevel)
