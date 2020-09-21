@@ -30,9 +30,7 @@ def ocrd_cli_wrap_processor(
     overwrite=False,
     **kwargs
 ):
-    if not (dump_json or help or version or overwrite) and \
-            mets == 'mets.xml' and \
-            not (kwargs['input_file_grp'] or kwargs['output_file_grp']):
+    if not sys.argv[1:]:
         processorClass(workspace=None, show_help=True)
         sys.exit(1)
     if dump_json or help or version:
@@ -40,9 +38,6 @@ def ocrd_cli_wrap_processor(
         sys.exit()
     else:
         LOG = getLogger('ocrd_cli_wrap_processor')
-        if not mets or (is_local_filename(mets) and not isfile(get_local_filename(mets))):
-            processorClass(workspace=None, show_help=True)
-            sys.exit(1)
         initLogging()
         # LOG.info('kwargs=%s' % kwargs)
         # Merge parameter overrides and parameters
