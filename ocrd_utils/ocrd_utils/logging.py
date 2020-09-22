@@ -94,11 +94,9 @@ def getLogger(*args, **kwargs):
     if not _initialized_flag:
         # XXX logger.exception may only be called in an except clause
         initLogging()
-        logging.getLogger('').critical('*** getLogger was called before initLogging ***')
-        logging.getLogger('').critical('*** If you encounter this when running a processor, open an issue about it in the resp. project on GitHub ***')
-        for x in format_stack(limit=2):
-            for y in x.split('\n'):
-                logging.getLogger('').critical(y)
+        logging.getLogger('').critical('getLogger was called before initLogging. Source of the call:')
+        for line in [x for x in format_stack(limit=2)[0].split('\n') if x]:
+            logging.getLogger('').critical(line)
     name = args[0]
     logger = logging.getLogger(*args, **kwargs)
     if _overrideLogLevel and name:
@@ -111,7 +109,7 @@ def initLogging(reinit=False):
     """
     Reset root logger, read logging configuration if exists, otherwise use basicConfig
     """
-    global _initialized_flag
+    global _initialized_flag # pylint: disable=global-statement
     if _initialized_flag and not reinit:
         raise Exception("initLogging called multiple times")
 
@@ -142,8 +140,6 @@ def initLogging(reinit=False):
         logging.getLogger('shapely.geos').setLevel(logging.ERROR)
         logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
-    if _overrideLogLevel:
-        setOverrideLogLevel(_overrideLogLevel)
     _initialized_flag = True
 
 def disableLogging():

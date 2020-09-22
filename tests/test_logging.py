@@ -2,7 +2,7 @@ import logging
 from re import match
 from tempfile import TemporaryDirectory
 
-from tests.base import TestCase, main, FIFOIO, assets
+from tests.base import CapturingTestCase as TestCase, main, FIFOIO, assets
 from tests.data import DummyProcessor
 from ocrd import Resolver, run_processor
 
@@ -37,6 +37,15 @@ class TestLogging(TestCase):
         self.assertEqual(notherlogger.getEffectiveLevel(), logging.ERROR)
         setOverrideLogLevel('INFO')
         somelogger = getLogger('foo.bar')
+
+    def test_getLogger_before_initLogging(self):
+        self.capture_out_err()
+        getLogger('foo')
+        _, err = self.capture_out_err()
+        print(err)
+        assert 'getLogger was called before initLogging' in err
+        assert __file__ in err
+        assert len(err.split('\n')) == 4
 
     def test_getLevelName(self):
         self.assertEqual(getLevelName('ERROR'), logging.ERROR)
