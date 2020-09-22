@@ -303,5 +303,15 @@ class TestOcrdPage(TestCase):
         pcgts = parseString(to_xml(pcgts, skip_declaration=True))
         assert not pcgts.get_Page().get_ReadingOrder()
 
+    def test_hashable(self):
+        """
+        https://github.com/OCR-D/ocrd_segment/issues/45
+        """
+        pcgts = page_from_image(OcrdFile(None, url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
+        page = pcgts.get_Page()
+        testset = set()
+        testset.add(pcgts)
+        testset.add(page)
+
 if __name__ == '__main__':
     main(__file__)
