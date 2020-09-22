@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd_utils.image` handles 16/32-bit images correctly, #606, python-pillow/Pillow#4925
+  * OcrdPage: Most elements should be hashable, i.e. usable in sets, maps etc., #610
 
 ## [2.16.3] - 2020-09-09
 
