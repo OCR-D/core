@@ -106,7 +106,13 @@ ocrd__parse_argv () {
         ocrd__raise "Must set \$params (declare -A params)"
     fi
 
+    if [[ $# = 0 ]];then
+        ocrd__usage
+        exit 1
+    fi
+
     ocrd__argv[overwrite]=false
+    ocrd__argv[mets_file]="$PWD/mets.xml"
 
     local __parameters=()
     local __parameter_overrides=()
@@ -130,9 +136,8 @@ ocrd__parse_argv () {
         shift
     done
 
-    if [[ ! -r "${ocrd__argv[mets_file]:=$PWD/mets.xml}" ]];then
-        ocrd__usage
-        exit 1
+    if [[ ! -e "${ocrd__argv[mets_file]}" ]];then
+        ocrd__raise "METS file '${ocrd__argv[mets_file]}' not found"
     fi
 
     if [[ ! -d "${ocrd__argv[working_dir]:=$(dirname "${ocrd__argv[mets_file]}")}" ]];then
