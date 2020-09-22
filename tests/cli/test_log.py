@@ -20,7 +20,7 @@ class TestLogCli(TestCase):
         disableLogging()
         code, out, err = self.invoke_cli(mock_ocrd_cli, args)
         print(code, out, err)
-        return err
+        return out + err
 
     def tearDown(self):
         if 'OCRD_TOOL_NAME' in ENV:

@@ -92,7 +92,6 @@ def getLogger(*args, **kwargs):
     Wrapper around ``logging.getLogger`` that respects `overrideLogLevel <#setOverrideLogLevel>`_.
     """
     if not _initialized_flag:
-        # XXX logger.exception may only be called in an except clause
         initLogging()
         logging.getLogger('').critical('getLogger was called before initLogging. Source of the call:')
         for line in [x for x in format_stack(limit=2)[0].split('\n') if x]:
@@ -103,15 +102,15 @@ def getLogger(*args, **kwargs):
         logger.setLevel(logging.NOTSET)
     return logger
 
-# Default logging config
-
-def initLogging(reinit=False):
+def initLogging():
     """
     Reset root logger, read logging configuration if exists, otherwise use basicConfig
     """
     global _initialized_flag # pylint: disable=global-statement
-    if _initialized_flag and not reinit:
-        raise Exception("initLogging called multiple times")
+    if _initialized_flag:
+        logging.getLogger('').critical('initLogging was called multiple times. Source of latest call:')
+        for line in [x for x in format_stack(limit=2)[0].split('\n') if x]:
+            logging.getLogger('').critical(line)
 
     logging.disable(logging.NOTSET)
     for handler in logging.root.handlers[:]:
@@ -130,6 +129,7 @@ def initLogging(reinit=False):
         logging.info("Picked up logging config at %s" % config_file)
         logging.config.fileConfig(config_file)
     else:
+        # Default logging config
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIMEFMT)
         logging.getLogger('').setLevel(logging.INFO)
         #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
@@ -139,6 +139,9 @@ def initLogging(reinit=False):
         # To cut back on the `Self-intersection at or near point` INFO messages
         logging.getLogger('shapely.geos').setLevel(logging.ERROR)
         logging.getLogger('tensorflow').setLevel(logging.ERROR)
+
+    if _overrideLogLevel:
+        logging.getLogger('').setLevel(_overrideLogLevel)
 
     _initialized_flag = True
 

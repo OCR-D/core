@@ -38,14 +38,23 @@ class TestLogging(TestCase):
         setOverrideLogLevel('INFO')
         somelogger = getLogger('foo.bar')
 
+    def test_multiple_initLogging(self):
+        disableLogging()
+        initLogging()
+        self.capture_out_err()
+        initLogging()
+        out = '\n'.join(self.capture_out_err())
+        assert 'initLogging was called multiple times' in out
+        assert __file__ in out
+
     def test_getLogger_before_initLogging(self):
+        disableLogging()
         self.capture_out_err()
         getLogger('foo')
-        _, err = self.capture_out_err()
-        print(err)
-        assert 'getLogger was called before initLogging' in err
-        assert __file__ in err
-        assert len(err.split('\n')) == 4
+        out = '\n'.join(self.capture_out_err())
+        print(out)
+        assert 'getLogger was called before initLogging' in out
+        assert __file__ in out
 
     def test_getLevelName(self):
         self.assertEqual(getLevelName('ERROR'), logging.ERROR)

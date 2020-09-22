@@ -27,10 +27,8 @@ class TestCase(VanillaTestCase):
         chdir(dirname(realpath(__file__)) + '/..')
 
     def setUp(self):
-        initLogging(True)
-
-    # def tearDown(self):
-    #     disableLogging()
+        disableLogging()
+        initLogging()
 
 class CapturingTestCase(TestCase):
     """
