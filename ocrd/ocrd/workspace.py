@@ -836,10 +836,10 @@ class Workspace():
     def save_image_file(self, image,
                         file_id,
                         file_grp,
-                        dpi=None,
                         page_id=None,
                         mimetype='image/png',
-                        force=False):
+                        force=False,
+                        dpi=None):
         """Store and reference an image as file into the workspace.
 
         Given a PIL.Image `image`, and an ID `file_id` to use in METS,
@@ -860,6 +860,8 @@ class Workspace():
             orig_img_pil = self.resolve_image_exif(orig_img_file.url)
             exif = OcrdExif(orig_img_pil)
             dpi = (exif.xResolution, exif.yResolution)
+            if exif.resolutionUnit == 'cm':
+                dpi = (dpi[0] * 2.54, dpi[1] * 2.54)
         image.save(image_bytes, dpi=dpi, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
