@@ -52,7 +52,7 @@ def test_handle_response_mets(plain_xml_response_content):
 @mock.patch("requests.get")
 def test_handle_common_oai_response(mock_get, response_dir, oai_response_content):
     """Base use case with valid OAI Response data"""
-    initLogging(True)
+    initLogging()
 
     # arrange
     url = 'http://digital.bibliothek.uni-halle.de/hd/oai/?verb=GetRecord&metadataPrefix=mets&mode=xml&identifier=9049'
@@ -81,7 +81,7 @@ def test_handle_response_for_invalid_content(mock_get, response_dir):
     headers = {'Content-Type': 'text/plain'}
     mock_get.return_value.headers = headers
     resolver = Resolver()
-    initLogging(True)
+    initLogging()
 
     # capture log
     log = getLogger('ocrd_models.utils.handle_oai_response')

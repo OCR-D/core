@@ -195,7 +195,7 @@ class TestLogging(TestCase):
                     ''')
             # this will call logging.config.fileConfig with disable_existing_loggers=True,
             # so the defaults from the import-time initLogging should be invalided
-            initLogging(True)
+            initLogging()
             # ensure log level is set from temporary config file
             self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
 

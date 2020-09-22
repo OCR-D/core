@@ -23,7 +23,7 @@ def log_cli(ctx, name, *args, **kwargs):
     """
     Logging
     """
-    initLogging(True)  # reinit because setOverrideLogLevel may have come before
+    initLogging()
     ctx.obj = LogCtx(name)
 
 def _bind_log_command(lvl):

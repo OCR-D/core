@@ -21,7 +21,7 @@ def process_cli(log_level, mets, page_id, tasks, overwrite):
     """
     Process a series of tasks
     """
-    initLogging(True)
+    initLogging()
     log = getLogger('ocrd.cli.process')
     run_tasks(mets, log_level, page_id, tasks, overwrite)
     log.info("Finished")

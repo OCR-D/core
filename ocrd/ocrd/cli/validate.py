@@ -27,7 +27,7 @@ def validate_cli():
     """
     All the validation in one CLI
     """
-    initLogging(True)
+    initLogging()
 
 @validate_cli.command('tool-json')
 @click.argument('ocrd_tool', required=False, nargs=1)

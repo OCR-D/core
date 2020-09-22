@@ -17,7 +17,7 @@ FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 class TestResolver(TestCase):
 
     def setUp(self):
-        initLogging(True)
+        initLogging()
         self.resolver = Resolver()
 
     def test_workspace_from_url_bad(self):

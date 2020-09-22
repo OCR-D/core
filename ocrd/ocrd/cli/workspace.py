@@ -56,7 +56,7 @@ def workspace_cli(ctx, directory, mets, mets_basename, backup):
     """
     Working with workspace
     """
-    initLogging(True)
+    initLogging()
     ctx.obj = WorkspaceCtx(directory, mets_url=mets, mets_basename=mets_basename, automatic_backup=backup)
 
 # ----------------------------------------------------------------------

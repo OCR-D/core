@@ -37,7 +37,7 @@ def ocrd_cli_wrap_processor(
         if not mets or (is_local_filename(mets) and not isfile(get_local_filename(mets))):
             processorClass(workspace=None, show_help=True)
             sys.exit(1)
-        initLogging(True)
+        initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
         # LOG.info('kwargs=%s' % kwargs)
         # Merge parameter overrides and parameters

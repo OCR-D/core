@@ -14,7 +14,7 @@ def zip_cli():
     """
     Bag/Spill/Validate OCRD-ZIP bags
     """
-    initLogging(True)
+    initLogging()
 
 # ----------------------------------------------------------------------
 # ocrd zip bag
