@@ -64,7 +64,7 @@ class TestResolver(TestCase):
     def test_workspace_from_url0(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
         #  print(workspace.mets)
-        input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
+        input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
         #  print [str(f) for f in input_files]
         image_file = input_files[0]
         #  print(image_file)
@@ -76,7 +76,7 @@ class TestResolver(TestCase):
     # pylint: disable=protected-access
     def test_resolve_image0(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
+        input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
         f = input_files[0]
         print(f.url)
         img_pil1 = workspace._resolve_image_as_pil(f.url)

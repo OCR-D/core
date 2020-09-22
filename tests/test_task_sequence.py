@@ -140,7 +140,7 @@ class TestOcrdWfStep(TestCase):
                 ws = resolver.workspace_from_url('mets.xml')
                 ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE, pageId=None)
                 ws.save_mets()
-                files_before = len(ws.mets.find_files())
+                files_before = len(ws.mets.find_all_files())
                 run_tasks('mets.xml', 'DEBUG', None, [
                     "dummy -I OCR-D-IMG -O GRP1",
                     "dummy -I GRP1 -O GRP2",
@@ -148,7 +148,7 @@ class TestOcrdWfStep(TestCase):
                 ws.reload_mets()
                 # step 1: 2 images in OCR-D-IMG -> 2 images 2 PAGEXML in GRP1
                 # step 2: 2 images and 2 PAGEXML in GRP1 -> process just the PAGEXML
-                self.assertEqual(len(ws.mets.find_files()), files_before + 6)
+                self.assertEqual(len(ws.mets.find_all_files()), files_before + 6)
 
 
 if __name__ == '__main__':

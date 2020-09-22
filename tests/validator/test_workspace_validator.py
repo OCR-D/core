@@ -63,6 +63,7 @@ class TestWorkspaceValidator(TestCase):
         validator = WorkspaceValidator(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), download=True)
         report = validator._validate() # pylint: disable=protected-access
         report = validator._validate() # pylint: disable=protected-access
+        print(report.errors)
         self.assertTrue(report.is_valid)
 
     def test_validate_empty(self):
@@ -96,6 +97,7 @@ class TestWorkspaceValidator(TestCase):
             workspace.mets.add_file_group('OCR-D-INVALID-FILEGRP')
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
+            print(report.notices)
             self.assertEqual(len(report.errors), 1)
             self.assertEqual(len(report.notices), 1)
             self.assertEqual(report.notices[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")

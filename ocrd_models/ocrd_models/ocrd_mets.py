@@ -55,7 +55,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         String representation
         """
-        return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, self.find_files())
+        return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, list(self.find_files()))
 
     @property
     def unique_identifier(self):
@@ -114,10 +114,18 @@ class OcrdMets(OcrdXmlDocument):
         """
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
+    def find_all_files(self, *args, **kwargs):
+        """
+        Like find_files but return a list of all results.
+
+        Equivalent to ``list(self.find_files(...))``
+        """
+        return list(self.find_files(*args, **kwargs))
+
     # pylint: disable=multiple-statements
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
-        Search ``mets:file`` in this METS document.
+        Search ``mets:file`` in this METS document and yield results.
 
 
         The ``ID``, ``fileGrp``, ``url`` and ``mimetype`` parameters can be
@@ -181,8 +189,7 @@ class OcrdMets(OcrdXmlDocument):
             # If only local resources should be returned and f is not a file path: skip the file
             if local_only and not is_local_filename(f.url):
                 continue
-            ret.append(f)
-        return ret
+            yield f
 
     def add_file_group(self, fileGrp):
         """
@@ -261,10 +268,10 @@ class OcrdMets(OcrdXmlDocument):
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
-        if ID and not ignore and self.find_files(ID=ID) != []:
+        if ID and not ignore and next(self.find_files(ID=ID), None):
             if not force:
                 raise Exception("File with ID='%s' already exists" % ID)
-            mets_file = self.find_files(ID=ID)[0]
+            mets_file = next(self.find_files(ID=ID))
         else:
             mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self)
         mets_file.url = url
@@ -279,7 +286,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         Delete all files matching the query. Same arguments as ``OcrdMets.find_files``
         """
-        files = self.find_files(*args, **kwargs)
+        files = list(self.find_files(*args, **kwargs))
         if files:
             for f in files:
                 self.remove_one_file(f)
@@ -299,9 +306,7 @@ class OcrdMets(OcrdXmlDocument):
             ocrd_file = ID
             ID = ocrd_file.ID
         else:
-            ocrd_file = self.find_files(ID=ID)
-            if ocrd_file:
-                ocrd_file = ocrd_file[0]
+            ocrd_file = next(self.find_files(ID=ID), None)
 
         if not ocrd_file:
             raise FileNotFoundError("File not found: %s" % ID)

@@ -51,14 +51,14 @@ def test_workspace_remove_single_group_recursive(workspace_directory):
     # arrange
     resolver = Resolver()
     workspace = Workspace(resolver, workspace_directory)
-    files = workspace.mets.find_files(fileGrp='OCR-D-GT-ALTO')
+    files = workspace.mets.find_all_files(fileGrp='OCR-D-GT-ALTO')
     assert len(files) == 2
 
     # act
     workspace.remove_file_group('OCR-D-GT-ALTO', recursive=True)
 
     # assert
-    files = workspace.mets.find_files(fileGrp='OCR-D-GT-ALTO')
+    files = workspace.mets.find_all_files(fileGrp='OCR-D-GT-ALTO')
     assert len(files) == 0
 
 
