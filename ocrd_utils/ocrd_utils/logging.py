@@ -126,8 +126,8 @@ def initLogging():
             if os.path.exists(f)),
             None)
     if config_file:
-        logging.info("Picked up logging config at %s" % config_file)
         logging.config.fileConfig(config_file)
+        logging.getLogger('ocrd.logging').debug("Picked up logging config at %s" % config_file)
     else:
         # Default logging config
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIMEFMT)
