@@ -4,6 +4,7 @@ Utility functions for strings, paths and URL.
 
 import re
 import json
+from .constants import REGEX_FILE_ID
 
 __all__ = [
     'assert_file_grp_cardinality',
@@ -79,6 +80,9 @@ def make_file_id(ocrd_file, output_file_grp):
         while ocrd_file.mets.find_files(ID=ret):
             n += 1
             ret = concat_padded(output_file_grp, n)
+    if not REGEX_FILE_ID.fullmatch(ret):
+        ret = ret.replace(':', '_')
+        ret = re.sub(r'^(\d+)', r'id_\1', ret)
     return ret
 
 def nth_url_segment(url, n=-1):

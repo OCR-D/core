@@ -2,6 +2,7 @@
 Constants for ocrd_utils.
 """
 from pkg_resources import get_distribution
+from re import compile as regex_compile
 
 __all__ = [
     'EXT_TO_MIME',
@@ -12,6 +13,7 @@ __all__ = [
     'MIME_TO_PIL',
     'PIL_TO_MIME',
     'REGEX_PREFIX',
+    'REGEX_FILE_ID',
     'VERSION',
 ]
 
@@ -80,6 +82,9 @@ MIME_TO_PIL = {
 
 # Prefix to denote query is regular expression not fixed string
 REGEX_PREFIX = '//'
+
+# Regex for valid mets:file/@ID
+REGEX_FILE_ID = regex_compile('^[A-Za-z][^:]*$')
 
 # Log level format implementing https://ocr-d.de/en/spec/cli#logging
 LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'

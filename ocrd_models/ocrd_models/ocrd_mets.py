@@ -5,7 +5,7 @@ from datetime import datetime
 from re import fullmatch
 from lxml import etree as ET
 
-from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX
+from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX, REGEX_FILE_ID
 
 from .constants import (
     NAMESPACES as NS,
@@ -20,7 +20,6 @@ from .constants import (
     IDENTIFIER_PRIORITY,
     TAG_MODS_IDENTIFIER,
     METS_XML_EMPTY,
-    REGEX_FILE_ID
 )
 
 from .ocrd_xml_base import OcrdXmlDocument, ET
