@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.17.0] - 2020-09-23
+
 Fixed:
 
   * `ocrd_utils.image` handles 16/32-bit images correctly, #606, python-pillow/Pillow#4925
@@ -1151,6 +1153,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.17.0]: ../../compare/v2.17.0..v2.16.3
 [2.16.3]: ../../compare/v2.16.3..v2.16.2
 [2.16.2]: ../../compare/v2.16.2..v2.16.1
 [2.16.1]: ../../compare/v2.16.1..v2.16.0
