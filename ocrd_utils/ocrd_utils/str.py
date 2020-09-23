@@ -82,7 +82,8 @@ def make_file_id(ocrd_file, output_file_grp):
             ret = concat_padded(output_file_grp, n)
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
-        ret = re.sub(r'^(\d+)', r'id_\1', ret)
+        ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
+        ret = re.sub(r'[^\w.-]', r'', ret)
     return ret
 
 def nth_url_segment(url, n=-1):
@@ -176,4 +177,3 @@ def safe_filename(url):
     ret = re.sub('[^A-Za-z0-9]+', '.', url)
     #  print('safe filename: %s -> %s' % (url, ret))
     return ret
-

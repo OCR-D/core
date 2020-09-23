@@ -295,7 +295,7 @@ class TestUtils(TestCase):
         mets = OcrdMets.empty_mets()
         f = mets.add_file('1:!GRP', ID='FOO_0001', pageId='phys0001')
         f = mets.add_file('2:!GRP', ID='FOO_0002', pageId='phys0002')
-        self.assertEqual(make_file_id(f, '2:!GRP'), 'id_2_!GRP_0002')
+        self.assertEqual(make_file_id(f, '2:!GRP'), 'id_2_GRP_0002')
 
 if __name__ == '__main__':
     main(__file__)
