@@ -26,10 +26,8 @@ __all__ = [
     'TAG_PAGE_TEXTLINE',
     'TAG_PAGE_TEXTEQUIV',
     'TAG_PAGE_TEXTREGION',
-    'REGEX_FILE_ID',
 ]
 
-REGEX_FILE_ID = re.compile('^[A-Za-z][^:]*$')
 
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 
