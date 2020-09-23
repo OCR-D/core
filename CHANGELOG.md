@@ -12,7 +12,7 @@ Fixed:
 
 Changed:
 
-  * Calling a processor w/o any arguments: show help and exit 1, #586
+  * Calling a processor w/o any arguments: show help and exit 1, #586, #615
   * :fire: `Workspace.add_file` requires page_id kwarg (which can be None), #560
 
 ## [2.16.3] - 2020-09-09
