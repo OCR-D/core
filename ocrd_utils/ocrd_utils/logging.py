@@ -151,7 +151,7 @@ def disableLogging():
     global _overrideLogLevel # pylint: disable=global-statement
     _overrideLogLevel = None
     logging.basicConfig(level=logging.CRITICAL)
-    logging.disable(logging.CRITICAL)
+    logging.disable(logging.ERROR)
 
 # Initializing stream handlers at module level
 # would cause message output in all runtime contexts,
