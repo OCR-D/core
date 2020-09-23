@@ -84,7 +84,7 @@ MIME_TO_PIL = {
 REGEX_PREFIX = '//'
 
 # Regex for valid mets:file/@ID
-REGEX_FILE_ID = regex_compile('^[A-Za-z][^:]*$')
+REGEX_FILE_ID = regex_compile(r'^[a-zA-Z_][\w.-]*$')
 
 # Log level format implementing https://ocr-d.de/en/spec/cli#logging
 LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'
