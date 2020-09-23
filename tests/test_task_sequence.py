@@ -138,6 +138,8 @@ class TestOcrdWfStep(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 ws = resolver.workspace_from_url('mets.xml')
+                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE, pageId=None)
+                ws.save_mets()
                 files_before = len(ws.mets.find_files())
                 run_tasks('mets.xml', 'DEBUG', None, [
                     "dummy -I OCR-D-IMG -O GRP1",
