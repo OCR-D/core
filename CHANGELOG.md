@@ -9,6 +9,7 @@ Fixed:
 
   * `ocrd_utils.image` handles 16/32-bit images correctly, #606, python-pillow/Pillow#4925
   * OcrdPage: Most elements should be hashable, i.e. usable in sets, maps etc., #610
+  * `ocrd_utils.make_file_id`: Ensure produced IDs are syntactically valid xs:ID, #616
 
 Changed:
 
