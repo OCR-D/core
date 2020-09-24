@@ -190,7 +190,8 @@ class Workspace():
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
                 self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
-                file_dirs.append(path.dirname(f.local_filename))
+                if f.local_filename:
+                    file_dirs.append(path.dirname(f.local_filename))
 
         self.mets.remove_file_group(USE, force=force)
 
