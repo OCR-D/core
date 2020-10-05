@@ -36,6 +36,7 @@ EXT_TO_MIME = {
     '.ppm': 'image/x-portable-pixmap',
     '.pnm': 'image/x-portable-anymap',
     '.pbm': 'image/x-portable-bitmap',
+    '.txt': 'text/plain',
 }
 
 MIME_TO_EXT = {
@@ -53,6 +54,7 @@ MIME_TO_EXT = {
     'image/x-portable-pixmap': '.ppm',
     'image/x-portable-anymap': '.pnm',
     'image/x-portable-bitmap': '.pbm',
+    'text/plain': '.txt',
 }
 
 #
