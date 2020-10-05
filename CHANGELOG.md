@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace remove-group`: don't fail on non-existing files, #618
+
 ## [2.17.0] - 2020-09-23
 
 Fixed:
