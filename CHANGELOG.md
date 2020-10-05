@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.17.1] - 2020-10-05
+
 Fixed:
 
   * `ocrd workspace remove-group`: don't fail on non-existing files, #618
@@ -1161,6 +1163,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.17.1]: ../../compare/v2.17.1..v2.17.0
 [2.17.0]: ../../compare/v2.17.0..v2.16.3
 [2.16.3]: ../../compare/v2.16.3..v2.16.2
 [2.16.2]: ../../compare/v2.16.2..v2.16.1
