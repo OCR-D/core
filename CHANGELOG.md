@@ -9,6 +9,10 @@ Fixed:
 
   * `ocrd workspace remove-group`: don't fail on non-existing files, #618
 
+Changed:
+
+  * media type <-> extension mapping for `text/plain`, #612
+
 ## [2.17.0] - 2020-09-23
 
 Fixed:
