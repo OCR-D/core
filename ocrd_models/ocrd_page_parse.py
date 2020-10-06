@@ -1,8 +1,8 @@
-def parse(inFileName, silence=False, print_warnings=True):
+def parse(inFileName, silence=False, print_warnings=True, filename=None):
     global CapturedNsmap_
     if not filename:
-        filename=inFilename
-    gds_collector = GdsCollector_(filename=filenmae)
+        filename = inFileName
+    gds_collector = GdsCollector_(filename=filename)
     parser = None
     doc = parsexml_(inFileName, parser)
     rootNode = doc.getroot()
@@ -31,7 +31,7 @@ def parse(inFileName, silence=False, print_warnings=True):
         sys.stderr.write(separator)
     return rootObj
 
-def parseString(inString, filename=None, silence=False, print_warnings=True):
+def parseString(inString, silence=False, print_warnings=True, filename=None):
     '''Parse a string, create the object tree, and export it.
 
     Arguments:
