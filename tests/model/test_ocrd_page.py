@@ -2,6 +2,7 @@ from tests.base import TestCase, main, assets
 from tests.data.mock_file import MockOcrdFile as OcrdFile
 
 from ocrd_modelfactory import page_from_image
+from ocrd_models.report import ValidationReport
 from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
@@ -320,6 +321,7 @@ class TestOcrdPage(TestCase):
             pcgts = parseString(f.read().encode('utf8'), silence=True)
             gdc = pcgts.gds_collector_
             self.assertTrue(isinstance(gdc, OcrdGdsCollector))
+            self.assertTrue(isinstance(gdc, ValidationReport))
 
     def test_gdscollector_info(self):
         filename = assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml')
@@ -329,10 +331,10 @@ class TestOcrdPage(TestCase):
             s = s.encode('utf-8')
             pcgts = parseString(s, silence=True, filename=filename)
             gdsc = pcgts.gds_collector_
-            self.assertEqual(gdsc.messages, [])
+            self.assertEqual(gdsc.warnings, [])
             self.assertEqual(gdsc.filename, filename)
             pcgts.validate_(gdsc, True)
-            self.assertEqual(gdsc.messages, ['Number of values for Page near line 2 is below the minimum allowed, expected at least 1, found 0'])
+            self.assertEqual(gdsc.warnings, ['Number of values for Page near line 2 is below the minimum allowed, expected at least 1, found 0'])
 
 if __name__ == '__main__':
     main(__file__)
