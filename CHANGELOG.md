@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * As a workaround for tensorflow compatiblity, require `numpy < 1.19.0`, #620
+
 ## [2.17.1] - 2020-10-05
 
 Fixed:
