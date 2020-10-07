@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.17.2] - 2020-10-07
+
 Fixed:
 
   * As a workaround for tensorflow compatiblity, require `numpy < 1.19.0`, #620
@@ -1167,6 +1169,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.17.2]: ../../compare/v2.17.2..v2.17.1
 [2.17.1]: ../../compare/v2.17.1..v2.17.0
 [2.17.0]: ../../compare/v2.17.0..v2.16.3
 [2.16.3]: ../../compare/v2.16.3..v2.16.2
