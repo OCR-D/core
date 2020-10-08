@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: `OcrdMets.find_files` is now a generator, #614
+
 ## [2.17.2] - 2020-10-07
 
 Fixed:
