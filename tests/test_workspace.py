@@ -43,7 +43,7 @@ class TestWorkspace(TestCase):
                 pageId=None,
                 local_filename=fpath
             )
-            f = ws1.mets.find_files()[0]
+            f = ws1.mets.find_all_files()[0]
             self.assertEqual(f.ID, 'ID1')
             self.assertEqual(f.mimetype, 'image/tiff')
             self.assertEqual(f.url, fpath)
@@ -54,7 +54,7 @@ class TestWorkspace(TestCase):
         with TemporaryDirectory() as tempdir:
             ws1 = self.resolver.workspace_from_nothing(directory=tempdir)
             ws1.add_file('GRP', ID='ID1', mimetype='image/tiff', pageId=None)
-            f = ws1.mets.find_files()[0]
+            f = next(ws1.mets.find_files())
             self.assertEqual(f.url, None)
 
     def test_workspace_add_file_binary_content(self):
@@ -142,7 +142,7 @@ class TestWorkspace(TestCase):
                     f_out.write(f_in.read())
             self.assertEqual(len(find_recursive(wsdir)), 1)
             ws1 = Workspace(self.resolver, wsdir)
-            for file in ws1.mets.find_files():
+            for file in ws1.mets.find_all_files():
                 ws1.download_file(file)
             self.assertEqual(len(find_recursive(wsdir)), 2)
             self.assertTrue(exists(join(wsdir, 'OCR-D-IMG/FILE_0005_IMAGE.tif')))
@@ -195,9 +195,9 @@ class TestWorkspace(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
             with pushd_popd(tempdir):
                 ws = Workspace(self.resolver, directory=tempdir)
-                self.assertEqual(len(ws.mets.find_files()), 119)
+                self.assertEqual(len(ws.mets.find_all_files()), 119)
                 ws.remove_file('OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001', page_recursive=True, page_same_group=False, keep_file=True)
-                self.assertEqual(len(ws.mets.find_files()), 83)
+                self.assertEqual(len(ws.mets.find_all_files()), 83)
                 ws.remove_file('PAGE_0017_ALTO', page_recursive=True)
 
     def test_remove_file_page_recursive_keep_file(self):

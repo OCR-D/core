@@ -77,7 +77,7 @@ def make_file_id(ocrd_file, output_file_grp):
             except ValueError:
                 n = len(ids)
         ret = concat_padded(output_file_grp, n)
-        while ocrd_file.mets.find_files(ID=ret):
+        while next(ocrd_file.mets.find_files(ID=ret), None):
             n += 1
             ret = concat_padded(output_file_grp, n)
     if not REGEX_FILE_ID.fullmatch(ret):

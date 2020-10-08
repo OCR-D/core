@@ -55,7 +55,7 @@ class WorkspaceValidator():
                 if grp in workspace.mets.file_groups:
                     if page_id:
                         for one_page_id in page_id:
-                            if workspace.mets.find_files(fileGrp=grp, pageId=one_page_id):
+                            if next(workspace.mets.find_files(fileGrp=grp, pageId=one_page_id), None):
                                 report.add_error("Output fileGrp[@USE='%s'] already contains output for page %s" % (grp, one_page_id))
                     else:
                         report.add_error("Output fileGrp[@USE='%s'] already in METS!" % grp)
@@ -252,7 +252,9 @@ class WorkspaceValidator():
         """
         Validate ``mets:file`` URLs are sane.
         """
-        if not self.mets.find_files():
+        try:
+            next(self.mets.find_files())
+        except StopIteration:
             self.report.add_error("No files")
         for f in self.mets.find_files():
             if f._el.get('GROUPID'): # pylint: disable=protected-access

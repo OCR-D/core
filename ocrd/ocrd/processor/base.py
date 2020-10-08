@@ -111,11 +111,11 @@ class Processor():
           having multiple images for a single page)
         (https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593)
         """
-        ret = self.workspace.mets.find_files(
+        ret = self.workspace.mets.find_all_files(
             fileGrp=self.input_file_grp, pageId=self.page_id, mimetype=MIMETYPE_PAGE)
         if ret:
             return ret
-        ret = self.workspace.mets.find_files(
+        ret = self.workspace.mets.find_all_files(
             fileGrp=self.input_file_grp, pageId=self.page_id, mimetype="//image/.*")
         if self.page_id and len(ret) > 1:
             raise ValueError("No PAGE-XML %s in fileGrp '%s' but multiple images." % (

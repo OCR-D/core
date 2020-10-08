@@ -274,13 +274,13 @@ class TestUtils(TestCase):
         for i in range(1, 10):
             mets.add_file('FOO', ID="FOO_%04d" % (i), mimetype="image/tiff")
             mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff")
-        self.assertEqual(make_file_id(mets.find_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
+        self.assertEqual(make_file_id(mets.find_all_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
         f = mets.add_file('ABC', ID="BAR_7", mimetype="image/tiff")
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0010')
         mets.remove_file(fileGrp='FOO')
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0001')
         mets.add_file('FOO', ID="FOO_0001", mimetype="image/tiff")
-        # print('\n'.join(['%s' % of for of in mets.find_files()]))
+        # print('\n'.join(['%s' % of for of in mets.find_all_files()]))
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0002')
 
     def test_make_file_id_570(self):
