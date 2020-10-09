@@ -3,6 +3,7 @@ Helper methods for running and documenting processors
 """
 from time import time
 import json
+import inspect
 from subprocess import run, PIPE
 
 from click import wrap_text
@@ -120,13 +121,13 @@ def run_cli(
     result = run(args, check=False, stdout=PIPE, stderr=PIPE)
     return result.returncode, result.stdout.decode('utf-8'), result.stderr.decode('utf-8')
 
-def generate_processor_help(ocrd_tool, doc=None):
+def generate_processor_help(ocrd_tool, processor_instance=None):
     """Generate a string describing the full CLI of this processor including params.
     
     Args:
          ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
-         doc (str, optional): additional documentation
-                              (presumably from the module/class/function docstring)
+         processor_instance (object, optional): the processor implementation
+             (for adding any module/class/function docstrings)
     """
     parameter_help = ''
     if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
@@ -147,10 +148,19 @@ def generate_processor_help(ocrd_tool, doc=None):
                 parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
             parameter_help += "\n"
     doc_help = ''
-    if doc:
-        doc_help = '\n\n' + wrap_text(doc, initial_indent='  > ',
-                                      subsequent_indent='  > ',
-                                      width=72, preserve_paragraphs=True)
+    if processor_instance:
+        module = inspect.getmodule(processor_instance)
+        if module and module.__doc__:
+            doc_help += '\n' + inspect.cleandoc(module.__doc__)
+        if processor_instance.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__)
+        if processor_instance.process.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.process.__doc__)
+        if doc_help:
+            doc_help = '\n\n' + wrap_text(doc_help, width=72,
+                                          initial_indent='  > ',
+                                          subsequent_indent='  > ',
+                                          preserve_paragraphs=True)
     return '''
 Usage: %s [OPTIONS]
 
