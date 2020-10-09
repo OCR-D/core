@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * :fire: `OcrdMets.find_files` is now a generator, #614
+  * Print docstrings if available for `--help`, #623
 
 ## [2.17.2] - 2020-10-07
 
