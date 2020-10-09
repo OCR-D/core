@@ -65,7 +65,7 @@ class Processor():
         self.parameter = parameter
 
     def show_help(self):
-        print(generate_processor_help(self.ocrd_tool))
+        print(generate_processor_help(self.ocrd_tool, processor_instance=self))
 
     def show_version(self):
         print("Version %s, ocrd/core %s" % (self.version, OCRD_VERSION))
