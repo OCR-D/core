@@ -6,6 +6,7 @@ __all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processor']
 
 import os
 import json
+import inspect
 from ocrd_utils import VERSION as OCRD_VERSION, MIMETYPE_PAGE
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
@@ -65,7 +66,15 @@ class Processor():
         self.parameter = parameter
 
     def show_help(self):
-        print(generate_processor_help(self.ocrd_tool))
+        doc = ''
+        module = inspect.getmodule(self)
+        if module and module.__doc__:
+            doc += '\n' + inspect.cleandoc(module.__doc__)
+        if self.__doc__:
+            doc += '\n' + inspect.cleandoc(self.__doc__)
+        if self.process.__doc__:
+            doc += '\n' + inspect.cleandoc(self.process.__doc__)
+        print(generate_processor_help(self.ocrd_tool, doc=doc))
 
     def show_version(self):
         print("Version %s, ocrd/core %s" % (self.version, OCRD_VERSION))

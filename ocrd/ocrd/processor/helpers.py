@@ -120,7 +120,14 @@ def run_cli(
     result = run(args, check=False, stdout=PIPE, stderr=PIPE)
     return result.returncode, result.stdout.decode('utf-8'), result.stderr.decode('utf-8')
 
-def generate_processor_help(ocrd_tool):
+def generate_processor_help(ocrd_tool, doc=None):
+    """Generate a string describing the full CLI of this processor including params.
+    
+    Args:
+         ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
+         doc (str, optional): additional documentation
+                              (presumably from the module/class/function docstring)
+    """
     parameter_help = ''
     if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
         parameter_help = '  NONE\n'
@@ -139,10 +146,15 @@ def generate_processor_help(ocrd_tool):
             if 'enum' in param:
                 parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
             parameter_help += "\n"
+    doc_help = ''
+    if doc:
+        doc_help = '\n\n' + wrap_text(doc, initial_indent='  > ',
+                                      subsequent_indent='  > ',
+                                      width=72, preserve_paragraphs=True)
     return '''
 Usage: %s [OPTIONS]
 
-  %s
+  %s%s
 
 Options:
   -I, --input-file-grp USE        File group(s) used as input
@@ -170,10 +182,8 @@ Default Wiring:
 ''' % (
     ocrd_tool['executable'],
     ocrd_tool['description'],
+    doc_help,
     parameter_help,
     ocrd_tool.get('input_file_grp', 'NONE'),
     ocrd_tool.get('output_file_grp', 'NONE')
 )
-
-
-
