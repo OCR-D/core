@@ -6,6 +6,7 @@ __all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processor']
 
 import os
 import json
+from collections import Counter
 from ocrd_utils import VERSION as OCRD_VERSION, MIMETYPE_PAGE
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
@@ -117,9 +118,12 @@ class Processor():
             return ret
         ret = self.workspace.mets.find_all_files(
             fileGrp=self.input_file_grp, pageId=self.page_id, mimetype="//image/.*")
-        if self.page_id and len(ret) > 1:
+        duplicate_pageids = [x for x, count in Counter([file.pageId for file in ret]).items() if count > 1]
+        if duplicate_pageids:
             raise ValueError("No PAGE-XML %s in fileGrp '%s' but multiple images." % (
-                "for page '%s'" % self.page_id if self.page_id else '',
+                "for page%s '%s'" % (
+                    's' if len(duplicate_pageids) > 1 else '',
+                    self.page_id if self.page_id else ''),
                 self.input_file_grp
                 ))
         return ret
