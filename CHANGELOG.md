@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.18.0] - 2020-10-12
+
 Changed:
 
   * :fire: `OcrdMets.find_files` is now a generator, #614
@@ -1175,6 +1177,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.18.0]: ../../compare/v2.18.0..02.17.2
 [2.17.2]: ../../compare/v2.17.2..v2.17.1
 [2.17.1]: ../../compare/v2.17.1..v2.17.0
 [2.17.0]: ../../compare/v2.17.0..v2.16.3
