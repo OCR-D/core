@@ -14,14 +14,17 @@ class TestOsUtils(TestCase):
         self.tempdir_path = mkdtemp()
         self.tempdir_venv = mkdtemp()
         ENV['OCRD_DUMMY_PATH'] = self.tempdir_path
-        self.VIRTUAL_ENV = ENV['VIRTUAL_ENV']
+        self.VIRTUAL_ENV = ENV.get('VIRTUAL_ENV')
         ENV['VIRTUAL_ENV'] = self.tempdir_venv
 
     def tearDown(self):
         rmtree(self.tempdir_path)
         rmtree(self.tempdir_venv)
         del ENV['OCRD_DUMMY_PATH']
-        ENV['VIRTUAL_ENV'] = self.VIRTUAL_ENV
+        if self.VIRTUAL_ENV:
+            ENV['VIRTUAL_ENV'] = self.VIRTUAL_ENV
+        else:
+            del ENV['VIRTUAL_ENV']
 
     def test_resolve_basic(self):
         fname = 'foo.bar'
