@@ -1,4 +1,5 @@
-from os import walk
+from os import walk, stat, chmod
+from stat import filemode
 from subprocess import run, PIPE
 from os.path import join, exists, abspath, basename, dirname
 from tempfile import TemporaryDirectory, mkdtemp
@@ -10,7 +11,7 @@ from PIL import Image
 from tests.base import TestCase, assets, main, copy_of_directory
 
 from ocrd_models.ocrd_page import parseString
-from ocrd_utils import pushd_popd
+from ocrd_utils import pushd_popd, initLogging
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 
@@ -277,6 +278,19 @@ class TestWorkspace(TestCase):
             self.assertEquals(info['features'], 'binarized,clipped')
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
             self.assertEquals(info['features'], 'binarized,clipped')
+
+    def test_mets_permissions(self):
+        initLogging()
+        with TemporaryDirectory() as tempdir:
+            ws = self.resolver.workspace_from_nothing(tempdir)
+            ws.save_mets()
+            mets_path = join(ws.directory, 'mets.xml')
+            assert filemode(stat(mets_path).st_mode) == '-rw-rw-r--'
+            chmod(mets_path, 0o777)
+            ws.save_mets()
+            assert filemode(stat(mets_path).st_mode) == '-rwxrwxrwx'
+
+
 
 
 if __name__ == '__main__':

@@ -2,3 +2,4 @@ Pillow >= 7.2.0
 # All current versions of TensorFlow require numpy < 1.19.0,
 # so make sure that now newer version is installed here.
 numpy >= 1.17.0, < 1.19.0
+atomicwrites >= 1.3.0

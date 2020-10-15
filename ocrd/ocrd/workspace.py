@@ -5,12 +5,12 @@ from pathlib import Path
 import cv2
 from PIL import Image
 import numpy as np
-from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif, OcrdFile
 from ocrd_models.ocrd_page import parse
 from ocrd_utils import (
+    atomic_write,
     getLogger,
     image_from_polygon,
     coordinates_of_segment,

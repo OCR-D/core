@@ -128,6 +128,7 @@ from .logging import (
 
 from .os import (
     abspath,
+    atomic_write,
     pushd_popd,
     unzip_file_to_dir)
 
