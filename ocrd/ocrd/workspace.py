@@ -10,6 +10,7 @@ from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif, OcrdFile
 from ocrd_models.ocrd_page import parse
+from ocrd_modelfactory import exif_from_filename
 from ocrd_utils import (
     getLogger,
     image_from_polygon,
@@ -267,8 +268,7 @@ class Workspace():
         """
         f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
         image_filename = self.download_file(f).local_filename
-        with Image.open(image_filename) as pil_img:
-            ocrd_exif = OcrdExif(pil_img)
+        ocrd_exif = exif_from_filename(image_filename)
         return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
