@@ -294,9 +294,45 @@ class Workspace():
             pil_image = Image.open(image_filename)
             pil_image.load() # alloc and give up the FD
 
+        # Pillow does not properly support higher color depths
+        # (e.g. 16-bit or 32-bit or floating point grayscale),
+        # clipping its dynamic range to the lower 8-bit in
+        # many operations (including paste, putalpha, ImageStat...),
+        # even including conversion.
+        # Cf. Pillow#3011 Pillow#3159 Pillow#3838 (still open in 8.0)
+        # So to be on the safe side, we must re-quantize these
+        # to 8-bit via numpy (conversion to/from which fortunately
+        # seems to work reliably):
+        if (pil_image.mode.startswith('I') or
+            pil_image.mode.startswith('F')):
+            arr_image = np.array(pil_image)
+            if arr_image.dtype.kind == 'i':
+                # signed integer is *not* trustworthy in this context
+                # (usually a mistake in the array interface)
+                log.debug('Casting image "%s" from signed to unsigned', image_url)
+                arr_image.dtype = np.dtype('u' + arr_image.dtype.name)
+            if arr_image.dtype.kind == 'u':
+                # integer needs to be scaled linearly to 8 bit
+                # of course, an image might actually have some lower range
+                # (e.g. 10-bit in I;16 or 20-bit in I or 4-bit in L),
+                # but that would be guessing anyway, so here don't
+                # make assumptions on _scale_, just reduce _precision_
+                log.debug('Reducing image "%s" from depth %d bit to 8 bit',
+                          image_url, arr_image.dtype.itemsize * 8)
+                arr_image = arr_image >> 8 * (arr_image.dtype.itemsize-1)
+                arr_image = arr_image.astype(np.uint8)
+            elif arr_image.dtype.kind == 'f':
+                # float needs to be scaled from [0,1.0] to [0,255]
+                log.debug('Reducing image "%s" from floating point to 8 bit',
+                          image_url)
+                arr_image *= 255
+                arr_image = arr_image.astype(np.uint8)
+            pil_image = Image.fromarray(arr_image)
+
         if coords is None:
             return pil_image
 
+        # FIXME: remove or replace this by (image_from_polygon+) crop_image ...
         log.debug("Converting PIL to OpenCV: %s", image_url)
         color_conversion = cv2.COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  cv2.COLOR_RGB2BGR
         pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
