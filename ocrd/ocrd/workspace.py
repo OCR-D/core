@@ -8,7 +8,7 @@ import numpy as np
 from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
-from ocrd_models import OcrdMets, OcrdExif, OcrdFile
+from ocrd_models import OcrdMets, OcrdFile
 from ocrd_models.ocrd_page import parse
 from ocrd_modelfactory import exif_from_filename
 from ocrd_utils import (
@@ -416,8 +416,8 @@ class Workspace():
            ``
         """
         log = getLogger('ocrd.workspace.image_from_page')
+        page_image_info = self.resolve_image_exif(page.imageFilename)
         page_image = self._resolve_image_as_pil(page.imageFilename)
-        page_image_info = OcrdExif(page_image)
         page_coords = dict()
         # use identity as initial affine coordinate transform:
         page_coords['transform'] = np.eye(3)
