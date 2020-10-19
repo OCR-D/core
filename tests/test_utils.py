@@ -1,10 +1,11 @@
 from os import getcwd
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, gettempdir
 from pathlib import Path
 
 from PIL import Image
 
 from tests.base import TestCase, main, assets
+from tests.data.mock_file import MockOcrdFile
 from ocrd_utils import (
     abspath,
 
@@ -43,21 +44,6 @@ from ocrd_utils import (
 )
 from ocrd_models.utils import xmllint_format
 from ocrd_models import OcrdFile, OcrdMets
-
-class MockOcrdFile(OcrdFile):
-    """
-    OcrdFile with mocked fileGrp access
-    """
-    @property
-    def fileGrp(self):
-        return self.__filegrp
-    @fileGrp.setter
-    def fileGrp(self, fileGrp):
-        self.__filegrp = fileGrp
-    def __init__(self, *args, fileGrp=None, ocrd_mets=None, **kwargs):
-        super(MockOcrdFile, self).__init__(*args, **kwargs)
-        self.fileGrp = fileGrp if fileGrp else None
-        self.ocrd_mets = ocrd_mets if ocrd_mets else None
 
 class TestUtils(TestCase):
 
@@ -158,11 +144,23 @@ class TestUtils(TestCase):
             pil_image = Image.open(assets.path_to('grenzboten-test/data/OCR-D-IMG-BIN/p179470.tif'))
             pil_image.crop(box=[1539, 202, 1626, 271])
 
-    def test_pushd_popd(self):
+    def test_pushd_popd_newcwd(self):
         cwd = getcwd()
         with pushd_popd('/tmp'):
             self.assertEqual(getcwd(), '/tmp')
         self.assertEqual(getcwd(), cwd)
+
+    def test_pushd_popd_tempdir(self):
+        cwd = getcwd()
+        with pushd_popd(tempdir=True) as newcwd:
+            self.assertEqual(getcwd(), newcwd)
+            self.assertTrue(newcwd.startswith(gettempdir()))
+        self.assertEqual(getcwd(), cwd)
+
+    def test_pushd_popd_bad_call(self):
+        with self.assertRaisesRegex(Exception, 'pushd_popd can accept either newcwd or tempdir, not both'):
+            with pushd_popd('/foo/bar', True):
+                pass
 
     def test_is_local_filename(self):
         self.assertTrue(is_local_filename('/foo/bar'))
@@ -276,23 +274,28 @@ class TestUtils(TestCase):
         for i in range(1, 10):
             mets.add_file('FOO', ID="FOO_%04d" % (i), mimetype="image/tiff")
             mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff")
-        self.assertEqual(make_file_id(mets.find_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
+        self.assertEqual(make_file_id(mets.find_all_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
         f = mets.add_file('ABC', ID="BAR_7", mimetype="image/tiff")
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0010')
         mets.remove_file(fileGrp='FOO')
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0001')
         mets.add_file('FOO', ID="FOO_0001", mimetype="image/tiff")
-        # print('\n'.join(['%s' % of for of in mets.find_files()]))
+        # print('\n'.join(['%s' % of for of in mets.find_all_files()]))
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0002')
 
     def test_make_file_id_570(self):
-        """
-        https://github.com/OCR-D/core/pull/570
-        """
+        """https://github.com/OCR-D/core/pull/570"""
         mets = OcrdMets.empty_mets()
         f = mets.add_file('GRP', ID='FOO_0001', pageId='phys0001')
         mets.add_file('GRP', ID='GRP2_0001', pageId='phys0002')
         self.assertEqual(make_file_id(f, 'GRP2'), 'GRP2_0002')
+
+    def test_make_file_id_605(self):
+        """https://github.com/OCR-D/core/pull/605"""
+        mets = OcrdMets.empty_mets()
+        f = mets.add_file('1:!GRP', ID='FOO_0001', pageId='phys0001')
+        f = mets.add_file('2:!GRP', ID='FOO_0002', pageId='phys0002')
+        self.assertEqual(make_file_id(f, '2:!GRP'), 'id_2_GRP_0002')
 
 if __name__ == '__main__':
     main(__file__)

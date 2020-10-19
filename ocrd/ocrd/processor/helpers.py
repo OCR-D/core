@@ -3,6 +3,7 @@ Helper methods for running and documenting processors
 """
 from time import time
 import json
+import inspect
 from subprocess import run, PIPE
 
 from click import wrap_text
@@ -13,8 +14,6 @@ __all__ = [
     'run_cli',
     'run_processor'
 ]
-
-log = getLogger('ocrd.processor')
 
 def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
     if workspace is None:
@@ -51,6 +50,7 @@ def run_processor(
         mets_url,
         working_dir
     )
+    log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
     processor = processorClass(
         workspace,
@@ -116,11 +116,19 @@ def run_cli(
         args += ['--parameter', parameter]
     if overwrite:
         args += ['--overwrite']
+    log = getLogger('ocrd.processor.helpers.run_cli')
     log.debug("Running subprocess '%s'", ' '.join(args))
     result = run(args, check=False, stdout=PIPE, stderr=PIPE)
-    return result.returncode, result.stdout, result.stderr
+    return result.returncode, result.stdout.decode('utf-8'), result.stderr.decode('utf-8')
 
-def generate_processor_help(ocrd_tool):
+def generate_processor_help(ocrd_tool, processor_instance=None):
+    """Generate a string describing the full CLI of this processor including params.
+    
+    Args:
+         ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
+         processor_instance (object, optional): the processor implementation
+             (for adding any module/class/function docstrings)
+    """
     parameter_help = ''
     if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
         parameter_help = '  NONE\n'
@@ -139,10 +147,24 @@ def generate_processor_help(ocrd_tool):
             if 'enum' in param:
                 parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
             parameter_help += "\n"
+    doc_help = ''
+    if processor_instance:
+        module = inspect.getmodule(processor_instance)
+        if module and module.__doc__:
+            doc_help += '\n' + inspect.cleandoc(module.__doc__)
+        if processor_instance.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__)
+        if processor_instance.process.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.process.__doc__)
+        if doc_help:
+            doc_help = '\n\n' + wrap_text(doc_help, width=72,
+                                          initial_indent='  > ',
+                                          subsequent_indent='  > ',
+                                          preserve_paragraphs=True)
     return '''
 Usage: %s [OPTIONS]
 
-  %s
+  %s%s
 
 Options:
   -I, --input-file-grp USE        File group(s) used as input
@@ -170,10 +192,8 @@ Default Wiring:
 ''' % (
     ocrd_tool['executable'],
     ocrd_tool['description'],
+    doc_help,
     parameter_help,
     ocrd_tool.get('input_file_grp', 'NONE'),
     ocrd_tool.get('output_file_grp', 'NONE')
 )
-
-
-

@@ -1,5 +1,5 @@
 import io
-from os import makedirs, unlink, listdir
+from os import makedirs, unlink, listdir, path
 from pathlib import Path
 
 import cv2
@@ -29,13 +29,11 @@ from ocrd_utils import (
     pushd_popd,
     MIME_TO_EXT,
     MIME_TO_PIL,
-    MIMETYPE_PAGE
+    MIMETYPE_PAGE,
+    REGEX_PREFIX
 )
 
 from .workspace_backup import WorkspaceBackupManager
-
-log = getLogger('ocrd.workspace')
-
 
 class Workspace():
     """
@@ -69,7 +67,7 @@ class Workspace():
             self.directory,
             self.baseurl,
             self.mets.file_groups,
-            [str(f) for f in self.mets.find_files()],
+            [str(f) for f in self.mets.find_all_files()],
         )
 
     def reload_mets(self):
@@ -100,6 +98,7 @@ class Workspace():
         """
         Download a :py:mod:`ocrd.model.ocrd_file.OcrdFile` to the workspace.
         """
+        log = getLogger('ocrd.workspace.download_file')
         log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
             try:
@@ -133,6 +132,7 @@ class Workspace():
             page_recursive (boolean): Whether to remove all images referenced in the file if the file is a PAGE-XML document.
             page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. Has no effect unless ``page_recursive`` is ``True``.
         """
+        log = getLogger('ocrd.workspace.remove_file')
         log.debug('Deleting mets:file %s', ID)
         if not force and self.overwrite_mode:
             force = True
@@ -182,29 +182,43 @@ class Workspace():
         """
         if not force and self.overwrite_mode:
             force = True
-        if USE not in self.mets.file_groups and not force:
+
+        if (not USE.startswith(REGEX_PREFIX)) and (USE not in self.mets.file_groups) and (not force):
             raise Exception("No such fileGrp: %s" % USE)
+
+        file_dirs = []
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
                 self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
-        if USE in self.mets.file_groups:
-            self.mets.remove_file_group(USE)
-        # XXX this only removes directories in the workspace if they are empty
+                if f.local_filename:
+                    file_dirs.append(path.dirname(f.local_filename))
+
+        self.mets.remove_file_group(USE, force=force)
+
+        # PLEASE NOTE: this only removes directories in the workspace if they are empty
         # and named after the fileGrp which is a convention in OCR-D.
         with pushd_popd(self.directory):
             if Path(USE).is_dir() and not listdir(USE):
                 Path(USE).rmdir()
+            if file_dirs:
+                for file_dir in set(file_dirs):
+                    if Path(file_dir).is_dir() and not listdir(file_dir):
+                        Path(file_dir).rmdir()
+
 
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add an output file. Creates an :class:`OcrdFile` to pass around and adds that to the
         OcrdMets OUTPUT section.
         """
+        log = getLogger('ocrd.workspace.add_file')
         log.debug(
             'outputfile file_grp=%s local_filename=%s content=%s',
             file_grp,
             kwargs.get('local_filename'),
             content is not None)
+        if 'pageId' not in kwargs:
+            raise ValueError("workspace.add_file must be passed a 'pageId' kwarg, even if it is None.")
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
@@ -234,6 +248,7 @@ class Workspace():
         """
         Write out the current state of the METS file.
         """
+        log = getLogger('ocrd.workspace.save_mets')
         log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
@@ -250,8 +265,7 @@ class Workspace():
         Return
             :class:`OcrdExif`
         """
-        files = self.mets.find_files(url=image_url)
-        f = files[0] if files else OcrdFile(None, url=image_url)
+        f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
         image_filename = self.download_file(f).local_filename
         with Image.open(image_filename) as pil_img:
             ocrd_exif = OcrdExif(pil_img)
@@ -272,8 +286,8 @@ class Workspace():
             Image or region in image as PIL.Image
 
         """
-        files = self.mets.find_files(url=image_url)
-        f = files[0] if files else OcrdFile(None, url=image_url)
+        log = getLogger('ocrd.workspace._resolve_image_as_pil')
+        f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
         image_filename = self.download_file(f).local_filename
 
         with pushd_popd(self.directory):
@@ -365,6 +379,7 @@ class Workspace():
                  feature_filter='binarized,grayscale_normalized')
            ``
         """
+        log = getLogger('ocrd.workspace.image_from_page')
         page_image = self._resolve_image_as_pil(page.imageFilename)
         page_image_info = OcrdExif(page_image)
         page_coords = dict()
@@ -374,7 +389,7 @@ class Workspace():
         page_bbox = [0, 0, page_image.width, page_image.height]
         page_xywh = {'x': 0, 'y': 0,
                      'w': page_image.width, 'h': page_image.height}
-        
+
         border = page.get_Border()
         # page angle: PAGE @orientation is defined clockwise,
         # whereas PIL/ndimage rotation is in mathematical direction:
@@ -388,7 +403,7 @@ class Workspace():
         page_coords['angle'] = 0 # nothing applied yet (depends on filters)
         log.debug("page '%s' has %s orientation=%d skew=%.2f",
                   page_id, "border," if border else "", orientation, skew)
-        
+
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
         alternative_image = None
@@ -417,7 +432,7 @@ class Workspace():
                           features, page_id)
                 page_image = self._resolve_image_as_pil(alternative_image.get_filename())
                 page_coords['features'] = features
-        
+
         # adjust the coord transformation to the steps applied on the image,
         # and apply steps on the existing image in case it is missing there,
         # but traverse all steps (crop/reflect/rotate) in a particular order:
@@ -481,7 +496,7 @@ class Workspace():
                               -page_xywh['y']]))
                 # crop, if (still) necessary:
                 if not 'cropped' in page_coords['features']:
-                    log.debug("Cropping %s for page '%s' to border", 
+                    log.debug("Cropping %s for page '%s' to border",
                               "AlternativeImage" if alternative_image else "image",
                               page_id)
                     # create a mask from the page polygon:
@@ -536,7 +551,7 @@ class Workspace():
                     page_coords['features'] += ',deskewed'
                 (page_xywh['w'], page_xywh['h']) = adjust_canvas_to_rotation(
                     [page_xywh['w'], page_xywh['h']], skew)
-        
+
         # verify constraints again:
         if not all(feature in page_coords['features']
                    for feature in feature_selector.split(',') if feature):
@@ -633,6 +648,7 @@ class Workspace():
                  feature_selector='deskewed,cropped',
                  feature_filter='binarized,grayscale_normalized')``
         """
+        log = getLogger('ocrd.workspace.image_from_segment')
         # note: We should mask overlapping neighbouring segments here,
         # but finding the right clipping rules can be difficult if operating
         # on the raw (non-binary) image data alone: for each intersection, it
@@ -647,7 +663,7 @@ class Workspace():
         # on some ad-hoc binarization method. Thus, it is preferable to use
         # a dedicated processor for this (which produces clipped AlternativeImage
         # or reduced polygon coordinates).
-        
+
         # get polygon outline of segment relative to parent image:
         segment_polygon = coordinates_of_segment(segment, parent_image, parent_coords)
         # get relative bounding box:
@@ -669,7 +685,7 @@ class Workspace():
                 np.array([-segment_bbox[0],
                           -segment_bbox[1]]))
         }
-        
+
         if 'orientation' in segment.__dict__:
             # region angle: PAGE @orientation is defined clockwise,
             # whereas PIL/ndimage rotation is in mathematical direction:
@@ -719,14 +735,14 @@ class Workspace():
                 np.array([0.5 * segment_xywh['w'],
                           0.5 * segment_xywh['h']]))
             segment_coords['angle'] += skew
-            
+
         # initialize AlternativeImage@comments classes from parent, except
         # for those operations that can apply on multiple hierarchy levels:
         segment_coords['features'] = ','.join(
             [feature for feature in parent_coords['features'].split(',')
              if feature in ['binarized', 'grayscale_normalized',
                             'despeckled', 'dewarped']])
-        
+
         alternative_image = None
         alternative_images = segment.get_AlternativeImage()
         if alternative_images:
@@ -806,7 +822,7 @@ class Workspace():
                           segment.id, segment_coords['features'],
                           segment_image.width, segment_image.height,
                           segment_xywh['w'], segment_xywh['h'])
-            
+
         # verify constraints again:
         if not all(feature in segment_coords['features']
                    for feature in feature_selector.split(',') if feature):
@@ -837,6 +853,7 @@ class Workspace():
 
         Return the (absolute) path of the created file.
         """
+        log = getLogger('ocrd.workspace.save_image_file')
         if not force and self.overwrite_mode:
             force = True
         image_bytes = io.BytesIO()

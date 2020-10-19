@@ -8,7 +8,7 @@ import io
 import collections
 from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
-from ocrd_utils import initLogging
+from ocrd_utils import disableLogging, initLogging
 
 from tests.assets import assets, copy_of_directory
 
@@ -26,7 +26,8 @@ class TestCase(VanillaTestCase):
     def setUpClass(cls):
         chdir(dirname(realpath(__file__)) + '/..')
 
-    def tearDown(self):
+    def setUp(self):
+        disableLogging()
         initLogging()
 
 class CapturingTestCase(TestCase):
@@ -44,11 +45,14 @@ class CapturingTestCase(TestCase):
         with unittests/pytest capturing stdout/stderr.
         """
         self.capture_out_err()  # XXX snapshot just before executing the CLI
+        code = 0
+        sys.argv[1:] = args # XXX necessary because sys.argv reflects pytest args not cli args
         try:
             cli.main(args=args)
         except SystemExit as e:
-            out, err = self.capture_out_err()
-            return e.code or 0, out, err
+            code = e.code
+        out, err = self.capture_out_err()
+        return code, out, err
 
     def capture_out_err(self):
         return self.capfd.readouterr()

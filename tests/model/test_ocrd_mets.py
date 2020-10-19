@@ -3,7 +3,6 @@ from os.path import join
 from tests.base import TestCase, main, assets, copy_of_directory
 
 from ocrd_utils import (
-    initLogging,
     VERSION,
     MIMETYPE_PAGE
 )
@@ -13,8 +12,8 @@ from ocrd_models import OcrdMets
 class TestOcrdMets(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        initLogging()
 
     def test_unique_identifier(self):
         self.assertEqual(self.mets.unique_identifier, 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier')
@@ -47,25 +46,25 @@ class TestOcrdMets(TestCase):
     def test_file_groups(self):
         self.assertEqual(len(self.mets.file_groups), 17, '17 file groups')
 
-    def test_find_files(self):
-        self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
-        self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
-        self.assertEqual(len(self.mets.find_files(fileGrp='//OCR-D-I.*')), 13, '13 files in "//OCR-D-I.*"')
-        self.assertEqual(len(self.mets.find_files(ID="FILE_0001_IMAGE")), 1, '1 files with ID "FILE_0001_IMAGE"')
-        self.assertEqual(len(self.mets.find_files(ID="//FILE_0005_.*")), 1, '1 files with ID "//FILE_0005_.*"')
-        self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001')), 17, '17 files for page "PHYS_0001"')
-        self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001-NOTEXIST')), 0, '0 pages for "PHYS_0001-NOTEXIST"')
-        self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
-        self.assertEqual(len(self.mets.find_files(mimetype='//application/.*')), 22, '22 application/.*')
-        self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
-        self.assertEqual(len(self.mets.find_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
+    def test_find_all_files(self):
+        self.assertEqual(len(self.mets.find_all_files()), 35, '35 files total')
+        self.assertEqual(len(self.mets.find_all_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
+        self.assertEqual(len(self.mets.find_all_files(fileGrp='//OCR-D-I.*')), 13, '13 files in "//OCR-D-I.*"')
+        self.assertEqual(len(self.mets.find_all_files(ID="FILE_0001_IMAGE")), 1, '1 files with ID "FILE_0001_IMAGE"')
+        self.assertEqual(len(self.mets.find_all_files(ID="//FILE_0005_.*")), 1, '1 files with ID "//FILE_0005_.*"')
+        self.assertEqual(len(self.mets.find_all_files(pageId='PHYS_0001')), 17, '17 files for page "PHYS_0001"')
+        self.assertEqual(len(self.mets.find_all_files(pageId='PHYS_0001-NOTEXIST')), 0, '0 pages for "PHYS_0001-NOTEXIST"')
+        self.assertEqual(len(self.mets.find_all_files(mimetype='image/tiff')), 13, '13 image/tiff')
+        self.assertEqual(len(self.mets.find_all_files(mimetype='//application/.*')), 22, '22 application/.*')
+        self.assertEqual(len(self.mets.find_all_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
+        self.assertEqual(len(self.mets.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
 
-    def test_find_files_no_regex_for_pageid(self):
+    def test_find_all_files_no_regex_for_pageid(self):
         with self.assertRaisesRegex(Exception, "not support regex search for pageId"):
-            self.mets.find_files(pageId='//foo')
+            self.mets.find_all_files(pageId='//foo')
 
-    def test_find_files_local_only(self):
-        self.assertEqual(len(self.mets.find_files(pageId='PHYS_0001', local_only=True)), 3, '3 local files for page "PHYS_0001"')
+    def test_find_all_files_local_only(self):
+        self.assertEqual(len(self.mets.find_all_files(pageId='PHYS_0001', local_only=True)), 3, '3 local files for page "PHYS_0001"')
 
     def test_physical_pages(self):
         self.assertEqual(len(self.mets.physical_pages), 3, '3 physical pages')
@@ -92,12 +91,12 @@ class TestOcrdMets(TestCase):
     def test_add_file(self):
         mets = OcrdMets.empty_mets()
         self.assertEqual(len(mets.file_groups), 0, '0 file groups')
-        self.assertEqual(len(mets.find_files(fileGrp='OUTPUT')), 0, '0 files in "OUTPUT"')
+        self.assertEqual(len(list(mets.find_all_files(fileGrp='OUTPUT'))), 0, '0 files in "OUTPUT"')
         f = mets.add_file('OUTPUT', ID="foo123", mimetype="bla/quux", pageId="foobar")
         f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
         self.assertEqual(f.pageId, 'foobar', 'pageId set')
         self.assertEqual(len(mets.file_groups), 1, '1 file groups')
-        self.assertEqual(len(mets.find_files(fileGrp='OUTPUT')), 2, '2 files in "OUTPUT"')
+        self.assertEqual(len(list(mets.find_all_files(fileGrp='OUTPUT'))), 2, '2 files in "OUTPUT"')
         mets.set_physical_page_for_file('barfoo', f, order='300', orderlabel="page 300")
         self.assertEqual(f.pageId, 'barfoo', 'pageId changed')
         mets.set_physical_page_for_file('quux', f2, order='302', orderlabel="page 302")
@@ -123,7 +122,7 @@ class TestOcrdMets(TestCase):
             self.mets.add_file('OUTPUT', ID='1234:::', mimetype="beep/boop")
 
     def test_filegrp_from_file(self):
-        f = self.mets.find_files(fileGrp='OCR-D-IMG')[0]
+        f = self.mets.find_all_files(fileGrp='OCR-D-IMG')[0]
         self.assertEqual(f.fileGrp, 'OCR-D-IMG')
 
     def test_add_file_no_id(self):
@@ -135,7 +134,7 @@ class TestOcrdMets(TestCase):
         self.assertEqual(f.pageId, None, 'No pageId')
 
     def test_file_pageid(self):
-        f = self.mets.find_files()[0]
+        f = self.mets.find_all_files()[0]
         self.assertEqual(f.pageId, 'PHYS_0001')
         f.pageId = 'foo'
         self.assertEqual(f.pageId, 'foo')
@@ -192,7 +191,7 @@ class TestOcrdMets(TestCase):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
             self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002', 'PHYS_0005'])
-            ocrd_file = mets.find_files(ID='FILE_0005_IMAGE')[0]
+            ocrd_file = mets.find_all_files(ID='FILE_0005_IMAGE')[0]
             mets.remove_one_file(ocrd_file)
             self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002'])
 
@@ -210,15 +209,15 @@ class TestOcrdMets(TestCase):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
             self.assertEqual(len(mets.file_groups), 17)
-            self.assertEqual(len(mets.find_files()), 35)
+            self.assertEqual(len(mets.find_all_files()), 35)
             #  print()
-            #  before = sorted([x.ID for x in mets.find_files()])
+            #  before = sorted([x.ID for x in mets.find_all_files()])
             with self.assertRaisesRegex(Exception, "not empty"):
                 mets.remove_file_group('OCR-D-GT-ALTO')
             mets.remove_file_group('OCR-D-GT-PAGE', recursive=True)
-            #  print([x for x in before if x not in sorted([x.ID for x in mets.find_files()])])
+            #  print([x for x in before if x not in sorted([x.ID for x in mets.find_all_files()])])
             self.assertEqual(len(mets.file_groups), 16)
-            self.assertEqual(len(mets.find_files()), 33)
+            self.assertEqual(len(mets.find_all_files()), 33)
 
     def test_remove_file_group_regex(self):
         """
@@ -227,10 +226,10 @@ class TestOcrdMets(TestCase):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
             self.assertEqual(len(mets.file_groups), 17)
-            self.assertEqual(len(mets.find_files()), 35)
+            self.assertEqual(len(mets.find_all_files()), 35)
             mets.remove_file_group('//OCR-D-GT-.*', recursive=True)
             self.assertEqual(len(mets.file_groups), 15)
-            self.assertEqual(len(mets.find_files()), 31)
+            self.assertEqual(len(mets.find_all_files()), 31)
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

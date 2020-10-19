@@ -2,6 +2,7 @@
 Constants for ocrd_utils.
 """
 from pkg_resources import get_distribution
+from re import compile as regex_compile
 import os
 from os.path import join, expanduser
 
@@ -14,6 +15,7 @@ __all__ = [
     'MIME_TO_PIL',
     'PIL_TO_MIME',
     'REGEX_PREFIX',
+    'REGEX_FILE_ID',
     'VERSION',
     'XDG_CONFIG_HOME',
     'XDG_DATA_HOME',
@@ -39,6 +41,7 @@ EXT_TO_MIME = {
     '.ppm': 'image/x-portable-pixmap',
     '.pnm': 'image/x-portable-anymap',
     '.pbm': 'image/x-portable-bitmap',
+    '.txt': 'text/plain',
 }
 
 MIME_TO_EXT = {
@@ -56,6 +59,7 @@ MIME_TO_EXT = {
     'image/x-portable-pixmap': '.ppm',
     'image/x-portable-anymap': '.pnm',
     'image/x-portable-bitmap': '.pbm',
+    'text/plain': '.txt',
 }
 
 #
@@ -85,6 +89,9 @@ MIME_TO_PIL = {
 
 # Prefix to denote query is regular expression not fixed string
 REGEX_PREFIX = '//'
+
+# Regex for valid mets:file/@ID
+REGEX_FILE_ID = regex_compile(r'^[a-zA-Z_][\w.-]*$')
 
 # Log level format implementing https://ocr-d.de/en/spec/cli#logging
 LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'

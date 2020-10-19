@@ -70,13 +70,14 @@ Utility functions and constants usable in various circumstances.
 
 from .constants import (
     EXT_TO_MIME,
-    LOG_FORMAT,
-    LOG_TIMEFMT,
     MIMETYPE_PAGE,
     MIME_TO_EXT,
     MIME_TO_PIL,
     PIL_TO_MIME,
     REGEX_PREFIX,
+    REGEX_FILE_ID,
+    LOG_FORMAT,
+    LOG_TIMEFMT,
     VERSION,
     XDG_CACHE_HOME,
     XDG_CONFIG_HOME,
@@ -120,11 +121,13 @@ from .introspect import (
     membername)
 
 from .logging import (
-    logging,
-    getLogger,
+    disableLogging,
     getLevelName,
+    getLogger,
     initLogging,
-    setOverrideLogLevel)
+    logging,
+    setOverrideLogLevel,
+    )
 
 from .os import (
     abspath,

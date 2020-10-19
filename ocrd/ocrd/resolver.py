@@ -13,8 +13,8 @@ from ocrd_utils import (
 )
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
-
-log = getLogger('ocrd.resolver')
+from ocrd_models.constants import NAMESPACES as NS
+from ocrd_models.utils import handle_oai_response
 
 class Resolver():
     """
@@ -98,7 +98,8 @@ class Resolver():
             response = requests.get(url)
             if response.status_code != 200:
                 raise Exception("HTTP request failed: %s (HTTP %d)" % (url, response.status_code))
-            dst_path.write_bytes(response.content)
+            contents = handle_oai_response(response)
+            dst_path.write_bytes(contents)
 
         return ret
 
@@ -118,6 +119,7 @@ class Resolver():
         Returns:
             Workspace
         """
+        log = getLogger('ocrd.resolver.workspace_from_url')
 
         if mets_url is None:
             raise ValueError("Must pass 'mets_url' workspace_from_url")
@@ -165,6 +167,7 @@ class Resolver():
         """
         Create an empty workspace.
         """
+        log = getLogger('ocrd.resolver.workspace_from_nothing')
         if directory is None:
             directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
         Path(directory).mkdir(parents=True, exist_ok=True)
@@ -176,3 +179,4 @@ class Resolver():
         mets_path.write_bytes(mets.to_xml(xmllint=True))
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
+

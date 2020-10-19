@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from os.path import join as pjoin
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -5,7 +7,7 @@ from tempfile import TemporaryDirectory
 from tests.base import TestCase, assets, main, copy_of_directory
 
 from ocrd.resolver import Resolver
-from ocrd_utils import pushd_popd
+from ocrd_utils import pushd_popd, initLogging
 
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
@@ -15,6 +17,7 @@ FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
 class TestResolver(TestCase):
 
     def setUp(self):
+        initLogging()
         self.resolver = Resolver()
 
     def test_workspace_from_url_bad(self):
@@ -27,9 +30,11 @@ class TestResolver(TestCase):
             mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml')
 
     def test_workspace_from_url_download(self):
+        url_src = 'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml'
+        #url_src = 'http://digital.bibliothek.uni-halle.de/hd/oai/?verb=GetRecord&metadataPrefix=mets&mode=xml&identifier=9049'
         with TemporaryDirectory() as dst_dir:
             self.resolver.workspace_from_url(
-                'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml',
+                url_src,
                 mets_basename='foo.xml',
                 dst_dir=dst_dir,
                 download=True)
@@ -59,7 +64,7 @@ class TestResolver(TestCase):
     def test_workspace_from_url0(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
         #  print(workspace.mets)
-        input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
+        input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
         #  print [str(f) for f in input_files]
         image_file = input_files[0]
         #  print(image_file)
@@ -71,7 +76,7 @@ class TestResolver(TestCase):
     # pylint: disable=protected-access
     def test_resolve_image0(self):
         workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
+        input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
         f = input_files[0]
         print(f.url)
         img_pil1 = workspace._resolve_image_as_pil(f.url)
@@ -148,4 +153,4 @@ class TestResolver(TestCase):
                 self.assertTrue(Path(dst, fn).exists())
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

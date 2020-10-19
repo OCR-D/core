@@ -5,6 +5,84 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.18.0] - 2020-10-12
+
+Changed:
+
+  * :fire: `OcrdMets.find_files` is now a generator, #614
+  * Print docstrings if available for `--help`, #623
+  * parameter values can be arrays, OCR-D/spec#174
+
+## [2.17.2] - 2020-10-07
+
+Fixed:
+
+  * As a workaround for tensorflow compatiblity, require `numpy < 1.19.0`, #620
+
+## [2.17.1] - 2020-10-05
+
+Fixed:
+
+  * `ocrd workspace remove-group`: don't fail on non-existing files, #618
+
+Changed:
+
+  * media type <-> extension mapping for `text/plain`, #612
+
+## [2.17.0] - 2020-09-23
+
+Fixed:
+
+  * `ocrd_utils.image` handles 16/32-bit images correctly, #606, python-pillow/Pillow#4925
+  * OcrdPage: Most elements should be hashable, i.e. usable in sets, maps etc., #610
+  * `ocrd_utils.make_file_id`: Ensure produced IDs are syntactically valid xs:ID, #616
+
+Changed:
+
+  * Calling a processor w/o any arguments: show help and exit 1, #586, #615
+  * :fire: `Workspace.add_file` requires page_id kwarg (which can be None), #560
+  * Reorganized the loggign to be more consistent and well-behaved, #599
+
+## [2.16.3] - 2020-09-09
+
+Fixed:
+
+  * Prune empty reading order when serializing, #602
+
+## [2.16.2] - 2020-09-08
+
+Fixed:
+
+  * handle empty reading order in PAGE gracefully, #600
+
+## [2.16.1] - 2020-09-08
+
+Fixed:
+
+  * `ocrd_utils` on module-level, *disable* logging less than CRITICAL, call initLogging explicitly in CLI, #594
+
+## [2.16.0] - 2020-09-03
+
+Fixed:
+
+  * `ocrd process`: better-readable output on failure, #583
+  * `ocrd log` no longer produces "Logging errors" for multi-arg call, #588
+  * `ocrd workspace remove-group`: remove empty file groups on disk, #584, #569
+
+Added:
+
+  * `METS_URL` can also be an OAI-PMH GetRecord request, ht @m3ssman, #581
+  * Additional docker base image for Nvidia CUDA, ht @sepastian, #452
+
+## [2.15.0] - 2020-08-28
+
+Changed:
+
+  * :fire: Finish deprecations on workspace CLI begun in 2.11.0, #578
+    * `--mets-basename` is deprecated now, use `--mets` and `--directory`
+    * Deprecated arguments are hidden in `--help`
+    * some internal function name changes
+
 ## [2.14.0] - 2020-08-22
 
 Fixed:
@@ -1099,6 +1177,15 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.18.0]: ../../compare/v2.18.0..02.17.2
+[2.17.2]: ../../compare/v2.17.2..v2.17.1
+[2.17.1]: ../../compare/v2.17.1..v2.17.0
+[2.17.0]: ../../compare/v2.17.0..v2.16.3
+[2.16.3]: ../../compare/v2.16.3..v2.16.2
+[2.16.2]: ../../compare/v2.16.2..v2.16.1
+[2.16.1]: ../../compare/v2.16.1..v2.16.0
+[2.16.0]: ../../compare/v2.16.0..v2.15.0
+[2.15.0]: ../../compare/v2.15.0..v2.14.0
 [2.14.0]: ../../compare/v2.14.0..v2.13.2
 [2.13.2]: ../../compare/v2.13.2..v2.13.1
 [2.13.1]: ../../compare/v2.13.1..v2.13.0

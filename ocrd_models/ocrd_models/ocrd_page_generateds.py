@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Jun  8 13:37:37 2020 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
+# Generated Mon Sep 21 14:00:49 2020 by generateDS.py version 2.35.20.
+# Python 3.6.9 (default, Jul 17 2020, 12:50:27)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -13,10 +13,10 @@
 #   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
 # Command line arguments:
-#   ocrd_validators/ocrd_validators/xsd/page.xsd
+#   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/env/py3-disht/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/xsd/page.xsd
+#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1207,7 +1207,15 @@ class PcGtsType(GeneratedsSuper):
             self.Page = obj_
             obj_.original_tagname_ = 'Page'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
     def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
         Get all the pc:AlternativeImage/@filename paths referenced in the PAGE-XML document.
@@ -1254,6 +1262,13 @@ class PcGtsType(GeneratedsSuper):
                 ret += doc.xpath('//page:Glyph/page:AlternativeImage/@filename', namespaces=NAMESPACES)
     
         return ret
+    def prune_ReadingOrder(self):
+        """
+        Remove any empty ReadingOrder elements
+        """
+        ro = self.get_Page().get_ReadingOrder()
+        if ro and not ro.get_OrderedGroup() and not ro.get_UnorderedGroup():
+            self.get_Page().set_ReadingOrder(None)
 # end class PcGtsType
 
 
@@ -1467,7 +1482,15 @@ class MetadataType(GeneratedsSuper):
             self.MetadataItem.append(obj_)
             obj_.original_tagname_ = 'MetadataItem'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class MetadataType
 
 
@@ -1637,7 +1660,15 @@ class MetadataItemType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class MetadataItemType
 
 
@@ -1802,7 +1833,15 @@ class LabelsType(GeneratedsSuper):
             self.Label.append(obj_)
             obj_.original_tagname_ = 'Label'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class LabelsType
 
 
@@ -1929,7 +1968,15 @@ class LabelType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class LabelType
 
 
@@ -2895,7 +2942,15 @@ class PageType(GeneratedsSuper):
             self.CustomRegion.append(obj_)
             obj_.original_tagname_ = 'CustomRegion'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
     # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
     def _region_class(self, x): # pylint: disable=unused-argument
         return x.__class__.__name__.replace('RegionType', '')
@@ -3123,7 +3178,15 @@ class CoordsType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class CoordsType
 
 
@@ -3561,7 +3624,15 @@ class TextLineType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class TextLineType
 
 
@@ -3967,7 +4038,15 @@ class WordType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class WordType
 
 
@@ -4326,7 +4405,15 @@ class GlyphType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GlyphType
 
 
@@ -4552,7 +4639,15 @@ class TextEquivType(GeneratedsSuper):
             self.Unicode = value_
 
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class TextEquivType
 
 
@@ -4660,7 +4755,15 @@ class GridType(GeneratedsSuper):
             self.GridPoints.append(obj_)
             obj_.original_tagname_ = 'GridPoints'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GridType
 
 
@@ -4780,7 +4883,15 @@ class GridPointsType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GridPointsType
 
 
@@ -4885,7 +4996,15 @@ class PrintSpaceType(GeneratedsSuper):
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class PrintSpaceType
 
 
@@ -5033,7 +5152,15 @@ class ReadingOrderType(GeneratedsSuper):
             self.UnorderedGroup = obj_
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class ReadingOrderType
 
 
@@ -5141,7 +5268,15 @@ class RegionRefIndexedType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class RegionRefIndexedType
 
 
@@ -5477,7 +5612,15 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
     # pylint: disable=invalid-name,missing-module-docstring,line-too-long
     def get_AllIndexed(self, classes=None, index_sort=True):
         """
@@ -5906,7 +6049,15 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
     def get_UnorderedGroupChildren(self):
         """
         List all non-metadata children of an UnorderedGroup
@@ -6005,7 +6156,15 @@ class RegionRefType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class RegionRefType
 
 
@@ -6325,7 +6484,15 @@ class OrderedGroupType(GeneratedsSuper):
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
     # pylint: disable=invalid-name,missing-module-docstring,line-too-long
     def get_AllIndexed(self, classes=None, index_sort=True):
         """
@@ -6738,7 +6905,15 @@ class UnorderedGroupType(GeneratedsSuper):
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
     def get_UnorderedGroupChildren(self):
         """
         List all non-metadata children of an UnorderedGroup
@@ -6845,7 +7020,15 @@ class BorderType(GeneratedsSuper):
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class BorderType
 
 
@@ -6955,7 +7138,15 @@ class LayersType(GeneratedsSuper):
             self.Layer.append(obj_)
             obj_.original_tagname_ = 'Layer'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class LayersType
 
 
@@ -7102,7 +7293,15 @@ class LayerType(GeneratedsSuper):
             self.RegionRef.append(obj_)
             obj_.original_tagname_ = 'RegionRef'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class LayerType
 
 
@@ -7238,7 +7437,15 @@ class BaselineType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class BaselineType
 
 
@@ -7348,7 +7555,15 @@ class RelationsType(GeneratedsSuper):
             self.Relation.append(obj_)
             obj_.original_tagname_ = 'Relation'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class RelationsType
 
 
@@ -7556,7 +7771,15 @@ class RelationType(GeneratedsSuper):
             self.TargetRegionRef = obj_
             obj_.original_tagname_ = 'TargetRegionRef'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class RelationType
 
 
@@ -8020,7 +8243,15 @@ class TextStyleType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class TextStyleType
 
 
@@ -8627,7 +8858,15 @@ class RegionType(GeneratedsSuper):
             self.CustomRegion.append(obj_)
             obj_.original_tagname_ = 'CustomRegion'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class RegionType
 
 
@@ -8765,7 +9004,15 @@ class AlternativeImageType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class AlternativeImageType
 
 
@@ -8924,7 +9171,15 @@ class GraphemesType(GeneratedsSuper):
             self.GraphemeGroup.append(obj_)
             obj_.original_tagname_ = 'GraphemeGroup'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GraphemesType
 
 
@@ -9139,7 +9394,15 @@ class GraphemeBaseType(GeneratedsSuper):
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GraphemeBaseType
 
 
@@ -9244,7 +9507,15 @@ class GraphemeType(GraphemeBaseType):
             obj_.original_tagname_ = 'Coords'
         super(GraphemeType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GraphemeType
 
 
@@ -9331,7 +9602,15 @@ class NonPrintingCharType(GraphemeBaseType):
         super(NonPrintingCharType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class NonPrintingCharType
 
 
@@ -9467,7 +9746,15 @@ class GraphemeGroupType(GraphemeBaseType):
             obj_.original_tagname_ = 'NonPrintingChar'
         super(GraphemeGroupType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GraphemeGroupType
 
 
@@ -9575,7 +9862,15 @@ class UserDefinedType(GeneratedsSuper):
             self.UserAttribute.append(obj_)
             obj_.original_tagname_ = 'UserAttribute'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class UserDefinedType
 
 
@@ -9710,7 +10005,15 @@ class UserAttributeType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class UserAttributeType
 
 
@@ -9867,7 +10170,15 @@ class TableCellRoleType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class TableCellRoleType
 
 
@@ -9965,7 +10276,15 @@ class RolesType(GeneratedsSuper):
             self.TableCellRole = obj_
             obj_.original_tagname_ = 'TableCellRole'
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class RolesType
 
 
@@ -10067,7 +10386,15 @@ class CustomRegionType(RegionType):
         super(CustomRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class CustomRegionType
 
 
@@ -10151,7 +10478,15 @@ class UnknownRegionType(RegionType):
         super(UnknownRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class UnknownRegionType
 
 
@@ -10237,7 +10572,15 @@ class NoiseRegionType(RegionType):
         super(NoiseRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class NoiseRegionType
 
 
@@ -10370,7 +10713,15 @@ class AdvertRegionType(RegionType):
         super(AdvertRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class AdvertRegionType
 
 
@@ -10503,7 +10854,15 @@ class MusicRegionType(RegionType):
         super(MusicRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class MusicRegionType
 
 
@@ -10608,7 +10967,15 @@ class MapRegionType(RegionType):
         super(MapRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class MapRegionType
 
 
@@ -10742,7 +11109,15 @@ class ChemRegionType(RegionType):
         super(ChemRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class ChemRegionType
 
 
@@ -10876,7 +11251,15 @@ class MathsRegionType(RegionType):
         super(MathsRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class MathsRegionType
 
 
@@ -11011,7 +11394,15 @@ class SeparatorRegionType(RegionType):
         super(SeparatorRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class SeparatorRegionType
 
 
@@ -11211,7 +11602,15 @@ class ChartRegionType(RegionType):
         super(ChartRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class ChartRegionType
 
 
@@ -11452,7 +11851,15 @@ class TableRegionType(RegionType):
             obj_.original_tagname_ = 'Grid'
         super(TableRegionType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class TableRegionType
 
 
@@ -11623,7 +12030,15 @@ class GraphicRegionType(RegionType):
         super(GraphicRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class GraphicRegionType
 
 
@@ -11794,7 +12209,15 @@ class LineDrawingRegionType(RegionType):
         super(LineDrawingRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class LineDrawingRegionType
 
 
@@ -11978,7 +12401,15 @@ class ImageRegionType(RegionType):
         super(ImageRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class ImageRegionType
 
 
@@ -12450,7 +12881,15 @@ class TextRegionType(RegionType):
             obj_.original_tagname_ = 'TextStyle'
         super(TextRegionType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, 'pcGtsId'):
+            val = self.pcGtsId
+        elif hasattr(self, 'imageFilename'):
+            val = self.imageFilename
+        elif hasattr(self, 'id'):
+            val = self.id
+        else:
+            raise ValueError("Cannot hash %s" % self)
+        return hash(val)
 # end class TextRegionType
 
 

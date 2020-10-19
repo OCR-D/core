@@ -5,7 +5,7 @@ from os.path import join
 from shutil import rmtree
 from pathlib import Path
 
-from tests.base import TestCase as BaseTestCase
+from tests.base import CapturingTestCase as BaseTestCase
 
 SAMPLE_NAME = 'ocrd-sample-processor'
 SAMPLE_OCRD_TOOL_JSON = '''{
@@ -40,6 +40,7 @@ class TestCase(BaseTestCase):
         rmtree(self.tempdir)
 
     def setUp(self):
+        super().setUp()
         self.tempdir = mkdtemp(prefix='ocrd-task-sequence-')
         self.param_fname = join(self.tempdir, 'params.json')
         with open(self.param_fname, 'w') as f:

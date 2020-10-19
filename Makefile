@@ -13,9 +13,6 @@ BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
 
 FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
 
-# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
-
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
@@ -28,30 +25,35 @@ help:
 	@echo "    install-dev    Install with pip install -e"
 	@echo "    uninstall      Uninstall the tool"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
-	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
-	@echo "    repo/spec      Clone OCR-D/spec to ./repo/spec"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
 	@echo "    assets-server  Start asset server at http://localhost:5001"
-	@echo "    assets-clean   Remove symlinks in $(TESTDIR)/assets"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
+	@echo "    docker-cuda    Build docker GPU / CUDA image"
 	@echo "    bashlib        Build bash library"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
-	@echo "    DOCKER_ARGS  Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
-	@echo "    DOCKER_TAG   Docker tag."
-	@echo "    PIP_INSTALL  pip install command. Default: $(PIP_INSTALL)"
+	@echo "    DOCKER_TAG         Docker tag. Default: '$(DOCKER_TAG)'."
+	@echo "    DOCKER_BASE_IMAGE  Docker base image. Default: '$(DOCKER_BASE_IMAGE)'."
+	@echo "    DOCKER_ARGS        Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
+	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
 
-# Docker tag.
-DOCKER_TAG = 'ocrd/core'
+# Docker tag. Default: '$(DOCKER_TAG)'.
+DOCKER_TAG = ocrd/core
+
+# Docker base image. Default: '$(DOCKER_BASE_IMAGE)'.
+DOCKER_BASE_IMAGE = ubuntu:18.04
+
+# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
+DOCKER_ARGS = 
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL = pip install
@@ -66,7 +68,7 @@ deps-test:
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
-install: spec
+install:
 	$(PIP) install -U "pip>=19.0.0" wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
@@ -100,16 +102,17 @@ generate-page: repo/assets
 #
 # Repos
 #
+.PHONY: repos always-update
+repos: repo/assets repo/spec
 
-# Clone OCR-D/assets to ./repo/assets
-repo/assets:
-	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/assets "$@"
 
-# Clone OCR-D/spec to ./repo/spec
-repo/spec:
-	mkdir -p $(dir $@)
-	git clone https://github.com/OCR-D/spec "$@"
+# Update OCR-D/assets and OCR-D/spec resp.
+repo/assets repo/spec: always-update
+	git submodule sync --recursive $@
+	if git submodule status --recursive $@ | grep -qv '^ '; then \
+		git submodule update --init --recursive $@ && \
+		touch $@; \
+	fi
 
 #
 # Spec
@@ -127,6 +130,7 @@ spec: repo/spec
 
 # Setup test assets
 assets: repo/assets
+	rm -rf $(TESTDIR)/assets
 	mkdir -p $(TESTDIR)/assets
 	cp -r -t $(TESTDIR)/assets repo/assets/data/*
 
@@ -134,9 +138,6 @@ assets: repo/assets
 assets-server:
 	cd assets && make start
 
-# Remove symlinks in $(TESTDIR)/assets
-assets-clean:
-	rm -rf $(TESTDIR)/assets
 
 #
 # Tests
@@ -144,15 +145,16 @@ assets-clean:
 
 .PHONY: test
 # Run all unit tests
-test: spec assets
-	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR) -k TestLogging
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)
+test: assets
+	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
 	$(PYTHON) analyze_profile.py
 
-coverage: assets-clean assets
+coverage: assets
 	coverage erase
 	make test PYTHON="coverage run"
 	coverage report
@@ -199,8 +201,12 @@ pyclean:
 #
 
 # Build docker image
-docker:
-	docker build -t $(DOCKER_TAG) $(DOCKER_ARGS) .
+docker docker-cuda:
+	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+
+# Build docker GPU / CUDA image
+docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.0-runtime-ubuntu18.04
+docker-cuda: DOCKER_TAG = ocrd/core-cuda
 
 #
 # bash library

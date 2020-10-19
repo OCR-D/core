@@ -69,6 +69,7 @@ from .ocrd_page_generateds import (
     parse,
     parseString,
 
+    AdvertRegionType,
     AlternativeImageType,
     BaselineType,
     BorderType,
@@ -126,10 +127,13 @@ from .ocrd_page_generateds import (
 
 from .constants import NAMESPACES
 
-def to_xml(el):
+def to_xml(el, skip_declaration=False):
     """
     Serialize ``pc:PcGts`` document
     """
+    # XXX remove potential empty ReadingOrder
+    if hasattr(el, 'prune_ReadingOrder'):
+        el.prune_ReadingOrder()
     sio = StringIO()
     el.export(
             outfile=sio,
@@ -141,4 +145,7 @@ def to_xml(el):
                 NAMESPACES['page'],
                 NAMESPACES['page']
             ))
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + sio.getvalue()
+    ret = sio.getvalue()
+    if not skip_declaration:
+        ret = '<?xml version="1.0" encoding="UTF-8"?>\n' + ret
+    return ret

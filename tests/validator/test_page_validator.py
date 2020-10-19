@@ -35,7 +35,7 @@ class TestPageValidator(TestCase):
         resolver = Resolver()
         workspace = resolver.workspace_from_url(assets.url_of('glyph-consistency/data/mets.xml'))
         with pushd_popd(workspace.directory):
-            ocrd_file = workspace.mets.find_files(ID="FAULTY_GLYPHS_FILE")[0]
+            ocrd_file = workspace.mets.find_all_files(ID="FAULTY_GLYPHS_FILE")[0]
             report = PageValidator.validate(ocrd_file=ocrd_file)
             self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 17, '17 textequiv consistency errors')
 

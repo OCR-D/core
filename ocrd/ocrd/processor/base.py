@@ -20,7 +20,6 @@ from pkg_resources import resource_filename
 import requests
 
 from ocrd_utils import (
-    getLogger,
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
     list_resource_candidates,
@@ -32,8 +31,6 @@ from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
-
-log = getLogger('ocrd.processor')
 
 class Processor():
     """
@@ -87,7 +84,7 @@ class Processor():
         self.parameter = parameter
 
     def show_help(self):
-        print(generate_processor_help(self.ocrd_tool))
+        print(generate_processor_help(self.ocrd_tool, processor_instance=self))
 
     def show_version(self):
         print("Version %s, ocrd/core %s" % (self.version, OCRD_VERSION))
@@ -178,11 +175,11 @@ class Processor():
           having multiple images for a single page)
         (https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593)
         """
-        ret = self.workspace.mets.find_files(
+        ret = self.workspace.mets.find_all_files(
             fileGrp=self.input_file_grp, pageId=self.page_id, mimetype=MIMETYPE_PAGE)
         if ret:
             return ret
-        ret = self.workspace.mets.find_files(
+        ret = self.workspace.mets.find_all_files(
             fileGrp=self.input_file_grp, pageId=self.page_id, mimetype="//image/.*")
         if self.page_id and len(ret) > 1:
             raise ValueError("No PAGE-XML %s in fileGrp '%s' but multiple images." % (

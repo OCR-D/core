@@ -7,9 +7,7 @@ import codecs
 from ocrd import Resolver, Workspace
 from ocrd.task_sequence import ProcessorTask, validate_tasks
 
-from ocrd_utils import (
-    parse_json_string_or_file
-)
+from ocrd_utils import initLogging, parse_json_string_or_file
 from ocrd_validators import (
     OcrdToolValidator,
     OcrdZipValidator,
@@ -29,6 +27,7 @@ def validate_cli():
     """
     All the validation in one CLI
     """
+    initLogging()
 
 @validate_cli.command('tool-json')
 @click.argument('ocrd_tool', required=False, nargs=1)

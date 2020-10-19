@@ -14,6 +14,7 @@ These files will be executed in the context of ocrd/ocrd_logging.py, with `loggi
 # pylint: disable=no-member
 
 from __future__ import absolute_import
+from traceback import format_stack
 
 import logging
 import logging.config
@@ -22,13 +23,15 @@ import os
 from .constants import LOG_FORMAT, LOG_TIMEFMT
 
 __all__ = [
-    'logging',
-    'getLogger',
+    'disableLogging',
     'getLevelName',
+    'getLogger',
     'initLogging',
-    'setOverrideLogLevel'
+    'logging',
+    'setOverrideLogLevel',
 ]
 
+_initialized_flag = False
 _overrideLogLevel = None
 
 _ocrdLevel2pythonLevel = {
@@ -71,62 +74,92 @@ def setOverrideLogLevel(lvl, silent=False):
     """
     if lvl is None:
         return
+    root_logger = logging.getLogger('')
     if not silent:
-        logging.info('Overriding log level globally to %s', lvl)
+        root_logger.info('Overriding log level globally to %s', lvl)
     lvl = getLevelName(lvl)
     global _overrideLogLevel # pylint: disable=global-statement
     _overrideLogLevel = lvl
-    logging.getLogger('').setLevel(lvl)
     for loggerName in logging.Logger.manager.loggerDict:
         logger = logging.Logger.manager.loggerDict[loggerName]
         if isinstance(logger, logging.PlaceHolder):
             continue
         logger.setLevel(logging.NOTSET)
+    root_logger.setLevel(lvl)
 
 def getLogger(*args, **kwargs):
     """
     Wrapper around ``logging.getLogger`` that respects `overrideLogLevel <#setOverrideLogLevel>`_.
     """
+    if not _initialized_flag:
+        initLogging()
+        logging.getLogger('').critical('getLogger was called before initLogging. Source of the call:')
+        for line in [x for x in format_stack(limit=2)[0].split('\n') if x]:
+            logging.getLogger('').critical(line)
+    name = args[0]
     logger = logging.getLogger(*args, **kwargs)
-    if _overrideLogLevel is not None:
+    if _overrideLogLevel and name:
         logger.setLevel(logging.NOTSET)
     return logger
-
-# Default logging config
 
 def initLogging():
     """
     Reset root logger, read logging configuration if exists, otherwise use basicConfig
     """
+    global _initialized_flag # pylint: disable=global-statement
+    if _initialized_flag:
+        logging.getLogger('').critical('initLogging was called multiple times. Source of latest call:')
+        for line in [x for x in format_stack(limit=2)[0].split('\n') if x]:
+            logging.getLogger('').critical(line)
 
+    logging.disable(logging.NOTSET)
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-
-    global _overrideLogLevel # pylint: disable=global-statement
-    _overrideLogLevel = None
 
     CONFIG_PATHS = [
         os.path.curdir,
         os.path.join(os.path.expanduser('~')),
         '/etc',
     ]
-    for p in CONFIG_PATHS:
-        config_file = os.path.join(p, 'ocrd_logging.conf')
-        if os.path.exists(config_file):
-            logging.config.fileConfig(config_file)
-            return
+    config_file = next((f for f \
+            in [os.path.join(p, 'ocrd_logging.conf') for p in CONFIG_PATHS] \
+            if os.path.exists(f)),
+            None)
+    if config_file:
+        logging.config.fileConfig(config_file)
+        logging.getLogger('ocrd.logging').debug("Picked up logging config at %s" % config_file)
+    else:
+        # Default logging config
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIMEFMT)
+        logging.getLogger('').setLevel(logging.INFO)
+        #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
+        #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
+        #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
+        logging.getLogger('PIL').setLevel(logging.INFO)
+        # To cut back on the `Self-intersection at or near point` INFO messages
+        logging.getLogger('shapely.geos').setLevel(logging.ERROR)
+        logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format=LOG_FORMAT,
-        datefmt=LOG_TIMEFMT)
-    logging.getLogger('').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
-    #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
-    logging.getLogger('PIL').setLevel(logging.INFO)
-    # To cut back on the `Self-intersection at or near point` INFO messages
-    logging.getLogger('shapely.geos').setLevel(logging.ERROR)
+    if _overrideLogLevel:
+        logging.getLogger('').setLevel(_overrideLogLevel)
 
+    _initialized_flag = True
 
-initLogging()
+def disableLogging():
+    global _initialized_flag # pylint: disable=global-statement
+    _initialized_flag = False
+    global _overrideLogLevel # pylint: disable=global-statement
+    _overrideLogLevel = None
+    logging.basicConfig(level=logging.CRITICAL)
+    logging.disable(logging.ERROR)
+
+# Initializing stream handlers at module level
+# would cause message output in all runtime contexts,
+# including those which are already run for std output
+# (--dump-json, --version, ocrd-tool, bashlib etc).
+# So this needs to be an opt-in from the CLIs/decorators:
+#initLogging()
+# Also, we even have to block log output for libraries
+# (like matplotlib/tensorflow) which set up logging
+# themselves already:
+disableLogging()

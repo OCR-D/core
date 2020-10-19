@@ -31,7 +31,6 @@ from ocrd_models.ocrd_page_generateds import (
 )
 from ocrd_models import ValidationReport
 
-log = getLogger('ocrd.page_validator')
 
 _HIERARCHY = [
     # page can contain different types of regions
@@ -182,6 +181,7 @@ def page_get_reading_order(ro, rogroup):
     and an object ``rogroup`` with additional ReadingOrder element objects,
     add all references to the dict, traversing the group recursively.
     """
+    regionrefs = list()
     if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)):
         regionrefs = (rogroup.get_RegionRefIndexed() +
                       rogroup.get_OrderedGroupIndexed() +
@@ -233,6 +233,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
     Check whether the text results on an element is consistent with its child element text results,
     and whether the coordinates of an element are fully within its parent element coordinates.
     """
+    log = getLogger('ocrd.page_validator.validate_consistency')
     if isinstance(node, PcGtsType):
         # top-level (start recursion)
         node_id = node.get_pcGtsId()
@@ -372,6 +373,7 @@ def get_text(node, page_textequiv_strategy='first'):
     If there are no scores/indexes, use the first result.
     If there are no results, return the empty string.
     """
+    log = getLogger('ocrd.page_validator.get_text')
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
         log.debug("No text results on %s %s", node, node.id)
@@ -455,6 +457,7 @@ class PageValidator():
         Returns:
             report (:class:`ValidationReport`) Report on the validity
         """
+        log = getLogger('ocrd.page_validator.validate')
         if ocrd_page:
             page = ocrd_page
             file_id = ocrd_page.get_pcGtsId()

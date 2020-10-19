@@ -8,6 +8,7 @@ __all__ = [
     'list_resource_candidates'
 ]
 
+from tempfile import TemporaryDirectory
 import contextlib
 from os import getcwd, chdir
 from os.path import join, expanduser, isdir, exists
@@ -27,16 +28,23 @@ def abspath(url):
     return os.path.abspath(url)
 
 @contextlib.contextmanager
-def pushd_popd(newcwd=None):
+def pushd_popd(newcwd=None, tempdir=False):
+    if newcwd and tempdir:
+        raise Exception("pushd_popd can accept either newcwd or tempdir, not both")
     try:
         oldcwd = getcwd()
     except FileNotFoundError as e:  # pylint: disable=unused-variable
         # This happens when a directory is deleted before the context is exited
         oldcwd = '/tmp'
     try:
-        if newcwd:
-            chdir(newcwd)
-        yield
+        if tempdir:
+            with TemporaryDirectory() as tempcwd:
+                chdir(tempcwd)
+                yield tempcwd
+        else:
+            if newcwd:
+                chdir(newcwd)
+            yield newcwd
     finally:
         chdir(oldcwd)
 
