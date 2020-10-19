@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * default ocrd_logging.conf had a typo, #590, #628
+
 ## [2.18.0] - 2020-10-12
 
 Changed:
