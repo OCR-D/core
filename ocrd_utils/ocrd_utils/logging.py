@@ -141,6 +141,11 @@ def initLogging():
         logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
     if _overrideLogLevel:
+        for loggerName in logging.Logger.manager.loggerDict:
+            logger = logging.Logger.manager.loggerDict[loggerName]
+            if isinstance(logger, logging.PlaceHolder):
+                continue
+            logger.setLevel(logging.NOTSET)
         logging.getLogger('').setLevel(_overrideLogLevel)
 
     _initialized_flag = True
