@@ -1,4 +1,4 @@
-from os import walk, stat, chmod
+from os import walk, stat, chmod, umask
 from stat import filemode
 from subprocess import run, PIPE
 from os.path import join, exists, abspath, basename, dirname
@@ -280,12 +280,13 @@ class TestWorkspace(TestCase):
             self.assertEquals(info['features'], 'binarized,clipped')
 
     def test_mets_permissions(self):
-        initLogging()
         with TemporaryDirectory() as tempdir:
             ws = self.resolver.workspace_from_nothing(tempdir)
             ws.save_mets()
             mets_path = join(ws.directory, 'mets.xml')
-            assert filemode(stat(mets_path).st_mode) == '-rw-rw-r--'
+            mask = umask(0)
+            umask(mask)
+            assert '%o' % (stat(mets_path).st_mode & ~mask) == '100644'
             chmod(mets_path, 0o777)
             ws.save_mets()
             assert filemode(stat(mets_path).st_mode) == '-rwxrwxrwx'

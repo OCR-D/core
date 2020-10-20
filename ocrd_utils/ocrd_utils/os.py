@@ -8,10 +8,10 @@ __all__ = [
     'atomic_write',
 ]
 
-from atomicwrites import atomic_write as atomic_write_
+from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 from tempfile import TemporaryDirectory
 import contextlib
-from os import getcwd, chdir, stat, chmod
+from os import getcwd, chdir, stat, fchmod, umask
 from os.path import exists, abspath as abspath_
 
 from zipfile import ZipFile
@@ -55,12 +55,25 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
+
+
+# ht @pabs3
+# https://github.com/untitaker/python-atomicwrites/issues/42
+class AtomicWriterPerms(AtomicWriter):
+    def get_fileobject(self, **kwargs):
+        f = super().get_fileobject(**kwargs)
+        try:
+            mode = stat(self._path).st_mode
+        except FileNotFoundError:
+            # Creating a new file, emulate what os.open() does
+            mask = umask(0)
+            umask(mask)
+            mode = 0o664 & ~mask
+        fd = f.fileno()
+        fchmod(fd, mode)
+        return f
+
 @contextlib.contextmanager
-def atomic_write(fpath, overwrite=False):
-    if exists(fpath):
-        mode = stat(fpath).st_mode
-    else:
-        mode =  0o664
-    with atomic_write_(fpath, overwrite=True) as f:
+def atomic_write(fpath):
+    with atomic_write_(fpath, writer_cls=AtomicWriterPerms, overwrite=True) as f:
         yield f
-    chmod(fpath, mode)

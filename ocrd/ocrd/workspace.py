@@ -252,7 +252,7 @@ class Workspace():
         log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
-        with atomic_write(self.mets_target, overwrite=True) as f:
+        with atomic_write(self.mets_target) as f:
             f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
