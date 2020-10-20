@@ -44,3 +44,41 @@ def test_configured_dateformat(logging_conf, capsys):
     assert not re.match(must_not_match, log_info_output)
     match_pattern = r"^\d{2}:\d{2}:\d{2}.*"
     assert re.match(match_pattern, log_info_output)
+
+
+def test_configured_tensorflow_logger_present(logging_conf, capsys):
+    """Ensure example ocrd_logging.conf is valid and contains logger tensorflow"""
+
+    # arrange
+    os.chdir(logging_conf)
+    initLogging()
+    logger_under_test = getLogger('tensorflow')
+
+    # act info
+    logger_under_test.info("tensorflow logger initialized")
+    log_info_output = capsys.readouterr().out
+    assert not log_info_output
+
+    # act error
+    logger_under_test.error("tensorflow has error")
+    log_error_output = capsys.readouterr().out
+    assert log_error_output
+
+
+def test_configured_shapely_logger_present(logging_conf, capsys):
+    """Ensure example ocrd_logging.conf is valid and contains logger shapely.geos"""
+
+    # arrange
+    os.chdir(logging_conf)
+    initLogging()
+    logger_under_test = getLogger('shapely.geos')
+
+    # act info
+    logger_under_test.info("shapely.geos logger initialized")
+    log_info_output = capsys.readouterr().out
+    assert not log_info_output
+
+    # act error
+    logger_under_test.error("shapely alert")
+    log_error_output = capsys.readouterr().out
+    assert log_error_output
