@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * default ocrd_logging.conf had a typo, #590, #628
+  * default ocrd_logging.conf mirrors builtin logging config, #630
 
 ## [2.18.0] - 2020-10-12
 
