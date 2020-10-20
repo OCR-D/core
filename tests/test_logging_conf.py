@@ -28,7 +28,7 @@ def _fixture_loggin_conf(tmpdir):
     return str(tmpdir)
 
 
-def test_cli_log_level_set(logging_conf, capsys):
+def test_configured_dateformat(logging_conf, capsys):
     """Ensure example ocrd_logging.conf is valid and produces desired record format"""
 
     # arrange
