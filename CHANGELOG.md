@@ -9,6 +9,7 @@ Fixed:
 
   * default ocrd_logging.conf had a typo, #590, #628
   * default ocrd_logging.conf mirrors builtin logging config, #630
+  * `--log-level` override mechanism works with logging config file, #626, #631
 
 ## [2.18.0] - 2020-10-12
 
