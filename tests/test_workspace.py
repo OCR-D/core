@@ -286,7 +286,7 @@ class TestWorkspace(TestCase):
             mets_path = join(ws.directory, 'mets.xml')
             mask = umask(0)
             umask(mask)
-            assert '%o' % (stat(mets_path).st_mode & ~mask) == '100644'
+            assert (stat(mets_path).st_mode & ~mask) == 0o100664 & ~mask
             chmod(mets_path, 0o777)
             ws.save_mets()
             assert filemode(stat(mets_path).st_mode) == '-rwxrwxrwx'
