@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.18.1] - 2020-10-21
+
 Fixed:
 
   * default ocrd_logging.conf had a typo, #590, #628
@@ -1183,6 +1185,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.18.1]: ../../compare/v2.18.1..02.18.0
 [2.18.0]: ../../compare/v2.18.0..02.17.2
 [2.17.2]: ../../compare/v2.17.2..v2.17.1
 [2.17.1]: ../../compare/v2.17.1..v2.17.0
