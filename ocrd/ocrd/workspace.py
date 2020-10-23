@@ -5,12 +5,12 @@ from pathlib import Path
 import cv2
 from PIL import Image
 import numpy as np
-from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdExif, OcrdFile
 from ocrd_models.ocrd_page import parse
 from ocrd_utils import (
+    atomic_write,
     getLogger,
     image_from_polygon,
     coordinates_of_segment,
@@ -252,7 +252,7 @@ class Workspace():
         log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
-        with atomic_write(self.mets_target, overwrite=True) as f:
+        with atomic_write(self.mets_target) as f:
             f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
