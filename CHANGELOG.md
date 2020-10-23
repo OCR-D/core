@@ -9,6 +9,11 @@ Changed:
 
   * CUDA base image is now nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04, #629 ht @Witiko
 
+Fixed:
+
+  * Permission of existing `mets.xml` should not change, #403, #625
+  * Handle `pg:AlternativeImage` without `comments`, #633
+
 ## [2.18.1] - 2020-10-21
 
 Fixed:
