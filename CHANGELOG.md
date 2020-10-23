@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.19.0] - 2020-10-23
+
 Changed:
 
   * CUDA base image is now nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04, #629 ht @Witiko
@@ -1195,8 +1197,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-[2.18.1]: ../../compare/v2.18.1..02.18.0
-[2.18.0]: ../../compare/v2.18.0..02.17.2
+[2.19.0]: ../../compare/v2.19.0..v2.18.1
+[2.18.1]: ../../compare/v2.18.1..v2.18.0
+[2.18.0]: ../../compare/v2.18.0..v2.17.2
 [2.17.2]: ../../compare/v2.17.2..v2.17.1
 [2.17.1]: ../../compare/v2.17.1..v2.17.0
 [2.17.0]: ../../compare/v2.17.0..v2.16.3
