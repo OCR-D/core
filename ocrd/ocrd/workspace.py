@@ -5,13 +5,13 @@ from pathlib import Path
 import cv2
 from PIL import Image
 import numpy as np
-from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdFile
 from ocrd_models.ocrd_page import parse
 from ocrd_modelfactory import exif_from_filename
 from ocrd_utils import (
+    atomic_write,
     getLogger,
     image_from_polygon,
     coordinates_of_segment,
@@ -253,7 +253,7 @@ class Workspace():
         log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
-        with atomic_write(self.mets_target, overwrite=True) as f:
+        with atomic_write(self.mets_target) as f:
             f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
@@ -452,6 +452,10 @@ class Workspace():
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
                     features = alternative_image.get_comments()
+                    if not features:
+                        log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
+                                    alternative_images.index(alternative_image) + 1, page_id)
+                        features = ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -462,6 +466,10 @@ class Workspace():
             else:
                 alternative_image = alternative_images[-1]
                 features = alternative_image.get_comments()
+                if not features:
+                    log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
+                                alternative_images.index(alternative_image) + 1, page_id)
+                    features = ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for page '%s'",
                           alternative_images.index(alternative_image) + 1,
@@ -789,6 +797,10 @@ class Workspace():
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
                     features = alternative_image.get_comments()
+                    if not features:
+                        log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
+                                    alternative_images.index(alternative_image) + 1, segment.id)
+                        features = ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -799,6 +811,10 @@ class Workspace():
             else:
                 alternative_image = alternative_images[-1]
                 features = alternative_image.get_comments()
+                if not features:
+                    log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
+                                alternative_images.index(alternative_image) + 1, segment.id)
+                    features = ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for segment '%s'",
                           alternative_images.index(alternative_image) + 1,

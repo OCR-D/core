@@ -5,6 +5,23 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * CUDA base image is now nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04, #629 ht @Witiko
+
+Fixed:
+
+  * Permission of existing `mets.xml` should not change, #403, #625
+  * Handle `pg:AlternativeImage` without `comments`, #633
+
+## [2.18.1] - 2020-10-21
+
+Fixed:
+
+  * default ocrd_logging.conf had a typo, #590, #628
+  * default ocrd_logging.conf mirrors builtin logging config, #630
+  * `--log-level` override mechanism works with logging config file, #626, #631
+
 ## [2.18.0] - 2020-10-12
 
 Changed:
@@ -1177,6 +1194,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.18.1]: ../../compare/v2.18.1..02.18.0
 [2.18.0]: ../../compare/v2.18.0..02.17.2
 [2.17.2]: ../../compare/v2.17.2..v2.17.1
 [2.17.1]: ../../compare/v2.17.1..v2.17.0
