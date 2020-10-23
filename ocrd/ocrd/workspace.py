@@ -415,7 +415,11 @@ class Workspace():
                 # search from the end, because by convention we always append,
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
-                    features = alternative_image.get_comments() or ''
+                    features = alternative_image.get_comments()
+                    if not features:
+                        log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
+                                    alternative_images.index(alternative_image) + 1, page_id)
+                        features = ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -425,7 +429,11 @@ class Workspace():
                         alternative_image = None
             else:
                 alternative_image = alternative_images[-1]
-                features = alternative_image.get_comments() or ''
+                features = alternative_image.get_comments()
+                if not features:
+                    log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
+                                alternative_images.index(alternative_image) + 1, page_id)
+                    features = ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for page '%s'",
                           alternative_images.index(alternative_image) + 1,
@@ -752,7 +760,11 @@ class Workspace():
                 # search from the end, because by convention we always append,
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
-                    features = alternative_image.get_comments() or ''
+                    features = alternative_image.get_comments()
+                    if not features:
+                        log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
+                                    alternative_images.index(alternative_image) + 1, segment.id)
+                        features = ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -762,7 +774,11 @@ class Workspace():
                         alternative_image = None
             else:
                 alternative_image = alternative_images[-1]
-                features = alternative_image.get_comments() or ''
+                features = alternative_image.get_comments()
+                if not features:
+                    log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
+                                alternative_images.index(alternative_image) + 1, segment.id)
+                    features = ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for segment '%s'",
                           alternative_images.index(alternative_image) + 1,
