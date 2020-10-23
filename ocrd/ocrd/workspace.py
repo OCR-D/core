@@ -415,7 +415,7 @@ class Workspace():
                 # search from the end, because by convention we always append,
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
-                    features = alternative_image.get_comments()
+                    features = alternative_image.get_comments() or ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -425,7 +425,7 @@ class Workspace():
                         alternative_image = None
             else:
                 alternative_image = alternative_images[-1]
-                features = alternative_image.get_comments()
+                features = alternative_image.get_comments() or ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for page '%s'",
                           alternative_images.index(alternative_image) + 1,
@@ -752,7 +752,7 @@ class Workspace():
                 # search from the end, because by convention we always append,
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
-                    features = alternative_image.get_comments()
+                    features = alternative_image.get_comments() or ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -762,7 +762,7 @@ class Workspace():
                         alternative_image = None
             else:
                 alternative_image = alternative_images[-1]
-                features = alternative_image.get_comments()
+                features = alternative_image.get_comments() or ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for segment '%s'",
                           alternative_images.index(alternative_image) + 1,
