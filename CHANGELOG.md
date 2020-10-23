@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * CUDA base image is now nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04, #629 ht @Witiko
+  * Convert 16-/32-bit images to 8-bit because PIL poorly supports the former, #627
 
 Fixed:
 
