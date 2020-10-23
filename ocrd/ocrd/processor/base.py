@@ -6,7 +6,7 @@ __all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processor']
 
 import os
 import json
-from ocrd_utils import VERSION as OCRD_VERSION, MIMETYPE_PAGE
+from ocrd_utils import VERSION as OCRD_VERSION, MIMETYPE_PAGE, getLogger
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
@@ -15,9 +15,11 @@ from .helpers import run_cli, run_processor, generate_processor_help # pylint: d
 
 class Processor():
     """
-    A processor runs an algorithm based on the workspace, the mets.xml in the
-    workspace (and the input files defined therein) as well as optional
-    parameter.
+    A processor is an OCR-D compliant command-line-interface for executing
+    a single workflow step on the workspace (represented by local METS). It
+    reads input files for all or requested physical pages of the input fileGrp(s),
+    and writes output files for them into the output fileGrp(s). It may take 
+    a number of optional or mandatory parameters.
     """
 
     def __init__(
@@ -123,3 +125,48 @@ class Processor():
                 self.input_file_grp
                 ))
         return ret
+
+    @property
+    def zip_input_files(self, require_first=True):
+        """
+        List tuples of input files (for multiple input file groups).
+
+        Processors that expect/need multiple input file groups,
+        cannot use ``input_files``. They must align (zip) input files
+        across pages. This includes the case where not all pages
+        are equally present in all file groups.
+
+        This function does not make much sense for non-PAGE fileGrps,
+        so it uses a fixed MIME type filter for PAGE-XML.
+
+        Args:
+             require_first (bool): If true, then skip a page entirely
+             whenever it is not available in the first input fileGrp.
+        """
+
+        LOG = getLogger('ocrd.processor.base')
+        ifgs = self.input_file_grp.split(",")
+        # Iterating over all files repeatedly may seem inefficient at first sight,
+        # but the unnecessary OcrdFile instantiations for posterior fileGrp filtering
+        # can actually be much more costly than traversing the ltree.
+        # This might depend on the number of pages vs number of fileGrps.
+
+        pages = dict()
+        for i, ifg in enumerate(ifgs):
+            for file_ in self.workspace.mets.find_all_files(
+                    pageId=self.page_id, fileGrp=ifg, mimetype=MIMETYPE_PAGE):
+                if not file_.pageId:
+                    continue
+                LOG.debug("adding page %s to input file group %s", file_.pageId, ifg)
+                ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
+                ift[i] = file_
+        ifts = list()
+        for page, ifiles in pages.items():
+            for i, ifg in enumerate(ifgs):
+                if not ifiles[i]:
+                    # other fallback options?
+                    LOG.error('found no page %s in file group %s',
+                              page, ifg)
+            if ifiles[0] or not require_first:
+                ifts.append(tuple(ifiles))
+        return ifts
