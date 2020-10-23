@@ -5,6 +5,7 @@ from os.path import join, exists, abspath, basename, dirname
 from tempfile import TemporaryDirectory, mkdtemp
 from shutil import copyfile
 from pathlib import Path
+from gzip import open as gzip_open
 
 from PIL import Image
 
@@ -279,6 +280,18 @@ class TestWorkspace(TestCase):
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
             self.assertEquals(info['features'], 'binarized,clipped')
 
+    def test_downsample_16bit_image(self):
+        with pushd_popd(tempdir=True) as tempdir:
+            with gzip_open(join(dirname(__file__), 'data/OCR-D-IMG_APBB_Mitteilungen_62.0002.tif.gz'), 'rb') as gzip_in:
+                with open('16bit.tif', 'wb') as tif_out:
+                    tif_out.write(gzip_in.read())
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.add_file('IMG', ID='foo', url='16bit.tif', mimetype='image/tiff', pageId=None)
+            pil_before = Image.open('16bit.tif')
+            assert pil_before.mode == 'I;16'
+            pil_after = ws._resolve_image_as_pil('16bit.tif')
+            assert pil_after.mode == 'L'
+
     def test_mets_permissions(self):
         with TemporaryDirectory() as tempdir:
             ws = self.resolver.workspace_from_nothing(tempdir)
@@ -290,8 +303,6 @@ class TestWorkspace(TestCase):
             chmod(mets_path, 0o777)
             ws.save_mets()
             assert filemode(stat(mets_path).st_mode) == '-rwxrwxrwx'
-
-
 
 
 if __name__ == '__main__':
