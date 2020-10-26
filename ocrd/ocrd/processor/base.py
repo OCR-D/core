@@ -126,7 +126,7 @@ class Processor():
                 ))
         return ret
 
-    def zip_input_files(self, require_first=True):
+    def zip_input_files(self, require_first=True, mimetype=MIMETYPE_PAGE):
         """
         List tuples of input files (for multiple input file groups).
 
@@ -153,7 +153,7 @@ class Processor():
         pages = dict()
         for i, ifg in enumerate(ifgs):
             for file_ in self.workspace.mets.find_all_files(
-                    pageId=self.page_id, fileGrp=ifg, mimetype=MIMETYPE_PAGE):
+                    pageId=self.page_id, fileGrp=ifg, mimetype=mimetype):
                 if not file_.pageId:
                     continue
                 LOG.debug("adding page %s to input file group %s", file_.pageId, ifg)

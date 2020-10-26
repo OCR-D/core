@@ -94,11 +94,11 @@ class TestProcessor(TestCase):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0001')
+            ws.add_file('GRP2', mimetype='application/alto+xml', ID='foobar2', pageId='phys_0001')
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', pageId='phys_0002')
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar4', pageId='phys_0002')
             proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2')
-            tuples = [(one.ID, two.ID) for one, two in proc.zip_input_files()]
+            tuples = [(one.ID, two.ID) for one, two in proc.zip_input_files(mimetype=r'//application/(vnd.prima.page|alto)\+xml')]
             assert ('foobar1', 'foobar2') in tuples
             assert ('foobar3', 'foobar4') in tuples
 
