@@ -126,7 +126,6 @@ class Processor():
                 ))
         return ret
 
-    @property
     def zip_input_files(self, require_first=True):
         """
         List tuples of input files (for multiple input file groups).
