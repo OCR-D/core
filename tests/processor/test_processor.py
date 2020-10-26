@@ -2,10 +2,10 @@ import json
 
 from tempfile import TemporaryDirectory
 from os.path import join
-from tests.base import TestCase, assets, main # pylint: disable=import-error, no-name-in-module
+from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, IncompleteProcessor, DUMMY_TOOL
 
-from ocrd_utils import MIMETYPE_PAGE
+from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
 
@@ -88,6 +88,33 @@ class TestProcessor(TestCase):
                 mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'),
                 resolver=Resolver(),
             )
+
+    def test_zip_input_files(self):
+        class ZipTestProcessor(Processor): pass
+        with pushd_popd(tempdir=True) as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', pageId='phys_0002')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar4', pageId='phys_0002')
+            proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2')
+            tuples = [(one.ID, two.ID) for one, two in proc.zip_input_files()]
+            assert ('foobar1', 'foobar2') in tuples
+            assert ('foobar3', 'foobar4') in tuples
+
+    def test_zip_input_files_require_first(self):
+        initLogging()
+        class ZipTestProcessor(Processor): pass
+        self.capture_out_err()
+        with pushd_popd(tempdir=True) as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId=None)
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0001')
+            proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2')
+            assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
+        r = self.capture_out_err()
+        assert 'ERROR ocrd.processor.base - found no page phys_0001 in file group GRP1' in r.err
+
 
 if __name__ == "__main__":
     main(__file__)
