@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Use `chmod`, not `fchmod` to support Windows, #636 ht @b2m
+
 ## [2.19.0] - 2020-10-23
 
 Changed:
