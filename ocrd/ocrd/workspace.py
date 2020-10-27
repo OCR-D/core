@@ -5,12 +5,13 @@ from pathlib import Path
 import cv2
 from PIL import Image
 import numpy as np
-from atomicwrites import atomic_write
 from deprecated.sphinx import deprecated
 
-from ocrd_models import OcrdMets, OcrdExif, OcrdFile
+from ocrd_models import OcrdMets, OcrdFile
 from ocrd_models.ocrd_page import parse
+from ocrd_modelfactory import exif_from_filename
 from ocrd_utils import (
+    atomic_write,
     getLogger,
     image_from_polygon,
     coordinates_of_segment,
@@ -252,7 +253,7 @@ class Workspace():
         log.info("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
-        with atomic_write(self.mets_target, overwrite=True) as f:
+        with atomic_write(self.mets_target) as f:
             f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
@@ -267,8 +268,7 @@ class Workspace():
         """
         f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
         image_filename = self.download_file(f).local_filename
-        with Image.open(image_filename) as pil_img:
-            ocrd_exif = OcrdExif(pil_img)
+        ocrd_exif = exif_from_filename(image_filename)
         return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
@@ -294,9 +294,45 @@ class Workspace():
             pil_image = Image.open(image_filename)
             pil_image.load() # alloc and give up the FD
 
+        # Pillow does not properly support higher color depths
+        # (e.g. 16-bit or 32-bit or floating point grayscale),
+        # clipping its dynamic range to the lower 8-bit in
+        # many operations (including paste, putalpha, ImageStat...),
+        # even including conversion.
+        # Cf. Pillow#3011 Pillow#3159 Pillow#3838 (still open in 8.0)
+        # So to be on the safe side, we must re-quantize these
+        # to 8-bit via numpy (conversion to/from which fortunately
+        # seems to work reliably):
+        if (pil_image.mode.startswith('I') or
+            pil_image.mode.startswith('F')):
+            arr_image = np.array(pil_image)
+            if arr_image.dtype.kind == 'i':
+                # signed integer is *not* trustworthy in this context
+                # (usually a mistake in the array interface)
+                log.debug('Casting image "%s" from signed to unsigned', image_url)
+                arr_image.dtype = np.dtype('u' + arr_image.dtype.name)
+            if arr_image.dtype.kind == 'u':
+                # integer needs to be scaled linearly to 8 bit
+                # of course, an image might actually have some lower range
+                # (e.g. 10-bit in I;16 or 20-bit in I or 4-bit in L),
+                # but that would be guessing anyway, so here don't
+                # make assumptions on _scale_, just reduce _precision_
+                log.debug('Reducing image "%s" from depth %d bit to 8 bit',
+                          image_url, arr_image.dtype.itemsize * 8)
+                arr_image = arr_image >> 8 * (arr_image.dtype.itemsize-1)
+                arr_image = arr_image.astype(np.uint8)
+            elif arr_image.dtype.kind == 'f':
+                # float needs to be scaled from [0,1.0] to [0,255]
+                log.debug('Reducing image "%s" from floating point to 8 bit',
+                          image_url)
+                arr_image *= 255
+                arr_image = arr_image.astype(np.uint8)
+            pil_image = Image.fromarray(arr_image)
+
         if coords is None:
             return pil_image
 
+        # FIXME: remove or replace this by (image_from_polygon+) crop_image ...
         log.debug("Converting PIL to OpenCV: %s", image_url)
         color_conversion = cv2.COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  cv2.COLOR_RGB2BGR
         pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
@@ -380,8 +416,8 @@ class Workspace():
            ``
         """
         log = getLogger('ocrd.workspace.image_from_page')
+        page_image_info = self.resolve_image_exif(page.imageFilename)
         page_image = self._resolve_image_as_pil(page.imageFilename)
-        page_image_info = OcrdExif(page_image)
         page_coords = dict()
         # use identity as initial affine coordinate transform:
         page_coords['transform'] = np.eye(3)
@@ -416,6 +452,10 @@ class Workspace():
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
                     features = alternative_image.get_comments()
+                    if not features:
+                        log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
+                                    alternative_images.index(alternative_image) + 1, page_id)
+                        features = ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -426,6 +466,10 @@ class Workspace():
             else:
                 alternative_image = alternative_images[-1]
                 features = alternative_image.get_comments()
+                if not features:
+                    log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
+                                alternative_images.index(alternative_image) + 1, page_id)
+                    features = ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for page '%s'",
                           alternative_images.index(alternative_image) + 1,
@@ -753,6 +797,10 @@ class Workspace():
                 # and among multiple satisfactory images we want the most recent:
                 for alternative_image in reversed(alternative_images):
                     features = alternative_image.get_comments()
+                    if not features:
+                        log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
+                                    alternative_images.index(alternative_image) + 1, segment.id)
+                        features = ''
                     if (all(feature in features
                             for feature in feature_selector.split(',') if feature) and
                         not any(feature in features
@@ -763,6 +811,10 @@ class Workspace():
             else:
                 alternative_image = alternative_images[-1]
                 features = alternative_image.get_comments()
+                if not features:
+                    log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
+                                alternative_images.index(alternative_image) + 1, segment.id)
+                    features = ''
             if alternative_image:
                 log.debug("Using AlternativeImage %d (%s) for segment '%s'",
                           alternative_images.index(alternative_image) + 1,

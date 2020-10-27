@@ -133,6 +133,7 @@ from .os import (
     abspath,
     list_all_resources,
     list_resource_candidates,
+    atomic_write,
     pushd_popd,
     unzip_file_to_dir)
 

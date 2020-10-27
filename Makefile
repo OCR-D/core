@@ -205,7 +205,7 @@ docker docker-cuda:
 	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build docker GPU / CUDA image
-docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.0-runtime-ubuntu18.04
+docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
 
 #

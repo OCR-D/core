@@ -141,6 +141,15 @@ def initLogging():
         logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
     if _overrideLogLevel:
+        # for existing loggers that won't have getLogger do this
+        # (because they were instantiated through logging.getLogger
+        #  instead of ours, or come from logging.config.fileConfig),
+        # unset log levels so the global override can apply:
+        for loggerName in logging.Logger.manager.loggerDict:
+            logger = logging.Logger.manager.loggerDict[loggerName]
+            if isinstance(logger, logging.PlaceHolder):
+                continue
+            logger.setLevel(logging.NOTSET)
         logging.getLogger('').setLevel(_overrideLogLevel)
 
     _initialized_flag = True
