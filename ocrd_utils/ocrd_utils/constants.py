@@ -3,7 +3,7 @@ Constants for ocrd_utils.
 """
 from pkg_resources import get_distribution
 from re import compile as regex_compile
-import os
+from os import environ
 from os.path import join, expanduser
 
 __all__ = [
@@ -98,6 +98,10 @@ LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'
 LOG_TIMEFMT = r'%H:%M:%S'
 
 # See https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-XDG_DATA_HOME = os.environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in os.environ else join(expanduser('~'), '.local', 'share')
-XDG_CONFIG_HOME = os.environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in os.environ else join(expanduser('~'), '.config')
-XDG_CACHE_HOME = os.environ['XDG_CACHE_HOME'] if 'XDG_CACHE_HOME' in os.environ else join(expanduser('~'), '.cache')
+if 'HOME' in environ and environ['HOME'] != expanduser('~'):
+    HOME = environ['HOME']
+else:
+    HOME = expanduser('~')
+XDG_DATA_HOME = environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in environ else join(HOME, '.local', 'share')
+XDG_CONFIG_HOME = environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in environ else join(HOME, '.config')
+XDG_CACHE_HOME = environ['XDG_CACHE_HOME'] if 'XDG_CACHE_HOME' in environ else join(HOME, '.cache')

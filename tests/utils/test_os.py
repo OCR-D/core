@@ -27,14 +27,16 @@ class TestOsUtils(TestCase):
             del ENV['VIRTUAL_ENV']
 
     def test_resolve_basic(self):
+        def dehomify(s):
+            return s.replace(ENV['HOME'], '$HOME').replace(expanduser('~'), '$HOME')
         fname = 'foo.bar'
         cands = list_resource_candidates('ocrd-dummy', fname)
-        print(getcwd())
-        cands = [x.replace(getcwd(), '$PWD').replace(expanduser('~'), '$HOME') for x in cands]
+        cands = [dehomify(x) for x in cands]
+        print(cands)
         self.assertEqual(cands, [join(x, fname) for x in [
-            '$PWD',
-            self.tempdir_path,
-            join(self.tempdir_venv, 'share', 'ocrd-dummy'),
+            dehomify(getcwd()),
+            dehomify(self.tempdir_path),
+            dehomify(join(self.tempdir_venv, 'share', 'ocrd-dummy')),
             '$HOME/.local/share/ocrd-dummy',
             '$HOME/.config/ocrd-dummy',
             '$HOME/.cache/ocrd-dummy',
