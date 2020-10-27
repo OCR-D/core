@@ -11,8 +11,8 @@ __all__ = [
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 from tempfile import TemporaryDirectory
 import contextlib
-from os import getcwd, chdir, stat, fchmod, umask
-from os.path import exists, abspath as abspath_
+from os import getcwd, chdir, stat, chmod, umask
+from os.path import abspath as abspath_
 
 from zipfile import ZipFile
 
@@ -32,7 +32,7 @@ def pushd_popd(newcwd=None, tempdir=False):
         raise Exception("pushd_popd can accept either newcwd or tempdir, not both")
     try:
         oldcwd = getcwd()
-    except FileNotFoundError as e:  # pylint: disable=unused-variable
+    except FileNotFoundError:
         # This happens when a directory is deleted before the context is exited
         oldcwd = '/tmp'
     try:
@@ -70,7 +70,7 @@ class AtomicWriterPerms(AtomicWriter):
             umask(mask)
             mode = 0o664 & ~mask
         fd = f.fileno()
-        fchmod(fd, mode)
+        chmod(fd, mode)
         return f
 
 @contextlib.contextmanager
