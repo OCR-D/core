@@ -118,8 +118,8 @@ def run_cli(
         args += ['--overwrite']
     log = getLogger('ocrd.processor.helpers.run_cli')
     log.debug("Running subprocess '%s'", ' '.join(args))
-    result = run(args, check=False, stdout=PIPE, stderr=PIPE)
-    return result.returncode, result.stdout.decode('utf-8'), result.stderr.decode('utf-8')
+    result = run(args, check=False)
+    return result.returncode
 
 def generate_processor_help(ocrd_tool, processor_instance=None):
     """Generate a string describing the full CLI of this processor including params.
