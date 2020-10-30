@@ -94,8 +94,16 @@ class Processor():
                         externalModel="ocrd-tool",
                         externalId="parameters",
                         Label=[LabelType(type_=name,
-                            value=self.parameter[name])
-                            for name in self.parameter.keys()])]))
+                                         value=self.parameter[name])
+                               for name in self.parameter.keys()]),
+                            LabelsType(
+                        externalModel="ocrd-tool",
+                        externalId="version",
+                        Label=[LabelType(type_=self.ocrd_tool['executable'],
+                                         value=self.version),
+                               LabelType(type_='ocrd/core',
+                                         value=OCRD_VERSION)])
+                    ]))
 
     @property
     def input_files(self):
