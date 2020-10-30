@@ -9,6 +9,10 @@ Fixed:
 
   * Use `chmod`, not `fchmod` to support Windows, #636 ht @b2m
 
+Changed:
+
+  * Record version information in `pg:MetadataItem`, #637
+
 ## [2.19.0] - 2020-10-23
 
 Changed:
