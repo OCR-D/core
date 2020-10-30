@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Sep 21 14:00:49 2020 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Jul 17 2020, 12:50:27)  [GCC 8.4.0]
+# Generated Sat Oct 31 00:32:57 2020 by generateDS.py version 2.35.20.
+# Python 3.6.7 (default, Oct 22 2018, 11:32:17)  [GCC 8.2.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -16,7 +16,7 @@
 #   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -3036,6 +3036,37 @@ class PageType(GeneratedsSuper):
                 else:
                     ret = in_reading_order + [r for r in ret if r not in in_reading_order]
         return ret
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
 # end class PageType
 
 
@@ -3633,6 +3664,37 @@ class TextLineType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
 # end class TextLineType
 
 
@@ -4047,6 +4109,37 @@ class WordType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
 # end class WordType
 
 
@@ -4414,6 +4507,37 @@ class GlyphType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
 # end class GlyphType
 
 
@@ -8867,6 +8991,37 @@ class RegionType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
 # end class RegionType
 
 

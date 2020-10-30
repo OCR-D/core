@@ -109,6 +109,7 @@ METHOD_SPECS = (
     _add_method(r'^(PageType)$', 'get_AllRegions'),
     _add_method(r'^(PcGtsType)$', 'get_AllAlternativeImagePaths'),
     _add_method(r'^(PcGtsType)$', 'prune_ReadingOrder'),
+    _add_method(r'^(PageType|RegionType|TextLineType|WordType|GlyphType)$', 'invalidate_AlternativeImage'),
     )
 
 
