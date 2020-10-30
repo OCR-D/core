@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Sep 21 14:00:49 2020 by generateDS.py version 2.35.20.
+# Generated Mon Oct 12 18:12:47 2020 by generateDS.py version 2.36.2.
 # Python 3.6.9 (default, Jul 17 2020, 12:50:27)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
 #   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
-#   ('--disable-generatedssuper-lookup', '')
+#   ('--export', 'write etree validate')
 #   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
 # Command line arguments:
 #   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --export="write etree validate" --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -124,7 +124,7 @@ except ImportError:
 # clues about the possible content of that class.
 #
 try:
-    from generatedscollector import GdsCollector as GdsCollector_
+    from .generatedscollector import GdsCollector as GdsCollector_
 except ImportError:
 
     class GdsCollector_(object):
@@ -169,238 +169,193 @@ except ImportError:
 # You can replace these methods by re-implementing the following class
 #   in a module named generatedssuper.py.
 
-
-class GeneratedsSuper(object):
-    __hash__ = object.__hash__
-    tzoff_pattern = re_.compile(r'(\+|-)((0\d|1[0-3]):[0-5]\d|14:00)$')
-    class _FixedOffsetTZ(datetime_.tzinfo):
-        def __init__(self, offset, name):
-            self.__offset = datetime_.timedelta(minutes=offset)
-            self.__name = name
-        def utcoffset(self, dt):
-            return self.__offset
-        def tzname(self, dt):
-            return self.__name
-        def dst(self, dt):
-            return None
-    def gds_format_string(self, input_data, input_name=''):
-        return input_data
-    def gds_parse_string(self, input_data, node=None, input_name=''):
-        return input_data
-    def gds_validate_string(self, input_data, node=None, input_name=''):
-        if not input_data:
-            return ''
-        else:
+try:
+    from generatedssuper import GeneratedsSuper
+except ImportError as exp:
+    
+    class GeneratedsSuper(object):
+        __hash__ = object.__hash__
+        tzoff_pattern = re_.compile(r'(\+|-)((0\d|1[0-3]):[0-5]\d|14:00)$')
+        class _FixedOffsetTZ(datetime_.tzinfo):
+            def __init__(self, offset, name):
+                self.__offset = datetime_.timedelta(minutes=offset)
+                self.__name = name
+            def utcoffset(self, dt):
+                return self.__offset
+            def tzname(self, dt):
+                return self.__name
+            def dst(self, dt):
+                return None
+        def gds_format_string(self, input_data, input_name=''):
             return input_data
-    def gds_format_base64(self, input_data, input_name=''):
-        return base64.b64encode(input_data)
-    def gds_validate_base64(self, input_data, node=None, input_name=''):
-        return input_data
-    def gds_format_integer(self, input_data, input_name=''):
-        return '%d' % input_data
-    def gds_parse_integer(self, input_data, node=None, input_name=''):
-        try:
-            ival = int(input_data)
-        except (TypeError, ValueError) as exp:
-            raise_parse_error(node, 'Requires integer value: %s' % exp)
-        return ival
-    def gds_validate_integer(self, input_data, node=None, input_name=''):
-        try:
-            value = int(input_data)
-        except (TypeError, ValueError):
-            raise_parse_error(node, 'Requires integer value')
-        return value
-    def gds_format_integer_list(self, input_data, input_name=''):
-        return '%s' % ' '.join(input_data)
-    def gds_validate_integer_list(
-            self, input_data, node=None, input_name=''):
-        values = input_data.split()
-        for value in values:
+        def gds_parse_string(self, input_data, node=None, input_name=''):
+            return input_data
+        def gds_validate_string(self, input_data, node=None, input_name=''):
+            if not input_data:
+                return ''
+            else:
+                return input_data
+        def gds_format_base64(self, input_data, input_name=''):
+            return base64.b64encode(input_data)
+        def gds_validate_base64(self, input_data, node=None, input_name=''):
+            return input_data
+        def gds_format_integer(self, input_data, input_name=''):
+            return '%d' % input_data
+        def gds_parse_integer(self, input_data, node=None, input_name=''):
             try:
-                int(value)
-            except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires sequence of integer valuess')
-        return values
-    def gds_format_float(self, input_data, input_name=''):
-        return ('%.15f' % input_data).rstrip('0')
-    def gds_parse_float(self, input_data, node=None, input_name=''):
-        try:
-            fval_ = float(input_data)
-        except (TypeError, ValueError) as exp:
-            raise_parse_error(node, 'Requires float or double value: %s' % exp)
-        return fval_
-    def gds_validate_float(self, input_data, node=None, input_name=''):
-        try:
-            value = float(input_data)
-        except (TypeError, ValueError):
-            raise_parse_error(node, 'Requires float value')
-        return value
-    def gds_format_float_list(self, input_data, input_name=''):
-        return '%s' % ' '.join(input_data)
-    def gds_validate_float_list(
-            self, input_data, node=None, input_name=''):
-        values = input_data.split()
-        for value in values:
+                ival = int(input_data)
+            except (TypeError, ValueError) as exp:
+                raise_parse_error(node, 'Requires integer value: %s' % exp)
+            return ival
+        def gds_validate_integer(self, input_data, node=None, input_name=''):
             try:
-                float(value)
+                value = int(input_data)
             except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires sequence of float values')
-        return values
-    def gds_format_decimal(self, input_data, input_name=''):
-        return ('%s' % input_data).rstrip('0')
-    def gds_parse_decimal(self, input_data, node=None, input_name=''):
-        try:
-            decimal_value = decimal_.Decimal(input_data)
-        except (TypeError, ValueError):
-            raise_parse_error(node, 'Requires decimal value')
-        return decimal_value
-    def gds_validate_decimal(self, input_data, node=None, input_name=''):
-        try:
-            value = decimal_.Decimal(input_data)
-        except (TypeError, ValueError):
-            raise_parse_error(node, 'Requires decimal value')
-        return value
-    def gds_format_decimal_list(self, input_data, input_name=''):
-        return '%s' % ' '.join(input_data)
-    def gds_validate_decimal_list(
-            self, input_data, node=None, input_name=''):
-        values = input_data.split()
-        for value in values:
+                raise_parse_error(node, 'Requires integer value')
+            return value
+        def gds_format_integer_list(self, input_data, input_name=''):
+            return '%s' % ' '.join(input_data)
+        def gds_validate_integer_list(
+                self, input_data, node=None, input_name=''):
+            values = input_data.split()
+            for value in values:
+                try:
+                    int(value)
+                except (TypeError, ValueError):
+                    raise_parse_error(node, 'Requires sequence of integer valuess')
+            return values
+        def gds_format_float(self, input_data, input_name=''):
+            return ('%.15f' % input_data).rstrip('0')
+        def gds_parse_float(self, input_data, node=None, input_name=''):
             try:
-                decimal_.Decimal(value)
-            except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires sequence of decimal values')
-        return values
-    def gds_format_double(self, input_data, input_name=''):
-        return '%e' % input_data
-    def gds_parse_double(self, input_data, node=None, input_name=''):
-        try:
-            fval_ = float(input_data)
-        except (TypeError, ValueError) as exp:
-            raise_parse_error(node, 'Requires double or float value: %s' % exp)
-        return fval_
-    def gds_validate_double(self, input_data, node=None, input_name=''):
-        try:
-            value = float(input_data)
-        except (TypeError, ValueError):
-            raise_parse_error(node, 'Requires double or float value')
-        return value
-    def gds_format_double_list(self, input_data, input_name=''):
-        return '%s' % ' '.join(input_data)
-    def gds_validate_double_list(
-            self, input_data, node=None, input_name=''):
-        values = input_data.split()
-        for value in values:
+                fval_ = float(input_data)
+            except (TypeError, ValueError) as exp:
+                raise_parse_error(node, 'Requires float or double value: %s' % exp)
+            return fval_
+        def gds_validate_float(self, input_data, node=None, input_name=''):
             try:
-                float(value)
+                value = float(input_data)
             except (TypeError, ValueError):
-                raise_parse_error(
-                    node, 'Requires sequence of double or float values')
-        return values
-    def gds_format_boolean(self, input_data, input_name=''):
-        return ('%s' % input_data).lower()
-    def gds_parse_boolean(self, input_data, node=None, input_name=''):
-        if input_data in ('true', '1'):
-            bval = True
-        elif input_data in ('false', '0'):
-            bval = False
-        else:
-            raise_parse_error(node, 'Requires boolean value')
-        return bval
-    def gds_validate_boolean(self, input_data, node=None, input_name=''):
-        if input_data not in (True, 1, False, 0, ):
-            raise_parse_error(
-                node,
-                'Requires boolean value '
-                '(one of True, 1, False, 0)')
-        return input_data
-    def gds_format_boolean_list(self, input_data, input_name=''):
-        return '%s' % ' '.join(input_data)
-    def gds_validate_boolean_list(
-            self, input_data, node=None, input_name=''):
-        values = input_data.split()
-        for value in values:
-            if value not in (True, 1, False, 0, ):
+                raise_parse_error(node, 'Requires float value')
+            return value
+        def gds_format_float_list(self, input_data, input_name=''):
+            return '%s' % ' '.join(input_data)
+        def gds_validate_float_list(
+                self, input_data, node=None, input_name=''):
+            values = input_data.split()
+            for value in values:
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    raise_parse_error(node, 'Requires sequence of float values')
+            return values
+        def gds_format_decimal(self, input_data, input_name=''):
+            return_value = '%s' % input_data
+            if '.' in return_value:
+                return_value = return_value.rstrip('0')
+                if return_value.endswith('.'):
+                    return_value = return_value.rstrip('.')
+            return return_value
+        def gds_parse_decimal(self, input_data, node=None, input_name=''):
+            try:
+                decimal_value = decimal_.Decimal(input_data)
+            except (TypeError, ValueError):
+                raise_parse_error(node, 'Requires decimal value')
+            return decimal_value
+        def gds_validate_decimal(self, input_data, node=None, input_name=''):
+            try:
+                value = decimal_.Decimal(input_data)
+            except (TypeError, ValueError):
+                raise_parse_error(node, 'Requires decimal value')
+            return value
+        def gds_format_decimal_list(self, input_data, input_name=''):
+            return ' '.join([self.gds_format_decimal(item) for item in input_data])
+        def gds_validate_decimal_list(
+                self, input_data, node=None, input_name=''):
+            values = input_data.split()
+            for value in values:
+                try:
+                    decimal_.Decimal(value)
+                except (TypeError, ValueError):
+                    raise_parse_error(node, 'Requires sequence of decimal values')
+            return values
+        def gds_format_double(self, input_data, input_name=''):
+            return '%e' % input_data
+        def gds_parse_double(self, input_data, node=None, input_name=''):
+            try:
+                fval_ = float(input_data)
+            except (TypeError, ValueError) as exp:
+                raise_parse_error(node, 'Requires double or float value: %s' % exp)
+            return fval_
+        def gds_validate_double(self, input_data, node=None, input_name=''):
+            try:
+                value = float(input_data)
+            except (TypeError, ValueError):
+                raise_parse_error(node, 'Requires double or float value')
+            return value
+        def gds_format_double_list(self, input_data, input_name=''):
+            return '%s' % ' '.join(input_data)
+        def gds_validate_double_list(
+                self, input_data, node=None, input_name=''):
+            values = input_data.split()
+            for value in values:
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    raise_parse_error(
+                        node, 'Requires sequence of double or float values')
+            return values
+        def gds_format_boolean(self, input_data, input_name=''):
+            return ('%s' % input_data).lower()
+        def gds_parse_boolean(self, input_data, node=None, input_name=''):
+            if input_data in ('true', '1'):
+                bval = True
+            elif input_data in ('false', '0'):
+                bval = False
+            else:
+                raise_parse_error(node, 'Requires boolean value')
+            return bval
+        def gds_validate_boolean(self, input_data, node=None, input_name=''):
+            if input_data not in (True, 1, False, 0, ):
                 raise_parse_error(
                     node,
-                    'Requires sequence of boolean values '
+                    'Requires boolean value '
                     '(one of True, 1, False, 0)')
-        return values
-    def gds_validate_datetime(self, input_data, node=None, input_name=''):
-        return input_data
-    def gds_format_datetime(self, input_data, input_name=''):
-        if input_data.microsecond == 0:
-            _svalue = '%04d-%02d-%02dT%02d:%02d:%02d' % (
-                input_data.year,
-                input_data.month,
-                input_data.day,
-                input_data.hour,
-                input_data.minute,
-                input_data.second,
-            )
-        else:
-            _svalue = '%04d-%02d-%02dT%02d:%02d:%02d.%s' % (
-                input_data.year,
-                input_data.month,
-                input_data.day,
-                input_data.hour,
-                input_data.minute,
-                input_data.second,
-                ('%f' % (float(input_data.microsecond) / 1000000))[2:],
-            )
-        if input_data.tzinfo is not None:
-            tzoff = input_data.tzinfo.utcoffset(input_data)
-            if tzoff is not None:
-                total_seconds = tzoff.seconds + (86400 * tzoff.days)
-                if total_seconds == 0:
-                    _svalue += 'Z'
-                else:
-                    if total_seconds < 0:
-                        _svalue += '-'
-                        total_seconds *= -1
-                    else:
-                        _svalue += '+'
-                    hours = total_seconds // 3600
-                    minutes = (total_seconds - (hours * 3600)) // 60
-                    _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
-        return _svalue
-    @classmethod
-    def gds_parse_datetime(cls, input_data):
-        tz = None
-        if input_data[-1] == 'Z':
-            tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
-            input_data = input_data[:-1]
-        else:
-            results = GeneratedsSuper.tzoff_pattern.search(input_data)
-            if results is not None:
-                tzoff_parts = results.group(2).split(':')
-                tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
-                if results.group(1) == '-':
-                    tzoff *= -1
-                tz = GeneratedsSuper._FixedOffsetTZ(
-                    tzoff, results.group(0))
-                input_data = input_data[:-6]
-        time_parts = input_data.split('.')
-        if len(time_parts) > 1:
-            micro_seconds = int(float('0.' + time_parts[1]) * 1000000)
-            input_data = '%s.%s' % (
-                time_parts[0], "{}".format(micro_seconds).rjust(6, "0"), )
-            dt = datetime_.datetime.strptime(
-                input_data, '%Y-%m-%dT%H:%M:%S.%f')
-        else:
-            dt = datetime_.datetime.strptime(
-                input_data, '%Y-%m-%dT%H:%M:%S')
-        dt = dt.replace(tzinfo=tz)
-        return dt
-    def gds_validate_date(self, input_data, node=None, input_name=''):
-        return input_data
-    def gds_format_date(self, input_data, input_name=''):
-        _svalue = '%04d-%02d-%02d' % (
-            input_data.year,
-            input_data.month,
-            input_data.day,
-        )
-        try:
+            return input_data
+        def gds_format_boolean_list(self, input_data, input_name=''):
+            return '%s' % ' '.join(input_data)
+        def gds_validate_boolean_list(
+                self, input_data, node=None, input_name=''):
+            values = input_data.split()
+            for value in values:
+                if value not in (True, 1, False, 0, ):
+                    raise_parse_error(
+                        node,
+                        'Requires sequence of boolean values '
+                        '(one of True, 1, False, 0)')
+            return values
+        def gds_validate_datetime(self, input_data, node=None, input_name=''):
+            return input_data
+        def gds_format_datetime(self, input_data, input_name=''):
+            if input_data.microsecond == 0:
+                _svalue = '%04d-%02d-%02dT%02d:%02d:%02d' % (
+                    input_data.year,
+                    input_data.month,
+                    input_data.day,
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                )
+            else:
+                _svalue = '%04d-%02d-%02dT%02d:%02d:%02d.%s' % (
+                    input_data.year,
+                    input_data.month,
+                    input_data.day,
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                    ('%f' % (float(input_data.microsecond) / 1000000))[2:],
+                )
             if input_data.tzinfo is not None:
                 tzoff = input_data.tzinfo.utcoffset(input_data)
                 if tzoff is not None:
@@ -415,236 +370,289 @@ class GeneratedsSuper(object):
                             _svalue += '+'
                         hours = total_seconds // 3600
                         minutes = (total_seconds - (hours * 3600)) // 60
-                        _svalue += '{0:02d}:{1:02d}'.format(
-                            hours, minutes)
-        except AttributeError:
-            pass
-        return _svalue
-    @classmethod
-    def gds_parse_date(cls, input_data):
-        tz = None
-        if input_data[-1] == 'Z':
-            tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
-            input_data = input_data[:-1]
-        else:
-            results = GeneratedsSuper.tzoff_pattern.search(input_data)
-            if results is not None:
-                tzoff_parts = results.group(2).split(':')
-                tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
-                if results.group(1) == '-':
-                    tzoff *= -1
-                tz = GeneratedsSuper._FixedOffsetTZ(
-                    tzoff, results.group(0))
-                input_data = input_data[:-6]
-        dt = datetime_.datetime.strptime(input_data, '%Y-%m-%d')
-        dt = dt.replace(tzinfo=tz)
-        return dt.date()
-    def gds_validate_time(self, input_data, node=None, input_name=''):
-        return input_data
-    def gds_format_time(self, input_data, input_name=''):
-        if input_data.microsecond == 0:
-            _svalue = '%02d:%02d:%02d' % (
-                input_data.hour,
-                input_data.minute,
-                input_data.second,
-            )
-        else:
-            _svalue = '%02d:%02d:%02d.%s' % (
-                input_data.hour,
-                input_data.minute,
-                input_data.second,
-                ('%f' % (float(input_data.microsecond) / 1000000))[2:],
-            )
-        if input_data.tzinfo is not None:
-            tzoff = input_data.tzinfo.utcoffset(input_data)
-            if tzoff is not None:
-                total_seconds = tzoff.seconds + (86400 * tzoff.days)
-                if total_seconds == 0:
-                    _svalue += 'Z'
-                else:
-                    if total_seconds < 0:
-                        _svalue += '-'
-                        total_seconds *= -1
-                    else:
-                        _svalue += '+'
-                    hours = total_seconds // 3600
-                    minutes = (total_seconds - (hours * 3600)) // 60
-                    _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
-        return _svalue
-    def gds_validate_simple_patterns(self, patterns, target):
-        # pat is a list of lists of strings/patterns.
-        # The target value must match at least one of the patterns
-        # in order for the test to succeed.
-        found1 = True
-        for patterns1 in patterns:
-            found2 = False
-            for patterns2 in patterns1:
-                mo = re_.search(patterns2, target)
-                if mo is not None and len(mo.group(0)) == len(target):
-                    found2 = True
-                    break
-            if not found2:
-                found1 = False
-                break
-        return found1
-    @classmethod
-    def gds_parse_time(cls, input_data):
-        tz = None
-        if input_data[-1] == 'Z':
-            tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
-            input_data = input_data[:-1]
-        else:
-            results = GeneratedsSuper.tzoff_pattern.search(input_data)
-            if results is not None:
-                tzoff_parts = results.group(2).split(':')
-                tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
-                if results.group(1) == '-':
-                    tzoff *= -1
-                tz = GeneratedsSuper._FixedOffsetTZ(
-                    tzoff, results.group(0))
-                input_data = input_data[:-6]
-        if len(input_data.split('.')) > 1:
-            dt = datetime_.datetime.strptime(input_data, '%H:%M:%S.%f')
-        else:
-            dt = datetime_.datetime.strptime(input_data, '%H:%M:%S')
-        dt = dt.replace(tzinfo=tz)
-        return dt.time()
-    def gds_check_cardinality_(
-            self, value, input_name,
-            min_occurs=0, max_occurs=1, required=None):
-        if value is None:
-            length = 0
-        elif isinstance(value, list):
-            length = len(value)
-        else:
-            length = 1
-        if required is not None :
-            if required and length < 1:
-                self.gds_collector_.add_message(
-                    "Required value {}{} is missing".format(
-                        input_name, self.gds_get_node_lineno_()))
-        if length < min_occurs:
-            self.gds_collector_.add_message(
-                "Number of values for {}{} is below "
-                "the minimum allowed, "
-                "expected at least {}, found {}".format(
-                    input_name, self.gds_get_node_lineno_(),
-                    min_occurs, length))
-        elif length > max_occurs:
-            self.gds_collector_.add_message(
-                "Number of values for {}{} is above "
-                "the maximum allowed, "
-                "expected at most {}, found {}".format(
-                    input_name, self.gds_get_node_lineno_(),
-                    max_occurs, length))
-    def gds_validate_builtin_ST_(
-            self, validator, value, input_name,
-            min_occurs=None, max_occurs=None, required=None):
-        if value is not None:
-            try:
-                validator(value, input_name=input_name)
-            except GDSParseError as parse_error:
-                self.gds_collector_.add_message(str(parse_error))
-    def gds_validate_defined_ST_(
-            self, validator, value, input_name,
-            min_occurs=None, max_occurs=None, required=None):
-        if value is not None:
-            try:
-                validator(value)
-            except GDSParseError as parse_error:
-                self.gds_collector_.add_message(str(parse_error))
-    def gds_str_lower(self, instring):
-        return instring.lower()
-    def get_path_(self, node):
-        path_list = []
-        self.get_path_list_(node, path_list)
-        path_list.reverse()
-        path = '/'.join(path_list)
-        return path
-    Tag_strip_pattern_ = re_.compile(r'\{.*\}')
-    def get_path_list_(self, node, path_list):
-        if node is None:
-            return
-        tag = GeneratedsSuper.Tag_strip_pattern_.sub('', node.tag)
-        if tag:
-            path_list.append(tag)
-        self.get_path_list_(node.getparent(), path_list)
-    def get_class_obj_(self, node, default_class=None):
-        class_obj1 = default_class
-        if 'xsi' in node.nsmap:
-            classname = node.get('{%s}type' % node.nsmap['xsi'])
-            if classname is not None:
-                names = classname.split(':')
-                if len(names) == 2:
-                    classname = names[1]
-                class_obj2 = globals().get(classname)
-                if class_obj2 is not None:
-                    class_obj1 = class_obj2
-        return class_obj1
-    def gds_build_any(self, node, type_name=None):
-        # provide default value in case option --disable-xml is used.
-        content = ""
-        content = etree_.tostring(node, encoding="unicode")
-        return content
-    @classmethod
-    def gds_reverse_node_mapping(cls, mapping):
-        return dict(((v, k) for k, v in mapping.items()))
-    @staticmethod
-    def gds_encode(instring):
-        if sys.version_info.major == 2:
-            if ExternalEncoding:
-                encoding = ExternalEncoding
+                        _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
+            return _svalue
+        @classmethod
+        def gds_parse_datetime(cls, input_data):
+            tz = None
+            if input_data[-1] == 'Z':
+                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+                input_data = input_data[:-1]
             else:
-                encoding = 'utf-8'
-            return instring.encode(encoding)
+                results = GeneratedsSuper.tzoff_pattern.search(input_data)
+                if results is not None:
+                    tzoff_parts = results.group(2).split(':')
+                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                    if results.group(1) == '-':
+                        tzoff *= -1
+                    tz = GeneratedsSuper._FixedOffsetTZ(
+                        tzoff, results.group(0))
+                    input_data = input_data[:-6]
+            time_parts = input_data.split('.')
+            if len(time_parts) > 1:
+                micro_seconds = int(float('0.' + time_parts[1]) * 1000000)
+                input_data = '%s.%s' % (
+                    time_parts[0], "{}".format(micro_seconds).rjust(6, "0"), )
+                dt = datetime_.datetime.strptime(
+                    input_data, '%Y-%m-%dT%H:%M:%S.%f')
+            else:
+                dt = datetime_.datetime.strptime(
+                    input_data, '%Y-%m-%dT%H:%M:%S')
+            dt = dt.replace(tzinfo=tz)
+            return dt
+        def gds_validate_date(self, input_data, node=None, input_name=''):
+            return input_data
+        def gds_format_date(self, input_data, input_name=''):
+            _svalue = '%04d-%02d-%02d' % (
+                input_data.year,
+                input_data.month,
+                input_data.day,
+            )
+            try:
+                if input_data.tzinfo is not None:
+                    tzoff = input_data.tzinfo.utcoffset(input_data)
+                    if tzoff is not None:
+                        total_seconds = tzoff.seconds + (86400 * tzoff.days)
+                        if total_seconds == 0:
+                            _svalue += 'Z'
+                        else:
+                            if total_seconds < 0:
+                                _svalue += '-'
+                                total_seconds *= -1
+                            else:
+                                _svalue += '+'
+                            hours = total_seconds // 3600
+                            minutes = (total_seconds - (hours * 3600)) // 60
+                            _svalue += '{0:02d}:{1:02d}'.format(
+                                hours, minutes)
+            except AttributeError:
+                pass
+            return _svalue
+        @classmethod
+        def gds_parse_date(cls, input_data):
+            tz = None
+            if input_data[-1] == 'Z':
+                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+                input_data = input_data[:-1]
+            else:
+                results = GeneratedsSuper.tzoff_pattern.search(input_data)
+                if results is not None:
+                    tzoff_parts = results.group(2).split(':')
+                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                    if results.group(1) == '-':
+                        tzoff *= -1
+                    tz = GeneratedsSuper._FixedOffsetTZ(
+                        tzoff, results.group(0))
+                    input_data = input_data[:-6]
+            dt = datetime_.datetime.strptime(input_data, '%Y-%m-%d')
+            dt = dt.replace(tzinfo=tz)
+            return dt.date()
+        def gds_validate_time(self, input_data, node=None, input_name=''):
+            return input_data
+        def gds_format_time(self, input_data, input_name=''):
+            if input_data.microsecond == 0:
+                _svalue = '%02d:%02d:%02d' % (
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                )
+            else:
+                _svalue = '%02d:%02d:%02d.%s' % (
+                    input_data.hour,
+                    input_data.minute,
+                    input_data.second,
+                    ('%f' % (float(input_data.microsecond) / 1000000))[2:],
+                )
+            if input_data.tzinfo is not None:
+                tzoff = input_data.tzinfo.utcoffset(input_data)
+                if tzoff is not None:
+                    total_seconds = tzoff.seconds + (86400 * tzoff.days)
+                    if total_seconds == 0:
+                        _svalue += 'Z'
+                    else:
+                        if total_seconds < 0:
+                            _svalue += '-'
+                            total_seconds *= -1
+                        else:
+                            _svalue += '+'
+                        hours = total_seconds // 3600
+                        minutes = (total_seconds - (hours * 3600)) // 60
+                        _svalue += '{0:02d}:{1:02d}'.format(hours, minutes)
+            return _svalue
+        def gds_validate_simple_patterns(self, patterns, target):
+            # pat is a list of lists of strings/patterns.
+            # The target value must match at least one of the patterns
+            # in order for the test to succeed.
+            found1 = True
+            for patterns1 in patterns:
+                found2 = False
+                for patterns2 in patterns1:
+                    mo = re_.search(patterns2, target)
+                    if mo is not None and len(mo.group(0)) == len(target):
+                        found2 = True
+                        break
+                if not found2:
+                    found1 = False
+                    break
+            return found1
+        @classmethod
+        def gds_parse_time(cls, input_data):
+            tz = None
+            if input_data[-1] == 'Z':
+                tz = GeneratedsSuper._FixedOffsetTZ(0, 'UTC')
+                input_data = input_data[:-1]
+            else:
+                results = GeneratedsSuper.tzoff_pattern.search(input_data)
+                if results is not None:
+                    tzoff_parts = results.group(2).split(':')
+                    tzoff = int(tzoff_parts[0]) * 60 + int(tzoff_parts[1])
+                    if results.group(1) == '-':
+                        tzoff *= -1
+                    tz = GeneratedsSuper._FixedOffsetTZ(
+                        tzoff, results.group(0))
+                    input_data = input_data[:-6]
+            if len(input_data.split('.')) > 1:
+                dt = datetime_.datetime.strptime(input_data, '%H:%M:%S.%f')
+            else:
+                dt = datetime_.datetime.strptime(input_data, '%H:%M:%S')
+            dt = dt.replace(tzinfo=tz)
+            return dt.time()
+        def gds_check_cardinality_(
+                self, value, input_name,
+                min_occurs=0, max_occurs=1, required=None):
+            if value is None:
+                length = 0
+            elif isinstance(value, list):
+                length = len(value)
+            else:
+                length = 1
+            if required is not None :
+                if required and length < 1:
+                    self.gds_collector_.add_message(
+                        "Required value {}{} is missing".format(
+                            input_name, self.gds_get_node_lineno_()))
+            if length < min_occurs:
+                self.gds_collector_.add_message(
+                    "Number of values for {}{} is below "
+                    "the minimum allowed, "
+                    "expected at least {}, found {}".format(
+                        input_name, self.gds_get_node_lineno_(),
+                        min_occurs, length))
+            elif length > max_occurs:
+                self.gds_collector_.add_message(
+                    "Number of values for {}{} is above "
+                    "the maximum allowed, "
+                    "expected at most {}, found {}".format(
+                        input_name, self.gds_get_node_lineno_(),
+                        max_occurs, length))
+        def gds_validate_builtin_ST_(
+                self, validator, value, input_name,
+                min_occurs=None, max_occurs=None, required=None):
+            if value is not None:
+                try:
+                    validator(value, input_name=input_name)
+                except GDSParseError as parse_error:
+                    self.gds_collector_.add_message(str(parse_error))
+        def gds_validate_defined_ST_(
+                self, validator, value, input_name,
+                min_occurs=None, max_occurs=None, required=None):
+            if value is not None:
+                try:
+                    validator(value)
+                except GDSParseError as parse_error:
+                    self.gds_collector_.add_message(str(parse_error))
+        def gds_str_lower(self, instring):
+            return instring.lower()
+        def get_path_(self, node):
+            path_list = []
+            self.get_path_list_(node, path_list)
+            path_list.reverse()
+            path = '/'.join(path_list)
+            return path
+        Tag_strip_pattern_ = re_.compile(r'\{.*\}')
+        def get_path_list_(self, node, path_list):
+            if node is None:
+                return
+            tag = GeneratedsSuper.Tag_strip_pattern_.sub('', node.tag)
+            if tag:
+                path_list.append(tag)
+            self.get_path_list_(node.getparent(), path_list)
+        def get_class_obj_(self, node, default_class=None):
+            class_obj1 = default_class
+            if 'xsi' in node.nsmap:
+                classname = node.get('{%s}type' % node.nsmap['xsi'])
+                if classname is not None:
+                    names = classname.split(':')
+                    if len(names) == 2:
+                        classname = names[1]
+                    class_obj2 = globals().get(classname)
+                    if class_obj2 is not None:
+                        class_obj1 = class_obj2
+            return class_obj1
+        def gds_build_any(self, node, type_name=None):
+            # provide default value in case option --disable-xml is used.
+            content = ""
+            content = etree_.tostring(node, encoding="unicode")
+            return content
+        @classmethod
+        def gds_reverse_node_mapping(cls, mapping):
+            return dict(((v, k) for k, v in mapping.items()))
+        @staticmethod
+        def gds_encode(instring):
+            if sys.version_info.major == 2:
+                if ExternalEncoding:
+                    encoding = ExternalEncoding
+                else:
+                    encoding = 'utf-8'
+                return instring.encode(encoding)
+            else:
+                return instring
+        @staticmethod
+        def convert_unicode(instring):
+            if isinstance(instring, str):
+                result = quote_xml(instring)
+            elif sys.version_info.major == 2 and isinstance(instring, unicode):
+                result = quote_xml(instring).encode('utf8')
+            else:
+                result = GeneratedsSuper.gds_encode(str(instring))
+            return result
+        def __eq__(self, other):
+            def excl_select_objs_(obj):
+                return (obj[0] != 'parent_object_' and
+                        obj[0] != 'gds_collector_')
+            if type(self) != type(other):
+                return False
+            return all(x == y for x, y in zip_longest(
+                filter(excl_select_objs_, self.__dict__.items()),
+                filter(excl_select_objs_, other.__dict__.items())))
+        def __ne__(self, other):
+            return not self.__eq__(other)
+        # Django ETL transform hooks.
+        def gds_djo_etl_transform(self):
+            pass
+        def gds_djo_etl_transform_db_obj(self, dbobj):
+            pass
+        # SQLAlchemy ETL transform hooks.
+        def gds_sqa_etl_transform(self):
+            return 0, None
+        def gds_sqa_etl_transform_db_obj(self, dbobj):
+            pass
+        def gds_get_node_lineno_(self):
+            if (hasattr(self, "gds_elementtree_node_") and
+                    self.gds_elementtree_node_ is not None):
+                return ' near line {}'.format(
+                    self.gds_elementtree_node_.sourceline)
+            else:
+                return ""
+    
+    
+    def getSubclassFromModule_(module, class_):
+        '''Get the subclass of a class from a specific module.'''
+        name = class_.__name__ + 'Sub'
+        if hasattr(module, name):
+            return getattr(module, name)
         else:
-            return instring
-    @staticmethod
-    def convert_unicode(instring):
-        if isinstance(instring, str):
-            result = quote_xml(instring)
-        elif sys.version_info.major == 2 and isinstance(instring, unicode):
-            result = quote_xml(instring).encode('utf8')
-        else:
-            result = GeneratedsSuper.gds_encode(str(instring))
-        return result
-    def __eq__(self, other):
-        def excl_select_objs_(obj):
-            return (obj[0] != 'parent_object_' and
-                    obj[0] != 'gds_collector_')
-        if type(self) != type(other):
-            return False
-        return all(x == y for x, y in zip_longest(
-            filter(excl_select_objs_, self.__dict__.items()),
-            filter(excl_select_objs_, other.__dict__.items())))
-    def __ne__(self, other):
-        return not self.__eq__(other)
-    # Django ETL transform hooks.
-    def gds_djo_etl_transform(self):
-        pass
-    def gds_djo_etl_transform_db_obj(self, dbobj):
-        pass
-    # SQLAlchemy ETL transform hooks.
-    def gds_sqa_etl_transform(self):
-        return 0, None
-    def gds_sqa_etl_transform_db_obj(self, dbobj):
-        pass
-    def gds_get_node_lineno_(self):
-        if (hasattr(self, "gds_elementtree_node_") and
-                self.gds_elementtree_node_ is not None):
-            return ' near line {}'.format(
-                self.gds_elementtree_node_.sourceline)
-        else:
-            return ""
-
-
-def getSubclassFromModule_(module, class_):
-    '''Get the subclass of a class from a specific module.'''
-    name = class_.__name__ + 'Sub'
-    if hasattr(module, name):
-        return getattr(module, name)
-    else:
-        return None
+            return None
 
 
 #
@@ -1085,6 +1093,42 @@ class UnderlineStyleSimpleType(str, Enum):
     OTHER='other'
 
 
+class charTypeType(str, Enum):
+    """Type of character represented by the
+    grapheme, group, or non-printing character element."""
+    BASE='base'
+    COMBINING='combining'
+
+
+class imageResolutionUnitType(str, Enum):
+    """Specifies the unit of the resolution information
+    referring to a standardised unit of measurement
+    (pixels per inch, pixels per centimeter or other)."""
+    PPI='PPI'
+    PPCM='PPCM'
+    OTHER='other'
+
+
+class typeType(str, Enum):
+    """Type of metadata (e.g. author)"""
+    AUTHOR='author'
+    IMAGE_PROPERTIES='imageProperties'
+    PROCESSING_STEP='processingStep'
+    OTHER='other'
+
+
+class typeType1(str, Enum):
+    LINK='link'
+    JOIN='join'
+
+
+class typeType3(str, Enum):
+    XSDSTRING='xsd:string'
+    XSDINTEGER='xsd:integer'
+    XSDBOOLEAN='xsd:boolean'
+    XSDFLOAT='xsd:float'
+
+
 class PcGtsType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
@@ -1179,6 +1223,38 @@ class PcGtsType(GeneratedsSuper):
         if self.Page is not None:
             namespaceprefix_ = self.Page_nsprefix_ + ':' if (UseCapturedNS_ and self.Page_nsprefix_) else ''
             self.Page.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Page', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PcGtsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.pcGtsId is not None:
+            element.set('pcGtsId', self.gds_format_string(self.pcGtsId))
+        if self.Metadata is not None:
+            Metadata_ = self.Metadata
+            Metadata_.to_etree(element, name_='Metadata', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Page is not None:
+            Page_ = self.Page
+            Page_.to_etree(element, name_='Page', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.pcGtsId, 'pcGtsId')
+        self.gds_check_cardinality_(self.pcGtsId, 'pcGtsId', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Metadata, 'Metadata', min_occurs=1, max_occurs=1)
+        self.gds_check_cardinality_(self.Page, 'Page', min_occurs=1, max_occurs=1)
+        if recursive:
+            if self.Metadata is not None:
+                self.Metadata.validate_(gds_collector, recursive=True)
+            if self.Page is not None:
+                self.Page.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1233,24 +1309,13 @@ class PcGtsType(GeneratedsSuper):
         # XXX Since we're only interested in the **paths** of the images,
         # export, parse and xpath are less convoluted than traversing
         # the generateDS API. Quite possibly not as efficient as could be.
-        sio = StringIO()
-        self.export(
-                outfile=sio,
-                level=0,
-                name_='PcGts',
-                namespaceprefix_='pc:',
-                namespacedef_='xmlns:pc="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
-                    NAMESPACES['page'],
-                    NAMESPACES['page'],
-                    NAMESPACES['page']
-                ))
-        doc = parsexmlstring_(sio.getvalue())  # pylint: disable=undefined-variable
+        doc = self.to_etree()
         # shortcut
         if page and region and line and word and glyph:
             ret += doc.xpath('//page:AlternativeImage/@filename', namespaces=NAMESPACES)
         else:
             if page:
-                ret += doc.xpath('/page:PcGts/page:Page/page:AlternativeImage/@filename', namespaces=NAMESPACES)
+                ret += doc.xpath('page:Page/page:AlternativeImage/@filename', namespaces=NAMESPACES)
             if region:
                 for class_ in PAGE_REGION_TYPES:
                     ret += doc.xpath('//page:%sRegion/page:AlternativeImage/@filename' % class_, namespaces=NAMESPACES)
@@ -1432,6 +1497,57 @@ class MetadataType(GeneratedsSuper):
         for MetadataItem_ in self.MetadataItem:
             namespaceprefix_ = self.MetadataItem_nsprefix_ + ':' if (UseCapturedNS_ and self.MetadataItem_nsprefix_) else ''
             MetadataItem_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MetadataItem', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MetadataType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.externalRef is not None:
+            element.set('externalRef', self.gds_format_string(self.externalRef))
+        if self.Creator is not None:
+            Creator_ = self.Creator
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Creator').text = self.gds_format_string(Creator_)
+        if self.Created is not None:
+            Created_ = self.Created
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Created').text = self.gds_format_datetime(Created_)
+        if self.LastChange is not None:
+            LastChange_ = self.LastChange
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}LastChange').text = self.gds_format_datetime(LastChange_)
+        if self.Comments is not None:
+            Comments_ = self.Comments
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Comments').text = self.gds_format_string(Comments_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for MetadataItem_ in self.MetadataItem:
+            MetadataItem_.to_etree(element, name_='MetadataItem', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.externalRef, 'externalRef')
+        self.gds_check_cardinality_(self.externalRef, 'externalRef', required=False)
+        # validate simple type children
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.Creator, 'Creator')
+        self.gds_check_cardinality_(self.Creator, 'Creator', min_occurs=1, max_occurs=1)
+        self.gds_validate_builtin_ST_(self.gds_validate_datetime, self.Created, 'Created')
+        self.gds_check_cardinality_(self.Created, 'Created', min_occurs=1, max_occurs=1)
+        self.gds_validate_builtin_ST_(self.gds_validate_datetime, self.LastChange, 'LastChange')
+        self.gds_check_cardinality_(self.LastChange, 'LastChange', min_occurs=1, max_occurs=1)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.Comments, 'Comments')
+        self.gds_check_cardinality_(self.Comments, 'Comments', min_occurs=0, max_occurs=1)
+        # validate complex type children
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.MetadataItem, 'MetadataItem', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.MetadataItem:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1500,7 +1616,7 @@ class MetadataItemType(GeneratedsSuper):
     E.g. RGB"""
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'typeType', 0, 1, {'use': 'optional'}),
         MemberSpec_('name', 'string', 0, 1, {'use': 'optional'}),
         MemberSpec_('value', 'string', 0, 0, {'use': 'required'}),
         MemberSpec_('date', 'dateTime', 0, 1, {'use': 'optional'}),
@@ -1571,6 +1687,19 @@ class MetadataItemType(GeneratedsSuper):
         return self.date
     def set_date(self, date):
         self.date = date
+    def validate_typeType(self, value):
+        # Validate type typeType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['author', 'imageProperties', 'processingStep', 'other']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on typeType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
     def hasContent_(self):
         if (
             self.Labels
@@ -1622,6 +1751,43 @@ class MetadataItemType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MetadataItemType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.date is not None:
+            element.set('date', self.gds_format_datetime(self.date))
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_defined_ST_(self.validate_typeType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.name, 'name')
+        self.gds_check_cardinality_(self.name, 'name', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.value, 'value')
+        self.gds_check_cardinality_(self.value, 'value', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_datetime, self.date, 'date')
+        self.gds_check_cardinality_(self.date, 'date', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1638,6 +1804,7 @@ class MetadataItemType(GeneratedsSuper):
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
             self.type_ = value
+            self.validate_typeType(self.type_)    # validate type typeType
         value = find_attr_value_('name', node)
         if value is not None and 'name' not in already_processed:
             already_processed.add('name')
@@ -1798,6 +1965,43 @@ class LabelsType(GeneratedsSuper):
         for Label_ in self.Label:
             namespaceprefix_ = self.Label_nsprefix_ + ':' if (UseCapturedNS_ and self.Label_nsprefix_) else ''
             Label_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Label', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LabelsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.externalModel is not None:
+            element.set('externalModel', self.gds_format_string(self.externalModel))
+        if self.externalId is not None:
+            element.set('externalId', self.gds_format_string(self.externalId))
+        if self.prefix is not None:
+            element.set('prefix', self.gds_format_string(self.prefix))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for Label_ in self.Label:
+            Label_.to_etree(element, name_='Label', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.externalModel, 'externalModel')
+        self.gds_check_cardinality_(self.externalModel, 'externalModel', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.externalId, 'externalId')
+        self.gds_check_cardinality_(self.externalId, 'externalId', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.prefix, 'prefix')
+        self.gds_check_cardinality_(self.prefix, 'prefix', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Label, 'Label', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.Label:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1941,6 +2145,35 @@ class LabelType(GeneratedsSuper):
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='LabelType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.value, 'value')
+        self.gds_check_cardinality_(self.value, 'value', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -2021,7 +2254,7 @@ class PageType(GeneratedsSuper):
         MemberSpec_('imageHeight', 'int', 0, 0, {'use': 'required'}),
         MemberSpec_('imageXResolution', 'float', 0, 1, {'use': 'optional'}),
         MemberSpec_('imageYResolution', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('imageResolutionUnit', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('imageResolutionUnit', 'imageResolutionUnitType', 0, 1, {'use': 'optional'}),
         MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
         MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
         MemberSpec_('type_', 'pc:PageTypeSimpleType', 0, 1, {'use': 'optional'}),
@@ -2473,6 +2706,19 @@ class PageType(GeneratedsSuper):
         return self.conf
     def set_conf(self, conf):
         self.conf = conf
+    def validate_imageResolutionUnitType(self, value):
+        # Validate type imageResolutionUnitType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['PPI', 'PPCM', 'other']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on imageResolutionUnitType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
     def validate_PageTypeSimpleType(self, value):
         # Validate type pc:PageTypeSimpleType, a restriction on string.
         if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
@@ -2732,6 +2978,228 @@ class PageType(GeneratedsSuper):
         for CustomRegion_ in self.CustomRegion:
             namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PageType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.imageFilename is not None:
+            element.set('imageFilename', self.gds_format_string(self.imageFilename))
+        if self.imageWidth is not None:
+            element.set('imageWidth', self.gds_format_integer(self.imageWidth))
+        if self.imageHeight is not None:
+            element.set('imageHeight', self.gds_format_integer(self.imageHeight))
+        if self.imageXResolution is not None:
+            element.set('imageXResolution', self.gds_format_float(self.imageXResolution))
+        if self.imageYResolution is not None:
+            element.set('imageYResolution', self.gds_format_float(self.imageYResolution))
+        if self.imageResolutionUnit is not None:
+            element.set('imageResolutionUnit', self.gds_format_string(self.imageResolutionUnit))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.gds_format_string(self.secondaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.gds_format_string(self.textLineOrder))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Border is not None:
+            Border_ = self.Border
+            Border_.to_etree(element, name_='Border', mapping_=mapping_, nsmap_=nsmap_)
+        if self.PrintSpace is not None:
+            PrintSpace_ = self.PrintSpace
+            PrintSpace_.to_etree(element, name_='PrintSpace', mapping_=mapping_, nsmap_=nsmap_)
+        if self.ReadingOrder is not None:
+            ReadingOrder_ = self.ReadingOrder
+            ReadingOrder_.to_etree(element, name_='ReadingOrder', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Layers is not None:
+            Layers_ = self.Layers
+            Layers_.to_etree(element, name_='Layers', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Relations is not None:
+            Relations_ = self.Relations
+            Relations_.to_etree(element, name_='Relations', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for TextRegion_ in self.TextRegion:
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ImageRegion_ in self.ImageRegion:
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for LineDrawingRegion_ in self.LineDrawingRegion:
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for GraphicRegion_ in self.GraphicRegion:
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for TableRegion_ in self.TableRegion:
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChartRegion_ in self.ChartRegion:
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MapRegion_ in self.MapRegion:
+            MapRegion_.to_etree(element, name_='MapRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for SeparatorRegion_ in self.SeparatorRegion:
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MathsRegion_ in self.MathsRegion:
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChemRegion_ in self.ChemRegion:
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MusicRegion_ in self.MusicRegion:
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for AdvertRegion_ in self.AdvertRegion:
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for NoiseRegion_ in self.NoiseRegion:
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for UnknownRegion_ in self.UnknownRegion:
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for CustomRegion_ in self.CustomRegion:
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.imageFilename, 'imageFilename')
+        self.gds_check_cardinality_(self.imageFilename, 'imageFilename', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.imageWidth, 'imageWidth')
+        self.gds_check_cardinality_(self.imageWidth, 'imageWidth', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.imageHeight, 'imageHeight')
+        self.gds_check_cardinality_(self.imageHeight, 'imageHeight', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.imageXResolution, 'imageXResolution')
+        self.gds_check_cardinality_(self.imageXResolution, 'imageXResolution', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.imageYResolution, 'imageYResolution')
+        self.gds_check_cardinality_(self.imageYResolution, 'imageYResolution', required=False)
+        self.gds_validate_defined_ST_(self.validate_imageResolutionUnitType, self.imageResolutionUnit, 'imageResolutionUnit')
+        self.gds_check_cardinality_(self.imageResolutionUnit, 'imageResolutionUnit', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_PageTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_defined_ST_(self.validate_LanguageSimpleType, self.primaryLanguage, 'primaryLanguage')
+        self.gds_check_cardinality_(self.primaryLanguage, 'primaryLanguage', required=False)
+        self.gds_validate_defined_ST_(self.validate_LanguageSimpleType, self.secondaryLanguage, 'secondaryLanguage')
+        self.gds_check_cardinality_(self.secondaryLanguage, 'secondaryLanguage', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.primaryScript, 'primaryScript')
+        self.gds_check_cardinality_(self.primaryScript, 'primaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.secondaryScript, 'secondaryScript')
+        self.gds_check_cardinality_(self.secondaryScript, 'secondaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ReadingDirectionSimpleType, self.readingDirection, 'readingDirection')
+        self.gds_check_cardinality_(self.readingDirection, 'readingDirection', required=False)
+        self.gds_validate_defined_ST_(self.validate_TextLineOrderSimpleType, self.textLineOrder, 'textLineOrder')
+        self.gds_check_cardinality_(self.textLineOrder, 'textLineOrder', required=False)
+        self.gds_validate_defined_ST_(self.validate_ConfSimpleType, self.conf, 'conf')
+        self.gds_check_cardinality_(self.conf, 'conf', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.AlternativeImage, 'AlternativeImage', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.Border, 'Border', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.PrintSpace, 'PrintSpace', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.ReadingOrder, 'ReadingOrder', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Layers, 'Layers', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Relations, 'Relations', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.TextStyle, 'TextStyle', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item TextRegion
+        #self.gds_check_cardinality_(self.TextRegion, 'TextRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item ImageRegion
+        #self.gds_check_cardinality_(self.ImageRegion, 'ImageRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item LineDrawingRegion
+        #self.gds_check_cardinality_(self.LineDrawingRegion, 'LineDrawingRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item GraphicRegion
+        #self.gds_check_cardinality_(self.GraphicRegion, 'GraphicRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item TableRegion
+        #self.gds_check_cardinality_(self.TableRegion, 'TableRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item ChartRegion
+        #self.gds_check_cardinality_(self.ChartRegion, 'ChartRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item MapRegion
+        #self.gds_check_cardinality_(self.MapRegion, 'MapRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item SeparatorRegion
+        #self.gds_check_cardinality_(self.SeparatorRegion, 'SeparatorRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item MathsRegion
+        #self.gds_check_cardinality_(self.MathsRegion, 'MathsRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item ChemRegion
+        #self.gds_check_cardinality_(self.ChemRegion, 'ChemRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item MusicRegion
+        #self.gds_check_cardinality_(self.MusicRegion, 'MusicRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item AdvertRegion
+        #self.gds_check_cardinality_(self.AdvertRegion, 'AdvertRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item NoiseRegion
+        #self.gds_check_cardinality_(self.NoiseRegion, 'NoiseRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item UnknownRegion
+        #self.gds_check_cardinality_(self.UnknownRegion, 'UnknownRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item CustomRegion
+        #self.gds_check_cardinality_(self.CustomRegion, 'CustomRegion', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.AlternativeImage:
+                item.validate_(gds_collector, recursive=True)
+            if self.Border is not None:
+                self.Border.validate_(gds_collector, recursive=True)
+            if self.PrintSpace is not None:
+                self.PrintSpace.validate_(gds_collector, recursive=True)
+            if self.ReadingOrder is not None:
+                self.ReadingOrder.validate_(gds_collector, recursive=True)
+            if self.Layers is not None:
+                self.Layers.validate_(gds_collector, recursive=True)
+            if self.Relations is not None:
+                self.Relations.validate_(gds_collector, recursive=True)
+            if self.TextStyle is not None:
+                self.TextStyle.validate_(gds_collector, recursive=True)
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.TextRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.ImageRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.LineDrawingRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.GraphicRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.TableRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.ChartRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.MapRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.SeparatorRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.MathsRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.ChemRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.MusicRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.AdvertRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.NoiseRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.UnknownRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.CustomRegion:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -2770,6 +3238,7 @@ class PageType(GeneratedsSuper):
         if value is not None and 'imageResolutionUnit' not in already_processed:
             already_processed.add('imageResolutionUnit')
             self.imageResolutionUnit = value
+            self.validate_imageResolutionUnitType(self.imageResolutionUnit)    # validate type imageResolutionUnitType
         value = find_attr_value_('custom', node)
         if value is not None and 'custom' not in already_processed:
             already_processed.add('custom')
@@ -3152,6 +3621,31 @@ class CoordsType(GeneratedsSuper):
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='CoordsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_defined_ST_(self.validate_PointsType, self.points, 'points')
+        self.gds_check_cardinality_(self.points, 'points', required=True)
+        self.gds_validate_defined_ST_(self.validate_ConfSimpleType, self.conf, 'conf')
+        self.gds_check_cardinality_(self.conf, 'conf', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -3187,6 +3681,27 @@ class CoordsType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def validate_PointsType(self, value):
+        """
+        Improved validation of @points
+        """
+        # 8<-- original
+        # Validate type pc:PointsType, a restriction on string.
+        print('value=%s Validate_simpletypes_=%s gds_collector_=%s' % (value, Validate_simpletypes_, self.gds_collector_))
+        if not value or not Validate_simpletypes_ or not self.gds_collector_:
+            return True
+        if not isinstance(value, str):
+            lineno = self.gds_get_node_lineno_()
+            self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+            return False
+        if not self.gds_validate_simple_patterns(self.validate_PointsType_patterns_, value):
+            self.gds_collector_.add_message('Value "%s" does not match xsd pattern restrictions: %s' % (value, self.validate_PointsType_patterns_, ))
+        # -->8 original
+        for idx, xy in enumerate(value.split(' ')):
+            x, y = [int(v) for v in  xy.split(',')]
+            if x < 0: self.gds_collector_.add_message('Negative x coordinate at position %d in "%s"' % (idx, value))
+            if y < 0: self.gds_collector_.add_message('Negative y coordinate at position %d in "%s"' % (idx, value))
+    
 # end class CoordsType
 
 
@@ -3529,6 +4044,102 @@ class TextLineType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TextLineType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Baseline is not None:
+            Baseline_ = self.Baseline
+            Baseline_.to_etree(element, name_='Baseline', mapping_=mapping_, nsmap_=nsmap_)
+        for Word_ in self.Word:
+            Word_.to_etree(element, name_='Word', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_defined_ST_(self.validate_LanguageSimpleType, self.primaryLanguage, 'primaryLanguage')
+        self.gds_check_cardinality_(self.primaryLanguage, 'primaryLanguage', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.primaryScript, 'primaryScript')
+        self.gds_check_cardinality_(self.primaryScript, 'primaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.secondaryScript, 'secondaryScript')
+        self.gds_check_cardinality_(self.secondaryScript, 'secondaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ReadingDirectionSimpleType, self.readingDirection, 'readingDirection')
+        self.gds_check_cardinality_(self.readingDirection, 'readingDirection', required=False)
+        self.gds_validate_defined_ST_(self.validate_ProductionSimpleType, self.production, 'production')
+        self.gds_check_cardinality_(self.production, 'production', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.index, 'index')
+        self.gds_check_cardinality_(self.index, 'index', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.AlternativeImage, 'AlternativeImage', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.Coords, 'Coords', min_occurs=1, max_occurs=1)
+        self.gds_check_cardinality_(self.Baseline, 'Baseline', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Word, 'Word', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.TextEquiv, 'TextEquiv', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.TextStyle, 'TextStyle', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.AlternativeImage:
+                item.validate_(gds_collector, recursive=True)
+            if self.Coords is not None:
+                self.Coords.validate_(gds_collector, recursive=True)
+            if self.Baseline is not None:
+                self.Baseline.validate_(gds_collector, recursive=True)
+            for item in self.Word:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.TextEquiv:
+                item.validate_(gds_collector, recursive=True)
+            if self.TextStyle is not None:
+                self.TextStyle.validate_(gds_collector, recursive=True)
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -3952,6 +4563,92 @@ class WordType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='WordType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.language is not None:
+            element.set('language', self.gds_format_string(self.language))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        for Glyph_ in self.Glyph:
+            Glyph_.to_etree(element, name_='Glyph', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_defined_ST_(self.validate_LanguageSimpleType, self.language, 'language')
+        self.gds_check_cardinality_(self.language, 'language', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.primaryScript, 'primaryScript')
+        self.gds_check_cardinality_(self.primaryScript, 'primaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.secondaryScript, 'secondaryScript')
+        self.gds_check_cardinality_(self.secondaryScript, 'secondaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ReadingDirectionSimpleType, self.readingDirection, 'readingDirection')
+        self.gds_check_cardinality_(self.readingDirection, 'readingDirection', required=False)
+        self.gds_validate_defined_ST_(self.validate_ProductionSimpleType, self.production, 'production')
+        self.gds_check_cardinality_(self.production, 'production', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.AlternativeImage, 'AlternativeImage', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.Coords, 'Coords', min_occurs=1, max_occurs=1)
+        self.gds_check_cardinality_(self.Glyph, 'Glyph', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.TextEquiv, 'TextEquiv', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.TextStyle, 'TextStyle', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.AlternativeImage:
+                item.validate_(gds_collector, recursive=True)
+            if self.Coords is not None:
+                self.Coords.validate_(gds_collector, recursive=True)
+            for item in self.Glyph:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.TextEquiv:
+                item.validate_(gds_collector, recursive=True)
+            if self.TextStyle is not None:
+                self.TextStyle.validate_(gds_collector, recursive=True)
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4316,6 +5013,89 @@ class GlyphType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GlyphType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.symbol is not None:
+            element.set('symbol', self.gds_format_boolean(self.symbol))
+        if self.script is not None:
+            element.set('script', self.gds_format_string(self.script))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Graphemes is not None:
+            Graphemes_ = self.Graphemes
+            Graphemes_.to_etree(element, name_='Graphemes', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.ligature, 'ligature')
+        self.gds_check_cardinality_(self.ligature, 'ligature', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.symbol, 'symbol')
+        self.gds_check_cardinality_(self.symbol, 'symbol', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.script, 'script')
+        self.gds_check_cardinality_(self.script, 'script', required=False)
+        self.gds_validate_defined_ST_(self.validate_ProductionSimpleType, self.production, 'production')
+        self.gds_check_cardinality_(self.production, 'production', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.AlternativeImage, 'AlternativeImage', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.Coords, 'Coords', min_occurs=1, max_occurs=1)
+        self.gds_check_cardinality_(self.Graphemes, 'Graphemes', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.TextEquiv, 'TextEquiv', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.TextStyle, 'TextStyle', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.AlternativeImage:
+                item.validate_(gds_collector, recursive=True)
+            if self.Coords is not None:
+                self.Coords.validate_(gds_collector, recursive=True)
+            if self.Graphemes is not None:
+                self.Graphemes.validate_(gds_collector, recursive=True)
+            for item in self.TextEquiv:
+                item.validate_(gds_collector, recursive=True)
+            if self.TextStyle is not None:
+                self.TextStyle.validate_(gds_collector, recursive=True)
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4429,7 +5209,7 @@ class TextEquivType(GeneratedsSuper):
     instance."""
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('index', 'integer', 0, 1, {'use': 'optional'}),
+        MemberSpec_('index', 'indexType', 0, 1, {'use': 'optional'}),
         MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
         MemberSpec_('dataType', 'pc:TextDataTypeSimpleType', 0, 1, {'use': 'optional'}),
         MemberSpec_('dataTypeDetails', 'string', 0, 1, {'use': 'optional'}),
@@ -4502,6 +5282,17 @@ class TextEquivType(GeneratedsSuper):
         return self.comments
     def set_comments(self, comments):
         self.comments = comments
+    def validate_indexType(self, value):
+        # Validate type indexType, a restriction on integer.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, int):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (int)' % {"value": value, "lineno": lineno, })
+                return False
+            if value < 0:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd minInclusive restriction on indexType' % {"value": value, "lineno": lineno} )
+                result = False
     def validate_ConfSimpleType(self, value):
         # Validate type pc:ConfSimpleType, a restriction on float.
         if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
@@ -4590,6 +5381,53 @@ class TextEquivType(GeneratedsSuper):
             namespaceprefix_ = self.Unicode_nsprefix_ + ':' if (UseCapturedNS_ and self.Unicode_nsprefix_) else ''
             showIndent(outfile, level, pretty_print)
             outfile.write('<%sUnicode>%s</%sUnicode>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Unicode), input_name='Unicode')), namespaceprefix_ , eol_))
+    def to_etree(self, parent_element=None, name_='TextEquivType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if self.dataType is not None:
+            element.set('dataType', self.gds_format_string(self.dataType))
+        if self.dataTypeDetails is not None:
+            element.set('dataTypeDetails', self.gds_format_string(self.dataTypeDetails))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.PlainText is not None:
+            PlainText_ = self.PlainText
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}PlainText').text = self.gds_format_string(PlainText_)
+        if self.Unicode is not None:
+            Unicode_ = self.Unicode
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Unicode').text = self.gds_format_string(Unicode_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_defined_ST_(self.validate_indexType, self.index, 'index')
+        self.gds_check_cardinality_(self.index, 'index', required=False)
+        self.gds_validate_defined_ST_(self.validate_ConfSimpleType, self.conf, 'conf')
+        self.gds_check_cardinality_(self.conf, 'conf', required=False)
+        self.gds_validate_defined_ST_(self.validate_TextDataTypeSimpleType, self.dataType, 'dataType')
+        self.gds_check_cardinality_(self.dataType, 'dataType', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.dataTypeDetails, 'dataTypeDetails')
+        self.gds_check_cardinality_(self.dataTypeDetails, 'dataTypeDetails', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.PlainText, 'PlainText')
+        self.gds_check_cardinality_(self.PlainText, 'PlainText', min_occurs=0, max_occurs=1)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.Unicode, 'Unicode')
+        self.gds_check_cardinality_(self.Unicode, 'Unicode', min_occurs=1, max_occurs=1)
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4606,6 +5444,7 @@ class TextEquivType(GeneratedsSuper):
         if value is not None and 'index' not in already_processed:
             already_processed.add('index')
             self.index = self.gds_parse_integer(value, node, 'index')
+            self.validate_indexType(self.index)    # validate type indexType
         value = find_attr_value_('conf', node)
         if value is not None and 'conf' not in already_processed:
             already_processed.add('conf')
@@ -4735,6 +5574,27 @@ class GridType(GeneratedsSuper):
         for GridPoints_ in self.GridPoints:
             namespaceprefix_ = self.GridPoints_nsprefix_ + ':' if (UseCapturedNS_ and self.GridPoints_nsprefix_) else ''
             GridPoints_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GridPoints', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GridType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for GridPoints_ in self.GridPoints:
+            GridPoints_.to_etree(element, name_='GridPoints', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.GridPoints, 'GridPoints', min_occurs=2, max_occurs=9999999)
+        if recursive:
+            for item in self.GridPoints:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4859,6 +5719,31 @@ class GridPointsType(GeneratedsSuper):
             outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='GridPointsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.index, 'index')
+        self.gds_check_cardinality_(self.index, 'index', required=True)
+        self.gds_validate_defined_ST_(self.validate_PointsType, self.points, 'points')
+        self.gds_check_cardinality_(self.points, 'points', required=True)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4976,6 +5861,28 @@ class PrintSpaceType(GeneratedsSuper):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PrintSpaceType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Coords, 'Coords', min_occurs=1, max_occurs=1)
+        if recursive:
+            if self.Coords is not None:
+                self.Coords.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5122,6 +6029,40 @@ class ReadingOrderType(GeneratedsSuper):
         if self.UnorderedGroup is not None:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             self.UnorderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ReadingOrderType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if self.OrderedGroup is not None:
+            OrderedGroup_ = self.OrderedGroup
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UnorderedGroup is not None:
+            UnorderedGroup_ = self.UnorderedGroup
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_defined_ST_(self.validate_ConfSimpleType, self.conf, 'conf')
+        self.gds_check_cardinality_(self.conf, 'conf', required=False)
+        # validate simple type children
+        # validate complex type children
+        # cardinality check omitted for choice item OrderedGroup
+        #self.gds_check_cardinality_(self.OrderedGroup, 'OrderedGroup', min_occurs=1, max_occurs=1)
+        # cardinality check omitted for choice item UnorderedGroup
+        #self.gds_check_cardinality_(self.UnorderedGroup, 'UnorderedGroup', min_occurs=1, max_occurs=1)
+        if recursive:
+            if self.OrderedGroup is not None:
+                self.OrderedGroup.validate_(gds_collector, recursive=True)
+            if self.UnorderedGroup is not None:
+                self.UnorderedGroup.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5245,6 +6186,31 @@ class RegionRefIndexedType(GeneratedsSuper):
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='RegionRefIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.index, 'index')
+        self.gds_check_cardinality_(self.index, 'index', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.regionRef, 'regionRef')
+        self.gds_check_cardinality_(self.regionRef, 'regionRef', required=True)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5535,6 +6501,83 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='OrderedGroupIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.regionRef, 'regionRef')
+        self.gds_check_cardinality_(self.regionRef, 'regionRef', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.index, 'index')
+        self.gds_check_cardinality_(self.index, 'index', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.caption, 'caption')
+        self.gds_check_cardinality_(self.caption, 'caption', required=False)
+        self.gds_validate_defined_ST_(self.validate_GroupTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.continuation, 'continuation')
+        self.gds_check_cardinality_(self.continuation, 'continuation', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item RegionRefIndexed
+        #self.gds_check_cardinality_(self.RegionRefIndexed, 'RegionRefIndexed', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item OrderedGroupIndexed
+        #self.gds_check_cardinality_(self.OrderedGroupIndexed, 'OrderedGroupIndexed', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item UnorderedGroupIndexed
+        #self.gds_check_cardinality_(self.UnorderedGroupIndexed, 'UnorderedGroupIndexed', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.RegionRefIndexed:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.OrderedGroupIndexed:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.UnorderedGroupIndexed:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5972,6 +7015,83 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         for UnorderedGroup_ in self.UnorderedGroup:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnorderedGroupIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroup_ in self.OrderedGroup:
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.regionRef, 'regionRef')
+        self.gds_check_cardinality_(self.regionRef, 'regionRef', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.index, 'index')
+        self.gds_check_cardinality_(self.index, 'index', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.caption, 'caption')
+        self.gds_check_cardinality_(self.caption, 'caption', required=False)
+        self.gds_validate_defined_ST_(self.validate_GroupTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.continuation, 'continuation')
+        self.gds_check_cardinality_(self.continuation, 'continuation', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item RegionRef
+        #self.gds_check_cardinality_(self.RegionRef, 'RegionRef', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item OrderedGroup
+        #self.gds_check_cardinality_(self.OrderedGroup, 'OrderedGroup', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item UnorderedGroup
+        #self.gds_check_cardinality_(self.UnorderedGroup, 'UnorderedGroup', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.RegionRef:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.OrderedGroup:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.UnorderedGroup:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6137,6 +7257,27 @@ class RegionRefType(GeneratedsSuper):
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.regionRef, 'regionRef')
+        self.gds_check_cardinality_(self.regionRef, 'regionRef', required=True)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6411,6 +7552,79 @@ class OrderedGroupType(GeneratedsSuper):
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.regionRef, 'regionRef')
+        self.gds_check_cardinality_(self.regionRef, 'regionRef', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.caption, 'caption')
+        self.gds_check_cardinality_(self.caption, 'caption', required=False)
+        self.gds_validate_defined_ST_(self.validate_GroupTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.continuation, 'continuation')
+        self.gds_check_cardinality_(self.continuation, 'continuation', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item RegionRefIndexed
+        #self.gds_check_cardinality_(self.RegionRefIndexed, 'RegionRefIndexed', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item OrderedGroupIndexed
+        #self.gds_check_cardinality_(self.OrderedGroupIndexed, 'OrderedGroupIndexed', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item UnorderedGroupIndexed
+        #self.gds_check_cardinality_(self.UnorderedGroupIndexed, 'UnorderedGroupIndexed', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.RegionRefIndexed:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.OrderedGroupIndexed:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.UnorderedGroupIndexed:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6832,6 +8046,79 @@ class UnorderedGroupType(GeneratedsSuper):
         for UnorderedGroup_ in self.UnorderedGroup:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroup_ in self.OrderedGroup:
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.regionRef, 'regionRef')
+        self.gds_check_cardinality_(self.regionRef, 'regionRef', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.caption, 'caption')
+        self.gds_check_cardinality_(self.caption, 'caption', required=False)
+        self.gds_validate_defined_ST_(self.validate_GroupTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.continuation, 'continuation')
+        self.gds_check_cardinality_(self.continuation, 'continuation', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item RegionRef
+        #self.gds_check_cardinality_(self.RegionRef, 'RegionRef', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item OrderedGroup
+        #self.gds_check_cardinality_(self.OrderedGroup, 'OrderedGroup', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item UnorderedGroup
+        #self.gds_check_cardinality_(self.UnorderedGroup, 'UnorderedGroup', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.RegionRef:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.OrderedGroup:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.UnorderedGroup:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7000,6 +8287,28 @@ class BorderType(GeneratedsSuper):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='BorderType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Coords, 'Coords', min_occurs=1, max_occurs=1)
+        if recursive:
+            if self.Coords is not None:
+                self.Coords.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7118,6 +8427,27 @@ class LayersType(GeneratedsSuper):
         for Layer_ in self.Layer:
             namespaceprefix_ = self.Layer_nsprefix_ + ':' if (UseCapturedNS_ and self.Layer_nsprefix_) else ''
             Layer_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layer', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LayersType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for Layer_ in self.Layer:
+            Layer_.to_etree(element, name_='Layer', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Layer, 'Layer', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            for item in self.Layer:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7262,6 +8592,39 @@ class LayerType(GeneratedsSuper):
         for RegionRef_ in self.RegionRef:
             namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
             RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LayerType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.zIndex is not None:
+            element.set('zIndex', self.gds_format_integer(self.zIndex))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.zIndex, 'zIndex')
+        self.gds_check_cardinality_(self.zIndex, 'zIndex', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.caption, 'caption')
+        self.gds_check_cardinality_(self.caption, 'caption', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.RegionRef, 'RegionRef', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            for item in self.RegionRef:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7411,6 +8774,31 @@ class BaselineType(GeneratedsSuper):
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='BaselineType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_defined_ST_(self.validate_PointsType, self.points, 'points')
+        self.gds_check_cardinality_(self.points, 'points', required=True)
+        self.gds_validate_defined_ST_(self.validate_ConfSimpleType, self.conf, 'conf')
+        self.gds_check_cardinality_(self.conf, 'conf', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7535,6 +8923,27 @@ class RelationsType(GeneratedsSuper):
         for Relation_ in self.Relation:
             namespaceprefix_ = self.Relation_nsprefix_ + ':' if (UseCapturedNS_ and self.Relation_nsprefix_) else ''
             Relation_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relation', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RelationsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for Relation_ in self.Relation:
+            Relation_.to_etree(element, name_='Relation', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Relation, 'Relation', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            for item in self.Relation:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7586,7 +8995,7 @@ class RelationType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'typeType1', 0, 1, {'use': 'optional'}),
         MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
         MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
@@ -7667,6 +9076,19 @@ class RelationType(GeneratedsSuper):
         return self.comments
     def set_comments(self, comments):
         self.comments = comments
+    def validate_typeType1(self, value):
+        # Validate type typeType1, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['link', 'join']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on typeType1' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
     def hasContent_(self):
         if (
             self.Labels or
@@ -7726,6 +9148,55 @@ class RelationType(GeneratedsSuper):
         if self.TargetRegionRef is not None:
             namespaceprefix_ = self.TargetRegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.TargetRegionRef_nsprefix_) else ''
             self.TargetRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TargetRegionRef', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RelationType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if self.SourceRegionRef is not None:
+            SourceRegionRef_ = self.SourceRegionRef
+            SourceRegionRef_.to_etree(element, name_='SourceRegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TargetRegionRef is not None:
+            TargetRegionRef_ = self.TargetRegionRef
+            TargetRegionRef_.to_etree(element, name_='TargetRegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_defined_ST_(self.validate_typeType1, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.SourceRegionRef, 'SourceRegionRef', min_occurs=1, max_occurs=1)
+        self.gds_check_cardinality_(self.TargetRegionRef, 'TargetRegionRef', min_occurs=1, max_occurs=1)
+        if recursive:
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+            if self.SourceRegionRef is not None:
+                self.SourceRegionRef.validate_(gds_collector, recursive=True)
+            if self.TargetRegionRef is not None:
+                self.TargetRegionRef.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7746,6 +9217,7 @@ class RelationType(GeneratedsSuper):
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
             self.type_ = value
+            self.validate_typeType1(self.type_)    # validate type typeType1
         value = find_attr_value_('custom', node)
         if value is not None and 'custom' not in already_processed:
             already_processed.add('custom')
@@ -8089,6 +9561,103 @@ class TextStyleType(GeneratedsSuper):
             outfile.write(' letterSpaced="%s"' % self.gds_format_boolean(self.letterSpaced, input_name='letterSpaced'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='TextStyleType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.fontFamily is not None:
+            element.set('fontFamily', self.gds_format_string(self.fontFamily))
+        if self.serif is not None:
+            element.set('serif', self.gds_format_boolean(self.serif))
+        if self.monospace is not None:
+            element.set('monospace', self.gds_format_boolean(self.monospace))
+        if self.fontSize is not None:
+            element.set('fontSize', self.gds_format_float(self.fontSize))
+        if self.xHeight is not None:
+            element.set('xHeight', self.gds_format_integer(self.xHeight))
+        if self.kerning is not None:
+            element.set('kerning', self.gds_format_integer(self.kerning))
+        if self.textColour is not None:
+            element.set('textColour', self.gds_format_string(self.textColour))
+        if self.textColourRgb is not None:
+            element.set('textColourRgb', self.gds_format_integer(self.textColourRgb))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.bgColourRgb is not None:
+            element.set('bgColourRgb', self.gds_format_integer(self.bgColourRgb))
+        if self.reverseVideo is not None:
+            element.set('reverseVideo', self.gds_format_boolean(self.reverseVideo))
+        if self.bold is not None:
+            element.set('bold', self.gds_format_boolean(self.bold))
+        if self.italic is not None:
+            element.set('italic', self.gds_format_boolean(self.italic))
+        if self.underlined is not None:
+            element.set('underlined', self.gds_format_boolean(self.underlined))
+        if self.underlineStyle is not None:
+            element.set('underlineStyle', self.gds_format_string(self.underlineStyle))
+        if self.subscript is not None:
+            element.set('subscript', self.gds_format_boolean(self.subscript))
+        if self.superscript is not None:
+            element.set('superscript', self.gds_format_boolean(self.superscript))
+        if self.strikethrough is not None:
+            element.set('strikethrough', self.gds_format_boolean(self.strikethrough))
+        if self.smallCaps is not None:
+            element.set('smallCaps', self.gds_format_boolean(self.smallCaps))
+        if self.letterSpaced is not None:
+            element.set('letterSpaced', self.gds_format_boolean(self.letterSpaced))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.fontFamily, 'fontFamily')
+        self.gds_check_cardinality_(self.fontFamily, 'fontFamily', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.serif, 'serif')
+        self.gds_check_cardinality_(self.serif, 'serif', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.monospace, 'monospace')
+        self.gds_check_cardinality_(self.monospace, 'monospace', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.fontSize, 'fontSize')
+        self.gds_check_cardinality_(self.fontSize, 'fontSize', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.xHeight, 'xHeight')
+        self.gds_check_cardinality_(self.xHeight, 'xHeight', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.kerning, 'kerning')
+        self.gds_check_cardinality_(self.kerning, 'kerning', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.textColour, 'textColour')
+        self.gds_check_cardinality_(self.textColour, 'textColour', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.textColourRgb, 'textColourRgb')
+        self.gds_check_cardinality_(self.textColourRgb, 'textColourRgb', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.bgColourRgb, 'bgColourRgb')
+        self.gds_check_cardinality_(self.bgColourRgb, 'bgColourRgb', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.reverseVideo, 'reverseVideo')
+        self.gds_check_cardinality_(self.reverseVideo, 'reverseVideo', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.bold, 'bold')
+        self.gds_check_cardinality_(self.bold, 'bold', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.italic, 'italic')
+        self.gds_check_cardinality_(self.italic, 'italic', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.underlined, 'underlined')
+        self.gds_check_cardinality_(self.underlined, 'underlined', required=False)
+        self.gds_validate_defined_ST_(self.validate_UnderlineStyleSimpleType, self.underlineStyle, 'underlineStyle')
+        self.gds_check_cardinality_(self.underlineStyle, 'underlineStyle', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.subscript, 'subscript')
+        self.gds_check_cardinality_(self.subscript, 'subscript', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.superscript, 'superscript')
+        self.gds_check_cardinality_(self.superscript, 'superscript', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.strikethrough, 'strikethrough')
+        self.gds_check_cardinality_(self.strikethrough, 'strikethrough', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.smallCaps, 'smallCaps')
+        self.gds_check_cardinality_(self.smallCaps, 'smallCaps', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.letterSpaced, 'letterSpaced')
+        self.gds_check_cardinality_(self.letterSpaced, 'letterSpaced', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -8724,6 +10293,152 @@ class RegionType(GeneratedsSuper):
         for CustomRegion_ in self.CustomRegion:
             namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RegionType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Roles is not None:
+            Roles_ = self.Roles
+            Roles_.to_etree(element, name_='Roles', mapping_=mapping_, nsmap_=nsmap_)
+        for TextRegion_ in self.TextRegion:
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ImageRegion_ in self.ImageRegion:
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for LineDrawingRegion_ in self.LineDrawingRegion:
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for GraphicRegion_ in self.GraphicRegion:
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for TableRegion_ in self.TableRegion:
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChartRegion_ in self.ChartRegion:
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for SeparatorRegion_ in self.SeparatorRegion:
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MathsRegion_ in self.MathsRegion:
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChemRegion_ in self.ChemRegion:
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MusicRegion_ in self.MusicRegion:
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for AdvertRegion_ in self.AdvertRegion:
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for NoiseRegion_ in self.NoiseRegion:
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for UnknownRegion_ in self.UnknownRegion:
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for CustomRegion_ in self.CustomRegion:
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.continuation, 'continuation')
+        self.gds_check_cardinality_(self.continuation, 'continuation', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.AlternativeImage, 'AlternativeImage', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.Coords, 'Coords', min_occurs=1, max_occurs=1)
+        self.gds_check_cardinality_(self.UserDefined, 'UserDefined', min_occurs=0, max_occurs=1)
+        self.gds_check_cardinality_(self.Labels, 'Labels', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.Roles, 'Roles', min_occurs=0, max_occurs=1)
+        # cardinality check omitted for choice item TextRegion
+        #self.gds_check_cardinality_(self.TextRegion, 'TextRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item ImageRegion
+        #self.gds_check_cardinality_(self.ImageRegion, 'ImageRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item LineDrawingRegion
+        #self.gds_check_cardinality_(self.LineDrawingRegion, 'LineDrawingRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item GraphicRegion
+        #self.gds_check_cardinality_(self.GraphicRegion, 'GraphicRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item TableRegion
+        #self.gds_check_cardinality_(self.TableRegion, 'TableRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item ChartRegion
+        #self.gds_check_cardinality_(self.ChartRegion, 'ChartRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item SeparatorRegion
+        #self.gds_check_cardinality_(self.SeparatorRegion, 'SeparatorRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item MathsRegion
+        #self.gds_check_cardinality_(self.MathsRegion, 'MathsRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item ChemRegion
+        #self.gds_check_cardinality_(self.ChemRegion, 'ChemRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item MusicRegion
+        #self.gds_check_cardinality_(self.MusicRegion, 'MusicRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item AdvertRegion
+        #self.gds_check_cardinality_(self.AdvertRegion, 'AdvertRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item NoiseRegion
+        #self.gds_check_cardinality_(self.NoiseRegion, 'NoiseRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item UnknownRegion
+        #self.gds_check_cardinality_(self.UnknownRegion, 'UnknownRegion', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item CustomRegion
+        #self.gds_check_cardinality_(self.CustomRegion, 'CustomRegion', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.AlternativeImage:
+                item.validate_(gds_collector, recursive=True)
+            if self.Coords is not None:
+                self.Coords.validate_(gds_collector, recursive=True)
+            if self.UserDefined is not None:
+                self.UserDefined.validate_(gds_collector, recursive=True)
+            for item in self.Labels:
+                item.validate_(gds_collector, recursive=True)
+            if self.Roles is not None:
+                self.Roles.validate_(gds_collector, recursive=True)
+            for item in self.TextRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.ImageRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.LineDrawingRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.GraphicRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.TableRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.ChartRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.SeparatorRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.MathsRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.ChemRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.MusicRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.AdvertRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.NoiseRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.UnknownRegion:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.CustomRegion:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -8975,6 +10690,35 @@ class AlternativeImageType(GeneratedsSuper):
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='AlternativeImageType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.filename is not None:
+            element.set('filename', self.gds_format_string(self.filename))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.filename, 'filename')
+        self.gds_check_cardinality_(self.filename, 'filename', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        self.gds_validate_defined_ST_(self.validate_ConfSimpleType, self.conf, 'conf')
+        self.gds_check_cardinality_(self.conf, 'conf', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9141,6 +10885,40 @@ class GraphemesType(GeneratedsSuper):
         for GraphemeGroup_ in self.GraphemeGroup:
             namespaceprefix_ = self.GraphemeGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.GraphemeGroup_nsprefix_) else ''
             GraphemeGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphemeGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemesType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for Grapheme_ in self.Grapheme:
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
+        for NonPrintingChar_ in self.NonPrintingChar:
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
+        for GraphemeGroup_ in self.GraphemeGroup:
+            GraphemeGroup_.to_etree(element, name_='GraphemeGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        # cardinality check omitted for choice item Grapheme
+        #self.gds_check_cardinality_(self.Grapheme, 'Grapheme', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item NonPrintingChar
+        #self.gds_check_cardinality_(self.NonPrintingChar, 'NonPrintingChar', min_occurs=1, max_occurs=9999999)
+        # cardinality check omitted for choice item GraphemeGroup
+        #self.gds_check_cardinality_(self.GraphemeGroup, 'GraphemeGroup', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            for item in self.Grapheme:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.NonPrintingChar:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.GraphemeGroup:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9193,9 +10971,9 @@ class GraphemeBaseType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
+        MemberSpec_('index', 'indexType2', 0, 0, {'use': 'required'}),
         MemberSpec_('ligature', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('charType', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('charType', 'charTypeType', 0, 1, {'use': 'optional'}),
         MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
         MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
         MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
@@ -9277,6 +11055,30 @@ class GraphemeBaseType(GeneratedsSuper):
         self.comments = comments
     def get_extensiontype_(self): return self.extensiontype_
     def set_extensiontype_(self, extensiontype_): self.extensiontype_ = extensiontype_
+    def validate_indexType2(self, value):
+        # Validate type indexType2, a restriction on int.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, int):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (int)' % {"value": value, "lineno": lineno, })
+                return False
+            if value < 0:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd minInclusive restriction on indexType2' % {"value": value, "lineno": lineno} )
+                result = False
+    def validate_charTypeType(self, value):
+        # Validate type charTypeType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['base', 'combining']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on charTypeType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
     def hasContent_(self):
         if (
             self.TextEquiv
@@ -9342,6 +11144,53 @@ class GraphemeBaseType(GeneratedsSuper):
         for TextEquiv_ in self.TextEquiv:
             namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
             TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeBaseType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.charType is not None:
+            element.set('charType', self.gds_format_string(self.charType))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.id, 'id')
+        self.gds_check_cardinality_(self.id, 'id', required=True)
+        self.gds_validate_defined_ST_(self.validate_indexType2, self.index, 'index')
+        self.gds_check_cardinality_(self.index, 'index', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.ligature, 'ligature')
+        self.gds_check_cardinality_(self.ligature, 'ligature', required=False)
+        self.gds_validate_defined_ST_(self.validate_charTypeType, self.charType, 'charType')
+        self.gds_check_cardinality_(self.charType, 'charType', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.custom, 'custom')
+        self.gds_check_cardinality_(self.custom, 'custom', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.comments, 'comments')
+        self.gds_check_cardinality_(self.comments, 'comments', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.TextEquiv, 'TextEquiv', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.TextEquiv:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9362,6 +11211,7 @@ class GraphemeBaseType(GeneratedsSuper):
         if value is not None and 'index' not in already_processed:
             already_processed.add('index')
             self.index = self.gds_parse_integer(value, node, 'index')
+            self.validate_indexType2(self.index)    # validate type indexType2
         value = find_attr_value_('ligature', node)
         if value is not None and 'ligature' not in already_processed:
             already_processed.add('ligature')
@@ -9375,6 +11225,7 @@ class GraphemeBaseType(GeneratedsSuper):
         if value is not None and 'charType' not in already_processed:
             already_processed.add('charType')
             self.charType = value
+            self.validate_charTypeType(self.charType)    # validate type charTypeType
         value = find_attr_value_('custom', node)
         if value is not None and 'custom' not in already_processed:
             already_processed.add('custom')
@@ -9486,6 +11337,25 @@ class GraphemeType(GraphemeBaseType):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeType', mapping_=None, nsmap_=None):
+        element = super(GraphemeType, self).to_etree(parent_element, name_, mapping_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Coords, 'Coords', min_occurs=1, max_occurs=1)
+        if recursive:
+            if self.Coords is not None:
+                self.Coords.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9585,6 +11455,20 @@ class NonPrintingCharType(GraphemeBaseType):
         super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
         super(NonPrintingCharType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NonPrintingCharType', mapping_=None, nsmap_=None):
+        element = super(NonPrintingCharType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9720,6 +11604,31 @@ class GraphemeGroupType(GraphemeBaseType):
         for NonPrintingChar_ in self.NonPrintingChar:
             namespaceprefix_ = self.NonPrintingChar_nsprefix_ + ':' if (UseCapturedNS_ and self.NonPrintingChar_nsprefix_) else ''
             NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeGroupType', mapping_=None, nsmap_=None):
+        element = super(GraphemeGroupType, self).to_etree(parent_element, name_, mapping_)
+        for Grapheme_ in self.Grapheme:
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
+        for NonPrintingChar_ in self.NonPrintingChar:
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        # cardinality check omitted for choice item Grapheme
+        #self.gds_check_cardinality_(self.Grapheme, 'Grapheme', min_occurs=0, max_occurs=9999999)
+        # cardinality check omitted for choice item NonPrintingChar
+        #self.gds_check_cardinality_(self.NonPrintingChar, 'NonPrintingChar', min_occurs=0, max_occurs=9999999)
+        if recursive:
+            for item in self.Grapheme:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.NonPrintingChar:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9842,6 +11751,27 @@ class UserDefinedType(GeneratedsSuper):
         for UserAttribute_ in self.UserAttribute:
             namespaceprefix_ = self.UserAttribute_nsprefix_ + ':' if (UseCapturedNS_ and self.UserAttribute_nsprefix_) else ''
             UserAttribute_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserAttribute', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UserDefinedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for UserAttribute_ in self.UserAttribute:
+            UserAttribute_.to_etree(element, name_='UserAttribute', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.UserAttribute, 'UserAttribute', min_occurs=1, max_occurs=9999999)
+        if recursive:
+            for item in self.UserAttribute:
+                item.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9880,7 +11810,7 @@ class UserAttributeType(GeneratedsSuper):
     member_data_items_ = [
         MemberSpec_('name', 'string', 0, 1, {'use': 'optional'}),
         MemberSpec_('description', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'typeType3', 0, 1, {'use': 'optional'}),
         MemberSpec_('value', 'string', 0, 1, {'use': 'optional'}),
     ]
     subclass = None
@@ -9930,6 +11860,19 @@ class UserAttributeType(GeneratedsSuper):
         return self.value
     def set_value(self, value):
         self.value = value
+    def validate_typeType3(self, value):
+        # Validate type typeType3, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['xsd:string', 'xsd:integer', 'xsd:boolean', 'xsd:float']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on typeType3' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
     def hasContent_(self):
         if (
 
@@ -9974,6 +11917,39 @@ class UserAttributeType(GeneratedsSuper):
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='UserAttributeType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.description is not None:
+            element.set('description', self.gds_format_string(self.description))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.name, 'name')
+        self.gds_check_cardinality_(self.name, 'name', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.description, 'description')
+        self.gds_check_cardinality_(self.description, 'description', required=False)
+        self.gds_validate_defined_ST_(self.validate_typeType3, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.value, 'value')
+        self.gds_check_cardinality_(self.value, 'value', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9998,6 +11974,7 @@ class UserAttributeType(GeneratedsSuper):
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
             self.type_ = value
+            self.validate_typeType3(self.type_)    # validate type typeType3
         value = find_attr_value_('value', node)
         if value is not None and 'value' not in already_processed:
             already_processed.add('value')
@@ -10130,6 +12107,43 @@ class TableCellRoleType(GeneratedsSuper):
             outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='TableCellRoleType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.rowIndex is not None:
+            element.set('rowIndex', self.gds_format_integer(self.rowIndex))
+        if self.columnIndex is not None:
+            element.set('columnIndex', self.gds_format_integer(self.columnIndex))
+        if self.rowSpan is not None:
+            element.set('rowSpan', self.gds_format_integer(self.rowSpan))
+        if self.colSpan is not None:
+            element.set('colSpan', self.gds_format_integer(self.colSpan))
+        if self.header is not None:
+            element.set('header', self.gds_format_boolean(self.header))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.rowIndex, 'rowIndex')
+        self.gds_check_cardinality_(self.rowIndex, 'rowIndex', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.columnIndex, 'columnIndex')
+        self.gds_check_cardinality_(self.columnIndex, 'columnIndex', required=True)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.rowSpan, 'rowSpan')
+        self.gds_check_cardinality_(self.rowSpan, 'rowSpan', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.colSpan, 'colSpan')
+        self.gds_check_cardinality_(self.colSpan, 'colSpan', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.header, 'header')
+        self.gds_check_cardinality_(self.header, 'header', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10256,6 +12270,28 @@ class RolesType(GeneratedsSuper):
         if self.TableCellRole is not None:
             namespaceprefix_ = self.TableCellRole_nsprefix_ + ':' if (UseCapturedNS_ and self.TableCellRole_nsprefix_) else ''
             self.TableCellRole.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableCellRole', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RolesType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.TableCellRole is not None:
+            TableCellRole_ = self.TableCellRole
+            TableCellRole_.to_etree(element, name_='TableCellRole', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.TableCellRole, 'TableCellRole', min_occurs=0, max_occurs=1)
+        if recursive:
+            if self.TableCellRole is not None:
+                self.TableCellRole.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10365,6 +12401,24 @@ class CustomRegionType(RegionType):
             outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CustomRegionType', fromsubclass_=False, pretty_print=True):
         super(CustomRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='CustomRegionType', mapping_=None, nsmap_=None):
+        element = super(CustomRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_string, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10461,6 +12515,20 @@ class UnknownRegionType(RegionType):
         super(UnknownRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
         super(UnknownRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnknownRegionType', mapping_=None, nsmap_=None):
+        element = super(UnknownRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10555,6 +12623,20 @@ class NoiseRegionType(RegionType):
         super(NoiseRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
         super(NoiseRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NoiseRegionType', mapping_=None, nsmap_=None):
+        element = super(NoiseRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10686,6 +12768,28 @@ class AdvertRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
         super(AdvertRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='AdvertRegionType', mapping_=None, nsmap_=None):
+        element = super(AdvertRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10827,6 +12931,28 @@ class MusicRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
         super(MusicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MusicRegionType', mapping_=None, nsmap_=None):
+        element = super(MusicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10945,6 +13071,24 @@ class MapRegionType(RegionType):
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
         super(MapRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MapRegionType', mapping_=None, nsmap_=None):
+        element = super(MapRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11082,6 +13226,28 @@ class ChemRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
         super(ChemRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChemRegionType', mapping_=None, nsmap_=None):
+        element = super(ChemRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11224,6 +13390,28 @@ class MathsRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
         super(MathsRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MathsRegionType', mapping_=None, nsmap_=None):
+        element = super(MathsRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11367,6 +13555,28 @@ class SeparatorRegionType(RegionType):
             outfile.write(' colour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.colour), input_name='colour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
         super(SeparatorRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='SeparatorRegionType', mapping_=None, nsmap_=None):
+        element = super(SeparatorRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colour is not None:
+            element.set('colour', self.gds_format_string(self.colour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.colour, 'colour')
+        self.gds_check_cardinality_(self.colour, 'colour', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11557,6 +13767,40 @@ class ChartRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
         super(ChartRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChartRegionType', mapping_=None, nsmap_=None):
+        element = super(ChartRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ChartTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.numColours, 'numColours')
+        self.gds_check_cardinality_(self.numColours, 'numColours', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.embText, 'embText')
+        self.gds_check_cardinality_(self.embText, 'embText', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11789,6 +14033,53 @@ class TableRegionType(RegionType):
         if self.Grid is not None:
             namespaceprefix_ = self.Grid_nsprefix_ + ':' if (UseCapturedNS_ and self.Grid_nsprefix_) else ''
             self.Grid.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grid', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TableRegionType', mapping_=None, nsmap_=None):
+        element = super(TableRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.rows is not None:
+            element.set('rows', self.gds_format_integer(self.rows))
+        if self.columns is not None:
+            element.set('columns', self.gds_format_integer(self.columns))
+        if self.lineColour is not None:
+            element.set('lineColour', self.gds_format_string(self.lineColour))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.lineSeparators is not None:
+            element.set('lineSeparators', self.gds_format_boolean(self.lineSeparators))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if self.Grid is not None:
+            Grid_ = self.Grid
+            Grid_.to_etree(element, name_='Grid', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.rows, 'rows')
+        self.gds_check_cardinality_(self.rows, 'rows', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.columns, 'columns')
+        self.gds_check_cardinality_(self.columns, 'columns', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.lineColour, 'lineColour')
+        self.gds_check_cardinality_(self.lineColour, 'lineColour', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.lineSeparators, 'lineSeparators')
+        self.gds_check_cardinality_(self.lineSeparators, 'lineSeparators', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.embText, 'embText')
+        self.gds_check_cardinality_(self.embText, 'embText', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.Grid, 'Grid', min_occurs=0, max_occurs=1)
+        if recursive:
+            if self.Grid is not None:
+                self.Grid.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11990,6 +14281,36 @@ class GraphicRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
         super(GraphicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphicRegionType', mapping_=None, nsmap_=None):
+        element = super(GraphicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_GraphicsTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.numColours, 'numColours')
+        self.gds_check_cardinality_(self.numColours, 'numColours', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.embText, 'embText')
+        self.gds_check_cardinality_(self.embText, 'embText', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12168,6 +14489,36 @@ class LineDrawingRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
         super(LineDrawingRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LineDrawingRegionType', mapping_=None, nsmap_=None):
+        element = super(LineDrawingRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.penColour is not None:
+            element.set('penColour', self.gds_format_string(self.penColour))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.penColour, 'penColour')
+        self.gds_check_cardinality_(self.penColour, 'penColour', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.embText, 'embText')
+        self.gds_check_cardinality_(self.embText, 'embText', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12360,6 +14711,36 @@ class ImageRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
         super(ImageRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ImageRegionType', mapping_=None, nsmap_=None):
+        element = super(ImageRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colourDepth is not None:
+            element.set('colourDepth', self.gds_format_string(self.colourDepth))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourDepthSimpleType, self.colourDepth, 'colourDepth')
+        self.gds_check_cardinality_(self.colourDepth, 'colourDepth', required=False)
+        self.gds_validate_defined_ST_(self.validate_ColourSimpleType, self.bgColour, 'bgColour')
+        self.gds_check_cardinality_(self.bgColour, 'bgColour', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.embText, 'embText')
+        self.gds_check_cardinality_(self.embText, 'embText', required=False)
+        # validate simple type children
+        # validate complex type children
+        if recursive:
+            pass
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12782,6 +15163,87 @@ class TextRegionType(RegionType):
         if self.TextStyle is not None:
             namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
             self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TextRegionType', mapping_=None, nsmap_=None):
+        element = super(TextRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.leading is not None:
+            element.set('leading', self.gds_format_integer(self.leading))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.gds_format_string(self.textLineOrder))
+        if self.readingOrientation is not None:
+            element.set('readingOrientation', self.gds_format_float(self.readingOrientation))
+        if self.indented is not None:
+            element.set('indented', self.gds_format_boolean(self.indented))
+        if self.align is not None:
+            element.set('align', self.gds_format_string(self.align))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.gds_format_string(self.secondaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        for TextLine_ in self.TextLine:
+            TextLine_.to_etree(element, name_='TextLine', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
+    def validate_(self, gds_collector, recursive=False):
+        self.gds_collector_ = gds_collector
+        message_count = len(self.gds_collector_.get_messages())
+        # validate simple type attributes
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.orientation, 'orientation')
+        self.gds_check_cardinality_(self.orientation, 'orientation', required=False)
+        self.gds_validate_defined_ST_(self.validate_TextTypeSimpleType, self.type_, 'type_')
+        self.gds_check_cardinality_(self.type_, 'type_', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_integer, self.leading, 'leading')
+        self.gds_check_cardinality_(self.leading, 'leading', required=False)
+        self.gds_validate_defined_ST_(self.validate_ReadingDirectionSimpleType, self.readingDirection, 'readingDirection')
+        self.gds_check_cardinality_(self.readingDirection, 'readingDirection', required=False)
+        self.gds_validate_defined_ST_(self.validate_TextLineOrderSimpleType, self.textLineOrder, 'textLineOrder')
+        self.gds_check_cardinality_(self.textLineOrder, 'textLineOrder', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_float, self.readingOrientation, 'readingOrientation')
+        self.gds_check_cardinality_(self.readingOrientation, 'readingOrientation', required=False)
+        self.gds_validate_builtin_ST_(self.gds_validate_boolean, self.indented, 'indented')
+        self.gds_check_cardinality_(self.indented, 'indented', required=False)
+        self.gds_validate_defined_ST_(self.validate_AlignSimpleType, self.align, 'align')
+        self.gds_check_cardinality_(self.align, 'align', required=False)
+        self.gds_validate_defined_ST_(self.validate_LanguageSimpleType, self.primaryLanguage, 'primaryLanguage')
+        self.gds_check_cardinality_(self.primaryLanguage, 'primaryLanguage', required=False)
+        self.gds_validate_defined_ST_(self.validate_LanguageSimpleType, self.secondaryLanguage, 'secondaryLanguage')
+        self.gds_check_cardinality_(self.secondaryLanguage, 'secondaryLanguage', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.primaryScript, 'primaryScript')
+        self.gds_check_cardinality_(self.primaryScript, 'primaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ScriptSimpleType, self.secondaryScript, 'secondaryScript')
+        self.gds_check_cardinality_(self.secondaryScript, 'secondaryScript', required=False)
+        self.gds_validate_defined_ST_(self.validate_ProductionSimpleType, self.production, 'production')
+        self.gds_check_cardinality_(self.production, 'production', required=False)
+        # validate simple type children
+        # validate complex type children
+        self.gds_check_cardinality_(self.TextLine, 'TextLine', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.TextEquiv, 'TextEquiv', min_occurs=0, max_occurs=9999999)
+        self.gds_check_cardinality_(self.TextStyle, 'TextStyle', min_occurs=0, max_occurs=1)
+        if recursive:
+            for item in self.TextLine:
+                item.validate_(gds_collector, recursive=True)
+            for item in self.TextEquiv:
+                item.validate_(gds_collector, recursive=True)
+            if self.TextStyle is not None:
+                self.TextStyle.validate_(gds_collector, recursive=True)
+        return message_count == len(self.gds_collector_.get_messages())
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12933,36 +15395,6 @@ def get_required_ns_prefix_defs(rootNode):
     return nsmap, namespacedefs
 
 
-def parse(inFileName, silence=False, print_warnings=True):
-    global CapturedNsmap_
-    gds_collector = GdsCollector_()
-    parser = None
-    doc = parsexml_(inFileName, parser)
-    rootNode = doc.getroot()
-    rootTag, rootClass = get_root_tag(rootNode)
-    if rootClass is None:
-        rootTag = 'PcGts'
-        rootClass = PcGts
-    rootObj = rootClass.factory()
-    rootObj.build(rootNode, gds_collector_=gds_collector)
-    CapturedNsmap_, namespacedefs = get_required_ns_prefix_defs(rootNode)
-    if not SaveElementTreeNode:
-        doc = None
-        rootNode = None
-    if not silence:
-        sys.stdout.write('<?xml version="1.0" ?>\n')
-        rootObj.export(
-            sys.stdout, 0, name_=rootTag,
-            namespacedef_=namespacedefs,
-            pretty_print=True)
-    if print_warnings and len(gds_collector.get_messages()) > 0:
-        separator = ('-' * 50) + '\n'
-        sys.stderr.write(separator)
-        sys.stderr.write('----- Warnings -- count: {} -----\n'.format(
-            len(gds_collector.get_messages()), ))
-        gds_collector.write_messages(sys.stderr)
-        sys.stderr.write(separator)
-    return rootObj
 
 
 def parseEtree(inFileName, silence=False, print_warnings=True,
@@ -13002,39 +15434,6 @@ def parseEtree(inFileName, silence=False, print_warnings=True,
     return rootObj, rootElement, mapping, reverse_mapping
 
 
-def parseString(inString, silence=False, print_warnings=True):
-    '''Parse a string, create the object tree, and export it.
-
-    Arguments:
-    - inString -- A string.  This XML fragment should not start
-      with an XML declaration containing an encoding.
-    - silence -- A boolean.  If False, export the object.
-    Returns -- The root object in the tree.
-    '''
-    parser = None
-    rootNode= parsexmlstring_(inString, parser)
-    gds_collector = GdsCollector_()
-    rootTag, rootClass = get_root_tag(rootNode)
-    if rootClass is None:
-        rootTag = 'PcGts'
-        rootClass = PcGts
-    rootObj = rootClass.factory()
-    rootObj.build(rootNode, gds_collector_=gds_collector)
-    if not SaveElementTreeNode:
-        rootNode = None
-    if not silence:
-        sys.stdout.write('<?xml version="1.0" ?>\n')
-        rootObj.export(
-            sys.stdout, 0, name_=rootTag,
-            namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"')
-    if print_warnings and len(gds_collector.get_messages()) > 0:
-        separator = ('-' * 50) + '\n'
-        sys.stderr.write(separator)
-        sys.stderr.write('----- Warnings -- count: {} -----\n'.format(
-            len(gds_collector.get_messages()), ))
-        gds_collector.write_messages(sys.stderr)
-        sys.stderr.write(separator)
-    return rootObj
 
 
 def parseLiteral(inFileName, silence=False, print_warnings=True):
@@ -13082,6 +15481,224 @@ if __name__ == '__main__':
 
 RenameMappings_ = {
 }
+
+#
+# Mapping of namespaces to types defined in them
+# and the file in which each is defined.
+# simpleTypes are marked "ST" and complexTypes "CT".
+NamespaceToDefMappings_ = {'http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15': [('ColourSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ReadingDirectionSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('TextLineOrderSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('TextTypeSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('PageTypeSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ConfSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('LanguageSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ScriptSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ColourDepthSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('GraphicsTypeSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ChartTypeSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('PointsType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ProductionSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('AlignSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('GroupTypeSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('TextDataTypeSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('UnderlineStyleSimpleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('PcGtsType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MetadataType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MetadataItemType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LabelsType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LabelType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('PageType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('CoordsType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextLineType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('WordType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GlyphType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextEquivType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ImageRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LineDrawingRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphicRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TableRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GridType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GridPointsType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ChartRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('SeparatorRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MathsRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ChemRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MapRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MusicRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('AdvertRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('NoiseRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UnknownRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('CustomRegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('PrintSpaceType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ReadingOrderType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RegionRefIndexedType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('OrderedGroupIndexedType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UnorderedGroupIndexedType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RegionRefType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('OrderedGroupType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UnorderedGroupType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('BorderType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LayersType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LayerType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('BaselineType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RelationsType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RelationType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextStyleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RegionType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('AlternativeImageType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemesType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemeBaseType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemeType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('NonPrintingCharType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemeGroupType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UserDefinedType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UserAttributeType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TableCellRoleType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RolesType',
+                                                                      'ocrd_validators/ocrd_validators/page.xsd',
+                                                                      'CT')]}
 
 __all__ = [
     "AdvertRegionType",
@@ -13139,3 +15756,70 @@ __all__ = [
     "UserDefinedType",
     "WordType"
 ]
+def parse(inFileName, silence=False, print_warnings=True, filename=None):
+    global CapturedNsmap_
+    if not filename:
+        filename = inFileName
+    gds_collector = GdsCollector_(filename=filename)
+    parser = None
+    doc = parsexml_(inFileName, parser)
+    rootNode = doc.getroot()
+    rootTag, rootClass = get_root_tag(rootNode)
+    if rootClass is None:
+        rootTag = 'PcGts'
+        rootClass = PcGts
+    rootObj = rootClass.factory()
+    rootObj.build(rootNode, gds_collector_=gds_collector)
+    CapturedNsmap_, namespacedefs = get_required_ns_prefix_defs(rootNode)
+    if not SaveElementTreeNode:
+        doc = None
+        rootNode = None
+    if not silence:
+        sys.stdout.write('<?xml version="1.0" ?>\n')
+        rootObj.export(
+            sys.stdout, 0, name_=rootTag,
+            namespacedef_=namespacedefs,
+            pretty_print=True)
+    if print_warnings and len(gds_collector.get_messages()) > 0:
+        separator = ('-' * 50) + '\n'
+        sys.stderr.write(separator)
+        sys.stderr.write('----- Warnings -- count: {} -----\n'.format(
+            len(gds_collector.get_messages()), ))
+        gds_collector.write_messages(sys.stderr)
+        sys.stderr.write(separator)
+    return rootObj
+
+def parseString(inString, silence=False, print_warnings=True, filename=None):
+    '''Parse a string, create the object tree, and export it.
+
+    Arguments:
+    - inString -- A string.  This XML fragment should not start
+      with an XML declaration containing an encoding.
+    - silence -- A boolean.  If False, export the object.
+    Returns -- The root object in the tree.
+    '''
+    parser = None
+    rootNode= parsexmlstring_(inString, parser)
+    gds_collector = GdsCollector_(filename=filename)
+    rootTag, rootClass = get_root_tag(rootNode)
+    if rootClass is None:
+        rootTag = 'PcGts'
+        rootClass = PcGts
+    rootObj = rootClass.factory()
+    rootObj.build(rootNode, gds_collector_=gds_collector)
+    if not SaveElementTreeNode:
+        rootNode = None
+    if not silence:
+        sys.stdout.write('<?xml version="1.0" ?>\n')
+        rootObj.export(
+            sys.stdout, 0, name_=rootTag,
+            namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"')
+    if print_warnings and len(gds_collector.get_messages()) > 0:
+        separator = ('-' * 50) + '\n'
+        sys.stderr.write(separator)
+        sys.stderr.write('----- Warnings -- count: {} -----\n'.format(
+            len(gds_collector.get_messages()), ))
+        gds_collector.write_messages(sys.stderr)
+        sys.stderr.write(separator)
+    return rootObj
+

@@ -2,6 +2,7 @@ from tests.base import TestCase, main, assets
 from tests.data.mock_file import MockOcrdFile as OcrdFile
 
 from ocrd_modelfactory import page_from_image
+from ocrd_models.report import ValidationReport
 from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
@@ -293,6 +294,7 @@ class TestOcrdPage(TestCase):
             # TODO: Test with word/glyph-level AlternativeImages
             # self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(word=False)), 37)
 
+
     def test_serialize_no_empty_readingorder(self):
         """
         https://github.com/OCR-D/core/issues/602
@@ -312,6 +314,46 @@ class TestOcrdPage(TestCase):
         testset = set()
         testset.add(pcgts)
         testset.add(page)
+
+    def test_gdscollector_override(self):
+        from ocrd_models.generatedscollector import OcrdGdsCollector
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            gdc = pcgts.gds_collector_
+            self.assertTrue(isinstance(gdc, OcrdGdsCollector))
+            self.assertTrue(isinstance(gdc, ValidationReport))
+
+    def test_gdscollector_info(self):
+        filename = assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml')
+        with open(filename, 'r') as f:
+            s = f.read()
+            s = s.replace('pc:Page', 'pc:Foo')
+            s = s.encode('utf-8')
+            pcgts = parseString(s, silence=True, filename=filename)
+            gdsc = pcgts.gds_collector_
+            self.assertEqual(gdsc.warnings, [])
+            self.assertEqual(gdsc.filename, filename)
+            pcgts.validate_(gdsc, True)
+            self.assertEqual(gdsc.warnings, ['Number of values for Page near line 2 is below the minimum allowed, expected at least 1, found 0'])
+
+    def test_gdscollector_points(self):
+        p = parseString('''\
+<pc:PcGts xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd" pcGtsId="FOO1">
+    <pc:Metadata>
+        <pc:Creator>me</pc:Creator>
+        <pc:Created>2020-10-12T18:32:40</pc:Created>
+        <pc:LastChange>2020-10-12T18:32:40</pc:LastChange>
+    </pc:Metadata>
+    <pc:Page imageFilename="IMG/FOO1.tif" imageWidth="1000" imageHeight="1000" type="content">
+        <pc:TextRegion id="FOO1_region1">
+            <pc:Coords points="-100,-100 -100,1100 1100,1100 1100,-100"/>
+        </pc:TextRegion>
+    </pc:Page>
+</pc:PcGts>''')
+        print(p.gds_collector_.to_xml())
+        p.validate_(p.gds_collector_, True)
+        print(p.gds_collector_.to_xml())
+        assert 0
 
 if __name__ == '__main__':
     main(__file__)

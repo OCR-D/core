@@ -88,16 +88,23 @@ generate-page: repo/assets
 		-f \
 		--root-element='PcGts' \
 		-o $(GDS_PAGE) \
-		--disable-generatedssuper-lookup \
+		--export="write etree validate" \
 		--user-methods=$(GDS_PAGE_USER) \
 		ocrd_validators/ocrd_validators/page.xsd
-	# hack to prevent #451: enum keys will be strings
-	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
 	# hack to ensure output has pc: prefix
 	@#sed -i "s/namespaceprefix_=''/namespaceprefix_='pc:'/" $(GDS_PAGE)
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
 	# hack to ensure child nodes also have pc: prefix...
 	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
+	#
+	# hack to replace parse, parseString and error collection logic
+	sed -i \
+		-e '/def parse(/,/return rootObj/ d' \
+		-e '/def parseString(/,/return rootObj/ d' \
+		$(GDS_PAGE)
+	cat ocrd_models/ocrd_page_parse.py >> $(GDS_PAGE)
+	sed -i 's,from generatedscollector import,from .generatedscollector import,' $(GDS_PAGE)
+
 
 #
 # Repos
