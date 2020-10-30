@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Sat Oct 31 00:47:39 2020 by generateDS.py version 2.35.20.
+# Generated Sat Oct 31 00:59:08 2020 by generateDS.py version 2.35.20.
 # Python 3.6.7 (default, Oct 22 2018, 11:32:17)  [GCC 8.2.0]
 #
 # Command line options:
@@ -3067,6 +3067,15 @@ class PageType(GeneratedsSuper):
         for image in removed_images:
             self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
                 image.get_comments() or '', name))
+    def set_Border(self, Border):
+        """
+        Set coordinate polygon by given object.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        self.invalidate_AlternativeImage(feature_selector='cropped')
+        self.Border = Border
     def set_orientation(self, orientation):
         """
         Set deskewing angle to given number.
