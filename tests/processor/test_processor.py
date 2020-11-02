@@ -30,9 +30,19 @@ class TestProcessor(TestCase):
         with self.assertRaisesRegex(Exception, 'pass mets_url to create a workspace'):
             run_processor(DummyProcessor, resolver=self.resolver)
 
+    def test_no_input_file_grp(self):
+        processor = run_processor(DummyProcessor,
+                                  resolver=self.resolver,
+                                  mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        with self.assertRaisesRegex(Exception, 'Processor is missing input fileGrp'):
+            _ = processor.input_files
+
     def test_with_mets_url_input_files(self):
-        processor = run_processor(DummyProcessor, resolver=self.resolver, mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        self.assertEqual(len(processor.input_files), 20)
+        processor = run_processor(DummyProcessor,
+                                  input_file_grp='OCR-D-SEG-PAGE',
+                                  resolver=self.resolver,
+                                  mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        self.assertEqual(len(processor.input_files), 2)
         self.assertTrue(all([f.mimetype == MIMETYPE_PAGE for f in processor.input_files]))
 
     def test_parameter(self):
@@ -44,10 +54,11 @@ class TestProcessor(TestCase):
                 processor = run_processor(
                     DummyProcessor,
                     parameter=json.load(f),
+                    input_file_grp="OCR-D-IMG",
                     resolver=self.resolver,
                     mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml')
                 )
-            self.assertEqual(len(processor.input_files), 20)
+            self.assertEqual(len(processor.input_files), 3)
 
     def test_verify(self):
         proc = DummyProcessor(self.workspace)
