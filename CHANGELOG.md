@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * Use `chmod`, not `fchmod` to support Windows, #636 ht @b2m
+  * Do not capture processor output in `run_cli`, #592, #638
 
 Changed:
 
