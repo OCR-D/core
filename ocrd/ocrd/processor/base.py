@@ -102,29 +102,24 @@ class Processor():
     @property
     def input_files(self):
         """
-        List the input files.
+        List the input files (for single input file groups).
 
-        - If there's a PAGE-XML for the page, take it (and forget about all
+        For each physical page:
+        - If there is a single PAGE-XML for the page, take it (and forget about all
           other files for that page)
-        - Else if there's only one image, take it (and forget about all other
+        - Else if there is a single image file, take it (and forget about all other
           files for that page)
         - Otherwise raise an error (complaining that only PAGE-XML warrants
-
           having multiple images for a single page)
         (https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593)
         """
-        ret = self.workspace.mets.find_all_files(
-            fileGrp=self.input_file_grp, pageId=self.page_id, mimetype=MIMETYPE_PAGE)
-        if ret:
-            return ret
-        ret = self.workspace.mets.find_all_files(
-            fileGrp=self.input_file_grp, pageId=self.page_id, mimetype="//image/.*")
-        if self.page_id and len(ret) > 1:
-            raise ValueError("No PAGE-XML %s in fileGrp '%s' but multiple images." % (
-                "for page '%s'" % self.page_id if self.page_id else '',
-                self.input_file_grp
-                ))
-        return ret
+        if not self.input_file_grp:
+            raise ValueError("Processor is missing input fileGrp")
+        ret = self.zip_input_files(mimetype=None, on_error='abort')
+        if not ret:
+            return []
+        assert len(ret[0]) == 1, 'Use zip_input_files() instead of input_files when processing multiple input fileGrps'
+        return [tuples[0] for tuples in ret]
 
     def zip_input_files(self, require_first=True, mimetype=None, on_error='skip'):
         """
@@ -164,6 +159,8 @@ class Processor():
              type (literal or regex prefixed by ``//``.
              Otherwise prefer PAGE or image.
         """
+        if not self.input_file_grp:
+            raise ValueError("Processor is missing input fileGrp")
 
         LOG = getLogger('ocrd.processor.base')
         ifgs = self.input_file_grp.split(",")
