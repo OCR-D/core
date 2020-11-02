@@ -126,21 +126,43 @@ class Processor():
                 ))
         return ret
 
-    def zip_input_files(self, require_first=True, mimetype=MIMETYPE_PAGE):
+    def zip_input_files(self, require_first=True, mimetype=None, on_error='skip'):
         """
         List tuples of input files (for multiple input file groups).
 
         Processors that expect/need multiple input file groups,
         cannot use ``input_files``. They must align (zip) input files
         across pages. This includes the case where not all pages
-        are equally present in all file groups.
+        are equally present in all file groups. It also requires
+        making a consistent selection if there are multiple files
+        per page.
 
-        This function does not make much sense for non-PAGE fileGrps,
-        so it uses a fixed MIME type filter for PAGE-XML.
+        Following the OCR-D functional model, this function tries to
+        find a single PAGE file per page, or fall back to a single
+        image file per page. In either case, multiple matches per page
+        are an error (see error handling below).
+        This default behaviour can be changed by using a fixed MIME
+        type filter via ``mimetype``. But still, multiple matching
+        files per page are an error.
+
+        Single-page multiple-file errors are handled according to
+        ``on_error``:
+        - if ``skip``, then the page for the respective fileGrp will be
+          silently skipped (as if there was no match at all)
+        - if ``first``, then the first matching file for the page will be
+          silently selected (as if the first was the only match)
+        - if ``last``, then the last matching file for the page will be
+          silently selected (as if the last was the only match)
+        - if ``abort``, then an exception will be raised.
+        Multiple matches for PAGE-XML will always raise an exception.
 
         Args:
              require_first (bool): If true, then skip a page entirely
              whenever it is not available in the first input fileGrp.
+
+             mimetype (str): If not None, filter by the specified MIME
+             type (literal or regex prefixed by ``//``.
+             Otherwise prefer PAGE or image.
         """
 
         LOG = getLogger('ocrd.processor.base')
@@ -152,13 +174,55 @@ class Processor():
 
         pages = dict()
         for i, ifg in enumerate(ifgs):
-            for file_ in self.workspace.mets.find_all_files(
-                    pageId=self.page_id, fileGrp=ifg, mimetype=mimetype):
+            for file_ in sorted(self.workspace.mets.find_all_files(
+                    pageId=self.page_id, fileGrp=ifg, mimetype=mimetype),
+                                # sort by MIME type so PAGE comes before images
+                                key=lambda file_: file_.mimetype):
                 if not file_.pageId:
                     continue
-                LOG.debug("adding page %s to input file group %s", file_.pageId, ifg)
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
-                ift[i] = file_
+                if ift[i]:
+                    LOG.debug("another page %s in input file group %s", file_.pageId, ifg)
+                    # fileGrp has multiple files for this page ID
+                    if mimetype:
+                        # filter was active, this must not happen
+                        if on_error == 'skip':
+                            ift[i] = None
+                        elif on_error == 'first':
+                            pass # keep first match
+                        elif on_error == 'last':
+                            ift[i] = file_
+                        elif on_error == 'abort':
+                            raise ValueError(
+                                "Multiple '%s' matches for page '%s' in fileGrp '%s'." % (
+                                    mimetype, file_.pageId, ifg))
+                        else:
+                            raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
+                    elif (ift[i].mimetype == MIMETYPE_PAGE and
+                          file_.mimetype != MIMETYPE_PAGE):
+                        pass # keep PAGE match
+                    elif (ift[i].mimetype == MIMETYPE_PAGE and
+                          file_.mimetype == MIMETYPE_PAGE):
+                            raise ValueError(
+                                "Multiple PAGE-XML matches for page '%s' in fileGrp '%s'." % (
+                                    file_.pageId, ifg))
+                    else:
+                        # filter was inactive but no PAGE is in control, this must not happen
+                        if on_error == 'skip':
+                            ift[i] = None
+                        elif on_error == 'first':
+                            pass # keep first match
+                        elif on_error == 'last':
+                            ift[i] = file_
+                        elif on_error == 'abort':
+                            raise ValueError(
+                                "No PAGE-XML for page '%s' in fileGrp '%s' but multiple matches." % (
+                                    file_.pageId, ifg))
+                        else:
+                            raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
+                else:
+                    LOG.debug("adding page %s to input file group %s", file_.pageId, ifg)
+                    ift[i] = file_
         ifts = list()
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
