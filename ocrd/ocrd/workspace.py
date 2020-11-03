@@ -266,6 +266,9 @@ class Workspace():
         Return
             :class:`OcrdExif`
         """
+        if not image_url:
+            # avoid "finding" just any file
+            raise Exception("Cannot resolve empty image path")
         f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
         image_filename = self.download_file(f).local_filename
         ocrd_exif = exif_from_filename(image_filename)
@@ -286,6 +289,9 @@ class Workspace():
             Image or region in image as PIL.Image
 
         """
+        if not image_url:
+            # avoid "finding" just any file
+            raise Exception("Cannot resolve empty image path")
         log = getLogger('ocrd.workspace._resolve_image_as_pil')
         f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
         image_filename = self.download_file(f).local_filename
