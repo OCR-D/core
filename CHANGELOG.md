@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.20.0] - 2020-11-03
+
 Fixed:
 
   * Use `chmod`, not `fchmod` to support Windows, #636 ht @b2m
@@ -1208,6 +1210,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.20.0]: ../../compare/v2.20.0..v2.19.0
 [2.19.0]: ../../compare/v2.19.0..v2.18.1
 [2.18.1]: ../../compare/v2.18.1..v2.18.0
 [2.18.0]: ../../compare/v2.18.0..v2.17.2
