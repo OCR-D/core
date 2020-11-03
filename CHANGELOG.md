@@ -14,6 +14,7 @@ Changed:
 
   * Record version information in `pg:MetadataItem`, #637
   * New method `Processor.zip_input_files` to uniformly handle files from multiple input file groups, #635
+  * Auto-invalidate derived `pg:AlternativeImage` images when changing coords, #639
 
 ## [2.19.0] - 2020-10-23
 
