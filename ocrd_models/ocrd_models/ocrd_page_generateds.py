@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Sep 21 14:00:49 2020 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Jul 17 2020, 12:50:27)  [GCC 8.4.0]
+# Generated Sat Oct 31 00:59:08 2020 by generateDS.py version 2.35.20.
+# Python 3.6.7 (default, Oct 22 2018, 11:32:17)  [GCC 8.2.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -16,7 +16,7 @@
 #   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -3036,6 +3036,57 @@ class PageType(GeneratedsSuper):
                 else:
                     ret = in_reading_order + [r for r in ret if r not in in_reading_order]
         return ret
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
+    def set_Border(self, Border):
+        """
+        Set coordinate polygon by given object.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        self.invalidate_AlternativeImage(feature_selector='cropped')
+        self.Border = Border
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class PageType
 
 
@@ -3187,6 +3238,22 @@ class CoordsType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_points(self, points):
+        """
+        Set coordinate polygon by given string.
+        Moreover, invalidate the parent's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        if hasattr(self, 'parent_object_'):
+            parent = self.parent_object_
+            if hasattr(parent, 'invalidate_AlternativeImage'):
+                # RegionType, TextLineType, WordType, GlyphType:
+                parent.invalidate_AlternativeImage()
+            elif hasattr(parent, 'parent_object_') and hasattr(parent.parent_object_, 'invalidate_AlternativeImage'):
+                # BorderType:
+                parent.parent_object_.invalidate_AlternativeImage(feature_selector='cropped')
+        self.points = points
 # end class CoordsType
 
 
@@ -3633,6 +3700,51 @@ class TextLineType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
+    def set_Coords(self, Coords):
+        """
+        Set coordinate polygon by given object.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # RegionType, TextLineType, WordType, GlyphType:
+            self.invalidate_AlternativeImage()
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'invalidate_AlternativeImage'):
+            # BorderType:
+            self.parent_object_.invalidate_AlternativeImage(feature_selector='cropped')
+        self.Coords = Coords
 # end class TextLineType
 
 
@@ -4047,6 +4159,51 @@ class WordType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
+    def set_Coords(self, Coords):
+        """
+        Set coordinate polygon by given object.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # RegionType, TextLineType, WordType, GlyphType:
+            self.invalidate_AlternativeImage()
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'invalidate_AlternativeImage'):
+            # BorderType:
+            self.parent_object_.invalidate_AlternativeImage(feature_selector='cropped')
+        self.Coords = Coords
 # end class WordType
 
 
@@ -4414,6 +4571,51 @@ class GlyphType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
+    def set_Coords(self, Coords):
+        """
+        Set coordinate polygon by given object.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # RegionType, TextLineType, WordType, GlyphType:
+            self.invalidate_AlternativeImage()
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'invalidate_AlternativeImage'):
+            # BorderType:
+            self.parent_object_.invalidate_AlternativeImage(feature_selector='cropped')
+        self.Coords = Coords
 # end class GlyphType
 
 
@@ -7029,6 +7231,20 @@ class BorderType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_Coords(self, Coords):
+        """
+        Set coordinate polygon by given object.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # RegionType, TextLineType, WordType, GlyphType:
+            self.invalidate_AlternativeImage()
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'invalidate_AlternativeImage'):
+            # BorderType:
+            self.parent_object_.invalidate_AlternativeImage(feature_selector='cropped')
+        self.Coords = Coords
 # end class BorderType
 
 
@@ -8867,6 +9083,51 @@ class RegionType(GeneratedsSuper):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def invalidate_AlternativeImage(self, feature_selector=None):
+        """
+        Remove derived images from this segment (due to changed coordinates).
+    
+        If ``feature_selector`` is not none, remove only images with
+        matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
+        """
+        existing_images = self.AlternativeImage or []
+        removed_images = []
+        if feature_selector:
+            new_images = []
+            for image in existing_images:
+                features = image.get_comments() or ''
+                if any(feature in features.split(',')
+                       for feature in feature_selector.split(',') if feature):
+                    removed_images.append(image)
+                else:
+                    new_images.append(image)
+            self.AlternativeImage = new_images
+        else:
+            removed_images = existing_images
+            self.AlternativeImage = []
+        if hasattr(self, 'id'):
+            name = self.id
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'pcGtsId'):
+            name = self.parent_object_.pcGtsId
+        else:
+            name = ''
+        for image in removed_images:
+            self.gds_collector_.add_message('Removing AlternativeImage %s from "%s"' % (
+                image.get_comments() or '', name))
+    def set_Coords(self, Coords):
+        """
+        Set coordinate polygon by given object.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been cropped with a bbox
+         of the previous polygon).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # RegionType, TextLineType, WordType, GlyphType:
+            self.invalidate_AlternativeImage()
+        elif hasattr(self, 'parent_object_') and hasattr(self.parent_object_, 'invalidate_AlternativeImage'):
+            # BorderType:
+            self.parent_object_.invalidate_AlternativeImage(feature_selector='cropped')
+        self.Coords = Coords
 # end class RegionType
 
 
@@ -10722,6 +10983,17 @@ class AdvertRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class AdvertRegionType
 
 
@@ -10863,6 +11135,17 @@ class MusicRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class MusicRegionType
 
 
@@ -10976,6 +11259,17 @@ class MapRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class MapRegionType
 
 
@@ -11118,6 +11412,17 @@ class ChemRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class ChemRegionType
 
 
@@ -11260,6 +11565,17 @@ class MathsRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class MathsRegionType
 
 
@@ -11403,6 +11719,17 @@ class SeparatorRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class SeparatorRegionType
 
 
@@ -11611,6 +11938,17 @@ class ChartRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class ChartRegionType
 
 
@@ -11860,6 +12198,17 @@ class TableRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class TableRegionType
 
 
@@ -12039,6 +12388,17 @@ class GraphicRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class GraphicRegionType
 
 
@@ -12218,6 +12578,17 @@ class LineDrawingRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class LineDrawingRegionType
 
 
@@ -12410,6 +12781,17 @@ class ImageRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class ImageRegionType
 
 
@@ -12890,6 +13272,17 @@ class TextRegionType(RegionType):
         else:
             raise ValueError("Cannot hash %s" % self)
         return hash(val)
+    def set_orientation(self, orientation):
+        """
+        Set deskewing angle to given number.
+        Moreover, invalidate self's AlternativeImages
+        (because they will have been rotated and enlarged
+         with the angle of the previous value).
+        """
+        if hasattr(self, 'invalidate_AlternativeImage'):
+            # PageType, RegionType:
+            self.invalidate_AlternativeImage(feature_selector='deskewed')
+        self.orientation = orientation
 # end class TextRegionType
 
 

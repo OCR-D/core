@@ -109,6 +109,12 @@ METHOD_SPECS = (
     _add_method(r'^(PageType)$', 'get_AllRegions'),
     _add_method(r'^(PcGtsType)$', 'get_AllAlternativeImagePaths'),
     _add_method(r'^(PcGtsType)$', 'prune_ReadingOrder'),
+    _add_method(r'^(PageType|RegionType|TextLineType|WordType|GlyphType)$', 'invalidate_AlternativeImage'),
+    _add_method(r'^(BorderType|RegionType|TextLineType|WordType|GlyphType)$', 'set_Coords'),
+    _add_method(r'^(PageType)$', 'set_Border'),
+    _add_method(r'^(CoordsType)$', 'set_points'),
+    # for some reason, pagecontent.xsd does not declare @orientation at the abstract/base RegionType:
+    _add_method(r'^(PageType|AdvertRegionType|MusicRegionType|MapRegionType|ChemRegionType|MathsRegionType|SeparatorRegionType|ChartRegionType|TableRegionType|GraphicRegionType|LineDrawingRegionType|ImageRegionType|TextRegionType)$', 'set_orientation'),
     )
 
 
