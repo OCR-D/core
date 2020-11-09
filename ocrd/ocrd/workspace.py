@@ -538,7 +538,7 @@ class Workspace():
                     log, name, orientation, page_image, page_coords, page_xywh)
             elif feature == 'deskewed':
                 page_image, page_coords, page_xywh = _rotate(
-                    log, name, skew, page_image, page_coords, page_xywh,
+                    log, name, skew, border, page_image, page_coords, page_xywh,
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
@@ -761,7 +761,7 @@ class Workspace():
                     log, name, orientation, segment_image, segment_coords, segment_xywh)
             elif feature == 'deskewed':
                 segment_image, segment_coords, segment_xywh = _rotate(
-                    log, name, skew, segment_image, segment_coords, segment_xywh, 
+                    log, name, skew, segment, segment_image, segment_coords, segment_xywh,
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
@@ -825,8 +825,9 @@ def _crop(log, name, segment, parent_image, parent_coords, **kwargs):
     # crop, if (still) necessary:
     if (not isinstance(segment, BorderType) or # always crop below page level
         not 'cropped' in parent_coords['features']):
-        log.debug("Cropping %s", name)
-        segment_coords['features'] += ',cropped'
+        if isinstance(segment, BorderType):
+            log.info("Cropping %s", name)
+            segment_coords['features'] += ',cropped'
         # create a mask from the segment polygon:
         segment_image = image_from_polygon(parent_image, segment_polygon, **kwargs)
         # crop to bbox:
@@ -863,7 +864,7 @@ def _reflect(log, name, orientation, segment_image, segment_coords, segment_xywh
         segment_coords['features'] += ',rotated-%d' % orientation
     return segment_image, segment_coords, segment_xywh
 
-def _rotate(log, name, skew, segment_image, segment_coords, segment_xywh, **kwargs):
+def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xywh, **kwargs):
     # Rotate around center in affine coordinate transform:
     # (consistent with image rotation or AlternativeImage below)
     segment_coords['transform'] = rotate_coordinates(
@@ -878,4 +879,19 @@ def _rotate(log, name, skew, segment_image, segment_coords, segment_xywh, **kwar
         log.info("Rotating %s by %.2f°", name, skew)
         segment_image = rotate_image(segment_image, skew, **kwargs)
         segment_coords['features'] += ',deskewed'
+        if (segment and
+            (not isinstance(segment, BorderType) or # always crop below page level
+             'cropped' in segment_coords['features'])):
+            # re-crop to new bbox (which may deviate
+            # if segment polygon was not a rectangle)
+            segment_image, segment_coords, segment_xywh = _crop(
+                log, name, segment, segment_image, segment_coords,
+                **kwargs)
+    elif (segment and
+          (not isinstance(segment, BorderType) or # always crop below page level
+           'cropped' in segment_coords['features'])):
+        # only shift coordinates as if re-cropping
+        _, segment_coords, segment_xywh = _crop(
+            log, name, segment, segment_image, segment_coords,
+            **kwargs)
     return segment_image, segment_coords, segment_xywh
