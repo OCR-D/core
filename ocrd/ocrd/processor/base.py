@@ -187,7 +187,7 @@ class Processor():
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
                 if ift[i]:
-                    LOG.debug("another page %s in input file group %s", file_.pageId, ifg)
+                    LOG.debug("another file %s for page %s in input file group %s", file_.ID, file_.pageId, ifg)
                     # fileGrp has multiple files for this page ID
                     if mimetype:
                         # filter was active, this must not happen
@@ -226,7 +226,7 @@ class Processor():
                         else:
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                 else:
-                    LOG.debug("adding page %s to input file group %s", file_.pageId, ifg)
+                    LOG.debug("adding file %s for page %s to input file group %s", file_.ID, file_.pageId, ifg)
                     ift[i] = file_
         ifts = list()
         for page, ifiles in pages.items():
