@@ -657,16 +657,21 @@ class Workspace():
             segment, parent_image, parent_coords,
             fill=fill, transparency=transparency)
 
-        if 'orientation' in segment.__dict__:
+        # Semantics of missing @orientation at region level could be either
+        # - inherited from page level: same as line or word level (no @orientation),
+        # - zero (unrotate page angle): different from line or word level (because
+        #   otherwise deskewing would never have an effect on lines and words)
+        # The PAGE specification is silent here (but does generally not concern itself
+        # much with AlternativeImage coordinate consistency).
+        # Since our (generateDS-backed) ocrd_page supports the zero/none distinction,
+        # we choose the former (i.e. None is inheritance).
+        if 'orientation' in segment.__dict__ and segment.get_orientation() is not None:
             # region angle: PAGE @orientation is defined clockwise,
             # whereas PIL/ndimage rotation is in mathematical direction:
-            segment_coords['angle'] = -(segment.get_orientation() or 0)
-        else:
-            segment_coords['angle'] = 0
-        if segment_coords['angle']:
+            angle = -segment.get_orientation()
             # @orientation is always absolute; if higher levels
             # have already rotated, then we must compensate:
-            angle = segment_coords['angle'] - parent_coords['angle']
+            angle -= parent_coords['angle']
             # map angle from (-180,180] to [0,360], and partition into multiples of 90;
             # but avoid unnecessary large remainders, i.e. split symmetrically:
             orientation = (angle + 45) % 360
