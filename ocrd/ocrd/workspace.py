@@ -493,6 +493,13 @@ class Workspace():
         # This helps deal with arbitrary workflows (e.g. crop then deskew,
         # or deskew then crop), regardless of where images are generated.
         alternative_image_features = page_coords['features'].split(',')
+        for duplicate_feature in set([feature for feature in alternative_image_features
+                                      # features relevant in reconstructing coordinates:
+                                      if (feature in ['cropped', 'deskewed', 'rotated-90',
+                                                      'rotated-180', 'rotated-270'] and
+                                          alternative_image_features.count(feature) > 1)]):
+            log.error("Duplicate feature %s in AlternativeImage for page '%s'",
+                      duplicate_feature, page_id)
         for i, feature in enumerate(alternative_image_features +
                                     (['cropped']
                                      if (border and
@@ -728,6 +735,13 @@ class Workspace():
                 segment_coords['features'] = features
 
         alternative_image_features = segment_coords['features'].split(',')
+        for duplicate_feature in set([feature for feature in alternative_image_features
+                                      # features relevant in reconstructing coordinates:
+                                      if (feature in ['deskewed', 'rotated-90',
+                                                      'rotated-180', 'rotated-270'] and
+                                          alternative_image_features.count(feature) > 1)]):
+            log.error("Duplicate feature %s in AlternativeImage for segment '%s'",
+                      duplicate_feature, segment.id)
         for i, feature in enumerate(alternative_image_features +
                                     (['rotated-%d' % orientation]
                                      if (orientation and
