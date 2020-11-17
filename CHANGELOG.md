@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.20.1] - 2020-11-17
+
 Fixed:
 
   * `Workspace.find_files`: Ignore `mets:file` w/o `mets:FLocat`, #640
@@ -1216,6 +1218,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.20.1]: ../../compare/v2.20.1..v2.20.0
 [2.20.0]: ../../compare/v2.20.0..v2.19.0
 [2.19.0]: ../../compare/v2.19.0..v2.18.1
 [2.18.1]: ../../compare/v2.18.1..v2.18.0
