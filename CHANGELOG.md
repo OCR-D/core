@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `Workspace.find_files`: Ignore `mets:file` w/o `mets:FLocat`, #640
+  * Re-crop after rotation to avoid coordinate inconsistencies (and get tighter crops), #640
+  * Handle missing `@orientation` by using the next-upper-level `@orientation`, #640
+
 ## [2.20.0] - 2020-11-03
 
 Fixed:
