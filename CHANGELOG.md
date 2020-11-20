@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.20.2] - 2020-11-20
+
+Fixed:
+
+  * `ocrd workspace`: workspace directory should always be absolute, #644
+
 ## [2.20.1] - 2020-11-17
 
 Fixed:
@@ -1218,6 +1224,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.20.2]: ../../compare/v2.20.2..v2.20.1
 [2.20.1]: ../../compare/v2.20.1..v2.20.0
 [2.20.0]: ../../compare/v2.20.0..v2.19.0
 [2.19.0]: ../../compare/v2.19.0..v2.18.1
