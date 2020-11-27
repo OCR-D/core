@@ -1,7 +1,7 @@
 """
 Helper methods for running and documenting processors
 """
-from time import time
+from time import perf_counter, process_time
 import json
 import inspect
 from subprocess import run, PIPE
@@ -65,12 +65,15 @@ def run_processor(
     otherrole = ocrd_tool['steps'][0]
     logProfile = getLogger('ocrd.process.profile')
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
-    t0 = time()
+    t0_wall = perf_counter()
+    t0_cpu = process_time()
     processor.process()
-    t1 = time() - t0
-    logProfile.info("Executing processor '%s' took %fs [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s']" % (
+    t1_wall = perf_counter() - t0_wall
+    t1_cpu = process_time() - t0_cpu
+    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s']" % (
         ocrd_tool['executable'],
-        t1,
+        t1_wall,
+        t1_cpu,
         input_file_grp if input_file_grp else '',
         output_file_grp if output_file_grp else '',
         json.dumps(parameter) if parameter else {}
