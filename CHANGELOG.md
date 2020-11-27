@@ -9,6 +9,10 @@ Changed:
 
   * `prune_ReadingOrder`: also remove if RO contains only empty groups, #648
 
+Fixed:
+
+  * `TaskSequence.parse` do not hard-code class to instantiate, #649
+
 ## [2.20.2] - 2020-11-20
 
 Fixed:
