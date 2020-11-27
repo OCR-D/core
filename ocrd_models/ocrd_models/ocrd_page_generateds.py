@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Sat Oct 31 00:59:08 2020 by generateDS.py version 2.35.20.
-# Python 3.6.7 (default, Oct 22 2018, 11:32:17)  [GCC 8.2.0]
+# Generated Fri Nov 27 15:25:12 2020 by generateDS.py version 2.35.20.
+# Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -16,7 +16,7 @@
 #   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1267,8 +1267,19 @@ class PcGtsType(GeneratedsSuper):
         Remove any empty ReadingOrder elements
         """
         ro = self.get_Page().get_ReadingOrder()
-        if ro and not ro.get_OrderedGroup() and not ro.get_UnorderedGroup():
-            self.get_Page().set_ReadingOrder(None)
+        if ro:
+            og = ro.get_OrderedGroup()
+            if og and (not og.get_RegionRefIndexed() and
+                       not og.get_OrderedGroupIndexed() and
+                       not og.get_UnorderedGroupIndexed()):
+                og = None
+            ug = ro.get_UnorderedGroup()
+            if ug and (not ug.get_RegionRef() and
+                       not ug.get_OrderedGroup() and
+                       not ug.get_UnorderedGroup()):
+                ug = None
+            if not og and not ug:
+                self.get_Page().set_ReadingOrder(None)
 # end class PcGtsType
 
 
