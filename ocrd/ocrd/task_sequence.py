@@ -36,7 +36,7 @@ class ProcessorTask():
                 tokens = tokens[3:]
             else:
                 raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
-        return ProcessorTask(executable, input_file_grps, output_file_grps, parameters)
+        return cls(executable, input_file_grps, output_file_grps, parameters)
 
     def __init__(self, executable, input_file_grps, output_file_grps, parameters):
         self.executable = executable
