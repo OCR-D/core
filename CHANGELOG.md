@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `prune_ReadingOrder`: also remove if RO contains only empty groups, #648
+
 ## [2.20.2] - 2020-11-20
 
 Fixed:
