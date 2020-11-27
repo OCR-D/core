@@ -8,6 +8,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * `prune_ReadingOrder`: also remove if RO contains only empty groups, #648
+  * Don't restrict version range on `numpy`, #642
+  * `run_cli`: measure both wall time and CPU time, #647
 
 Fixed:
 
