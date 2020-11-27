@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.21.0] - 2020-11-27
+
 Changed:
 
   * `prune_ReadingOrder`: also remove if RO contains only empty groups, #648
@@ -1234,6 +1236,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.21.0]: ../../compare/v2.21.0..v2.20.2
 [2.20.2]: ../../compare/v2.20.2..v2.20.1
 [2.20.1]: ../../compare/v2.20.1..v2.20.0
 [2.20.0]: ../../compare/v2.20.0..v2.19.0
