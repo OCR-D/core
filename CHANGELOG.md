@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `run_cli`: don't reference undefined vars in error handler, #651
+
 ## [2.21.0] - 2020-11-27
 
 Changed:
