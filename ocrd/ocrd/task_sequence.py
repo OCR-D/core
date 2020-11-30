@@ -156,4 +156,4 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
         # check output file groups are in mets
         for output_file_grp in task.output_file_grps:
             if not output_file_grp in workspace.mets.file_groups:
-                raise Exception("Invalid state: expected output file group not in mets: %s\nSTDOUT:\n%s\nSTDERR:\n%s" % (output_file_grp, out, err))
+                raise Exception("Invalid state: expected output file group '%s' not in METS (despite processor success)" % output_file_grp)
