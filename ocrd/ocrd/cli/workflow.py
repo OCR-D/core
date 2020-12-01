@@ -100,5 +100,6 @@ def server_cli(log_level, host, port, tasks):
         if fun is None:
             raise RuntimeError('Not running with the Werkzeug Server')
         fun()
+        return 'Stopped'
     log.debug("Running server on http://%s:%d", host, port)
     app.run(host=host, port=port)
