@@ -3,6 +3,7 @@ CLI for task_sequence
 """
 import click
 import flask
+import requests
 
 from ocrd_utils import getLogger, initLogging
 from ocrd.task_sequence import run_tasks, parse_tasks
@@ -94,6 +95,12 @@ def server_cli(log_level, host, port, tasks):
             log.exception("Request '%s' failed", str(flask.request.args))
             return 'Failed: %s' % str(e)
         return 'Finished'
+    @app.route('/list-tasks')
+    def list_tasks(): # pylint: disable=unused-variable
+        seq = ''
+        for task in tasks:
+            seq += '\n' + str(task)
+        return seq
     @app.route('/shutdown')
     def shutdown(): # pylint: disable=unused-variable
         fun = flask.request.environ.get('werkzeug.server.shutdown')
@@ -103,3 +110,67 @@ def server_cli(log_level, host, port, tasks):
         return 'Stopped'
     log.debug("Running server on http://%s:%d", host, port)
     app.run(host=host, port=port)
+
+# ----------------------------------------------------------------------
+# ocrd workflow client
+# ----------------------------------------------------------------------
+@workflow_cli.group('client')
+@click.option('-h', '--host', help="host name/IP to listen at", default='127.0.0.1')
+@click.option('-p', '--port', help="TCP port to listen at", default=5000, type=click.IntRange(min=1024))
+@click.pass_context
+def client_cli(ctx, host, port):
+    """
+    Have the workflow server run commands
+    """
+    url = 'http://' + host + ':' + str(port) + '/'
+    ctx.ensure_object(dict)
+    ctx.obj['URL'] = url
+
+@client_cli.command('process')
+@click.option('-m', '--mets', help="METS to process", default="mets.xml")
+@click.option('-g', '--page-id', help="ID(s) of the pages to process")
+@click.option('--overwrite', is_flag=True, default=False, help="Remove output pages/images if they already exist")
+@click.pass_context
+def client_process_cli(ctx, mets, page_id, overwrite):
+    """
+    Have the workflow server process another workspace
+    """
+    url = ctx.obj['URL'] + 'process'
+    params = {'mets': mets,
+              'page_id': page_id,
+              'overwrite': str(overwrite)
+    }
+    response = requests.get(url, params=params)
+    if response.status_code != 200:
+        raise Exception("HTTP request failed: %s (HTTP %d)" % (
+            response.url, response.status_code))
+    print(response.text)
+    if response.text != 'Finished':
+        return 1
+
+@client_cli.command('list-tasks')
+@click.pass_context
+def client_process_cli(ctx):
+    """
+    Have the workflow server print the configured task sequence
+    """
+    url = ctx.obj['URL'] + 'list-tasks'
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception("HTTP request failed: %s (HTTP %d)" % (
+            response.url, response.status_code))
+    print(response.text)
+
+@client_cli.command('shutdown')
+@click.pass_context
+def client_process_cli(ctx):
+    """
+    Have the workflow server shutdown gracefully
+    """
+    url = ctx.obj['URL'] + 'shutdown'
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception("HTTP request failed: %s (HTTP %d)" % (
+            response.url, response.status_code))
+    print(response.text)
+
