@@ -55,14 +55,12 @@ def run_processor(
     processor = processorClass(
         workspace,
         ocrd_tool=ocrd_tool,
+        input_file_grp=input_file_grp,
+        output_file_grp=output_file_grp,
+        page_id=page_id,
         parameter=parameter
     )
-    error = run_api(
-        processor,
-        page_id=page_id,
-        input_file_grp=input_file_grp,
-        output_file_grp=output_file_grp
-    )
+    error = run_api(processor)
     if error:
         raise error
     workspace.save_mets()
