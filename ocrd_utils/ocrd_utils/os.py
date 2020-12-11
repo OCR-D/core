@@ -11,7 +11,7 @@ __all__ = [
 
 from tempfile import TemporaryDirectory
 import contextlib
-from os import getcwd, chdir, stat, fchmod, umask, environ, walk
+from os import getcwd, chdir, stat, chmod, umask, environ, walk
 from os.path import exists, abspath as abspath_, join, isdir
 from zipfile import ZipFile
 

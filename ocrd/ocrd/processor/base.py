@@ -22,6 +22,7 @@ import requests
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
+    getLogger,
     list_resource_candidates,
     list_all_resources,
     XDG_CACHE_HOME
