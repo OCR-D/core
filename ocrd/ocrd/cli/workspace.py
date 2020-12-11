@@ -31,6 +31,7 @@ class WorkspaceCtx():
                 raise ValueError("--mets is an http(s) URL but no --directory was given")
             directory = dirname(abspath(mets_url)) or getcwd()
         elif directory and not mets_url:
+            directory = abspath(directory)
             mets_url = join(directory, mets_basename)
         else:
             directory = getcwd()

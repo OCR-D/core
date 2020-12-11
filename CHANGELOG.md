@@ -5,6 +5,49 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `run_cli`: don't reference undefined vars in error handler, #651
+
+## [2.21.0] - 2020-11-27
+
+Changed:
+
+  * `prune_ReadingOrder`: also remove if RO contains only empty groups, #648
+  * Don't restrict version range on `numpy`, #642
+  * `run_cli`: measure both wall time and CPU time, #647
+
+Fixed:
+
+  * `TaskSequence.parse` do not hard-code class to instantiate, #649
+
+## [2.20.2] - 2020-11-20
+
+Fixed:
+
+  * `ocrd workspace`: workspace directory should always be absolute, #644
+
+## [2.20.1] - 2020-11-17
+
+Fixed:
+
+  * `Workspace.find_files`: Ignore `mets:file` w/o `mets:FLocat`, #640
+  * Re-crop after rotation to avoid coordinate inconsistencies (and get tighter crops), #640
+  * Handle missing `@orientation` by using the next-upper-level `@orientation`, #640
+
+## [2.20.0] - 2020-11-03
+
+Fixed:
+
+  * Use `chmod`, not `fchmod` to support Windows, #636 ht @b2m
+  * Do not capture processor output in `run_cli`, #592, #638
+
+Changed:
+
+  * Record version information in `pg:MetadataItem`, #637
+  * New method `Processor.zip_input_files` to uniformly handle files from multiple input file groups, #635
+  * Auto-invalidate derived `pg:AlternativeImage` images when changing coords, #639
+
 ## [2.19.0] - 2020-10-23
 
 Changed:
@@ -1197,6 +1240,10 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.21.0]: ../../compare/v2.21.0..v2.20.2
+[2.20.2]: ../../compare/v2.20.2..v2.20.1
+[2.20.1]: ../../compare/v2.20.1..v2.20.0
+[2.20.0]: ../../compare/v2.20.0..v2.19.0
 [2.19.0]: ../../compare/v2.19.0..v2.18.1
 [2.18.1]: ../../compare/v2.18.1..v2.18.0
 [2.18.0]: ../../compare/v2.18.0..v2.17.2

@@ -178,7 +178,10 @@ class OcrdMets(OcrdXmlDocument):
                     if cand.get('MIMETYPE') != mimetype: continue
 
             if url:
-                cand_url = cand.find('mets:FLocat', namespaces=NS).get('{%s}href' % NS['xlink'])
+                cand_locat = cand.find('mets:FLocat', namespaces=NS)
+                if cand_locat is None:
+                    continue
+                cand_url = cand_locat.get('{%s}href' % NS['xlink'])
                 if url.startswith(REGEX_PREFIX):
                     if not fullmatch(url[REGEX_PREFIX_LEN:], cand_url): continue
                 else:
