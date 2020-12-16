@@ -15,6 +15,7 @@ from shutil import copyfileobj
 import json
 import os
 import re
+import sys
 from pkg_resources import resource_filename
 
 import requests
@@ -23,6 +24,7 @@ from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
     getLogger,
+    initLogging,
     list_resource_candidates,
     list_all_resources,
     XDG_CACHE_HOME
@@ -53,6 +55,8 @@ class Processor():
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             page_id=None,
+            show_resource=None,
+            list_resources=False,
             show_help=False,
             show_version=False,
             dump_json=False,
@@ -62,6 +66,20 @@ class Processor():
             parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
+            return
+        if list_resources:
+            for res in list_all_resources(ocrd_tool['executable']):
+                print(res)
+            return
+        if show_resource:
+            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource, is_file=True)
+            if not res_fname:
+                initLogging()
+                logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
+                logger.error("Failed to resolve %s for processort %s" % (show_resource, ocrd_tool['executable']))
+            else:
+                with open(res_fname[0], 'rb') as f:
+                    copyfileobj(f, sys.stdout.buffer)
             return
         self.ocrd_tool = ocrd_tool
         if show_help:
@@ -130,7 +148,7 @@ class Processor():
 
     def resolve_resource(self, parameter_name, val):
         """
-        Resolve a resource name with the algorithm in
+        Resolve a resource name to an absolute file path with the algorithm in
         https://ocr-d.de/en/spec/ocrd_tool#file-parameters
 
         Args:

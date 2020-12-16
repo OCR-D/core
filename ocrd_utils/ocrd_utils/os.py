@@ -12,6 +12,7 @@ __all__ = [
 from tempfile import TemporaryDirectory
 import contextlib
 from os import getcwd, chdir, stat, chmod, umask, environ, walk
+from pathlib import Path
 from os.path import exists, abspath as abspath_, join, isdir
 from zipfile import ZipFile
 
@@ -58,7 +59,7 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
-def list_resource_candidates(executable, fname, cwd=getcwd()):
+def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_dir=False):
     """
     Generate candidates for processor resources according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
@@ -73,6 +74,10 @@ def list_resource_candidates(executable, fname, cwd=getcwd()):
     candidates.append(join(XDG_DATA_HOME, executable, fname))
     candidates.append(join(XDG_CONFIG_HOME, executable, fname))
     candidates.append(join(XDG_CACHE_HOME, executable, fname))
+    if is_file:
+        candidates = [c for c in candidates if Path(c).is_file()]
+    if is_dir:
+        candidates = [c for c in candidates if Path(c).is_dir()]
     return candidates
 
 def list_all_resources(executable):
