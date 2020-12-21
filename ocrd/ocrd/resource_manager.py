@@ -38,13 +38,17 @@ class OcrdResourceManager():
                 self.database[executable] = list_loaded[executable] + self.database[executable]
 
     def list_available(self, executable=None):
+        """
+        List models available for download by processor
+        """
         if executable:
-            resources = [(executable, self.database[executable])]
-        else:
-            resources = [(x, y) for x, y in self.database.items()]
-        return resources
+            return [(executable, self.database[executable])]
+        return [(x, y) for x, y in self.database.items()]
 
     def list_installed(self, executable=None):
+        """
+        List installed resources, matching with registry by ``name``
+        """
         ret = []
         for executable in [executable] if executable else self.database.keys():
             reslist = []

@@ -7,16 +7,18 @@ from ocrd_validators import OcrdZipValidator
 
 from ..resource_manager import OcrdResourceManager
 
+def print_resources(executable, reslist):
+    print('%s' % executable)
+    for resdict in reslist:
+        print('- %s (%s)\n  %s' % (resdict['name'], resdict['url'], resdict['description']))
+    print()
+
 @click.group("resmgr")
 def resmgr_cli():
     """
     Managing processor resources
     """
     initLogging()
-
-# ----------------------------------------------------------------------
-# ocrd zip list-available
-# ----------------------------------------------------------------------
 
 @resmgr_cli.command('list-available')
 @click.option('-e', '--executable', help='Show only resources for executable EXEC', metavar='EXEC')
@@ -26,10 +28,7 @@ def list_available(executable=None):
     """
     resmgr = OcrdResourceManager()
     for executable, reslist in resmgr.list_available(executable):
-        print('%s' % executable)
-        for resdict in reslist:
-            print('- %s (%s)\n  %s' % (resdict['name'], resdict['url'], resdict['description']))
-        print()
+        print_resources(executable, reslist)
 
 @resmgr_cli.command('list-installed')
 @click.option('-e', '--executable', help='Show only resources for executable EXEC', metavar='EXEC')
@@ -40,4 +39,4 @@ def list_installed(executable=None):
     resmgr = OcrdResourceManager()
     ret = []
     for executable, reslist in resmgr.list_installed(executable):
-        print(executable, reslist)
+        print_resources(executable, reslist)
