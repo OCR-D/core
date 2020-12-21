@@ -8,6 +8,7 @@ patternProperties:
       additionalProperties: false
       required:
         - url
+        - description
         - type
         - name
         - version_range
@@ -15,16 +16,19 @@ patternProperties:
         url:
           type: string
           description: URLs of all components of this resource
+        description:
+          type: string
+          description: A description of the resource
         name:
           type: string
           description: Name to store the resource as
         type:
           type: string
-          enum: ['direct-link', 'github-file', 'github-dir', 'tarball-link', 'zip-link']
+          enum: ['file', 'github-file', 'github-dir', 'archive']
           description: Type of the URL
         path_in_archive:
           type: string
-          description: if type is tarball-link or zip-link, the resource is at this location in the archive
+          description: if type is archive, the resource is at this location in the archive
         version_range:
           type: string
           description: Range of supported versions, syntax like in PEP 440

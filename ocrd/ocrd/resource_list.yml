@@ -1,0 +1,20 @@
+# List available resources by processor for "ocrd resmgr"
+ocrd-tesserocr-recognize:
+  - url: https://ub-backup.bib.uni-mannheim.de/~stweil/ocrd-train/data/Fraktur_5000000/tessdata_fast/Fraktur_50000000.334_450937.traineddata
+    type: file
+    name: Fraktur_GT4HistOCR.traineddata
+    description: Tesseract LSTM model trained on GT4HistOCR
+    version_range: '>= 0.0.1'
+ocrd-calamari-recognize:
+  - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
+    type: archive
+    name: qurator-gt4hist-0.3
+    description: Calamari model trained with GT4HistOCR
+    path_in_archive: '.'
+    version_range: '< 1.0.0'
+  - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-12-11T11_10+0100/model.tar.xz
+    type: archive
+    name: qurator-gt4hist-1.0
+    description: Calamari model trained with GT4HistOCR
+    path_in_archive: '.'
+    version_range: '>= 1.0.0'
