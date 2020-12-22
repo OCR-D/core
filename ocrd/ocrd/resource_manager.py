@@ -1,6 +1,8 @@
 from pathlib import Path
 import re
-from shutil import copyfileobj
+from shutil import copyfileobj, copytree
+from tempfile import TemporaryFile
+from tarfile import open as open_tarfile
 
 import requests
 from yaml import safe_load
@@ -10,7 +12,7 @@ from .constants import RESOURCE_LIST_FILENAME
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
 from ocrd_utils.constants import HOME, XDG_CACHE_HOME
-from ocrd_utils.os import list_resource_candidates, list_all_resources
+from ocrd_utils.os import list_resource_candidates, list_all_resources, pushd_popd
 
 builtin_list_filename = Path(RESOURCE_LIST_FILENAME)
 user_list_filename = Path(HOME, 'ocrd', 'resources.yml')
@@ -104,8 +106,18 @@ class OcrdResourceManager():
             with requests.get(url, stream=True) as r:
                 with open(fpath, 'wb') as f:
                     copyfileobj(r.raw, f)
-        # elif resource_type == archive:
+        elif resource_type == 'tarball':
+            with pushd_popd(tempdir=True):
+                log.info("Downloading %s" % url)
+                with open('download.tar.xx', 'wb') as f_write_tar:
+                    with requests.get(url, stream=True) as r:
+                        copyfileobj(r.raw, f_write_tar)
+                Path('out').mkdir()
+                with pushd_popd('out'):
+                    log.info("Extracting tarball")
+                    with open_tarfile('../download.tar.xx', 'r:*') as tar:
+                        tar.extractall()
+                    log.info("Copying '%s' from tarball to %s" % (path_in_archive, fpath))
+                    copytree(path_in_archive, str(fpath))
         # TODO
-        # elif resource_type == 'archive':
         # elif resource_type == 'github-dir':
-        # elif resource_type == 'github-file':
