@@ -9,9 +9,7 @@ patternProperties:
       required:
         - url
         - description
-        - type
         - name
-        - version_range
       properties:
         url:
           type: string
@@ -25,6 +23,7 @@ patternProperties:
         type:
           type: string
           enum: ['file', 'github-file', 'github-dir', 'archive']
+          default: file
           description: Type of the URL
         parameter_usage:
           type: string
@@ -34,6 +33,8 @@ patternProperties:
         path_in_archive:
           type: string
           description: if type is archive, the resource is at this location in the archive
+          default: '.'
         version_range:
           type: string
           description: Range of supported versions, syntax like in PEP 440
+          default: '>= 0.0.1'
