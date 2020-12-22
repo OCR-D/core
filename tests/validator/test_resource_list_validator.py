@@ -11,7 +11,8 @@ def reslist():
         'ocrd-foo': [
             {
                 'url': 'https:/foo',
-                'type': 'direct-link',
+                'type': 'file',
+                'description': 'something descriptive',
                 'name': 'foo',
                 'version_range': '>= 0.0.1'
             }

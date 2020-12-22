@@ -11,7 +11,7 @@ __all__ = [
 
 from tempfile import TemporaryDirectory
 import contextlib
-from os import getcwd, chdir, stat, chmod, umask, environ, walk
+from os import getcwd, chdir, stat, chmod, umask, environ, scandir
 from pathlib import Path
 from os.path import exists, abspath as abspath_, join, isdir
 from zipfile import ZipFile
@@ -93,17 +93,14 @@ def list_all_resources(executable):
     if processor_path_var in environ:
         for processor_path in environ[processor_path_var].split(':'):
             if isdir(processor_path):
-                for root, dirs, files in walk(processor_path):
-                    candidates += files
+                candidates += list(scandir(processor_path))
     if 'VIRTUAL_ENV' in environ:
         sharedir = join(environ['VIRTUAL_ENV'], 'share', executable)
         if isdir(sharedir):
-            for root, dirs, files in walk(sharedir):
-                candidates += files
+            candidates += list(scandir(sharedir))
     for xdgdir in [join(d, executable) for d in [XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_CACHE_HOME]]:
         if isdir(xdgdir):
-            for root, dirs, files in walk(xdgdir):
-                candidates += files
+            candidates += list(scandir(xdgdir))
     return candidates
 
 # ht @pabs3
