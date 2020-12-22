@@ -1,12 +1,15 @@
 from pathlib import Path
+import re
+from shutil import copyfileobj
 
+import requests
 from yaml import safe_load
 
 from .constants import RESOURCE_LIST_FILENAME
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.constants import HOME
+from ocrd_utils.constants import HOME, XDG_CACHE_HOME
 from ocrd_utils.os import list_resource_candidates, list_all_resources
 
 builtin_list_filename = Path(RESOURCE_LIST_FILENAME)
@@ -56,7 +59,46 @@ class OcrdResourceManager():
                 res_name = Path(res_filename).name
                 resdict = [x for x in self.database[executable] if x['name'] == res_name]
                 if not resdict:
+                    # TODO handle gracefully
                     resdict = [{'name': res_name, 'url': '???', 'description': '???', 'version_range': '???'}]
                 reslist.append(resdict[0])
             ret.append((executable, reslist))
         return ret
+
+    def find_resources(self, executable=None, name=None, url=None):
+        """
+        Find resources in the registry
+        """
+        ret = []
+        if executable and executable not in self.database.keys():
+            return ret
+        for executable in [executable] if executable else self.database.keys():
+            for resdict in self.database[executable]:
+                if url and url == resdict['url']:
+                    ret.append((executable, resdict))
+                elif name and name == resdict['name']:
+                    ret.append((executable, resdict))
+        return ret
+
+    # TODO Proper caching (make head request for size, If-Modified etc)
+    def download(self, executable, url, overwrite=False, basedir=XDG_CACHE_HOME, name=None, type='file', path_in_archive='.'):
+        """
+        Download a resource by URL
+        """
+        log = getLogger('ocrd.resource_manager.download')
+        destdir = Path(basedir, executable)
+        if not name:
+            name = re.sub('[^A-Za-z0-9]', '', url)
+        fpath = Path(destdir, name)
+        if fpath.exists() and not overwrite:
+            log.info("%s to be downloaded to %s which already exists and overwrite is False" % (url, fpath))
+            return fpath
+        destdir.mkdir(parents=True, exist_ok=True)
+        if type == 'file':
+            with requests.get(url, stream=True) as r:
+                with open(fpath, 'wb') as f:
+                    copyfileobj(r.raw, f)
+        # TODO
+        # elif type == 'archive':
+        # elif type == 'github-dir':
+        # elif type == 'github-file':

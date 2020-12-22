@@ -164,16 +164,6 @@ class Processor():
             raise ValueError("Parameter '%s' is not a file parameter (has no 'mimetype' field)" %
                              parameter_name)
         if val.startswith('http:') or val.startswith('https:'):
-            cache_dir = join(XDG_CACHE_HOME, executable)
-            cache_key = re.sub('[^A-Za-z0-9]', '', val)
-            cache_fpath = join(cache_dir, cache_key)
-            # TODO Proper caching (make head request for size, If-Modified etc)
-            if not exists(cache_fpath):
-                if not isdir(cache_dir):
-                    makedirs(cache_dir)
-                with requests.get(val, stream=True) as r:
-                    with open(cache_fpath, 'wb') as f:
-                        copyfileobj(r.raw, f)
             return cache_fpath
         ret = next([cand for cand in list_resource_candidates(executable, val) if exists(cand)])
         if ret:
