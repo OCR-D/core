@@ -87,7 +87,7 @@ class OcrdResourceManager():
             return Path(name).stem
 
     # TODO Proper caching (make head request for size, If-Modified etc)
-    def download(self, executable, url, overwrite=False, basedir=XDG_CACHE_HOME, name=None, type='file', path_in_archive='.'):
+    def download(self, executable, url, overwrite=False, basedir=XDG_CACHE_HOME, name=None, resource_type='file', path_in_archive='.'):
         """
         Download a resource by URL
         """
@@ -100,11 +100,12 @@ class OcrdResourceManager():
             log.info("%s to be downloaded to %s which already exists and overwrite is False" % (url, fpath))
             return fpath
         destdir.mkdir(parents=True, exist_ok=True)
-        if type == 'file':
+        if resource_type == 'file':
             with requests.get(url, stream=True) as r:
                 with open(fpath, 'wb') as f:
                     copyfileobj(r.raw, f)
+        # elif resource_type == archive:
         # TODO
-        # elif type == 'archive':
-        # elif type == 'github-dir':
-        # elif type == 'github-file':
+        # elif resource_type == 'archive':
+        # elif resource_type == 'github-dir':
+        # elif resource_type == 'github-file':

@@ -34,13 +34,13 @@ ocrd-tesserocr-recognize:
     description: Tesseract Latin model
 ocrd-calamari-recognize:
   - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
-    type: archive
+    type: tarball
     name: qurator-gt4hist-0.3
     description: Calamari model trained with GT4HistOCR
     path_in_archive: '.'
     version_range: '< 1.0.0'
   - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-12-11T11_10+0100/model.tar.xz
-    type: archive
+    type: tarball
     name: qurator-gt4hist-1.0
     description: Calamari model trained with GT4HistOCR
     path_in_archive: '.'
@@ -66,10 +66,10 @@ ocrd-sbb-binarize:
   - url: https://qurator-data.de/sbb_binarization/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
-    type: archive
+    type: tarball
     path_in_archive: models
 ocrd-sbb-textline-detector:
   - url: https://qurator-data.de/sbb_textline_detector/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
-    type: archive
+    type: tarball

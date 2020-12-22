@@ -88,7 +88,7 @@ def download(any_url, overwrite, location, executable, url_or_name):
                 executable,
                 resdict['url'],
                 name=resdict['name'],
-                type=resdict['type'],
+                resource_type=resdict['type'],
                 path_in_archive=resdict.get('path_in_archive', '.'),
                 overwrite=overwrite,
                 basedir=basedir
