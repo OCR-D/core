@@ -147,33 +147,34 @@ class Processor():
                                          value=OCRD_VERSION)])
                     ]))
 
-    def resolve_resource(self, parameter_name, val):
+    def resolve_resource(self, val):
         """
         Resolve a resource name to an absolute file path with the algorithm in
         https://ocr-d.de/en/spec/ocrd_tool#file-parameters
 
         Args:
-            parameter_name (string): name of parameter to resolve resource for
             val (string): resource value to resolve
         """
         executable = self.ocrd_tool['executable']
-        try:
-            param = self.ocrd_tool['parameter'][parameter_name]
-        except KeyError:
-            raise ValueError("Parameter '%s' not defined in ocrd-tool.json" % parameter_name)
-        if not param['mimetype']:
-            raise ValueError("Parameter '%s' is not a file parameter (has no 'mimetype' field)" %
-                             parameter_name)
-        if val.startswith('http:') or val.startswith('https:'):
-            return OcrdResourceManager().download(executable, val)
-        ret = next([cand for cand in list_resource_candidates(executable, val) if exists(cand)])
+        if exists(val):
+            return val
+        ret = [cand for cand in list_resource_candidates(executable, val) if exists(cand)]
         if ret:
-            return ret
-        bundled_fpath = resource_filename(__name__, val)
-        if exists(bundled_fpath):
-            return bundled_fpath
-        raise FileNotFoundError("Could not resolve '%s' file parameter value '%s'" %
-                                (parameter_name, val))
+            return ret[0]
+        resmgr = OcrdResourceManager()
+        reslist = resmgr.find_resources(executable, name=val)
+        if not reslist:
+            reslist = resmgr.find_resources(executable, url=val)
+        if not reslist:
+            raise FileNotFoundError("Could not resolve '%s'" % val)
+        _, resdict = reslist[0]
+        return str(resmgr.download(
+            executable,
+            url=resdict['url'],
+            name=resdict['name'],
+            path_in_archive=resdict['path_in_archive'],
+            resource_type=resdict['type']
+        ))
 
     def list_all_resources(self):
         """

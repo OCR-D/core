@@ -121,3 +121,4 @@ class OcrdResourceManager():
                     copytree(path_in_archive, str(fpath))
         # TODO
         # elif resource_type == 'github-dir':
+        return fpath
