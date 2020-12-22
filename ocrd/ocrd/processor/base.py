@@ -31,6 +31,7 @@ from ocrd_utils import (
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
+from ..resource_manager import OcrdResourceManager
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
@@ -164,7 +165,7 @@ class Processor():
             raise ValueError("Parameter '%s' is not a file parameter (has no 'mimetype' field)" %
                              parameter_name)
         if val.startswith('http:') or val.startswith('https:'):
-            return cache_fpath
+            return OcrdResourceManager().download(executable, val)
         ret = next([cand for cand in list_resource_candidates(executable, val) if exists(cand)])
         if ret:
             return ret
