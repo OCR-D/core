@@ -80,6 +80,12 @@ class OcrdResourceManager():
                     ret.append((executable, resdict))
         return ret
 
+    def parameter_usage(self, name, usage='as-is'):
+        if usage == 'as-is':
+            return name
+        if usage == 'without-extension':
+            return Path(name).stem
+
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(self, executable, url, overwrite=False, basedir=XDG_CACHE_HOME, name=None, type='file', path_in_archive='.'):
         """

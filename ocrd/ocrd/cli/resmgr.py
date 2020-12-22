@@ -94,5 +94,5 @@ def download(any_url, overwrite, location, executable, url_or_name):
                 basedir=basedir
             )
             log.info("Downloaded %s to %s" % (resdict['url'], fpath))
-            log.info("Use in parameters as '%s'" % fpath.name)
+            log.info("Use in parameters as '%s'" % resmgr.parameter_usage(resdict['name'], usage=resdict['parameter_usage']))
 

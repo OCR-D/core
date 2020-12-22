@@ -26,6 +26,11 @@ patternProperties:
           type: string
           enum: ['file', 'github-file', 'github-dir', 'archive']
           description: Type of the URL
+        parameter_usage:
+          type: string
+          description: Defines how the parameter is to be used
+          enum: ['as-is', 'without-extension']
+          default: 'as-is'
         path_in_archive:
           type: string
           description: if type is archive, the resource is at this location in the archive

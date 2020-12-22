@@ -3,6 +3,7 @@ ocrd-tesserocr-recognize:
   - url: https://ub-backup.bib.uni-mannheim.de/~stweil/ocrd-train/data/Fraktur_5000000/tessdata_fast/Fraktur_50000000.334_450937.traineddata
     type: file
     name: Fraktur_GT4HistOCR.traineddata
+    parameter_usage: 'without-extension'
     description: Tesseract LSTM model trained on GT4HistOCR
     version_range: '>= 0.0.1'
 ocrd-calamari-recognize:
