@@ -1,6 +1,7 @@
 import sys
 from os import getcwd
 from pathlib import Path
+import requests
 
 import click
 
@@ -61,6 +62,8 @@ def download(any_url, overwrite, location, executable, url_or_name):
 
     URL_OR_NAME can either be the ``name`` or ``url`` of a registered resource.
 
+    If URL_OR_NAME is '*' (asterisk), download all known resources for this processor
+
     If ``--any-url`` is given, also accepts URL of non-registered resources for ``URL_OR_NAME``.
     """
     log = getLogger('ocrd.cli.resmgr')
@@ -71,7 +74,8 @@ def download(any_url, overwrite, location, executable, url_or_name):
             getcwd()
     is_url = url_or_name.startswith('https://') or url_or_name.startswith('http://')
     find_kwargs = {'executable': executable}
-    find_kwargs['url' if is_url else 'name'] = url_or_name
+    if url_or_name != '*':
+        find_kwargs['url' if is_url else 'name'] = url_or_name
     reslist = resmgr.find_resources(**find_kwargs)
     if not reslist:
         log.info("No resources found in registry")

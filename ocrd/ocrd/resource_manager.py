@@ -76,7 +76,9 @@ class OcrdResourceManager():
             return ret
         for executable in [executable] if executable else self.database.keys():
             for resdict in self.database[executable]:
-                if url and url == resdict['url']:
+                if not name and not url:
+                    ret.append((executable, resdict))
+                elif url and url == resdict['url']:
                     ret.append((executable, resdict))
                 elif name and name == resdict['name']:
                     ret.append((executable, resdict))
