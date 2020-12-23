@@ -88,8 +88,28 @@ class OcrdResourceManager():
         if usage == 'without-extension':
             return Path(name).stem
 
+    def _download_impl(self, url, filename, progress_cb=None):
+        with open(filename, 'wb') as f:
+            with requests.get(url, stream=True) as r:
+                total = int(r.headers.get('content-length'))
+                # copyfileobj(r.raw, f_write_tar)
+                for data in r.iter_content(chunk_size=4096):
+                    if progress_cb:
+                        progress_cb(len(data))
+                    f.write(data)
+
     # TODO Proper caching (make head request for size, If-Modified etc)
-    def download(self, executable, url, overwrite=False, basedir=XDG_CACHE_HOME, name=None, resource_type='file', path_in_archive='.'):
+    def download(
+        self,
+        executable,
+        url,
+        overwrite=False,
+        basedir=XDG_CACHE_HOME,
+        name=None,
+        resource_type='file',
+        path_in_archive='.',
+        progress_cb=None,
+    ):
         """
         Download a resource by URL
         """
@@ -103,15 +123,11 @@ class OcrdResourceManager():
             return fpath
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type == 'file':
-            with requests.get(url, stream=True) as r:
-                with open(fpath, 'wb') as f:
-                    copyfileobj(r.raw, f)
+            self._download_impl(url, fpath, progress_cb)
         elif resource_type == 'tarball':
             with pushd_popd(tempdir=True):
                 log.info("Downloading %s" % url)
-                with open('download.tar.xx', 'wb') as f_write_tar:
-                    with requests.get(url, stream=True) as r:
-                        copyfileobj(r.raw, f_write_tar)
+                self._download_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     log.info("Extracting tarball")

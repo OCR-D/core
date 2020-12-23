@@ -10,6 +10,7 @@ patternProperties:
         - url
         - description
         - name
+        - size
       properties:
         url:
           type: string
@@ -38,3 +39,6 @@ patternProperties:
           type: string
           description: Range of supported versions, syntax like in PEP 440
           default: '>= 0.0.1'
+        size:
+          type: number
+          description: Size of the resource in bytes

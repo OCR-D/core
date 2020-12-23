@@ -77,22 +77,34 @@ def download(any_url, overwrite, location, executable, url_or_name):
         log.info("No resources found in registry")
         if is_url and any_url:
             log.info("Downloading unregistered resource %s" % url_or_name)
-            fpath = resmgr.download(executable, url_or_name, overwrite=overwrite, basedir=basedir)
+            with requests.head(url_or_name) as r:
+                content_length = int(r.headers.get('content-length'))
+            with click.progressbar(length=content_length) as bar:
+                fpath = resmgr.download(
+                    executable,
+                    url_or_name,
+                    overwrite=overwrite,
+                    basedir=basedir,
+                    progress_cb=lambda delta: bar.update(delta)
+                )
             log.info("Downloaded %s to %s" % (url_or_name, fpath))
             log.info("Use in parameters as '%s'" % fpath.name)
         else:
             sys.exit(1)
     else:
         for _, resdict in reslist:
-            fpath = resmgr.download(
-                executable,
-                resdict['url'],
-                name=resdict['name'],
-                resource_type=resdict['type'],
-                path_in_archive=resdict.get('path_in_archive', '.'),
-                overwrite=overwrite,
-                basedir=basedir
-            )
+            log.info("Downloading resource %s" % resdict)
+            with click.progressbar(length=resdict['size']) as bar:
+                fpath = resmgr.download(
+                    executable,
+                    resdict['url'],
+                    name=resdict['name'],
+                    resource_type=resdict['type'],
+                    path_in_archive=resdict.get('path_in_archive', '.'),
+                    overwrite=overwrite,
+                    basedir=basedir,
+                    progress_cb=lambda delta: bar.update(delta)
+                )
             log.info("Downloaded %s to %s" % (resdict['url'], fpath))
             log.info("Use in parameters as '%s'" % resmgr.parameter_usage(resdict['name'], usage=resdict['parameter_usage']))
 
