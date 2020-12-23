@@ -12,6 +12,7 @@ def reslist():
             {
                 'url': 'https:/foo',
                 'type': 'file',
+                'size': 123,
                 'description': 'something descriptive',
                 'name': 'foo',
                 'version_range': '>= 0.0.1'
