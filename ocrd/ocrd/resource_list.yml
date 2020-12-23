@@ -73,3 +73,22 @@ ocrd-sbb-textline-detector:
     description: default models provided by github.com/qurator-spk
     name: default
     type: tarball
+ocrd-anybaseocr-dewarp:
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/dewarping/latest_net_G.pth
+    name: latest_net_G.pth
+    description: dewarping model for anybaseocr
+ocrd-anybaseocr-block-segmentation:
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/segmentation/block_segmentation_weights.h5
+    name: block_segmentation_weights.h5
+    description: block segmentation model for anybaseocr
+ocrd-anybaseocr-layout-analysis:
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/structure_analysis.h5
+    name: structure_analysis.h5
+    description: structure analysis model for anybaseocr
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle
+    name: mapping_densenet.pickle
+    description: mapping model for anybaseocr
+ocrd-anybaseocr-tiseg:
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/tiseg/seg_model.hdf5
+    name: seg_model.hdf5
+    description: text image segmentation model for anybaseocr
