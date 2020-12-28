@@ -5,9 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.0b1] - 2020-12-28
+
 Fixed:
 
   * `run_cli`: don't reference undefined vars in error handler, #651
+
+Changed:
+
+  * Implement file resource algorithm from OCR-D/spec#169, #559
+
+Added:
+
+  * New CLI `ocrd resmgr` to download/browse processor resources, #559
 
 ## [2.21.0] - 2020-11-27
 
@@ -1240,6 +1250,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.22.0b1]: ../../compare/v2.22.0b1..v2.21.0
 [2.21.0]: ../../compare/v2.21.0..v2.20.2
 [2.20.2]: ../../compare/v2.20.2..v2.20.1
 [2.20.1]: ../../compare/v2.20.1..v2.20.0
