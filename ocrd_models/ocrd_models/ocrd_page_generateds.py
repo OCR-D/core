@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri Nov 27 15:25:12 2020 by generateDS.py version 2.35.20.
+# Generated Wed Dec 30 18:18:58 2020 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
 #
 # Command line options:
@@ -3087,6 +3087,15 @@ class PageType(GeneratedsSuper):
         """
         self.invalidate_AlternativeImage(feature_selector='cropped')
         self.Border = Border
+    def get_AllTextLine(self):
+        """
+        Return all the TextLine in the document
+        """
+        ret = []
+        for reg in self.get_AllRegions(['Text']):
+            ret += reg.get_TextLine()
+        return ret
+    
     def set_orientation(self, orientation):
         """
         Set deskewing angle to given number.

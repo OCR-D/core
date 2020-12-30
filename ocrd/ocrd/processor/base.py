@@ -166,7 +166,7 @@ class Processor():
         if not reslist:
             reslist = resmgr.find_resources(executable, url=val)
         if not reslist:
-            raise FileNotFoundError("Could not resolve '%s'" % val)
+            raise FileNotFoundError("Could not resolve %s resource '%s'" % (executable, val))
         _, resdict = reslist[0]
         return str(resmgr.download(
             executable,
