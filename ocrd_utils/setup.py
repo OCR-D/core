@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='ocrd_utils',
-    version='2.22.0b1',
+    version='2.22.0b2',
     description='OCR-D framework - shared code, helpers, constants',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

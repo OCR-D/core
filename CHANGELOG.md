@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.0b2] - 2020-12-30
+
+Added:
+
+  * PAGE API method `get_AllTextLine`
+  * resources for kraken
+
 ## [2.22.0b1] - 2020-12-28
 
 Fixed:
