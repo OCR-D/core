@@ -121,6 +121,6 @@ ocrd-kraken-segment:
     size: 5046835
 ocrd-kraken-recognize:
   - url: https://zenodo.org/record/2577813/files/en_best.mlmodel?download=1
-    name: 10.5281/zenodo.2577813
+    name: en_best.mlmodel
     description: This model has been trained on a large corpus of modern printed English text\naugmented with ~10000 lines of historical pages
     size: 2930723
