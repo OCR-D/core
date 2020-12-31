@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.0b3] - 2020-12-30
+
+Fixed:
+  * `name` of resources mustn't contain slash `/`
+
 ## [2.22.0b2] - 2020-12-30
 
 Added:
