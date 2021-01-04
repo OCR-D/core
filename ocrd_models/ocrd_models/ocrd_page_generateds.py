@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Jan  4 18:05:36 2021 by generateDS.py version 2.35.20.
+# Generated Mon Jan  4 18:29:27 2021 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
 #
 # Command line options:
@@ -3087,12 +3087,22 @@ class PageType(GeneratedsSuper):
         """
         self.invalidate_AlternativeImage(feature_selector='cropped')
         self.Border = Border
-    def get_AllTextLines(self):
+    def get_AllTextLines(self, region_order='document', textline_order='top-to-bottom'):
         """
         Return all the TextLine in the document
+    
+        Arguments:
+            region_order ("document"|"reading-order"|"reading-order-only") Whether to
+                return regions sorted by document order (``document``, default) or by
+                reading order with regions not in the reading order at the end of the
+                returned list (``reading-order``) or regions not in the reading order
+                omitted (``reading-order-only``)
+            textline_order ("top-to-bottom"|"bottom-to-top"|left-to-right"|"right-to-left")
+                The order of text lines within a block (not currently used)
         """
+        # TODO handle textLineOrder
         ret = []
-        for reg in self.get_AllRegions(['Text']):
+        for reg in self.get_AllRegions(['Text'], order=region_order):
             ret += reg.get_TextLine()
         return ret
     
