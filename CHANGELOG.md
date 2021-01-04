@@ -9,6 +9,10 @@ Fixed:
 
   * `run_cli`: don't reference undefined vars in error handler, #651
 
+Added:
+
+  * `Workspace.rename_file_group` with CLI `ocrd workspace rename-group` to rename file groups, #646
+
 ## [2.21.0] - 2020-11-27
 
 Changed:

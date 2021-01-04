@@ -209,14 +209,13 @@ class Workspace():
                         Path(file_dir).rmdir()
 
 
-    def rename_file_group(self, old, new, keep_files=False):
+    def rename_file_group(self, old, new):
         """
         Rename a fileGrp.
 
         Arguments:
             old (string): USE attribute of the fileGrp to rename
             new (string): USE attribute of the fileGrp to rename as
-            keep_files (boolean): Keep files on disk (copy them)
         """
         log = getLogger('ocrd.workspace.rename_file_group')
 
