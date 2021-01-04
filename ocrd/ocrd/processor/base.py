@@ -16,7 +16,6 @@ import json
 import os
 import re
 import sys
-from pkg_resources import resource_filename
 
 import requests
 
