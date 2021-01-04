@@ -14,7 +14,7 @@ Fixed:
 
 Added:
 
-  * PAGE API method `get_AllTextLine`
+  * PAGE API method `get_AllTextLines`
   * resources for kraken
 
 ## [2.22.0b1] - 2020-12-28

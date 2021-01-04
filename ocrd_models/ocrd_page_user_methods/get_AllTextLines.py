@@ -1,4 +1,4 @@
-def get_AllTextLine(self):
+def get_AllTextLines(self):
     """
     Return all the TextLine in the document
     """
