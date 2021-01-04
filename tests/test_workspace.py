@@ -12,7 +12,8 @@ from PIL import Image
 from tests.base import TestCase, assets, main, copy_of_directory
 
 from ocrd_models.ocrd_page import parseString
-from ocrd_utils import pushd_popd, initLogging
+from ocrd_utils import pushd_popd, initLogging, MIMETYPE_PAGE
+from ocrd_modelfactory import page_from_file
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 
@@ -173,6 +174,21 @@ class TestWorkspace(TestCase):
             # should also succeed
             ws.overwrite_mode = True
             ws.remove_file('page1_img', force=False)
+
+    def test_rename_file_group(self):
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784-page-region-line-word_glyph/data')) as tempdir:
+            workspace = Workspace(self.resolver, directory=tempdir)
+            with pushd_popd(tempdir):
+                pcgts_before = page_from_file(next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001')))
+                assert pcgts_before.get_Page().imageFilename == 'OCR-D-IMG/OCR-D-IMG_0001.tif'
+                # from os import system
+                # print(system('find'))
+                workspace.rename_file_group('OCR-D-IMG', 'FOOBAR')
+                # print(system('find'))
+                pcgts_after = page_from_file(next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001')))
+                assert pcgts_after.get_Page().imageFilename == 'FOOBAR/OCR-D-IMG_0001.tif'
+                assert Path('FOOBAR/OCR-D-IMG_0001.tif').exists()
+                assert not Path('OCR-D-IMG/OCR-D-IMG_0001.tif').exists()
 
     def test_remove_file_group_force(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
