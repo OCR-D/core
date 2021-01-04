@@ -279,26 +279,19 @@ class TestOcrdPage(TestCase):
     def test_get_AllAlternativeImagePaths(self):
         with open(assets.path_to('kant_aufklaerung_1784-complex/data/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001.xml'), 'r') as f:
             pcgts = parseString(f.read().encode('utf8'), silence=True)
-            self.assertEqual(pcgts.get_AllAlternativeImagePaths(page=False, region=False, line=False, word=False, glyph=False), [])
-            self.assertEqual(pcgts.get_AllAlternativeImagePaths(page=True, region=False, line=False, word=False, glyph=False), [
+            self.assertEqual(pcgts.get_AllAlternativeImagePaths(page=False, region=False, line=False), [])
+            self.assertEqual(pcgts.get_AllAlternativeImagePaths(page=True, region=False, line=False), [
                 'OCR-D-IMG-BIN/OCR-D-IMG-BINPAGE-sauvola_0001-BIN_sauvola-ms-split.png',
                 'OCR-D-IMG-CROP/OCR-D-IMG-CROP_0001.png',
                 'OCR-D-IMG-BIN/INPUT_0017-BIN_sauvola-ms-split.png',
                 'OCR-D-IMG-DESPECK/OCR-D-IMG-DESPECK_0001.png',
                 'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png',
                 'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png'])
-            self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=False, word=False, glyph=False)), 12)
-            self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=False, word=False, glyph=False)), 12)
-            self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=True, word=False, glyph=False)), 36)
+            self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=False)), 12)
+            self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=False)), 12)
+            self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=True)), 36)
             # TODO: Test with word/glyph-level AlternativeImages
             # self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(word=False)), 37)
-
-    def test_get_AllAlternativeImagePathsElems(self):
-        with open(assets.path_to('kant_aufklaerung_1784-complex/data/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001.xml'), 'r') as f:
-            pcgts = parseString(f.read().encode('utf8'), silence=True)
-            self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=True, return_elems=True)), 36)
-            elem = pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=True, return_elems=True)[0]
-            assert hasattr(elem, 'filename')
 
     def test_serialize_no_empty_readingorder(self):
         """

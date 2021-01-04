@@ -1,4 +1,4 @@
-def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True, return_elems=False):
+def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
     """
     Get all the pc:AlternativeImage/@filename paths referenced in the PAGE-XML document.
 
@@ -8,7 +8,6 @@ def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=T
     line (boolean) Get images on pc:TextLine level
     word (boolean) Get images on pc:Word level
     glyph (boolean) Get images on pc:Glyph level
-    return_elems (boolean) Return not the paths but the AlternativeImage elements
     """
     from .constants import NAMESPACES, PAGE_REGION_TYPES # pylint: disable=relative-beyond-top-level,import-outside-toplevel
     from io import StringIO  # pylint: disable=import-outside-toplevel
@@ -28,23 +27,20 @@ def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=T
                 NAMESPACES['page']
             ))
     doc = parsexmlstring_(sio.getvalue())  # pylint: disable=undefined-variable
-    xpath_suffix = 'page:AlternativeImage'
-    if not return_elems:
-        xpath_suffix += '/@filename'
     # shortcut
     if page and region and line and word and glyph:
-        ret += doc.xpath('//%s' % xpath_suffix, namespaces=NAMESPACES)
+        ret += doc.xpath('//page:AlternativeImage/@filename', namespaces=NAMESPACES)
     else:
         if page:
-            ret += doc.xpath('/page:PcGts/page:Page/%s' % xpath_suffix, namespaces=NAMESPACES)
+            ret += doc.xpath('/page:PcGts/page:Page/page:AlternativeImage/@filename', namespaces=NAMESPACES)
         if region:
             for class_ in PAGE_REGION_TYPES:
-                ret += doc.xpath('//page:%sRegion/%s' % (class_, xpath_suffix), namespaces=NAMESPACES)
+                ret += doc.xpath('//page:%sRegion/page:AlternativeImage/@filename' % class_, namespaces=NAMESPACES)
         if line:
-            ret += doc.xpath('//page:TextLine/%s' % xpath_suffix, namespaces=NAMESPACES)
+            ret += doc.xpath('//page:TextLine/page:AlternativeImage/@filename', namespaces=NAMESPACES)
         if word:
-            ret += doc.xpath('//page:TextLine/%s' % xpath_suffix, namespaces=NAMESPACES)
+            ret += doc.xpath('//page:Word/page:AlternativeImage/@filename', namespaces=NAMESPACES)
         if glyph:
-            ret += doc.xpath('//page:TextLine/%s' % xpath_suffix, namespaces=NAMESPACES)
+            ret += doc.xpath('//page:Glyph/page:AlternativeImage/@filename', namespaces=NAMESPACES)
 
     return ret
