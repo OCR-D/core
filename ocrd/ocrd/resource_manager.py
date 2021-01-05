@@ -1,18 +1,19 @@
 from pathlib import Path
+from os.path import join
+from os import environ, listdir
 import re
-from shutil import copyfileobj, copytree
-from tempfile import TemporaryFile
+from shutil import copytree
 from tarfile import open as open_tarfile
 
 import requests
 from yaml import safe_load
 
-from .constants import RESOURCE_LIST_FILENAME
-
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.constants import HOME, XDG_CACHE_HOME
-from ocrd_utils.os import list_resource_candidates, list_all_resources, pushd_popd
+from ocrd_utils.constants import HOME, XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME
+from ocrd_utils.os import list_all_resources, pushd_popd
+
+from .constants import RESOURCE_LIST_FILENAME
 
 builtin_list_filename = Path(RESOURCE_LIST_FILENAME)
 user_list_filename = Path(HOME, 'ocrd', 'resources.yml')
@@ -55,16 +56,27 @@ class OcrdResourceManager():
         List installed resources, matching with registry by ``name``
         """
         ret = []
-        for executable in [executable] if executable else self.database.keys():
+        if executable:
+            all_executables = [executable]
+        else:
+            # resources we know about
+            all_executables = list(self.database.keys())
+            # resources in the file system
+            parent_dirs = [XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME]
+            if 'VIRTUAL_ENV' in environ:
+                parent_dirs += [join(environ['VIRTUAL_ENV'], 'share')]
+            for parent_dir in parent_dirs:
+                all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
+        for this_executable in set(all_executables):
             reslist = []
-            for res_filename in list_all_resources(executable):
+            for res_filename in list_all_resources(this_executable):
                 res_name = Path(res_filename).name
-                resdict = [x for x in self.database[executable] if x['name'] == res_name]
+                resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if not resdict:
                     # TODO handle gracefully
                     resdict = [{'name': res_name, 'url': '???', 'description': '???', 'version_range': '???'}]
                 reslist.append(resdict[0])
-            ret.append((executable, reslist))
+            ret.append((this_executable, reslist))
         return ret
 
     def find_resources(self, executable=None, name=None, url=None):
