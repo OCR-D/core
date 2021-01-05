@@ -55,7 +55,7 @@ ocrd-calamari-recognize:
     size: 90275264
     path_in_archive: '.'
     version_range: '>= 1.0.0'
-ocrd-ocropy-recognize:
+ocrd-cis-ocropy-recognize:
   - url: https://github.com/zuphilip/ocropy-models/raw/master/en-default.pyrnn.gz
     name: en-default.pyrnn.gz
     description: Default ocropy model
