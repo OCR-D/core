@@ -5,6 +5,7 @@ import re
 from shutil import copytree
 from datetime import datetime
 from tarfile import open as open_tarfile
+from urllib.parse import urlparse
 
 import requests
 from yaml import safe_load, safe_dump
@@ -164,7 +165,8 @@ class OcrdResourceManager():
         log = getLogger('ocrd.resource_manager.download')
         destdir = Path(basedir, executable)
         if not name:
-            name = re.sub('[^A-Za-z0-9]', '', url)
+            url_parsed = urlparse(url)
+            name = Path(url_parsed.path).name
         fpath = Path(destdir, name)
         if fpath.exists() and not overwrite:
             log.info("%s to be downloaded to %s which already exists and overwrite is False" % (url, fpath))
