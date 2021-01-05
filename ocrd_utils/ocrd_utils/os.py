@@ -101,7 +101,7 @@ def list_all_resources(executable):
     for xdgdir in [join(d, executable) for d in [XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_CACHE_HOME]]:
         if isdir(xdgdir):
             candidates += list(scandir(xdgdir))
-    return candidates
+    return [x.path for x in candidates]
 
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42
