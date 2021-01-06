@@ -166,7 +166,7 @@ class OcrdResourceManager():
         destdir = Path(basedir, executable)
         if not name:
             url_parsed = urlparse(url)
-            name = Path(unqote(url_parsed.path)).name
+            name = Path(unquote(url_parsed.path)).name
         fpath = Path(destdir, name)
         if fpath.exists() and not overwrite:
             log.info("%s to be downloaded to %s which already exists and overwrite is False" % (url, fpath))

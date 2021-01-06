@@ -81,9 +81,9 @@ def download(any_url, overwrite, location, executable, url_or_name):
         log.info("No resources found in registry")
         if is_url and any_url:
             log.info("Downloading unregistered resource %s" % url_or_name)
-            with requests.head(url_or_name) as r:
+            with requests.get(url_or_name, stream=True) as r:
                 content_length = int(r.headers.get('content-length'))
-            with click.progressbar(length=content_length) as bar:
+            with click.progressbar(length=content_length, label="Downloading") as bar:
                 fpath = resmgr.download(
                     executable,
                     url_or_name,
