@@ -51,7 +51,7 @@ def list_installed(executable=None):
         print_resources(executable, reslist)
 
 @resmgr_cli.command('download')
-@click.option('-n', '--any-url', help='Allow downloading unregistered resources', is_flag=True)
+@click.option('-n', '--any-url', help='Allow downloading/copying unregistered resources', is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(['cache', 'config', 'data', 'cwd']), default='cache', show_default=True)
 @click.argument('executable', required=True)
@@ -64,7 +64,7 @@ def download(any_url, overwrite, location, executable, url_or_name):
 
     If URL_OR_NAME is '*' (asterisk), download all known resources for this processor
 
-    If ``--any-url`` is given, also accepts URL of non-registered resources for ``URL_OR_NAME``.
+    If ``--any-url`` is given, also accepts URL or filenames of non-registered resources for ``URL_OR_NAME``.
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
@@ -73,25 +73,29 @@ def download(any_url, overwrite, location, executable, url_or_name):
             XDG_CONFIG_HOME if location == 'config' else \
             getcwd()
     is_url = url_or_name.startswith('https://') or url_or_name.startswith('http://')
+    is_filename = Path(url_or_name).exists()
     find_kwargs = {'executable': executable}
     if url_or_name != '*':
         find_kwargs['url' if is_url else 'name'] = url_or_name
     reslist = resmgr.find_resources(**find_kwargs)
     if not reslist:
         log.info("No resources found in registry")
-        if is_url and any_url:
-            log.info("Downloading unregistered resource %s" % url_or_name)
-            with requests.get(url_or_name, stream=True) as r:
-                content_length = int(r.headers.get('content-length'))
-            with click.progressbar(length=content_length, label="Downloading") as bar:
+        if any_url and (is_url or is_filename):
+            log.info("%s unregistered resource %s" % ("Downloading" if is_url else "Copying", url_or_name))
+            if is_url:
+                with requests.get(url_or_name, stream=True) as r:
+                    content_length = int(r.headers.get('content-length'))
+            else:
+                url_or_name = str(Path(url_or_name).resolve())
+                content_length = Path(url_or_name).stat().st_size
+            with click.progressbar(length=content_length, label="Downloading" if is_url else "Copying") as bar:
                 fpath = resmgr.download(
                     executable,
                     url_or_name,
                     overwrite=overwrite,
                     basedir=basedir,
-                    progress_cb=lambda delta: bar.update(delta)
-                )
-            log.info("Downloaded %s to %s" % (url_or_name, fpath))
+                    progress_cb=lambda delta: bar.update(delta))
+            log.info("%s %s to %s" % ("Downloaded" if is_url else "Copied", url_or_name, fpath))
             log.info("Use in parameters as '%s'" % fpath.name)
         else:
             sys.exit(1)

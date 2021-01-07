@@ -138,14 +138,28 @@ class OcrdResourceManager():
             return Path(name).stem
 
     def _download_impl(self, url, filename, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._download_impl')
+        log.info("Downloading %s" % url)
         with open(filename, 'wb') as f:
             with requests.get(url, stream=True) as r:
                 total = int(r.headers.get('content-length'))
-                # copyfileobj(r.raw, f_write_tar)
                 for data in r.iter_content(chunk_size=4096):
                     if progress_cb:
                         progress_cb(len(data))
                     f.write(data)
+
+    def _copy_impl(self, src_filename, filename, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_impl')
+        log.info("Copying %s" % src_filename)
+        with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
+            while True:
+                chunk = f_in.read(4096)
+                if chunk:
+                    f_out.write(chunk)
+                    if progress_cb:
+                        progress_cb(len(chunk))
+                else:
+                    break
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(
@@ -168,16 +182,22 @@ class OcrdResourceManager():
             url_parsed = urlparse(url)
             name = Path(unquote(url_parsed.path)).name
         fpath = Path(destdir, name)
+        is_url = url.startswith('https://') or url.startswith('http://')
         if fpath.exists() and not overwrite:
             log.info("%s to be downloaded to %s which already exists and overwrite is False" % (url, fpath))
             return fpath
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type == 'file':
-            self._download_impl(url, fpath, progress_cb)
+            if is_url:
+                self._download_impl(url, fpath, progress_cb)
+            else:
+                self._copy_impl(url, fpath, progress_cb)
         elif resource_type == 'tarball':
             with pushd_popd(tempdir=True):
-                log.info("Downloading %s" % url)
-                self._download_impl(url, 'download.tar.xx', progress_cb)
+                if is_url:
+                    self._download_impl(url, 'download.tar.xx', progress_cb)
+                else:
+                    self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     log.info("Extracting tarball")
