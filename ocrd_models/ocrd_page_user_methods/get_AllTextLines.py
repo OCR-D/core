@@ -1,4 +1,4 @@
-def get_AllTextLines(self, region_order='document', textline_order='top-to-bottom'):
+def get_AllTextLines(self, region_order='document', respect_textline_order=True):
     """
     Return all the TextLine in the document
 
@@ -8,12 +8,16 @@ def get_AllTextLines(self, region_order='document', textline_order='top-to-botto
             reading order with regions not in the reading order at the end of the
             returned list (``reading-order``) or regions not in the reading order
             omitted (``reading-order-only``)
-        textline_order ("top-to-bottom"|"bottom-to-top"|left-to-right"|"right-to-left")
-            The order of text lines within a block (not currently used)
+        respect_textline_order (boolean) Whether to respect textlineOrder attribute
     """
-    # TODO handle textLineOrder
+    # TODO handle textLineOrder according to https://github.com/PRImA-Research-Lab/PAGE-XML/issues/26
     ret = []
     for reg in self.get_AllRegions(['Text'], order=region_order):
-        ret += reg.get_TextLine()
+        lines = reg.get_TextLine()
+        if not respect_textline_order:
+            ret += lines
+        else:
+            lo = reg.get_textLineOrder() or self.get_textLineOrder() or 'top-to-bottom'
+            ret += lines if lo in ['top-to-bottom', 'left-to-right'] else list(reversed(lines))
     return ret
 
