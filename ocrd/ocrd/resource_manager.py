@@ -70,11 +70,12 @@ class OcrdResourceManager():
             # resources we know about
             all_executables = list(self.database.keys())
             # resources in the file system
-            parent_dirs = [XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME]
+            parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME]]
             if 'VIRTUAL_ENV' in environ:
-                parent_dirs += [join(environ['VIRTUAL_ENV'], 'share')]
+                parent_dirs += [join(environ['VIRTUAL_ENV'], 'share', 'ocrd-resources')]
             for parent_dir in parent_dirs:
-                all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
+                if Path(parent_dir).exists():
+                    all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
         for this_executable in set(all_executables):
             reslist = []
             for res_filename in list_all_resources(this_executable):
@@ -184,7 +185,7 @@ class OcrdResourceManager():
         fpath = Path(destdir, name)
         is_url = url.startswith('https://') or url.startswith('http://')
         if fpath.exists() and not overwrite:
-            log.info("%s to be downloaded to %s which already exists and overwrite is False" % (url, fpath))
+            log.info("%s to be %s to %s which already exists and overwrite is False" % (url, 'downloaded' if is_url else 'copied', fpath))
             return fpath
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type == 'file':

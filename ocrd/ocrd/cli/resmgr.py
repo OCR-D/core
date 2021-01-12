@@ -1,5 +1,6 @@
 import sys
 from os import getcwd
+from os.path import join
 from pathlib import Path
 import requests
 
@@ -68,9 +69,9 @@ def download(any_url, overwrite, location, executable, url_or_name):
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
-    basedir = XDG_CACHE_HOME if location == 'cache' else \
-            XDG_DATA_HOME if location == 'data' else \
-            XDG_CONFIG_HOME if location == 'config' else \
+    basedir = join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
+            join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
+            join(XDG_CONFIG_HOME, 'ocrd-resources') if location == 'config' else \
             getcwd()
     is_url = url_or_name.startswith('https://') or url_or_name.startswith('http://')
     is_filename = Path(url_or_name).exists()
