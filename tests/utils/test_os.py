@@ -11,6 +11,7 @@ from ocrd_utils.os import (
 class TestOsUtils(TestCase):
 
     def setUp(self):
+        self.maxDiff = None
         self.tempdir_path = mkdtemp()
         self.tempdir_venv = mkdtemp()
         ENV['OCRD_DUMMY_PATH'] = self.tempdir_path
@@ -34,12 +35,12 @@ class TestOsUtils(TestCase):
         cands = [dehomify(x) for x in cands]
         print(cands)
         self.assertEqual(cands, [join(x, fname) for x in [
-            dehomify(getcwd()),
+            dehomify(join(getcwd(), 'ocrd-resources')),
             dehomify(self.tempdir_path),
-            dehomify(join(self.tempdir_venv, 'share', 'ocrd-dummy')),
-            '$HOME/.local/share/ocrd-dummy',
-            '$HOME/.config/ocrd-dummy',
-            '$HOME/.cache/ocrd-dummy',
+            dehomify(join(self.tempdir_venv, 'share', 'ocrd-resources', 'ocrd-dummy')),
+            '$HOME/.local/share/ocrd-resources/ocrd-dummy',
+            '$HOME/.config/ocrd-resources/ocrd-dummy',
+            '$HOME/.cache/ocrd-resources/ocrd-dummy',
         ]])
 
 

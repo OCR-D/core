@@ -70,10 +70,10 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
     if 'VIRTUAL_ENV' in environ:
-        candidates.append(join(environ['VIRTUAL_ENV'], 'share', executable, fname))
-    candidates.append(join(XDG_DATA_HOME, executable, fname))
-    candidates.append(join(XDG_CONFIG_HOME, executable, fname))
-    candidates.append(join(XDG_CACHE_HOME, executable, fname))
+        candidates.append(join(environ['VIRTUAL_ENV'], 'share', 'ocrd-resources', executable, fname))
+    candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
+    candidates.append(join(XDG_CONFIG_HOME, 'ocrd-resources', executable, fname))
+    candidates.append(join(XDG_CACHE_HOME, 'ocrd-resources', executable, fname))
     if is_file:
         candidates = [c for c in candidates if Path(c).is_file()]
     if is_dir:
