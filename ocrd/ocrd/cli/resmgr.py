@@ -98,6 +98,8 @@ def download(any_url, overwrite, location, executable, url_or_name):
                     overwrite=overwrite,
                     basedir=basedir,
                     progress_cb=lambda delta: bar.update(delta))
+            log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'" % (executable, fpath.name, url_or_name, resmgr.user_list))
+            resmgr.add_to_user_database(executable, fpath, url_or_name)
             log.info("%s %s to %s" % ("Downloaded" if is_url else "Copied", url_or_name, fpath))
             log.info("Use in parameters as '%s'" % fpath.name)
         else:

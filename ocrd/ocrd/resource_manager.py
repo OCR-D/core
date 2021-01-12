@@ -88,7 +88,7 @@ class OcrdResourceManager():
             ret.append((this_executable, reslist))
         return ret
 
-    def add_to_user_database(self, executable, res_filename):
+    def add_to_user_database(self, executable, res_filename, url=None):
         """
         Add a stub entry to the user resource.yml
         """
@@ -101,7 +101,7 @@ class OcrdResourceManager():
         if not self.find_resources(executable=executable, name=res_name, database=user_database):
             resdict = {
                 'name': res_name,
-                'url': '???',
+                'url': url if url else '???',
                 'description': 'Found at %s on %s' % (res_filename, datetime.now()),
                 'version_range': '???',
                 'size': res_size
