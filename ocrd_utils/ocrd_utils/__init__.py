@@ -79,6 +79,7 @@ from .constants import (
     LOG_FORMAT,
     LOG_TIMEFMT,
     VERSION,
+    VIRTUAL_ENV,
     XDG_CACHE_HOME,
     XDG_CONFIG_HOME,
     XDG_DATA_HOME)

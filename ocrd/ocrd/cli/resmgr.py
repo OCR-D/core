@@ -9,6 +9,7 @@ import click
 from ocrd_utils import (
     initLogging,
     getLogger,
+    VIRTUAL_ENV,
     XDG_CACHE_HOME,
     XDG_CONFIG_HOME,
     XDG_DATA_HOME
@@ -54,7 +55,7 @@ def list_installed(executable=None):
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='Allow downloading/copying unregistered resources', is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
-@click.option('-l', '--location', help='Where to store resources', type=click.Choice(['cache', 'config', 'data', 'cwd']), default='cache', show_default=True)
+@click.option('-l', '--location', help='Where to store resources', type=click.Choice(['virtualenv', 'cache', 'config', 'data', 'cwd']), default='virtualenv', show_default=True)
 @click.argument('executable', required=True)
 @click.argument('url_or_name', required=True)
 def download(any_url, overwrite, location, executable, url_or_name):
@@ -69,7 +70,8 @@ def download(any_url, overwrite, location, executable, url_or_name):
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
-    basedir = join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
+    basedir = join(VIRTUAL_ENV, 'ocrd-resources') if location == 'virtualenv' and VIRTUAL_ENV else \
+            join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
             join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
             join(XDG_CONFIG_HOME, 'ocrd-resources') if location == 'config' else \
             getcwd()

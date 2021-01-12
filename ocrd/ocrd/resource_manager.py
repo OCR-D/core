@@ -12,7 +12,7 @@ from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.constants import HOME, XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME
+from ocrd_utils.constants import HOME, XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME, VIRTUAL_ENV
 from ocrd_utils.os import list_all_resources, pushd_popd
 
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
@@ -71,8 +71,8 @@ class OcrdResourceManager():
             all_executables = list(self.database.keys())
             # resources in the file system
             parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME]]
-            if 'VIRTUAL_ENV' in environ:
-                parent_dirs += [join(environ['VIRTUAL_ENV'], 'share', 'ocrd-resources')]
+            if VIRTUAL_ENV:
+                parent_dirs += [join(VIRTUAL_ENV, 'share', 'ocrd-resources')]
             for parent_dir in parent_dirs:
                 if Path(parent_dir).exists():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
