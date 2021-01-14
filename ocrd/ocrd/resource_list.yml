@@ -5,6 +5,11 @@ ocrd-tesserocr-recognize:
     parameter_usage: 'without-extension'
     description: Tesseract LSTM model trained on GT4HistOCR
     size: 1058487
+  - url: https://ub-backup.bib.uni-mannheim.de/~stweil/ocrd-train/data/ONB/tessdata_best/ONB_1.195_300718_989100.traineddata
+    name: ONB.traineddata
+    parameter_usage: 'without-extension'
+    description: Tesseract LSTM model based on Austrian National Library newspaper data
+    size: 4358948
   - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/equ.traineddata
     name: equ.traineddata
     parameter_usage: 'without-extension'
