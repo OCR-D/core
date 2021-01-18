@@ -106,6 +106,9 @@ def download(any_url, overwrite, location, executable, url_or_name):
             sys.exit(1)
     else:
         for _, resdict in reslist:
+            if resdict['url'] == '???':
+                log.info("Cannot download user resource %s" % (resdict['name'])),
+                continue
             log.info("Downloading resource %s" % resdict)
             with click.progressbar(length=resdict['size']) as bar:
                 fpath = resmgr.download(
