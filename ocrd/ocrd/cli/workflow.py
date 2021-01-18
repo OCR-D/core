@@ -1,6 +1,7 @@
 """
 CLI for task_sequence
 """
+import sys
 import click
 import flask
 import requests
@@ -115,8 +116,8 @@ def server_cli(log_level, host, port, tasks):
 # ocrd workflow client
 # ----------------------------------------------------------------------
 @workflow_cli.group('client')
-@click.option('-h', '--host', help="host name/IP to listen at", default='127.0.0.1')
-@click.option('-p', '--port', help="TCP port to listen at", default=5000, type=click.IntRange(min=1024))
+@click.option('-h', '--host', help="host name/IP to request from", default='127.0.0.1')
+@click.option('-p', '--port', help="TCP port to request from", default=5000, type=click.IntRange(min=1024))
 @click.pass_context
 def client_cli(ctx, host, port):
     """
@@ -125,6 +126,7 @@ def client_cli(ctx, host, port):
     url = 'http://' + host + ':' + str(port) + '/'
     ctx.ensure_object(dict)
     ctx.obj['URL'] = url
+    ctx.obj['log'] = getLogger('ocrd.workflow.client')
 
 @client_cli.command('process')
 @click.option('-m', '--mets', help="METS to process", default="mets.xml")
@@ -140,13 +142,23 @@ def client_process_cli(ctx, mets, page_id, overwrite):
               'page_id': page_id,
               'overwrite': str(overwrite)
     }
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        raise Exception("HTTP request failed: %s (HTTP %d)" % (
-            response.url, response.status_code))
-    print(response.text)
-    if response.text != 'Finished':
-        return 1
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        print(response.text)
+        if response.text == 'Finished':
+            sys.exit(0)
+        else:
+            sys.exit(1)
+    except requests.exceptions.HTTPError as err:
+        ctx.obj['log'].error("Server error: %s", err)
+    except requests.exceptions.ConnectionError as err:
+        ctx.obj['log'].error("Connection error: %s", err)
+    except requests.exceptions.Timeout as err:
+        ctx.obj['log'].error("Timeout error: %s", err)
+    except requests.exceptions.RequestException as err:
+        ctx.obj['log'].error("Unknown error: %s", err)
+    sys.exit(2)
 
 @client_cli.command('list-tasks')
 @click.pass_context
@@ -155,11 +167,20 @@ def client_process_cli(ctx):
     Have the workflow server print the configured task sequence
     """
     url = ctx.obj['URL'] + 'list-tasks'
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception("HTTP request failed: %s (HTTP %d)" % (
-            response.url, response.status_code))
-    print(response.text)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        print(response.text)
+        sys.exit(0)
+    except requests.exceptions.HTTPError as err:
+        ctx.obj['log'].error("Server error: %s", err)
+    except requests.exceptions.ConnectionError as err:
+        ctx.obj['log'].error("Connection error: %s", err)
+    except requests.exceptions.Timeout as err:
+        ctx.obj['log'].error("Timeout error: %s", err)
+    except requests.exceptions.RequestException as err:
+        ctx.obj['log'].error("Unknown error: %s", err)
+    sys.exit(2)
 
 @client_cli.command('shutdown')
 @click.pass_context
@@ -168,9 +189,17 @@ def client_process_cli(ctx):
     Have the workflow server shutdown gracefully
     """
     url = ctx.obj['URL'] + 'shutdown'
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception("HTTP request failed: %s (HTTP %d)" % (
-            response.url, response.status_code))
-    print(response.text)
+    try:
+        response = requests.get(url)
+        print(response.text)
+        sys.exit(0)
+    except requests.exceptions.HTTPError as err:
+        ctx.obj['log'].error("Server error: %s", err)
+    except requests.exceptions.ConnectionError as err:
+        ctx.obj['log'].error("Connection error: %s", err)
+    except requests.exceptions.Timeout as err:
+        ctx.obj['log'].error("Timeout error: %s", err)
+    except requests.exceptions.RequestException as err:
+        ctx.obj['log'].error("Unknown error: %s", err)
+    sys.exit(2)
 
