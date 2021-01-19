@@ -12,7 +12,9 @@ def load_config_file():
     """
     Load the configuration file
     """
-    fpath = Path(XDG_CONFIG_HOME, 'ocrd.yml')
+    fpath = Path(XDG_CONFIG_HOME, 'ocrd', 'config.yml')
+    if not fpath.parent.exists():
+        fpath.parent.mkdir()
     obj = DEFAULT_CONFIG
     if not fpath.exists():
         with open(str(fpath), 'w', encoding='utf-8') as f_out:
