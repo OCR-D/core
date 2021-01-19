@@ -1,6 +1,6 @@
 from pathlib import Path
 from os.path import join
-from os import environ, listdir
+from os import environ, listdir, getcwd
 import re
 from shutil import copytree
 from datetime import datetime
@@ -16,6 +16,7 @@ from ocrd_utils.constants import HOME, XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA
 from ocrd_utils.os import list_all_resources, pushd_popd
 
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
+from .config import load_config_file
 
 class OcrdResourceManager():
 
@@ -131,6 +132,18 @@ class OcrdResourceManager():
                 elif name and name == resdict['name']:
                     ret.append((executable, resdict))
         return ret
+
+    def get_resource_dir(self, location):
+        return join(VIRTUAL_ENV, 'ocrd-resources') if location == 'virtualenv' and VIRTUAL_ENV else \
+                join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
+                join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
+                join(XDG_CONFIG_HOME, 'ocrd-resources') if location == 'config' else \
+                getcwd()
+
+    @property
+    def default_resource_dir(self):
+        config = load_config_file()
+        return self.get_resource_dir(config.resource_location)
 
     def parameter_usage(self, name, usage='as-is'):
         if usage == 'as-is':

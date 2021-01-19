@@ -74,11 +74,7 @@ def download(any_url, overwrite, location, executable, url_or_name):
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
-    basedir = join(VIRTUAL_ENV, 'ocrd-resources') if location == 'virtualenv' and VIRTUAL_ENV else \
-            join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
-            join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
-            join(XDG_CONFIG_HOME, 'ocrd-resources') if location == 'config' else \
-            getcwd()
+    basedir = resmgr.get_resource_dir(location)
     is_url = url_or_name.startswith('https://') or url_or_name.startswith('http://')
     is_filename = Path(url_or_name).exists()
     find_kwargs = {'executable': executable}
