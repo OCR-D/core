@@ -388,6 +388,22 @@ def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefin
 
 
 # ----------------------------------------------------------------------
+# ocrd workspace rename-group
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('rename-group')
+@click.argument('OLD', nargs=1)
+@click.argument('NEW', nargs=1)
+@pass_workspace
+def rename_group(ctx, old, new):
+    """
+    Rename fileGrp (USE attribute ``NEW`` to ``OLD``).
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
+    workspace.rename_file_group(old, new)
+    workspace.save_mets()
+
+# ----------------------------------------------------------------------
 # ocrd workspace remove-group
 # ----------------------------------------------------------------------
 
