@@ -76,6 +76,7 @@ from .constants import (
     PIL_TO_MIME,
     REGEX_PREFIX,
     REGEX_FILE_ID,
+    RESOURCE_LOCATIONS,
     LOG_FORMAT,
     LOG_TIMEFMT,
     VERSION,

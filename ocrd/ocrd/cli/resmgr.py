@@ -10,6 +10,7 @@ from ocrd_utils import (
     initLogging,
     getLogger,
     VIRTUAL_ENV,
+    RESOURCE_LOCATIONS,
     XDG_CACHE_HOME,
     XDG_CONFIG_HOME,
     XDG_DATA_HOME
@@ -55,7 +56,7 @@ def list_installed(executable=None):
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='Allow downloading/copying unregistered resources', is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
-@click.option('-l', '--location', help='Where to store resources', type=click.Choice(['virtualenv', 'cache', 'config', 'data', 'cwd']), default='virtualenv', show_default=True)
+@click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='virtualenv', show_default=True)
 @click.argument('executable', required=True)
 @click.argument('url_or_name', required=True)
 def download(any_url, overwrite, location, executable, url_or_name):

@@ -1,0 +1,7 @@
+type: object
+additionalProperties: true
+properties:
+  resource_location:
+    type: string
+    enum: ['virtualenv', 'cache', 'config', 'data', 'cwd']
+    default: 'virtualenv'
