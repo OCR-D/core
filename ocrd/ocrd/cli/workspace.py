@@ -401,6 +401,7 @@ def rename_group(ctx, old, new):
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
     workspace.rename_file_group(old, new)
+    workspace.save_mets()
 
 # ----------------------------------------------------------------------
 # ocrd workspace remove-group
