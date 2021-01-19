@@ -232,7 +232,7 @@ class Workspace():
             url_replacements = {}
             log.info("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_url = sub(rf'^{old}/', f'{new}/', mets_file.url)
+                new_url = sub(r'^%s/' % old, '%s/' % new, mets_file.url)
                 url_replacements[mets_file.url] = new_url
                 # move file from ``old`` to ``new``
                 move(mets_file.url, new_url)
