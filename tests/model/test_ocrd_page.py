@@ -298,6 +298,20 @@ class TestOcrdPage(TestCase):
             # TODO: Test with word/glyph-level AlternativeImages
             # self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(word=False)), 37)
 
+    def test_get_AllAlternativeImages(self):
+        with open(assets.path_to('kant_aufklaerung_1784-complex/data/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001.xml'), 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            page = pcgts.get_Page()
+            self.assertEqual(page.get_AllAlternativeImages(page=False, region=False, line=False), [])
+            self.assertEqual([x.filename for x in page.get_AllAlternativeImages(page=True, region=False, line=False)], [
+                'OCR-D-IMG-BIN/OCR-D-IMG-BINPAGE-sauvola_0001-BIN_sauvola-ms-split.png',
+                'OCR-D-IMG-CROP/OCR-D-IMG-CROP_0001.png',
+                'OCR-D-IMG-BIN/INPUT_0017-BIN_sauvola-ms-split.png',
+                'OCR-D-IMG-DESPECK/OCR-D-IMG-DESPECK_0001.png',
+                'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png',
+                'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png'])
+            assert isinstance(page.get_AllAlternativeImages()[0], AlternativeImageType)
+
     def test_serialize_no_empty_readingorder(self):
         """
         https://github.com/OCR-D/core/issues/602

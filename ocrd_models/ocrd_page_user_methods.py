@@ -108,6 +108,7 @@ METHOD_SPECS = (
     _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
     _add_method(r'^(PageType)$', 'get_AllRegions'),
     _add_method(r'^(PcGtsType)$', 'get_AllAlternativeImagePaths'),
+    _add_method(r'^(PageType)$', 'get_AllAlternativeImages'),
     _add_method(r'^(PcGtsType)$', 'prune_ReadingOrder'),
     _add_method(r'^(PageType|RegionType|TextLineType|WordType|GlyphType)$', 'invalidate_AlternativeImage'),
     _add_method(r'^(BorderType|RegionType|TextLineType|WordType|GlyphType)$', 'set_Coords'),

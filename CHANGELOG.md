@@ -5,6 +5,17 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Implement file resource algorithm from OCR-D/spec#169, #559
+  * New CLI `ocrd resmgr` to download/browse processor resources, #559
+  * `Workspace.rename_file_group` with CLI `ocrd workspace rename-group` to rename file groups, #646
+
+Changed:
+
+  * `ocrd workspace add`: guess `--mimetype` if not provided, #658
+  * `ocrd workspace add`: warn if `--page-id` not provided, #659
+
 ## [2.22.0b3] - 2020-12-30
 
 Fixed:
@@ -23,13 +34,6 @@ Fixed:
 
   * `run_cli`: don't reference undefined vars in error handler, #651
 
-Changed:
-
-  * Implement file resource algorithm from OCR-D/spec#169, #559
-
-Added:
-
-  * New CLI `ocrd resmgr` to download/browse processor resources, #559
 
 ## [2.21.0] - 2020-11-27
 

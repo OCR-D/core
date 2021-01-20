@@ -212,6 +212,15 @@ class OcrdMets(OcrdXmlDocument):
             el_fileGrp.set('USE', fileGrp)
         return el_fileGrp
 
+    def rename_file_group(self, old, new):
+        """
+        Rename a filegroup by changing the ``USE`` attribute from ``old`` to ``new``.
+        """
+        el_fileGrp = self._tree.getroot().find('mets:fileSec/mets:fileGrp[@USE="%s"]' % old, NS)
+        if el_fileGrp is None:
+            raise FileNotFoundError("No such fileGrp '%s'" % old)
+        el_fileGrp.set('USE', new)
+
     def remove_file_group(self, USE, recursive=False, force=False):
         """
         Remove a fileGrp (fixed ``USE``) or fileGrps (regex ``USE``)
