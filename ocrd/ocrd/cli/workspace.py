@@ -167,10 +167,10 @@ def workspace_init(ctx, clobber_mets, directory):
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('add')
-@click.option('-G', '--file-grp', help="fileGrp USE", required=True)
-@click.option('-i', '--file-id', help="ID for the file", required=True)
-@click.option('-m', '--mimetype', help="Media type of the file", required=True)
-@click.option('-g', '--page-id', help="ID of the physical page")
+@click.option('-G', '--file-grp', help="fileGrp USE", required=True, metavar='FILE_GRP')
+@click.option('-i', '--file-id', help="ID for the file", required=True, metavar='FILE_ID')
+@click.option('-m', '--mimetype', help="Media type of the file", required=True, metavar='TYPE')
+@click.option('-g', '--page-id', help="ID of the physical page", metavar='PAGE_ID')
 @click.option('-C', '--check-file-exists', help="Whether to ensure FNAME exists", is_flag=True, default=False)
 @click.option('--ignore', help="Do not check whether file exists.", default=False, is_flag=True)
 @click.option('--force', help="If file with ID already exists, replace it. No effect if --ignore is set.", default=False, is_flag=True)
