@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.0b4] - 2021-01-20
+
 Added:
 
   * Implement file resource algorithm from OCR-D/spec#169, #559
@@ -1266,6 +1268,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.22.0b4]: ../../compare/v2.22.0b4..v2.22.0b3
+[2.22.0b3]: ../../compare/v2.22.0b3..v2.22.0b2
+[2.22.0b2]: ../../compare/v2.22.0b2..v2.22.0b1
 [2.22.0b1]: ../../compare/v2.22.0b1..v2.21.0
 [2.21.0]: ../../compare/v2.21.0..v2.20.2
 [2.20.2]: ../../compare/v2.20.2..v2.20.1
