@@ -169,7 +169,7 @@ def workspace_init(ctx, clobber_mets, directory):
 @workspace_cli.command('add')
 @click.option('-G', '--file-grp', help="fileGrp USE", required=True)
 @click.option('-i', '--file-id', help="ID for the file", required=True)
-@click.option('-m', '--mimetype', help="Media type of the file", required=True)
+@click.option('-m', '--mimetype', help="Media type of the file. Guessed from extension if not provided", required=False)
 @click.option('-g', '--page-id', help="ID of the physical page")
 @click.option('-C', '--check-file-exists', help="Whether to ensure FNAME exists", is_flag=True, default=False)
 @click.option('--ignore', help="Do not check whether file exists.", default=False, is_flag=True)
@@ -183,8 +183,15 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
 
-    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
     log = getLogger('ocrd.cli.workspace.add')
+    if not mimetype:
+        try:
+            mimetype = EXT_TO_MIME[Path(fname).suffix]
+            log.info("Guessed mimetype to be %s" % mimetype)
+        except KeyError:
+            log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (Path(fname).suffix, fname))
+
+    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
     log.debug("Adding '%s' (%s)", fname, kwargs)
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
