@@ -13,6 +13,11 @@ Added:
 
   * `Workspace.rename_file_group` with CLI `ocrd workspace rename-group` to rename file groups, #646
 
+Changed:
+
+  * `ocrd workspace add`: guess `--mimetype` if not provided, #658
+  * `ocrd workspace add`: warn if `--page-id` not provided, #659
+
 ## [2.21.0] - 2020-11-27
 
 Changed:
