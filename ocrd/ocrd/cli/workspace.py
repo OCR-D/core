@@ -206,6 +206,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         kwargs['local_filename'] = fname
 
     kwargs['url'] = fname
+    if not page_id:
+        log.warning("You did not provide '--page-id/-g', so the file you added is not linked to a specific page.")
     workspace.mets.add_file(**kwargs)
     workspace.save_mets()
 
