@@ -134,7 +134,7 @@ class OcrdResourceManager():
         return ret
 
     def get_resource_dir(self, location):
-        return join(VIRTUAL_ENV, 'ocrd-resources') if location == 'virtualenv' and VIRTUAL_ENV else \
+        return join(VIRTUAL_ENV, 'share', 'ocrd-resources') if location == 'virtualenv' and VIRTUAL_ENV else \
                 join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
                 join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
                 join(XDG_CONFIG_HOME, 'ocrd-resources') if location == 'config' else \
