@@ -85,6 +85,7 @@ class OcrdResourceManager():
                 if not resdict:
                     self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'" % (this_executable, res_name, res_filename, self.user_list))
                     resdict = [self.add_to_user_database(this_executable, res_filename)]
+                resdict[0]['path'] = res_filename
                 reslist.append(resdict[0])
             ret.append((this_executable, reslist))
         return ret
@@ -103,7 +104,7 @@ class OcrdResourceManager():
             resdict = {
                 'name': res_name,
                 'url': url if url else '???',
-                'description': 'Found at %s on %s' % (res_filename, datetime.now()),
+                'description': 'Found at %s on %s' % (self.resource_dir_to_location(res_filename), datetime.now()),
                 'version_range': '???',
                 'size': res_size
             }
@@ -133,17 +134,25 @@ class OcrdResourceManager():
                     ret.append((executable, resdict))
         return ret
 
-    def get_resource_dir(self, location):
+    def location_to_resource_dir(self, location):
         return join(VIRTUAL_ENV, 'share', 'ocrd-resources') if location == 'virtualenv' and VIRTUAL_ENV else \
                 join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
                 join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
                 join(XDG_CONFIG_HOME, 'ocrd-resources') if location == 'config' else \
                 getcwd()
 
+    def resource_dir_to_location(self, resource_path):
+        resource_path = str(resource_path)
+        return 'virtualenv' if VIRTUAL_ENV and resource_path.startswith(join(VIRTUAL_ENV, 'share', 'ocrd-resources')) else \
+               'cache' if resource_path.startswith(join(XDG_CACHE_HOME, 'ocrd-resources')) else \
+               'data' if resource_path.startswith(join(XDG_DATA_HOME, 'ocrd-resources')) else \
+               'config' if resource_path.startswith(join(XDG_CONFIG_HOME, 'ocrd-resources')) else \
+               resource_path
+
     @property
     def default_resource_dir(self):
         config = load_config_file()
-        return self.get_resource_dir(config.resource_location)
+        return self.location_to_resource_dir(config.resource_location)
 
     def parameter_usage(self, name, usage='as-is'):
         if usage == 'as-is':

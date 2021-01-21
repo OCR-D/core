@@ -22,10 +22,15 @@ from ..config import load_config_file
 
 config = load_config_file()
 
-def print_resources(executable, reslist):
+def print_resources(executable, reslist, resmgr):
     print('%s' % executable)
     for resdict in reslist:
-        print('- %s (%s)\n  %s' % (resdict['name'], resdict['url'], resdict['description']))
+        print('- %s %s (%s)\n  %s' % (
+            resdict['name'],
+            '@ %s' % resmgr.resource_dir_to_location(resdict['path']) if 'path' in resdict else '',
+            resdict['url'],
+            resdict['description']
+        ))
     print()
 
 @click.group("resmgr")
@@ -43,7 +48,7 @@ def list_available(executable=None):
     """
     resmgr = OcrdResourceManager()
     for executable, reslist in resmgr.list_available(executable):
-        print_resources(executable, reslist)
+        print_resources(executable, reslist, resmgr)
 
 @resmgr_cli.command('list-installed')
 @click.option('-e', '--executable', help='Show only resources for executable EXEC', metavar='EXEC')
@@ -54,7 +59,7 @@ def list_installed(executable=None):
     resmgr = OcrdResourceManager()
     ret = []
     for executable, reslist in resmgr.list_installed(executable):
-        print_resources(executable, reslist)
+        print_resources(executable, reslist, resmgr)
 
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='Allow downloading/copying unregistered resources', is_flag=True)
@@ -74,7 +79,7 @@ def download(any_url, overwrite, location, executable, url_or_name):
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
-    basedir = resmgr.get_resource_dir(location)
+    basedir = resmgr.location_to_resource_dir(location)
     is_url = url_or_name.startswith('https://') or url_or_name.startswith('http://')
     is_filename = Path(url_or_name).exists()
     find_kwargs = {'executable': executable}
