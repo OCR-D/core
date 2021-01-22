@@ -16,7 +16,6 @@ from ocrd_utils.constants import HOME, XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA
 from ocrd_utils.os import list_all_resources, pushd_popd
 
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
-from .config import load_config_file
 
 class OcrdResourceManager():
 
@@ -146,11 +145,6 @@ class OcrdResourceManager():
                'data' if resource_path.startswith(join(XDG_DATA_HOME, 'ocrd-resources')) else \
                'config' if resource_path.startswith(join(XDG_CONFIG_HOME, 'ocrd-resources')) else \
                resource_path
-
-    @property
-    def default_resource_dir(self):
-        config = load_config_file()
-        return self.location_to_resource_dir(config.resource_location)
 
     def parameter_usage(self, name, usage='as-is'):
         if usage == 'as-is':

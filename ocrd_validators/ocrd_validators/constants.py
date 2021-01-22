@@ -20,7 +20,6 @@ __all__ = [
 
 OCRD_TOOL_SCHEMA = yaml.safe_load(resource_string(__name__, 'ocrd_tool.schema.yml'))
 RESOURCE_LIST_SCHEMA = yaml.safe_load(resource_string(__name__, 'resource_list.schema.yml'))
-CONFIG_SCHEMA = yaml.safe_load(resource_string(__name__, 'ocrd_config.schema.yml'))
 OCRD_BAGIT_PROFILE = yaml.safe_load(resource_string(__name__, 'bagit-profile.yml'))
 
 BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'
