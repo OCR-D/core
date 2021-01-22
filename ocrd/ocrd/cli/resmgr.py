@@ -9,7 +9,6 @@ import click
 from ocrd_utils import (
     initLogging,
     getLogger,
-    VIRTUAL_ENV,
     RESOURCE_LOCATIONS,
     XDG_CACHE_HOME,
     XDG_CONFIG_HOME,

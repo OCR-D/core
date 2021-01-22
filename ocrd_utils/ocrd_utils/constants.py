@@ -18,7 +18,6 @@ __all__ = [
     'REGEX_FILE_ID',
     'RESOURCE_LOCATIONS',
     'VERSION',
-    'VIRTUAL_ENV',
     'XDG_CONFIG_HOME',
     'XDG_DATA_HOME',
     'XDG_CACHE_HOME',
@@ -107,6 +106,5 @@ else:
 XDG_DATA_HOME = environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in environ else join(HOME, '.local', 'share')
 XDG_CONFIG_HOME = environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in environ else join(HOME, '.config')
 XDG_CACHE_HOME = environ['XDG_CACHE_HOME'] if 'XDG_CACHE_HOME' in environ else join(HOME, '.cache')
-VIRTUAL_ENV = environ.get('VIRTUAL_ENV', None)
 
-RESOURCE_LOCATIONS = ['virtualenv', 'cwd', 'cache', 'config', 'data']
+RESOURCE_LOCATIONS = ['data', 'cwd', 'cache', 'config', 'system']

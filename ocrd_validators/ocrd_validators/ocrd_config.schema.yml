@@ -3,5 +3,5 @@ additionalProperties: true
 properties:
   resource_location:
     type: string
-    enum: ['virtualenv', 'cache', 'config', 'data', 'cwd']
-    default: 'virtualenv'
+    enum: ['data', 'cache', 'config', 'system', 'cwd']
+    default: 'data'

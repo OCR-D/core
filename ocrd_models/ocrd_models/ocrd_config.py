@@ -4,7 +4,7 @@ Configuration file
 import json
 
 DEFAULT_CONFIG = {
-    'resource_location': 'virtualenv'
+    'resource_location': 'data'
 }
 
 class OcrdConfig():
