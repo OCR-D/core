@@ -12,7 +12,7 @@ from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.constants import HOME, XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME
+from ocrd_utils.constants import HOME, XDG_DATA_HOME, XDG_CONFIG_HOME
 from ocrd_utils.os import list_all_resources, pushd_popd
 
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
@@ -70,7 +70,7 @@ class OcrdResourceManager():
             # resources we know about
             all_executables = list(self.database.keys())
             # resources in the file system
-            parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME, '/usr/local/share']]
+            parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_DATA_HOME, '/usr/local/share']]
             for parent_dir in parent_dirs:
                 if Path(parent_dir).exists():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
@@ -133,17 +133,13 @@ class OcrdResourceManager():
 
     def location_to_resource_dir(self, location):
         return '/usr/local/share/ocrd-resources' if location == 'system' else \
-                join(XDG_CACHE_HOME, 'ocrd-resources') if location == 'cache' else \
                 join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
-                join(XDG_CONFIG_HOME, 'ocrd-resources') if location == 'config' else \
                 getcwd()
 
     def resource_dir_to_location(self, resource_path):
         resource_path = str(resource_path)
         return 'system' if resource_path.startswith('/usr/local/share/ocrd-resources') else \
-               'cache' if resource_path.startswith(join(XDG_CACHE_HOME, 'ocrd-resources')) else \
                'data' if resource_path.startswith(join(XDG_DATA_HOME, 'ocrd-resources')) else \
-               'config' if resource_path.startswith(join(XDG_CONFIG_HOME, 'ocrd-resources')) else \
                resource_path
 
     def parameter_usage(self, name, usage='as-is'):
@@ -181,8 +177,8 @@ class OcrdResourceManager():
         self,
         executable,
         url,
+        basedir,
         overwrite=False,
-        basedir=XDG_CACHE_HOME,
         name=None,
         resource_type='file',
         path_in_archive='.',

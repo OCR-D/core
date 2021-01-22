@@ -26,7 +26,6 @@ from ocrd_utils import (
     initLogging,
     list_resource_candidates,
     list_all_resources,
-    XDG_CACHE_HOME
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType

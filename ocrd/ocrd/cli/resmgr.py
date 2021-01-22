@@ -9,10 +9,7 @@ import click
 from ocrd_utils import (
     initLogging,
     getLogger,
-    RESOURCE_LOCATIONS,
-    XDG_CACHE_HOME,
-    XDG_CONFIG_HOME,
-    XDG_DATA_HOME
+    RESOURCE_LOCATIONS
 )
 from ocrd_validators import OcrdZipValidator
 

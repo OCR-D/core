@@ -18,7 +18,7 @@ from zipfile import ZipFile
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
-from .constants import XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_CACHE_HOME
+from .constants import XDG_DATA_HOME
 
 def abspath(url):
     """
@@ -70,8 +70,6 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
     candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
-    candidates.append(join(XDG_CONFIG_HOME, 'ocrd-resources', executable, fname))
-    candidates.append(join(XDG_CACHE_HOME, 'ocrd-resources', executable, fname))
     candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
     if is_file:
         candidates = [c for c in candidates if Path(c).is_file()]
@@ -93,9 +91,9 @@ def list_all_resources(executable):
         for processor_path in environ[processor_path_var].split(':'):
             if isdir(processor_path):
                 candidates += list(scandir(processor_path))
-    for xdgdir in [join(d, 'ocrd-resources', executable) for d in [XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_CACHE_HOME]]:
-        if isdir(xdgdir):
-            candidates += list(scandir(xdgdir))
+    datadir = join(XDG_DATA_HOME, 'ocrd-resources', executable)
+    if isdir(datadir):
+        candidates += list(scandir(datadir))
     systemdir = join('/usr/local/share/ocrd-resources', executable)
     if isdir(systemdir):
         candidates += list(scandir(systemdir))

@@ -13,19 +13,11 @@ class TestOsUtils(TestCase):
     def setUp(self):
         self.maxDiff = None
         self.tempdir_path = mkdtemp()
-        self.tempdir_venv = mkdtemp()
         ENV['OCRD_DUMMY_PATH'] = self.tempdir_path
-        self.VIRTUAL_ENV = ENV.get('VIRTUAL_ENV')
-        ENV['VIRTUAL_ENV'] = self.tempdir_venv
 
     def tearDown(self):
         rmtree(self.tempdir_path)
-        rmtree(self.tempdir_venv)
         del ENV['OCRD_DUMMY_PATH']
-        if self.VIRTUAL_ENV:
-            ENV['VIRTUAL_ENV'] = self.VIRTUAL_ENV
-        else:
-            del ENV['VIRTUAL_ENV']
 
     def test_resolve_basic(self):
         def dehomify(s):
@@ -37,10 +29,8 @@ class TestOsUtils(TestCase):
         self.assertEqual(cands, [join(x, fname) for x in [
             dehomify(join(getcwd(), 'ocrd-resources')),
             dehomify(self.tempdir_path),
-            dehomify(join(self.tempdir_venv, 'share', 'ocrd-resources', 'ocrd-dummy')),
             '$HOME/.local/share/ocrd-resources/ocrd-dummy',
-            '$HOME/.config/ocrd-resources/ocrd-dummy',
-            '$HOME/.cache/ocrd-resources/ocrd-dummy',
+            '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
 
 
