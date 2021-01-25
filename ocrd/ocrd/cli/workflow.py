@@ -75,6 +75,8 @@ def server_cli(log_level, host, port, tasks):
     log = getLogger('ocrd.workflow.server')
     log.debug("Parsing and instantiating %d tasks", len(tasks))
     tasks = parse_tasks(tasks)
+    for task in tasks:
+        task.instantiate()
     app = flask.Flask(__name__)
     @app.route('/process')
     def process(): # pylint: disable=unused-variable
