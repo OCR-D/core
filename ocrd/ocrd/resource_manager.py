@@ -131,6 +131,9 @@ class OcrdResourceManager():
                     ret.append((executable, resdict))
         return ret
 
+    @property
+    def default_resource_dir(self):
+        return self.location_to_resource_dir('data')
     def location_to_resource_dir(self, location):
         return '/usr/local/share/ocrd-resources' if location == 'system' else \
                 join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
