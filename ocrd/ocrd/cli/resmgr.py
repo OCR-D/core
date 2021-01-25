@@ -2,8 +2,9 @@ import sys
 from os import getcwd
 from os.path import join
 from pathlib import Path
-import requests
+from distutils.spawn import find_executable as which
 
+import requests
 import click
 
 from ocrd_utils import (
@@ -56,11 +57,12 @@ def list_installed(executable=None):
 
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='Allow downloading/copying unregistered resources', is_flag=True)
+@click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
 @click.argument('executable', required=True)
 @click.argument('url_or_name', required=True)
-def download(any_url, overwrite, location, executable, url_or_name):
+def download(any_url, allow_uninstalled, overwrite, location, executable, url_or_name):
     """
     Download resource URL_OR_NAME for processor EXECUTABLE.
 
@@ -75,6 +77,13 @@ def download(any_url, overwrite, location, executable, url_or_name):
     basedir = resmgr.location_to_resource_dir(location)
     is_url = url_or_name.startswith('https://') or url_or_name.startswith('http://')
     is_filename = Path(url_or_name).exists()
+    if not which(executable):
+        if not allow_uninstalled:
+            log.error("Executable %s is not installed. Is there a typo in the executable? " \
+                "To install resources for uninstalled processor, use the -a/--allow-uninstalled flag" % executable)
+            sys.exit(1)
+        else:
+            log.warning("Executable %s is not installed but -a/--allow-uninstalled was given, so proceeding" % executable)
     find_kwargs = {'executable': executable}
     if url_or_name != '*':
         find_kwargs['url' if is_url else 'name'] = url_or_name
