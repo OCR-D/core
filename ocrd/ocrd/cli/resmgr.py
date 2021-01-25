@@ -61,7 +61,7 @@ def list_installed(executable=None):
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
 @click.argument('executable', required=True)
-@click.argument('url_or_name', required=True)
+@click.argument('url_or_name', required=False)
 def download(any_url, allow_uninstalled, overwrite, location, executable, url_or_name):
     """
     Download resource URL_OR_NAME for processor EXECUTABLE.
@@ -75,9 +75,14 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, url_or
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
     basedir = resmgr.location_to_resource_dir(location)
-    is_url = url_or_name.startswith('https://') or url_or_name.startswith('http://')
-    is_filename = Path(url_or_name).exists()
-    if not which(executable):
+    if executable != '*' and not url_or_name:
+        log.error("Unless EXECUTABLE ('%s') is the '*' wildcard, URL_OR_NAME is required" % executable)
+        sys.exit(1)
+    elif executable == '*':
+        executable = None
+    is_url = (url_or_name.startswith('https://') or url_or_name.startswith('http://')) if url_or_name else False
+    is_filename = Path(url_or_name).exists() if url_or_name else False
+    if executable and not which(executable):
         if not allow_uninstalled:
             log.error("Executable %s is not installed. Is there a typo in the executable? " \
                 "To install resources for uninstalled processor, use the -a/--allow-uninstalled flag" % executable)
@@ -85,7 +90,7 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, url_or
         else:
             log.warning("Executable %s is not installed but -a/--allow-uninstalled was given, so proceeding" % executable)
     find_kwargs = {'executable': executable}
-    if url_or_name != '*':
+    if url_or_name and url_or_name != '*':
         find_kwargs['url' if is_url else 'name'] = url_or_name
     reslist = resmgr.find_resources(**find_kwargs)
     if not reslist:
@@ -112,7 +117,10 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, url_or
         else:
             sys.exit(1)
     else:
-        for _, resdict in reslist:
+        for executable, resdict in reslist:
+            if not allow_uninstalled and not which(executable):
+                log.info("Skipping installing resources for %s as it is not installed. (Use -a/--allow-uninstalled to force)")
+                continue
             if resdict['url'] == '???':
                 log.info("Cannot download user resource %s" % (resdict['name'])),
                 continue
