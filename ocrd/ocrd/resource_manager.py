@@ -70,7 +70,7 @@ class OcrdResourceManager():
             # resources we know about
             all_executables = list(self.database.keys())
             # resources in the file system
-            parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_DATA_HOME, '/usr/local/share']]
+            parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_DATA_HOME, '/usr/local/share', getcwd()]]
             for parent_dir in parent_dirs:
                 if Path(parent_dir).exists():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
