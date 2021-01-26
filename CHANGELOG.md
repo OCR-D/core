@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.1] - 2021-01-26
+
+Fixed:
+
+  * `mkdir -p $HOME/.config/ocrd`
+
 ## [2.22.0] - 2021-01-26
 
 Added:
@@ -1255,6 +1261,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.22.1]: ../../compare/v2.22.1..v2.22.0
 [2.22.0]: ../../compare/v2.22.0..v2.22.0b4
 [2.22.0b4]: ../../compare/v2.22.0b4..v2.22.0b3
 [2.22.0b3]: ../../compare/v2.22.0b3..v2.22.0b2
