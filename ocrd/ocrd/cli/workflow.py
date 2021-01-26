@@ -112,7 +112,10 @@ def server_cli(log_level, host, port, tasks):
         fun()
         return 'Stopped'
     log.debug("Running server on http://%s:%d", host, port)
-    app.run(host=host, port=port)
+    # disable multithreading here:
+    # - GPU processors need to have same thread context between startup and processing
+    # - we have no multiprocessing server backend anyway (until we move to external server)
+    app.run(host=host, port=port, debug=False, threaded=False)
 
 # ----------------------------------------------------------------------
 # ocrd workflow client
