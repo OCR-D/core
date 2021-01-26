@@ -29,7 +29,7 @@ class OcrdResourceManager():
         self.user_list = Path(XDG_CONFIG_HOME, 'ocrd', 'resources.yml')
         if not self.user_list.exists():
             if not self.user_list.parent.exists():
-                self.user_list.parent.mkdir()
+                self.user_list.parent.mkdir(parents=True)
             with open(str(self.user_list), 'w', encoding='utf-8') as f:
                 f.write(RESOURCE_USER_LIST_COMMENT)
         self.load_resource_list(self.user_list)
