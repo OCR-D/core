@@ -5,37 +5,24 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [2.22.0b4] - 2021-01-20
+## [2.22.0] - 2021-01-26
 
 Added:
 
   * Implement file resource algorithm from OCR-D/spec#169, #559
   * New CLI `ocrd resmgr` to download/browse processor resources, #559
   * `Workspace.rename_file_group` with CLI `ocrd workspace rename-group` to rename file groups, #646
+  * PAGE API method `get_AllTextLines`
+  * resources for kraken
 
 Changed:
 
   * `ocrd workspace add`: guess `--mimetype` if not provided, #658
   * `ocrd workspace add`: warn if `--page-id` not provided, #659
 
-## [2.22.0b3] - 2020-12-30
-
 Fixed:
-  * `name` of resources mustn't contain slash `/`
-
-## [2.22.0b2] - 2020-12-30
-
-Added:
-
-  * PAGE API method `get_AllTextLines`
-  * resources for kraken
-
-## [2.22.0b1] - 2020-12-28
-
-Fixed:
-
   * `run_cli`: don't reference undefined vars in error handler, #651
-
+  * `name` of resources mustn't contain slash `/`
 
 ## [2.21.0] - 2020-11-27
 
@@ -1268,6 +1255,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.22.0]: ../../compare/v2.22.0..v2.22.0b4
 [2.22.0b4]: ../../compare/v2.22.0b4..v2.22.0b3
 [2.22.0b3]: ../../compare/v2.22.0b3..v2.22.0b2
 [2.22.0b2]: ../../compare/v2.22.0b2..v2.22.0b1
