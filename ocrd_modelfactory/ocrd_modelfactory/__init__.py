@@ -5,6 +5,7 @@ Factory methods to create models for data, files, URLs.
 """
 from datetime import datetime
 from pathlib import Path
+from yaml import safe_load, safe_dump
 
 from PIL import Image
 

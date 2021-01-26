@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Jan  4 13:58:35 2021 by generateDS.py version 2.35.20.
+# Generated Wed Jan 20 12:35:59 2021 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
 #
 # Command line options:
@@ -3115,6 +3115,29 @@ class PageType(GeneratedsSuper):
         """
         self.invalidate_AlternativeImage(feature_selector='cropped')
         self.Border = Border
+    def get_AllTextLines(self, region_order='document', respect_textline_order=True):
+        """
+        Return all the TextLine in the document
+    
+        Arguments:
+            region_order ("document"|"reading-order"|"reading-order-only") Whether to
+                return regions sorted by document order (``document``, default) or by
+                reading order with regions not in the reading order at the end of the
+                returned list (``reading-order``) or regions not in the reading order
+                omitted (``reading-order-only``)
+            respect_textline_order (boolean) Whether to respect textlineOrder attribute
+        """
+        # TODO handle textLineOrder according to https://github.com/PRImA-Research-Lab/PAGE-XML/issues/26
+        ret = []
+        for reg in self.get_AllRegions(['Text'], order=region_order):
+            lines = reg.get_TextLine()
+            if not respect_textline_order:
+                ret += lines
+            else:
+                lo = reg.get_textLineOrder() or self.get_textLineOrder() or 'top-to-bottom'
+                ret += lines if lo in ['top-to-bottom', 'left-to-right'] else list(reversed(lines))
+        return ret
+    
     def set_orientation(self, orientation):
         """
         Set deskewing angle to given number.

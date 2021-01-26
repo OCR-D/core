@@ -2,13 +2,34 @@
 Processor base class and helper functions
 """
 
-__all__ = ['Processor', 'generate_processor_help', 'run_cli', 'run_processor']
+__all__ = [
+    'Processor',
+    'generate_processor_help',
+    'run_cli',
+    'run_processor'
+]
 
-import os
+from os import makedirs
+from os.path import exists, isdir, join
+from shutil import copyfileobj
 import json
-from ocrd_utils import VERSION as OCRD_VERSION, MIMETYPE_PAGE, getLogger
+import os
+import re
+import sys
+
+import requests
+
+from ocrd_utils import (
+    VERSION as OCRD_VERSION,
+    MIMETYPE_PAGE,
+    getLogger,
+    initLogging,
+    list_resource_candidates,
+    list_all_resources,
+)
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
+from ..resource_manager import OcrdResourceManager
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
@@ -33,6 +54,8 @@ class Processor():
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             page_id=None,
+            show_resource=None,
+            list_resources=False,
             show_help=False,
             show_version=False,
             dump_json=False,
@@ -42,6 +65,20 @@ class Processor():
             parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
+            return
+        if list_resources:
+            for res in list_all_resources(ocrd_tool['executable']):
+                print(res)
+            return
+        if show_resource:
+            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource, is_file=True)
+            if not res_fname:
+                initLogging()
+                logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
+                logger.error("Failed to resolve %s for processort %s" % (show_resource, ocrd_tool['executable']))
+            else:
+                with open(res_fname[0], 'rb') as f:
+                    copyfileobj(f, sys.stdout.buffer)
             return
         self.ocrd_tool = ocrd_tool
         if show_help:
@@ -84,6 +121,7 @@ class Processor():
         """
         raise Exception("Must be implemented")
 
+
     def add_metadata(self, pcgts):
         """
         Adds PAGE-XML MetadataItem describing the processing step
@@ -106,6 +144,41 @@ class Processor():
                                LabelType(type_='ocrd/core',
                                          value=OCRD_VERSION)])
                     ]))
+
+    def resolve_resource(self, val):
+        """
+        Resolve a resource name to an absolute file path with the algorithm in
+        https://ocr-d.de/en/spec/ocrd_tool#file-parameters
+
+        Args:
+            val (string): resource value to resolve
+        """
+        executable = self.ocrd_tool['executable']
+        if exists(val):
+            return val
+        ret = [cand for cand in list_resource_candidates(executable, val) if exists(cand)]
+        if ret:
+            return ret[0]
+        resmgr = OcrdResourceManager()
+        reslist = resmgr.find_resources(executable, name=val)
+        if not reslist:
+            reslist = resmgr.find_resources(executable, url=val)
+        if not reslist:
+            raise FileNotFoundError("Could not resolve %s resource '%s'" % (executable, val))
+        _, resdict = reslist[0]
+        return str(resmgr.download(
+            executable,
+            url=resdict['url'],
+            name=resdict['name'],
+            path_in_archive=resdict['path_in_archive'],
+            resource_type=resdict['type']
+        ))
+
+    def list_all_resources(self):
+        """
+        List all resources found in the filesystem
+        """
+        return list_all_resources(self.ocrd_tool['executable'])
 
     @property
     def input_files(self):

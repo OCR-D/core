@@ -4,7 +4,7 @@ from pathlib import Path
 from shutil import move
 from re import sub
 
-import cv2
+from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
 from PIL import Image
 import numpy as np
 from deprecated.sphinx import deprecated
@@ -398,9 +398,9 @@ class Workspace():
 
         # FIXME: remove or replace this by (image_from_polygon+) crop_image ...
         log.debug("Converting PIL to OpenCV: %s", image_url)
-        color_conversion = cv2.COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  cv2.COLOR_RGB2BGR
+        color_conversion = COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  COLOR_RGB2BGR
         pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
-        cv2_image = cv2.cvtColor(pil_as_np_array, color_conversion)
+        cv2_image = cvtColor(pil_as_np_array, color_conversion)
 
         poly = np.array(coords, np.int32)
         log.debug("Cutting region %s from %s", coords, image_url)

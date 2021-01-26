@@ -266,6 +266,11 @@ class TestOcrdPage(TestCase):
             rrs = og.get_RegionRefIndexed()
             self.assertEqual([x.index for x in rrs][-3:], [22, 23, 24])
 
+    def test_get_AllTextLine(self):
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
+            page = parseString(f.read().encode('utf8'), silence=True).get_Page()
+            assert len(page.get_AllTextLines()) == 55
+
     def test_extend_AllIndexed_validate_continuity(self):
         with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
