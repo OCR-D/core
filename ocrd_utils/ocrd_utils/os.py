@@ -65,7 +65,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
     """
     candidates = []
-    candidates.append(join(cwd, 'ocrd-resources', fname))
+    candidates.append(join(cwd, 'ocrd-resources', executable, fname))
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
