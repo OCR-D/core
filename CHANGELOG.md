@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.3] - 2021-01-27
+
+Changed:
+
+  * resmgr: do not download on-demand when encountering unresolveable file parameters
+
+Fixed:
+
+  * resmgr: bugs in `--location cwd` resolving
+
 ## [2.22.2] - 2021-01-26
 
 Changed:
