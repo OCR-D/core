@@ -46,16 +46,17 @@ ocrd-tesserocr-recognize:
     description: Tesseract Latin model
     size: 89384811
 ocrd-calamari-recognize:
-  - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
-    type: tarball
-    name: qurator-gt4hist-0.3
-    description: Calamari model trained with GT4HistOCR
-    size: 116439072
-    path_in_archive: '.'
-    version_range: '< 1.0.0'
+  # XXX disabled since older ocrd_calamari versions don't support resource resolving
+  #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
+  #  type: tarball
+  #  name: qurator-gt4histocr-0.3
+  #  description: Calamari model trained with GT4HistOCR
+  #  size: 116439072
+  #  path_in_archive: '.'
+  #  version_range: '< 1.0.0'
   - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-12-11T11_10+0100/model.tar.xz
     type: tarball
-    name: qurator-gt4hist-1.0
+    name: qurator-gt4histocr-1.0
     description: Calamari model trained with GT4HistOCR
     size: 90275264
     path_in_archive: '.'
