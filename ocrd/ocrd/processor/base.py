@@ -153,26 +153,14 @@ class Processor():
         Args:
             val (string): resource value to resolve
         """
-        executable = self.ocrd_tool['executable']
         if exists(val):
             return val
+        executable = self.ocrd_tool['executable']
         ret = [cand for cand in list_resource_candidates(executable, val) if exists(cand)]
         if ret:
             return ret[0]
-        resmgr = OcrdResourceManager()
-        reslist = resmgr.find_resources(executable, name=val)
-        if not reslist:
-            reslist = resmgr.find_resources(executable, url=val)
-        if not reslist:
-            raise FileNotFoundError("Could not resolve %s resource '%s'" % (executable, val))
-        _, resdict = reslist[0]
-        return str(resmgr.download(
-            executable,
-            url=resdict['url'],
-            name=resdict['name'],
-            path_in_archive=resdict['path_in_archive'],
-            resource_type=resdict['type']
-        ))
+        raise FileNotFoundError("Could not find resource '%s' for executable '%s'. Try 'ocrd resmgr download %s %s' to download this resource." %
+                (val, executable, executable, val))
 
     def list_all_resources(self):
         """
