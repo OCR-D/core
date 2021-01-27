@@ -153,14 +153,18 @@ class Processor():
         Args:
             val (string): resource value to resolve
         """
-        if exists(val):
-            return val
         executable = self.ocrd_tool['executable']
+        log = getLogger('ocrd.%s.resolve_resource' % executable)
+        if exists(val):
+            log.debug("Resolved to absolute path %s" % val)
+            return val
         ret = [cand for cand in list_resource_candidates(executable, val) if exists(cand)]
         if ret:
+            log.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
-        raise FileNotFoundError("Could not find resource '%s' for executable '%s'. Try 'ocrd resmgr download %s %s' to download this resource." %
-                (val, executable, executable, val))
+        log.error("Could not find resource '%s' for executable '%s'. Try 'ocrd resmgr download %s %s' to download this resource.",
+                val, executable, executable, val)
+        sys.exit(1)
 
     def list_all_resources(self):
         """
