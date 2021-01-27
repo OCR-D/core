@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.2] - 2021-01-26
+
+Changed:
+
+  * resmgr/ocrd_calamari: disable pre-1.0 model
+  * resmgr/ocrd_calamri: Rename resource `qurator-gt4hist{,ocr}-1.0`
+
 ## [2.22.1] - 2021-01-26
 
 Fixed:
@@ -1261,6 +1268,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.22.2]: ../../compare/v2.22.2..v2.22.1
 [2.22.1]: ../../compare/v2.22.1..v2.22.0
 [2.22.0]: ../../compare/v2.22.0..v2.22.0b4
 [2.22.0b4]: ../../compare/v2.22.0b4..v2.22.0b3
