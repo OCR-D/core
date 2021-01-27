@@ -14,6 +14,7 @@ from os.path import exists, isdir, join
 from shutil import copyfileobj
 import json
 import os
+from os import getcwd
 import re
 import sys
 
@@ -93,6 +94,7 @@ class Processor():
         # but there is no way to do that in process here since it's an
         # overridden method. chdir is almost always an anti-pattern.
         if self.workspace:
+            self.old_pwd = getcwd()
             os.chdir(self.workspace.directory)
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
@@ -158,7 +160,7 @@ class Processor():
         if exists(val):
             log.debug("Resolved to absolute path %s" % val)
             return val
-        ret = [cand for cand in list_resource_candidates(executable, val) if exists(cand)]
+        ret = [cand for cand in list_resource_candidates(executable, val, cwd=self.old_pwd) if exists(cand)]
         if ret:
             log.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
