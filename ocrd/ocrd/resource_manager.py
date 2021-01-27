@@ -137,7 +137,7 @@ class OcrdResourceManager():
     def location_to_resource_dir(self, location):
         return '/usr/local/share/ocrd-resources' if location == 'system' else \
                 join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
-                getcwd()
+                join(getcwd(), 'ocrd-resources')
 
     def resource_dir_to_location(self, resource_path):
         resource_path = str(resource_path)
