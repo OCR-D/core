@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Jan 20 12:35:59 2021 by generateDS.py version 2.35.20.
+# Generated Wed Feb  3 11:36:26 2021 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
 #   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
+#   ('--silence', '')
 #   ('--disable-generatedssuper-lookup', '')
 #   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
@@ -16,7 +17,7 @@
 #   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --silence --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -13404,12 +13405,12 @@ def parse(inFileName, silence=False, print_warnings=True):
     if not SaveElementTreeNode:
         doc = None
         rootNode = None
-    if not silence:
-        sys.stdout.write('<?xml version="1.0" ?>\n')
-        rootObj.export(
-            sys.stdout, 0, name_=rootTag,
-            namespacedef_=namespacedefs,
-            pretty_print=True)
+##     if not silence:
+##         sys.stdout.write('<?xml version="1.0" ?>\n')
+##         rootObj.export(
+##             sys.stdout, 0, name_=rootTag,
+##             namespacedef_=namespacedefs,
+##             pretty_print=True)
     if print_warnings and len(gds_collector.get_messages()) > 0:
         separator = ('-' * 50) + '\n'
         sys.stderr.write(separator)
@@ -13441,12 +13442,12 @@ def parseEtree(inFileName, silence=False, print_warnings=True,
     if not SaveElementTreeNode:
         doc = None
         rootNode = None
-    if not silence:
-        content = etree_.tostring(
-            rootElement, pretty_print=True,
-            xml_declaration=True, encoding="utf-8")
-        sys.stdout.write(str(content))
-        sys.stdout.write('\n')
+##     if not silence:
+##         content = etree_.tostring(
+##             rootElement, pretty_print=True,
+##             xml_declaration=True, encoding="utf-8")
+##         sys.stdout.write(str(content))
+##         sys.stdout.write('\n')
     if print_warnings and len(gds_collector.get_messages()) > 0:
         separator = ('-' * 50) + '\n'
         sys.stderr.write(separator)
@@ -13477,11 +13478,11 @@ def parseString(inString, silence=False, print_warnings=True):
     rootObj.build(rootNode, gds_collector_=gds_collector)
     if not SaveElementTreeNode:
         rootNode = None
-    if not silence:
-        sys.stdout.write('<?xml version="1.0" ?>\n')
-        rootObj.export(
-            sys.stdout, 0, name_=rootTag,
-            namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"')
+##     if not silence:
+##         sys.stdout.write('<?xml version="1.0" ?>\n')
+##         rootObj.export(
+##             sys.stdout, 0, name_=rootTag,
+##             namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"')
     if print_warnings and len(gds_collector.get_messages()) > 0:
         separator = ('-' * 50) + '\n'
         sys.stderr.write(separator)
@@ -13507,12 +13508,12 @@ def parseLiteral(inFileName, silence=False, print_warnings=True):
     if not SaveElementTreeNode:
         doc = None
         rootNode = None
-    if not silence:
-        sys.stdout.write('#from ocrd_page_generateds import *\n\n')
-        sys.stdout.write('import ocrd_page_generateds as model_\n\n')
-        sys.stdout.write('rootObj = model_.rootClass(\n')
-        rootObj.exportLiteral(sys.stdout, 0, name_=rootTag)
-        sys.stdout.write(')\n')
+##     if not silence:
+##         sys.stdout.write('#from ocrd_page_generateds import *\n\n')
+##         sys.stdout.write('import ocrd_page_generateds as model_\n\n')
+##         sys.stdout.write('rootObj = model_.rootClass(\n')
+##         rootObj.exportLiteral(sys.stdout, 0, name_=rootTag)
+##         sys.stdout.write(')\n')
     if print_warnings and len(gds_collector.get_messages()) > 0:
         separator = ('-' * 50) + '\n'
         sys.stderr.write(separator)
