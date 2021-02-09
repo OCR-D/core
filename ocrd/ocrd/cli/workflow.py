@@ -167,7 +167,7 @@ def client_process_cli(ctx, mets, page_id, overwrite):
 
 @client_cli.command('list-tasks')
 @click.pass_context
-def client_process_cli(ctx):
+def client_list_tasks_cli(ctx):
     """
     Have the workflow server print the configured task sequence
     """
@@ -189,7 +189,7 @@ def client_process_cli(ctx):
 
 @client_cli.command('shutdown')
 @click.pass_context
-def client_process_cli(ctx):
+def client_shutdown_cli(ctx):
     """
     Have the workflow server shutdown gracefully
     """
