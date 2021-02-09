@@ -69,16 +69,19 @@ Utility functions and constants usable in various circumstances.
 """
 
 from .constants import (
-    VERSION,
-    MIMETYPE_PAGE,
     EXT_TO_MIME,
+    MIMETYPE_PAGE,
     MIME_TO_EXT,
-    PIL_TO_MIME,
     MIME_TO_PIL,
+    PIL_TO_MIME,
     REGEX_PREFIX,
     REGEX_FILE_ID,
+    RESOURCE_LOCATIONS,
     LOG_FORMAT,
-    LOG_TIMEFMT)
+    LOG_TIMEFMT,
+    VERSION,
+    XDG_CONFIG_HOME,
+    XDG_DATA_HOME)
 
 from .deprecate import (
     deprecated_alias)
@@ -128,6 +131,8 @@ from .logging import (
 
 from .os import (
     abspath,
+    list_all_resources,
+    list_resource_candidates,
     atomic_write,
     pushd_popd,
     unzip_file_to_dir)

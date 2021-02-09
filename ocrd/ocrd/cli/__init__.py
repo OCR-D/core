@@ -19,6 +19,7 @@ from ocrd.cli.process import process_cli
 from ocrd.cli.workflow import workflow_cli
 from ocrd.cli.bashlib import bashlib_cli
 from ocrd.cli.validate import validate_cli
+from ocrd.cli.resmgr import resmgr_cli
 from ocrd.decorators import ocrd_loglevel
 from .zip import zip_cli
 from .log import log_cli
@@ -39,3 +40,4 @@ cli.add_command(bashlib_cli)
 cli.add_command(zip_cli)
 cli.add_command(validate_cli)
 cli.add_command(log_cli)
+cli.add_command(resmgr_cli)

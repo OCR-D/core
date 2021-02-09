@@ -1,15 +1,17 @@
 import io
 from os import makedirs, unlink, listdir, path
 from pathlib import Path
+from shutil import move
+from re import sub
 
-import cv2
+from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
 from PIL import Image
 import numpy as np
 from deprecated.sphinx import deprecated
 
 from ocrd_models import OcrdMets, OcrdFile
-from ocrd_models.ocrd_page import parse, BorderType
-from ocrd_modelfactory import exif_from_filename
+from ocrd_models.ocrd_page import parse, BorderType, to_xml
+from ocrd_modelfactory import exif_from_filename, page_from_file
 from ocrd_utils import (
     atomic_write,
     getLogger,
@@ -207,6 +209,62 @@ class Workspace():
                         Path(file_dir).rmdir()
 
 
+    def rename_file_group(self, old, new):
+        """
+        Rename a fileGrp.
+
+        Arguments:
+            old (string): USE attribute of the fileGrp to rename
+            new (string): USE attribute of the fileGrp to rename as
+        """
+        log = getLogger('ocrd.workspace.rename_file_group')
+
+        if old not in self.mets.file_groups:
+            raise ValueError("No such fileGrp: %s" % old)
+        if new in self.mets.file_groups:
+            raise ValueError("fileGrp already exists %s" % new)
+
+        with pushd_popd(self.directory):
+            # create workspace dir ``new``
+            log.info("mkdir %s" % new)
+            if not Path(new).is_dir():
+                Path(new).mkdir()
+            url_replacements = {}
+            log.info("Moving files")
+            for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
+                new_url = sub(r'^%s/' % old, '%s/' % new, mets_file.url)
+                url_replacements[mets_file.url] = new_url
+                # move file from ``old`` to ``new``
+                move(mets_file.url, new_url)
+                # change the url of ``mets:file``
+                mets_file.url = new_url
+            # change file paths in PAGE-XML imageFilename and filename attributes
+            for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
+                log.info("Renaming file references in PAGE-XML %s" % page_file)
+                pcgts = page_from_file(page_file)
+                changed = False
+                for old_url, new_url in url_replacements.items():
+                    if pcgts.get_Page().imageFilename == old_url:
+                        changed = True
+                        log.info("Rename pc:Page/@imageFilename: %s -> %s" % (old_url, new_url))
+                        pcgts.get_Page().imageFilename = new_url
+                for ai in pcgts.get_Page().get_AllAlternativeImages():
+                    for old_url, new_url in url_replacements.items():
+                        if ai.filename == old_url:
+                            changed = True
+                            log.info("Rename pc:Page/../AlternativeImage: %s -> %s" % (old_url, new_url))
+                            ai.filename = new_url
+                if changed:
+                    log.info("PAGE-XML changed, writing %s" % (page_file.local_filename))
+                    with open(page_file.local_filename, 'w', encoding='utf-8') as f:
+                        f.write(to_xml(pcgts))
+            # change the ``USE`` attribute of the fileGrp
+            self.mets.rename_file_group(old, new)
+            # Remove the old dir
+            log.info("rmdir %s" % old)
+            if Path(old).is_dir() and not listdir(old):
+                Path(old).rmdir()
+
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add an output file. Creates an :class:`OcrdFile` to pass around and adds that to the
@@ -340,9 +398,9 @@ class Workspace():
 
         # FIXME: remove or replace this by (image_from_polygon+) crop_image ...
         log.debug("Converting PIL to OpenCV: %s", image_url)
-        color_conversion = cv2.COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  cv2.COLOR_RGB2BGR
+        color_conversion = COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  COLOR_RGB2BGR
         pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
-        cv2_image = cv2.cvtColor(pil_as_np_array, color_conversion)
+        cv2_image = cvtColor(pil_as_np_array, color_conversion)
 
         poly = np.array(coords, np.int32)
         log.debug("Cutting region %s from %s", coords, image_url)

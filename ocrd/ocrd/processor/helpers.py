@@ -36,6 +36,8 @@ def run_processor(
         log_level=None,         # TODO actually use this!
         input_file_grp=None,
         output_file_grp=None,
+        show_resource=None,
+        list_resources=False,
         parameter=None,
         parameter_override=None,
         working_dir=None,
@@ -217,6 +219,8 @@ Options:
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Log level
+  -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
+  -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON and exit
   -h, --help                      This help message
   -V, --version                   Show version

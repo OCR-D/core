@@ -5,16 +5,20 @@ __all__ = [
     'abspath',
     'pushd_popd',
     'unzip_file_to_dir',
+    'list_resource_candidates',
     'atomic_write',
 ]
 
-from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 from tempfile import TemporaryDirectory
 import contextlib
-from os import getcwd, chdir, stat, chmod, umask
-from os.path import abspath as abspath_
-
+from os import getcwd, chdir, stat, chmod, umask, environ, scandir
+from pathlib import Path
+from os.path import exists, abspath as abspath_, join, isdir
 from zipfile import ZipFile
+
+from atomicwrites import atomic_write as atomic_write_, AtomicWriter
+
+from .constants import XDG_DATA_HOME
 
 def abspath(url):
     """
@@ -55,7 +59,45 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
+def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_dir=False):
+    """
+    Generate candidates for processor resources according to
+    https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
+    """
+    candidates = []
+    candidates.append(join(cwd, 'ocrd-resources', executable, fname))
+    processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
+    if processor_path_var in environ:
+        candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
+    candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
+    candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
+    if is_file:
+        candidates = [c for c in candidates if Path(c).is_file()]
+    if is_dir:
+        candidates = [c for c in candidates if Path(c).is_dir()]
+    return candidates
 
+def list_all_resources(executable):
+    """
+    List all processor resources in the filesystem according to
+    https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
+    """
+    candidates = []
+    cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
+    if Path(cwd_candidate).exists():
+        candidates.append(cwd_candidate)
+    processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
+    if processor_path_var in environ:
+        for processor_path in environ[processor_path_var].split(':'):
+            if isdir(processor_path):
+                candidates += list(scandir(processor_path))
+    datadir = join(XDG_DATA_HOME, 'ocrd-resources', executable)
+    if isdir(datadir):
+        candidates += list(scandir(datadir))
+    systemdir = join('/usr/local/share/ocrd-resources', executable)
+    if isdir(systemdir):
+        candidates += list(scandir(systemdir))
+    return [x.path for x in candidates]
 
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42

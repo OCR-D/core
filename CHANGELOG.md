@@ -5,9 +5,47 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.3] - 2021-01-27
+
+Changed:
+
+  * resmgr: do not download on-demand when encountering unresolveable file parameters
+
 Fixed:
 
+  * resmgr: bugs in `--location cwd` resolving
+
+## [2.22.2] - 2021-01-26
+
+Changed:
+
+  * resmgr/ocrd_calamari: disable pre-1.0 model
+  * resmgr/ocrd_calamri: Rename resource `qurator-gt4hist{,ocr}-1.0`
+
+## [2.22.1] - 2021-01-26
+
+Fixed:
+
+  * `mkdir -p $HOME/.config/ocrd`
+
+## [2.22.0] - 2021-01-26
+
+Added:
+
+  * Implement file resource algorithm from OCR-D/spec#169, #559
+  * New CLI `ocrd resmgr` to download/browse processor resources, #559
+  * `Workspace.rename_file_group` with CLI `ocrd workspace rename-group` to rename file groups, #646
+  * PAGE API method `get_AllTextLines`
+  * resources for kraken
+
+Changed:
+
+  * `ocrd workspace add`: guess `--mimetype` if not provided, #658
+  * `ocrd workspace add`: warn if `--page-id` not provided, #659
+
+Fixed:
   * `run_cli`: don't reference undefined vars in error handler, #651
+  * `name` of resources mustn't contain slash `/`
 
 ## [2.21.0] - 2020-11-27
 
@@ -1240,6 +1278,13 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.22.2]: ../../compare/v2.22.2..v2.22.1
+[2.22.1]: ../../compare/v2.22.1..v2.22.0
+[2.22.0]: ../../compare/v2.22.0..v2.22.0b4
+[2.22.0b4]: ../../compare/v2.22.0b4..v2.22.0b3
+[2.22.0b3]: ../../compare/v2.22.0b3..v2.22.0b2
+[2.22.0b2]: ../../compare/v2.22.0b2..v2.22.0b1
+[2.22.0b1]: ../../compare/v2.22.0b1..v2.21.0
 [2.21.0]: ../../compare/v2.21.0..v2.20.2
 [2.20.2]: ../../compare/v2.20.2..v2.20.1
 [2.20.1]: ../../compare/v2.20.1..v2.20.0

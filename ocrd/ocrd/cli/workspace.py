@@ -167,10 +167,10 @@ def workspace_init(ctx, clobber_mets, directory):
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('add')
-@click.option('-G', '--file-grp', help="fileGrp USE", required=True)
-@click.option('-i', '--file-id', help="ID for the file", required=True)
-@click.option('-m', '--mimetype', help="Media type of the file", required=True)
-@click.option('-g', '--page-id', help="ID of the physical page")
+@click.option('-G', '--file-grp', help="fileGrp USE", required=True, metavar='FILE_GRP')
+@click.option('-i', '--file-id', help="ID for the file", required=True, metavar='FILE_ID')
+@click.option('-m', '--mimetype', help="Media type of the file. Guessed from extension if not provided", required=False, metavar='TYPE')
+@click.option('-g', '--page-id', help="ID of the physical page", metavar='PAGE_ID')
 @click.option('-C', '--check-file-exists', help="Whether to ensure FNAME exists", is_flag=True, default=False)
 @click.option('--ignore', help="Do not check whether file exists.", default=False, is_flag=True)
 @click.option('--force', help="If file with ID already exists, replace it. No effect if --ignore is set.", default=False, is_flag=True)
@@ -183,8 +183,15 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
 
-    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
     log = getLogger('ocrd.cli.workspace.add')
+    if not mimetype:
+        try:
+            mimetype = EXT_TO_MIME[Path(fname).suffix]
+            log.info("Guessed mimetype to be %s" % mimetype)
+        except KeyError:
+            log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (Path(fname).suffix, fname))
+
+    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
     log.debug("Adding '%s' (%s)", fname, kwargs)
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
@@ -206,6 +213,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         kwargs['local_filename'] = fname
 
     kwargs['url'] = fname
+    if not page_id:
+        log.warning("You did not provide '--page-id/-g', so the file you added is not linked to a specific page.")
     workspace.mets.add_file(**kwargs)
     workspace.save_mets()
 
@@ -386,6 +395,22 @@ def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefin
         workspace.remove_file(i, force=force, keep_file=keep_file)
     workspace.save_mets()
 
+
+# ----------------------------------------------------------------------
+# ocrd workspace rename-group
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('rename-group')
+@click.argument('OLD', nargs=1)
+@click.argument('NEW', nargs=1)
+@pass_workspace
+def rename_group(ctx, old, new):
+    """
+    Rename fileGrp (USE attribute ``NEW`` to ``OLD``).
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url))
+    workspace.rename_file_group(old, new)
+    workspace.save_mets()
 
 # ----------------------------------------------------------------------
 # ocrd workspace remove-group

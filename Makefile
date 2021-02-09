@@ -64,12 +64,12 @@ deps-ubuntu:
 
 # Install test python deps via pip
 deps-test:
-	$(PIP) install -U "pip>=19.0.0"
+	$(PIP) install -U "pip>=19.0.0,!=20.3.2"
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
 install:
-	$(PIP) install -U "pip>=19.0.0" wheel
+	$(PIP) install -U "pip>=19.0.0,!=20.3.2" wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
 # Install with pip install -e
@@ -148,7 +148,7 @@ assets-server:
 test: assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
+	$(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)

@@ -174,6 +174,5 @@ class TestProcessor(TestCase):
         r = self.capture_out_err()
         assert 'ERROR ocrd.processor.base - found no page phys_0001 in file group GRP1' in r.err
 
-
 if __name__ == "__main__":
     main(__file__)

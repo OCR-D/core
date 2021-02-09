@@ -266,6 +266,11 @@ class TestOcrdPage(TestCase):
             rrs = og.get_RegionRefIndexed()
             self.assertEqual([x.index for x in rrs][-3:], [22, 23, 24])
 
+    def test_get_AllTextLine(self):
+        with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
+            page = parseString(f.read().encode('utf8'), silence=True).get_Page()
+            assert len(page.get_AllTextLines()) == 55
+
     def test_extend_AllIndexed_validate_continuity(self):
         with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
             og = parseString(f.read().encode('utf8'), silence=True).get_Page().get_ReadingOrder().get_OrderedGroup()
@@ -292,6 +297,20 @@ class TestOcrdPage(TestCase):
             self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(page=True, region=True, line=True)), 36)
             # TODO: Test with word/glyph-level AlternativeImages
             # self.assertEqual(len(pcgts.get_AllAlternativeImagePaths(word=False)), 37)
+
+    def test_get_AllAlternativeImages(self):
+        with open(assets.path_to('kant_aufklaerung_1784-complex/data/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP/OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001.xml'), 'r') as f:
+            pcgts = parseString(f.read().encode('utf8'), silence=True)
+            page = pcgts.get_Page()
+            self.assertEqual(page.get_AllAlternativeImages(page=False, region=False, line=False), [])
+            self.assertEqual([x.filename for x in page.get_AllAlternativeImages(page=True, region=False, line=False)], [
+                'OCR-D-IMG-BIN/OCR-D-IMG-BINPAGE-sauvola_0001-BIN_sauvola-ms-split.png',
+                'OCR-D-IMG-CROP/OCR-D-IMG-CROP_0001.png',
+                'OCR-D-IMG-BIN/INPUT_0017-BIN_sauvola-ms-split.png',
+                'OCR-D-IMG-DESPECK/OCR-D-IMG-DESPECK_0001.png',
+                'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png',
+                'OCR-D-IMG-DESKEW/OCR-D-IMG-DESKEW_0001.png'])
+            assert isinstance(page.get_AllAlternativeImages()[0], AlternativeImageType)
 
     def test_serialize_no_empty_readingorder(self):
         """

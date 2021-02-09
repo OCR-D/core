@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri Nov 27 15:25:12 2020 by generateDS.py version 2.35.20.
+# Generated Wed Jan 20 12:35:59 2021 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
 #
 # Command line options:
@@ -3047,6 +3047,34 @@ class PageType(GeneratedsSuper):
                 else:
                     ret = in_reading_order + [r for r in ret if r not in in_reading_order]
         return ret
+    def get_AllAlternativeImages(self, page=True, region=True, line=True, word=True, glyph=True):
+        """
+        Get all the pc:AlternativeImage in a document
+    
+    
+        page (boolean): Get pc:Page level images
+        region (boolean): Get images on pc:*Region level
+        line (boolean) Get images on pc:TextLine level
+        word (boolean) Get images on pc:Word level
+        glyph (boolean) Get images on pc:Glyph level
+        """
+        ret = []
+        if page:
+            ret += self.get_AlternativeImage()
+        for this_region in self.get_AllRegions(['Text']):
+            if region:
+                ret += this_region.get_AlternativeImage()
+            for this_line in this_region.get_TextLine():
+                if line:
+                    ret += this_line.get_AlternativeImage()
+                for this_word in this_line.get_Word():
+                    if word:
+                        ret += this_word.get_AlternativeImage()
+                    for this_glyph in this_word.get_Glyph():
+                        if glyph:
+                            ret += this_glyph.get_AlternativeImage()
+        return ret
+    
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
@@ -3087,6 +3115,29 @@ class PageType(GeneratedsSuper):
         """
         self.invalidate_AlternativeImage(feature_selector='cropped')
         self.Border = Border
+    def get_AllTextLines(self, region_order='document', respect_textline_order=True):
+        """
+        Return all the TextLine in the document
+    
+        Arguments:
+            region_order ("document"|"reading-order"|"reading-order-only") Whether to
+                return regions sorted by document order (``document``, default) or by
+                reading order with regions not in the reading order at the end of the
+                returned list (``reading-order``) or regions not in the reading order
+                omitted (``reading-order-only``)
+            respect_textline_order (boolean) Whether to respect textlineOrder attribute
+        """
+        # TODO handle textLineOrder according to https://github.com/PRImA-Research-Lab/PAGE-XML/issues/26
+        ret = []
+        for reg in self.get_AllRegions(['Text'], order=region_order):
+            lines = reg.get_TextLine()
+            if not respect_textline_order:
+                ret += lines
+            else:
+                lo = reg.get_textLineOrder() or self.get_textLineOrder() or 'top-to-bottom'
+                ret += lines if lo in ['top-to-bottom', 'left-to-right'] else list(reversed(lines))
+        return ret
+    
     def set_orientation(self, orientation):
         """
         Set deskewing angle to given number.

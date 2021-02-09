@@ -20,3 +20,4 @@ from ocrd.resolver import Resolver
 from ocrd_validators import *
 from ocrd.workspace import Workspace
 from ocrd.workspace_backup import WorkspaceBackupManager
+from ocrd.resource_manager import OcrdResourceManager

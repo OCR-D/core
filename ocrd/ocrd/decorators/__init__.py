@@ -28,13 +28,22 @@ def ocrd_cli_wrap_processor(
     help=False, # pylint: disable=redefined-builtin
     version=False,
     overwrite=False,
+    show_resource=None,
+    list_resources=False,
     **kwargs
 ):
     if not sys.argv[1:]:
         processorClass(workspace=None, show_help=True)
         sys.exit(1)
-    if dump_json or help or version:
-        processorClass(workspace=None, dump_json=dump_json, show_help=help, show_version=version)
+    if dump_json or help or version or show_resource or list_resources:
+        processorClass(
+            workspace=None,
+            dump_json=dump_json,
+            show_help=help,
+            show_version=version,
+            show_resource=show_resource,
+            list_resources=list_resources
+        )
         sys.exit()
     else:
         initLogging()

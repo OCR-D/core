@@ -202,6 +202,16 @@ class TestOcrdMets(TestCase):
             mets.remove_file('//FILE_0005.*')
             self.assertEqual(mets.physical_pages, ['PHYS_0001', 'PHYS_0002'])
 
+    def test_rename_file_group0(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            with self.assertRaisesRegex(FileNotFoundError, "No such fileGrp 'FOOBAR'"):
+                mets.rename_file_group('FOOBAR', 'FOOBAR')
+            assert 'FOOBAR' not in mets.file_groups
+            mets.rename_file_group('OCR-D-GT-PAGE', 'FOOBAR')
+            assert 'OCR-D-GT-PAGE' not in mets.file_groups
+            assert 'FOOBAR' in mets.file_groups
+
     def test_remove_file_group0(self):
         """
         Test removal of filegrp
