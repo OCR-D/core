@@ -299,21 +299,18 @@ class WorkspaceValidator():
         Validate all PAGE-XML files against PAGE XSD schema
         """
         self.log.debug('_validate_page_xsd')
-        log = getLogger('ocrd.workspace_validator')
-        log.debug("Validating all PAGE-XML files against XSD")
         for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
             self.workspace.download_file(ocrd_file)
             for err in XsdPageValidator.validate(Path(ocrd_file.local_filename)).errors:
                 self.report.add_error("%s: %s" % (ocrd_file.ID, err))
-        log.debug("Finished alidating all PAGE-XML files against XSD")
+        self.log.debug("Finished alidating all PAGE-XML files against XSD")
 
     def _validate_mets_xsd(self):
         """
         Validate METS against METS XSD schema
         """
         self.log.debug('_validate_mets_xsd')
-        log = getLogger('ocrd.workspace_validator')
-        log.debug("Validating METS %s against XSD" % self.workspace.mets_target)
+        self.log.debug("Validating METS %s against XSD" % self.workspace.mets_target)
         for err in XsdMetsValidator.validate(Path(self.workspace.mets_target)).errors:
             self.report.add_error("%s: %s" % (self.workspace.mets_target, err))
-        log.debug("Finished Validating METS against XSD")
+        self.log.debug("Finished Validating METS against XSD")
