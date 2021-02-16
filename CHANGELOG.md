@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `OcrdPage`: never output parsing results to STDOUT, #665, #372
+  * improved docstrings throughout (ht @bertsky), #664
+
 ## [2.22.3] - 2021-01-27
 
 Changed:
