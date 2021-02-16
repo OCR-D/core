@@ -1,6 +1,4 @@
 import sys
-from os import getcwd
-from os.path import join
 from pathlib import Path
 from distutils.spawn import find_executable as which
 
@@ -12,7 +10,6 @@ from ocrd_utils import (
     getLogger,
     RESOURCE_LOCATIONS
 )
-from ocrd_validators import OcrdZipValidator
 
 from ..resource_manager import OcrdResourceManager
 
@@ -109,6 +106,7 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, url_or
                     url_or_name,
                     overwrite=overwrite,
                     basedir=basedir,
+                    no_subdir=location == 'cwd',
                     progress_cb=lambda delta: bar.update(delta))
             log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'" % (executable, fpath.name, url_or_name, resmgr.user_list))
             resmgr.add_to_user_database(executable, fpath, url_or_name)
@@ -133,6 +131,7 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, url_or
                     resource_type=resdict['type'],
                     path_in_archive=resdict.get('path_in_archive', '.'),
                     overwrite=overwrite,
+                    no_subdir=location == 'cwd',
                     basedir=basedir,
                     progress_cb=lambda delta: bar.update(delta)
                 )

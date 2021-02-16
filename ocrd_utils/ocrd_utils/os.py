@@ -65,7 +65,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
     """
     candidates = []
-    candidates.append(join(cwd, 'ocrd-resources', executable, fname))
+    candidates.append(join(cwd, fname))
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
@@ -83,9 +83,10 @@ def list_all_resources(executable):
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
     """
     candidates = []
-    cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
-    if Path(cwd_candidate).exists():
-        candidates.append(cwd_candidate)
+    # XXX cwd would list too many false positives
+    # cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
+    # if Path(cwd_candidate).exists():
+    #     candidates.append(cwd_candidate)
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         for processor_path in environ[processor_path_var].split(':'):
