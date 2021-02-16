@@ -291,9 +291,9 @@ class Processor():
                         pass # keep PAGE match
                     elif (ift[i].mimetype == MIMETYPE_PAGE and
                           file_.mimetype == MIMETYPE_PAGE):
-                            raise ValueError(
-                                "Multiple PAGE-XML matches for page '%s' in fileGrp '%s'." % (
-                                    file_.pageId, ifg))
+                        raise ValueError(
+                            "Multiple PAGE-XML matches for page '%s' in fileGrp '%s'." % (
+                                file_.pageId, ifg))
                     else:
                         # filter was inactive but no PAGE is in control, this must not happen
                         if on_error == 'skip':
