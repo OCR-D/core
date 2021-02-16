@@ -1,5 +1,5 @@
 """
-Processor base class and helper functions
+Processor base class and helper functions.
 """
 
 __all__ = [
@@ -37,9 +37,10 @@ from .helpers import run_cli, run_processor, generate_processor_help # pylint: d
 
 class Processor():
     """
-    A processor is an OCR-D compliant command-line-interface for executing
-    a single workflow step on the workspace (represented by local METS). It
-    reads input files for all or requested physical pages of the input fileGrp(s),
+    A processor is a tool that implements the uniform OCR-D command-line interface
+    for run-time data processing. That is, it executes a single workflow step,
+    or a combination of workflow steps, on the workspace (represented by local METS).
+    It reads input files for all or requested physical pages of the input fileGrp(s),
     and writes output files for them into the output fileGrp(s). It may take 
     a number of optional or mandatory parameters.
     """
@@ -62,6 +63,12 @@ class Processor():
             dump_json=False,
             version=None
     ):
+        """
+        Instantiate, but do not process. Unless ``list_resources`` or
+        ``show_resource`` or ``show_help`` or ``show_version`` or
+        ``dump_json`` is true, setup for processing (parsing and
+        validating parameters, entering the workspace directory).
+        """
         if parameter is None:
             parameter = {}
         if dump_json:
@@ -119,14 +126,19 @@ class Processor():
 
     def process(self):
         """
-        Process the workspace
+        Process the :py:attr:`workspace` 
+        from the given :py:attr:`input_file_grp`s
+        to the given :py:attr:`output_file_grp`s
+        under the given :py:attr:`parameter`s.
+        
+        (This contains the main functionality and needs to be overridden by subclasses.)
         """
         raise Exception("Must be implemented")
 
 
     def add_metadata(self, pcgts):
         """
-        Adds PAGE-XML MetadataItem describing the processing step
+        Add PAGE-XML `MetadataItem` describing the processing step and runtime parameters to :py:class:`ocrd_models.ocrd_page.PcGtsType` ``pcgts``.
         """
         pcgts.get_Metadata().add_MetadataItem(
                 MetadataItemType(type_="processingStep",
@@ -177,7 +189,7 @@ class Processor():
     @property
     def input_files(self):
         """
-        List the input files (for single input file groups).
+        List the input files (for single-valued :py:attr:`input_file_grp`).
 
         For each physical page:
         - If there is a single PAGE-XML for the page, take it (and forget about all
@@ -186,7 +198,10 @@ class Processor():
           files for that page)
         - Otherwise raise an error (complaining that only PAGE-XML warrants
           having multiple images for a single page)
-        (https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593)
+        Algorithm <https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593>_
+        
+        Returns:
+            A list of :py:class:`ocrd_models.ocrd_file.OcrdFile` objects.
         """
         if not self.input_file_grp:
             raise ValueError("Processor is missing input fileGrp")
@@ -198,10 +213,10 @@ class Processor():
 
     def zip_input_files(self, require_first=True, mimetype=None, on_error='skip'):
         """
-        List tuples of input files (for multiple input file groups).
+        List tuples of input files (for multi-valued :py:attr:`input_file_grp`).
 
         Processors that expect/need multiple input file groups,
-        cannot use ``input_files``. They must align (zip) input files
+        cannot use :py:data:`input_files`. They must align (zip) input files
         across pages. This includes the case where not all pages
         are equally present in all file groups. It also requires
         making a consistent selection if there are multiple files
@@ -217,22 +232,23 @@ class Processor():
 
         Single-page multiple-file errors are handled according to
         ``on_error``:
-        - if ``skip``, then the page for the respective fileGrp will be
+        - if `'skip'`, then the page for the respective fileGrp will be
           silently skipped (as if there was no match at all)
-        - if ``first``, then the first matching file for the page will be
+        - if `'first'`, then the first matching file for the page will be
           silently selected (as if the first was the only match)
-        - if ``last``, then the last matching file for the page will be
+        - if `'last'`, then the last matching file for the page will be
           silently selected (as if the last was the only match)
-        - if ``abort``, then an exception will be raised.
+        - if `'abort'`, then an exception will be raised.
         Multiple matches for PAGE-XML will always raise an exception.
 
-        Args:
-             require_first (bool): If true, then skip a page entirely
-             whenever it is not available in the first input fileGrp.
-
-             mimetype (str): If not None, filter by the specified MIME
-             type (literal or regex prefixed by ``//``.
-             Otherwise prefer PAGE or image.
+        Keyword Args:
+             require_first (boolean): If true, then skip a page entirely
+                 whenever it is not available in the first input `fileGrp`.
+             mimetype (string): If not `None`, filter by the specified MIME
+                 type (literal or regex prefixed by `//`). Otherwise prefer
+                 PAGE or image.
+        Returns:
+            A list of :py:class:`ocrd_models.ocrd_file.OcrdFile` tuples.
         """
         if not self.input_file_grp:
             raise ValueError("Processor is missing input fileGrp")

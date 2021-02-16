@@ -62,7 +62,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         Get the unique identifier by looking through ``mods:identifier``
 
-        See `specs <https://ocr-d.github.io/mets#unique-id-for-the-document-processed>`_ for details.
+        See `specs <https://ocr-d.de/en/spec/mets#unique-id-for-the-document-processed>`_ for details.
         """
         for t in IDENTIFIER_PRIORITY:
             found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
@@ -74,7 +74,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         Set the unique identifier by looking through ``mods:identifier``
 
-        See `specs <https://ocr-d.github.io/mets#unique-id-for-the-document-processed>`_ for details.
+        See `specs <https://ocr-d.de/en/spec/mets#unique-id-for-the-document-processed>`_ for details.
         """
         id_el = None
         for t in IDENTIFIER_PRIORITY:
@@ -90,13 +90,13 @@ class OcrdMets(OcrdXmlDocument):
     @property
     def agents(self):
         """
-        List all `OcrdAgent </../../ocrd_models/ocrd_models.ocrd_agent.html>`_
+        List all :py:class:`ocrd_models.ocrd_agent.OcrdAgent`s
         """
         return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('mets:metsHdr/mets:agent', NS)]
 
     def add_agent(self, *args, **kwargs):
         """
-        Add an `OcrdAgent </../../ocrd_models/ocrd_models.ocrd_agent.html>`_ to the list of agents in the metsHdr.
+        Add an :py:class:`ocrd_models.ocrd_agent.OcrdAgent` to the list of agents in the `metsHdr`.
         """
         el_metsHdr = self._tree.getroot().find('.//mets:metsHdr', NS)
         if el_metsHdr is None:
@@ -110,13 +110,13 @@ class OcrdMets(OcrdXmlDocument):
     @property
     def file_groups(self):
         """
-        List the ``USE`` attributes of all ``mets:fileGrp``.
+        List the `@USE` of all `mets:fileGrp` entries.
         """
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
     def find_all_files(self, *args, **kwargs):
         """
-        Like find_files but return a list of all results.
+        Like :py:meth:`find_files` but return a list of all results.
 
         Equivalent to ``list(self.find_files(...))``
         """
@@ -125,25 +125,25 @@ class OcrdMets(OcrdXmlDocument):
     # pylint: disable=multiple-statements
     def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
         """
-        Search ``mets:file`` in this METS document and yield results.
+        Search `mets:file` entries in this METS document and yield results.
 
 
-        The ``ID``, ``fileGrp``, ``url`` and ``mimetype`` parameters can be
+        The ``ID``, ``fileGrp``, ``url`` and ``mimetype`` parameters can each be
         either a literal string or a regular expression if the string starts
-        with ``//`` (double slash). If it is a regex, the leading ``//`` is removed
-        and candidates are matched against the regex with ``re.fullmatch``. If it is
+        with `//` (double slash). If it is a regex, the leading `//` is removed
+        and candidates are matched against the regex with `re.fullmatch`. If it is
         a literal string, comparison is done with string equality.
 
-        Args:
-            ID (string) : ID of the file
-            fileGrp (string) : USE of the fileGrp to list files of
-            pageId (string) : ID of physical page manifested by matching files
-            url (string) : @xlink:href of mets:Flocat of mets:file
-            mimetype (string) : MIMETYPE of matching files
-            local (boolean) : Whether to restrict results to local files
+        Keyword Args:
+            ID (string) : `@ID` of the `mets:file`
+            fileGrp (string) : `@USE` of the `mets:fileGrp` to list files of
+            pageId (string) : `@ID` of the corresponding physical `mets:structMap` entry (physical page)
+            url (string) : `@xlink:href` (URL or path) of `mets:Flocat` of `mets:file`
+            mimetype (string) : `@MIMETYPE` of `mets:file`
+            local (boolean) : Whether to restrict results to local files in the filesystem
 
-        Return:
-            List of files.
+        Yields:
+            :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
         """
         ret = []
         if pageId:
@@ -196,10 +196,10 @@ class OcrdMets(OcrdXmlDocument):
 
     def add_file_group(self, fileGrp):
         """
-        Add a new ``mets:fileGrp``.
+        Add a new `mets:fileGrp`.
 
         Arguments:
-            fileGrp (string): ``USE`` attribute of the new filegroup.
+            fileGrp (string): `@USE` of the new `mets:fileGrp`.
         """
         if ',' in fileGrp:
             raise Exception('fileGrp must not contain commas')
@@ -214,7 +214,7 @@ class OcrdMets(OcrdXmlDocument):
 
     def rename_file_group(self, old, new):
         """
-        Rename a filegroup by changing the ``USE`` attribute from ``old`` to ``new``.
+        Rename a `mets:fileGrp` by changing the `@USE` from ``old`` to ``new``.
         """
         el_fileGrp = self._tree.getroot().find('mets:fileSec/mets:fileGrp[@USE="%s"]' % old, NS)
         if el_fileGrp is None:
@@ -223,12 +223,12 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_file_group(self, USE, recursive=False, force=False):
         """
-        Remove a fileGrp (fixed ``USE``) or fileGrps (regex ``USE``)
+        Remove a `mets:fileGrp` (fixed `@USE`) or `mets:fileGrp`s (regex `@USE`)
 
         Arguments:
-            USE (string): USE attribute of the fileGrp to delete. Can be a regex if prefixed with //
-            recursive (boolean): Whether to recursively delete all files in the group
-            force (boolean): Do not raise an exception if file group doesn't exist
+            USE (string): `@USE` of the `mets:fileGrp` to delete. Can be a regex if prefixed with `//`
+            recursive (boolean): Whether to recursively delete all `mets:file`s in the group
+            force (boolean): Do not raise an exception if `mets:fileGrp` does not exist
         """
         log = getLogger('ocrd_models.ocrd_mets.remove_file_group')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
@@ -260,18 +260,18 @@ class OcrdMets(OcrdXmlDocument):
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
         """
-        Add a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
+        Instantiate and add a new :py:class:`ocrd_models.ocrd_file.OcrdFile`.
 
         Arguments:
-            fileGrp (string): Add file to ``mets:fileGrp`` with this ``USE`` attribute
-            mimetype (string):
-            url (string):
-            ID (string):
-            pageId (string):
-            force (boolean): Whether to add the file even if a ``mets:file`` with the same ``ID`` already exists.
-            ignore (boolean): Don't look for existing files. Shift responsibility for preventing errors from duplicate ID to the user.
+            fileGrp (string): `@USE` of `mets:fileGrp` to add to
+        Keyword Args:
+            mimetype (string): `@MIMETYPE` of the `mets:file` to use
+            url (string): `@xlink:href` (URL or path) of the `mets:file` to use
+            ID (string): `@ID` of the `mets:file` to use
+            pageId (string): `@ID` in the physical `mets:structMap` to link to
+            force (boolean): Whether to add the file even if a `mets:file` with the same `@ID` already exists.
+            ignore (boolean): Do not look for existing files at all. Shift responsibility for preventing errors from duplicate ID to the user.
             local_filename (string):
-            mimetype (string):
         """
         if not ID:
             raise Exception("Must set ID of the mets:file")
@@ -296,7 +296,7 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_file(self, *args, **kwargs):
         """
-        Delete all files matching the query. Same arguments as ``OcrdMets.find_files``
+        Delete all `ocrd:file`s matching the query. Same arguments as :py:meth:`find_files`
         """
         files = list(self.find_files(*args, **kwargs))
         if files:
@@ -310,7 +310,13 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_one_file(self, ID):
         """
-        Delete a `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_.
+        Delete an existing :py:class:`ocrd_models.ocrd_file.OcrdFile`.
+        
+        Arguments:
+            ID (string): `@ID` of the `mets:file` to delete
+            
+        Returns:
+            The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
         log = getLogger('ocrd_models.ocrd_mets.remove_one_file')
         log.info("remove_one_file(%s)" % ID)
@@ -342,7 +348,7 @@ class OcrdMets(OcrdXmlDocument):
     @property
     def physical_pages(self):
         """
-        List all page IDs
+        List all page IDs (the `@ID`s of all physical `mets:structMap` `mets:div`s)
         """
         return self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
@@ -350,7 +356,8 @@ class OcrdMets(OcrdXmlDocument):
 
     def get_physical_pages(self, for_fileIds=None):
         """
-        List all page IDs (optionally for a subset of file IDs)
+        List all page IDs (the `@ID`s of all physical `mets:structMap` `mets:div`s),
+        optionally for a subset of `mets:file` `@ID`s ``for_fileIds``.
         """
         if for_fileIds is None:
             return self.physical_pages
@@ -365,7 +372,15 @@ class OcrdMets(OcrdXmlDocument):
 
     def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
         """
-        Create a new physical page
+        Set the physical page ID (`@ID` of the physical `mets:structMap` `mets:div` entry)
+        corresponding to the `mets:file` ``ocrd_file``, creating all structures if necessary.
+        
+        Arguments:
+            pageId (string): `@ID` of the physical `mets:structMap` entry to use
+            ocrd_file (object): existing :py:class:`ocrd_models.ocrd_file.OcrdFile` object
+        Keyword Args:
+            order (string): `@ORDER` to use
+            orderlabel (string): `@ORDERLABEL` to use
         """
         #  print(pageId, ocrd_file)
         # delete any page mapping for this file.ID
@@ -397,7 +412,8 @@ class OcrdMets(OcrdXmlDocument):
 
     def get_physical_page_for_file(self, ocrd_file):
         """
-        Get the pageId for a ocrd_file
+        Get the physical page ID (`@ID` of the physical `mets:structMap` `mets:div` entry)
+        corresponding to the `mets:file` ``ocrd_file``.
         """
         ret = self._tree.getroot().xpath(
             '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@ID' %
@@ -406,6 +422,9 @@ class OcrdMets(OcrdXmlDocument):
             return ret[0]
 
     def remove_physical_page(self, ID):
+        """
+        Delete page (physical `mets:structMap` `mets:div` entry `@ID`) ``ID``.
+        """
         mets_div = self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % ID,
             namespaces=NS)
