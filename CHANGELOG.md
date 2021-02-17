@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.22.4] - 2021-02-17
+
 Fixed:
 
   * `OcrdPage`: never output parsing results to STDOUT, #665, #372
@@ -1284,6 +1286,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.22.4]: ../../compare/v2.22.4..v2.22.3
+[2.22.3]: ../../compare/v2.22.3..v2.22.2
 [2.22.2]: ../../compare/v2.22.2..v2.22.1
 [2.22.1]: ../../compare/v2.22.1..v2.22.0
 [2.22.0]: ../../compare/v2.22.0..v2.22.0b4
