@@ -70,7 +70,7 @@ class OcrdResourceManager():
             # resources we know about
             all_executables = list(self.database.keys())
             # resources in the file system
-            parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_DATA_HOME, '/usr/local/share', getcwd()]]
+            parent_dirs = [join(x, 'ocrd-resources') for x in [XDG_DATA_HOME, '/usr/local/share']]
             for parent_dir in parent_dirs:
                 if Path(parent_dir).exists():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
@@ -134,15 +134,17 @@ class OcrdResourceManager():
     @property
     def default_resource_dir(self):
         return self.location_to_resource_dir('data')
+
     def location_to_resource_dir(self, location):
         return '/usr/local/share/ocrd-resources' if location == 'system' else \
                 join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
-                join(getcwd(), 'ocrd-resources')
+                getcwd()
 
     def resource_dir_to_location(self, resource_path):
         resource_path = str(resource_path)
         return 'system' if resource_path.startswith('/usr/local/share/ocrd-resources') else \
                'data' if resource_path.startswith(join(XDG_DATA_HOME, 'ocrd-resources')) else \
+               'cwd' if resource_path.startswith(getcwd()) else \
                resource_path
 
     def parameter_usage(self, name, usage='as-is'):
@@ -153,7 +155,7 @@ class OcrdResourceManager():
 
     def _download_impl(self, url, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._download_impl')
-        log.info("Downloading %s" % url)
+        log.info("Downloading %s to %s" % (url, filename))
         with open(filename, 'wb') as f:
             with requests.get(url, stream=True) as r:
                 total = int(r.headers.get('content-length'))
@@ -182,6 +184,7 @@ class OcrdResourceManager():
         url,
         basedir,
         overwrite=False,
+        no_subdir=False,
         name=None,
         resource_type='file',
         path_in_archive='.',
@@ -191,7 +194,7 @@ class OcrdResourceManager():
         Download a resource by URL
         """
         log = getLogger('ocrd.resource_manager.download')
-        destdir = Path(basedir, executable)
+        destdir = Path(basedir) if no_subdir else Path(basedir, executable)
         if not name:
             url_parsed = urlparse(url)
             name = Path(unquote(url_parsed.path)).name
