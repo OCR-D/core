@@ -9,6 +9,7 @@ Fixed:
 
   * `OcrdPage`: never output parsing results to STDOUT, #665, #372
   * improved docstrings throughout (ht @bertsky), #664
+  * `resmgr --location cwd` will download to `$PWD`, not `$PWD/ocrd-resources/<executable>`, #671
 
 ## [2.22.3] - 2021-01-27
 
