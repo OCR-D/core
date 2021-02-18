@@ -2,10 +2,17 @@
 API to METS
 """
 from datetime import datetime
-from re import fullmatch
+from re import fullmatch, search
 from lxml import etree as ET
 
-from ocrd_utils import is_local_filename, getLogger, VERSION, REGEX_PREFIX, REGEX_FILE_ID
+from ocrd_utils import (
+    is_local_filename,
+    getLogger,
+    generate_range,
+    VERSION,
+    REGEX_PREFIX,
+    REGEX_FILE_ID
+)
 
 from .constants import (
     NAMESPACES as NS,
@@ -150,6 +157,11 @@ class OcrdMets(OcrdXmlDocument):
             if pageId.startswith(REGEX_PREFIX):
                 raise Exception("find_files does not support regex search for pageId")
             pageIds, pageId = pageId.split(','), list()
+            pageIds_expanded = []
+            for pageId_ in pageIds:
+                if '..' in pageId_:
+                    pageIds_expanded += generate_range(*pageId_.split('..', 2))
+            pageIds += pageIds_expanded
             for page in self._tree.getroot().xpath(
                 '//mets:div[@TYPE="page"]', namespaces=NS):
                 if page.get('ID') in pageIds:
