@@ -299,7 +299,8 @@ class TestUtils(TestCase):
         self.assertEqual(make_file_id(f, '2:!GRP'), 'id_2_GRP_0002')
 
     def test_generate_range(self):
-        assert generate_range('PHYS_0001', 'PHYS_0005') == ['PHYS_0001', 'PHYS_0002', 'PHYS_0003', 'PHYS_0004']
+        assert generate_range('PHYS_0001', 'PHYS_0005') == ['PHYS_0001', 'PHYS_0002', 'PHYS_0003', 'PHYS_0004', 'PHYS_0005']
+        assert generate_range('NONUMBER', 'ALSO_NONUMBER') == ['NONUMBER', 'ALSO_NONUMBER']
 
 
 if __name__ == '__main__':

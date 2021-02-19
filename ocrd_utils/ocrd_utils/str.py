@@ -185,11 +185,10 @@ def generate_range(start, end):
     """
     ret = []
     start_num, end_num = re.search('\d+', start), re.search('\d+', end)
-    if not start_num and end_num:
-        getLogger('ocrd_utils.generate_range').error("Unable to parse generate range %s .. %s" % (start, end))
+    if not (start_num and end_num):
+        getLogger('ocrd_utils.generate_range').error("Unable to generate range %s .. %s, could not detect number part" % (start, end))
         return [start, end]
     start_num, end_num = start_num.group(0), end_num.group(0)
-    start_num_len = len(start_num)
-    for i in range(int(start_num), int(end_num)):
-        ret.append(start.replace(start_num, str(i).zfill(start_num_len)))
+    for i in range(int(start_num), int(end_num) + 1):
+        ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
     return ret
