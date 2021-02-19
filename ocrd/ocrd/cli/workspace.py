@@ -2,6 +2,7 @@ import os
 from os import getcwd
 from os.path import relpath, exists, join, isabs, dirname, basename, abspath
 from pathlib import Path
+from json import loads
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
@@ -525,6 +526,27 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
     workspace.mets.unique_identifier = id
+    workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace merge
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('merge')
+@click.argument('METS_PATH')
+@click.option('--copy-files', is_flag=True, help="Copy files as well", default=True)
+@click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp")
+@pass_workspace
+def merge(ctx, copy_files, filegrp_mapping, mets_path):   # pylint: disable=redefined-builtin
+    """
+    Merges this workspace with the workspace that contains ``METS_PATH``
+    """
+    mets_path = Path(mets_path)
+    if filegrp_mapping:
+        filegrp_mapping = loads(filegrp_mapping)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
+    other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
+    workspace.merge(other_workspace, copy_files=copy_files, fileGrp_mapping=filegrp_mapping)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
