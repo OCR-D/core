@@ -5,7 +5,6 @@ Utility functions for strings, paths and URL.
 import re
 import json
 from .constants import REGEX_FILE_ID
-from .logging import getLogger
 
 __all__ = [
     'assert_file_grp_cardinality',
@@ -184,10 +183,9 @@ def generate_range(start, end):
     Generate a list of strings by incrementing the number part of ``start`` until including ``end``.
     """
     ret = []
-    start_num, end_num = re.search('\d+', start), re.search('\d+', end)
+    start_num, end_num = re.search(r'\d+', start), re.search(r'\d+', end)
     if not (start_num and end_num):
-        getLogger('ocrd_utils.generate_range').error("Unable to generate range %s .. %s, could not detect number part" % (start, end))
-        return [start, end]
+        raise ValueError("Unable to generate range %s .. %s, could not detect number part" % (start, end))
     start_num, end_num = start_num.group(0), end_num.group(0)
     for i in range(int(start_num), int(end_num) + 1):
         ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
