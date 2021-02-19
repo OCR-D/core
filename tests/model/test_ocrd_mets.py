@@ -58,7 +58,7 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.find_all_files(mimetype='//application/.*')), 22, '22 application/.*')
         self.assertEqual(len(self.mets.find_all_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
-        self.assertEqual(len(self.mets.find_all_files(pageId='PHYS_0001..PHYS_0005')), 34, '34 files for page "PHYS_0001..PHYS_0005"')
+        self.assertEqual(len(self.mets.find_all_files(pageId='PHYS_0001..PHYS_0005')), 35, '35 files for page "PHYS_0001..PHYS_0005"')
 
     def test_find_all_files_no_regex_for_pageid(self):
         with self.assertRaisesRegex(Exception, "not support regex search for pageId"):
