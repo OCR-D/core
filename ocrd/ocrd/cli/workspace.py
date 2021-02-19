@@ -11,6 +11,7 @@ import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME
+from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
 
@@ -324,10 +325,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('find')
-@click.option('-G', '--file-grp', help="fileGrp USE", metavar='FILTER')
-@click.option('-m', '--mimetype', help="Media type to look for", metavar='FILTER')
-@click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
-@click.option('-i', '--file-id', help="ID", metavar='FILTER')
+@mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
         default=['url'],
         multiple=True,
@@ -536,17 +534,30 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 @click.argument('METS_PATH')
 @click.option('--copy-files', is_flag=True, help="Copy files as well", default=True)
 @click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp")
+@mets_find_options
 @pass_workspace
-def merge(ctx, copy_files, filegrp_mapping, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, copy_files, filegrp_mapping, filegrp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
+
+    The ``--file-id``, ``--page-id``, ``--mimetype`` and ``--fileGrp`` options have
+    the same semantics as in ``ocrd workspace find``, see ``ocrd workspace find --help``
+    for an explanation.
     """
     mets_path = Path(mets_path)
     if filegrp_mapping:
         filegrp_mapping = loads(filegrp_mapping)
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
     other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
-    workspace.merge(other_workspace, copy_files=copy_files, fileGrp_mapping=filegrp_mapping)
+    workspace.merge(
+        other_workspace,
+        copy_files=copy_files,
+        fileGrp_mapping=filegrp_mapping,
+        fileGrp=filegrp,
+        ID=file_id,
+        pageId=page_id,
+        mimetype=mimetype,
+    )
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
