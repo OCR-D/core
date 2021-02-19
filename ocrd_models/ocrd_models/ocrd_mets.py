@@ -141,6 +141,10 @@ class OcrdMets(OcrdXmlDocument):
         and candidates are matched against the regex with `re.fullmatch`. If it is
         a literal string, comparison is done with string equality.
 
+        The ``pageId`` parameter supports the numeric range operator ``..``. For
+        example, to find all files in pages ``PHYS_0001`` to ``PHYS_0003``, 
+        ``PHYS_0001..PHYS_0003`` will be expanded to ``PHYS_0001,PHYS_0002,PHYS_0003``.
+
         Keyword Args:
             ID (string) : `@ID` of the `mets:file`
             fileGrp (string) : `@USE` of the `mets:fileGrp` to list files of
