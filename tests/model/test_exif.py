@@ -34,10 +34,10 @@ class TestOcrdExif(TestCase):
             exif = OcrdExif(img)
         self.assertEqual(exif.width, 1457)
         self.assertEqual(exif.height, 2084)
-        self.assertEqual(exif.xResolution, 295)
-        self.assertEqual(exif.yResolution, 295)
-        self.assertEqual(exif.resolution, 295)
-        self.assertEqual(exif.resolutionUnit, 'inches')
+        self.assertEqual(exif.xResolution, 116)
+        self.assertEqual(exif.yResolution, 116)
+        self.assertEqual(exif.resolution, 116)
+        self.assertEqual(exif.resolutionUnit, 'cm')
         self.assertEqual(exif.compression, None)
         self.assertEqual(exif.photometricInterpretation, '1')
 
@@ -46,9 +46,9 @@ class TestOcrdExif(TestCase):
             exif = OcrdExif(img)
         self.assertEqual(exif.width, 2097)
         self.assertEqual(exif.height, 3062)
-        self.assertEqual(exif.xResolution, 1)
-        self.assertEqual(exif.yResolution, 1)
-        self.assertEqual(exif.resolution, 1)
+        self.assertEqual(exif.xResolution, 72)
+        self.assertEqual(exif.yResolution, 72)
+        self.assertEqual(exif.resolution, 72)
         self.assertEqual(exif.photometricInterpretation, '1')
         self.assertEqual(exif.resolutionUnit, 'inches')
 
@@ -57,9 +57,9 @@ class TestOcrdExif(TestCase):
             exif = OcrdExif(img)
         self.assertEqual(exif.width, 944)
         self.assertEqual(exif.height, 1472)
-        self.assertEqual(exif.xResolution, 1)
-        self.assertEqual(exif.yResolution, 1)
-        self.assertEqual(exif.resolution, 1)
+        self.assertEqual(exif.xResolution, 72)
+        self.assertEqual(exif.yResolution, 72)
+        self.assertEqual(exif.resolution, 72)
         self.assertEqual(exif.resolutionUnit, 'inches')
         self.assertEqual(exif.photometricInterpretation, 'RGB')
         self.assertEqual(exif.resolutionUnit, 'inches')
@@ -74,6 +74,12 @@ class TestOcrdExif(TestCase):
         self.assertEqual(exif.resolution, 1)
         self.assertEqual(exif.photometricInterpretation, 'RGB')
         self.assertEqual(exif.resolutionUnit, 'inches')
+
+    # def test_kolonie(self):
+        # with Image.open('/tmp/Kolonie186-fixed.png') as img:
+            # exif = OcrdExif(img)
+            # print(exif.to_xml())
+            # assert exif.resolution == 236
 
 if __name__ == '__main__':
     main(__file__)
