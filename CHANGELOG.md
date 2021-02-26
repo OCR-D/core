@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * The `--page-id`/`-g` option now accepts value ranges with the `..` operator, #672
+
+Added:
+
+  * `ocrd workspace merge` to merge two workspaces, #670, #673
+
 ## [2.22.4] - 2021-02-17
 
 Fixed:
