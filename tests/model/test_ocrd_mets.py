@@ -242,5 +242,11 @@ class TestOcrdMets(TestCase):
             self.assertEqual(len(mets.file_groups), 15)
             self.assertEqual(len(mets.find_all_files()), 31)
 
+    def test_merge(self):
+        assert len(self.mets.file_groups) == 17
+        other_mets = OcrdMets(filename=assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
+        self.mets.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
+        assert len(self.mets.file_groups) == 18
+
 if __name__ == '__main__':
     main(__file__)

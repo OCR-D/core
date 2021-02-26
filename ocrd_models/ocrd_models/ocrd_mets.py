@@ -446,3 +446,26 @@ class OcrdMets(OcrdXmlDocument):
             namespaces=NS)
         if mets_div:
             mets_div[0].getparent().remove(mets_div[0])
+
+    def merge(self, other_mets, fileGrp_mapping=None, after_add_cb=None, **kwargs):
+        """
+        Add all files from other_mets.
+
+        Accepts the same kwargs as :py:func:find_files
+
+        Keyword Args:
+            fileGrp_mapping (dict): Map ``other_mets`` fileGrp to fileGrp in this METS
+            after_add_cb (function): Callback received after file is added to the METS
+        """
+        if not fileGrp_mapping:
+            fileGrp_mapping = {}
+        for f_src in other_mets.find_files(**kwargs):
+            f_dest = self.add_file(
+                    fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
+                    mimetype=f_src.mimetype,
+                    url=f_src.url,
+                    ID=f_src.ID,
+                    pageId=f_src.pageId)
+            if after_add_cb:
+                after_add_cb(f_dest)
+

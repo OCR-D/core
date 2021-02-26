@@ -1,7 +1,7 @@
 import io
 from os import makedirs, unlink, listdir, path
 from pathlib import Path
-from shutil import move
+from shutil import move, copyfileobj
 from re import sub
 
 from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
@@ -79,6 +79,29 @@ class Workspace():
         Reload METS from the filesystem.
         """
         self.mets = OcrdMets(filename=self.mets_target)
+
+    def merge(self, other_workspace, copy_files=True, **kwargs):
+        """
+        Merge ``other_workspace`` into this one
+
+        See :py:func:OcrdMets.merge: for the ``kwargs``
+
+        Keyword Args:
+            copy_files (boolean): Whether to copy files from ``other_workspace`` to this one
+        """
+        def after_add_cb(f):
+            if not copy_files:
+                return
+            fpath_src = Path(other_workspace.directory, f.url)
+            fpath_dest = Path(self.directory, f.url)
+            if fpath_src.exists():
+                if fpath_dest.exists():
+                    raise Exception("Copying %s to %s would overwrite the latter" % (fpath_src, fpath_dest))
+                if not fpath_dest.parent.is_dir():
+                    makedirs(str(fpath_dest.parent))
+                with open(str(fpath_src), 'rb') as fstream_in, open(str(fpath_dest), 'wb') as fstream_out:
+                    copyfileobj(fstream_in, fstream_out)
+        self.mets.merge(other_workspace.mets, after_add_cb=after_add_cb, **kwargs)
 
 
     @deprecated(version='1.0.0', reason="Use workspace.download_file")
