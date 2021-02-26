@@ -12,6 +12,7 @@ Changed:
 Added:
 
   * `ocrd workspace merge` to merge two workspaces, #670, #673
+  * Two experimental calmari models `c1_fraktur19-1` and `c1_latin-script-hist-3`, #675
 
 ## [2.22.4] - 2021-02-17
 
