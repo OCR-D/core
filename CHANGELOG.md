@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.23.0] - 2021-02-26
+
 Changed:
 
   * The `--page-id`/`-g` option now accepts value ranges with the `..` operator, #672
@@ -1295,6 +1297,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.23.0]: ../../compare/v2.23.0..v2.22.4
 [2.22.4]: ../../compare/v2.22.4..v2.22.3
 [2.22.3]: ../../compare/v2.22.3..v2.22.2
 [2.22.2]: ../../compare/v2.22.2..v2.22.1
