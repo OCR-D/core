@@ -3,6 +3,8 @@ Technical image metadata
 """
 
 from math import sqrt
+from io import BytesIO
+from wand.image import Image
 
 class OcrdExif():
     """Represents technical image metadata.
@@ -17,7 +19,7 @@ class OcrdExif():
       'I' for 32-bit signed integer grayscale,
       'F' for floating-point grayscale
       (see PIL concept `mode`)
-    - `resolution` / `xResolution` / `yResolution`: pixel density
+    - `resolution`: pixel density
     - `resolutionUnit`: unit of measurement (either `inches` or `cm`)
 
     """
@@ -27,38 +29,40 @@ class OcrdExif():
         Arguments:
             img (PIL.Image): PIL image technical metadata is about.
         """
-        #  print(img.__dict__)
         self.width = img.width
         self.height = img.height
         self.photometricInterpretation = img.mode
         self.n_frames = img.n_frames if 'n_frames' in img.__dict__ else 1
-        #  if img.format == 'PNG':
-        #      print(img.info)
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
-        if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
-            self.xResolution = int(img.info['dpi'][0])
-            self.yResolution = int(img.info['dpi'][1])
-            if img.format == 'TIFF':
-                self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
-            else:
-                self.resolutionUnit = 'inches'
-        elif img.format == 'JPEG' and 'jfif_density' in img.info:
-            self.xResolution = img.info['jfif_density'][0]
-            self.yResolution = img.info['jfif_density'][1]
-            self.resolutionUnit = 'cm' if img.info['jfif_unit'] == 2 else 'inches'
-        elif img.format == 'PNG' and 'aspect' in img.info:
-            self.xResolution = img.info['aspect'][0]
-            self.yResolution = img.info['aspect'][1]
+        if img.format == 'JPEG2000':
+            # TODO find out how to detect DPI in JP2
+            self.xResolution = self.yResolution = 1
             self.resolutionUnit = 'inches'
         else:
-            #  if img.format == 'JPEG2000':
-            #      import sys
-            #      print('JPEG 2000 not supported yet :(', file=sys.stderr)
-            self.xResolution = 1
-            self.yResolution = 1
-            self.resolutionUnit = 'inches'
-        #  print('format=%s type=%s' % (img.format, type(self.xResolution))
+            with BytesIO() as blob:
+                img.save(blob, format=img.format)
+                wand_img = Image(blob=blob.getvalue())
+                self.xResolution, self.yResolution = wand_img.resolution
+                if not self.xResolution or not self.yResolution:
+                    if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
+                        self.xResolution = int(img.info['dpi'][0])
+                        self.yResolution = int(img.info['dpi'][1])
+                        if img.format == 'TIFF':
+                            self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
+                        else:
+                            self.resolutionUnit = 'inches'
+                    elif img.format == 'JPEG' and 'jfif_density' in img.info:
+                        self.xResolution = img.info['jfif_density'][0]
+                        self.yResolution = img.info['jfif_density'][1]
+                        self.resolutionUnit = 'cm' if img.info['jfif_unit'] == 2 else 'inches'
+                    elif img.format == 'PNG' and 'aspect' in img.info:
+                        self.xResolution = img.info['aspect'][0]
+                        self.yResolution = img.info['aspect'][1]
+                        self.resolutionUnit = 'inches'
+                self.xResolution = max(1, self.xResolution)
+                self.yResolution = max(1, self.yResolution)
+                self.resolutionUnit = 'cm' if wand_img.units == 'pixelspercentimeter' else 'inches'
         self.resolution = round(sqrt(self.xResolution * self.yResolution))
 
     def to_xml(self):
