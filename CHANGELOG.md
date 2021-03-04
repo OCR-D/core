@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Stop testing python 3.5, start testing python 3.9
+
 ## [2.23.0] - 2021-02-26
 
 Changed:
