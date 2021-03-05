@@ -11,6 +11,7 @@ from ocrd.resolver import Resolver
 class TestWorkspaceBackup(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
         self.tempdir = mkdtemp()
         self.workspace_dir = join(self.tempdir, 'kant_aufklaerung_1784')

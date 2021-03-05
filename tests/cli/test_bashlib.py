@@ -13,6 +13,7 @@ class TestBashlibCli(TestCase):
 
     def setUp(self):
         self.maxDiff = None
+        super().setUp()
 
     def test_filename(self):
         exit_code, out, err = self.invoke_cli(bashlib_cli, ['filename'])

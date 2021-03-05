@@ -9,7 +9,7 @@ from click.testing import CliRunner
 # pylint: disable=import-error, no-name-in-module
 from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory, main
 
-from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel
+from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel, disableLogging
 from ocrd.cli.workspace import workspace_cli
 from ocrd import Resolver
 
@@ -17,6 +17,7 @@ class TestCli(TestCase):
 
     def setUp(self):
         super().setUp()
+        disableLogging()
         self.maxDiff = None
         self.resolver = Resolver()
         self.runner = CliRunner(mix_stderr=False)
@@ -176,7 +177,7 @@ class TestCli(TestCase):
         page_id = 'foo123page'
         file_grp = 'TEST_GROUP'
         mimetype = 'image/tiff'
-        with TemporaryDirectory() as tempdir:
+        with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.save_mets()
             exit_code, out, err = self.invoke_cli(workspace_cli, [
@@ -386,8 +387,10 @@ class TestCli(TestCase):
     def test_mets_get_id_set_id(self):
         with pushd_popd(tempdir=True):
             self.invoke_cli(workspace_cli, ['init'])
+            disableLogging()
             mets_id = 'foo123'
             self.invoke_cli(workspace_cli, ['set-id', mets_id])
+            disableLogging()
             _, out, _ = self.invoke_cli(workspace_cli, ['get-id'])
             self.assertEqual(out, mets_id + '\n')
 

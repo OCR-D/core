@@ -16,6 +16,7 @@ class TestParameterValidator(TestCase):
             }
         }
         self.defaults_validator = JsonValidator(self.schema, DefaultValidatingDraft4Validator)
+        super().setUp()
 
     def test_validate_string(self):
         report = JsonValidator.validate('{}', {})

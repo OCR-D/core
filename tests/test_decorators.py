@@ -14,7 +14,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging
 
 @click.command()
 @ocrd_cli_options
@@ -39,6 +39,10 @@ def cli_dummy_processor(*args, **kwargs):
 DEFAULT_IN_OUT = ('-I', 'OCR-D-IMG', '-O', 'OUTPUT')
 
 class TestDecorators(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        disableLogging()
 
     def test_minimal(self):
         exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])

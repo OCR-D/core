@@ -14,6 +14,7 @@ class TestOsUtils(TestCase):
         self.maxDiff = None
         self.tempdir_path = mkdtemp()
         ENV['OCRD_DUMMY_PATH'] = self.tempdir_path
+        super().setUp()
 
     def tearDown(self):
         rmtree(self.tempdir_path)

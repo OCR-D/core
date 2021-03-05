@@ -32,6 +32,7 @@ def count_files():
 class TestWorkspace(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
 
     def test_workspace_add_file(self):
