@@ -13,6 +13,7 @@ from tests.model.test_ocrd_page import simple_page
 class TestXsdValidator(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
         self.ws = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
 

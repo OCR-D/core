@@ -12,8 +12,7 @@ from ocrd.processor.base import Processor, run_processor, run_cli
 class TestProcessor(TestCase):
 
     def setUp(self):
-        disableLogging()
-        initLogging()
+        super().setUp()
         self.resolver = Resolver()
         self.workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
 

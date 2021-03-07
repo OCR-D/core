@@ -22,11 +22,8 @@ def main(fn=None):
 
 class TestCase(VanillaTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        chdir(dirname(realpath(__file__)) + '/..')
-
     def setUp(self):
+        chdir(dirname(realpath(__file__)) + '/..')
         disableLogging()
         initLogging()
 

@@ -27,8 +27,8 @@ class TestLogCli(TestCase):
             del(ENV['OCRD_TOOL_NAME'])
 
     def test_loglevel(self):
-        assert ' DEBUG root - foo' not in self._get_log_output('log', 'debug', 'foo')
-        assert ' DEBUG root - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
+        assert 'DEBUG root - foo' not in self._get_log_output('log', 'debug', 'foo')
+        assert 'DEBUG root - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
 
     def test_log_basic(self):
         assert 'INFO root - foo bar' in self._get_log_output('log', 'info', 'foo bar')

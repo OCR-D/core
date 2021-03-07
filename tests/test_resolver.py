@@ -19,6 +19,7 @@ class TestResolver(TestCase):
     def setUp(self):
         initLogging()
         self.resolver = Resolver()
+        super().setUp()
 
     def test_workspace_from_url_bad(self):
         with self.assertRaisesRegex(Exception, "Must pass 'mets_url'"):
