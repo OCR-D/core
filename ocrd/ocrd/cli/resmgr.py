@@ -131,6 +131,7 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, url_or
                     resource_type=resdict['type'],
                     path_in_archive=resdict.get('path_in_archive', '.'),
                     overwrite=overwrite,
+                    size=resdict['size'],
                     no_subdir=location == 'cwd',
                     basedir=basedir,
                     progress_cb=lambda delta: bar.update(delta)
