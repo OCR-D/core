@@ -177,3 +177,16 @@ def safe_filename(url):
     ret = re.sub('[^A-Za-z0-9]+', '.', url)
     #  print('safe filename: %s -> %s' % (url, ret))
     return ret
+
+def generate_range(start, end):
+    """
+    Generate a list of strings by incrementing the number part of ``start`` until including ``end``.
+    """
+    ret = []
+    start_num, end_num = re.search(r'\d+', start), re.search(r'\d+', end)
+    if not (start_num and end_num):
+        raise ValueError("Unable to generate range %s .. %s, could not detect number part" % (start, end))
+    start_num, end_num = start_num.group(0), end_num.group(0)
+    for i in range(int(start_num), int(end_num) + 1):
+        ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
+    return ret

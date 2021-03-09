@@ -24,6 +24,7 @@ skeleton = '''
 class TestOcrdToolValidator(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.ocrd_tool = json.loads(skeleton)
 
     def test_smoke(self):

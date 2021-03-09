@@ -14,6 +14,7 @@ class TestOsUtils(TestCase):
         self.maxDiff = None
         self.tempdir_path = mkdtemp()
         ENV['OCRD_DUMMY_PATH'] = self.tempdir_path
+        super().setUp()
 
     def tearDown(self):
         rmtree(self.tempdir_path)
@@ -27,7 +28,7 @@ class TestOsUtils(TestCase):
         cands = [dehomify(x) for x in cands]
         print(cands)
         self.assertEqual(cands, [join(x, fname) for x in [
-            dehomify(join(getcwd(), 'ocrd-resources')),
+            dehomify(join(getcwd())),
             dehomify(self.tempdir_path),
             '$HOME/.local/share/ocrd-resources/ocrd-dummy',
             '/usr/local/share/ocrd-resources/ocrd-dummy',

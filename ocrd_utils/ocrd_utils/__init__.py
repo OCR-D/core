@@ -1,69 +1,103 @@
 """
 Utility functions and constants usable in various circumstances.
 
-* ``coordinates_of_segment``, ``coordinates_for_segment``
+* :py:func:`coordinates_of_segment`,
+  :py:func:`coordinates_for_segment`
 
     These functions convert polygon outlines for PAGE elements on all hierarchy
     levels below page (i.e. region, line, word, glyph) between relative coordinates
     w.r.t. a corresponding image and absolute coordinates w.r.t. the top-level image.
     This includes rotation and offset correction, based on affine transformations.
-    (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``)
+    (Used by :py:class:`ocrd.workspace.Workspace` methods 
+    :py:meth:`ocrd.workspace.Workspace.image_from_page` and 
+    :py:meth:`ocrd.workspace.Workspace.image_from_segment`.)
 
-* ``rotate_coordinates``, ``shift_coordinates``, ``transpose_coordinates``, ``transform_coordinates``
+* :py:func:`rotate_coordinates`, 
+  :py:func:`shift_coordinates`,
+  :py:func:`transpose_coordinates`,
+  :py:func:`transform_coordinates`
 
     These backend functions compose affine transformations for reflection, rotation
     and offset correction of coordinates, or apply them to a set of points. They can be
     used to pass down the coordinate system along with images (both invariably sharing
     the same operations context) when traversing the element hierarchy top to bottom.
-    (Used by ``Workspace`` methods ``image_from_page`` and ``image_from_segment``).
+    (Used by :py:class:`ocrd.workspace.Workspace` methods
+    :py:meth:`ocrd.workspace.Workspace.image_from_page` and 
+    :py:meth:`ocrd.workspace.Workspace.image_from_segment`.)
 
-* ``rotate_image``, ``crop_image``, ``transpose_image``
+* :py:func:`rotate_image`,
+  :py:func:`crop_image`,
+  :py:func:`transpose_image`
 
-    These PIL.Image functions are safe replacements for the ``rotate``, ``crop``, and
-    ``transpose`` methods.
+    These `PIL.Image` functions are safe replacements for the `rotate`, `crop`, and
+    `transpose` methods.
 
-* ``image_from_polygon``, ``polygon_mask``
+* :py:func:`image_from_polygon`,
+  :py:func:`polygon_mask`
 
-    These functions apply polygon masks to PIL.Image objects.
+    These functions apply polygon masks to `PIL.Image` objects.
 
-* ``xywh_from_points``, ``points_from_xywh``, ``polygon_from_points`` etc.
+* :py:func:`xywh_from_points`,
+  :py:func:`points_from_xywh`,
+  :py:func:`polygon_from_points` etc.
 
-   These functions have the syntax ``X_from_Y``, where ``X``/``Y`` can be
+    These functions have the syntax `X_from_Y`, where `X` and `Y` can be:
 
-    * ``bbox`` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
+    * `bbox` is a 4-tuple of integers x0, y0, x1, y1 of the bounding box (rectangle)
 
-      (used by PIL.Image)
-    * ``points`` a string encoding a polygon: ``"0,0 100,0 100,100, 0,100"``
+      (used by `PIL.Image`)
+    * `points` a string encoding a polygon: `"0,0 100,0 100,100, 0,100"`
 
       (used by PAGE-XML)
-    * ``polygon`` is a list of 2-lists of integers x, y of points forming an (implicitly closed) polygon path: ``[[0,0], [100,0], [100,100], [0,100]]``
+    * `polygon` is a list of 2-lists of integers x, y of points forming an (implicitly closed)
+      polygon path: `[[0,0], [100,0], [100,100], [0,100]]`
 
-      (used by opencv2 and higher-level coordinate functions in ocrd_utils)
-    * ``xywh`` a dict with keys for x, y, width and height: ``{'x': 0, 'y': 0, 'w': 100, 'h': 100}``
+      (used by Open `cv2` and higher-level coordinate functions in :py:mod:`ocrd_utils`)
+    * `xywh` a dict with keys for x, y, width and height: `{'x': 0, 'y': 0, 'w': 100, 'h': 100}`
 
-      (produced by tesserocr and image/coordinate recursion methods in ocrd.workspace)
-    * ``x0y0x1y1`` is a 4-list of strings ``x0``, ``y0``, ``x1``, ``y1`` of the bounding box (rectangle)
+      (produced by `tesserocr` and image/coordinate recursion methods in :py:mod:`ocrd.workspace`)
+    * `x0y0x1y1` is a 4-list of strings `x0`, `y0`, `x1`, `y1` of the bounding box (rectangle)
 
-      (produced by tesserocr)
-    * ``y0x0y1x1`` is the same as ``x0y0x1y1`` with positions of ``x`` and ``y`` in the list swapped
+      (produced by `tesserocr`)
+    * `y0x0y1x1` is the same as `x0y0x1y1` with positions of `x` and `y` in the list swapped
 
-* ``is_local_filename``, ``safe_filename``, ``abspath``, ``get_local_filename``
+* :py:func:`is_local_filename`,
+  :py:func:`safe_filename`,
+  :py:func:`abspath`,
+  :py:func:`get_local_filename`
 
-    FS-related utilities
+    filesystem-related utilities
 
-* ``is_string``, ``membername``, ``concat_padded``, ``nth_url_segment``, ``remove_non_path_from_url``, ``parse_json_string_with_comments``, ``parse_json_string_or_file``, ``set_json_key_value_overrides``, ``assert_file_grp_cardinality``, ``make_file_id``
+* :py:func:`is_string`,
+  :py:func:`membername`,
+  :py:func:`concat_padded`,
+  :py:func:`nth_url_segment`,
+  :py:func:`remove_non_path_from_url`,
+  :py:func:`parse_json_string_with_comments`,
+  :py:func:`parse_json_string_or_file`,
+  :py:func:`set_json_key_value_overrides`,
+  :py:func:`assert_file_grp_cardinality`,
+  :py:func:`make_file_id`
+  :py:func:`generate_range`
 
     String and OOP utilities
 
-* ``MIMETYPE_PAGE``, ``EXT_TO_MIME``, ``MIME_TO_EXT``, ``VERSION``
+* :py:data:`MIMETYPE_PAGE`,
+  :py:data:`EXT_TO_MIME`,
+  :py:data:`MIME_TO_EXT`,
+  :py:data:`VERSION`
 
     Constants
 
-* ``logging``, ``setOverrideLogLevel``, ``getLevelName``, ``getLogger``, ``initLogging``
+* :py:mod:`logging`,
+  :py:func:`setOverrideLogLevel`,
+  :py:func:`getLevelName`,
+  :py:func:`getLogger`,
+  :py:func:`initLogging`
 
-    Exports of ocrd_utils.logging
+    Exports of :py:mod:`ocrd_utils.logging`
 
-* ``deprecated_alias``
+* :py:func:`deprecated_alias`
 
     Decorator to mark a kwarg as deprecated
 """
@@ -140,6 +174,7 @@ from .os import (
 from .str import (
     assert_file_grp_cardinality,
     concat_padded,
+    generate_range,
     get_local_filename,
     is_local_filename,
     is_string,

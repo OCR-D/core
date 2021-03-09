@@ -5,6 +5,36 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.23.1] - 2021-03-07
+
+Added:
+
+  * `configs` resource for `ocrd-tesserocr-recognize`, #680
+
+Changed:
+
+  * Stop testing python 3.5, start testing python 3.9
+  * `ocrd resmgr`: skip redundant `content-length` request if `size` is known
+
+## [2.23.0] - 2021-02-26
+
+Changed:
+
+  * The `--page-id`/`-g` option now accepts value ranges with the `..` operator, #672
+
+Added:
+
+  * `ocrd workspace merge` to merge two workspaces, #670, #673
+  * Two experimental calmari models `c1_fraktur19-1` and `c1_latin-script-hist-3`, #675
+
+## [2.22.4] - 2021-02-17
+
+Fixed:
+
+  * `OcrdPage`: never output parsing results to STDOUT, #665, #372
+  * improved docstrings throughout (ht @bertsky), #664
+  * `resmgr --location cwd` will download to `$PWD`, not `$PWD/ocrd-resources/<executable>`, #671
+
 ## [2.22.3] - 2021-01-27
 
 Changed:
@@ -1278,6 +1308,10 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.23.1]: ../../compare/v2.23.1..v2.23.0
+[2.23.0]: ../../compare/v2.23.0..v2.22.4
+[2.22.4]: ../../compare/v2.22.4..v2.22.3
+[2.22.3]: ../../compare/v2.22.3..v2.22.2
 [2.22.2]: ../../compare/v2.22.2..v2.22.1
 [2.22.1]: ../../compare/v2.22.1..v2.22.0
 [2.22.0]: ../../compare/v2.22.0..v2.22.0b4

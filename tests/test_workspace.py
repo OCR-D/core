@@ -32,6 +32,7 @@ def count_files():
 class TestWorkspace(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
 
     def test_workspace_add_file(self):
@@ -319,6 +320,16 @@ class TestWorkspace(TestCase):
             chmod(mets_path, 0o777)
             ws.save_mets()
             assert filemode(stat(mets_path).st_mode) == '-rwxrwxrwx'
+
+    def test_merge(self):
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as ws1dir, \
+            copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as ws2dir:
+            ws1 = Workspace(self.resolver, ws1dir)
+            ws2 = Workspace(self.resolver, ws2dir)
+            assert len(ws1.mets.find_all_files()) == 6
+            ws1.merge(ws2)
+            assert len(ws1.mets.find_all_files()) == 41
+            assert exists(join(ws1dir, 'OCR-D-IMG/FILE_0001_IMAGE.tif'))
 
 
 if __name__ == '__main__':

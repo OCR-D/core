@@ -2,15 +2,6 @@ version: 2
 
 jobs:
 
-  test-python35:
-    docker:
-      - image: python:3.5.3
-    working_directory: ~/ocrd-core
-    steps:
-      - checkout
-      - run: make deps-test install
-      - run: make test
-
   test-python36:
     docker:
       - image: python:3.6.12
@@ -32,6 +23,15 @@ jobs:
   test-python38:
     docker:
       - image: python:3.8.5
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: make deps-test install
+      - run: make test
+
+  test-python39:
+    docker:
+      - image: python:3.9
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -62,7 +62,7 @@ workflows:
               only: master
   test-pull-request:
     jobs:
-      - test-python35
       - test-python36
       - test-python37
       - test-python38
+      - test-python39

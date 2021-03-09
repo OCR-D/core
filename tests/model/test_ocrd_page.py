@@ -55,6 +55,7 @@ simple_page = """\
 class TestOcrdPage(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.maxDiff = 5000
         with open(assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml'), 'rb') as f:
             self.xml_as_str = f.read()

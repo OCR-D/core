@@ -45,6 +45,12 @@ ocrd-tesserocr-recognize:
     parameter_usage: 'without-extension'
     description: Tesseract Latin model
     size: 89384811
+  - url: https://github.com/tesseract-ocr/tesseract/archive/master.tar.gz
+    name: configs
+    description: Tesseract configs (parameter sets) for use with the standalone tesseract CLI
+    size: 1973268
+    type: tarball
+    path_in_archive: 'tesseract-master/tessdata/configs'
 ocrd-calamari-recognize:
   # XXX disabled since older ocrd_calamari versions don't support resource resolving
   #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
@@ -60,6 +66,20 @@ ocrd-calamari-recognize:
     description: Calamari model trained with GT4HistOCR
     size: 90275264
     path_in_archive: '.'
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_fraktur19-1.tar.gz
+    type: tarball
+    name: zpd-fraktur19
+    description: Model trained on 19th century german fraktur
+    path_in_archive: 'c1_fraktur19-1'
+    size: 86009886
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_latin-script-hist-3.tar.gz
+    type: tarball
+    name: zpd-latin-script-hist-3
+    path_in_archive: 'c1_latin-script-hist-3'
+    description: Model trained on historical latin-script texts
+    size: 88416863
     version_range: '>= 1.0.0'
 ocrd-cis-ocropy-recognize:
   - url: https://github.com/zuphilip/ocropy-models/raw/master/en-default.pyrnn.gz

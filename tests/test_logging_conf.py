@@ -7,6 +7,7 @@ import re
 import shutil
 import sys
 
+from ocrd_utils import pushd_popd
 from ocrd_utils.logging import (
     initLogging,
     getLogger
@@ -32,18 +33,18 @@ def test_configured_dateformat(logging_conf, capsys):
     """Ensure example ocrd_logging.conf is valid and produces desired record format"""
 
     # arrange
-    os.chdir(logging_conf)
-    initLogging()
-    test_logger = getLogger('')
+    with pushd_popd(logging_conf):
+        initLogging()
+        test_logger = getLogger('')
 
-    # act
-    test_logger.info("test logger initialized")
+        # act
+        test_logger.info("test logger initialized")
 
-    log_info_output = capsys.readouterr().out
-    must_not_match = r"^\d{4}-\d{2}-\d{2}.*"
-    assert not re.match(must_not_match, log_info_output)
-    match_pattern = r"^\d{2}:\d{2}:\d{2}.*"
-    assert re.match(match_pattern, log_info_output)
+        log_info_output = capsys.readouterr().out
+        must_not_match = r"^\d{4}-\d{2}-\d{2}.*"
+        assert not re.match(must_not_match, log_info_output)
+        match_pattern = r"^\d{2}:\d{2}:\d{2}.*"
+        assert re.match(match_pattern, log_info_output)
 
 
 def test_configured_tensorflow_logger_present(logging_conf, capsys):

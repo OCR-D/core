@@ -58,6 +58,7 @@ class TestOcrdMets(TestCase):
         self.assertEqual(len(self.mets.find_all_files(mimetype='//application/.*')), 22, '22 application/.*')
         self.assertEqual(len(self.mets.find_all_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
         self.assertEqual(len(self.mets.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
+        self.assertEqual(len(self.mets.find_all_files(pageId='PHYS_0001..PHYS_0005')), 35, '35 files for page "PHYS_0001..PHYS_0005"')
 
     def test_find_all_files_no_regex_for_pageid(self):
         with self.assertRaisesRegex(Exception, "not support regex search for pageId"):
@@ -240,6 +241,12 @@ class TestOcrdMets(TestCase):
             mets.remove_file_group('//OCR-D-GT-.*', recursive=True)
             self.assertEqual(len(mets.file_groups), 15)
             self.assertEqual(len(mets.find_all_files()), 31)
+
+    def test_merge(self):
+        assert len(self.mets.file_groups) == 17
+        other_mets = OcrdMets(filename=assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
+        self.mets.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
+        assert len(self.mets.file_groups) == 18
 
 if __name__ == '__main__':
     main(__file__)
