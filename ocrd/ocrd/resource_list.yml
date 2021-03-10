@@ -104,6 +104,12 @@ ocrd-typegroups-classifier:
     description: Network to predict font families with. Bundled with standard installation.
     size: 28509377
 ocrd-sbb-binarize:
+  - url: https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz
+    description: updated default models provided by github.com/qurator-spk
+    name: default-2021-03-09
+    type: tarball
+    path_in_archive: models
+    size: 133363179
   - url: https://qurator-data.de/sbb_binarization/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
