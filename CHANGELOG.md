@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.23.2] - 2021-03-10
+
+Added:
+
+  * `ocrd resmgr`: new model `default-2021-03-09` for sbb_binarization, #681
+
 ## [2.23.1] - 2021-03-07
 
 Added:
@@ -1308,6 +1314,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.23.2]: ../../compare/v2.23.2..v2.23.1
 [2.23.1]: ../../compare/v2.23.1..v2.23.0
 [2.23.0]: ../../compare/v2.23.0..v2.22.4
 [2.22.4]: ../../compare/v2.22.4..v2.22.3
