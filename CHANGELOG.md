@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.23.3] - 2021-04-14
+
+Added:
+
+  * `ocrd resmgr`: model `default` for eynollah, #668
+
 ## [2.23.2] - 2021-03-10
 
 Added:
