@@ -83,7 +83,7 @@ class Processor():
             if not res_fname:
                 initLogging()
                 logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
-                logger.error("Failed to resolve %s for processort %s" % (show_resource, ocrd_tool['executable']))
+                logger.error("Failed to resolve %s for processor %s" % (show_resource, ocrd_tool['executable']))
             else:
                 with open(res_fname[0], 'rb') as f:
                     copyfileobj(f, sys.stdout.buffer)
