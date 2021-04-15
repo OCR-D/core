@@ -39,11 +39,11 @@ class OcrdExif():
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
         if img.filename:
-            ret = run(['identify', '-format', r'%x %y %U', img.filename], check=False, stderr=PIPE, stdout=PIPE)
+            ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U', img.filename], check=False, stderr=PIPE, stdout=PIPE)
         else:
             with BytesIO() as bio:
                 img.save(bio, format=img.format)
-                ret = run(['identify', '-format', r'%x %y %U', '/dev/stdin'], check=False, stderr=PIPE, stdout=PIPE, input=bio.getvalue())
+                ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U', '/dev/stdin'], check=False, stderr=PIPE, stdout=PIPE, input=bio.getvalue())
         if ret.returncode:
             stderr = ret.stderr.decode('utf-8')
             if not which('identify'):
@@ -52,7 +52,7 @@ class OcrdExif():
                 getLogger('ocrd_exif').warning("ImageMagick does not support the '%s' image format. ", img.format)
             else:
                 getLogger('ocrd_exif').error("identify exited with non-zero %s: %s", ret.returncode, stderr)
-            self.xResolution = self.yResolution = 1
+            self.xResolution = self.yResolution = 0
             self.resolutionUnit = 'inches'
         else:
             tokens = ret.stdout.decode('utf-8').split(' ', 3)
