@@ -52,12 +52,12 @@ class OcrdExif():
                 getLogger('ocrd_exif').warning("ImageMagick does not support the '%s' image format. ", img.format)
             else:
                 getLogger('ocrd_exif').error("identify exited with non-zero %s: %s", ret.returncode, stderr)
-            self.xResolution = self.yResolution = 0
+            self.xResolution = self.yResolution = 1
             self.resolutionUnit = 'inches'
         else:
             tokens = ret.stdout.decode('utf-8').split(' ', 3)
-            self.xResolution = int(float(tokens[0]))
-            self.yResolution = int(float(tokens[1]))
+            self.xResolution = max(int(float(tokens[0])), 1)
+            self.yResolution = max(int(float(tokens[1])), 1)
             self.resolutionUnit = 'inches' if tokens[2] == 'undefined' else \
                                   'cm' if tokens[2] == 'PixelsPerCentimeter' else \
                                   'inches'
