@@ -472,7 +472,7 @@ class Workspace():
 
         If ``feature_selector`` and/or ``feature_filter`` is given, then
         select/filter among the `@imageFilename` image and the available
-        AlternativeImages the last one which contains all of the selected,
+        AlternativeImages the richest one which contains all of the selected,
         but none of the filtered features (i.e. `@comments` classes), or
         raise an error.
 
@@ -553,40 +553,37 @@ class Workspace():
 
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
-        alternative_image = None
+        best_image = None
         alternative_images = page.get_AlternativeImage()
         if alternative_images:
             # (e.g. from page-level cropping, binarization, deskewing or despeckling)
-            if feature_selector or feature_filter:
-                alternative_image = None
-                # search from the end, because by convention we always append,
-                # and among multiple satisfactory images we want the most recent:
-                for alternative_image in reversed(alternative_images):
-                    features = alternative_image.get_comments()
-                    if not features:
-                        log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
-                                    alternative_images.index(alternative_image) + 1, page_id)
-                        features = ''
-                    if (all(feature in features
-                            for feature in feature_selector.split(',') if feature) and
-                        not any(feature in features
-                                for feature in feature_filter.split(',') if feature)):
-                        break
-                    else:
-                        alternative_image = None
-            else:
-                alternative_image = alternative_images[-1]
+            best_features = set()
+            auto_features = {'cropped', 'deskewed', 'rotated-90', 'rotated-180', 'rotated-270'}
+            # search to the end, because by convention we always append,
+            # and among multiple satisfactory images we want the most recent,
+            # but also ensure that we get the richest feature set, i.e. most
+            # of those features that we cannot reproduce automatically below
+            for alternative_image in alternative_images:
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
                                 alternative_images.index(alternative_image) + 1, page_id)
                     features = ''
-            if alternative_image:
-                log.debug("Using AlternativeImage %d (%s) for page '%s'",
-                          alternative_images.index(alternative_image) + 1,
-                          features, page_id)
-                page_image = self._resolve_image_as_pil(alternative_image.get_filename())
-                page_coords['features'] = features
+                featureset = set(features.split(','))
+                if (all(feature in featureset
+                        for feature in feature_selector.split(',') if feature) and
+                    not any(feature in featureset
+                            for feature in feature_filter.split(',') if feature) and
+                    len(featureset.difference(auto_features)) >= \
+                    len(best_features.difference(auto_features))):
+                    best_features = featureset
+                    best_image = alternative_image
+            if best_image:
+                log.debug("Using AlternativeImage %d %s for page '%s'",
+                          alternative_images.index(best_image) + 1,
+                          best_features, page_id)
+                page_image = self._resolve_image_as_pil(best_image.get_filename())
+                page_coords['features'] = best_image.get_comments() # including duplicates
 
         # adjust the coord transformation to the steps applied on the image,
         # and apply steps on the existing image in case it is missing there,
@@ -638,7 +635,7 @@ class Workspace():
                           page_id, page_coords['features'],
                           page_image.width, page_image.height,
                           page_xywh['w'], page_xywh['h'])
-            name = "%s for page '%s'" % ("AlternativeImage" if alternative_image
+            name = "%s for page '%s'" % ("AlternativeImage" if best_image
                                          else "original image", page_id)
             # adjust transform to feature, and ensure feature is applied to image
             if feature == 'cropped':
@@ -699,7 +696,7 @@ class Workspace():
 
         If ``feature_selector`` and/or ``feature_filter`` is given, then
         select/filter among the cropped ``parent_image`` and the available
-        `AlternativeImage`s the last one which contains all of the selected,
+        `AlternativeImage`s the richest one which contains all of the selected,
         but none of the filtered features (i.e. `@comments` classes), or
         raise an error.
 
@@ -812,40 +809,37 @@ class Workspace():
              if feature in ['binarized', 'grayscale_normalized',
                             'despeckled', 'dewarped']])
 
-        alternative_image = None
+        best_image = None
         alternative_images = segment.get_AlternativeImage()
         if alternative_images:
             # (e.g. from segment-level cropping, binarization, deskewing or despeckling)
-            if feature_selector or feature_filter:
-                alternative_image = None
-                # search from the end, because by convention we always append,
-                # and among multiple satisfactory images we want the most recent:
-                for alternative_image in reversed(alternative_images):
-                    features = alternative_image.get_comments()
-                    if not features:
-                        log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
-                                    alternative_images.index(alternative_image) + 1, segment.id)
-                        features = ''
-                    if (all(feature in features
-                            for feature in feature_selector.split(',') if feature) and
-                        not any(feature in features
-                                for feature in feature_filter.split(',') if feature)):
-                        break
-                    else:
-                        alternative_image = None
-            else:
-                alternative_image = alternative_images[-1]
+            best_features = set()
+            auto_features = {'cropped', 'deskewed', 'rotated-90', 'rotated-180', 'rotated-270'}
+            # search to the end, because by convention we always append,
+            # and among multiple satisfactory images we want the most recent,
+            # but also ensure that we get the richest feature set, i.e. most
+            # of those features that we cannot reproduce automatically below
+            for alternative_image in alternative_images:
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
                                 alternative_images.index(alternative_image) + 1, segment.id)
                     features = ''
-            if alternative_image:
-                log.debug("Using AlternativeImage %d (%s) for segment '%s'",
-                          alternative_images.index(alternative_image) + 1,
-                          features, segment.id)
+                featureset = set(features.split(','))
+                if (all(feature in featureset
+                        for feature in feature_selector.split(',') if feature) and
+                    not any(feature in featureset
+                            for feature in feature_filter.split(',') if feature) and
+                    len(featureset.difference(auto_features)) >= \
+                    len(best_features.difference(auto_features))):
+                    best_features = featureset
+                    best_image = alternative_image
+            if best_image:
+                log.debug("Using AlternativeImage %d %s for segment '%s'",
+                          alternative_images.index(best_image) + 1,
+                          best_features, segment.id)
                 segment_image = self._resolve_image_as_pil(alternative_image.get_filename())
-                segment_coords['features'] = features
+                segment_coords['features'] = best_image.get_comments() # including duplicates
 
         alternative_image_features = segment_coords['features'].split(',')
         for duplicate_feature in set([feature for feature in alternative_image_features
@@ -885,7 +879,7 @@ class Workspace():
                           segment.id, segment_coords['features'],
                           segment_image.width, segment_image.height,
                           segment_xywh['w'], segment_xywh['h'])
-            name = "%s for segment '%s'" % ("AlternativeImage" if alternative_image
+            name = "%s for segment '%s'" % ("AlternativeImage" if best_image
                                             else "parent image", segment.id)
             # adjust transform to feature, and ensure feature is applied to image
             if feature == 'rotated-%d' % orientation:
