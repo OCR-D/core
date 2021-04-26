@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `workspace.image_from_page` will return the AlternativeImage with most features matched, not the last one, #686
+  * `crop_image`: Ensures that masked areas do not influence the median for `fill='background'`, #686
+
 ## [2.23.3] - 2021-04-14
 
 Added:
