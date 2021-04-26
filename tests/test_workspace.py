@@ -297,6 +297,16 @@ class TestWorkspace(TestCase):
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
             self.assertEquals(info['features'], 'binarized,clipped')
 
+    def test_image_feature_selectoro(self):
+        with pushd_popd('tests/data/sample-features'):
+            ws = self.resolver.workspace_from_url('mets.xml')
+            with open('image_features.page.xml', 'r') as f:
+                pcgts = parseString(f.read().encode('utf8'), silence=True)
+            img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped')
+            self.assertEquals(info['features'], 'cropped,dewarped,binarized,despeckled,deskewed')
+            img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped', feature_filter='binarized')
+            self.assertEquals(info['features'], 'cropped,dewarped,despeckled')
+
     def test_downsample_16bit_image(self):
         with pushd_popd(tempdir=True) as tempdir:
             with gzip_open(join(dirname(__file__), 'data/OCR-D-IMG_APBB_Mitteilungen_62.0002.tif.gz'), 'rb') as gzip_in:

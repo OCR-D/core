@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd" pcGtsId="PAGE_0017_PAGE">
+    <Metadata>
+        <Creator>OCR-D</Creator>
+        <Created>2016-09-20T11:09:27.041+02:00</Created>
+        <LastChange>2018-04-25T17:44:49.605+01:00</LastChange>
+    </Metadata>
+    <Page imageFilename="foo0.png" imageWidth="1457" imageHeight="2083" type="content">
+        <AlternativeImage filename="foo1.png" comments="binarized"/>
+        <AlternativeImage filename="foo2.png" comments="dewarped,cropped"/>
+        <AlternativeImage filename="foo3.png" comments="cropped,binarized"/>
+        <AlternativeImage filename="foo4.png" comments="cropped,dewarped,binarized,despeckled,deskewed"/>
+        <AlternativeImage filename="foo5.png" comments="cropped,dewarped,despeckled"/>
+        <Border><Coords points="101,232 932,232 932,1794 101,1794"/></Border>
+    </Page>
+</PcGts>
