@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.24.0] - 2021-04-27
+
 Changed:
 
   * `workspace.image_from_page` will return the AlternativeImage with most features matched, not the last one, #686
@@ -1325,6 +1327,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.24.0]: ../../compare/v2.24.0..v2.23.2
 [2.23.2]: ../../compare/v2.23.2..v2.23.1
 [2.23.1]: ../../compare/v2.23.1..v2.23.0
 [2.23.0]: ../../compare/v2.23.0..v2.22.4
