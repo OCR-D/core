@@ -188,8 +188,7 @@ def polygon_mask(image, coordinates):
     Return the new PIL.Image.
     """
     mask = Image.new('L', image.size, 0)
-    if isinstance(coordinates, np.ndarray):
-        coordinates = list(map(tuple, coordinates))
+    coordinates = list(map(tuple, coordinates))
     ImageDraw.Draw(mask).polygon(coordinates, outline=255, fill=255)
     return mask
 
@@ -447,7 +446,8 @@ def crop_image(image, box=None):
                     str(box), image.width, image.height)
     LOG.debug('cropping image to %s', str(box))
     xywh = xywh_from_bbox(*box)
-    background = ImageStat.Stat(image)
+    poly = polygon_from_bbox(*box)
+    background = ImageStat.Stat(image, mask=polygon_mask(image, poly))
     if len(background.bands) > 1:
         background = tuple(background.median)
     else:
@@ -479,7 +479,7 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     """
     mask = polygon_mask(image, polygon)
     if fill == 'background':
-        background = ImageStat.Stat(image)
+        background = ImageStat.Stat(image, mask=mask)
         if len(background.bands) > 1:
             background = tuple(background.median)
         else:

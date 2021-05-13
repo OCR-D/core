@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="info:lc/xmlns/premis-v2 http://www.loc.gov/standards/premis/v2/premis-v2-0.xsd http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-6.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/version17/mets.v1-7.xsd http://www.loc.gov/mix/v10 http://www.loc.gov/standards/mix/mix10/mix10.xsd">
+  <mets:metsHdr CREATEDATE="2021-04-26T13:16:13.397420">
+    <mets:agent TYPE="OTHER" OTHERTYPE="SOFTWARE" ROLE="CREATOR">
+      <mets:name>ocrd/core v2.23.3</mets:name>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="DMDLOG_0001">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+                </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="AMD">
+    </mets:amdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="FOO">
+      <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="foo0">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="image_features.page.xml"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo1">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo1"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo2">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo2"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo3">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo3"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo4">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo4"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo5">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo5"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo6">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo6"/>
+      </mets:file>
+    </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div TYPE="physSequence">
+      <mets:div TYPE="page" ID="page1">
+        <mets:fptr FILEID="foo0"/>
+        <mets:fptr FILEID="foo1"/>
+        <mets:fptr FILEID="foo2"/>
+        <mets:fptr FILEID="foo3"/>
+        <mets:fptr FILEID="foo4"/>
+        <mets:fptr FILEID="foo5"/>
+        <mets:fptr FILEID="foo6"/>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+</mets:mets>
