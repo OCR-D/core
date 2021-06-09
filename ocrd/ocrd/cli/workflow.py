@@ -156,7 +156,7 @@ def client_process_cli(ctx, mets, page_id, overwrite):
         else:
             sys.exit(1)
     except requests.exceptions.HTTPError as err:
-        ctx.obj['log'].error("Server error: %s", err)
+        ctx.obj['log'].error("Server error: %s", err.response.text)
     except requests.exceptions.ConnectionError as err:
         ctx.obj['log'].error("Connection error: %s", err)
     except requests.exceptions.Timeout as err:
@@ -178,7 +178,7 @@ def client_list_tasks_cli(ctx):
         print(response.text)
         sys.exit(0)
     except requests.exceptions.HTTPError as err:
-        ctx.obj['log'].error("Server error: %s", err)
+        ctx.obj['log'].error("Server error: %s", err.response.text)
     except requests.exceptions.ConnectionError as err:
         ctx.obj['log'].error("Connection error: %s", err)
     except requests.exceptions.Timeout as err:
@@ -199,7 +199,7 @@ def client_shutdown_cli(ctx):
         print(response.text)
         sys.exit(0)
     except requests.exceptions.HTTPError as err:
-        ctx.obj['log'].error("Server error: %s", err)
+        ctx.obj['log'].error("Server error: %s", err.response.text)
     except requests.exceptions.ConnectionError as err:
         ctx.obj['log'].error("Connection error: %s", err)
     except requests.exceptions.Timeout as err:
