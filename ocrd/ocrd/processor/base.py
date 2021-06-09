@@ -97,6 +97,7 @@ class Processor():
         # FIXME HACK would be better to use pushd_popd(self.workspace.directory)
         # but there is no way to do that in process here since it's an
         # overridden method. chdir is almost always an anti-pattern.
+        self.old_pwd = getcwd()
         if self.workspace:
             self.old_pwd = getcwd()
             os.chdir(self.workspace.directory)
