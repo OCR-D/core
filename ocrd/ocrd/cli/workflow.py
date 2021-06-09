@@ -83,7 +83,7 @@ def server_cli(log_level, host, port, tasks):
         if flask.request.args.get("mets"):
             mets = flask.request.args["mets"]
         else:
-            return 'Error: No METS'
+            return 'Error: No METS', 400
         if flask.request.args.get('page_id'):
             page_id = flask.request.args["page_id"]
         else:
@@ -96,7 +96,7 @@ def server_cli(log_level, host, port, tasks):
             run_tasks(mets, log_level, page_id, tasks, overwrite)
         except Exception as e:
             log.exception("Request '%s' failed", str(flask.request.args))
-            return 'Failed: %s' % str(e)
+            return 'Failed: %s' % str(e), 500
         return 'Finished'
     @app.route('/list-tasks')
     def list_tasks(): # pylint: disable=unused-variable
