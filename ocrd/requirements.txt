@@ -5,6 +5,7 @@ requests
 lxml
 opencv-python-headless
 Flask
+uwsgi
 jsonschema
 pyyaml
 Deprecated == 1.2.0
