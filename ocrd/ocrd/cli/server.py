@@ -26,7 +26,12 @@ if loglevel:
 
 def setup():
     global tasks
-    log.info("Parsing and instantiating %d tasks", len(tasks))
+    if "CUDA_WORKERS" in os.environ and uwsgi.worker_id() > int(os.environ["CUDA_WORKERS"]):
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        where = "CPU"
+    else:
+        where = "GPU"
+    log.info("Parsing and instantiating %d tasks (on %s)", len(tasks), where)
     tasks = parse_tasks(tasks) # raises exception if invalid (causing worker to exit)
     for task in tasks:
         task.instantiate() # returns False if impossible (causing CLI fallback below)
