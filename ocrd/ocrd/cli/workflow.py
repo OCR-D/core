@@ -89,7 +89,7 @@ def server_cli(log_level, timeout, processes, host, port, tasks):
     result = subprocess.run(["uwsgi", "--http-socket", "%s:%d" % (host, port),
                              "--wsgi-file", os.path.join(os.path.dirname(__file__), 'server.py'),
                              "--callable", "app", "--need-app",
-                             "--disable-logging", # OCR-D logging is enough
+                             # "--disable-logging", # OCR-D logging is enough
                              # "--http-keepalive", "true",
                              # "--add-header", "Connection: Keep-Alive",
                              "--processes", "%d" % processes,
@@ -100,6 +100,7 @@ def server_cli(log_level, timeout, processes, host, port, tasks):
                              "--die-on-term", # do not reload on SIGTERM
                              "--reload-on-exception", # reload failed workers
                              "--enable-threads", # for multithreading in Numpy, TF, ...
+                             "--cache2", "name=workspace_lock,items=100",
                              # wrap in JSON to retain list/quotes (not possible with pyargv):
                              "--set", "tasks=%s" % json.dumps(tasks),
                              # server log level:
