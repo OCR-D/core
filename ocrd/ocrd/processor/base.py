@@ -53,6 +53,7 @@ class Processor():
             input_file_grp=None,
             output_file_grp=None,
             page_id=None,
+            server=None,
             show_resource=None,
             list_resources=False,
             show_help=False,

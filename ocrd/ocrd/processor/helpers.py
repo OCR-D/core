@@ -215,6 +215,10 @@ Options:
                                   or JSON file path
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
                                   taking precedence over --parameter
+  -s, --server HOST PORT WORKERS  Run web server instead of one-shot processing
+                                  (shifts mets/working-dir/page-id options to
+                                   HTTP request arguments); pass network interface
+                                  to bind to, TCP port, number of worker processes
   -m, --mets URL-PATH             URL or file path of METS to process
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]

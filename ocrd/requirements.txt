@@ -5,6 +5,7 @@ requests
 lxml
 opencv-python-headless
 Flask
+gunicorn
 uwsgi
 jsonschema
 pyyaml
