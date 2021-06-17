@@ -15,6 +15,7 @@ __all__ = [
     'OCRD_BAGIT_PROFILE_URL',
     'XSD_METS_URL',
     'XSD_PAGE_URL',
+    'XSD_ALTO_URL',
     'XSD_PATHS',
 ]
 
@@ -29,6 +30,8 @@ TMP_BAGIT_PREFIX = 'ocrd-bagit-'
 OCRD_BAGIT_PROFILE_URL = 'https://ocr-d.github.io/bagit-profile.json'
 XSD_METS_URL = 'https://www.loc.gov/standards/mets/mets.xsd'
 XSD_PAGE_URL = 'http://www.primaresearch.org/schema/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd'
+XSD_ALTO_URL = 'http://www.loc.gov/standards/alto/v4/alto-4-2.xsd'
 XSD_PATHS = {}
 XSD_PATHS[XSD_METS_URL] = resource_filename(__name__, 'mets.xsd')
 XSD_PATHS[XSD_PAGE_URL] = resource_filename(__name__, 'page.xsd')
+XSD_PATHS[XSD_ALTO_URL] = resource_filename(__name__, 'alto.xsd')
