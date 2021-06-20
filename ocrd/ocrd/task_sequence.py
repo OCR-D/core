@@ -15,7 +15,6 @@ from ocrd_utils import (
     set_json_key_value_overrides
 )
 # from collections import Counter
-from ocrd import decorators
 from ocrd.processor.base import run_cli, run_api
 from ocrd.resolver import Resolver
 from ocrd_validators import ParameterValidator, WorkspaceValidator
@@ -93,6 +92,7 @@ class ProcessorTask():
         return report
 
     def instantiate(self):
+        from ocrd import decorators
         logger = getLogger('ocrd.task_sequence.ProcessorTask')
         program = which(self.executable)
         if not program:
