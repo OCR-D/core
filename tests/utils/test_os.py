@@ -5,7 +5,8 @@ from os import environ as ENV, getcwd
 from os.path import expanduser, join
 
 from ocrd_utils.os import (
-    list_resource_candidates
+    list_resource_candidates,
+    resolve_mets_arguments
 )
 
 class TestOsUtils(TestCase):
@@ -33,6 +34,14 @@ class TestOsUtils(TestCase):
             '$HOME/.local/share/ocrd-resources/ocrd-dummy',
             '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
+
+    def test_resolve_mets_arguments(self):
+        assert resolve_mets_arguments('/', 'mets.xml', None) == ('/', 'mets.xml', 'mets.xml')
+        with self.assertRaisesRegex(ValueError, "Use either --mets or --mets-basename, not both"):
+            resolve_mets_arguments('/', '/foo/bar', 'foo.xml')
+        with self.assertRaisesRegex(ValueError, "--mets has a directory part inconsistent with --directory"):
+            resolve_mets_arguments('/foo', '/bar/foo.xml', None)
+        assert resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
 
 
 

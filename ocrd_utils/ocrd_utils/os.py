@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 import contextlib
 from os import getcwd, chdir, stat, chmod, umask, environ, scandir
 from pathlib import Path
-from os.path import exists, abspath as abspath_, join, isdir, dirname
+from os.path import exists, abspath as abspath_, join, isdir, dirname, basename
 from zipfile import ZipFile
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
@@ -121,7 +121,7 @@ def atomic_write(fpath):
     with atomic_write_(fpath, writer_cls=AtomicWriterPerms, overwrite=True) as f:
         yield f
 
-def resolve_mets_arguments(directory, mets_url, mets_basename, log):
+def resolve_mets_arguments(directory, mets_url, mets_basename, log=None):
     """
     Resolve the ``--mets``, ``--mets-basename`` and `--directory`` argument
     into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
@@ -129,8 +129,11 @@ def resolve_mets_arguments(directory, mets_url, mets_basename, log):
     if mets_basename and mets_url:
         raise ValueError("Use either --mets or --mets-basename, not both")
     if mets_basename and not mets_url:
-        log.warning(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
-    mets_basename = mets_basename if mets_basename else 'mets.xml'
+        (log.warning if log else print)(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+    if mets_url and not mets_basename:
+        mets_basename = basename(mets_url)
+    elif not mets_basename:
+        mets_basename = 'mets.xml'
     if directory and mets_url:
         directory = abspath(directory)
         if not abspath(mets_url).startswith(directory):
