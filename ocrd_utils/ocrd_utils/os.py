@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 import contextlib
 from os import getcwd, chdir, stat, chmod, umask, environ, scandir
 from pathlib import Path
-from os.path import exists, abspath as abspath_, join, isdir, dirname, basename
+from os.path import exists, abspath as abspath_, join, isdir
 from zipfile import ZipFile
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
@@ -128,25 +128,36 @@ def resolve_mets_arguments(directory, mets_url, mets_basename, log=None):
     """
     if mets_basename and mets_url:
         raise ValueError("Use either --mets or --mets-basename, not both")
-    if mets_basename and not mets_url:
-        (log.warning if log else print)(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
-    if mets_url and not mets_basename:
-        mets_basename = basename(mets_url)
-    elif not mets_basename:
+    elif not mets_basename and mets_url:
+        mets_basename = Path(mets_url).name
+    elif not mets_basename and not mets_url:
         mets_basename = 'mets.xml'
+    else:
+        (log.warning if log else print)(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+
     if directory and mets_url:
-        directory = abspath(directory)
-        if not abspath(mets_url).startswith(directory):
-            raise ValueError("--mets has a directory part inconsistent with --directory")
+        # XXX check whether mets_url has no parents, i.e. is actually the mets_basename
+        if Path(mets_url).parent == Path('.'):
+            (log.warning if log else print)('Treating --mets_url as --mets-basename because it is just a basename "%s"' % mets_url)
+            mets_basename, mets_url = mets_url, None
+        elif not is_file_in_directory(directory, mets_url):
+            raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
+
+    if directory and not mets_url:
+        directory = Path(directory).resolve()
+        mets_url = directory / mets_basename
     elif not directory and mets_url:
         if mets_url.startswith('http') or mets_url.startswith('https:'):
             raise ValueError("--mets is an http(s) URL but no --directory was given")
-        directory = dirname(abspath(mets_url)) or getcwd()
-    elif directory and not mets_url:
-        directory = abspath(directory)
-        mets_url = join(directory, mets_basename)
-    else:
-        directory = getcwd()
-        mets_url = join(directory, mets_basename)
+        mets_url = Path(mets_url).resolve()
+        directory = Path.cwd() if mets_url.parent == Path('.') else mets_url.parent
+    elif not directory:
+        directory = Path.cwd()
+        mets_url = Path(directory, mets_basename)
 
-    return directory, mets_url, mets_basename
+    return str(directory), str(mets_url), str(mets_basename)
+
+def is_file_in_directory(directory, file):
+    directory = Path(directory)
+    file = Path(file)
+    return list(file.parts)[:len(directory.parts)] == list(directory.parts)

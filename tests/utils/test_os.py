@@ -36,10 +36,10 @@ class TestOsUtils(TestCase):
         ]])
 
     def test_resolve_mets_arguments(self):
-        assert resolve_mets_arguments('/', 'mets.xml', None) == ('/', 'mets.xml', 'mets.xml')
+        assert resolve_mets_arguments('/', 'mets.xml', None) == ('/', '/mets.xml', 'mets.xml')
         with self.assertRaisesRegex(ValueError, "Use either --mets or --mets-basename, not both"):
             resolve_mets_arguments('/', '/foo/bar', 'foo.xml')
-        with self.assertRaisesRegex(ValueError, "--mets has a directory part inconsistent with --directory"):
+        with self.assertRaisesRegex(ValueError, "inconsistent with --directory"):
             resolve_mets_arguments('/foo', '/bar/foo.xml', None)
         assert resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
 
