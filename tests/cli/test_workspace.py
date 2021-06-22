@@ -396,7 +396,7 @@ class TestCli(TestCase):
 
     def test_mets_directory_incompatible(self):
           with pushd_popd(tempdir=True) as tempdir:
-            with self.assertRaisesRegex(ValueError, "--mets has a directory part inconsistent with --directory"):
+            with self.assertRaisesRegex(ValueError, "inconsistent with --directory"):
                 self.invoke_cli(workspace_cli, ['-d', 'foo', '-m', '/somewhere/else', 'init'])
 
     def test_mets_directory_html(self):
