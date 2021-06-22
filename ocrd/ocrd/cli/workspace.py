@@ -10,7 +10,7 @@ import re
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, resolve_mets_arguments
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
@@ -19,25 +19,7 @@ class WorkspaceCtx():
 
     def __init__(self, directory, mets_url, mets_basename, automatic_backup):
         self.log = getLogger('ocrd.cli.workspace')
-        if mets_basename and mets_url:
-            raise ValueError("Use either --mets or --mets-basename, not both")
-        if mets_basename and not mets_url:
-            self.log.warning(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
-        mets_basename = mets_basename if mets_basename else 'mets.xml'
-        if directory and mets_url:
-            directory = abspath(directory)
-            if not abspath(mets_url).startswith(directory):
-                raise ValueError("--mets has a directory part inconsistent with --directory")
-        elif not directory and mets_url:
-            if mets_url.startswith('http') or mets_url.startswith('https:'):
-                raise ValueError("--mets is an http(s) URL but no --directory was given")
-            directory = dirname(abspath(mets_url)) or getcwd()
-        elif directory and not mets_url:
-            directory = abspath(directory)
-            mets_url = join(directory, mets_basename)
-        else:
-            directory = getcwd()
-            mets_url = join(directory, mets_basename)
+        directory ,mets_url, mets_basename = resolve_mets_arguments(directory, mets_url, mets_basename, self.log)
         self.directory = directory
         self.resolver = Resolver()
         self.mets_url = mets_url

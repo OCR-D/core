@@ -65,6 +65,7 @@ Utility functions and constants usable in various circumstances.
   :py:func:`safe_filename`,
   :py:func:`abspath`,
   :py:func:`get_local_filename`
+  :py:func:`resolve_mets_arguments`
 
     filesystem-related utilities
 
@@ -169,7 +170,9 @@ from .os import (
     list_resource_candidates,
     atomic_write,
     pushd_popd,
-    unzip_file_to_dir)
+    unzip_file_to_dir,
+    resolve_mets_arguments,
+    )
 
 from .str import (
     assert_file_grp_cardinality,

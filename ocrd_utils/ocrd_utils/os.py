@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 import contextlib
 from os import getcwd, chdir, stat, chmod, umask, environ, scandir
 from pathlib import Path
-from os.path import exists, abspath as abspath_, join, isdir
+from os.path import exists, abspath as abspath_, join, isdir, dirname
 from zipfile import ZipFile
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
@@ -120,3 +120,30 @@ class AtomicWriterPerms(AtomicWriter):
 def atomic_write(fpath):
     with atomic_write_(fpath, writer_cls=AtomicWriterPerms, overwrite=True) as f:
         yield f
+
+def resolve_mets_arguments(directory, mets_url, mets_basename, log):
+    """
+    Resolve the ``--mets``, ``--mets-basename`` and `--directory`` argument
+    into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
+    """
+    if mets_basename and mets_url:
+        raise ValueError("Use either --mets or --mets-basename, not both")
+    if mets_basename and not mets_url:
+        log.warning(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+    mets_basename = mets_basename if mets_basename else 'mets.xml'
+    if directory and mets_url:
+        directory = abspath(directory)
+        if not abspath(mets_url).startswith(directory):
+            raise ValueError("--mets has a directory part inconsistent with --directory")
+    elif not directory and mets_url:
+        if mets_url.startswith('http') or mets_url.startswith('https:'):
+            raise ValueError("--mets is an http(s) URL but no --directory was given")
+        directory = dirname(abspath(mets_url)) or getcwd()
+    elif directory and not mets_url:
+        directory = abspath(directory)
+        mets_url = join(directory, mets_basename)
+    else:
+        directory = getcwd()
+        mets_url = join(directory, mets_basename)
+
+    return directory, mets_url, mets_basename
