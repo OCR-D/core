@@ -11,7 +11,10 @@ from PIL import Image
 
 from ocrd_utils import VERSION, MIMETYPE_PAGE
 from ocrd_models import OcrdExif
-from ocrd_models.ocrd_page import PcGtsType, PageType, MetadataType, parse
+from ocrd_models.ocrd_page import (
+    PcGtsType, PageType, MetadataType,
+    parse, parseEtree
+)
 
 __all__ = [
     'exif_from_filename',
@@ -34,14 +37,16 @@ def exif_from_filename(image_filename):
         ocrd_exif = OcrdExif(pil_img)
     return ocrd_exif
 
-def page_from_image(input_file):
+def page_from_image(input_file, with_tree=False):
     """
     Create `OcrdPage </../../ocrd_models/ocrd_models.ocrd_page.html>`_
     from an `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_
     representing an image (i.e. should have ``mimetype`` starting with ``image/``).
 
     Arguments:
-        * input_file (OcrdFile):
+        * input_file (OcrdFile): file to open and produce a PAGE DOM for
+    Keyword arguments:
+        * with_tree (boolean): whether to return XML node tree, element-node mapping and reverse mapping, too
     """
     if not input_file.local_filename:
         raise ValueError("input_file must have 'local_filename' property")
@@ -49,7 +54,7 @@ def page_from_image(input_file):
         raise FileNotFoundError("File not found: '%s' (%s)" % (input_file.local_filename, input_file))
     exif = exif_from_filename(input_file.local_filename)
     now = datetime.now()
-    return PcGtsType(
+    pcgts = PcGtsType(
         Metadata=MetadataType(
             Creator="OCR-D/core %s" % VERSION,
             Created=now,
@@ -63,20 +68,28 @@ def page_from_image(input_file):
         ),
         pcGtsId=input_file.ID
     )
+    if not with_tree:
+        return pcgts
+    mapping = dict()
+    etree = pcgts.to_etree(mapping_=mapping)
+    revmap = dict(((node, element) for element, node in mapping.items()))
+    return pcgts, etree, mapping, revmap
 
-def page_from_file(input_file):
+def page_from_file(input_file, with_tree=False):
     """
     Create a new PAGE-XML from a METS file representing a PAGE-XML or an image.
 
     Arguments:
-        * input_file (OcrdFile):
+        * input_file (OcrdFile): file to open and produce a PAGE DOM for
+    Keyword arguments:
+        * with_tree (boolean): whether to return XML node tree, element-node mapping and reverse mapping, too
     """
     if not input_file.local_filename:
         raise ValueError("input_file must have 'local_filename' property")
     if not Path(input_file.local_filename).exists():
         raise FileNotFoundError("File not found: '%s' (%s)" % (input_file.local_filename, input_file))
     if input_file.mimetype.startswith('image'):
-        return page_from_image(input_file)
+        return page_from_image(input_file, with_tree=with_tree)
     if input_file.mimetype == MIMETYPE_PAGE:
-        return parse(input_file.local_filename, silence=True)
+        return (parseEtree if with_tree else parse)(input_file.local_filename, silence=True)
     raise ValueError("Unsupported mimetype '%s'" % input_file.mimetype)
