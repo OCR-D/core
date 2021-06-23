@@ -5,6 +5,7 @@ from io import StringIO
 
 __all__ = [
     'parse',
+    'parseEtree',
     'parseString',
 
     "AdvertRegionType",
@@ -67,6 +68,7 @@ __all__ = [
 
 from .ocrd_page_generateds import (
     parse,
+    parseEtree,
     parseString,
 
     AdvertRegionType,
