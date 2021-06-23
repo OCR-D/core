@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Feb  3 11:36:26 2021 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
+# Generated Wed Jun 23 12:05:40 2021 by generateDS.py version 2.35.20.
+# Python 3.6.9 (default, Jan 26 2021, 15:33:00)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
 #   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
 #   ('--silence', '')
+#   ('--export', 'etree')
 #   ('--disable-generatedssuper-lookup', '')
 #   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
@@ -17,7 +18,7 @@
 #   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --silence --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   /home/kba/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --silence --export="etree" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1142,44 +1143,22 @@ class PcGtsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PcGtsType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('PcGtsType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='PcGtsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'PcGtsType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PcGtsType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PcGtsType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PcGtsType'):
-        if self.pcGtsId is not None and 'pcGtsId' not in already_processed:
-            already_processed.add('pcGtsId')
-            outfile.write(' pcGtsId=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.pcGtsId), input_name='pcGtsId')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PcGtsType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.pcGtsId is not None:
+            element.set('pcGtsId', self.gds_format_string(self.pcGtsId))
         if self.Metadata is not None:
-            namespaceprefix_ = self.Metadata_nsprefix_ + ':' if (UseCapturedNS_ and self.Metadata_nsprefix_) else ''
-            self.Metadata.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Metadata', pretty_print=pretty_print)
+            Metadata_ = self.Metadata
+            Metadata_.to_etree(element, name_='Metadata', mapping_=mapping_, nsmap_=nsmap_)
         if self.Page is not None:
-            namespaceprefix_ = self.Page_nsprefix_ + ':' if (UseCapturedNS_ and self.Page_nsprefix_) else ''
-            self.Page.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Page', pretty_print=pretty_print)
+            Page_ = self.Page
+            Page_.to_etree(element, name_='Page', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1390,60 +1369,33 @@ class MetadataType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='MetadataType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('MetadataType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='MetadataType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'MetadataType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MetadataType'):
-        if self.externalRef is not None and 'externalRef' not in already_processed:
-            already_processed.add('externalRef')
-            outfile.write(' externalRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalRef), input_name='externalRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='MetadataType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.externalRef is not None:
+            element.set('externalRef', self.gds_format_string(self.externalRef))
         if self.Creator is not None:
-            namespaceprefix_ = self.Creator_nsprefix_ + ':' if (UseCapturedNS_ and self.Creator_nsprefix_) else ''
-            showIndent(outfile, level, pretty_print)
-            outfile.write('<%sCreator>%s</%sCreator>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Creator), input_name='Creator')), namespaceprefix_ , eol_))
+            Creator_ = self.Creator
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Creator').text = self.gds_format_string(Creator_)
         if self.Created is not None:
-            namespaceprefix_ = self.Created_nsprefix_ + ':' if (UseCapturedNS_ and self.Created_nsprefix_) else ''
-            showIndent(outfile, level, pretty_print)
-            outfile.write('<%sCreated>%s</%sCreated>%s' % (namespaceprefix_ , self.gds_format_datetime(self.Created, input_name='Created'), namespaceprefix_ , eol_))
+            Created_ = self.Created
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Created').text = self.gds_format_datetime(Created_)
         if self.LastChange is not None:
-            namespaceprefix_ = self.LastChange_nsprefix_ + ':' if (UseCapturedNS_ and self.LastChange_nsprefix_) else ''
-            showIndent(outfile, level, pretty_print)
-            outfile.write('<%sLastChange>%s</%sLastChange>%s' % (namespaceprefix_ , self.gds_format_datetime(self.LastChange, input_name='LastChange'), namespaceprefix_ , eol_))
+            LastChange_ = self.LastChange
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}LastChange').text = self.gds_format_datetime(LastChange_)
         if self.Comments is not None:
-            namespaceprefix_ = self.Comments_nsprefix_ + ':' if (UseCapturedNS_ and self.Comments_nsprefix_) else ''
-            showIndent(outfile, level, pretty_print)
-            outfile.write('<%sComments>%s</%sComments>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Comments), input_name='Comments')), namespaceprefix_ , eol_))
+            Comments_ = self.Comments
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Comments').text = self.gds_format_string(Comments_)
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for MetadataItem_ in self.MetadataItem:
-            namespaceprefix_ = self.MetadataItem_nsprefix_ + ':' if (UseCapturedNS_ and self.MetadataItem_nsprefix_) else ''
-            MetadataItem_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MetadataItem', pretty_print=pretty_print)
+            MetadataItem_.to_etree(element, name_='MetadataItem', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1590,50 +1542,24 @@ class MetadataItemType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MetadataItemType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('MetadataItemType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='MetadataItemType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'MetadataItemType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataItemType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataItemType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MetadataItemType'):
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.name is not None and 'name' not in already_processed:
-            already_processed.add('name')
-            outfile.write(' name=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.name), input_name='name')), ))
-        if self.value is not None and 'value' not in already_processed:
-            already_processed.add('value')
-            outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
-        if self.date is not None and 'date' not in already_processed:
-            already_processed.add('date')
-            outfile.write(' date="%s"' % self.gds_format_datetime(self.date, input_name='date'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.date is not None:
+            element.set('date', self.gds_format_datetime(self.date))
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1766,50 +1692,24 @@ class LabelsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelsType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelsType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='LabelsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'LabelsType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelsType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelsType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LabelsType'):
-        if self.externalModel is not None and 'externalModel' not in already_processed:
-            already_processed.add('externalModel')
-            outfile.write(' externalModel=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalModel), input_name='externalModel')), ))
-        if self.externalId is not None and 'externalId' not in already_processed:
-            already_processed.add('externalId')
-            outfile.write(' externalId=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalId), input_name='externalId')), ))
-        if self.prefix is not None and 'prefix' not in already_processed:
-            already_processed.add('prefix')
-            outfile.write(' prefix=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.prefix), input_name='prefix')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelsType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.externalModel is not None:
+            element.set('externalModel', self.gds_format_string(self.externalModel))
+        if self.externalId is not None:
+            element.set('externalId', self.gds_format_string(self.externalId))
+        if self.prefix is not None:
+            element.set('prefix', self.gds_format_string(self.prefix))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         for Label_ in self.Label:
-            namespaceprefix_ = self.Label_nsprefix_ + ':' if (UseCapturedNS_ and self.Label_nsprefix_) else ''
-            Label_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Label', pretty_print=pretty_print)
+            Label_.to_etree(element, name_='Label', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1919,40 +1819,20 @@ class LabelType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('LabelType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='LabelType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'LabelType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LabelType'):
-        if self.value is not None and 'value' not in already_processed:
-            already_processed.add('value')
-            outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -2595,155 +2475,101 @@ class PageType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PageType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('PageType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='PageType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'PageType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PageType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PageType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PageType'):
-        if self.imageFilename is not None and 'imageFilename' not in already_processed:
-            already_processed.add('imageFilename')
-            outfile.write(' imageFilename=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.imageFilename), input_name='imageFilename')), ))
-        if self.imageWidth is not None and 'imageWidth' not in already_processed:
-            already_processed.add('imageWidth')
-            outfile.write(' imageWidth="%s"' % self.gds_format_integer(self.imageWidth, input_name='imageWidth'))
-        if self.imageHeight is not None and 'imageHeight' not in already_processed:
-            already_processed.add('imageHeight')
-            outfile.write(' imageHeight="%s"' % self.gds_format_integer(self.imageHeight, input_name='imageHeight'))
-        if self.imageXResolution is not None and 'imageXResolution' not in already_processed:
-            already_processed.add('imageXResolution')
-            outfile.write(' imageXResolution="%s"' % self.gds_format_float(self.imageXResolution, input_name='imageXResolution'))
-        if self.imageYResolution is not None and 'imageYResolution' not in already_processed:
-            already_processed.add('imageYResolution')
-            outfile.write(' imageYResolution="%s"' % self.gds_format_float(self.imageYResolution, input_name='imageYResolution'))
-        if self.imageResolutionUnit is not None and 'imageResolutionUnit' not in already_processed:
-            already_processed.add('imageResolutionUnit')
-            outfile.write(' imageResolutionUnit=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.imageResolutionUnit), input_name='imageResolutionUnit')), ))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.primaryLanguage is not None and 'primaryLanguage' not in already_processed:
-            already_processed.add('primaryLanguage')
-            outfile.write(' primaryLanguage=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.primaryLanguage), input_name='primaryLanguage')), ))
-        if self.secondaryLanguage is not None and 'secondaryLanguage' not in already_processed:
-            already_processed.add('secondaryLanguage')
-            outfile.write(' secondaryLanguage=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.secondaryLanguage), input_name='secondaryLanguage')), ))
-        if self.primaryScript is not None and 'primaryScript' not in already_processed:
-            already_processed.add('primaryScript')
-            outfile.write(' primaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.primaryScript), input_name='primaryScript')), ))
-        if self.secondaryScript is not None and 'secondaryScript' not in already_processed:
-            already_processed.add('secondaryScript')
-            outfile.write(' secondaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.secondaryScript), input_name='secondaryScript')), ))
-        if self.readingDirection is not None and 'readingDirection' not in already_processed:
-            already_processed.add('readingDirection')
-            outfile.write(' readingDirection=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.readingDirection), input_name='readingDirection')), ))
-        if self.textLineOrder is not None and 'textLineOrder' not in already_processed:
-            already_processed.add('textLineOrder')
-            outfile.write(' textLineOrder=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.textLineOrder), input_name='textLineOrder')), ))
-        if self.conf is not None and 'conf' not in already_processed:
-            already_processed.add('conf')
-            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PageType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.imageFilename is not None:
+            element.set('imageFilename', self.gds_format_string(self.imageFilename))
+        if self.imageWidth is not None:
+            element.set('imageWidth', self.gds_format_integer(self.imageWidth))
+        if self.imageHeight is not None:
+            element.set('imageHeight', self.gds_format_integer(self.imageHeight))
+        if self.imageXResolution is not None:
+            element.set('imageXResolution', self.gds_format_float(self.imageXResolution))
+        if self.imageYResolution is not None:
+            element.set('imageYResolution', self.gds_format_float(self.imageYResolution))
+        if self.imageResolutionUnit is not None:
+            element.set('imageResolutionUnit', self.gds_format_string(self.imageResolutionUnit))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.gds_format_string(self.secondaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.gds_format_string(self.textLineOrder))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
         for AlternativeImage_ in self.AlternativeImage:
-            namespaceprefix_ = self.AlternativeImage_nsprefix_ + ':' if (UseCapturedNS_ and self.AlternativeImage_nsprefix_) else ''
-            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
         if self.Border is not None:
-            namespaceprefix_ = self.Border_nsprefix_ + ':' if (UseCapturedNS_ and self.Border_nsprefix_) else ''
-            self.Border.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Border', pretty_print=pretty_print)
+            Border_ = self.Border
+            Border_.to_etree(element, name_='Border', mapping_=mapping_, nsmap_=nsmap_)
         if self.PrintSpace is not None:
-            namespaceprefix_ = self.PrintSpace_nsprefix_ + ':' if (UseCapturedNS_ and self.PrintSpace_nsprefix_) else ''
-            self.PrintSpace.export(outfile, level, namespaceprefix_, namespacedef_='', name_='PrintSpace', pretty_print=pretty_print)
+            PrintSpace_ = self.PrintSpace
+            PrintSpace_.to_etree(element, name_='PrintSpace', mapping_=mapping_, nsmap_=nsmap_)
         if self.ReadingOrder is not None:
-            namespaceprefix_ = self.ReadingOrder_nsprefix_ + ':' if (UseCapturedNS_ and self.ReadingOrder_nsprefix_) else ''
-            self.ReadingOrder.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ReadingOrder', pretty_print=pretty_print)
+            ReadingOrder_ = self.ReadingOrder
+            ReadingOrder_.to_etree(element, name_='ReadingOrder', mapping_=mapping_, nsmap_=nsmap_)
         if self.Layers is not None:
-            namespaceprefix_ = self.Layers_nsprefix_ + ':' if (UseCapturedNS_ and self.Layers_nsprefix_) else ''
-            self.Layers.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layers', pretty_print=pretty_print)
+            Layers_ = self.Layers
+            Layers_.to_etree(element, name_='Layers', mapping_=mapping_, nsmap_=nsmap_)
         if self.Relations is not None:
-            namespaceprefix_ = self.Relations_nsprefix_ + ':' if (UseCapturedNS_ and self.Relations_nsprefix_) else ''
-            self.Relations.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relations', pretty_print=pretty_print)
+            Relations_ = self.Relations
+            Relations_.to_etree(element, name_='Relations', mapping_=mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
-            namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
-            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
         for TextRegion_ in self.TextRegion:
-            namespaceprefix_ = self.TextRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.TextRegion_nsprefix_) else ''
-            TextRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextRegion', pretty_print=pretty_print)
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
         for ImageRegion_ in self.ImageRegion:
-            namespaceprefix_ = self.ImageRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.ImageRegion_nsprefix_) else ''
-            ImageRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ImageRegion', pretty_print=pretty_print)
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
         for LineDrawingRegion_ in self.LineDrawingRegion:
-            namespaceprefix_ = self.LineDrawingRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.LineDrawingRegion_nsprefix_) else ''
-            LineDrawingRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='LineDrawingRegion', pretty_print=pretty_print)
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
         for GraphicRegion_ in self.GraphicRegion:
-            namespaceprefix_ = self.GraphicRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.GraphicRegion_nsprefix_) else ''
-            GraphicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphicRegion', pretty_print=pretty_print)
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
         for TableRegion_ in self.TableRegion:
-            namespaceprefix_ = self.TableRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.TableRegion_nsprefix_) else ''
-            TableRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableRegion', pretty_print=pretty_print)
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
         for ChartRegion_ in self.ChartRegion:
-            namespaceprefix_ = self.ChartRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.ChartRegion_nsprefix_) else ''
-            ChartRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChartRegion', pretty_print=pretty_print)
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
         for MapRegion_ in self.MapRegion:
-            namespaceprefix_ = self.MapRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.MapRegion_nsprefix_) else ''
-            MapRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MapRegion', pretty_print=pretty_print)
+            MapRegion_.to_etree(element, name_='MapRegion', mapping_=mapping_, nsmap_=nsmap_)
         for SeparatorRegion_ in self.SeparatorRegion:
-            namespaceprefix_ = self.SeparatorRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.SeparatorRegion_nsprefix_) else ''
-            SeparatorRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SeparatorRegion', pretty_print=pretty_print)
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
         for MathsRegion_ in self.MathsRegion:
-            namespaceprefix_ = self.MathsRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.MathsRegion_nsprefix_) else ''
-            MathsRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MathsRegion', pretty_print=pretty_print)
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
         for ChemRegion_ in self.ChemRegion:
-            namespaceprefix_ = self.ChemRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.ChemRegion_nsprefix_) else ''
-            ChemRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChemRegion', pretty_print=pretty_print)
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
         for MusicRegion_ in self.MusicRegion:
-            namespaceprefix_ = self.MusicRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.MusicRegion_nsprefix_) else ''
-            MusicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MusicRegion', pretty_print=pretty_print)
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
         for AdvertRegion_ in self.AdvertRegion:
-            namespaceprefix_ = self.AdvertRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.AdvertRegion_nsprefix_) else ''
-            AdvertRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AdvertRegion', pretty_print=pretty_print)
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
         for NoiseRegion_ in self.NoiseRegion:
-            namespaceprefix_ = self.NoiseRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.NoiseRegion_nsprefix_) else ''
-            NoiseRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NoiseRegion', pretty_print=pretty_print)
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
         for UnknownRegion_ in self.UnknownRegion:
-            namespaceprefix_ = self.UnknownRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.UnknownRegion_nsprefix_) else ''
-            UnknownRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnknownRegion', pretty_print=pretty_print)
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
         for CustomRegion_ in self.CustomRegion:
-            namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
-            CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -3235,37 +3061,18 @@ class CoordsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('CoordsType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='CoordsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'CoordsType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CoordsType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='CoordsType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='CoordsType'):
-        if self.points is not None and 'points' not in already_processed:
-            already_processed.add('points')
-            outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
-        if self.conf is not None and 'conf' not in already_processed:
-            already_processed.add('conf')
-            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -3579,86 +3386,52 @@ class TextLineType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextLineType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextLineType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='TextLineType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'TextLineType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextLineType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextLineType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextLineType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.primaryLanguage is not None and 'primaryLanguage' not in already_processed:
-            already_processed.add('primaryLanguage')
-            outfile.write(' primaryLanguage=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.primaryLanguage), input_name='primaryLanguage')), ))
-        if self.primaryScript is not None and 'primaryScript' not in already_processed:
-            already_processed.add('primaryScript')
-            outfile.write(' primaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.primaryScript), input_name='primaryScript')), ))
-        if self.secondaryScript is not None and 'secondaryScript' not in already_processed:
-            already_processed.add('secondaryScript')
-            outfile.write(' secondaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.secondaryScript), input_name='secondaryScript')), ))
-        if self.readingDirection is not None and 'readingDirection' not in already_processed:
-            already_processed.add('readingDirection')
-            outfile.write(' readingDirection=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.readingDirection), input_name='readingDirection')), ))
-        if self.production is not None and 'production' not in already_processed:
-            already_processed.add('production')
-            outfile.write(' production=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.production), input_name='production')), ))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-        if self.index is not None and 'index' not in already_processed:
-            already_processed.add('index')
-            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextLineType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
         for AlternativeImage_ in self.AlternativeImage:
-            namespaceprefix_ = self.AlternativeImage_nsprefix_ + ':' if (UseCapturedNS_ and self.AlternativeImage_nsprefix_) else ''
-            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
-            namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
-            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
         if self.Baseline is not None:
-            namespaceprefix_ = self.Baseline_nsprefix_ + ':' if (UseCapturedNS_ and self.Baseline_nsprefix_) else ''
-            self.Baseline.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Baseline', pretty_print=pretty_print)
+            Baseline_ = self.Baseline
+            Baseline_.to_etree(element, name_='Baseline', mapping_=mapping_, nsmap_=nsmap_)
         for Word_ in self.Word:
-            namespaceprefix_ = self.Word_nsprefix_ + ':' if (UseCapturedNS_ and self.Word_nsprefix_) else ''
-            Word_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Word', pretty_print=pretty_print)
+            Word_.to_etree(element, name_='Word', mapping_=mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
-            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
-            namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
-            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4053,80 +3826,47 @@ class WordType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='WordType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('WordType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='WordType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'WordType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='WordType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='WordType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='WordType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.language is not None and 'language' not in already_processed:
-            already_processed.add('language')
-            outfile.write(' language=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.language), input_name='language')), ))
-        if self.primaryScript is not None and 'primaryScript' not in already_processed:
-            already_processed.add('primaryScript')
-            outfile.write(' primaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.primaryScript), input_name='primaryScript')), ))
-        if self.secondaryScript is not None and 'secondaryScript' not in already_processed:
-            already_processed.add('secondaryScript')
-            outfile.write(' secondaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.secondaryScript), input_name='secondaryScript')), ))
-        if self.readingDirection is not None and 'readingDirection' not in already_processed:
-            already_processed.add('readingDirection')
-            outfile.write(' readingDirection=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.readingDirection), input_name='readingDirection')), ))
-        if self.production is not None and 'production' not in already_processed:
-            already_processed.add('production')
-            outfile.write(' production=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.production), input_name='production')), ))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='WordType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.language is not None:
+            element.set('language', self.gds_format_string(self.language))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         for AlternativeImage_ in self.AlternativeImage:
-            namespaceprefix_ = self.AlternativeImage_nsprefix_ + ':' if (UseCapturedNS_ and self.AlternativeImage_nsprefix_) else ''
-            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
-            namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
-            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
         for Glyph_ in self.Glyph:
-            namespaceprefix_ = self.Glyph_nsprefix_ + ':' if (UseCapturedNS_ and self.Glyph_nsprefix_) else ''
-            Glyph_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Glyph', pretty_print=pretty_print)
+            Glyph_.to_etree(element, name_='Glyph', mapping_=mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
-            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
-            namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
-            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4465,77 +4205,46 @@ class GlyphType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GlyphType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GlyphType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='GlyphType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GlyphType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GlyphType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GlyphType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GlyphType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.ligature is not None and 'ligature' not in already_processed:
-            already_processed.add('ligature')
-            outfile.write(' ligature="%s"' % self.gds_format_boolean(self.ligature, input_name='ligature'))
-        if self.symbol is not None and 'symbol' not in already_processed:
-            already_processed.add('symbol')
-            outfile.write(' symbol="%s"' % self.gds_format_boolean(self.symbol, input_name='symbol'))
-        if self.script is not None and 'script' not in already_processed:
-            already_processed.add('script')
-            outfile.write(' script=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.script), input_name='script')), ))
-        if self.production is not None and 'production' not in already_processed:
-            already_processed.add('production')
-            outfile.write(' production=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.production), input_name='production')), ))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GlyphType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.symbol is not None:
+            element.set('symbol', self.gds_format_boolean(self.symbol))
+        if self.script is not None:
+            element.set('script', self.gds_format_string(self.script))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         for AlternativeImage_ in self.AlternativeImage:
-            namespaceprefix_ = self.AlternativeImage_nsprefix_ + ':' if (UseCapturedNS_ and self.AlternativeImage_nsprefix_) else ''
-            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
-            namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
-            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
         if self.Graphemes is not None:
-            namespaceprefix_ = self.Graphemes_nsprefix_ + ':' if (UseCapturedNS_ and self.Graphemes_nsprefix_) else ''
-            self.Graphemes.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Graphemes', pretty_print=pretty_print)
+            Graphemes_ = self.Graphemes
+            Graphemes_.to_etree(element, name_='Graphemes', mapping_=mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
-            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
-            namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
-            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4803,58 +4512,30 @@ class TextEquivType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='TextEquivType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextEquivType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='TextEquivType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'TextEquivType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextEquivType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextEquivType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextEquivType'):
-        if self.index is not None and 'index' not in already_processed:
-            already_processed.add('index')
-            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-        if self.conf is not None and 'conf' not in already_processed:
-            already_processed.add('conf')
-            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-        if self.dataType is not None and 'dataType' not in already_processed:
-            already_processed.add('dataType')
-            outfile.write(' dataType=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.dataType), input_name='dataType')), ))
-        if self.dataTypeDetails is not None and 'dataTypeDetails' not in already_processed:
-            already_processed.add('dataTypeDetails')
-            outfile.write(' dataTypeDetails=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.dataTypeDetails), input_name='dataTypeDetails')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='TextEquivType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if self.dataType is not None:
+            element.set('dataType', self.gds_format_string(self.dataType))
+        if self.dataTypeDetails is not None:
+            element.set('dataTypeDetails', self.gds_format_string(self.dataTypeDetails))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         if self.PlainText is not None:
-            namespaceprefix_ = self.PlainText_nsprefix_ + ':' if (UseCapturedNS_ and self.PlainText_nsprefix_) else ''
-            showIndent(outfile, level, pretty_print)
-            outfile.write('<%sPlainText>%s</%sPlainText>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.PlainText), input_name='PlainText')), namespaceprefix_ , eol_))
+            PlainText_ = self.PlainText
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}PlainText').text = self.gds_format_string(PlainText_)
         if self.Unicode is not None:
-            namespaceprefix_ = self.Unicode_nsprefix_ + ':' if (UseCapturedNS_ and self.Unicode_nsprefix_) else ''
-            showIndent(outfile, level, pretty_print)
-            outfile.write('<%sUnicode>%s</%sUnicode>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Unicode), input_name='Unicode')), namespaceprefix_ , eol_))
+            Unicode_ = self.Unicode
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Unicode').text = self.gds_format_string(Unicode_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4967,39 +4648,16 @@ class GridType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='GridType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GridType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GridType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for GridPoints_ in self.GridPoints:
-            namespaceprefix_ = self.GridPoints_nsprefix_ + ':' if (UseCapturedNS_ and self.GridPoints_nsprefix_) else ''
-            GridPoints_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GridPoints', pretty_print=pretty_print)
+            GridPoints_.to_etree(element, name_='GridPoints', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5093,37 +4751,18 @@ class GridPointsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GridPointsType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='GridPointsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GridPointsType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridPointsType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridPointsType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GridPointsType'):
-        if self.index is not None and 'index' not in already_processed:
-            already_processed.add('index')
-            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-        if self.points is not None and 'points' not in already_processed:
-            already_processed.add('points')
-            outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5208,39 +4847,17 @@ class PrintSpaceType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PrintSpaceType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('PrintSpaceType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='PrintSpaceType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'PrintSpaceType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PrintSpaceType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PrintSpaceType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PrintSpaceType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PrintSpaceType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         if self.Coords is not None:
-            namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
-            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5349,44 +4966,22 @@ class ReadingOrderType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ReadingOrderType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('ReadingOrderType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='ReadingOrderType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'ReadingOrderType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ReadingOrderType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ReadingOrderType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ReadingOrderType'):
-        if self.conf is not None and 'conf' not in already_processed:
-            already_processed.add('conf')
-            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
         if self.OrderedGroup is not None:
-            namespaceprefix_ = self.OrderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroup_nsprefix_) else ''
-            self.OrderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
+            OrderedGroup_ = self.OrderedGroup
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
         if self.UnorderedGroup is not None:
-            namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
-            self.UnorderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+            UnorderedGroup_ = self.UnorderedGroup
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5479,37 +5074,18 @@ class RegionRefIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefIndexedType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='RegionRefIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'RegionRefIndexedType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefIndexedType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefIndexedType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefIndexedType'):
-        if self.index is not None and 'index' not in already_processed:
-            already_processed.add('index')
-            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5732,74 +5308,41 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupIndexedType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupIndexedType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='OrderedGroupIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'OrderedGroupIndexedType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupIndexedType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupIndexedType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupIndexedType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-        if self.index is not None and 'index' not in already_processed:
-            already_processed.add('index')
-            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-        if self.caption is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.continuation is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
         for RegionRefIndexed_ in self.RegionRefIndexed:
-            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
-            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
-            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
-            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6169,74 +5712,41 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupIndexedType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupIndexedType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='UnorderedGroupIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'UnorderedGroupIndexedType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupIndexedType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupIndexedType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupIndexedType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-        if self.index is not None and 'index' not in already_processed:
-            already_processed.add('index')
-            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-        if self.caption is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.continuation is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
         for RegionRef_ in self.RegionRef:
-            namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
-            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
         for OrderedGroup_ in self.OrderedGroup:
-            namespaceprefix_ = self.OrderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroup_nsprefix_) else ''
-            OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
         for UnorderedGroup_ in self.UnorderedGroup:
-            namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
-            UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6374,34 +5884,16 @@ class RegionRefType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'RegionRefType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefType'):
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6611,71 +6103,39 @@ class OrderedGroupType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'OrderedGroupType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-        if self.caption is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.continuation is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
         for RegionRefIndexed_ in self.RegionRefIndexed:
-            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
-            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
-            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
-            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7032,71 +6492,39 @@ class UnorderedGroupType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'UnorderedGroupType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-        if self.caption is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.continuation is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
         for RegionRef_ in self.RegionRef:
-            namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
-            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
         for OrderedGroup_ in self.OrderedGroup:
-            namespaceprefix_ = self.OrderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroup_nsprefix_) else ''
-            OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
         for UnorderedGroup_ in self.UnorderedGroup:
-            namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
-            UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7232,39 +6660,17 @@ class BorderType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BorderType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('BorderType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='BorderType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'BorderType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BorderType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BorderType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='BorderType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BorderType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         if self.Coords is not None:
-            namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
-            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7364,39 +6770,16 @@ class LayersType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayersType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('LayersType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='LayersType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'LayersType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayersType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayersType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LayersType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayersType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for Layer_ in self.Layer:
-            namespaceprefix_ = self.Layer_nsprefix_ + ':' if (UseCapturedNS_ and self.Layer_nsprefix_) else ''
-            Layer_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layer', pretty_print=pretty_print)
+            Layer_.to_etree(element, name_='Layer', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7500,47 +6883,22 @@ class LayerType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayerType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('LayerType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='LayerType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'LayerType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayerType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayerType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LayerType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.zIndex is not None and 'zIndex' not in already_processed:
-            already_processed.add('zIndex')
-            outfile.write(' zIndex="%s"' % self.gds_format_integer(self.zIndex, input_name='zIndex'))
-        if self.caption is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayerType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.zIndex is not None:
+            element.set('zIndex', self.gds_format_integer(self.zIndex))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
         for RegionRef_ in self.RegionRef:
-            namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
-            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7659,37 +7017,18 @@ class BaselineType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('BaselineType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='BaselineType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'BaselineType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BaselineType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BaselineType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='BaselineType'):
-        if self.points is not None and 'points' not in already_processed:
-            already_processed.add('points')
-            outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
-        if self.conf is not None and 'conf' not in already_processed:
-            already_processed.add('conf')
-            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7781,39 +7120,16 @@ class RelationsType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationsType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RelationsType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='RelationsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'RelationsType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationsType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationsType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RelationsType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationsType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for Relation_ in self.Relation:
-            namespaceprefix_ = self.Relation_nsprefix_ + ':' if (UseCapturedNS_ and self.Relation_nsprefix_) else ''
-            Relation_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relation', pretty_print=pretty_print)
+            Relation_.to_etree(element, name_='Relation', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7955,56 +7271,30 @@ class RelationType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RelationType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='RelationType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'RelationType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RelationType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
         if self.SourceRegionRef is not None:
-            namespaceprefix_ = self.SourceRegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.SourceRegionRef_nsprefix_) else ''
-            self.SourceRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SourceRegionRef', pretty_print=pretty_print)
+            SourceRegionRef_ = self.SourceRegionRef
+            SourceRegionRef_.to_etree(element, name_='SourceRegionRef', mapping_=mapping_, nsmap_=nsmap_)
         if self.TargetRegionRef is not None:
-            namespaceprefix_ = self.TargetRegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.TargetRegionRef_nsprefix_) else ''
-            self.TargetRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TargetRegionRef', pretty_print=pretty_print)
+            TargetRegionRef_ = self.TargetRegionRef
+            TargetRegionRef_.to_etree(element, name_='TargetRegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -8283,91 +7573,54 @@ class TextStyleType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextStyleType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='TextStyleType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'TextStyleType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextStyleType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextStyleType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextStyleType'):
-        if self.fontFamily is not None and 'fontFamily' not in already_processed:
-            already_processed.add('fontFamily')
-            outfile.write(' fontFamily=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.fontFamily), input_name='fontFamily')), ))
-        if self.serif is not None and 'serif' not in already_processed:
-            already_processed.add('serif')
-            outfile.write(' serif="%s"' % self.gds_format_boolean(self.serif, input_name='serif'))
-        if self.monospace is not None and 'monospace' not in already_processed:
-            already_processed.add('monospace')
-            outfile.write(' monospace="%s"' % self.gds_format_boolean(self.monospace, input_name='monospace'))
-        if self.fontSize is not None and 'fontSize' not in already_processed:
-            already_processed.add('fontSize')
-            outfile.write(' fontSize="%s"' % self.gds_format_float(self.fontSize, input_name='fontSize'))
-        if self.xHeight is not None and 'xHeight' not in already_processed:
-            already_processed.add('xHeight')
-            outfile.write(' xHeight="%s"' % self.gds_format_integer(self.xHeight, input_name='xHeight'))
-        if self.kerning is not None and 'kerning' not in already_processed:
-            already_processed.add('kerning')
-            outfile.write(' kerning="%s"' % self.gds_format_integer(self.kerning, input_name='kerning'))
-        if self.textColour is not None and 'textColour' not in already_processed:
-            already_processed.add('textColour')
-            outfile.write(' textColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.textColour), input_name='textColour')), ))
-        if self.textColourRgb is not None and 'textColourRgb' not in already_processed:
-            already_processed.add('textColourRgb')
-            outfile.write(' textColourRgb="%s"' % self.gds_format_integer(self.textColourRgb, input_name='textColourRgb'))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-        if self.bgColourRgb is not None and 'bgColourRgb' not in already_processed:
-            already_processed.add('bgColourRgb')
-            outfile.write(' bgColourRgb="%s"' % self.gds_format_integer(self.bgColourRgb, input_name='bgColourRgb'))
-        if self.reverseVideo is not None and 'reverseVideo' not in already_processed:
-            already_processed.add('reverseVideo')
-            outfile.write(' reverseVideo="%s"' % self.gds_format_boolean(self.reverseVideo, input_name='reverseVideo'))
-        if self.bold is not None and 'bold' not in already_processed:
-            already_processed.add('bold')
-            outfile.write(' bold="%s"' % self.gds_format_boolean(self.bold, input_name='bold'))
-        if self.italic is not None and 'italic' not in already_processed:
-            already_processed.add('italic')
-            outfile.write(' italic="%s"' % self.gds_format_boolean(self.italic, input_name='italic'))
-        if self.underlined is not None and 'underlined' not in already_processed:
-            already_processed.add('underlined')
-            outfile.write(' underlined="%s"' % self.gds_format_boolean(self.underlined, input_name='underlined'))
-        if self.underlineStyle is not None and 'underlineStyle' not in already_processed:
-            already_processed.add('underlineStyle')
-            outfile.write(' underlineStyle=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.underlineStyle), input_name='underlineStyle')), ))
-        if self.subscript is not None and 'subscript' not in already_processed:
-            already_processed.add('subscript')
-            outfile.write(' subscript="%s"' % self.gds_format_boolean(self.subscript, input_name='subscript'))
-        if self.superscript is not None and 'superscript' not in already_processed:
-            already_processed.add('superscript')
-            outfile.write(' superscript="%s"' % self.gds_format_boolean(self.superscript, input_name='superscript'))
-        if self.strikethrough is not None and 'strikethrough' not in already_processed:
-            already_processed.add('strikethrough')
-            outfile.write(' strikethrough="%s"' % self.gds_format_boolean(self.strikethrough, input_name='strikethrough'))
-        if self.smallCaps is not None and 'smallCaps' not in already_processed:
-            already_processed.add('smallCaps')
-            outfile.write(' smallCaps="%s"' % self.gds_format_boolean(self.smallCaps, input_name='smallCaps'))
-        if self.letterSpaced is not None and 'letterSpaced' not in already_processed:
-            already_processed.add('letterSpaced')
-            outfile.write(' letterSpaced="%s"' % self.gds_format_boolean(self.letterSpaced, input_name='letterSpaced'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.fontFamily is not None:
+            element.set('fontFamily', self.gds_format_string(self.fontFamily))
+        if self.serif is not None:
+            element.set('serif', self.gds_format_boolean(self.serif))
+        if self.monospace is not None:
+            element.set('monospace', self.gds_format_boolean(self.monospace))
+        if self.fontSize is not None:
+            element.set('fontSize', self.gds_format_float(self.fontSize))
+        if self.xHeight is not None:
+            element.set('xHeight', self.gds_format_integer(self.xHeight))
+        if self.kerning is not None:
+            element.set('kerning', self.gds_format_integer(self.kerning))
+        if self.textColour is not None:
+            element.set('textColour', self.gds_format_string(self.textColour))
+        if self.textColourRgb is not None:
+            element.set('textColourRgb', self.gds_format_integer(self.textColourRgb))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.bgColourRgb is not None:
+            element.set('bgColourRgb', self.gds_format_integer(self.bgColourRgb))
+        if self.reverseVideo is not None:
+            element.set('reverseVideo', self.gds_format_boolean(self.reverseVideo))
+        if self.bold is not None:
+            element.set('bold', self.gds_format_boolean(self.bold))
+        if self.italic is not None:
+            element.set('italic', self.gds_format_boolean(self.italic))
+        if self.underlined is not None:
+            element.set('underlined', self.gds_format_boolean(self.underlined))
+        if self.underlineStyle is not None:
+            element.set('underlineStyle', self.gds_format_string(self.underlineStyle))
+        if self.subscript is not None:
+            element.set('subscript', self.gds_format_boolean(self.subscript))
+        if self.superscript is not None:
+            element.set('superscript', self.gds_format_boolean(self.superscript))
+        if self.strikethrough is not None:
+            element.set('strikethrough', self.gds_format_boolean(self.strikethrough))
+        if self.smallCaps is not None:
+            element.set('smallCaps', self.gds_format_boolean(self.smallCaps))
+        if self.letterSpaced is not None:
+            element.set('letterSpaced', self.gds_format_boolean(self.letterSpaced))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -8897,112 +8150,65 @@ class RegionType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='RegionType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'RegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-        if self.continuation is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
-        if self.extensiontype_ is not None and 'xsi:type' not in already_processed:
-            already_processed.add('xsi:type')
-            outfile.write(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
-            if ":" not in self.extensiontype_:
-                imported_ns_type_prefix_ = GenerateDSNamespaceTypePrefixes_.get(self.extensiontype_, '')
-                outfile.write(' xsi:type="%s%s"' % (imported_ns_type_prefix_, self.extensiontype_))
-            else:
-                outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
         for AlternativeImage_ in self.AlternativeImage:
-            namespaceprefix_ = self.AlternativeImage_nsprefix_ + ':' if (UseCapturedNS_ and self.AlternativeImage_nsprefix_) else ''
-            AlternativeImage_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AlternativeImage', pretty_print=pretty_print)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
-            namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
-            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
         if self.Roles is not None:
-            namespaceprefix_ = self.Roles_nsprefix_ + ':' if (UseCapturedNS_ and self.Roles_nsprefix_) else ''
-            self.Roles.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Roles', pretty_print=pretty_print)
+            Roles_ = self.Roles
+            Roles_.to_etree(element, name_='Roles', mapping_=mapping_, nsmap_=nsmap_)
         for TextRegion_ in self.TextRegion:
-            namespaceprefix_ = self.TextRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.TextRegion_nsprefix_) else ''
-            TextRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextRegion', pretty_print=pretty_print)
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
         for ImageRegion_ in self.ImageRegion:
-            namespaceprefix_ = self.ImageRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.ImageRegion_nsprefix_) else ''
-            ImageRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ImageRegion', pretty_print=pretty_print)
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
         for LineDrawingRegion_ in self.LineDrawingRegion:
-            namespaceprefix_ = self.LineDrawingRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.LineDrawingRegion_nsprefix_) else ''
-            LineDrawingRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='LineDrawingRegion', pretty_print=pretty_print)
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
         for GraphicRegion_ in self.GraphicRegion:
-            namespaceprefix_ = self.GraphicRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.GraphicRegion_nsprefix_) else ''
-            GraphicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphicRegion', pretty_print=pretty_print)
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
         for TableRegion_ in self.TableRegion:
-            namespaceprefix_ = self.TableRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.TableRegion_nsprefix_) else ''
-            TableRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableRegion', pretty_print=pretty_print)
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
         for ChartRegion_ in self.ChartRegion:
-            namespaceprefix_ = self.ChartRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.ChartRegion_nsprefix_) else ''
-            ChartRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChartRegion', pretty_print=pretty_print)
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
         for SeparatorRegion_ in self.SeparatorRegion:
-            namespaceprefix_ = self.SeparatorRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.SeparatorRegion_nsprefix_) else ''
-            SeparatorRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SeparatorRegion', pretty_print=pretty_print)
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
         for MathsRegion_ in self.MathsRegion:
-            namespaceprefix_ = self.MathsRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.MathsRegion_nsprefix_) else ''
-            MathsRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MathsRegion', pretty_print=pretty_print)
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
         for ChemRegion_ in self.ChemRegion:
-            namespaceprefix_ = self.ChemRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.ChemRegion_nsprefix_) else ''
-            ChemRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='ChemRegion', pretty_print=pretty_print)
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
         for MusicRegion_ in self.MusicRegion:
-            namespaceprefix_ = self.MusicRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.MusicRegion_nsprefix_) else ''
-            MusicRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MusicRegion', pretty_print=pretty_print)
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
         for AdvertRegion_ in self.AdvertRegion:
-            namespaceprefix_ = self.AdvertRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.AdvertRegion_nsprefix_) else ''
-            AdvertRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='AdvertRegion', pretty_print=pretty_print)
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
         for NoiseRegion_ in self.NoiseRegion:
-            namespaceprefix_ = self.NoiseRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.NoiseRegion_nsprefix_) else ''
-            NoiseRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NoiseRegion', pretty_print=pretty_print)
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
         for UnknownRegion_ in self.UnknownRegion:
-            namespaceprefix_ = self.UnknownRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.UnknownRegion_nsprefix_) else ''
-            UnknownRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnknownRegion', pretty_print=pretty_print)
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
         for CustomRegion_ in self.CustomRegion:
-            namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
-            CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9265,40 +8471,20 @@ class AlternativeImageType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('AlternativeImageType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='AlternativeImageType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'AlternativeImageType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AlternativeImageType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AlternativeImageType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='AlternativeImageType'):
-        if self.filename is not None and 'filename' not in already_processed:
-            already_processed.add('filename')
-            outfile.write(' filename=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.filename), input_name='filename')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-        if self.conf is not None and 'conf' not in already_processed:
-            already_processed.add('conf')
-            outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.filename is not None:
+            element.set('filename', self.gds_format_string(self.filename))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9426,45 +8612,20 @@ class GraphemesType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemesType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemesType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='GraphemesType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GraphemesType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemesType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemesType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemesType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemesType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for Grapheme_ in self.Grapheme:
-            namespaceprefix_ = self.Grapheme_nsprefix_ + ':' if (UseCapturedNS_ and self.Grapheme_nsprefix_) else ''
-            Grapheme_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grapheme', pretty_print=pretty_print)
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
         for NonPrintingChar_ in self.NonPrintingChar:
-            namespaceprefix_ = self.NonPrintingChar_nsprefix_ + ':' if (UseCapturedNS_ and self.NonPrintingChar_nsprefix_) else ''
-            NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
         for GraphemeGroup_ in self.GraphemeGroup:
-            namespaceprefix_ = self.GraphemeGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.GraphemeGroup_nsprefix_) else ''
-            GraphemeGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphemeGroup', pretty_print=pretty_print)
+            GraphemeGroup_.to_etree(element, name_='GraphemeGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9608,64 +8769,30 @@ class GraphemeBaseType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeBaseType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeBaseType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='GraphemeBaseType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GraphemeBaseType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeBaseType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeBaseType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeBaseType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.index is not None and 'index' not in already_processed:
-            already_processed.add('index')
-            outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-        if self.ligature is not None and 'ligature' not in already_processed:
-            already_processed.add('ligature')
-            outfile.write(' ligature="%s"' % self.gds_format_boolean(self.ligature, input_name='ligature'))
-        if self.charType is not None and 'charType' not in already_processed:
-            already_processed.add('charType')
-            outfile.write(' charType=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.charType), input_name='charType')), ))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-        if self.extensiontype_ is not None and 'xsi:type' not in already_processed:
-            already_processed.add('xsi:type')
-            outfile.write(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
-            if ":" not in self.extensiontype_:
-                imported_ns_type_prefix_ = GenerateDSNamespaceTypePrefixes_.get(self.extensiontype_, '')
-                outfile.write(' xsi:type="%s%s"' % (imported_ns_type_prefix_, self.extensiontype_))
-            else:
-                outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeBaseType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.charType is not None:
+            element.set('charType', self.gds_format_string(self.charType))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
         for TextEquiv_ in self.TextEquiv:
-            namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
-            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9776,40 +8903,14 @@ class GraphemeType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GraphemeType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeType'):
-        super(GraphemeType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeType', fromsubclass_=False, pretty_print=True):
-        super(GraphemeType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+    def to_etree(self, parent_element=None, name_='GraphemeType', mapping_=None, nsmap_=None):
+        element = super(GraphemeType, self).to_etree(parent_element, name_, mapping_)
         if self.Coords is not None:
-            namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
-            self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9882,33 +8983,11 @@ class NonPrintingCharType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('NonPrintingCharType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'NonPrintingCharType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NonPrintingCharType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='NonPrintingCharType'):
-        super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
-        super(NonPrintingCharType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NonPrintingCharType', mapping_=None, nsmap_=None):
+        element = super(NonPrintingCharType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10007,43 +9086,15 @@ class GraphemeGroupType(GraphemeBaseType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeGroupType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphemeGroupType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GraphemeGroupType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeGroupType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeGroupType'):
-        super(GraphemeGroupType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeGroupType', fromsubclass_=False, pretty_print=True):
-        super(GraphemeGroupType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+    def to_etree(self, parent_element=None, name_='GraphemeGroupType', mapping_=None, nsmap_=None):
+        element = super(GraphemeGroupType, self).to_etree(parent_element, name_, mapping_)
         for Grapheme_ in self.Grapheme:
-            namespaceprefix_ = self.Grapheme_nsprefix_ + ':' if (UseCapturedNS_ and self.Grapheme_nsprefix_) else ''
-            Grapheme_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grapheme', pretty_print=pretty_print)
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
         for NonPrintingChar_ in self.NonPrintingChar:
-            namespaceprefix_ = self.NonPrintingChar_nsprefix_ + ':' if (UseCapturedNS_ and self.NonPrintingChar_nsprefix_) else ''
-            NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10133,39 +9184,16 @@ class UserDefinedType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserDefinedType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('UserDefinedType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='UserDefinedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'UserDefinedType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserDefinedType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserDefinedType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UserDefinedType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserDefinedType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for UserAttribute_ in self.UserAttribute:
-            namespaceprefix_ = self.UserAttribute_nsprefix_ + ':' if (UseCapturedNS_ and self.UserAttribute_nsprefix_) else ''
-            UserAttribute_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserAttribute', pretty_print=pretty_print)
+            UserAttribute_.to_etree(element, name_='UserAttribute', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10261,43 +9289,22 @@ class UserAttributeType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('UserAttributeType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='UserAttributeType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'UserAttributeType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserAttributeType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserAttributeType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UserAttributeType'):
-        if self.name is not None and 'name' not in already_processed:
-            already_processed.add('name')
-            outfile.write(' name=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.name), input_name='name')), ))
-        if self.description is not None and 'description' not in already_processed:
-            already_processed.add('description')
-            outfile.write(' description=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.description), input_name='description')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.value is not None and 'value' not in already_processed:
-            already_processed.add('value')
-            outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.description is not None:
+            element.set('description', self.gds_format_string(self.description))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10414,46 +9421,24 @@ class TableCellRoleType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('TableCellRoleType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='TableCellRoleType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'TableCellRoleType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableCellRoleType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableCellRoleType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TableCellRoleType'):
-        if self.rowIndex is not None and 'rowIndex' not in already_processed:
-            already_processed.add('rowIndex')
-            outfile.write(' rowIndex="%s"' % self.gds_format_integer(self.rowIndex, input_name='rowIndex'))
-        if self.columnIndex is not None and 'columnIndex' not in already_processed:
-            already_processed.add('columnIndex')
-            outfile.write(' columnIndex="%s"' % self.gds_format_integer(self.columnIndex, input_name='columnIndex'))
-        if self.rowSpan is not None and 'rowSpan' not in already_processed:
-            already_processed.add('rowSpan')
-            outfile.write(' rowSpan="%s"' % self.gds_format_integer(self.rowSpan, input_name='rowSpan'))
-        if self.colSpan is not None and 'colSpan' not in already_processed:
-            already_processed.add('colSpan')
-            outfile.write(' colSpan="%s"' % self.gds_format_integer(self.colSpan, input_name='colSpan'))
-        if self.header is not None and 'header' not in already_processed:
-            already_processed.add('header')
-            outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
-        pass
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.rowIndex is not None:
+            element.set('rowIndex', self.gds_format_integer(self.rowIndex))
+        if self.columnIndex is not None:
+            element.set('columnIndex', self.gds_format_integer(self.columnIndex))
+        if self.rowSpan is not None:
+            element.set('rowSpan', self.gds_format_integer(self.rowSpan))
+        if self.colSpan is not None:
+            element.set('colSpan', self.gds_format_integer(self.colSpan))
+        if self.header is not None:
+            element.set('header', self.gds_format_boolean(self.header))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10547,39 +9532,17 @@ class RolesType(GeneratedsSuper):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RolesType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RolesType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
+    def to_etree(self, parent_element=None, name_='RolesType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'RolesType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RolesType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RolesType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RolesType'):
-        pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RolesType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         if self.TableCellRole is not None:
-            namespaceprefix_ = self.TableCellRole_nsprefix_ + ':' if (UseCapturedNS_ and self.TableCellRole_nsprefix_) else ''
-            self.TableCellRole.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableCellRole', pretty_print=pretty_print)
+            TableCellRole_ = self.TableCellRole
+            TableCellRole_.to_etree(element, name_='TableCellRole', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10659,36 +9622,13 @@ class CustomRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CustomRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('CustomRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'CustomRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CustomRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='CustomRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='CustomRegionType'):
-        super(CustomRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CustomRegionType')
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CustomRegionType', fromsubclass_=False, pretty_print=True):
-        super(CustomRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='CustomRegionType', mapping_=None, nsmap_=None):
+        element = super(CustomRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10758,33 +9698,11 @@ class UnknownRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnknownRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnknownRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'UnknownRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnknownRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnknownRegionType'):
-        super(UnknownRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
-        super(UnknownRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnknownRegionType', mapping_=None, nsmap_=None):
+        element = super(UnknownRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10852,33 +9770,11 @@ class NoiseRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NoiseRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('NoiseRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'NoiseRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NoiseRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='NoiseRegionType'):
-        super(NoiseRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
-        super(NoiseRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NoiseRegionType', mapping_=None, nsmap_=None):
+        element = super(NoiseRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10977,39 +9873,15 @@ class AdvertRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AdvertRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('AdvertRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'AdvertRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AdvertRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='AdvertRegionType'):
-        super(AdvertRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
-        super(AdvertRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='AdvertRegionType', mapping_=None, nsmap_=None):
+        element = super(AdvertRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11129,39 +10001,15 @@ class MusicRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MusicRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('MusicRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'MusicRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MusicRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MusicRegionType'):
-        super(MusicRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
-        super(MusicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MusicRegionType', mapping_=None, nsmap_=None):
+        element = super(MusicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11261,36 +10109,13 @@ class MapRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MapRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('MapRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'MapRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MapRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MapRegionType'):
-        super(MapRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
-        super(MapRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MapRegionType', mapping_=None, nsmap_=None):
+        element = super(MapRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11406,39 +10231,15 @@ class ChemRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChemRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('ChemRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'ChemRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChemRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ChemRegionType'):
-        super(ChemRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
-        super(ChemRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChemRegionType', mapping_=None, nsmap_=None):
+        element = super(ChemRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11559,39 +10360,15 @@ class MathsRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MathsRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('MathsRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'MathsRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MathsRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MathsRegionType'):
-        super(MathsRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
-        super(MathsRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MathsRegionType', mapping_=None, nsmap_=None):
+        element = super(MathsRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11713,39 +10490,15 @@ class SeparatorRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='SeparatorRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('SeparatorRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'SeparatorRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='SeparatorRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='SeparatorRegionType'):
-        super(SeparatorRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.colour is not None and 'colour' not in already_processed:
-            already_processed.add('colour')
-            outfile.write(' colour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.colour), input_name='colour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
-        super(SeparatorRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='SeparatorRegionType', mapping_=None, nsmap_=None):
+        element = super(SeparatorRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colour is not None:
+            element.set('colour', self.gds_format_string(self.colour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11905,48 +10658,21 @@ class ChartRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChartRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('ChartRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'ChartRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChartRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ChartRegionType'):
-        super(ChartRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.numColours is not None and 'numColours' not in already_processed:
-            already_processed.add('numColours')
-            outfile.write(' numColours="%s"' % self.gds_format_integer(self.numColours, input_name='numColours'))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-        if self.embText is not None and 'embText' not in already_processed:
-            already_processed.add('embText')
-            outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
-        super(ChartRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChartRegionType', mapping_=None, nsmap_=None):
+        element = super(ChartRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12135,61 +10861,28 @@ class TableRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TableRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('TableRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'TableRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TableRegionType'):
-        super(TableRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.rows is not None and 'rows' not in already_processed:
-            already_processed.add('rows')
-            outfile.write(' rows="%s"' % self.gds_format_integer(self.rows, input_name='rows'))
-        if self.columns is not None and 'columns' not in already_processed:
-            already_processed.add('columns')
-            outfile.write(' columns="%s"' % self.gds_format_integer(self.columns, input_name='columns'))
-        if self.lineColour is not None and 'lineColour' not in already_processed:
-            already_processed.add('lineColour')
-            outfile.write(' lineColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.lineColour), input_name='lineColour')), ))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-        if self.lineSeparators is not None and 'lineSeparators' not in already_processed:
-            already_processed.add('lineSeparators')
-            outfile.write(' lineSeparators="%s"' % self.gds_format_boolean(self.lineSeparators, input_name='lineSeparators'))
-        if self.embText is not None and 'embText' not in already_processed:
-            already_processed.add('embText')
-            outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TableRegionType', fromsubclass_=False, pretty_print=True):
-        super(TableRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+    def to_etree(self, parent_element=None, name_='TableRegionType', mapping_=None, nsmap_=None):
+        element = super(TableRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.rows is not None:
+            element.set('rows', self.gds_format_integer(self.rows))
+        if self.columns is not None:
+            element.set('columns', self.gds_format_integer(self.columns))
+        if self.lineColour is not None:
+            element.set('lineColour', self.gds_format_string(self.lineColour))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.lineSeparators is not None:
+            element.set('lineSeparators', self.gds_format_boolean(self.lineSeparators))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
         if self.Grid is not None:
-            namespaceprefix_ = self.Grid_nsprefix_ + ':' if (UseCapturedNS_ and self.Grid_nsprefix_) else ''
-            self.Grid.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grid', pretty_print=pretty_print)
+            Grid_ = self.Grid
+            Grid_.to_etree(element, name_='Grid', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12363,45 +11056,19 @@ class GraphicRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphicRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphicRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'GraphicRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphicRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphicRegionType'):
-        super(GraphicRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.numColours is not None and 'numColours' not in already_processed:
-            already_processed.add('numColours')
-            outfile.write(' numColours="%s"' % self.gds_format_integer(self.numColours, input_name='numColours'))
-        if self.embText is not None and 'embText' not in already_processed:
-            already_processed.add('embText')
-            outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
-        super(GraphicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphicRegionType', mapping_=None, nsmap_=None):
+        element = super(GraphicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12552,45 +11219,19 @@ class LineDrawingRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LineDrawingRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('LineDrawingRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'LineDrawingRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LineDrawingRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LineDrawingRegionType'):
-        super(LineDrawingRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.penColour is not None and 'penColour' not in already_processed:
-            already_processed.add('penColour')
-            outfile.write(' penColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.penColour), input_name='penColour')), ))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-        if self.embText is not None and 'embText' not in already_processed:
-            already_processed.add('embText')
-            outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
-        super(LineDrawingRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LineDrawingRegionType', mapping_=None, nsmap_=None):
+        element = super(LineDrawingRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.penColour is not None:
+            element.set('penColour', self.gds_format_string(self.penColour))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12755,45 +11396,19 @@ class ImageRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ImageRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('ImageRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'ImageRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ImageRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ImageRegionType'):
-        super(ImageRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.colourDepth is not None and 'colourDepth' not in already_processed:
-            already_processed.add('colourDepth')
-            outfile.write(' colourDepth=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.colourDepth), input_name='colourDepth')), ))
-        if self.bgColour is not None and 'bgColour' not in already_processed:
-            already_processed.add('bgColour')
-            outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-        if self.embText is not None and 'embText' not in already_processed:
-            already_processed.add('embText')
-            outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
-        super(ImageRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ImageRegionType', mapping_=None, nsmap_=None):
+        element = super(ImageRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colourDepth is not None:
+            element.set('colourDepth', self.gds_format_string(self.colourDepth))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -13148,85 +11763,44 @@ class TextRegionType(RegionType):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextRegionType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextRegionType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'TextRegionType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
-        if self.hasContent_():
-            outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextRegionType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextRegionType'):
-        super(TextRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
-        if self.orientation is not None and 'orientation' not in already_processed:
-            already_processed.add('orientation')
-            outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.leading is not None and 'leading' not in already_processed:
-            already_processed.add('leading')
-            outfile.write(' leading="%s"' % self.gds_format_integer(self.leading, input_name='leading'))
-        if self.readingDirection is not None and 'readingDirection' not in already_processed:
-            already_processed.add('readingDirection')
-            outfile.write(' readingDirection=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.readingDirection), input_name='readingDirection')), ))
-        if self.textLineOrder is not None and 'textLineOrder' not in already_processed:
-            already_processed.add('textLineOrder')
-            outfile.write(' textLineOrder=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.textLineOrder), input_name='textLineOrder')), ))
-        if self.readingOrientation is not None and 'readingOrientation' not in already_processed:
-            already_processed.add('readingOrientation')
-            outfile.write(' readingOrientation="%s"' % self.gds_format_float(self.readingOrientation, input_name='readingOrientation'))
-        if self.indented is not None and 'indented' not in already_processed:
-            already_processed.add('indented')
-            outfile.write(' indented="%s"' % self.gds_format_boolean(self.indented, input_name='indented'))
-        if self.align is not None and 'align' not in already_processed:
-            already_processed.add('align')
-            outfile.write(' align=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.align), input_name='align')), ))
-        if self.primaryLanguage is not None and 'primaryLanguage' not in already_processed:
-            already_processed.add('primaryLanguage')
-            outfile.write(' primaryLanguage=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.primaryLanguage), input_name='primaryLanguage')), ))
-        if self.secondaryLanguage is not None and 'secondaryLanguage' not in already_processed:
-            already_processed.add('secondaryLanguage')
-            outfile.write(' secondaryLanguage=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.secondaryLanguage), input_name='secondaryLanguage')), ))
-        if self.primaryScript is not None and 'primaryScript' not in already_processed:
-            already_processed.add('primaryScript')
-            outfile.write(' primaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.primaryScript), input_name='primaryScript')), ))
-        if self.secondaryScript is not None and 'secondaryScript' not in already_processed:
-            already_processed.add('secondaryScript')
-            outfile.write(' secondaryScript=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.secondaryScript), input_name='secondaryScript')), ))
-        if self.production is not None and 'production' not in already_processed:
-            already_processed.add('production')
-            outfile.write(' production=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.production), input_name='production')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextRegionType', fromsubclass_=False, pretty_print=True):
-        super(TextRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
+    def to_etree(self, parent_element=None, name_='TextRegionType', mapping_=None, nsmap_=None):
+        element = super(TextRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.leading is not None:
+            element.set('leading', self.gds_format_integer(self.leading))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.gds_format_string(self.textLineOrder))
+        if self.readingOrientation is not None:
+            element.set('readingOrientation', self.gds_format_float(self.readingOrientation))
+        if self.indented is not None:
+            element.set('indented', self.gds_format_boolean(self.indented))
+        if self.align is not None:
+            element.set('align', self.gds_format_string(self.align))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.gds_format_string(self.secondaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
         for TextLine_ in self.TextLine:
-            namespaceprefix_ = self.TextLine_nsprefix_ + ':' if (UseCapturedNS_ and self.TextLine_nsprefix_) else ''
-            TextLine_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextLine', pretty_print=pretty_print)
+            TextLine_.to_etree(element, name_='TextLine', mapping_=mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
-            TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
-            namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
-            self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
