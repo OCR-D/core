@@ -1,3 +1,10 @@
+"""
+OCR-D CLI: OCRD-ZIP (BagIt) management
+
+.. click:: ocrd.cli.zip:zip_cli
+    :prog: ocrd zip
+    :nested: full
+"""
 import sys
 
 import click

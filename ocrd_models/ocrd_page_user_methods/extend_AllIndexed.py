@@ -1,8 +1,8 @@
 # pylint: disable=line-too-long,invalid-name,missing-module-docstring
 def extend_AllIndexed(self, elements, validate_continuity=False):
     """
-    Add all elements in list ``elements``, respecting ``@index`` order.
-    With ``validate_continuity``, check that all new elements come after all old elements
+    Add all elements in list `elements`, respecting ``@index`` order.
+    With `validate_continuity`, check that all new elements come after all old elements
     (or raise an exception). 
     Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
     """

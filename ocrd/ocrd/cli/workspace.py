@@ -1,3 +1,10 @@
+"""
+OCR-D CLI: workspace management
+
+.. click:: ocrd.cli.workspace:workspace_cli
+    :prog: ocrd workspace
+    :nested: full
+"""
 import os
 from os import getcwd
 from os.path import relpath, exists, join, isabs, dirname, basename, abspath

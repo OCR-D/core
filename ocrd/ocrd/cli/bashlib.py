@@ -1,3 +1,11 @@
+"""
+OCR-D CLI: bash library
+
+.. click:: ocrd.cli.bashlib:bashlib_cli
+    :prog: ocrd bashlib
+    :nested: full
+
+"""
 from __future__ import print_function
 import sys
 import click
@@ -26,6 +34,8 @@ def bashlib_cli():
 def bashlib_filename():
     """
     Dump the bash library filename for sourcing by shell scripts
+
+    For functions exported by bashlib, see `<../../README.md>`_
     """
     print(BASHLIB_FILENAME)
 

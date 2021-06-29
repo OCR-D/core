@@ -1,5 +1,14 @@
+"""
+OCR-D Command-line interface
+
+.. click:: ocrd.cli:cli
+    :prog: ocrd
+    :nested: short
+"""
 import re
 import click
+
+__all__ = ['cli']
 
 def command_with_replaced_help(*replacements):
 
@@ -28,7 +37,7 @@ from .log import log_cli
 @ocrd_loglevel
 def cli(**kwargs): # pylint: disable=unused-argument
     """
-    CLI to OCR-D
+    Entry-point of multi-purpose CLI for OCR-D
     """
 
 cli.add_command(ocrd_tool_cli)

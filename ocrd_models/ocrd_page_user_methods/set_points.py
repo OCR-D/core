@@ -1,9 +1,9 @@
 def set_points(self, points):
     """
     Set coordinate polygon by given string.
-    Moreover, invalidate the parent's AlternativeImages
+    Moreover, invalidate the parent's ``pc:AlternativeImage``s
     (because they will have been cropped with a bbox
-     of the previous polygon).
+    of the previous polygon).
     """
     if hasattr(self, 'parent_object_'):
         parent = self.parent_object_

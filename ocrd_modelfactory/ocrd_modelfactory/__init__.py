@@ -25,11 +25,11 @@ __all__ = [
 
 def exif_from_filename(image_filename):
     """
-    Create `OcrdExif </../../ocrd_models/ocrd_models.ocrd_exif.html>`_
+    Create :py:class:`~ocrd_models.ocrd_exif.OcrdExif`
     by opening an image file with PIL and reading its metadata.
 
     Arguments:
-        * image_filename (string):
+        image_filename (str): Local image path name (relative to workspace).
     """
     if image_filename is None:
         raise Exception("Must pass 'image_filename' to 'exif_from_filename'")
@@ -39,14 +39,16 @@ def exif_from_filename(image_filename):
 
 def page_from_image(input_file, with_tree=False):
     """
-    Create `OcrdPage </../../ocrd_models/ocrd_models.ocrd_page.html>`_
-    from an `OcrdFile </../../ocrd_models/ocrd_models.ocrd_file.html>`_
-    representing an image (i.e. should have ``mimetype`` starting with ``image/``).
+    Create :py:class:`~ocrd_models.ocrd_page.OcrdPage`
+    from an :py:class:`~ocrd_models.ocrd_file.OcrdFile`
+    representing an image (i.e. should have ``@mimetype`` starting with ``image/``).
 
     Arguments:
-        * input_file (OcrdFile): file to open and produce a PAGE DOM for
+        input_file (:py:class:`~ocrd_models.ocrd_file.OcrdFile`): file to open \
+            and produce a PAGE DOM for
     Keyword arguments:
-        * with_tree (boolean): whether to return XML node tree, element-node mapping and reverse mapping, too
+        with_tree (boolean): whether to return XML node tree, element-node mapping \
+            and reverse mapping, too (cf. :py:func:`ocrd_models.ocrd_page.parseEtree`)
     """
     if not input_file.local_filename:
         raise ValueError("input_file must have 'local_filename' property")
@@ -80,9 +82,11 @@ def page_from_file(input_file, with_tree=False):
     Create a new PAGE-XML from a METS file representing a PAGE-XML or an image.
 
     Arguments:
-        * input_file (OcrdFile): file to open and produce a PAGE DOM for
+        input_file (:py:class:`~ocrd_models.ocrd_file.OcrdFile`): file to open \
+            and produce a PAGE DOM for
     Keyword arguments:
-        * with_tree (boolean): whether to return XML node tree, element-node mapping and reverse mapping, too
+        with_tree (boolean): whether to return XML node tree, element-node mapping \
+            and reverse mapping, too (cf. :py:func:`ocrd_models.ocrd_page.parseEtree`)
     """
     if not input_file.local_filename:
         raise ValueError("input_file must have 'local_filename' property")

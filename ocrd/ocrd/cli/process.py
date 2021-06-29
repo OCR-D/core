@@ -1,5 +1,10 @@
 """
-CLI for task_sequence
+OCR-D CLI: running task sequences (workflow processing)
+
+.. click:: ocrd.cli.process:process_cli
+    :prog: ocrd process
+    :nested: full
+
 """
 import click
 

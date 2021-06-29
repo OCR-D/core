@@ -11,7 +11,6 @@ OCR-D/core
    ocrd_validators <api/ocrd_validators/modules>
    ocrd_modelfactory <api/ocrd_modelfactory/modules>
 
-   api/ocrd/ocrd
 
 Indices and tables
 ==================

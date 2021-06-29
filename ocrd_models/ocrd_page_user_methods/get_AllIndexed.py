@@ -4,8 +4,14 @@ def get_AllIndexed(self, classes=None, index_sort=True):
     Get all indexed children sorted by their ``@index``.
 
     Arguments:
-        classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        classes (list): Type of children (sans ``Indexed``) to return. \
+            Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
         index_sort (boolean): Whether to sort by ``@index``
+
+    Returns:
+        a list of :py:class:`RegionRefIndexedType`, \
+            :py:class:`OrderedGroupIndexedType`, and \
+            :py:class:`UnorderedGroupIndexedType`
     """
     if not classes:
         classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']

@@ -38,11 +38,13 @@ from ocrd_utils import (
 
 from .workspace_backup import WorkspaceBackupManager
 
+__all__ = ['Workspace']
+
 class Workspace():
     """
     A workspace is a temporary directory set up for a processor. It's the
     interface to the METS/PAGE XML and delegates download and upload to the
-    :py:class:`ocrd.Resolver`.
+    :py:class:`ocrd.resolver.Resolver`.
 
     Args:
 
@@ -84,10 +86,10 @@ class Workspace():
         """
         Merge ``other_workspace`` into this one
 
-        See :py:func:OcrdMets.merge: for the ``kwargs``
+        See :py:meth:`ocrd_models.ocrd_mets.OcrdMets.merge` for the `kwargs`
 
         Keyword Args:
-            copy_files (boolean): Whether to copy files from ``other_workspace`` to this one
+            copy_files (boolean): Whether to copy files from `other_workspace` to this one
         """
         def after_add_cb(f):
             if not copy_files:
@@ -463,7 +465,7 @@ class Workspace():
             fill (string): a `PIL` color specifier
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of `@comments` classes
-            feature_filter (string): a comma-separated list of `@comments` classes            
+            feature_filter (string): a comma-separated list of `@comments` classes
 
         Extract a `PIL.Image` from ``page``, either from its `AlternativeImage`
         (if it exists), or from its `@imageFilename` (otherwise). Also crop it,
@@ -504,6 +506,7 @@ class Workspace():
             a tuple of
              * the extracted `PIL.Image`,
              * a `dict` with information about the extracted image:
+
                - `"transform"`: a `Numpy` array with an affine transform which
                    converts from absolute coordinates to those relative to the image,
                    i.e. after cropping to the page's border / bounding box (if any)
@@ -521,10 +524,10 @@ class Workspace():
 
          * get a raw (colored) but already deskewed and cropped image::
 
-           page_image, page_coords, page_image_info = workspace.image_from_page(
-                 page, page_id,
-                 feature_selector='deskewed,cropped',
-                 feature_filter='binarized,grayscale_normalized')
+                page_image, page_coords, page_image_info = workspace.image_from_page(
+                    page, page_id,
+                    feature_selector='deskewed,cropped',
+                    feature_filter='binarized,grayscale_normalized')
         """
         log = getLogger('ocrd.workspace.image_from_page')
         page_image_info = self.resolve_image_exif(page.imageFilename)
@@ -670,62 +673,63 @@ class Workspace():
         """Extract an image for a PAGE-XML hierarchy segment from its parent's image.
 
         Args:
-            segment (object): a PAGE segment object
-            (i.e. :py:class:`ocrd_models.ocrd_page.TextRegionType`
-             or :py:class:`ocrd_models.ocrd_page.TextLineType`
-             or :py:class:`ocrd_models.ocrd_page.WordType`
-             or :py:class:`ocrd_models.ocrd_page.GlyphType`)
-           parent_image (PIL.Image): image of the segment's parent
-           parent_coords (dict): a `dict` with information about ``parent_image``:
+            segment (object): a PAGE segment object \
+                (i.e. :py:class:`~ocrd_models.ocrd_page.TextRegionType` \
+                or :py:class:`~ocrd_models.ocrd_page.TextLineType` \
+                or :py:class:`~ocrd_models.ocrd_page.WordType` \
+                or :py:class:`~ocrd_models.ocrd_page.GlyphType`)
+            parent_image (`PIL.Image`): image of the `segment`'s parent
+            parent_coords (dict): a `dict` with information about `parent_image`:
+
                - `"transform"`: a `Numpy` array with an affine transform which
                  converts from absolute coordinates to those relative to the image,
                  i.e. after applying all operations (starting with the original image)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
-               - `"features"`: the `AlternativeImage` `@comments` for the image, i.e.
+               - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all operations that lead up to this result, and
         Keyword Args:
             fill (string): a `PIL` color specifier
             transparency (boolean): whether to add an alpha channel for masking
-            feature_selector (string): a comma-separated list of `@comments` classes
-            feature_filter (string): a comma-separated list of `@comments` classes            
+            feature_selector (string): a comma-separated list of ``@comments`` classes
+            feature_filter (string): a comma-separated list of ``@comments`` classes            
         
-        Extract a `PIL.Image` from ``segment``, either from `AlternativeImage`
-        (if it exists), or producing a new image via cropping from ``parent_image``
-        (otherwise). Pass in ``parent_image`` and ``parent_coords`` from the result
+        Extract a `PIL.Image` from `segment`, either from ``AlternativeImage``
+        (if it exists), or producing a new image via cropping from `parent_image`
+        (otherwise). Pass in `parent_image` and `parent_coords` from the result
         of the next higher-level of this function or from :py:meth:`image_from_page`.
 
-        If ``feature_selector`` and/or ``feature_filter`` is given, then
-        select/filter among the cropped ``parent_image`` and the available
-        `AlternativeImage`s the richest one which contains all of the selected,
-        but none of the filtered features (i.e. `@comments` classes), or
+        If `feature_selector` and/or `feature_filter` is given, then
+        select/filter among the cropped `parent_image` and the available
+        ``AlternativeImage``s the richest one which contains all of the selected,
+        but none of the filtered features (i.e. ``@comments`` classes), or
         raise an error.
 
         (Required and produced features need not be in the same order, so
-        ``feature_selector`` is merely a mask specifying Boolean AND, and
-        ``feature_filter`` is merely a mask specifying Boolean OR.)
+        `feature_selector` is merely a mask specifying Boolean AND, and
+        `feature_filter` is merely a mask specifying Boolean OR.)
 
         Cropping uses a polygon mask (not just the bounding box rectangle).
-        Areas outside the polygon will be filled according to ``fill``:
+        Areas outside the polygon will be filled according to `fill`:
 
         - if `"background"` (the default),
           then fill with the median color of the image;
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
 
-        Moreover, if ``transparency`` is true, and unless the image already
+        Moreover, if `transparency` is true, and unless the image already
         has an alpha channel, then add an alpha channel which is fully opaque
         before cropping and rotating. (Thus, unexposed/masked areas will be
         transparent afterwards for consumers that can interpret alpha channels).
 
-        When cropping, compensate any `@orientation` angle annotated for the
+        When cropping, compensate any ``@orientation`` angle annotated for the
         parent (from parent-level deskewing) by rotating the segment coordinates
         in an inverse transformation (i.e. translation to center, then passive
         rotation, and translation back).
 
-        Regardless, if any `@orientation` angle is annotated for the segment
+        Regardless, if any ``@orientation`` angle is annotated for the segment
         (from segment-level deskewing), and the chosen image does not have
         the feature `"deskewed"` yet, and unless `"deskewed"` is being filtered,
         then rotate it - compensating for any previous `"angle"`. (However,
-        if `@orientation` is above the [-45°,45°] interval, then apply as much
+        if ``@orientation`` is above the [-45°,45°] interval, then apply as much
         transposition as possible first, unless `"rotated-90"` / `"rotated-180"` /
         `"rotated-270"` is being filtered.)
 
@@ -733,26 +737,27 @@ class Workspace():
             a tuple of
              * the extracted `PIL.Image`,
              * a `dict` with information about the extracted image:
+
                - `"transform"`: a `Numpy` array with an affine transform which
                    converts from absolute coordinates to those relative to the image,
                    i.e. after applying all parent operations, and then cropping to
                    the segment's bounding box, and deskewing with the segment's
                    orientation angle (if any)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
-               - `"features"`: the `AlternativeImage` `@comments` for the image, i.e.
+               - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all applied operations that lead up to this result.
 
-        (These can be used to create a new `AlternativeImage`, or passed down
+        (These can be used to create a new ``AlternativeImage``, or passed down
          for :py:meth:`image_from_segment` calls on lower hierarchy levels.)
 
         Examples:
 
          * get a raw (colored) but already deskewed and cropped image::
 
-           image, xywh = workspace.image_from_segment(region,
-                 page_image, page_xywh,
-                 feature_selector='deskewed,cropped',
-                 feature_filter='binarized,grayscale_normalized')
+                image, xywh = workspace.image_from_segment(region,
+                    page_image, page_xywh,
+                    feature_selector='deskewed,cropped',
+                    feature_filter='binarized,grayscale_normalized')
         """
         log = getLogger('ocrd.workspace.image_from_segment')
         # note: We should mask overlapping neighbouring segments here,

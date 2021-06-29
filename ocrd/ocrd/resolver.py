@@ -18,27 +18,30 @@ from ocrd_models.utils import handle_oai_response
 
 class Resolver():
     """
-    Handle Uploads, Downloads, Repository access and manage temporary directories
+    Handle uploads, downloads, repository access, and manage temporary directories
     """
 
     def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None):
         """
         Download a file to a directory.
 
-        Early Shortcut: If url is a local file and that file is already in the directory, keep it there.
+        Early Shortcut: If `url` is a local file and that file is already in the directory, keep it there.
 
-        If basename is not given but subdir is, assume user knows what she's doing and use last URL segment as the basename.
-        If basename is not given and no subdir is given, use the alnum characters in the URL as the basename.
+        If `basename` is not given but subdir is, assume user knows what she's doing and
+        use last URL segment as the basename.
+
+        If `basename` is not given and no subdir is given, use the alnum characters in the URL as the basename.
 
         Args:
             directory (string): Directory to download files to
             basename (string, None): basename part of the filename on disk.
             url (string): URL to download from
-            if_exists (string, "skip"): What to do if target file already exists. One of ``skip`` (default), ``overwrite`` or ``raise``
-            subdir (string, None): Subdirectory to create within the directory. Think fileGrp.
+            if_exists (string, "skip"): What to do if target file already exists. \
+                One of ``skip`` (default), ``overwrite`` or ``raise``
+            subdir (string, None): Subdirectory to create within the directory. Think ``mets:fileGrp``.
 
         Returns:
-            Local filename, __relative__ to directory
+            Local filename string, __relative__ to directory
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
         log.debug("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
@@ -107,17 +110,18 @@ class Resolver():
         """
         Create a workspace from a METS by URL (i.e. clone it).
 
-        Sets the mets.xml file
+        Sets the ``mets.xml`` file
 
         Arguments:
             mets_url (string): Source mets URL
             dst_dir (string, None): Target directory for the workspace
-            clobber_mets (boolean, False): Whether to overwrite existing mets.xml. By default existing mets.xml will raise an exception.
+            clobber_mets (boolean, False): Whether to overwrite existing mets.xml. \
+                By default existing mets.xml will raise an exception.
             download (boolean, False): Whether to download all the files
             src_baseurl (string, None): Base URL for resolving relative file locations
 
         Returns:
-            Workspace
+            a new :py:class:`~ocrd.workspace.Workspace`
         """
         log = getLogger('ocrd.resolver.workspace_from_url')
 
