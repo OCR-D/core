@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.25.1] - 2021-06-30
+
+Fixed:
+
+  * `ocrd_page`: fallback for `id` if none of the attributes are set, #683
+
 ## [2.25.0] - 2021-06-30
 
 Added:
@@ -1339,6 +1345,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.25.1]: ../../compare/v2.25.1..v2.25.0
 [2.25.0]: ../../compare/v2.25.0..v2.24.0
 [2.24.0]: ../../compare/v2.24.0..v2.23.2
 [2.23.2]: ../../compare/v2.23.2..v2.23.1
