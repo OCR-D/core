@@ -44,6 +44,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.coverage',
     'sphinx.ext.githubpages',
+    'sphinx_click',
     'recommonmark'
 ]
 
@@ -74,6 +75,10 @@ exclude_patterns = [u'build', 'Thumbs.db', '.DS_Store', 'src', 'venv']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# Generate autodoc from both class and init docstrings
+autoclass_content = 'both'
+# Generate autodoc from members ordered bysource instead of alphabetical
+autodoc_member_order = 'bysource'
 
 # -- Options for HTML output -------------------------------------------------
 

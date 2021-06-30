@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Feb  3 11:36:26 2021 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Oct  8 2020, 12:12:24)  [GCC 8.4.0]
+# Generated Wed Jun 30 17:57:54 2021 by generateDS.py version 2.35.20.
+# Python 3.6.9 (default, Jan 26 2021, 15:33:00)  [GCC 8.4.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
 #   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
 #   ('--silence', '')
+#   ('--export', 'write etree')
 #   ('--disable-generatedssuper-lookup', '')
 #   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
 #
@@ -17,7 +18,7 @@
 #   ocrd_validators/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/build/github.com/OCR-D/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --silence --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   /home/kba/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --silence --export="write etree" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
@@ -1180,6 +1181,22 @@ class PcGtsType(GeneratedsSuper):
         if self.Page is not None:
             namespaceprefix_ = self.Page_nsprefix_ + ':' if (UseCapturedNS_ and self.Page_nsprefix_) else ''
             self.Page.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Page', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PcGtsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.pcGtsId is not None:
+            element.set('pcGtsId', self.gds_format_string(self.pcGtsId))
+        if self.Metadata is not None:
+            Metadata_ = self.Metadata
+            Metadata_.to_etree(element, name_='Metadata', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Page is not None:
+            Page_ = self.Page
+            Page_.to_etree(element, name_='Page', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1208,25 +1225,25 @@ class PcGtsType(GeneratedsSuper):
             self.Page = obj_
             obj_.original_tagname_ = 'Page'
     def __hash__(self):
+        return hash(self.id)
+    @property
+    def id(self):
         if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+            return self.pcGtsId
+        return self.imageFilename
     def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
-        Get all the pc:AlternativeImage/@filename paths referenced in the PAGE-XML document.
+        Get all the ``pc:AlternativeImage/@filename`` paths referenced in the PAGE-XML document.
     
+        Arguments:
+            page (boolean): Get images on ``pc:Page`` level
+            region (boolean): Get images on ``pc:*Region`` level
+            line (boolean): Get images on ``pc:TextLine`` level
+            word (boolean): Get images on ``pc:Word`` level
+            glyph (boolean): Get images on ``pc:Glyph`` level
     
-        page (boolean): Get pc:Page level images
-        region (boolean): Get images on pc:*Region level
-        line (boolean) Get images on pc:TextLine level
-        word (boolean) Get images on pc:Word level
-        glyph (boolean) Get images on pc:Glyph level
+        Returns:
+            a list of image filename strings
         """
         from .constants import NAMESPACES, PAGE_REGION_TYPES # pylint: disable=relative-beyond-top-level,import-outside-toplevel
         from io import StringIO  # pylint: disable=import-outside-toplevel
@@ -1444,6 +1461,33 @@ class MetadataType(GeneratedsSuper):
         for MetadataItem_ in self.MetadataItem:
             namespaceprefix_ = self.MetadataItem_nsprefix_ + ':' if (UseCapturedNS_ and self.MetadataItem_nsprefix_) else ''
             MetadataItem_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MetadataItem', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MetadataType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.externalRef is not None:
+            element.set('externalRef', self.gds_format_string(self.externalRef))
+        if self.Creator is not None:
+            Creator_ = self.Creator
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Creator').text = self.gds_format_string(Creator_)
+        if self.Created is not None:
+            Created_ = self.Created
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Created').text = self.gds_format_datetime(Created_)
+        if self.LastChange is not None:
+            LastChange_ = self.LastChange
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}LastChange').text = self.gds_format_datetime(LastChange_)
+        if self.Comments is not None:
+            Comments_ = self.Comments
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Comments').text = self.gds_format_string(Comments_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for MetadataItem_ in self.MetadataItem:
+            MetadataItem_.to_etree(element, name_='MetadataItem', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1494,15 +1538,7 @@ class MetadataType(GeneratedsSuper):
             self.MetadataItem.append(obj_)
             obj_.original_tagname_ = 'MetadataItem'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class MetadataType
 
 
@@ -1634,6 +1670,24 @@ class MetadataItemType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MetadataItemType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.date is not None:
+            element.set('date', self.gds_format_datetime(self.date))
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1672,15 +1726,7 @@ class MetadataItemType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class MetadataItemType
 
 
@@ -1810,6 +1856,24 @@ class LabelsType(GeneratedsSuper):
         for Label_ in self.Label:
             namespaceprefix_ = self.Label_nsprefix_ + ':' if (UseCapturedNS_ and self.Label_nsprefix_) else ''
             Label_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Label', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LabelsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.externalModel is not None:
+            element.set('externalModel', self.gds_format_string(self.externalModel))
+        if self.externalId is not None:
+            element.set('externalId', self.gds_format_string(self.externalId))
+        if self.prefix is not None:
+            element.set('prefix', self.gds_format_string(self.prefix))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for Label_ in self.Label:
+            Label_.to_etree(element, name_='Label', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1845,15 +1909,7 @@ class LabelsType(GeneratedsSuper):
             self.Label.append(obj_)
             obj_.original_tagname_ = 'Label'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class LabelsType
 
 
@@ -1953,6 +2009,20 @@ class LabelType(GeneratedsSuper):
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='LabelType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -1980,15 +2050,7 @@ class LabelType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class LabelType
 
 
@@ -2744,6 +2806,101 @@ class PageType(GeneratedsSuper):
         for CustomRegion_ in self.CustomRegion:
             namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PageType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.imageFilename is not None:
+            element.set('imageFilename', self.gds_format_string(self.imageFilename))
+        if self.imageWidth is not None:
+            element.set('imageWidth', self.gds_format_integer(self.imageWidth))
+        if self.imageHeight is not None:
+            element.set('imageHeight', self.gds_format_integer(self.imageHeight))
+        if self.imageXResolution is not None:
+            element.set('imageXResolution', self.gds_format_float(self.imageXResolution))
+        if self.imageYResolution is not None:
+            element.set('imageYResolution', self.gds_format_float(self.imageYResolution))
+        if self.imageResolutionUnit is not None:
+            element.set('imageResolutionUnit', self.gds_format_string(self.imageResolutionUnit))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.gds_format_string(self.secondaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.gds_format_string(self.textLineOrder))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Border is not None:
+            Border_ = self.Border
+            Border_.to_etree(element, name_='Border', mapping_=mapping_, nsmap_=nsmap_)
+        if self.PrintSpace is not None:
+            PrintSpace_ = self.PrintSpace
+            PrintSpace_.to_etree(element, name_='PrintSpace', mapping_=mapping_, nsmap_=nsmap_)
+        if self.ReadingOrder is not None:
+            ReadingOrder_ = self.ReadingOrder
+            ReadingOrder_.to_etree(element, name_='ReadingOrder', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Layers is not None:
+            Layers_ = self.Layers
+            Layers_.to_etree(element, name_='Layers', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Relations is not None:
+            Relations_ = self.Relations
+            Relations_.to_etree(element, name_='Relations', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for TextRegion_ in self.TextRegion:
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ImageRegion_ in self.ImageRegion:
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for LineDrawingRegion_ in self.LineDrawingRegion:
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for GraphicRegion_ in self.GraphicRegion:
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for TableRegion_ in self.TableRegion:
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChartRegion_ in self.ChartRegion:
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MapRegion_ in self.MapRegion:
+            MapRegion_.to_etree(element, name_='MapRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for SeparatorRegion_ in self.SeparatorRegion:
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MathsRegion_ in self.MathsRegion:
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChemRegion_ in self.ChemRegion:
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MusicRegion_ in self.MusicRegion:
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for AdvertRegion_ in self.AdvertRegion:
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for NoiseRegion_ in self.NoiseRegion:
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for UnknownRegion_ in self.UnknownRegion:
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for CustomRegion_ in self.CustomRegion:
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -2954,15 +3111,12 @@ class PageType(GeneratedsSuper):
             self.CustomRegion.append(obj_)
             obj_.original_tagname_ = 'CustomRegion'
     def __hash__(self):
+        return hash(self.id)
+    @property
+    def id(self):
         if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+            return self.pcGtsId
+        return self.imageFilename
     # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
     def _region_class(self, x): # pylint: disable=unused-argument
         return x.__class__.__name__.replace('RegionType', '')
@@ -3007,16 +3161,29 @@ class PageType(GeneratedsSuper):
     
     def get_AllRegions(self, classes=None, order='document', depth=0):
         """
-        Get all the *Region element or only those provided by ``classes``.
-        Returned in document order unless ``order`` is ``reading-order``
+        Get all the ``*Region`` elements, or only those provided by `classes`.
+        Return in document order, unless `order` is ``reading-order``.
+    
         Arguments:
-            classes (list) Classes of regions that shall be returned, e.g. ``['Text', 'Image']``
-            order ("document"|"reading-order"|"reading-order-only") Whether to
+            classes (list): Classes of regions that shall be returned, \
+                e.g. ``['Text', 'Image']``
+            order ("document"|"reading-order"|"reading-order-only"): Whether to \
                 return regions sorted by document order (``document``, default) or by
                 reading order with regions not in the reading order at the end of the
                 returned list (``reading-order``) or regions not in the reading order
                 omitted (``reading-order-only``)
-            depth (int) Recursive depth to look for regions at, set to `0` for all regions at any depth. Default: 0
+            depth (int): Recursive depth to look for regions at, set to `0` for \
+                all regions at any depth. Default: 0
+    
+        Returns:
+            a list of :py:class:`TextRegionType`, :py:class:`ImageRegionType`, \
+                :py:class:`LineDrawingRegionType`, :py:class:`GraphicRegionType`, \
+                :py:class:`TableRegionType`, :py:class:`ChartRegionType`, \
+                :py:class:`MapRegionType`, :py:class:`SeparatorRegionType`, \
+                :py:class:`MathsRegionType`, :py:class:`ChemRegionType`, \
+                :py:class:`MusicRegionType`, :py:class:`AdvertRegionType`, \
+                :py:class:`NoiseRegionType`, :py:class:`UnknownRegionType`, \
+                and/or :py:class:`CustomRegionType`
     
         For example, to get all text anywhere on the page in reading order, use:
         ::
@@ -3050,14 +3217,17 @@ class PageType(GeneratedsSuper):
         return ret
     def get_AllAlternativeImages(self, page=True, region=True, line=True, word=True, glyph=True):
         """
-        Get all the pc:AlternativeImage in a document
+        Get all the ``pc:AlternativeImage`` in a document
     
+        Arguments:
+            page (boolean): Get images on ``pc:Page`` level
+            region (boolean): Get images on ``pc:*Region`` level
+            line (boolean): Get images on ``pc:TextLine`` level
+            word (boolean): Get images on ``pc:Word`` level
+            glyph (boolean): Get images on ``pc:Glyph`` level
     
-        page (boolean): Get pc:Page level images
-        region (boolean): Get images on pc:*Region level
-        line (boolean) Get images on pc:TextLine level
-        word (boolean) Get images on pc:Word level
-        glyph (boolean) Get images on pc:Glyph level
+        Returns:
+            a list of :py:class:`AlternativeImageType`
         """
         ret = []
         if page:
@@ -3080,7 +3250,7 @@ class PageType(GeneratedsSuper):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -3109,10 +3279,10 @@ class PageType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Border(self, Border):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`BorderType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         self.invalidate_AlternativeImage(feature_selector='cropped')
         self.Border = Border
@@ -3121,12 +3291,15 @@ class PageType(GeneratedsSuper):
         Return all the TextLine in the document
     
         Arguments:
-            region_order ("document"|"reading-order"|"reading-order-only") Whether to
-                return regions sorted by document order (``document``, default) or by
-                reading order with regions not in the reading order at the end of the
-                returned list (``reading-order``) or regions not in the reading order
+            region_order ("document"|"reading-order"|"reading-order-only"): Whether to \
+                return regions sorted by document order (``document``, default) or by \
+                reading order with regions not in the reading order at the end of the \
+                returned list (``reading-order``) or regions not in the reading order \
                 omitted (``reading-order-only``)
-            respect_textline_order (boolean) Whether to respect textlineOrder attribute
+            respect_textline_order (boolean): Whether to respect `@textLineOrder` attribute
+    
+        Returns:
+            a list of :py:class:`TextLineType`
         """
         # TODO handle textLineOrder according to https://github.com/PRImA-Research-Lab/PAGE-XML/issues/26
         ret = []
@@ -3141,10 +3314,10 @@ class PageType(GeneratedsSuper):
     
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -3266,6 +3439,18 @@ class CoordsType(GeneratedsSuper):
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='CoordsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -3292,21 +3477,13 @@ class CoordsType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_points(self, points):
         """
         Set coordinate polygon by given string.
-        Moreover, invalidate the parent's AlternativeImages
+        Moreover, invalidate the parent's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'parent_object_'):
             parent = self.parent_object_
@@ -3659,6 +3836,52 @@ class TextLineType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TextLineType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Baseline is not None:
+            Baseline_ = self.Baseline
+            Baseline_.to_etree(element, name_='Baseline', mapping_=mapping_, nsmap_=nsmap_)
+        for Word_ in self.Word:
+            Word_.to_etree(element, name_='Word', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -3754,20 +3977,12 @@ class TextLineType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -3796,10 +4011,10 @@ class TextLineType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -4127,6 +4342,47 @@ class WordType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='WordType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.language is not None:
+            element.set('language', self.gds_format_string(self.language))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        for Glyph_ in self.Glyph:
+            Glyph_.to_etree(element, name_='Glyph', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4213,20 +4469,12 @@ class WordType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -4255,10 +4503,10 @@ class WordType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -4536,6 +4784,46 @@ class GlyphType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GlyphType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.symbol is not None:
+            element.set('symbol', self.gds_format_boolean(self.symbol))
+        if self.script is not None:
+            element.set('script', self.gds_format_string(self.script))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Graphemes is not None:
+            Graphemes_ = self.Graphemes
+            Graphemes_.to_etree(element, name_='Graphemes', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4625,20 +4913,12 @@ class GlyphType(GeneratedsSuper):
             self.Labels.append(obj_)
             obj_.original_tagname_ = 'Labels'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -4667,10 +4947,10 @@ class GlyphType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -4855,6 +5135,30 @@ class TextEquivType(GeneratedsSuper):
             namespaceprefix_ = self.Unicode_nsprefix_ + ':' if (UseCapturedNS_ and self.Unicode_nsprefix_) else ''
             showIndent(outfile, level, pretty_print)
             outfile.write('<%sUnicode>%s</%sUnicode>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Unicode), input_name='Unicode')), namespaceprefix_ , eol_))
+    def to_etree(self, parent_element=None, name_='TextEquivType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if self.dataType is not None:
+            element.set('dataType', self.gds_format_string(self.dataType))
+        if self.dataTypeDetails is not None:
+            element.set('dataTypeDetails', self.gds_format_string(self.dataTypeDetails))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.PlainText is not None:
+            PlainText_ = self.PlainText
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}PlainText').text = self.gds_format_string(PlainText_)
+        if self.Unicode is not None:
+            Unicode_ = self.Unicode
+            etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Unicode').text = self.gds_format_string(Unicode_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -4904,15 +5208,7 @@ class TextEquivType(GeneratedsSuper):
             self.Unicode = value_
 
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class TextEquivType
 
 
@@ -5000,6 +5296,16 @@ class GridType(GeneratedsSuper):
         for GridPoints_ in self.GridPoints:
             namespaceprefix_ = self.GridPoints_nsprefix_ + ':' if (UseCapturedNS_ and self.GridPoints_nsprefix_) else ''
             GridPoints_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GridPoints', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GridType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for GridPoints_ in self.GridPoints:
+            GridPoints_.to_etree(element, name_='GridPoints', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5020,15 +5326,7 @@ class GridType(GeneratedsSuper):
             self.GridPoints.append(obj_)
             obj_.original_tagname_ = 'GridPoints'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class GridType
 
 
@@ -5124,6 +5422,18 @@ class GridPointsType(GeneratedsSuper):
             outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='GridPointsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5148,15 +5458,7 @@ class GridPointsType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class GridPointsType
 
 
@@ -5241,6 +5543,17 @@ class PrintSpaceType(GeneratedsSuper):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='PrintSpaceType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5261,15 +5574,7 @@ class PrintSpaceType(GeneratedsSuper):
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class PrintSpaceType
 
 
@@ -5387,6 +5692,22 @@ class ReadingOrderType(GeneratedsSuper):
         if self.UnorderedGroup is not None:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             self.UnorderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ReadingOrderType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if self.OrderedGroup is not None:
+            OrderedGroup_ = self.OrderedGroup
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UnorderedGroup is not None:
+            UnorderedGroup_ = self.UnorderedGroup
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5417,15 +5738,7 @@ class ReadingOrderType(GeneratedsSuper):
             self.UnorderedGroup = obj_
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class ReadingOrderType
 
 
@@ -5510,6 +5823,18 @@ class RegionRefIndexedType(GeneratedsSuper):
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='RegionRefIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5533,15 +5858,7 @@ class RegionRefIndexedType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class RegionRefIndexedType
 
 
@@ -5800,6 +6117,41 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='OrderedGroupIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -5877,23 +6229,21 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     # pylint: disable=invalid-name,missing-module-docstring,line-too-long
     def get_AllIndexed(self, classes=None, index_sort=True):
         """
         Get all indexed children sorted by their ``@index``.
     
         Arguments:
-            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            classes (list): Type of children (sans ``Indexed``) to return. \
+                Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
             index_sort (boolean): Whether to sort by ``@index``
+    
+        Returns:
+            a list of :py:class:`RegionRefIndexedType`, \
+                :py:class:`OrderedGroupIndexedType`, and \
+                :py:class:`UnorderedGroupIndexedType`
         """
         if not classes:
             classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
@@ -5913,8 +6263,8 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
-        Add all elements in list ``elements``, respecting ``@index`` order.
-        With ``validate_continuity``, check that all new elements come after all old elements
+        Add all elements in list `elements`, respecting ``@index`` order.
+        With `validate_continuity`, check that all new elements come after all old elements
         (or raise an exception). 
         Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
@@ -6237,6 +6587,41 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         for UnorderedGroup_ in self.UnorderedGroup:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnorderedGroupIndexedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroup_ in self.OrderedGroup:
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6314,18 +6699,10 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def get_UnorderedGroupChildren(self):
         """
-        List all non-metadata children of an UnorderedGroup
+        List all non-metadata children of an :py:class:`UnorderedGroupType`
         """
         # TODO: should not change order
         return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
@@ -6402,6 +6779,16 @@ class RegionRefType(GeneratedsSuper):
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6421,15 +6808,7 @@ class RegionRefType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class RegionRefType
 
 
@@ -6676,6 +7055,39 @@ class OrderedGroupType(GeneratedsSuper):
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -6749,23 +7161,21 @@ class OrderedGroupType(GeneratedsSuper):
             self.UnorderedGroupIndexed.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroupIndexed'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     # pylint: disable=invalid-name,missing-module-docstring,line-too-long
     def get_AllIndexed(self, classes=None, index_sort=True):
         """
         Get all indexed children sorted by their ``@index``.
     
         Arguments:
-            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            classes (list): Type of children (sans ``Indexed``) to return. \
+                Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
             index_sort (boolean): Whether to sort by ``@index``
+    
+        Returns:
+            a list of :py:class:`RegionRefIndexedType`, \
+                :py:class:`OrderedGroupIndexedType`, and \
+                :py:class:`UnorderedGroupIndexedType`
         """
         if not classes:
             classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
@@ -6785,8 +7195,8 @@ class OrderedGroupType(GeneratedsSuper):
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
-        Add all elements in list ``elements``, respecting ``@index`` order.
-        With ``validate_continuity``, check that all new elements come after all old elements
+        Add all elements in list `elements`, respecting ``@index`` order.
+        With `validate_continuity`, check that all new elements come after all old elements
         (or raise an exception). 
         Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
@@ -7097,6 +7507,39 @@ class UnorderedGroupType(GeneratedsSuper):
         for UnorderedGroup_ in self.UnorderedGroup:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        for OrderedGroup_ in self.OrderedGroup:
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7170,18 +7613,10 @@ class UnorderedGroupType(GeneratedsSuper):
             self.UnorderedGroup.append(obj_)
             obj_.original_tagname_ = 'UnorderedGroup'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def get_UnorderedGroupChildren(self):
         """
-        List all non-metadata children of an UnorderedGroup
+        List all non-metadata children of an :py:class:`UnorderedGroupType`
         """
         # TODO: should not change order
         return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
@@ -7265,6 +7700,17 @@ class BorderType(GeneratedsSuper):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='BorderType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7285,21 +7731,13 @@ class BorderType(GeneratedsSuper):
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -7397,6 +7835,16 @@ class LayersType(GeneratedsSuper):
         for Layer_ in self.Layer:
             namespaceprefix_ = self.Layer_nsprefix_ + ':' if (UseCapturedNS_ and self.Layer_nsprefix_) else ''
             Layer_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layer', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LayersType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for Layer_ in self.Layer:
+            Layer_.to_etree(element, name_='Layer', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7417,15 +7865,7 @@ class LayersType(GeneratedsSuper):
             self.Layer.append(obj_)
             obj_.original_tagname_ = 'Layer'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class LayersType
 
 
@@ -7541,6 +7981,22 @@ class LayerType(GeneratedsSuper):
         for RegionRef_ in self.RegionRef:
             namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
             RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LayerType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.zIndex is not None:
+            element.set('zIndex', self.gds_format_integer(self.zIndex))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7572,15 +8028,7 @@ class LayerType(GeneratedsSuper):
             self.RegionRef.append(obj_)
             obj_.original_tagname_ = 'RegionRef'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class LayerType
 
 
@@ -7690,6 +8138,18 @@ class BaselineType(GeneratedsSuper):
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='BaselineType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.points is not None:
+            element.set('points', self.gds_format_string(self.points))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7716,15 +8176,7 @@ class BaselineType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class BaselineType
 
 
@@ -7814,6 +8266,16 @@ class RelationsType(GeneratedsSuper):
         for Relation_ in self.Relation:
             namespaceprefix_ = self.Relation_nsprefix_ + ':' if (UseCapturedNS_ and self.Relation_nsprefix_) else ''
             Relation_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relation', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RelationsType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for Relation_ in self.Relation:
+            Relation_.to_etree(element, name_='Relation', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -7834,15 +8296,7 @@ class RelationsType(GeneratedsSuper):
             self.Relation.append(obj_)
             obj_.original_tagname_ = 'Relation'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class RelationsType
 
 
@@ -8005,6 +8459,30 @@ class RelationType(GeneratedsSuper):
         if self.TargetRegionRef is not None:
             namespaceprefix_ = self.TargetRegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.TargetRegionRef_nsprefix_) else ''
             self.TargetRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TargetRegionRef', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RelationType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if self.SourceRegionRef is not None:
+            SourceRegionRef_ = self.SourceRegionRef
+            SourceRegionRef_.to_etree(element, name_='SourceRegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TargetRegionRef is not None:
+            TargetRegionRef_ = self.TargetRegionRef
+            TargetRegionRef_.to_etree(element, name_='TargetRegionRef', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -8050,15 +8528,7 @@ class RelationType(GeneratedsSuper):
             self.TargetRegionRef = obj_
             obj_.original_tagname_ = 'TargetRegionRef'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class RelationType
 
 
@@ -8368,6 +8838,54 @@ class TextStyleType(GeneratedsSuper):
             outfile.write(' letterSpaced="%s"' % self.gds_format_boolean(self.letterSpaced, input_name='letterSpaced'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='TextStyleType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.fontFamily is not None:
+            element.set('fontFamily', self.gds_format_string(self.fontFamily))
+        if self.serif is not None:
+            element.set('serif', self.gds_format_boolean(self.serif))
+        if self.monospace is not None:
+            element.set('monospace', self.gds_format_boolean(self.monospace))
+        if self.fontSize is not None:
+            element.set('fontSize', self.gds_format_float(self.fontSize))
+        if self.xHeight is not None:
+            element.set('xHeight', self.gds_format_integer(self.xHeight))
+        if self.kerning is not None:
+            element.set('kerning', self.gds_format_integer(self.kerning))
+        if self.textColour is not None:
+            element.set('textColour', self.gds_format_string(self.textColour))
+        if self.textColourRgb is not None:
+            element.set('textColourRgb', self.gds_format_integer(self.textColourRgb))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.bgColourRgb is not None:
+            element.set('bgColourRgb', self.gds_format_integer(self.bgColourRgb))
+        if self.reverseVideo is not None:
+            element.set('reverseVideo', self.gds_format_boolean(self.reverseVideo))
+        if self.bold is not None:
+            element.set('bold', self.gds_format_boolean(self.bold))
+        if self.italic is not None:
+            element.set('italic', self.gds_format_boolean(self.italic))
+        if self.underlined is not None:
+            element.set('underlined', self.gds_format_boolean(self.underlined))
+        if self.underlineStyle is not None:
+            element.set('underlineStyle', self.gds_format_string(self.underlineStyle))
+        if self.subscript is not None:
+            element.set('subscript', self.gds_format_boolean(self.subscript))
+        if self.superscript is not None:
+            element.set('superscript', self.gds_format_boolean(self.superscript))
+        if self.strikethrough is not None:
+            element.set('strikethrough', self.gds_format_boolean(self.strikethrough))
+        if self.smallCaps is not None:
+            element.set('smallCaps', self.gds_format_boolean(self.smallCaps))
+        if self.letterSpaced is not None:
+            element.set('letterSpaced', self.gds_format_boolean(self.letterSpaced))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -8522,15 +9040,7 @@ class TextStyleType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class TextStyleType
 
 
@@ -9003,6 +9513,65 @@ class RegionType(GeneratedsSuper):
         for CustomRegion_ in self.CustomRegion:
             namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RegionType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        for AlternativeImage_ in self.AlternativeImage:
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+        if self.Roles is not None:
+            Roles_ = self.Roles
+            Roles_.to_etree(element, name_='Roles', mapping_=mapping_, nsmap_=nsmap_)
+        for TextRegion_ in self.TextRegion:
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ImageRegion_ in self.ImageRegion:
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for LineDrawingRegion_ in self.LineDrawingRegion:
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for GraphicRegion_ in self.GraphicRegion:
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for TableRegion_ in self.TableRegion:
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChartRegion_ in self.ChartRegion:
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for SeparatorRegion_ in self.SeparatorRegion:
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MathsRegion_ in self.MathsRegion:
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for ChemRegion_ in self.ChemRegion:
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for MusicRegion_ in self.MusicRegion:
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for AdvertRegion_ in self.AdvertRegion:
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for NoiseRegion_ in self.NoiseRegion:
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for UnknownRegion_ in self.UnknownRegion:
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
+        for CustomRegion_ in self.CustomRegion:
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9137,20 +9706,12 @@ class RegionType(GeneratedsSuper):
             self.CustomRegion.append(obj_)
             obj_.original_tagname_ = 'CustomRegion'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -9179,10 +9740,10 @@ class RegionType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -9299,6 +9860,20 @@ class AlternativeImageType(GeneratedsSuper):
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='AlternativeImageType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.filename is not None:
+            element.set('filename', self.gds_format_string(self.filename))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.conf is not None:
+            element.set('conf', self.gds_format_float(self.conf))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9328,15 +9903,7 @@ class AlternativeImageType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class AlternativeImageType
 
 
@@ -9465,6 +10032,20 @@ class GraphemesType(GeneratedsSuper):
         for GraphemeGroup_ in self.GraphemeGroup:
             namespaceprefix_ = self.GraphemeGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.GraphemeGroup_nsprefix_) else ''
             GraphemeGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphemeGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemesType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for Grapheme_ in self.Grapheme:
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
+        for NonPrintingChar_ in self.NonPrintingChar:
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
+        for GraphemeGroup_ in self.GraphemeGroup:
+            GraphemeGroup_.to_etree(element, name_='GraphemeGroup', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9495,15 +10076,7 @@ class GraphemesType(GeneratedsSuper):
             self.GraphemeGroup.append(obj_)
             obj_.original_tagname_ = 'GraphemeGroup'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class GraphemesType
 
 
@@ -9666,6 +10239,30 @@ class GraphemeBaseType(GeneratedsSuper):
         for TextEquiv_ in self.TextEquiv:
             namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
             TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeBaseType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.extensiontype_ is not None:
+            element.set('{http://www.w3.org/2001/XMLSchema-instance}type', self.extensiontype_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.index is not None:
+            element.set('index', self.gds_format_integer(self.index))
+        if self.ligature is not None:
+            element.set('ligature', self.gds_format_boolean(self.ligature))
+        if self.charType is not None:
+            element.set('charType', self.gds_format_string(self.charType))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9718,15 +10315,7 @@ class GraphemeBaseType(GeneratedsSuper):
             self.TextEquiv.append(obj_)
             obj_.original_tagname_ = 'TextEquiv'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class GraphemeBaseType
 
 
@@ -9810,6 +10399,14 @@ class GraphemeType(GraphemeBaseType):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeType', mapping_=None, nsmap_=None):
+        element = super(GraphemeType, self).to_etree(parent_element, name_, mapping_)
+        if self.Coords is not None:
+            Coords_ = self.Coords
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9831,15 +10428,7 @@ class GraphemeType(GraphemeBaseType):
             obj_.original_tagname_ = 'Coords'
         super(GraphemeType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class GraphemeType
 
 
@@ -9909,6 +10498,11 @@ class NonPrintingCharType(GraphemeBaseType):
         super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
         super(NonPrintingCharType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NonPrintingCharType', mapping_=None, nsmap_=None):
+        element = super(NonPrintingCharType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -9926,15 +10520,7 @@ class NonPrintingCharType(GraphemeBaseType):
         super(NonPrintingCharType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class NonPrintingCharType
 
 
@@ -10044,6 +10630,15 @@ class GraphemeGroupType(GraphemeBaseType):
         for NonPrintingChar_ in self.NonPrintingChar:
             namespaceprefix_ = self.NonPrintingChar_nsprefix_ + ':' if (UseCapturedNS_ and self.NonPrintingChar_nsprefix_) else ''
             NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphemeGroupType', mapping_=None, nsmap_=None):
+        element = super(GraphemeGroupType, self).to_etree(parent_element, name_, mapping_)
+        for Grapheme_ in self.Grapheme:
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
+        for NonPrintingChar_ in self.NonPrintingChar:
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10070,15 +10665,7 @@ class GraphemeGroupType(GraphemeBaseType):
             obj_.original_tagname_ = 'NonPrintingChar'
         super(GraphemeGroupType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class GraphemeGroupType
 
 
@@ -10166,6 +10753,16 @@ class UserDefinedType(GeneratedsSuper):
         for UserAttribute_ in self.UserAttribute:
             namespaceprefix_ = self.UserAttribute_nsprefix_ + ':' if (UseCapturedNS_ and self.UserAttribute_nsprefix_) else ''
             UserAttribute_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserAttribute', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UserDefinedType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        for UserAttribute_ in self.UserAttribute:
+            UserAttribute_.to_etree(element, name_='UserAttribute', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10186,15 +10783,7 @@ class UserDefinedType(GeneratedsSuper):
             self.UserAttribute.append(obj_)
             obj_.original_tagname_ = 'UserAttribute'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class UserDefinedType
 
 
@@ -10298,6 +10887,22 @@ class UserAttributeType(GeneratedsSuper):
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='UserAttributeType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.name is not None:
+            element.set('name', self.gds_format_string(self.name))
+        if self.description is not None:
+            element.set('description', self.gds_format_string(self.description))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.value is not None:
+            element.set('value', self.gds_format_string(self.value))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10329,15 +10934,7 @@ class UserAttributeType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class UserAttributeType
 
 
@@ -10454,6 +11051,24 @@ class TableCellRoleType(GeneratedsSuper):
             outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
         pass
+    def to_etree(self, parent_element=None, name_='TableCellRoleType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.rowIndex is not None:
+            element.set('rowIndex', self.gds_format_integer(self.rowIndex))
+        if self.columnIndex is not None:
+            element.set('columnIndex', self.gds_format_integer(self.columnIndex))
+        if self.rowSpan is not None:
+            element.set('rowSpan', self.gds_format_integer(self.rowSpan))
+        if self.colSpan is not None:
+            element.set('colSpan', self.gds_format_integer(self.colSpan))
+        if self.header is not None:
+            element.set('header', self.gds_format_boolean(self.header))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10494,15 +11109,7 @@ class TableCellRoleType(GeneratedsSuper):
     def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class TableCellRoleType
 
 
@@ -10580,6 +11187,17 @@ class RolesType(GeneratedsSuper):
         if self.TableCellRole is not None:
             namespaceprefix_ = self.TableCellRole_nsprefix_ + ':' if (UseCapturedNS_ and self.TableCellRole_nsprefix_) else ''
             self.TableCellRole.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableCellRole', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='RolesType', mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.TableCellRole is not None:
+            TableCellRole_ = self.TableCellRole
+            TableCellRole_.to_etree(element, name_='TableCellRole', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10600,15 +11218,7 @@ class RolesType(GeneratedsSuper):
             self.TableCellRole = obj_
             obj_.original_tagname_ = 'TableCellRole'
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class RolesType
 
 
@@ -10689,6 +11299,13 @@ class CustomRegionType(RegionType):
             outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CustomRegionType', fromsubclass_=False, pretty_print=True):
         super(CustomRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='CustomRegionType', mapping_=None, nsmap_=None):
+        element = super(CustomRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10710,15 +11327,7 @@ class CustomRegionType(RegionType):
         super(CustomRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class CustomRegionType
 
 
@@ -10785,6 +11394,11 @@ class UnknownRegionType(RegionType):
         super(UnknownRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
         super(UnknownRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnknownRegionType', mapping_=None, nsmap_=None):
+        element = super(UnknownRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10802,15 +11416,7 @@ class UnknownRegionType(RegionType):
         super(UnknownRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class UnknownRegionType
 
 
@@ -10879,6 +11485,11 @@ class NoiseRegionType(RegionType):
         super(NoiseRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
         super(NoiseRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NoiseRegionType', mapping_=None, nsmap_=None):
+        element = super(NoiseRegionType, self).to_etree(parent_element, name_, mapping_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -10896,15 +11507,7 @@ class NoiseRegionType(RegionType):
         super(NoiseRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
 # end class NoiseRegionType
 
 
@@ -11010,6 +11613,15 @@ class AdvertRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
         super(AdvertRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='AdvertRegionType', mapping_=None, nsmap_=None):
+        element = super(AdvertRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11037,21 +11649,13 @@ class AdvertRegionType(RegionType):
         super(AdvertRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -11162,6 +11766,15 @@ class MusicRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
         super(MusicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MusicRegionType', mapping_=None, nsmap_=None):
+        element = super(MusicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11189,21 +11802,13 @@ class MusicRegionType(RegionType):
         super(MusicRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -11291,6 +11896,13 @@ class MapRegionType(RegionType):
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
         super(MapRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MapRegionType', mapping_=None, nsmap_=None):
+        element = super(MapRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11313,21 +11925,13 @@ class MapRegionType(RegionType):
         super(MapRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -11439,6 +12043,15 @@ class ChemRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
         super(ChemRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChemRegionType', mapping_=None, nsmap_=None):
+        element = super(ChemRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11466,21 +12079,13 @@ class ChemRegionType(RegionType):
         super(ChemRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -11592,6 +12197,15 @@ class MathsRegionType(RegionType):
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
         super(MathsRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MathsRegionType', mapping_=None, nsmap_=None):
+        element = super(MathsRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11619,21 +12233,13 @@ class MathsRegionType(RegionType):
         super(MathsRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -11746,6 +12352,15 @@ class SeparatorRegionType(RegionType):
             outfile.write(' colour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.colour), input_name='colour')), ))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
         super(SeparatorRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='SeparatorRegionType', mapping_=None, nsmap_=None):
+        element = super(SeparatorRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colour is not None:
+            element.set('colour', self.gds_format_string(self.colour))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11773,21 +12388,13 @@ class SeparatorRegionType(RegionType):
         super(SeparatorRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -11947,6 +12554,21 @@ class ChartRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
         super(ChartRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChartRegionType', mapping_=None, nsmap_=None):
+        element = super(ChartRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -11992,21 +12614,13 @@ class ChartRegionType(RegionType):
         super(ChartRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12190,6 +12804,28 @@ class TableRegionType(RegionType):
         if self.Grid is not None:
             namespaceprefix_ = self.Grid_nsprefix_ + ':' if (UseCapturedNS_ and self.Grid_nsprefix_) else ''
             self.Grid.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grid', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TableRegionType', mapping_=None, nsmap_=None):
+        element = super(TableRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.rows is not None:
+            element.set('rows', self.gds_format_integer(self.rows))
+        if self.columns is not None:
+            element.set('columns', self.gds_format_integer(self.columns))
+        if self.lineColour is not None:
+            element.set('lineColour', self.gds_format_string(self.lineColour))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.lineSeparators is not None:
+            element.set('lineSeparators', self.gds_format_boolean(self.lineSeparators))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if self.Grid is not None:
+            Grid_ = self.Grid
+            Grid_.to_etree(element, name_='Grid', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12252,21 +12888,13 @@ class TableRegionType(RegionType):
             obj_.original_tagname_ = 'Grid'
         super(TableRegionType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12402,6 +13030,19 @@ class GraphicRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
         super(GraphicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphicRegionType', mapping_=None, nsmap_=None):
+        element = super(GraphicRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.numColours is not None:
+            element.set('numColours', self.gds_format_integer(self.numColours))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12442,21 +13083,13 @@ class GraphicRegionType(RegionType):
         super(GraphicRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12591,6 +13224,19 @@ class LineDrawingRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
         super(LineDrawingRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LineDrawingRegionType', mapping_=None, nsmap_=None):
+        element = super(LineDrawingRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.penColour is not None:
+            element.set('penColour', self.gds_format_string(self.penColour))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12632,21 +13278,13 @@ class LineDrawingRegionType(RegionType):
         super(LineDrawingRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12794,6 +13432,19 @@ class ImageRegionType(RegionType):
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
         super(ImageRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ImageRegionType', mapping_=None, nsmap_=None):
+        element = super(ImageRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.colourDepth is not None:
+            element.set('colourDepth', self.gds_format_string(self.colourDepth))
+        if self.bgColour is not None:
+            element.set('bgColour', self.gds_format_string(self.bgColour))
+        if self.embText is not None:
+            element.set('embText', self.gds_format_boolean(self.embText))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -12835,21 +13486,13 @@ class ImageRegionType(RegionType):
         super(ImageRegionType, self).buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -13227,6 +13870,44 @@ class TextRegionType(RegionType):
         if self.TextStyle is not None:
             namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
             self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='TextRegionType', mapping_=None, nsmap_=None):
+        element = super(TextRegionType, self).to_etree(parent_element, name_, mapping_)
+        if self.orientation is not None:
+            element.set('orientation', self.gds_format_float(self.orientation))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.leading is not None:
+            element.set('leading', self.gds_format_integer(self.leading))
+        if self.readingDirection is not None:
+            element.set('readingDirection', self.gds_format_string(self.readingDirection))
+        if self.textLineOrder is not None:
+            element.set('textLineOrder', self.gds_format_string(self.textLineOrder))
+        if self.readingOrientation is not None:
+            element.set('readingOrientation', self.gds_format_float(self.readingOrientation))
+        if self.indented is not None:
+            element.set('indented', self.gds_format_boolean(self.indented))
+        if self.align is not None:
+            element.set('align', self.gds_format_string(self.align))
+        if self.primaryLanguage is not None:
+            element.set('primaryLanguage', self.gds_format_string(self.primaryLanguage))
+        if self.secondaryLanguage is not None:
+            element.set('secondaryLanguage', self.gds_format_string(self.secondaryLanguage))
+        if self.primaryScript is not None:
+            element.set('primaryScript', self.gds_format_string(self.primaryScript))
+        if self.secondaryScript is not None:
+            element.set('secondaryScript', self.gds_format_string(self.secondaryScript))
+        if self.production is not None:
+            element.set('production', self.gds_format_string(self.production))
+        for TextLine_ in self.TextLine:
+            TextLine_.to_etree(element, name_='TextLine', mapping_=mapping_, nsmap_=nsmap_)
+        for TextEquiv_ in self.TextEquiv:
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+        if self.TextStyle is not None:
+            TextStyle_ = self.TextStyle
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
         if SaveElementTreeNode:
@@ -13326,21 +14007,13 @@ class TextRegionType(RegionType):
             obj_.original_tagname_ = 'TextStyle'
         super(TextRegionType, self).buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
-        if hasattr(self, 'pcGtsId'):
-            val = self.pcGtsId
-        elif hasattr(self, 'imageFilename'):
-            val = self.imageFilename
-        elif hasattr(self, 'id'):
-            val = self.id
-        else:
-            raise ValueError("Cannot hash %s" % self)
-        return hash(val)
+        return hash(self.id)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:

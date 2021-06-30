@@ -1,5 +1,9 @@
 """
-Logging CLI
+OCR-D CLI: Logging
+
+.. click:: ocrd.cli.log:log_cli
+    :prog: ocrd log
+    :nested: full
 """
 import click
 from ocrd_utils import initLogging, getLogger, getLevelName

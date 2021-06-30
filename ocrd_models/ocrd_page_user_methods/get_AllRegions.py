@@ -42,16 +42,29 @@ def _get_recursive_reading_order(self, rogroup):
 
 def get_AllRegions(self, classes=None, order='document', depth=0):
     """
-    Get all the *Region element or only those provided by ``classes``.
-    Returned in document order unless ``order`` is ``reading-order``
+    Get all the ``*Region`` elements, or only those provided by `classes`.
+    Return in document order, unless `order` is ``reading-order``.
+
     Arguments:
-        classes (list) Classes of regions that shall be returned, e.g. ``['Text', 'Image']``
-        order ("document"|"reading-order"|"reading-order-only") Whether to
+        classes (list): Classes of regions that shall be returned, \
+            e.g. ``['Text', 'Image']``
+        order ("document"|"reading-order"|"reading-order-only"): Whether to \
             return regions sorted by document order (``document``, default) or by
             reading order with regions not in the reading order at the end of the
             returned list (``reading-order``) or regions not in the reading order
             omitted (``reading-order-only``)
-        depth (int) Recursive depth to look for regions at, set to `0` for all regions at any depth. Default: 0
+        depth (int): Recursive depth to look for regions at, set to `0` for \
+            all regions at any depth. Default: 0
+
+    Returns:
+        a list of :py:class:`TextRegionType`, :py:class:`ImageRegionType`, \
+            :py:class:`LineDrawingRegionType`, :py:class:`GraphicRegionType`, \
+            :py:class:`TableRegionType`, :py:class:`ChartRegionType`, \
+            :py:class:`MapRegionType`, :py:class:`SeparatorRegionType`, \
+            :py:class:`MathsRegionType`, :py:class:`ChemRegionType`, \
+            :py:class:`MusicRegionType`, :py:class:`AdvertRegionType`, \
+            :py:class:`NoiseRegionType`, :py:class:`UnknownRegionType`, \
+            and/or :py:class:`CustomRegionType`
 
     For example, to get all text anywhere on the page in reading order, use:
     ::

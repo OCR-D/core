@@ -5,6 +5,24 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.25.1] - 2021-06-30
+
+Fixed:
+
+  * `ocrd_page`: fallback for `id` if none of the attributes are set, #683
+
+## [2.25.0] - 2021-06-30
+
+Added:
+
+  * `ocrd_page`: Universal attribute `id` to get either `id`, `imageFilename` or `pcGtsId`, #683, #682
+  * `ocrd_page`: function `parseTree` and `with_etree` kwarg to `workspace.page_from_*` to access PAGE with etree API, #699, #313
+
+Fixed:
+
+  * Version-independent URL of METS XSD, #695, #694
+  * Recrop if deskewed after cropping, #688
+
 ## [2.24.0] - 2021-04-27
 
 Changed:
@@ -1327,6 +1345,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.25.1]: ../../compare/v2.25.1..v2.25.0
+[2.25.0]: ../../compare/v2.25.0..v2.24.0
 [2.24.0]: ../../compare/v2.24.0..v2.23.2
 [2.23.2]: ../../compare/v2.23.2..v2.23.1
 [2.23.1]: ../../compare/v2.23.1..v2.23.0
