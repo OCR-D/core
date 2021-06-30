@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Jun 23 17:59:57 2021 by generateDS.py version 2.35.20.
+# Generated Wed Jun 30 02:03:43 2021 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Apr 18 2020, 01:56:04)  [GCC 8.4.0]
 #
 # Command line options:
@@ -1236,14 +1236,17 @@ class PcGtsType(GeneratedsSuper):
         return hash(val)
     def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
-        Get all the pc:AlternativeImage/@filename paths referenced in the PAGE-XML document.
+        Get all the ``pc:AlternativeImage/@filename`` paths referenced in the PAGE-XML document.
     
+        Arguments:
+            page (boolean): Get images on ``pc:Page`` level
+            region (boolean): Get images on ``pc:*Region`` level
+            line (boolean): Get images on ``pc:TextLine`` level
+            word (boolean): Get images on ``pc:Word`` level
+            glyph (boolean): Get images on ``pc:Glyph`` level
     
-        page (boolean): Get pc:Page level images
-        region (boolean): Get images on pc:*Region level
-        line (boolean) Get images on pc:TextLine level
-        word (boolean) Get images on pc:Word level
-        glyph (boolean) Get images on pc:Glyph level
+        Returns:
+            a list of image filename strings
         """
         from .constants import NAMESPACES, PAGE_REGION_TYPES # pylint: disable=relative-beyond-top-level,import-outside-toplevel
         from io import StringIO  # pylint: disable=import-outside-toplevel
@@ -3196,16 +3199,29 @@ class PageType(GeneratedsSuper):
     
     def get_AllRegions(self, classes=None, order='document', depth=0):
         """
-        Get all the *Region element or only those provided by ``classes``.
-        Returned in document order unless ``order`` is ``reading-order``
+        Get all the ``*Region`` elements, or only those provided by `classes`.
+        Return in document order, unless `order` is ``reading-order``.
+    
         Arguments:
-            classes (list) Classes of regions that shall be returned, e.g. ``['Text', 'Image']``
-            order ("document"|"reading-order"|"reading-order-only") Whether to
+            classes (list): Classes of regions that shall be returned, \
+                e.g. ``['Text', 'Image']``
+            order ("document"|"reading-order"|"reading-order-only"): Whether to \
                 return regions sorted by document order (``document``, default) or by
                 reading order with regions not in the reading order at the end of the
                 returned list (``reading-order``) or regions not in the reading order
                 omitted (``reading-order-only``)
-            depth (int) Recursive depth to look for regions at, set to `0` for all regions at any depth. Default: 0
+            depth (int): Recursive depth to look for regions at, set to `0` for \
+                all regions at any depth. Default: 0
+    
+        Returns:
+            a list of :py:class:`TextRegionType`, :py:class:`ImageRegionType`, \
+                :py:class:`LineDrawingRegionType`, :py:class:`GraphicRegionType`, \
+                :py:class:`TableRegionType`, :py:class:`ChartRegionType`, \
+                :py:class:`MapRegionType`, :py:class:`SeparatorRegionType`, \
+                :py:class:`MathsRegionType`, :py:class:`ChemRegionType`, \
+                :py:class:`MusicRegionType`, :py:class:`AdvertRegionType`, \
+                :py:class:`NoiseRegionType`, :py:class:`UnknownRegionType`, \
+                and/or :py:class:`CustomRegionType`
     
         For example, to get all text anywhere on the page in reading order, use:
         ::
@@ -3239,14 +3255,17 @@ class PageType(GeneratedsSuper):
         return ret
     def get_AllAlternativeImages(self, page=True, region=True, line=True, word=True, glyph=True):
         """
-        Get all the pc:AlternativeImage in a document
+        Get all the ``pc:AlternativeImage`` in a document
     
+        Arguments:
+            page (boolean): Get images on ``pc:Page`` level
+            region (boolean): Get images on ``pc:*Region`` level
+            line (boolean): Get images on ``pc:TextLine`` level
+            word (boolean): Get images on ``pc:Word`` level
+            glyph (boolean): Get images on ``pc:Glyph`` level
     
-        page (boolean): Get pc:Page level images
-        region (boolean): Get images on pc:*Region level
-        line (boolean) Get images on pc:TextLine level
-        word (boolean) Get images on pc:Word level
-        glyph (boolean) Get images on pc:Glyph level
+        Returns:
+            a list of :py:class:`AlternativeImageType`
         """
         ret = []
         if page:
@@ -3269,7 +3288,7 @@ class PageType(GeneratedsSuper):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -3298,10 +3317,10 @@ class PageType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Border(self, Border):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`BorderType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         self.invalidate_AlternativeImage(feature_selector='cropped')
         self.Border = Border
@@ -3310,12 +3329,15 @@ class PageType(GeneratedsSuper):
         Return all the TextLine in the document
     
         Arguments:
-            region_order ("document"|"reading-order"|"reading-order-only") Whether to
-                return regions sorted by document order (``document``, default) or by
-                reading order with regions not in the reading order at the end of the
-                returned list (``reading-order``) or regions not in the reading order
+            region_order ("document"|"reading-order"|"reading-order-only"): Whether to \
+                return regions sorted by document order (``document``, default) or by \
+                reading order with regions not in the reading order at the end of the \
+                returned list (``reading-order``) or regions not in the reading order \
                 omitted (``reading-order-only``)
-            respect_textline_order (boolean) Whether to respect textlineOrder attribute
+            respect_textline_order (boolean): Whether to respect `@textLineOrder` attribute
+    
+        Returns:
+            a list of :py:class:`TextLineType`
         """
         # TODO handle textLineOrder according to https://github.com/PRImA-Research-Lab/PAGE-XML/issues/26
         ret = []
@@ -3330,10 +3352,10 @@ class PageType(GeneratedsSuper):
     
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -3505,9 +3527,9 @@ class CoordsType(GeneratedsSuper):
     def set_points(self, points):
         """
         Set coordinate polygon by given string.
-        Moreover, invalidate the parent's AlternativeImages
+        Moreover, invalidate the parent's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'parent_object_'):
             parent = self.parent_object_
@@ -4014,7 +4036,7 @@ class TextLineType(GeneratedsSuper):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -4043,10 +4065,10 @@ class TextLineType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -4514,7 +4536,7 @@ class WordType(GeneratedsSuper):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -4543,10 +4565,10 @@ class WordType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -4966,7 +4988,7 @@ class GlyphType(GeneratedsSuper):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -4995,10 +5017,10 @@ class GlyphType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -6340,8 +6362,14 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         Get all indexed children sorted by their ``@index``.
     
         Arguments:
-            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            classes (list): Type of children (sans ``Indexed``) to return. \
+                Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
             index_sort (boolean): Whether to sort by ``@index``
+    
+        Returns:
+            a list of :py:class:`RegionRefIndexedType`, \
+                :py:class:`OrderedGroupIndexedType`, and \
+                :py:class:`UnorderedGroupIndexedType`
         """
         if not classes:
             classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
@@ -6361,8 +6389,8 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
-        Add all elements in list ``elements``, respecting ``@index`` order.
-        With ``validate_continuity``, check that all new elements come after all old elements
+        Add all elements in list `elements`, respecting ``@index`` order.
+        With `validate_continuity`, check that all new elements come after all old elements
         (or raise an exception). 
         Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
@@ -6808,7 +6836,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         return hash(val)
     def get_UnorderedGroupChildren(self):
         """
-        List all non-metadata children of an UnorderedGroup
+        List all non-metadata children of an :py:class:`UnorderedGroupType`
         """
         # TODO: should not change order
         return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
@@ -7290,8 +7318,14 @@ class OrderedGroupType(GeneratedsSuper):
         Get all indexed children sorted by their ``@index``.
     
         Arguments:
-            classes (list): Type of children to return. Default: ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+            classes (list): Type of children (sans ``Indexed``) to return. \
+                Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
             index_sort (boolean): Whether to sort by ``@index``
+    
+        Returns:
+            a list of :py:class:`RegionRefIndexedType`, \
+                :py:class:`OrderedGroupIndexedType`, and \
+                :py:class:`UnorderedGroupIndexedType`
         """
         if not classes:
             classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
@@ -7311,8 +7345,8 @@ class OrderedGroupType(GeneratedsSuper):
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
-        Add all elements in list ``elements``, respecting ``@index`` order.
-        With ``validate_continuity``, check that all new elements come after all old elements
+        Add all elements in list `elements`, respecting ``@index`` order.
+        With `validate_continuity`, check that all new elements come after all old elements
         (or raise an exception). 
         Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
@@ -7740,7 +7774,7 @@ class UnorderedGroupType(GeneratedsSuper):
         return hash(val)
     def get_UnorderedGroupChildren(self):
         """
-        List all non-metadata children of an UnorderedGroup
+        List all non-metadata children of an :py:class:`UnorderedGroupType`
         """
         # TODO: should not change order
         return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
@@ -7866,10 +7900,10 @@ class BorderType(GeneratedsSuper):
         return hash(val)
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -9899,7 +9933,7 @@ class RegionType(GeneratedsSuper):
         """
         Remove derived images from this segment (due to changed coordinates).
     
-        If ``feature_selector`` is not none, remove only images with
+        If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
         existing_images = self.AlternativeImage or []
@@ -9928,10 +9962,10 @@ class RegionType(GeneratedsSuper):
                 image.get_comments() or '', name))
     def set_Coords(self, Coords):
         """
-        Set coordinate polygon by given object.
-        Moreover, invalidate self's AlternativeImages
+        Set coordinate polygon by given :py:class:`CoordsType` object.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been cropped with a bbox
-         of the previous polygon).
+        of the previous polygon).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # RegionType, TextLineType, WordType, GlyphType:
@@ -11952,10 +11986,10 @@ class AdvertRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12113,10 +12147,10 @@ class MusicRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12244,10 +12278,10 @@ class MapRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12406,10 +12440,10 @@ class ChemRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12568,10 +12602,10 @@ class MathsRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12731,10 +12765,10 @@ class SeparatorRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -12965,10 +12999,10 @@ class ChartRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -13247,10 +13281,10 @@ class TableRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -13450,10 +13484,10 @@ class GraphicRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -13653,10 +13687,10 @@ class LineDrawingRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -13869,10 +13903,10 @@ class ImageRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
@@ -14398,10 +14432,10 @@ class TextRegionType(RegionType):
         return hash(val)
     def set_orientation(self, orientation):
         """
-        Set deskewing angle to given number.
-        Moreover, invalidate self's AlternativeImages
+        Set deskewing angle to given `orientation` number.
+        Moreover, invalidate self's ``pc:AlternativeImage``s
         (because they will have been rotated and enlarged
-         with the angle of the previous value).
+        with the angle of the previous value).
         """
         if hasattr(self, 'invalidate_AlternativeImage'):
             # PageType, RegionType:
