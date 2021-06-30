@@ -1,3 +1,11 @@
+"""
+OCR-D CLI: ocrd-tool.json management
+
+.. click:: ocrd.cli.ocrd_tool:ocrd_tool_cli
+    :prog: ocrd ocrd-tool
+    :nested: full
+
+"""
 from json import dumps
 import codecs
 import sys

@@ -1,3 +1,10 @@
+"""
+OCR-D CLI: syntax validation
+
+.. click:: ocrd.cli.validate:validate_cli
+    :prog: ocrd validate
+    :nested: full
+"""
 import sys
 
 import click

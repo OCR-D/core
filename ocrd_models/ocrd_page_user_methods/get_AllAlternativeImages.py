@@ -1,13 +1,16 @@
 def get_AllAlternativeImages(self, page=True, region=True, line=True, word=True, glyph=True):
     """
-    Get all the pc:AlternativeImage in a document
+    Get all the ``pc:AlternativeImage`` in a document
 
+    Arguments:
+        page (boolean): Get images on ``pc:Page`` level
+        region (boolean): Get images on ``pc:*Region`` level
+        line (boolean): Get images on ``pc:TextLine`` level
+        word (boolean): Get images on ``pc:Word`` level
+        glyph (boolean): Get images on ``pc:Glyph`` level
 
-    page (boolean): Get pc:Page level images
-    region (boolean): Get images on pc:*Region level
-    line (boolean) Get images on pc:TextLine level
-    word (boolean) Get images on pc:Word level
-    glyph (boolean) Get images on pc:Glyph level
+    Returns:
+        a list of :py:class:`AlternativeImageType`
     """
     ret = []
     if page:

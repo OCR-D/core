@@ -2,7 +2,7 @@ def invalidate_AlternativeImage(self, feature_selector=None):
     """
     Remove derived images from this segment (due to changed coordinates).
 
-    If ``feature_selector`` is not none, remove only images with
+    If `feature_selector` is not none, remove only images with
     matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
     """
     existing_images = self.AlternativeImage or []

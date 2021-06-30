@@ -1,3 +1,10 @@
+"""
+OCR-D CLI: management of processor resources
+
+.. click:: ocrd.cli.resmgr:resmgr_cli
+    :prog: ocrd resmgr
+    :nested: full
+"""
 import sys
 from pathlib import Path
 from distutils.spawn import find_executable as which
