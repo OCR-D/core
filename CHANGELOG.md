@@ -12,6 +12,7 @@ Added:
 Fixed:
 
   * Version-independent URL of METS XSD, #695, #694
+  * Recrop if deskewed after cropping, #688
 
 ## [2.24.0] - 2021-04-27
 
