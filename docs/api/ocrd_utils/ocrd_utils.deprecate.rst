@@ -1,7 +1,7 @@
-ocrd\_utils.constants module
+ocrd\_utils.deprecate module
 ============================
 
-.. automodule:: ocrd_utils.constants
+.. automodule:: ocrd_utils.deprecate
    :members:
    :undoc-members:
    :show-inheritance:

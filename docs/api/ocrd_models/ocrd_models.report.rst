@@ -1,7 +1,7 @@
-ocrd\_utils.logging module
+ocrd\_models.report module
 ==========================
 
-.. automodule:: ocrd_utils.logging
+.. automodule:: ocrd_models.report
    :members:
    :undoc-members:
    :show-inheritance:

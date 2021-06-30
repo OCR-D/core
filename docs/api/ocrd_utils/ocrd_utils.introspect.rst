@@ -1,7 +1,7 @@
-ocrd\_models.constants module
+ocrd\_utils.introspect module
 =============================
 
-.. automodule:: ocrd_models.constants
+.. automodule:: ocrd_utils.introspect
    :members:
    :undoc-members:
    :show-inheritance:

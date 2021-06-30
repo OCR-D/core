@@ -1,7 +1,7 @@
-ocrd\_models.constants module
+ocrd.resource\_manager module
 =============================
 
-.. automodule:: ocrd_models.constants
+.. automodule:: ocrd.resource_manager
    :members:
    :undoc-members:
    :show-inheritance:

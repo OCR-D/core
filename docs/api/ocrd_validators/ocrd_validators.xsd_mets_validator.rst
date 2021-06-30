@@ -1,7 +1,7 @@
-ocrd\_validators.workspace\_validator module
+ocrd\_validators.xsd\_mets\_validator module
 ============================================
 
-.. automodule:: ocrd_validators.workspace_validator
+.. automodule:: ocrd_validators.xsd_mets_validator
    :members:
    :undoc-members:
    :show-inheritance:

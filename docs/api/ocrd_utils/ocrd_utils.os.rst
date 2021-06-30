@@ -1,7 +1,7 @@
-ocrd.workspace module
+ocrd\_utils.os module
 =====================
 
-.. automodule:: ocrd.workspace
+.. automodule:: ocrd_utils.os
    :members:
    :undoc-members:
    :show-inheritance:

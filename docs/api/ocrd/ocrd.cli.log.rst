@@ -1,7 +1,7 @@
-ocrd.cli.zip module
+ocrd.cli.log module
 ===================
 
-.. automodule:: ocrd.cli.zip
+.. automodule:: ocrd.cli.log
    :members:
    :undoc-members:
    :show-inheritance:

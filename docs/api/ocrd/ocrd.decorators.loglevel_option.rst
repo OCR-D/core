@@ -1,7 +1,7 @@
-ocrd\_validators.page\_validator module
+ocrd.decorators.loglevel\_option module
 =======================================
 
-.. automodule:: ocrd_validators.page_validator
+.. automodule:: ocrd.decorators.loglevel_option
    :members:
    :undoc-members:
    :show-inheritance:

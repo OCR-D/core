@@ -1,7 +1,7 @@
-ocrd\_models.constants module
+ocrd.processor.helpers module
 =============================
 
-.. automodule:: ocrd_models.constants
+.. automodule:: ocrd.processor.helpers
    :members:
    :undoc-members:
    :show-inheritance:
