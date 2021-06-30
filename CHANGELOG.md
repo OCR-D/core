@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Version-independent URL of METS XSD, #695, #694
+
 ## [2.24.0] - 2021-04-27
 
 Changed:
