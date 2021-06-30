@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added:
 
   * `ocrd_page`: Universal attribute `id` to get either `id`, `imageFilename` or `pcGtsId`, #683, #682
+  * `ocrd_page`: function `parseTree` and `with_etree` kwarg to `workspace.page_from_*` to access PAGE with etree API, #699, #313
 
 Fixed:
 
