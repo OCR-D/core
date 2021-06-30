@@ -100,6 +100,8 @@ generate-page: repo/assets
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
 	# hack to ensure child nodes also have pc: prefix...
 	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
+	# hack to get #698: auto-inheritance of attributes and TextStyle
+	patch -p1 < ocrd_models/ocrd_page_generateds.build.inherited.patch
 
 #
 # Repos
