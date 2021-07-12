@@ -169,7 +169,10 @@ coverage: assets
 .PHONY: docs
 # Build documentation
 docs:
-	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e -o docs/api/$$mod $$mod/$$mod 'ocrd_models/ocrd_models/ocrd_page_generateds.py';done
+	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e \
+		-o docs/api/$$mod $$mod/$$mod \
+		'ocrd_models/ocrd_models/ocrd_page_generateds.py' \
+		;done
 	cd docs ; $(MAKE) html
 
 docs-push: gh-pages docs

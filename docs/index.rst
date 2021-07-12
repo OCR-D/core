@@ -2,7 +2,7 @@ OCR-D/core
 ==========
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 5
    :caption: Contents:
 
    ocrd <api/ocrd/modules>
