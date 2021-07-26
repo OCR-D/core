@@ -10,7 +10,7 @@ from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
 
 class OcrdFile():
     """
-    Represents a single `mets:file/mets:FLocat` (METS file entry).
+    Represents a single ``mets:file/mets:FLocat`` (METS file entry).
     """
 
     #  @staticmethod
@@ -20,15 +20,15 @@ class OcrdFile():
     def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None):
         """
         Args:
-            el (LxmlElement): etree Element of the `mets:file` this represents. Create new if not provided
+            el (LxmlElement): etree Element of the ``mets:file`` this represents. Create new if not provided
         Keyword Args:
             mets (OcrdMets): Containing :py:class:`ocrd_models.ocrd_mets.OcrdMets`.
-            mimetype (string): `@MIMETYPE` of this `mets:file`
-            pageId (string): `@ID` of the physical `mets:structMap` entry corresponding to this `mets:file`
-            loctype (string): `@LOCTYPE` of this `mets:file`
+            mimetype (string): ``@MIMETYPE`` of this ``mets:file``
+            pageId (string): ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
+            loctype (string): ``@LOCTYPE`` of this ``mets:file``
             local_filename (string): Local filename
-            url (string): `@xlink:href` of this `mets:file`
-            ID (string): `@ID` of this `mets:file`
+            url (string): ``@xlink:href`` of this ``mets:file``
+            ID (string): ``@ID`` of this ``mets:file``
         """
         if el is None:
             el = ET.Element(TAG_METS_FILE)
@@ -49,7 +49,7 @@ class OcrdFile():
 
     def __str__(self):
         """
-        String representation of this `mets:file`.
+        String representation of this ``mets:file``.
         """
         #  props = '\n\t'.join([
         #      ' : '.join([k, getattr(self, k) if getattr(self, k) else '---'])
@@ -95,14 +95,14 @@ class OcrdFile():
     @property
     def ID(self):
         """
-        Get the `@ID` of the `mets:file`.
+        Get the ``@ID`` of the ``mets:file``.
         """
         return self._el.get('ID')
 
     @ID.setter
     def ID(self, ID):
         """
-        Set the `@ID` of the `mets:file` to ``ID``.
+        Set the ``@ID`` of the ``mets:file`` to :py:attr:`ID`.
         """
         if ID is None:
             return
@@ -111,7 +111,7 @@ class OcrdFile():
     @property
     def pageId(self):
         """
-        Get the `@ID` of the physical `mets:structMap` entry corresponding to this `mets:file` (physical page manifestation).
+        Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file`` (physical page manifestation).
         """
         if self.mets is None:
             raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
@@ -120,7 +120,7 @@ class OcrdFile():
     @pageId.setter
     def pageId(self, pageId):
         """
-        Get the `@ID` of the physical `mets:structMap` entry corresponding to this `mets:file` (physical page manifestation) to ``pageId``.
+        Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file`` (physical page manifestation) to :py:attr:`pageId`.
         """
         if pageId is None:
             return
@@ -132,7 +132,7 @@ class OcrdFile():
     @property
     def loctype(self):
         """
-        Get the `@LOCTYPE` of the `mets:file`.
+        Get the ``@LOCTYPE`` of the ``mets:file``.
         """
         el_FLocat = self._el.find('mets:FLocat', NS)
         return '' if el_FLocat is None else el_FLocat.get('LOCTYPE')
@@ -140,7 +140,7 @@ class OcrdFile():
     @loctype.setter
     def loctype(self, loctype):
         """
-        Set the `@LOCTYPE` of the `mets:file` to ``loctype``.
+        Set the ``@LOCTYPE`` of the ``mets:file`` to :py:attr:`loctype`.
         """
         if loctype is None:
             return
@@ -174,14 +174,14 @@ class OcrdFile():
     @property
     def mimetype(self):
         """
-        Get the `@MIMETYPE` of the `mets:file`.
+        Get the ``@MIMETYPE`` of the ``mets:file``.
         """
         return self._el.get('MIMETYPE')
 
     @mimetype.setter
     def mimetype(self, mimetype):
         """
-        Set the `@MIMETYPE` of the `mets:file` to ``mimetype``.
+        Set the ``@MIMETYPE`` of the ``mets:file`` to :py:attr:`mimetype`.
         """
         if mimetype is None:
             return
@@ -190,7 +190,7 @@ class OcrdFile():
     @property
     def fileGrp(self):
         """
-        The `@USE` of the containing `mets:fileGrp`
+        The ``@USE`` of the containing ``mets:fileGrp``
         """
         parent = self._el.getparent()
         if parent is not None:
@@ -200,7 +200,7 @@ class OcrdFile():
     @property
     def url(self):
         """
-        Get the `@xlink:href` of this `mets:file`.
+        Get the ``@xlink:href`` of this ``mets:file``.
         """
         el_FLocat = self._el.find(TAG_METS_FLOCAT)
         if el_FLocat is not None:
@@ -210,7 +210,7 @@ class OcrdFile():
     @url.setter
     def url(self, url):
         """
-        Set the `@xlink:href` of this `mets:file` to ``url``.
+        Set the ``@xlink:href`` of this ``mets:file`` to :py:attr:`url`.
         """
         if url is None:
             return
