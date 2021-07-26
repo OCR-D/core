@@ -41,7 +41,7 @@ class Resolver():
             subdir (string, None): Subdirectory to create within the directory. Think ``mets:fileGrp``.
 
         Returns:
-            Local filename string, __relative__ to directory
+            Local filename string, *relative* to directory
         """
         log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
         log.debug("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
@@ -108,17 +108,21 @@ class Resolver():
 
     def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, src_baseurl=None):
         """
-        Create a workspace from a METS by URL (i.e. clone it).
-
-        Sets the ``mets.xml`` file
+        Create a workspace from a METS by URL (i.e. clone if :py:attr:`mets_url` is remote or :py:attr:`dst_dir` is given).
 
         Arguments:
-            mets_url (string): Source mets URL
-            dst_dir (string, None): Target directory for the workspace
-            clobber_mets (boolean, False): Whether to overwrite existing mets.xml. \
-                By default existing mets.xml will raise an exception.
-            download (boolean, False): Whether to download all the files
+            mets_url (string): Source METS URL or filesystem path
+        Keyword Arguments:
+            dst_dir (string, None): Target directory for the workspace. \
+                By default create a temporary directory under :py:data:`ocrd.constants.TMP_PREFIX`. \
+                (The resulting path can be retrieved via :py:attr:`ocrd.Workspace.directory`.)
+            clobber_mets (boolean, False): Whether to overwrite existing ``mets.xml``. \
+                By default existing ``mets.xml`` will raise an exception.
+            download (boolean, False): Whether to also download all the files referenced by the METS
             src_baseurl (string, None): Base URL for resolving relative file locations
+
+        Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless 
+        the former is already local and the latter is ``none`` or already identical to its directory name.
 
         Returns:
             a new :py:class:`~ocrd.workspace.Workspace`
@@ -170,6 +174,17 @@ class Resolver():
     def workspace_from_nothing(self, directory, mets_basename='mets.xml', clobber_mets=False):
         """
         Create an empty workspace.
+
+        Arguments:
+            directory (string): Target directory for the workspace. \
+                If ``none``, create a temporary directory under :py:data:`ocrd.constants.TMP_PREFIX`. \
+                (The resulting path can be retrieved via :py:attr:`ocrd.Workspace.directory`.)
+        Keyword Arguments:
+            clobber_mets (boolean, False): Whether to overwrite existing ``mets.xml``. \
+                By default existing ``mets.xml`` will raise an exception.
+
+        Returns:
+            a new :py:class:`~ocrd.workspace.Workspace`
         """
         log = getLogger('ocrd.resolver.workspace_from_nothing')
         if directory is None:
