@@ -700,7 +700,7 @@ class Workspace():
 
         If `feature_selector` and/or `feature_filter` is given, then
         select/filter among the cropped `parent_image` and the available
-        ``AlternativeImage``s the richest one which contains all of the selected,
+        AlternativeImages the richest one which contains all of the selected,
         but none of the filtered features (i.e. ``@comments`` classes), or
         raise an error.
 
