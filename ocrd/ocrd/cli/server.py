@@ -72,24 +72,27 @@ def process(): # pylint: disable=unused-variable
     else:
         overwrite = False
     try:
-        if page_id:
-            npages = len(page_id.split(','))
-        else:
-            workspace = res.workspace_from_url(mets)
-            npages = len(workspace.mets.physical_pages)
-        timeout = timeout_per_page * npages
-        log.info("Processing %d tasks on %d pages (timeout=%ds)", len(tasks), npages, timeout)
-        # allow no more than timeout_per_page before restarting worker:
-        uwsgi.set_user_harakiri(timeout) # go, go, go!
-        # run the workflow
-        run_tasks(mets, log_level, page_id, tasks, overwrite)
-        uwsgi.set_user_harakiri(0) # take a breath!
+        _process(mets, page_id, log_level, overwrite)
     except Exception as e:
         log.exception("Request '%s' failed", str(flask.request.args))
         unlock(mets)
         return 'Failed: %s' % str(e), 500
     unlock(mets)
     return 'Finished'
+
+def _process(mets, page_id='', log_level=None, overwrite=False):
+    if page_id:
+        npages = len(page_id.split(','))
+    else:
+        workspace = res.workspace_from_url(mets)
+        npages = len(workspace.mets.physical_pages)
+    timeout = timeout_per_page * npages
+    log.info("Processing %d tasks on %d pages (timeout=%ds)", len(tasks), npages, timeout)
+    # allow no more than timeout_per_page before restarting worker:
+    uwsgi.set_user_harakiri(timeout) # go, go, go!
+    # run the workflow
+    run_tasks(mets, log_level, page_id, tasks, overwrite)
+    uwsgi.set_user_harakiri(0) # take a breath!
 
 @app.route('/list-tasks')
 def list_tasks(): # pylint: disable=unused-variable
