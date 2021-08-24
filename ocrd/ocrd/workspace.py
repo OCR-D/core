@@ -1034,3 +1034,22 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
             log, name, segment, segment_image, segment_coords,
             op='recropped', **kwargs)
     return segment_image, segment_coords, segment_xywh
+
+def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwargs):
+    # Resize linearly
+    segment_coords['transform'] = scale_coordinates(
+        segment_coords['transform'], [factor, factor])
+    segment_coords['scale'] = segment_coords.setdefault('scale', 1.0) * factor
+    segment_xywh['w'] *= factor
+    segment_xywh['h'] *= factor
+    # resize, if (still) necessary
+    if not 'scaled' in segment_coords['features']:
+        log.info("Scaling %s by %.2f", name, factor)
+        segment_coords['features'] += ',scaled'
+        # FIXME: validate factor against PAGE-XML attributes
+        # FIXME: factor should become less precise due to rounding
+        segment_image = segment_image.resize((int(segment_image.width * factor),
+                                              int(segment_image.height * factor)),
+                                             # slowest, but highest quality:
+                                             Image.BICUBIC)
+    return segment_image, segment_coords, segment_xywh
