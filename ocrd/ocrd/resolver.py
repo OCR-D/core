@@ -1,4 +1,4 @@
-import tempfile
+from tempfile import mkdtemp
 from pathlib import Path
 
 import requests
@@ -152,7 +152,7 @@ class Resolver():
                 dst_dir = Path(mets_url).parent
             else:
                 log.debug("Creating ephemeral workspace '%s' for METS @ <%s>", dst_dir, mets_url)
-                dst_dir = tempfile.mkdtemp(prefix=TMP_PREFIX)
+                dst_dir = mkdtemp(prefix=TMP_PREFIX)
         # XXX Path.resolve is always strict in Python <= 3.5, so create dst_dir unless it exists consistently
         if not Path(dst_dir).exists():
             Path(dst_dir).mkdir(parents=True, exist_ok=False)
@@ -188,7 +188,7 @@ class Resolver():
         """
         log = getLogger('ocrd.resolver.workspace_from_nothing')
         if directory is None:
-            directory = tempfile.mkdtemp(prefix=TMP_PREFIX)
+            directory = mkdtemp(prefix=TMP_PREFIX)
         Path(directory).mkdir(parents=True, exist_ok=True)
         mets_path = Path(directory, mets_basename)
         if mets_path.exists() and not clobber_mets:

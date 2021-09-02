@@ -3,11 +3,14 @@ from os import makedirs, unlink, listdir, path
 from pathlib import Path
 from shutil import move, copyfileobj
 from re import sub
+from tempfile import NamedTemporaryFile
+from contextlib import contextmanager
 
 from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
 from PIL import Image
 import numpy as np
 from deprecated.sphinx import deprecated
+import requests
 
 from ocrd_models import OcrdMets, OcrdFile
 from ocrd_models.ocrd_page import parse, BorderType, to_xml
@@ -39,6 +42,14 @@ from ocrd_utils import (
 from .workspace_backup import WorkspaceBackupManager
 
 __all__ = ['Workspace']
+
+@contextmanager
+def download_temporary_file(url):
+    with NamedTemporaryFile(prefix='ocrd-download-') as f:
+        with requests.get(url) as r:
+            f.write(r.content)
+        yield f
+
 
 class Workspace():
     """
@@ -368,9 +379,13 @@ class Workspace():
         if not image_url:
             # avoid "finding" just any file
             raise Exception("Cannot resolve empty image path")
-        f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
-        image_filename = self.download_file(f).local_filename
-        ocrd_exif = exif_from_filename(image_filename)
+        try:
+            f = next(self.mets.find_files(url=image_url))
+            image_filename = self.download_file(f).local_filename
+            ocrd_exif = exif_from_filename(image_filename)
+        except StopIteration:
+            with download_temporary_file(image_url) as f:
+                ocrd_exif = exif_from_filename(f.filename)
         return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
@@ -394,11 +409,13 @@ class Workspace():
             # avoid "finding" just any file
             raise Exception("Cannot resolve empty image path")
         log = getLogger('ocrd.workspace._resolve_image_as_pil')
-        f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
-        image_filename = self.download_file(f).local_filename
-
         with pushd_popd(self.directory):
-            pil_image = Image.open(image_filename)
+            try:
+                f = next(self.mets.find_files(url=image_url))
+                pil_image = Image.open(self.download_file(f).local_filename)
+            except StopIteration:
+                with download_temporary_file(image_url) as f:
+                    pil_image = Image.open(f.filename)
             pil_image.load() # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
