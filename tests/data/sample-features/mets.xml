@@ -20,6 +20,9 @@
       <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="foo0">
         <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="image_features.page.xml"/>
       </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo0-img">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo0.png"/>
+      </mets:file>
       <mets:file MIMETYPE="image/png" ID="foo1">
         <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo1"/>
       </mets:file>
