@@ -129,10 +129,10 @@ class Workspace():
         Returns:
             The local filename of the downloaded file
         """
-        f = OcrdFile(None, url=url, **kwargs)
+        dummy_mets = OcrdMets.empty_mets()
+        f = dummy_mets.add_file('DEPRECATED', ID=Path(url).name, url=url)
         f = self.download_file(f)
         return f.local_filename
-
 
     def download_file(self, f, _recursion_count=0):
         """
