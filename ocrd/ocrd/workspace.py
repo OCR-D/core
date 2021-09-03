@@ -184,35 +184,30 @@ class Workspace():
             ID = ID.ID
         try:
             try:
-                ocrd_file_ = next(self.mets.find_files(ID=ID))
+                ocrd_file = next(self.mets.find_files(ID=ID))
             except StopIteration:
                 raise FileNotFoundError("File %s not found in METS" % ID)
-            ocrd_files = [ocrd_file_] if isinstance(ocrd_file_, OcrdFile) else ocrd_file_
-            if page_recursive:
+            if page_recursive and ocrd_file.mimetype == MIMETYPE_PAGE:
                 with pushd_popd(self.directory):
-                    for ocrd_file in ocrd_files:
-                        if ocrd_file.mimetype != MIMETYPE_PAGE:
-                            continue
-                        ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
-                        for img_url in ocrd_page.get_AllAlternativeImagePaths():
-                            img_kwargs = {'url': img_url}
-                            if page_same_group:
-                                img_kwargs['fileGrp'] = ocrd_file.fileGrp
-                            for img_file in self.mets.find_files(**img_kwargs):
-                                self.remove_file(img_file, keep_file=keep_file, force=force)
+                    ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
+                    for img_url in ocrd_page.get_AllAlternativeImagePaths():
+                        img_kwargs = {'url': img_url}
+                        if page_same_group:
+                            img_kwargs['fileGrp'] = ocrd_file.fileGrp
+                        for img_file in self.mets.find_files(**img_kwargs):
+                            self.remove_file(img_file, keep_file=keep_file, force=force)
             if not keep_file:
                 with pushd_popd(self.directory):
-                    for ocrd_file in ocrd_files:
-                        if not ocrd_file.local_filename:
-                            log.warning("File not locally available %s", ocrd_file)
-                            if not force:
-                                raise Exception("File not locally available %s" % ocrd_file)
-                        else:
-                            log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
-                            unlink(ocrd_file.local_filename)
+                    if not ocrd_file.local_filename:
+                        log.warning("File not locally available %s", ocrd_file)
+                        if not force:
+                            raise Exception("File not locally available %s" % ocrd_file)
+                    else:
+                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                        unlink(ocrd_file.local_filename)
             # Remove from METS only after the recursion of AlternativeImages
             self.mets.remove_file(ID)
-            return ocrd_file_
+            return ocrd_file
         except FileNotFoundError as e:
             if not force:
                 raise e
