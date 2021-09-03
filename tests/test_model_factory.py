@@ -1,7 +1,7 @@
 from tests.base import TestCase, main, assets
 
 from ocrd_utils import MIMETYPE_PAGE
-from ocrd_models import OcrdFile
+from ocrd_models import OcrdFile, OcrdMets
 from ocrd_modelfactory import (
     exif_from_filename,
     page_from_image,
@@ -36,7 +36,9 @@ class TestModelFactory(TestCase):
 
     def test_page_from_file_no_existe(self):
         with self.assertRaisesRegex(FileNotFoundError, "File not found: 'no-existe'"):
-            page_from_file(OcrdFile(None, local_filename='no-existe', mimetype='foo/bar'))
+            mets = OcrdMets.empty_mets()
+            ocrd_file = mets.add_file('FOO', ID='foo', local_filename='no-existe', mimetype='foo/bar')
+            page_from_file(ocrd_file)
 
     def test_page_from_file_unsupported_mimetype(self):
         with self.assertRaisesRegex(ValueError, "Unsupported mimetype"):
@@ -46,4 +48,4 @@ class TestModelFactory(TestCase):
         from ocrd_models.ocrd_page import MetadataItemType
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

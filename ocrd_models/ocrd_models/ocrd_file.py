@@ -31,7 +31,7 @@ class OcrdFile():
             ID (string): ``@ID`` of this ``mets:file``
         """
         if el is None:
-            el = ET.Element(TAG_METS_FILE)
+            raise ValueError("Must provide mets:file element this OcrdFile represents")
         self._el = el
         self.mets = mets
         self.ID = ID
@@ -195,7 +195,7 @@ class OcrdFile():
         parent = self._el.getparent()
         if parent is not None:
             return self._el.getparent().get('USE')
-        return 'TEMP'
+        raise ValueError("OcrdFile not related to METS")
 
     @property
     def url(self):

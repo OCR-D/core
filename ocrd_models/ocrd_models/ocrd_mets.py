@@ -292,23 +292,26 @@ class OcrdMets(OcrdXmlDocument):
             local_filename (string):
         """
         if not ID:
-            raise Exception("Must set ID of the mets:file")
-        elif not REGEX_FILE_ID.fullmatch(ID):
-            raise Exception("Invalid syntax for mets:file/@ID %s" % ID)
+            raise ValueError("Must set ID of the mets:file")
+        if not fileGrp:
+            raise ValueError("Must set fileGrp of the mets:file")
+        if not REGEX_FILE_ID.fullmatch(ID):
+            raise ValueError("Invalid syntax for mets:file/@ID %s" % ID)
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
-        if ID and not ignore and next(self.find_files(ID=ID), None):
+        mets_file = next(self.find_files(ID=ID), None)
+        if mets_file and not ignore:
             if not force:
                 raise Exception("File with ID='%s' already exists" % ID)
-            mets_file = next(self.find_files(ID=ID))
+            mets_file.url = url
+            mets_file.mimetype = mimetype
+            mets_file.ID = ID
+            mets_file.pageId = pageId
+            mets_file.local_filename = local_filename
         else:
-            mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self)
-        mets_file.url = url
-        mets_file.mimetype = mimetype
-        mets_file.ID = ID
-        mets_file.pageId = pageId
-        mets_file.local_filename = local_filename
+            kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v}
+            mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self, **kwargs)
 
         return mets_file
 
