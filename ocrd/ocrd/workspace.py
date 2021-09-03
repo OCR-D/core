@@ -154,7 +154,7 @@ class Workspace():
                     if not self.baseurl:
                         raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
                     if _recursion_count >= 1:
-                        raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
+                        raise FileNotFoundError("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
                     log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
                     f.url = '%s/%s' % (self.baseurl, f.url)
                     f.url = self.download_file(f, _recursion_count + 1).local_filename
@@ -183,7 +183,10 @@ class Workspace():
         if isinstance(ID, OcrdFile):
             ID = ID.ID
         try:
-            ocrd_file_ = self.mets.remove_file(ID)
+            try:
+                ocrd_file_ = next(self.mets.find_files(ID=ID))
+            except StopIteration:
+                raise FileNotFoundError("File %s not found in METS" % ID)
             ocrd_files = [ocrd_file_] if isinstance(ocrd_file_, OcrdFile) else ocrd_file_
             if page_recursive:
                 with pushd_popd(self.directory):
@@ -207,6 +210,8 @@ class Workspace():
                         else:
                             log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
                             unlink(ocrd_file.local_filename)
+            # Remove from METS only after the recursion of AlternativeImages
+            self.mets.remove_file(ID)
             return ocrd_file_
         except FileNotFoundError as e:
             if not force:
