@@ -9,6 +9,7 @@ import collections
 from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
 from ocrd_utils import disableLogging, initLogging
+from ocrd_models import OcrdMets
 
 from tests.assets import assets, copy_of_directory
 
@@ -53,6 +54,15 @@ class CapturingTestCase(TestCase):
 
     def capture_out_err(self):
         return self.capfd.readouterr()
+
+def create_ocrd_file_with_defaults(**kwargs):
+    print('create_ocrd_file_with_defaults kwargs', kwargs)
+    return create_ocrd_file('FOO', **{'ID': 'foo', **kwargs})
+
+def create_ocrd_file(*args, **kwargs):
+    mets = OcrdMets.empty_mets()
+    return mets.add_file(*args, **kwargs)
+
 
 #  import traceback
 #  import warnings

@@ -1,12 +1,5 @@
-from tests.base import TestCase, main
+from tests.base import TestCase, main, create_ocrd_file, create_ocrd_file_with_defaults
 from ocrd_models import OcrdMets
-
-def create_ocrd_file_with_defaults(**kwargs):
-    return create_ocrd_file('FOO', **{'ID': 'foo', **kwargs})
-
-def create_ocrd_file(*args, **kwargs):
-    mets = OcrdMets.empty_mets()
-    return mets.add_file(*args, **kwargs)
 
 class TestOcrdFile(TestCase):
 

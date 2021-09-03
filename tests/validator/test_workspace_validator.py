@@ -134,8 +134,9 @@ class TestWorkspaceValidator(TestCase):
             f._el.set('GROUPID', 'donotuse') # pylint: disable=protected-access
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
-            self.assertEqual(len(report.errors), 1)
-            self.assertIn("Invalid (java) URL", report.errors[0])
+            assert not report.is_valid
+            assert len(report.errors) == 2
+            assert "invalid (Java-specific) file URL" in report.errors[0]
 
     def test_validate_pixel_no_download(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')
