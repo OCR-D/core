@@ -147,7 +147,7 @@ assets-server:
 
 .PHONY: test
 # Run all unit tests
-test: #assets
+test: assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	$(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
