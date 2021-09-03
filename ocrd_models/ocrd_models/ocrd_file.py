@@ -58,9 +58,13 @@ class OcrdFile():
         #  return 'OcrdFile[' + '\n\t' + props + '\n\t]'
         props = ', '.join([
             '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
-            for k in ['fileGrp', 'ID', 'mimetype', 'url', 'local_filename']
+            for k in ['ID', 'mimetype', 'url', 'local_filename']
         ])
-        return '<OcrdFile ' + props + ']/> '
+        try:
+            fileGrp = self.fileGrp
+        except ValueError:
+            fileGrp = '---'
+        return '<OcrdFile fileGrp=%s %s]/> ' % (fileGrp, props)
 
     def __eq__(self, other):
         return self.ID == other.ID # and \
