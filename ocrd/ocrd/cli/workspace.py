@@ -539,7 +539,7 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 
 @workspace_cli.command('merge')
 @click.argument('METS_PATH')
-@click.option('--copy-files', is_flag=True, help="Copy files as well", default=True)
+@click.option('--copy-files/--no-copy-files', is_flag=True, help="Copy files as well", default=True, show_default=True)
 @click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp")
 @mets_find_options
 @pass_workspace
