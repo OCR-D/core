@@ -18,6 +18,7 @@ Fixed:
 
   * `ocrd workspace merge`: handle `file_grp` parameter, #715
   * `ocrd workspace merge`: allow disabling copy-files behavior with `--no-copy-files`, #715
+  * `ocrd resmgr`: Fix tesseract URLs, #721
 
 ## [2.25.1] - 2021-06-30
 
