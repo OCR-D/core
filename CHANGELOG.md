@@ -12,6 +12,7 @@ Added:
 Changed:
 
   * `OcrdFile`: should only ever be instantiated in the context of `OcrdMets`, #324, #714
+  * Logging outputs to `STDERR` not `STDOUT`, OCR-D/spec#183, #713, #667
 
 Fixed:
 
