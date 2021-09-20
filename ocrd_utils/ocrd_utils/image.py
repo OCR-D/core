@@ -27,6 +27,7 @@ __all__ = [
     'polygon_mask',
     'rotate_coordinates',
     'shift_coordinates',
+    'scale_coordinates',
     'transform_coordinates',
     'transpose_coordinates',
     'xywh_from_bbox',
@@ -299,6 +300,23 @@ def shift_coordinates(transform, offset):
     shift[0, 2] = offset[0]
     shift[1, 2] = offset[1]
     return np.dot(shift, transform)
+
+def scale_coordinates(transform, factors):
+    """Compose an affine coordinate transformation with a proportional scaling.
+    Given a numpy array ``transform`` of an existing transformation
+    matrix in homogeneous (3d) coordinates, and a numpy array
+    ``factors`` of the scaling factors, calculate the affine
+    coordinate transform corresponding to the composition of both
+    transformations.
+    
+    Return a numpy array of the resulting affine transformation matrix.
+    """
+    LOG = getLogger('ocrd_utils.coords.scale_coordinates')
+    LOG.debug('scaling coordinates by %s', str(factors))
+    scale = np.eye(3)
+    scale[0, 0] = factors[0]
+    scale[1, 1] = factors[1]
+    return np.dot(scale, transform)
 
 def transform_coordinates(polygon, transform=None):
     """Apply an affine transformation to a set of points.
