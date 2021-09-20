@@ -9,6 +9,11 @@ Changed:
 
   * `OcrdFile`: should only ever be instantiated in the context of `OcrdMets`, #324, #714
 
+Fixed:
+
+  * `ocrd workspace merge`: handle `file_grp` parameter, #715
+  * `ocrd workspace merge`: allow disabling copy-files behavior with `--no-copy-files`, #715
+
 ## [2.25.1] - 2021-06-30
 
 Fixed:
