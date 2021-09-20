@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd_utils`: functions for scaling images, #707
+
 Changed:
 
   * `OcrdFile`: should only ever be instantiated in the context of `OcrdMets`, #324, #714
