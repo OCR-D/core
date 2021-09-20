@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `OcrdFile`: should only ever be instantiated in the context of `OcrdMets`, #324, #714
+
 ## [2.25.1] - 2021-06-30
 
 Fixed:
