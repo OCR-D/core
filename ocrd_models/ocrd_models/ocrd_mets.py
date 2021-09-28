@@ -327,6 +327,10 @@ class OcrdMets(OcrdXmlDocument):
                 return files
             else:
                 return files[0] # for backwards-compatibility
+        if any(1 for kwarg in kwargs
+               if isinstance(kwarg, str) and kwarg.startswith(REGEX_PREFIX)):
+            # allow empty results if filter criteria involve a regex
+            return []
         raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
 
     def remove_one_file(self, ID):
