@@ -186,6 +186,9 @@ class Workspace():
             try:
                 ocrd_file = next(self.mets.find_files(ID=ID))
             except StopIteration:
+                if ID.startswith(REGEX_PREFIX):
+                    # allow empty results if filter criteria involve a regex
+                    return None
                 raise FileNotFoundError("File %s not found in METS" % ID)
             if page_recursive and ocrd_file.mimetype == MIMETYPE_PAGE:
                 with pushd_popd(self.directory):
