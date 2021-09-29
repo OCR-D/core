@@ -66,6 +66,31 @@ class Processor():
         ``show_resource`` or ``show_help`` or ``show_version`` or
         ``dump_json`` is true, setup for processing (parsing and
         validating parameters, entering the workspace directory).
+
+        Args:
+             workspace (:py:class:`~ocrd.Workspace`): The workspace to process. \
+                 Can be ``None`` even for processing (esp. on multiple workspaces), \
+                 but then needs to be set before running.
+        Keyword Args:
+             ocrd_tool (string): JSON of the ocrd-tool description for that processor. \
+                 Can be ``None`` for processing, but needs to be set before running.
+             parameter (string): JSON of the runtime choices for ocrd-tool ``parameters``. \
+                 Can be ``None`` even for processing, but then needs to be set before running.
+             input_file_grp (string): comma-separated list of METS ``fileGrp``s used for input.
+             output_file_grp (string): comma-separated list of METS ``fileGrp``s used for output.
+             page_id (string): comma-separated list of METS physical ``page`` IDs to process \
+                 (or empty for all pages).
+             show_resource (string): If not ``None``, then instead of processing, resolve \
+                 given resource by name and print its contents to stdout.
+             list_resources (boolean): If true, then instead of processing, find all installed \
+                 resource files in the search paths and print their path names.
+             show_help (boolean): If true, then instead of processing, print a usage description \
+                 including the standard CLI and all of this processor's ocrd-tool parameters and \
+                 docstrings.
+             show_version (boolean): If true, then instead of processing, print information on \
+                 this processor's version and OCR-D version. Exit afterwards.
+             dump_json (boolean): If true, then instead of processing, print :py:attr:`ocrd_tool` \
+                 on stdout.
         """
         if parameter is None:
             parameter = {}
@@ -119,16 +144,17 @@ class Processor():
 
     def verify(self):
         """
-        Verify that the input fulfills the processor's requirements.
+        Verify that the :py:attr:`input_file_grp` fulfills the processor's requirements.
         """
         return True
 
     def process(self):
         """
         Process the :py:attr:`workspace` 
-        from the given :py:attr:`input_file_grp`s
-        to the given :py:attr:`output_file_grp`s
-        under the given :py:attr:`parameter`s.
+        from the given :py:attr:`input_file_grp`
+        to the given :py:attr:`output_file_grp`
+        for the given :py:attr:`page_id`
+        under the given :py:attr:`parameter`.
         
         (This contains the main functionality and needs to be overridden by subclasses.)
         """
@@ -137,7 +163,8 @@ class Processor():
 
     def add_metadata(self, pcgts):
         """
-        Add PAGE-XML `MetadataItem` describing the processing step and runtime parameters to :py:class:`ocrd_models.ocrd_page.PcGtsType` ``pcgts``.
+        Add PAGE-XML :py:class:`~ocrd_models.ocrd_page.MetadataItemType` ``MetadataItem`` describing
+        the processing step and runtime parameters to :py:class:`~ocrd_models.ocrd_page.PcGtsType` ``pcgts``.
         """
         pcgts.get_Metadata().add_MetadataItem(
                 MetadataItemType(type_="processingStep",
@@ -191,6 +218,7 @@ class Processor():
         List the input files (for single-valued :py:attr:`input_file_grp`).
 
         For each physical page:
+
         - If there is a single PAGE-XML for the page, take it (and forget about all
           other files for that page)
         - Else if there is a single image file, take it (and forget about all other
@@ -226,18 +254,19 @@ class Processor():
         image file per page. In either case, multiple matches per page
         are an error (see error handling below).
         This default behaviour can be changed by using a fixed MIME
-        type filter via ``mimetype``. But still, multiple matching
+        type filter via :py:attr:`mimetype`. But still, multiple matching
         files per page are an error.
 
         Single-page multiple-file errors are handled according to
-        ``on_error``:
-        - if `'skip'`, then the page for the respective fileGrp will be
+        :py:attr:`on_error`:
+
+        - if ``skip``, then the page for the respective fileGrp will be
           silently skipped (as if there was no match at all)
-        - if `'first'`, then the first matching file for the page will be
+        - if ``first``, then the first matching file for the page will be
           silently selected (as if the first was the only match)
-        - if `'last'`, then the last matching file for the page will be
+        - if ``last``, then the last matching file for the page will be
           silently selected (as if the last was the only match)
-        - if `'abort'`, then an exception will be raised.
+        - if ``abort``, then an exception will be raised.
         Multiple matches for PAGE-XML will always raise an exception.
 
         Keyword Args:

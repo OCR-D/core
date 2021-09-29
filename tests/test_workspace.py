@@ -99,7 +99,7 @@ class TestWorkspace(TestCase):
         with TemporaryDirectory() as directory:
             ws1 = self.resolver.workspace_from_nothing(directory)
             fn = ws1.download_url(abspath(__file__))
-            self.assertEqual(fn, join('TEMP', basename(__file__)))
+            self.assertEqual(fn, join('DEPRECATED', basename(__file__)))
 
     def test_download_url_without_baseurl(self):
         with TemporaryDirectory() as tempdir:
@@ -115,7 +115,7 @@ class TestWorkspace(TestCase):
             copyfile(SRC_METS, dst_mets)
             ws1 = self.resolver.workspace_from_url(dst_mets, src_baseurl=dirname(SRC_METS))
             f = Path(ws1.download_url(SAMPLE_FILE_URL))
-            self.assertEqual(f, Path('TEMP', '%s.tif' % SAMPLE_FILE_ID))
+            self.assertEqual(f, Path('DEPRECATED', '%s.tif' % SAMPLE_FILE_ID))
             self.assertTrue(Path(ws1.directory, f).exists())
 
     def test_from_url_dst_dir_download(self):
@@ -293,9 +293,9 @@ class TestWorkspace(TestCase):
             with open('TEMP1/PAGE_TEMP1.xml', 'r') as f:
                 pcgts = parseString(f.read().encode('utf8'), silence=True)
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017', feature_selector='clipped', feature_filter='cropped')
-            self.assertEquals(info['features'], 'binarized,clipped')
+            self.assertEqual(info['features'], 'binarized,clipped')
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
-            self.assertEquals(info['features'], 'binarized,clipped')
+            self.assertEqual(info['features'], 'binarized,clipped')
 
     def test_image_feature_selectoro(self):
         with pushd_popd('tests/data/sample-features'):
@@ -305,11 +305,11 @@ class TestWorkspace(TestCase):
             # richest feature set is not last:
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped')
             # recropped because foo4 contains cropped+deskewed but not recropped yet:
-            self.assertEquals(info['features'], 'cropped,dewarped,binarized,despeckled,deskewed,recropped')
+            self.assertEqual(info['features'], 'cropped,dewarped,binarized,despeckled,deskewed,recropped')
             # richest feature set is also last:
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped', feature_filter='binarized')
             # no deskewing here, thus no recropping:
-            self.assertEquals(info['features'], 'cropped,dewarped,despeckled')
+            self.assertEqual(info['features'], 'cropped,dewarped,despeckled')
 
     def test_downsample_16bit_image(self):
         with pushd_popd(tempdir=True) as tempdir:

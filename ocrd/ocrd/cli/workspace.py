@@ -539,15 +539,15 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 
 @workspace_cli.command('merge')
 @click.argument('METS_PATH')
-@click.option('--copy-files', is_flag=True, help="Copy files as well", default=True)
+@click.option('--copy-files/--no-copy-files', is_flag=True, help="Copy files as well", default=True, show_default=True)
 @click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp")
 @mets_find_options
 @pass_workspace
-def merge(ctx, copy_files, filegrp_mapping, filegrp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
 
-    The ``--file-id``, ``--page-id``, ``--mimetype`` and ``--fileGrp`` options have
+    The ``--file-id``, ``--page-id``, ``--mimetype`` and ``--file-grp`` options have
     the same semantics as in ``ocrd workspace find``, see ``ocrd workspace find --help``
     for an explanation.
     """
@@ -560,7 +560,7 @@ def merge(ctx, copy_files, filegrp_mapping, filegrp, file_id, page_id, mimetype,
         other_workspace,
         copy_files=copy_files,
         fileGrp_mapping=filegrp_mapping,
-        fileGrp=filegrp,
+        fileGrp=file_grp,
         ID=file_id,
         pageId=page_id,
         mimetype=mimetype,

@@ -15,18 +15,22 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
+import json
+import re
+with open(os.path.join(os.path.abspath('..'), 'ocrd_utils', 'setup.py'), 'r', encoding='utf-8') as f:
+    VERSION = re.findall(r'\bversion=\'([^\']*)\'', f.read())[0]
 
 
 # -- Project information -----------------------------------------------------
 
 project = u'ocrd'
-copyright = u'2018, Kay Wuerzner, Konstantin Baierer'
-author = u'Kay Wuerzner, Konstantin Baierer'
+copyright = u'2018-2021, OCR-D'
+author = u'OCR-D'
 
 # The short X.Y version
-version = u'0.13.0'
+version = VERSION
 # The full version, including alpha/beta/rc tags
-release = u''
+release = VERSION
 
 
 # -- General configuration ---------------------------------------------------
@@ -85,16 +89,22 @@ autodoc_member_order = 'bysource'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'basic'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'github_user': 'OCR-D',
-    'github_repo': 'core',
-    'travis_button': 'true',
+    'logo': 'ocrd-logo-small.png',
+    'logo_name': 'OCR-D/core',
+    # 'github_user': 'OCR-D',
+    # 'github_repo': 'core',
+    'travis_button': False,
+    'codecov_button': False,
+    # 'display_version': True,
+    'canonical_url': 'https://ocr-d.de',
+    'description': 'Software library for OCR-D'
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -112,6 +122,7 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
+html_js_files = ['ocrd-custom.js']
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
@@ -144,7 +155,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'core.tex', u'OCR-D/core Documentation',
-     u'Kay Wuerzner, Konstantin Baierer', 'manual'),
+     u'OCR-D', 'manual'),
 ]
 
 

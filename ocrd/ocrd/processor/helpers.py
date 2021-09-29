@@ -43,10 +43,26 @@ def run_processor(
         working_dir=None,
 ): # pylint: disable=too-many-locals
     """
-    Create a workspace for mets_url and run processor through it
+    Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
+
+    If :py:attr:`workspace` is not none, reuse that. Otherwise, instantiate an
+    :py:class:`~ocrd.Workspace` for :py:attr:`mets_url` (and :py:attr:`working_dir`)
+    by using :py:meth:`ocrd.Resolver.workspace_from_url` (i.e. open or clone local workspace).
+
+    Instantiate a Python object for :py:attr:`processorClass`, passing:
+    - the workspace,
+    - :py:attr:`ocrd_tool`
+    - :py:attr:`page_id`
+    - :py:attr:`input_file_grp`
+    - :py:attr:`output_file_grp`
+    - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
+
+    Run the processor on the workspace (creating output files in the filesystem).
+
+    Finally, write back the workspace (updating the METS in the filesystem).
 
     Args:
-        parameter (string): URL to the parameter
+        processorClass (object): Python class of the module processor.
     """
     workspace = _get_workspace(
         workspace,
@@ -138,7 +154,23 @@ def run_cli(
         working_dir=None,
 ):
     """
-    Create a workspace for mets_url and run MP CLI through it
+    Open a workspace and run a processor on the command line.
+
+    If :py:attr:`workspace` is not none, reuse that. Otherwise, instantiate an
+    :py:class:`~ocrd.Workspace` for :py:attr:`mets_url` (and :py:attr:`working_dir`)
+    by using :py:meth:`ocrd.Resolver.workspace_from_url` (i.e. open or clone local workspace).
+
+    Run the processor CLI :py:attr:`executable` on the workspace, passing:
+    - the workspace,
+    - :py:attr:`page_id`
+    - :py:attr:`input_file_grp`
+    - :py:attr:`output_file_grp`
+    - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
+
+    (Will create output files and update the in the filesystem).
+
+    Args:
+        executable (string): Executable name of the module processor.
     """
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
     args = [executable, '--working-dir', workspace.directory]

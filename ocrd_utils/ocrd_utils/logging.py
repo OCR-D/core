@@ -19,6 +19,7 @@ from traceback import format_stack
 import logging
 import logging.config
 import os
+import sys
 
 from .constants import LOG_FORMAT, LOG_TIMEFMT
 
@@ -130,7 +131,7 @@ def initLogging():
         logging.getLogger('ocrd.logging').debug("Picked up logging config at %s" % config_file)
     else:
         # Default logging config
-        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIMEFMT)
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIMEFMT, stream=sys.stderr)
         logging.getLogger('').setLevel(logging.INFO)
         #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
         #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)

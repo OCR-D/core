@@ -20,23 +20,26 @@
       <mets:file MIMETYPE="application/vnd.prima.page+xml" ID="foo0">
         <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="image_features.page.xml"/>
       </mets:file>
+      <mets:file MIMETYPE="image/png" ID="foo0-img">
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo0.png"/>
+      </mets:file>
       <mets:file MIMETYPE="image/png" ID="foo1">
-        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo1"/>
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo1.png"/>
       </mets:file>
       <mets:file MIMETYPE="image/png" ID="foo2">
-        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo2"/>
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo2.png"/>
       </mets:file>
       <mets:file MIMETYPE="image/png" ID="foo3">
-        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo3"/>
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo3.png"/>
       </mets:file>
       <mets:file MIMETYPE="image/png" ID="foo4">
-        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo4"/>
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo4.png"/>
       </mets:file>
       <mets:file MIMETYPE="image/png" ID="foo5">
-        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo5"/>
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo5.png"/>
       </mets:file>
       <mets:file MIMETYPE="image/png" ID="foo6">
-        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo6"/>
+        <mets:FLocat LOCTYPE="OTHER" OTHERLOCTYPE="FILE" xlink:href="foo6.png"/>
       </mets:file>
     </mets:fileGrp>
   </mets:fileSec>

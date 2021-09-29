@@ -1,7 +1,7 @@
-from tests.base import TestCase, main, assets
+from tests.base import TestCase, main, assets, create_ocrd_file, create_ocrd_file_with_defaults
 
 from ocrd_utils import MIMETYPE_PAGE
-from ocrd_models import OcrdFile
+from ocrd_models import OcrdMets
 from ocrd_modelfactory import (
     exif_from_filename,
     page_from_image,
@@ -19,31 +19,33 @@ class TestModelFactory(TestCase):
             exif_from_filename(None)
 
     def test_page_from_file(self):
-        f = OcrdFile(None, mimetype='image/tiff', local_filename=SAMPLE_IMG, ID='file1')
+        f = create_ocrd_file_with_defaults(mimetype='image/tiff', local_filename=SAMPLE_IMG, ID='file1')
         self.assertEqual(f.mimetype, 'image/tiff')
         p = page_from_file(f)
         self.assertEqual(p.pcGtsId, f.ID)
         self.assertEqual(p.get_Page().imageWidth, 1457)
 
     def test_page_from_file_page(self):
-        f = OcrdFile(None, mimetype=MIMETYPE_PAGE, local_filename=SAMPLE_PAGE)
+        f = create_ocrd_file_with_defaults(mimetype=MIMETYPE_PAGE, local_filename=SAMPLE_PAGE)
         p = page_from_file(f)
         self.assertEqual(p.get_Page().imageWidth, 1457)
 
     def test_page_from_file_no_local_filename(self):
         with self.assertRaisesRegex(ValueError, "input_file must have 'local_filename' property"):
-            page_from_file(OcrdFile(None, mimetype='image/tiff'))
+            page_from_file(create_ocrd_file_with_defaults(mimetype='image/tiff'))
 
     def test_page_from_file_no_existe(self):
         with self.assertRaisesRegex(FileNotFoundError, "File not found: 'no-existe'"):
-            page_from_file(OcrdFile(None, local_filename='no-existe', mimetype='foo/bar'))
+            mets = OcrdMets.empty_mets()
+            ocrd_file = mets.add_file('FOO', ID='foo', local_filename='no-existe', mimetype='foo/bar')
+            page_from_file(ocrd_file)
 
     def test_page_from_file_unsupported_mimetype(self):
         with self.assertRaisesRegex(ValueError, "Unsupported mimetype"):
-            page_from_file(OcrdFile(None, local_filename=__file__, mimetype='foo/bar'))
+            page_from_file(create_ocrd_file_with_defaults(local_filename=__file__, mimetype='foo/bar'))
 
     def test_imports_from_generateds(self):
         from ocrd_models.ocrd_page import MetadataItemType
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

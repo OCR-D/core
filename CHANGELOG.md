@@ -5,6 +5,23 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.26.0] - 2021-09-20
+
+Added:
+
+  * `ocrd_utils`: functions for scaling images, #707
+
+Changed:
+
+  * `OcrdFile`: should only ever be instantiated in the context of `OcrdMets`, #324, #714
+  * Logging outputs to `STDERR` not `STDOUT`, OCR-D/spec#183, #713, #667
+
+Fixed:
+
+  * `ocrd workspace merge`: handle `file_grp` parameter, #715
+  * `ocrd workspace merge`: explicit --copy-files was --no-copy-files, #715
+  * `ocrd resmgr`: Fix tesseract URLs, #721
+
 ## [2.25.1] - 2021-06-30
 
 Fixed:
@@ -1345,6 +1362,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.26.0]: ../../compare/v2.26.0..v2.25.1
 [2.25.1]: ../../compare/v2.25.1..v2.25.0
 [2.25.0]: ../../compare/v2.25.0..v2.24.0
 [2.24.0]: ../../compare/v2.24.0..v2.23.2
