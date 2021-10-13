@@ -39,6 +39,7 @@ def setup_where():
     if uwsgi.worker_id() > gpu_workers:
         # avoid GPU
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        where = 'CPU'
 
 def setup():
     global tasks
