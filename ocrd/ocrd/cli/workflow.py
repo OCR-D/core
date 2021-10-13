@@ -106,7 +106,8 @@ def server_cli(log_level, timeout, processes, host, port, tasks):
                              # server log level:
                              "--set", "loglevel=%s" % (log_level or ''),
                              # worker timeout per page:
-                             "--set", "timeout_per_page=%d" % timeout])
+                             "--set", "timeout_per_page=%d" % timeout,
+                             "--buffer-size", "102400"])
     return result.returncode
 
 # ----------------------------------------------------------------------

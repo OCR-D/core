@@ -3,15 +3,21 @@ Flask application for uwsgi workflow server
 
 (This is not meant to be imported directly, but loaded from uwsgi.)
 """
+import base64
 import os
 import signal
 import json
 import flask
 import uwsgi # added to module path by uwsgi runner
 
-from ocrd_utils import getLogger, initLogging
+from io import BytesIO
+from ocrd_modelfactory import page_from_file
+from ocrd_utils import getLogger, initLogging, pushd_popd
 from ocrd.task_sequence import run_tasks, parse_tasks
 from ocrd.resolver import Resolver
+from PIL import Image
+from tempfile import TemporaryDirectory
+
 
 # unwrap user-defined workflow:
 tasks = json.loads(uwsgi.opt["tasks"])
@@ -129,5 +135,67 @@ def unlock(mets):
         uwsgi.cache_del(mets)
     finally:
         uwsgi.unlock()
+
+@app.route('/process_images', methods=["POST"])
+def process_images():  # pylint: disable=undefined-name
+    log.debug(f"Processing request: {flask.request}")
+    if flask.request.is_json:
+        req = flask.request.get_json()
+
+        pages = {}
+        if "pages" in req:
+            for k, v in req["pages"].items():
+                pages[k] = v
+        elif "PAGES" in req:
+            for k, v in pages["PAGES"].items():
+                pages[k] = v
+        else:
+            return 'Missing "pages" param.', 400
+
+        try:
+            work_dir = TemporaryDirectory()
+            ws = res.workspace_from_nothing(directory=work_dir.name)
+
+            for k, v in pages.items():
+                img = Image.open(BytesIO(base64.b64decode(v)))
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+                ws.save_image_file(img, k, "OCR-D-IMG", page_id=k, mimetype='image/png')
+            ws.save_mets()
+            ws.reload_mets()
+        except Exception as e:
+            work_dir.cleanup()
+            return f"An error occured while decoding image(s) and creating mets.xml. {e}", 400
+
+        try:
+            _process(ws.mets_target)
+            ws.reload_mets()
+            for k in pages.keys():
+                pages[k] = {"img": None, "page": None}
+
+                page_file = next(ws.mets.find_files(
+                    pageId=k,
+                    fileGrp=tasks[-1].output_file_grps[0],
+                ))
+                with pushd_popd(ws.directory):
+                    if page_file and os.path.exists(page_file.local_filename):
+                        with open(page_file.local_filename, "r", encoding="utf8") as f:
+                            pages[k]["page"] = f.read()
+                    img_path = page_from_file(
+                        page_file
+                    ).get_Page().get_AlternativeImage()[-1].get_filename()
+                    if img_path and os.path.exists(img_path):
+                        img = Image.open(img_path)
+                        img_file = BytesIO()
+                        img.save(img_file, format="PNG")
+                        pages[k]["img"] = base64.b64encode(img_file.getvalue()).decode("utf8")
+        except Exception as e:
+            return f"Failed: {e}", 500
+        finally:
+            work_dir.cleanup()
+
+        return flask.json.jsonify(pages)
+    else:
+        return "Request was not JSON.", 400
 
 setup()
