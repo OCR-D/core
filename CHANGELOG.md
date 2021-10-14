@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.26.1] - 2021-10-14
+
+Fixed:
+
+  * `resmgr`: Correct URL for tesseract configs
+
 ## [2.26.0] - 2021-09-20
 
 Added:
