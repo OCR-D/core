@@ -12,7 +12,6 @@ from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.constants import HOME, XDG_DATA_HOME, XDG_CONFIG_HOME
 from ocrd_utils.os import list_all_resources, pushd_popd
 
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
@@ -23,10 +22,12 @@ class OcrdResourceManager():
     Managing processor resources
     """
     def __init__(self):
+        from ocrd_utils.constants import XDG_CONFIG_HOME
         self.log = getLogger('ocrd.resource_manager')
         self.database = {}
         self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
         self.user_list = Path(XDG_CONFIG_HOME, 'ocrd', 'resources.yml')
+        print(self.user_list)
         if not self.user_list.exists():
             if not self.user_list.parent.exists():
                 self.user_list.parent.mkdir(parents=True)
@@ -63,6 +64,7 @@ class OcrdResourceManager():
         """
         List installed resources, matching with registry by ``name``
         """
+        from ocrd_utils.constants import XDG_DATA_HOME
         ret = []
         if executable:
             all_executables = [executable]
@@ -97,7 +99,8 @@ class OcrdResourceManager():
             user_database = safe_load(f) or {}
         if executable not in user_database:
             user_database[executable] = []
-        if not self.find_resources(executable=executable, name=res_name, database=user_database):
+        resources_found = self.find_resources(executable=executable, name=res_name, database=user_database)
+        if not resources_found:
             resdict = {
                 'name': res_name,
                 'url': url if url else '???',
@@ -106,6 +109,8 @@ class OcrdResourceManager():
                 'size': res_size
             }
             user_database[executable].append(resdict)
+        else:
+            resdict = resources_found[0]
         with open(self.user_list, 'w', encoding='utf-8') as f:
             f.write(RESOURCE_USER_LIST_COMMENT)
             f.write('\n')
@@ -136,11 +141,13 @@ class OcrdResourceManager():
         return self.location_to_resource_dir('data')
 
     def location_to_resource_dir(self, location):
+        from ocrd_utils.constants import XDG_DATA_HOME
         return '/usr/local/share/ocrd-resources' if location == 'system' else \
                 join(XDG_DATA_HOME, 'ocrd-resources') if location == 'data' else \
                 getcwd()
 
     def resource_dir_to_location(self, resource_path):
+        from ocrd_utils.constants import XDG_DATA_HOME
         resource_path = str(resource_path)
         return 'system' if resource_path.startswith('/usr/local/share/ocrd-resources') else \
                'data' if resource_path.startswith(join(XDG_DATA_HOME, 'ocrd-resources')) else \
