@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Jun 30 17:57:54 2021 by generateDS.py version 2.35.20.
+# Generated Wed Nov  3 12:30:32 2021 by generateDS.py version 2.35.20.
 # Python 3.6.9 (default, Jan 26 2021, 15:33:00)  [GCC 8.4.0]
 #
 # Command line options:
@@ -24,7 +24,7 @@
 #   core
 #
 
-from six.moves import zip_longest
+from itertools import zip_longest
 import os
 import sys
 import re as re_
@@ -1229,7 +1229,7 @@ class PcGtsType(GeneratedsSuper):
     @property
     def id(self):
         if hasattr(self, 'pcGtsId'):
-            return self.pcGtsId
+            return self.pcGtsId or ''
         return self.imageFilename
     def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
@@ -3115,7 +3115,7 @@ class PageType(GeneratedsSuper):
     @property
     def id(self):
         if hasattr(self, 'pcGtsId'):
-            return self.pcGtsId
+            return self.pcGtsId or ''
         return self.imageFilename
     # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
     def _region_class(self, x): # pylint: disable=unused-argument

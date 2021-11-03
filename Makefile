@@ -100,6 +100,8 @@ generate-page: repo/assets
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
 	# hack to ensure child nodes also have pc: prefix...
 	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
+	# replace the need for six since we target python 3.6+
+	sed -i 's/from six.moves/from itertools/' $(GDS_PAGE)
 
 #
 # Repos
