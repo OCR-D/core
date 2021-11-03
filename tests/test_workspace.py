@@ -210,6 +210,16 @@ class TestWorkspace(TestCase):
             workspace.remove_file_group('OCR-D-IMG', recursive=True)
             self.assertFalse(exists(join(tempdir, 'OCR-D-IMG')))
 
+    def test_remove_file_group_flat(self):
+        """
+        https://github.com/OCR-D/core/issues/728
+        """
+        with pushd_popd(tempdir=True) as tempdir:
+            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
+            f1 = Path(workspace.add_file('FOO', ID='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', pageId=None).url)
+            assert f1.exists()
+            workspace.remove_file_group('FOO', recursive=True)
+
     def test_remove_file_page_recursive(self):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
             with pushd_popd(tempdir):
