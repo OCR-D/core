@@ -27,7 +27,6 @@ class OcrdResourceManager():
         self.database = {}
         self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
         self.user_list = Path(XDG_CONFIG_HOME, 'ocrd', 'resources.yml')
-        print(self.user_list)
         if not self.user_list.exists():
             if not self.user_list.parent.exists():
                 self.user_list.parent.mkdir(parents=True)
