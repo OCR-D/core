@@ -6,35 +6,31 @@ from pytest import fixture
 
 from ocrd_utils import pushd_popd, initLogging
 import ocrd_utils.constants
-from ocrd.resource_manager import OcrdResourceManager
+
+_tempdir = None
 
 @contextmanager
 def monkey_patch_temp_xdg():
+    global _tempdir
     with pushd_popd(tempdir=True) as tempdir:
         old_config = ocrd_utils.constants.XDG_CONFIG_HOME
         old_data = ocrd_utils.constants.XDG_DATA_HOME
         ocrd_utils.constants.XDG_CONFIG_HOME = tempdir
         ocrd_utils.constants.XDG_DATA_HOME = tempdir
-        yield tempdir
+        from ocrd.resource_manager import OcrdResourceManager
+        yield tempdir, OcrdResourceManager()
         ocrd_utils.constants.XDG_CONFIG_HOME = old_config
         ocrd_utils.constants.XDG_DATA_HOME = old_data
 
 def test_config_created():
-    with monkey_patch_temp_xdg() as tempdir:
-        mgr = OcrdResourceManager()
-        assert Path(tempdir, 'ocrd', 'resources.yml').exists()
-
-def test_add_to_user_database_new():
-    with monkey_patch_temp_xdg() as tempdir:
-        mgr = OcrdResourceManager()
-        ret = mgr.add_to_user_database('ocrd-foo', Path(tempdir, 'ocrd', 'resources.yml'))
-        ret = mgr.add_to_user_database('ocrd-foo', Path(tempdir, 'ocrd', 'resources.yml'))
+    with monkey_patch_temp_xdg() as (tempdir, mgr):
+        f = Path(tempdir, 'ocrd', 'resources.yml')
+        assert f.exists()
+        assert f == mgr.user_list
+        ret = mgr.add_to_user_database('ocrd-foo', f)
+        ret = mgr.add_to_user_database('ocrd-foo', f)
         assert ret
         mgr.list_installed()
-
-def test_add_to_user_database_existing():
-    with monkey_patch_temp_xdg() as tempdir:
-        mgr = OcrdResourceManager()
         proc = 'ocrd-anybaseocr-layout-analysis'
         url = 'https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle'
         fpath = mgr.download(proc, url, mgr.location_to_resource_dir('data'))
