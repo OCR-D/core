@@ -7,11 +7,8 @@ from pytest import fixture
 from ocrd_utils import pushd_popd, initLogging
 import ocrd_utils.constants
 
-_tempdir = None
-
 @contextmanager
 def monkey_patch_temp_xdg():
-    global _tempdir
     with pushd_popd(tempdir=True) as tempdir:
         old_config = ocrd_utils.constants.XDG_CONFIG_HOME
         old_data = ocrd_utils.constants.XDG_DATA_HOME
