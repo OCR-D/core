@@ -276,12 +276,18 @@ class Workspace():
             url_replacements = {}
             log.info("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_url = sub(r'^%s/' % old, '%s/' % new, mets_file.url)
+                new_url = mets_file.url
+                # Directory part
+                new_url = sub(r'^%s/' % old, r'%s/' % new, new_url)
+                # File part
+                new_url = sub(r'/%s' % old, r'/%s' % new, new_url)
                 url_replacements[mets_file.url] = new_url
                 # move file from ``old`` to ``new``
                 move(mets_file.url, new_url)
                 # change the url of ``mets:file``
                 mets_file.url = new_url
+                # change the file ID and update structMap
+                mets_file.ID = sub(r'^%s' % old, r'%s' % new, mets_file.ID)
             # change file paths in PAGE-XML imageFilename and filename attributes
             for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
                 log.info("Renaming file references in PAGE-XML %s" % page_file)
