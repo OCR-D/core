@@ -454,7 +454,7 @@ class OcrdMets(OcrdXmlDocument):
 
     def remove_physical_page_fptr(self, fileId):
         """
-        Delete all ``mets:fptr[@FILEID = fileId`` to ``mets:file[@ID == fileId]`` from alll entries in the physical ``mets:structMap`` ``mets:div`` entries) :py:attr:`ID`.
+        Delete all ``mets:fptr[@FILEID = fileId]`` to ``mets:file[@ID == fileId]`` for :py:attr:`fileId` from all ``mets:div`` entries in the physical ``mets:structMap``.
         Returns:
             List of pageIds that mets:fptrs were deleted from
         """
