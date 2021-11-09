@@ -9,6 +9,10 @@ Fixed:
 
   * remove dependency on six, #732
 
+Changed:
+
+  * `ocrd workspace rename-group` will now also rename filenames and `mets:file/@ID`
+
 ## [2.26.1] - 2021-10-14
 
 Fixed:
