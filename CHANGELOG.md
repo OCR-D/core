@@ -10,6 +10,7 @@ Fixed:
   * remove dependency on six, #732
   * `ocrd workspace remove-group`: handle files not in subdir gracefully, #734
   * `ocrd resmgr`: fix "reference before assignment" issue #689, #733
+  * `OcrdWorkspace.remove_file`: handle empty regexes, #725
 
 Changed:
 
