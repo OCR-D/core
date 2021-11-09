@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.27.0] - 2021-11-09
+
 Fixed:
 
   * remove dependency on six, #732
@@ -1379,6 +1381,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.27.0]: ../../compare/v2.27.0..v2.26.1
+[2.26.1]: ../../compare/v2.26.1..v2.26.0
 [2.26.0]: ../../compare/v2.26.0..v2.25.1
 [2.25.1]: ../../compare/v2.25.1..v2.25.0
 [2.25.0]: ../../compare/v2.25.0..v2.24.0
