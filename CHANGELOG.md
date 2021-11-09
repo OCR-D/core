@@ -8,10 +8,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * remove dependency on six, #732
+  * `ocrd workspace remove-group`: handle files not in subdir gracefully, #734
 
 Changed:
 
-  * `ocrd workspace rename-group` will now also rename filenames and `mets:file/@ID`
+  * `ocrd workspace rename-group` will now also rename filenames and `mets:file/@ID`, #736
 
 ## [2.26.1] - 2021-10-14
 
