@@ -114,7 +114,7 @@ def get_local_filename(url, start=None):
         url = url[len('file://'):]
     # Goobi/Kitodo produces those, they are always absolute
     if url.startswith('file:/'):
-        raise Exception("Invalid (java) URL: %s" % url)
+        url = url[len('file:'):]
     if start:
         if not url.startswith(start):
             raise Exception("Cannot remove prefix %s from url %s" % (start, url))

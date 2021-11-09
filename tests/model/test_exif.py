@@ -1,7 +1,10 @@
-from PIL import Image
+from PIL import Image, __version__ as pil_version
 from tests.base import TestCase, main, assets
 
 from ocrd_models import OcrdExif
+
+pil_version_major, pil_version_minor  = [int(x) for x in pil_version.split('.')][:2]
+pil_below_83 = pil_version_major < 8 or (pil_version_major == 8 and pil_version_minor < 3)
 
 # pylint: disable=no-member
 class TestOcrdExif(TestCase):
@@ -34,9 +37,9 @@ class TestOcrdExif(TestCase):
             exif = OcrdExif(img)
         self.assertEqual(exif.width, 1457)
         self.assertEqual(exif.height, 2084)
-        self.assertEqual(exif.xResolution, 295)
-        self.assertEqual(exif.yResolution, 295)
-        self.assertEqual(exif.resolution, 295)
+        self.assertEqual(exif.xResolution, 295 if pil_below_83 else 294)
+        self.assertEqual(exif.yResolution, 295 if pil_below_83 else 294)
+        self.assertEqual(exif.resolution, 295 if pil_below_83 else 294)
         self.assertEqual(exif.resolutionUnit, 'inches')
         self.assertEqual(exif.compression, None)
         self.assertEqual(exif.photometricInterpretation, '1')

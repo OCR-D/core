@@ -3,11 +3,14 @@ from os import makedirs, unlink, listdir, path
 from pathlib import Path
 from shutil import move, copyfileobj
 from re import sub
+from tempfile import NamedTemporaryFile
+from contextlib import contextmanager
 
 from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
 from PIL import Image
 import numpy as np
 from deprecated.sphinx import deprecated
+import requests
 
 from ocrd_models import OcrdMets, OcrdFile
 from ocrd_models.ocrd_page import parse, BorderType, to_xml
@@ -39,6 +42,14 @@ from ocrd_utils import (
 from .workspace_backup import WorkspaceBackupManager
 
 __all__ = ['Workspace']
+
+@contextmanager
+def download_temporary_file(url):
+    with NamedTemporaryFile(prefix='ocrd-download-') as f:
+        with requests.get(url) as r:
+            f.write(r.content)
+        yield f
+
 
 class Workspace():
     """
@@ -118,10 +129,10 @@ class Workspace():
         Returns:
             The local filename of the downloaded file
         """
-        f = OcrdFile(None, url=url, **kwargs)
+        dummy_mets = OcrdMets.empty_mets()
+        f = dummy_mets.add_file('DEPRECATED', ID=Path(url).name, url=url)
         f = self.download_file(f)
         return f.local_filename
-
 
     def download_file(self, f, _recursion_count=0):
         """
@@ -143,7 +154,7 @@ class Workspace():
                     if not self.baseurl:
                         raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
                     if _recursion_count >= 1:
-                        raise Exception("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
+                        raise FileNotFoundError("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
                     log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
                     f.url = '%s/%s' % (self.baseurl, f.url)
                     f.url = self.download_file(f, _recursion_count + 1).local_filename
@@ -172,31 +183,34 @@ class Workspace():
         if isinstance(ID, OcrdFile):
             ID = ID.ID
         try:
-            ocrd_file_ = self.mets.remove_file(ID)
-            ocrd_files = [ocrd_file_] if isinstance(ocrd_file_, OcrdFile) else ocrd_file_
-            if page_recursive:
+            try:
+                ocrd_file = next(self.mets.find_files(ID=ID))
+            except StopIteration:
+                if ID.startswith(REGEX_PREFIX):
+                    # allow empty results if filter criteria involve a regex
+                    return None
+                raise FileNotFoundError("File %s not found in METS" % ID)
+            if page_recursive and ocrd_file.mimetype == MIMETYPE_PAGE:
                 with pushd_popd(self.directory):
-                    for ocrd_file in ocrd_files:
-                        if ocrd_file.mimetype != MIMETYPE_PAGE:
-                            continue
-                        ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
-                        for img_url in ocrd_page.get_AllAlternativeImagePaths():
-                            img_kwargs = {'url': img_url}
-                            if page_same_group:
-                                img_kwargs['fileGrp'] = ocrd_file.fileGrp
-                            for img_file in self.mets.find_files(**img_kwargs):
-                                self.remove_file(img_file, keep_file=keep_file, force=force)
+                    ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
+                    for img_url in ocrd_page.get_AllAlternativeImagePaths():
+                        img_kwargs = {'url': img_url}
+                        if page_same_group:
+                            img_kwargs['fileGrp'] = ocrd_file.fileGrp
+                        for img_file in self.mets.find_files(**img_kwargs):
+                            self.remove_file(img_file, keep_file=keep_file, force=force)
             if not keep_file:
                 with pushd_popd(self.directory):
-                    for ocrd_file in ocrd_files:
-                        if not ocrd_file.local_filename:
-                            log.warning("File not locally available %s", ocrd_file)
-                            if not force:
-                                raise Exception("File not locally available %s" % ocrd_file)
-                        else:
-                            log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
-                            unlink(ocrd_file.local_filename)
-            return ocrd_file_
+                    if not ocrd_file.local_filename:
+                        log.warning("File not locally available %s", ocrd_file)
+                        if not force:
+                            raise Exception("File not locally available %s" % ocrd_file)
+                    else:
+                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                        unlink(ocrd_file.local_filename)
+            # Remove from METS only after the recursion of AlternativeImages
+            self.mets.remove_file(ID)
+            return ocrd_file
         except FileNotFoundError as e:
             if not force:
                 raise e
@@ -227,7 +241,9 @@ class Workspace():
             for f in self.mets.find_files(fileGrp=USE):
                 self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
                 if f.local_filename:
-                    file_dirs.append(path.dirname(f.local_filename))
+                    f_dir = path.dirname(f.local_filename)
+                    if f_dir:
+                        file_dirs.append(f_dir)
 
         self.mets.remove_file_group(USE, force=force)
 
@@ -265,12 +281,24 @@ class Workspace():
             url_replacements = {}
             log.info("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_url = sub(r'^%s/' % old, '%s/' % new, mets_file.url)
+                new_url = old_url = mets_file.url
+                # Directory part
+                new_url = sub(r'^%s/' % old, r'%s/' % new, new_url)
+                # File part
+                new_url = sub(r'/%s' % old, r'/%s' % new, new_url)
                 url_replacements[mets_file.url] = new_url
                 # move file from ``old`` to ``new``
                 move(mets_file.url, new_url)
                 # change the url of ``mets:file``
                 mets_file.url = new_url
+                # change the file ID and update structMap
+                # change the file ID and update structMap
+                new_id = sub(r'^%s' % old, r'%s' % new, mets_file.ID)
+                try:
+                    next(self.mets.find_files(ID=new_id))
+                    log.warning("ID %s already exists, not changing ID while renaming %s -> %s" % (new_id, old_url, new_url))
+                except StopIteration:
+                    mets_file.ID = new_id
             # change file paths in PAGE-XML imageFilename and filename attributes
             for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
                 log.info("Renaming file references in PAGE-XML %s" % page_file)
@@ -368,9 +396,13 @@ class Workspace():
         if not image_url:
             # avoid "finding" just any file
             raise Exception("Cannot resolve empty image path")
-        f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
-        image_filename = self.download_file(f).local_filename
-        ocrd_exif = exif_from_filename(image_filename)
+        try:
+            f = next(self.mets.find_files(url=image_url))
+            image_filename = self.download_file(f).local_filename
+            ocrd_exif = exif_from_filename(image_filename)
+        except StopIteration:
+            with download_temporary_file(image_url) as f:
+                ocrd_exif = exif_from_filename(f.filename)
         return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
@@ -394,11 +426,13 @@ class Workspace():
             # avoid "finding" just any file
             raise Exception("Cannot resolve empty image path")
         log = getLogger('ocrd.workspace._resolve_image_as_pil')
-        f = next(self.mets.find_files(url=image_url), OcrdFile(None, url=image_url))
-        image_filename = self.download_file(f).local_filename
-
         with pushd_popd(self.directory):
-            pil_image = Image.open(image_filename)
+            try:
+                f = next(self.mets.find_files(url=image_url))
+                pil_image = Image.open(self.download_file(f).local_filename)
+            except StopIteration:
+                with download_temporary_file(image_url) as f:
+                    pil_image = Image.open(f.filename)
             pil_image.load() # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
@@ -700,7 +734,7 @@ class Workspace():
 
         If `feature_selector` and/or `feature_filter` is given, then
         select/filter among the cropped `parent_image` and the available
-        ``AlternativeImage``s the richest one which contains all of the selected,
+        AlternativeImages the richest one which contains all of the selected,
         but none of the filtered features (i.e. ``@comments`` classes), or
         raise an error.
 
@@ -1033,4 +1067,23 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
         _, segment_coords, segment_xywh = _crop(
             log, name, segment, segment_image, segment_coords,
             op='recropped', **kwargs)
+    return segment_image, segment_coords, segment_xywh
+
+def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwargs):
+    # Resize linearly
+    segment_coords['transform'] = scale_coordinates(
+        segment_coords['transform'], [factor, factor])
+    segment_coords['scale'] = segment_coords.setdefault('scale', 1.0) * factor
+    segment_xywh['w'] *= factor
+    segment_xywh['h'] *= factor
+    # resize, if (still) necessary
+    if not 'scaled' in segment_coords['features']:
+        log.info("Scaling %s by %.2f", name, factor)
+        segment_coords['features'] += ',scaled'
+        # FIXME: validate factor against PAGE-XML attributes
+        # FIXME: factor should become less precise due to rounding
+        segment_image = segment_image.resize((int(segment_image.width * factor),
+                                              int(segment_image.height * factor)),
+                                             # slowest, but highest quality:
+                                             Image.BICUBIC)
     return segment_image, segment_coords, segment_xywh
