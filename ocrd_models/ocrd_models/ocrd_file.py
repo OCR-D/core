@@ -110,7 +110,13 @@ class OcrdFile():
         """
         if ID is None:
             return
+        if self.mets is None:
+            raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
+        old_id = self.ID
         self._el.set('ID', ID)
+        # also update the references in the physical structmap
+        for pageId in self.mets.remove_physical_page_fptr(fileId=old_id):
+            self.pageId = pageId
 
     @property
     def pageId(self):

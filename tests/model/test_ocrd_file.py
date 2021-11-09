@@ -85,5 +85,13 @@ class TestOcrdFile(TestCase):
         f5 = mets.add_file('TEMP', ID='TEMP_1', mimetype='image/tiff')
         self.assertEqual(f3 == f5, True)
 
+    def test_fptr_changed_for_change_id(self):
+        mets = OcrdMets.empty_mets()
+        f1 = mets.add_file('FOO', ID='FOO_1', mimetype='image/tiff', pageId='p0001')
+        assert mets.get_physical_pages(for_fileIds=['FOO_1']) == ['p0001']
+        f1.ID = 'BAZ_1'
+        assert mets.get_physical_pages(for_fileIds=['FOO_1']) == [None]
+        assert mets.get_physical_pages(for_fileIds=['BAZ_1']) == ['p0001']
+
 if __name__ == '__main__':
     main(__file__)
