@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * remove dependency on six, #732
+
 ## [2.26.1] - 2021-10-14
 
 Fixed:
