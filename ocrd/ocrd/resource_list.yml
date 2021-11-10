@@ -45,12 +45,12 @@ ocrd-tesserocr-recognize:
     parameter_usage: 'without-extension'
     description: Tesseract Latin model
     size: 89384811
-  - url: https://github.com/tesseract-ocr/tesseract/archive/master.tar.gz
+  - url: https://github.com/tesseract-ocr/tesseract/archive/main.tar.gz
     name: configs
     description: Tesseract configs (parameter sets) for use with the standalone tesseract CLI
-    size: 1973268
+    size: 1915529
     type: tarball
-    path_in_archive: 'tesseract-master/tessdata/configs'
+    path_in_archive: 'tesseract-main/tessdata/configs'
 ocrd-calamari-recognize:
   # XXX disabled since older ocrd_calamari versions don't support resource resolving
   #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz

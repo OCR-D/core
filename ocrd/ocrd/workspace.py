@@ -186,6 +186,9 @@ class Workspace():
             try:
                 ocrd_file = next(self.mets.find_files(ID=ID))
             except StopIteration:
+                if ID.startswith(REGEX_PREFIX):
+                    # allow empty results if filter criteria involve a regex
+                    return None
                 raise FileNotFoundError("File %s not found in METS" % ID)
             if page_recursive and ocrd_file.mimetype == MIMETYPE_PAGE:
                 with pushd_popd(self.directory):
@@ -238,7 +241,9 @@ class Workspace():
             for f in self.mets.find_files(fileGrp=USE):
                 self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
                 if f.local_filename:
-                    file_dirs.append(path.dirname(f.local_filename))
+                    f_dir = path.dirname(f.local_filename)
+                    if f_dir:
+                        file_dirs.append(f_dir)
 
         self.mets.remove_file_group(USE, force=force)
 
@@ -276,12 +281,24 @@ class Workspace():
             url_replacements = {}
             log.info("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_url = sub(r'^%s/' % old, '%s/' % new, mets_file.url)
+                new_url = old_url = mets_file.url
+                # Directory part
+                new_url = sub(r'^%s/' % old, r'%s/' % new, new_url)
+                # File part
+                new_url = sub(r'/%s' % old, r'/%s' % new, new_url)
                 url_replacements[mets_file.url] = new_url
                 # move file from ``old`` to ``new``
                 move(mets_file.url, new_url)
                 # change the url of ``mets:file``
                 mets_file.url = new_url
+                # change the file ID and update structMap
+                # change the file ID and update structMap
+                new_id = sub(r'^%s' % old, r'%s' % new, mets_file.ID)
+                try:
+                    next(self.mets.find_files(ID=new_id))
+                    log.warning("ID %s already exists, not changing ID while renaming %s -> %s" % (new_id, old_url, new_url))
+                except StopIteration:
+                    mets_file.ID = new_id
             # change file paths in PAGE-XML imageFilename and filename attributes
             for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
                 log.info("Renaming file references in PAGE-XML %s" % page_file)

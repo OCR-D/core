@@ -5,6 +5,25 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.27.0] - 2021-11-09
+
+Fixed:
+
+  * remove dependency on six, #732
+  * `ocrd workspace remove-group`: handle files not in subdir gracefully, #734
+  * `ocrd resmgr`: fix "reference before assignment" issue #689, #733
+  * `OcrdWorkspace.remove_file`: handle empty regexes, #725
+
+Changed:
+
+  * `ocrd workspace rename-group` will now also rename filenames and `mets:file/@ID`, #736
+
+## [2.26.1] - 2021-10-14
+
+Fixed:
+
+  * `resmgr`: Correct URL for tesseract configs
+
 ## [2.26.0] - 2021-09-20
 
 Added:
@@ -1362,6 +1381,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.27.0]: ../../compare/v2.27.0..v2.26.1
+[2.26.1]: ../../compare/v2.26.1..v2.26.0
 [2.26.0]: ../../compare/v2.26.0..v2.25.1
 [2.25.1]: ../../compare/v2.25.1..v2.25.0
 [2.25.0]: ../../compare/v2.25.0..v2.24.0

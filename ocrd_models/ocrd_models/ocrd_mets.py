@@ -327,6 +327,10 @@ class OcrdMets(OcrdXmlDocument):
                 return files
             else:
                 return files[0] # for backwards-compatibility
+        if any(1 for kwarg in kwargs
+               if isinstance(kwarg, str) and kwarg.startswith(REGEX_PREFIX)):
+            # allow empty results if filter criteria involve a regex
+            return []
         raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
 
     def remove_one_file(self, ID):
@@ -451,6 +455,22 @@ class OcrdMets(OcrdXmlDocument):
             namespaces=NS)
         if mets_div:
             mets_div[0].getparent().remove(mets_div[0])
+
+    def remove_physical_page_fptr(self, fileId):
+        """
+        Delete all ``mets:fptr[@FILEID = fileId]`` to ``mets:file[@ID == fileId]`` for :py:attr:`fileId` from all ``mets:div`` entries in the physical ``mets:structMap``.
+        Returns:
+            List of pageIds that mets:fptrs were deleted from
+        """
+        mets_fptrs = self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' % fileId,
+            namespaces=NS)
+        ret = []
+        for mets_fptr in mets_fptrs:
+            mets_div = mets_fptr.getparent()
+            ret.append(mets_div.get('ID'))
+            mets_div.remove(mets_fptr)
+        return ret
 
     def merge(self, other_mets, fileGrp_mapping=None, after_add_cb=None, **kwargs):
         """

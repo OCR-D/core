@@ -100,6 +100,8 @@ generate-page: repo/assets
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
 	# hack to ensure child nodes also have pc: prefix...
 	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
+	# replace the need for six since we target python 3.6+
+	sed -i 's/from six.moves/from itertools/' $(GDS_PAGE)
 
 #
 # Repos
@@ -150,7 +152,8 @@ assets-server:
 test: assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	$(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
+	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors $(TESTDIR)/test_resource_manager.py
+	$(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py --ignore=$(TESTDIR)/test_resource_manager.py $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)

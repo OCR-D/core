@@ -182,14 +182,13 @@ class TestWorkspace(TestCase):
             with pushd_popd(tempdir):
                 pcgts_before = page_from_file(next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001')))
                 assert pcgts_before.get_Page().imageFilename == 'OCR-D-IMG/OCR-D-IMG_0001.tif'
-                # from os import system
-                # print(system('find'))
                 workspace.rename_file_group('OCR-D-IMG', 'FOOBAR')
-                # print(system('find'))
                 pcgts_after = page_from_file(next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001')))
-                assert pcgts_after.get_Page().imageFilename == 'FOOBAR/OCR-D-IMG_0001.tif'
-                assert Path('FOOBAR/OCR-D-IMG_0001.tif').exists()
+                assert pcgts_after.get_Page().imageFilename == 'FOOBAR/FOOBAR_0001.tif'
+                assert Path('FOOBAR/FOOBAR_0001.tif').exists()
                 assert not Path('OCR-D-IMG/OCR-D-IMG_0001.tif').exists()
+                assert workspace.mets.get_physical_pages(for_fileIds=['OCR-D-IMG_0001']) == [None]
+                assert workspace.mets.get_physical_pages(for_fileIds=['FOOBAR_0001']) == ['phys_0001']
 
     def test_remove_file_group_force(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
@@ -209,6 +208,16 @@ class TestWorkspace(TestCase):
             self.assertTrue(exists(join(tempdir, 'OCR-D-IMG')))
             workspace.remove_file_group('OCR-D-IMG', recursive=True)
             self.assertFalse(exists(join(tempdir, 'OCR-D-IMG')))
+
+    def test_remove_file_group_flat(self):
+        """
+        https://github.com/OCR-D/core/issues/728
+        """
+        with pushd_popd(tempdir=True) as tempdir:
+            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
+            f1 = Path(workspace.add_file('FOO', ID='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', pageId=None).url)
+            assert f1.exists()
+            workspace.remove_file_group('FOO', recursive=True)
 
     def test_remove_file_page_recursive(self):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
