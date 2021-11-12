@@ -68,7 +68,7 @@ def make_file_id(ocrd_file, output_file_grp):
     """
     ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
     if ret == ocrd_file.ID:
-        if ocrd_file.pageId in ocrd_file.ID:
+        if ocrd_file.pageId and ocrd_file.pageId in ocrd_file.ID:
             # still sufficiently unique
             ret = ocrd_file.ID + '_' + output_file_grp
         else:
