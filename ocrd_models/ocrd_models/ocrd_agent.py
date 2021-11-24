@@ -155,7 +155,7 @@ class OcrdAgent():
                 self._el.remove(el_note)
         if notes:
             for note in notes:
-                el_note = ET.SubElement(self._el, TAG_METS_NOTE, nsmap=NS)
+                el_note = ET.SubElement(self._el, TAG_METS_NOTE, nsmap={'ocrd': NS['ocrd']})
                 attrib, text = note
                 el_note.text = text
                 for name, value in attrib.items():
