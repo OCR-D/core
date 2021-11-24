@@ -17,6 +17,7 @@ __all__ = [
     'TAG_METS_FLOCAT',
     'TAG_METS_METSHDR',
     'TAG_METS_NAME',
+    'TAG_METS_NOTE',
     'TAG_METS_STRUCTMAP',
     'TAG_MODS_IDENTIFIER',
     'TAG_PAGE_ALTERNATIVEIMAGE',
@@ -39,6 +40,7 @@ NAMESPACES = {
     'xlink': "http://www.w3.org/1999/xlink",
     'page': "http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15",
     'xsl': 'http://www.w3.org/1999/XSL/Transform#',
+    'ocrd': 'https://ocr-d.de',
 }
 
 # pylint: disable=bad-whitespace
@@ -51,6 +53,7 @@ TAG_METS_FPTR             = '{%s}fptr' % NAMESPACES['mets']
 TAG_METS_FLOCAT           = '{%s}FLocat' % NAMESPACES['mets']
 TAG_METS_METSHDR          = '{%s}metsHdr' % NAMESPACES['mets']
 TAG_METS_NAME             = '{%s}name' % NAMESPACES['mets']
+TAG_METS_NOTE             = '{%s}note' % NAMESPACES['mets']
 TAG_METS_STRUCTMAP        = '{%s}structMap' % NAMESPACES['mets']
 
 TAG_MODS_IDENTIFIER       = '{%s}identifier' % NAMESPACES['mods']
