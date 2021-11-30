@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added:
 
   * Store parameterization of processors in METS for provenance, #747
+  * `ocrd workspace find --download`: Add a `--wait` option to wait between downloads, #745
 
 ## [2.27.0] - 2021-11-09
 
