@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Store parameterization of processors in METS for provenance, #747
+
 ## [2.27.0] - 2021-11-09
 
 Fixed:
