@@ -10,6 +10,7 @@ Added:
   * Store parameterization of processors in METS for provenance, #747
   * `ocrd workspace find --download`: Add a `--wait` option to wait between downloads, #745
   * bashlib: Check fileGrps when parsing CLI args, #743, OCR-D/ocrd_olena#76
+  * Dockerfile: Install `time` to have `/usr/bin/time` in the image, #748, OCR-D/ocrd_all#271
 
 Fixed:
 
