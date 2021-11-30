@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.28.0] - 2021-11-30
+
 Added:
 
   * Store parameterization of processors in METS for provenance, #747
@@ -1392,6 +1394,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.28.0]: ../../compare/v2.28.0..v2.27.0
 [2.27.0]: ../../compare/v2.27.0..v2.26.1
 [2.26.1]: ../../compare/v2.26.1..v2.26.0
 [2.26.0]: ../../compare/v2.26.0..v2.25.1
