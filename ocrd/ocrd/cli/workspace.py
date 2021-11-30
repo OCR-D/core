@@ -13,6 +13,7 @@ from json import loads
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
+import time
 
 import click
 
@@ -347,8 +348,9 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             'local_filename',
         ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
+@click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download, wait):
     """
     Find files.
 
@@ -367,6 +369,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         if download and not f.local_filename:
             workspace.download_file(f)
             modified_mets = True
+            if wait:
+                time.sleep(wait)
         ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
                     for field in output_field])
     if modified_mets:
