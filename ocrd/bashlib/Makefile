@@ -13,6 +13,7 @@ help:
 # Build the lib
 lib: lib.bash
 
+.DELETE_ON_ERROR:
 lib.bash: $(wildcard src/*.bash)
 	shinclude -c pound src/lib.bash > "$@"
 

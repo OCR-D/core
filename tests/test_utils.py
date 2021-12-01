@@ -4,8 +4,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from tests.base import TestCase, main, assets
-from tests.data.mock_file import MockOcrdFile
+from tests.base import TestCase, main, assets, create_ocrd_file
 from ocrd_utils import (
     abspath,
 
@@ -44,7 +43,7 @@ from ocrd_utils import (
     MIME_TO_PIL, PIL_TO_MIME,
 )
 from ocrd_models.utils import xmllint_format
-from ocrd_models import OcrdFile, OcrdMets
+from ocrd_models import OcrdMets
 
 class TestUtils(TestCase):
 
@@ -173,8 +172,7 @@ class TestUtils(TestCase):
     def test_local_filename(self):
         self.assertEqual(get_local_filename('/foo/bar'), '/foo/bar')
         self.assertEqual(get_local_filename('file:///foo/bar'), '/foo/bar')
-        with self.assertRaisesRegex(Exception, "Invalid.* URL"):
-            self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
         self.assertEqual(get_local_filename('/foo/bar', '/foo/'), 'bar')
         self.assertEqual(get_local_filename('/foo/bar', '/foo'), 'bar')
         self.assertEqual(get_local_filename('foo/bar', 'foo'), 'bar')
@@ -263,12 +261,9 @@ class TestUtils(TestCase):
         with self.assertRaisesRegex(AssertionError, r"Expected exactly 1 output file group .foo bar., but '.'FOO', 'BAR'.' has 2"):
             assert_file_grp_cardinality('FOO,BAR', 1, 'foo bar')
 
-    def test_mock_file(self):
-        f = MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX')
-        self.assertEqual(f.fileGrp, 'MAX')
-
     def test_make_file_id_simple(self):
-        self.assertEqual(make_file_id(MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX'), 'FOO'), 'FOO_0012')
+        f = create_ocrd_file('MAX', ID="MAX_0012")
+        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0012')
 
     def test_make_file_id_mets(self):
         mets = OcrdMets.empty_mets()
