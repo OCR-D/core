@@ -24,7 +24,8 @@ from ocrd.decorators import (
 from ocrd_utils import (
     is_local_filename,
     get_local_filename,
-    initLogging
+    initLogging,
+    make_file_id
 )
 from ocrd.resolver import Resolver
 from ocrd.processor import Processor
@@ -89,6 +90,13 @@ def bashlib_constants(name):
 def bashlib_input_files(**kwargs):
     """
     List input files for processing
+
+    Instantiate a processor and workspace from the given processing options.
+    Then loop through the input files of the input fileGrp, and for each one,
+    print its `url`, `ID`, `mimetype` and `pageId`, as well as its recommended
+    `outputFileId` (from ``make_file_id``).
+
+    (The printing format is one associative array initializer per line.)
     """
     initLogging()
     mets = kwargs.pop('mets')
@@ -107,4 +115,4 @@ def bashlib_input_files(**kwargs):
         for field in ['url', 'ID', 'mimetype', 'pageId']:
             # make this bash-friendly (show initialization for associative array)
             print("[%s]='%s'" % (field, getattr(input_file, field)), end=' ')
-        print()
+        print("[outputFileId]='%s'" % make_file_id(input_file, kwargs['output_file_grp']))
