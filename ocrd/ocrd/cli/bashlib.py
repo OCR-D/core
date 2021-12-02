@@ -80,8 +80,8 @@ def bashlib_constants(name):
 @click.option('-m', '--mets', help="METS to process", default="mets.xml")
 @click.option('-w', '--working-dir', help="Working Directory")
 @click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT')
-# repeat some other processor options for convenience (will be ignored here)
 @click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT')
+# repeat some other processor options for convenience (will be ignored here)
 @click.option('-g', '--page-id', help="ID(s) of the pages to process")
 @click.option('--overwrite', is_flag=True, default=False, help="Remove output pages/images if they already exist")
 @parameter_option
