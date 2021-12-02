@@ -28,7 +28,7 @@ ocrd__wrap () {
     ocrd__parse_argv "$@"
 
     i=0
-    declare -ag ocrd__files
+    declare -ag ocrd__files=()
     while read line; do
         eval declare -Ag "ocrd__file$i=( $line )"
         eval "ocrd__files[$i]=ocrd__file$i"
