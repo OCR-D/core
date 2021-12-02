@@ -8,6 +8,7 @@ OCR-D CLI: bash library
 """
 from __future__ import print_function
 import sys
+from os.path import isfile
 import click
 
 from ocrd.constants import BASHLIB_FILENAME
@@ -15,6 +16,18 @@ import ocrd.constants
 import ocrd_utils.constants
 import ocrd_models.constants
 import ocrd_validators.constants
+from ocrd.decorators import (
+    parameter_option,
+    parameter_override_option,
+    ocrd_loglevel
+)
+from ocrd_utils import (
+    is_local_filename,
+    get_local_filename,
+    initLogging
+)
+from ocrd.resolver import Resolver
+from ocrd.processor import Processor
 
 # ----------------------------------------------------------------------
 # ocrd bashlib
@@ -61,3 +74,37 @@ def bashlib_constants(name):
             print("[%s]=%s" % (key, val[key]), end=' ')
     else:
         print(val)
+
+@bashlib_cli.command('input-files')
+@click.option('-m', '--mets', help="METS to process", default="mets.xml")
+@click.option('-w', '--working-dir', help="Working Directory")
+@click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT')
+# repeat some other processor options for convenience (will be ignored here)
+@click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT')
+@click.option('-g', '--page-id', help="ID(s) of the pages to process")
+@click.option('--overwrite', is_flag=True, default=False, help="Remove output pages/images if they already exist")
+@parameter_option
+@parameter_override_option
+@ocrd_loglevel
+def bashlib_input_files(**kwargs):
+    """
+    List input files for processing
+    """
+    initLogging()
+    mets = kwargs.pop('mets')
+    working_dir = kwargs.pop('working_dir')
+    if is_local_filename(mets) and not isfile(get_local_filename(mets)):
+        msg = "File does not exist: %s" % mets
+        raise Exception(msg)
+    resolver = Resolver()
+    workspace = resolver.workspace_from_url(mets, working_dir)
+    processor = Processor(workspace,
+                          ocrd_tool=None,
+                          page_id=kwargs['page_id'],
+                          input_file_grp=kwargs['input_file_grp'],
+                          output_file_grp=kwargs['output_file_grp'])
+    for input_file in processor.input_files:
+        for field in ['url', 'ID', 'mimetype', 'pageId']:
+            # make this bash-friendly (show initialization for associative array)
+            print("[%s]='%s'" % (field, getattr(input_file, field)), end=' ')
+        print()
