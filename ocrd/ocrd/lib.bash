@@ -156,6 +156,18 @@ ocrd__parse_argv () {
         ocrd__raise "Provide --output-file-grp/-O explicitly!"
     fi
 
+    # check fileGrps
+    local _valopts=( --workspace "${ocrd__argv[working_dir]}" )
+    if [[ ${ocrd__argv[overwrite]} = true ]]; then
+        _valopts+=( --overwrite )
+    fi
+    if [[ -n "${ocrd__argv[page_id]:-}" ]]; then
+        _valopts+=( --page-id "${ocrd__argv[page_id]}" )
+    fi
+    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]}" )
+    ocrd validate tasks "${_valopts[@]}" || exit $?
+
+    # check parameters
     local params_parsed retval
     params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params "${__parameters[@]}" "${__parameter_overrides[@]}")" || {
         retval=$?

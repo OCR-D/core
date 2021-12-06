@@ -88,20 +88,25 @@ def run_processor(
     processor.process()
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
-    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s']" % (
+    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
         ocrd_tool['executable'],
         t1_wall,
         t1_cpu,
-        input_file_grp if input_file_grp else '',
-        output_file_grp if output_file_grp else '',
-        json.dumps(parameter) if parameter else {}
+        input_file_grp or '',
+        output_file_grp or '',
+        json.dumps(parameter) or '',
+        page_id or ''
     ))
     workspace.mets.add_agent(
         name=name,
         _type='OTHER',
         othertype='SOFTWARE',
         role='OTHER',
-        otherrole=otherrole
+        otherrole=otherrole,
+        notes=[({'option': 'input-file-grp'}, input_file_grp or ''),
+               ({'option': 'output-file-grp'}, output_file_grp or ''),
+               ({'option': 'parameter'}, json.dumps(parameter or '')),
+               ({'option': 'page-id'}, page_id or '')]
     )
     workspace.save_mets()
     return processor

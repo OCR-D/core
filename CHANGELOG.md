@@ -5,6 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.28.0] - 2021-11-30
+
+Added:
+
+  * Store parameterization of processors in METS for provenance, #747
+  * `ocrd workspace find --download`: Add a `--wait` option to wait between downloads, #745
+  * bashlib: Check fileGrps when parsing CLI args, #743, OCR-D/ocrd_olena#76
+  * Dockerfile: Install `time` to have `/usr/bin/time` in the image, #748, OCR-D/ocrd_all#271
+
+Fixed:
+
+  * `ocrd-dummy`: Also set pcGtsId, v0.0.2, #739
+
 ## [2.27.0] - 2021-11-09
 
 Fixed:
@@ -1381,6 +1394,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.28.0]: ../../compare/v2.28.0..v2.27.0
 [2.27.0]: ../../compare/v2.27.0..v2.26.1
 [2.26.1]: ../../compare/v2.26.1..v2.26.0
 [2.26.0]: ../../compare/v2.26.0..v2.25.1
