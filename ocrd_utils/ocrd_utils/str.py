@@ -70,7 +70,7 @@ def make_file_id(ocrd_file, output_file_grp):
     if ret == ocrd_file.ID:
         if ocrd_file.pageId and ocrd_file.pageId in ocrd_file.ID:
             # still sufficiently unique
-            ret = ocrd_file.ID + '_' + output_file_grp
+            ret = output_file_grp + '_' + ocrd_file.ID
         else:
             ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
             try:
