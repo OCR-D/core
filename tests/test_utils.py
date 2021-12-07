@@ -289,9 +289,9 @@ class TestUtils(TestCase):
     def test_make_file_id_605(self):
         """https://github.com/OCR-D/core/pull/605"""
         mets = OcrdMets.empty_mets()
-        f = mets.add_file('1:!GRP', ID='FOO_0001', pageId='phys0001')
-        f = mets.add_file('2:!GRP', ID='FOO_0002', pageId='phys0002')
-        self.assertEqual(make_file_id(f, '2:!GRP'), 'id_2_GRP_0002')
+        f = mets.add_file('GRP1', ID='FOO_0001', pageId='phys0001')
+        f = mets.add_file('GRP2', ID='FOO_0002', pageId='phys0002')
+        self.assertEqual(make_file_id(f, 'GRP2'), 'GRP2_0002')
 
     def test_generate_range(self):
         assert generate_range('PHYS_0001', 'PHYS_0005') == ['PHYS_0001', 'PHYS_0002', 'PHYS_0003', 'PHYS_0004', 'PHYS_0005']

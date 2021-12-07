@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `OcrdMets.add_file`: `mets:fileGrp/@USE` must be valid `xs:ID`, #746
+
 ## [2.28.0] - 2021-11-30
 
 Added:

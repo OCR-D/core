@@ -255,5 +255,11 @@ class TestOcrdMets(TestCase):
         self.mets.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
         assert len(self.mets.file_groups) == 18
 
+    def test_invalid_filegrp(self):
+        """https://github.com/OCR-D/core/issues/746"""
+        mets = OcrdMets(content="<mets></mets>")
+        with self.assertRaisesRegex(ValueError, "Invalid syntax for mets:fileGrp/@USE"):
+            mets.add_file('1:! bad filegrp', ID="foo123", pageId="foobar")
+
 if __name__ == '__main__':
     main(__file__)
