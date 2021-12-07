@@ -8,6 +8,8 @@ from ocrd_models.ocrd_page import (
     PageType,
     TextRegionType,
     TextLineType,
+    TextEquivType,
+    TextStyleType,
     OrderedGroupIndexedType,
     UnorderedGroupIndexedType,
     ReadingOrderType,
@@ -340,6 +342,34 @@ class TestOcrdPage(TestCase):
         pcgts = parse(fpath_page)
         assert pcgts.id == 'PAGE_0017_PAGE'
         assert pcgts.get_Page().id == 'OCR-D-IMG/INPUT_0017.tif'
+
+    def test_style_inheritance_from_scratch(self):
+        """https://github.com/OCR-D/core/pull/700"""
+        pcgts = PcGtsType(pcGtsId="foo")
+        page = PageType()
+        region = TextRegionType()
+        textstyle = TextStyleType(fontFamily='Schwabacher')
+        textline = TextLineType(TextEquiv=[TextEquivType(Unicode='foo')])
+
+        pcgts.set_Page(page)
+        page.add_TextRegion(region)
+        region.add_TextLine(textline)
+
+        assert not textline.get_TextStyle()
+        assert not region.get_TextStyle()
+
+        region.set_TextStyle(textstyle)
+
+        # TODO doesn't work that way
+        # assert region.get_TextStyle() == textstyle
+        # assert textline.get_TextStyle() == textstyle
+
+        pcgts = parseString(to_xml(pcgts, skip_declaration=True))
+        region = pcgts.get_Page().get_TextRegion()[0]
+        textline = region.get_TextLine()[0]
+        assert region.get_TextStyle().get_fontFamily() == 'Schwabacher'
+        assert textline.get_TextStyle().get_fontFamily() == 'Schwabacher'
+
 
 if __name__ == '__main__':
     main(__file__)
