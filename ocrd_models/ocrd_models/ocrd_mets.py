@@ -296,7 +296,9 @@ class OcrdMets(OcrdXmlDocument):
         if not fileGrp:
             raise ValueError("Must set fileGrp of the mets:file")
         if not REGEX_FILE_ID.fullmatch(ID):
-            raise ValueError("Invalid syntax for mets:file/@ID %s" % ID)
+            raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
+        if not REGEX_FILE_ID.fullmatch(fileGrp):
+            raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % ID)
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
