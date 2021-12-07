@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd_utils.make_file_id`: only increment number in ID if it is the page ID, #744
+
 Added:
 
   * `ocrd ocrd-tool`: wrap `list-resources` and `show-resource` from `Processor`
