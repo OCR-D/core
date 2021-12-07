@@ -27,4 +27,20 @@ ocrd__wrap () {
 
     ocrd__parse_argv "$@"
 
+    i=0
+    declare -ag ocrd__files
+    while read line; do
+        eval declare -Ag "ocrd__file$i=( $line )"
+        eval "ocrd__files[$i]=ocrd__file$i"
+        let ++i
+    done < <(ocrd bashlib input-files \
+                  -m "${ocrd__argv[mets_file]}" \
+                  -I "${ocrd__argv[input_file_grp]}" \
+                  -O "${ocrd__argv[output_file_grp]}" \
+                  ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-})
+}
+
+# usage: pageId=$(ocrd__input_file 3 pageId)
+ocrd__input_file() {
+    eval echo "\${${ocrd__files[$1]}[$2]}"
 }

@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd ocrd-tool`: wrap `list-resources` and `show-resource` from `Processor`
+  * bashlib `ocrd__parse_argv`: add `--list-resources` and `--show-resource`, #751
+  * `ocrd bashlib`: wrap `input-files` from `Processor` and `make_file_id`
+  * bashlib `ocrd__wrap`: offer `ocrd__files` and `ocrd__input_file`, #571
+
 ## [2.28.0] - 2021-11-30
 
 Added:
