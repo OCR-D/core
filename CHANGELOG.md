@@ -7,7 +7,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Changed:
 
-  * `ocrd_utils.make_file_id`: only increment number in ID if it is the page ID, #744
+  * `ocrd_utils.make_file_id`: combine with output fileGrp if input has pageId, but don't extract numbers, #744
   * `OcrdMets.add_file`: `mets:fileGrp/@USE` must be valid `xs:ID`, #746
 
 Added:
