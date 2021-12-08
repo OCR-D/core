@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.29.0] - 2021-12-08
+
 Changed:
 
   * `ocrd_utils.make_file_id`: combine with output fileGrp if input has pageId, but don't extract numbers, #744
@@ -1406,6 +1408,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.29.0]: ../../compare/v2.29.0..v2.28.0
 [2.28.0]: ../../compare/v2.28.0..v2.27.0
 [2.27.0]: ../../compare/v2.27.0..v2.26.1
 [2.26.1]: ../../compare/v2.26.1..v2.26.0
