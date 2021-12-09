@@ -34,6 +34,8 @@ ocrd__parse_argv () {
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
+            -C|--show-resource) ocrd__show_resource "$2"; exit ;;
+            -L|--list-resources) ocrd__list_resources; exit ;;
             -p|--parameter) __parameters+=(-p "$2") ; shift ;;
             -P|--parameter-override) __parameter_overrides+=(-P "$2" "$3") ; shift ; shift ;;
             -g|--page-id) ocrd__argv[page_id]=$2 ; shift ;;
