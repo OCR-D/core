@@ -1,3 +1,4 @@
+autopep8
 pytest >= 4.0.0
 generateDS == 2.35.20
 coverage >= 4.5.2
