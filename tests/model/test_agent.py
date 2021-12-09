@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from ocrd_models import OcrdAgent
+from ocrd_models import (
+    OcrdAgent
+)
+from tests.base import (
+    main
+)
 
 
 def test_init_role_no_name():
     ag = OcrdAgent(role='FOO')
-    assert 'FOO' == ag.role
-    assert None == ag.name
+    assert ag.role == 'FOO'
+    assert ag.name is None
 
 
 def test_init_role_as_string():
@@ -17,18 +22,22 @@ def test_init_role_as_string():
 
 def test_init_otherrole_and_othertype():
     ag = OcrdAgent(otherrole='BAR', othertype='x')
-    assert 'OTHER' == ag.role
-    assert 'BAR' == ag.otherrole
-    assert 'x' == ag.othertype
+    assert ag.role == 'OTHER'
+    assert ag.otherrole == 'BAR'
+    assert ag.othertype == 'x'
 
 
 def test_init_othertype():
     ag = OcrdAgent(othertype='foobar')
-    assert 'OTHER' == ag.type
+    assert ag.type == 'OTHER'
 
 
 def test_set_name():
     ag = OcrdAgent(name='foobar')
-    assert 'foobar' == ag.name
-    ag.name = 'barfoo'
-    assert 'barfoo' == ag.name
+    assert ag.name == 'foobar'
+    ag.name = 'barfoo' 
+    assert ag.name == 'barfoo'
+
+
+if __name__ == '__main__':
+    main(__file__)

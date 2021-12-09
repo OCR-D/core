@@ -6,9 +6,14 @@ from PIL import Image, __version__ as pil_version
 
 import pytest
 
-from tests.base import assets
+from tests.base import (
+    assets,
+    main
+)
 
 from ocrd_models import OcrdExif
+
+# pylint: disable=no-member
 
 pil_version_major, pil_version_minor = [
     int(x) for x in pil_version.split('.')][:2]
@@ -46,7 +51,7 @@ def test_ocrd_exif(path, width, height, xResolution, yResolution, resolution, re
     assert ocrd_exif.resolution == resolution
     assert ocrd_exif.resolutionUnit == resolutionUnit
     assert ocrd_exif.photometricInterpretation == photometricInterpretation
-    # pylint: disable=no-member
+
     assert ocrd_exif.compression == compression
 
 
@@ -67,3 +72,7 @@ def test_ocrd_exif_serialize_xml():
                 '<resolution>300</resolution>'
                 '</exif>')
     assert expected == exif.to_xml()
+
+
+if __name__ == '__main__':
+    main(__file__)
