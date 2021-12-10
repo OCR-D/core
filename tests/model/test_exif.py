@@ -55,7 +55,6 @@ def test_ocrd_exif(path, width, height, xResolution, yResolution, resolution, re
     assert ocrd_exif.compression == compression
 
 
-@pytest.mark.skipif(not sys.platform.startswith('linux'), reason="not platform-independent/stable")
 def test_ocrd_exif_serialize_xml():
     with Image.open(assets.path_to('SBB0000F29300010000/data/OCR-D-IMG/FILE_0001_IMAGE.tif')) as img:
         exif = OcrdExif(img)
