@@ -382,7 +382,7 @@ class TestCli(TestCase):
         with pushd_popd(tempdir=True) as tempdir:
             _, out, err = self.invoke_cli(workspace_cli, ['-d', 'foo', '-M', 'not-foo.xml', 'init'])
             self.assertEqual(out, join(tempdir, 'foo') + '\n')
-            self.assertIn('--mets-basename is deprecated. Use --mets/--directory instead', err)
+            self.assertIn('--mets-basename is deprecated', err)
 
     def test_mets_get_id_set_id(self):
         with pushd_popd(tempdir=True):

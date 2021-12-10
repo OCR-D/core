@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import pytest
 from os.path import join as pjoin
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -152,6 +153,19 @@ class TestResolver(TestCase):
                 fn = self.resolver.download_to_directory(dst, pjoin(src, 'data/mets.xml'), subdir='baz')
                 self.assertEqual(fn, pjoin('baz', 'mets.xml'))
                 self.assertTrue(Path(dst, fn).exists())
+
+def test_resolve_mets_arguments():
+    """
+    https://github.com/OCR-D/core/issues/693
+    https://github.com/OCR-D/core/issues/517
+    """
+    resolver = Resolver()
+    assert resolver.resolve_mets_arguments('/', 'mets.xml', None) == ('/', '/mets.xml', 'mets.xml')
+    with pytest.raises(ValueError, match="Use either --mets or --mets-basename, not both"):
+        resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml')
+    with pytest.raises(ValueError, match="inconsistent with --directory"):
+        resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None)
+    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
 
 if __name__ == '__main__':
     main(__file__)

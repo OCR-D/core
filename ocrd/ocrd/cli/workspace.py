@@ -18,7 +18,7 @@ import time
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, resolve_mets_arguments
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
@@ -27,10 +27,10 @@ class WorkspaceCtx():
 
     def __init__(self, directory, mets_url, mets_basename, automatic_backup):
         self.log = getLogger('ocrd.cli.workspace')
-        directory ,mets_url, mets_basename = resolve_mets_arguments(directory, mets_url, mets_basename, self.log)
-        self.directory = directory
         self.resolver = Resolver()
-        self.mets_url = mets_url
+        if (mets_basename):
+            self.log.warning(DeprecationWarning('--mets-basename is deprecated'))
+        self.directory, self.mets_url, self.mets_basename = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename)
         self.automatic_backup = automatic_backup
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)

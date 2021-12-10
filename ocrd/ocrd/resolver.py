@@ -9,6 +9,7 @@ from ocrd_utils import (
     is_local_filename,
     get_local_filename,
     remove_non_path_from_url,
+    is_file_in_directory,
     nth_url_segment
 )
 from ocrd.workspace import Workspace
@@ -198,4 +199,42 @@ class Resolver():
         mets_path.write_bytes(mets.to_xml(xmllint=True))
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
+
+    def resolve_mets_arguments(self, directory, mets_url, mets_basename):
+        """
+        Resolve the ``--mets``, ``--mets-basename`` and `--directory`` argument
+        into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
+        """
+        log = getLogger('ocrd.resolver.resolve_mets_arguments')
+        if mets_basename and mets_url:
+            raise ValueError("Use either --mets or --mets-basename, not both")
+        elif not mets_basename and mets_url:
+            mets_basename = Path(mets_url).name
+        elif not mets_basename and not mets_url:
+            mets_basename = 'mets.xml'
+        else:
+            (log.warning if log else print)(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+
+        if directory and mets_url:
+            # XXX check whether mets_url has no parents, i.e. is actually the mets_basename
+            if Path(mets_url).parent == Path('.'):
+                (log.warning if log else print)('Treating --mets_url as --mets-basename because it is just a basename "%s"' % mets_url)
+                mets_basename, mets_url = mets_url, None
+            elif not is_file_in_directory(directory, mets_url):
+                raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
+
+        if directory and not mets_url:
+            directory = Path(directory).resolve()
+            mets_url = directory / mets_basename
+        elif not directory and mets_url:
+            if mets_url.startswith('http') or mets_url.startswith('https:'):
+                raise ValueError("--mets is an http(s) URL but no --directory was given")
+            mets_url = Path(mets_url).resolve()
+            directory = Path.cwd() if mets_url.parent == Path('.') else mets_url.parent
+        elif not directory:
+            directory = Path.cwd()
+            mets_url = Path(directory, mets_basename)
+
+        return str(directory), str(mets_url), str(mets_basename)
+
 

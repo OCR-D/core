@@ -61,11 +61,11 @@ Utility functions and constants usable in various circumstances.
       (produced by `tesserocr`)
     * `y0x0y1x1` is the same as `x0y0x1y1` with positions of `x` and `y` in the list swapped
 
-* :py:func:`is_local_filename`,
+* :py:func:`is_file_in_directory`
+  :py:func:`is_local_filename`,
   :py:func:`safe_filename`,
   :py:func:`abspath`,
   :py:func:`get_local_filename`
-  :py:func:`resolve_mets_arguments`
 
     filesystem-related utilities
 
@@ -167,11 +167,11 @@ from .logging import (
 from .os import (
     abspath,
     list_all_resources,
+    is_file_in_directory,
     list_resource_candidates,
     atomic_write,
     pushd_popd,
     unzip_file_to_dir,
-    resolve_mets_arguments,
     )
 
 from .str import (

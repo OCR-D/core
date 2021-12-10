@@ -212,12 +212,6 @@ class TestDecorators(TestCase):
                 print(out)
                 self.assertEqual(out, '{"baz": "two"}\n')
 
-    def test_resolve_mets_basename(self):
-        """
-        https://github.com/OCR-D/core/issues/693
-        https://github.com/OCR-D/core/issues/517
-        """
-
 
 if __name__ == '__main__':
-    main(__file__)
+    main()

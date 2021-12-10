@@ -7,7 +7,6 @@ from ocrd_utils import (
     is_local_filename,
     get_local_filename,
     set_json_key_value_overrides,
-    resolve_mets_arguments,
 )
 
 from ocrd_utils import getLogger, initLogging
@@ -61,7 +60,7 @@ def ocrd_cli_wrap_processor(
         # if not kwargs['output_file_grp']:
         #     raise ValueError('-O/--output-file-grp is required')
         resolver = Resolver()
-        working_dir, mets, _ = resolve_mets_arguments(working_dir, mets, None, LOG)
+        working_dir, mets, _ = resolver.resolve_mets_arguments(working_dir, mets, None)
         workspace = resolver.workspace_from_url(mets, working_dir)
         page_id = kwargs.get('page_id')
         # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
