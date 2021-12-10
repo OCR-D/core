@@ -161,11 +161,13 @@ def test_resolve_mets_arguments():
     """
     resolver = Resolver()
     assert resolver.resolve_mets_arguments('/', 'mets.xml', None) == ('/', '/mets.xml', 'mets.xml')
+    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
     with pytest.raises(ValueError, match="Use either --mets or --mets-basename, not both"):
         resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml')
     with pytest.raises(ValueError, match="inconsistent with --directory"):
         resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None)
-    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
+    with pytest.warns(DeprecationWarning):
+        resolver.resolve_mets_arguments('/foo', None, 'not_mets.xml')
 
 if __name__ == '__main__':
     main(__file__)

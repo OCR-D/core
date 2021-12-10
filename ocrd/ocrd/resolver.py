@@ -1,5 +1,6 @@
 from tempfile import mkdtemp
 from pathlib import Path
+from warnings import warn
 
 import requests
 
@@ -206,14 +207,14 @@ class Resolver():
         into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
         """
         log = getLogger('ocrd.resolver.resolve_mets_arguments')
-        if mets_basename and mets_url:
-            raise ValueError("Use either --mets or --mets-basename, not both")
-        elif not mets_basename and mets_url:
+        if not mets_basename and mets_url:
             mets_basename = Path(mets_url).name
         elif not mets_basename and not mets_url:
             mets_basename = 'mets.xml'
+        elif mets_basename and mets_url:
+            raise ValueError("Use either --mets or --mets-basename, not both")
         else:
-            (log.warning if log else print)(DeprecationWarning("--mets-basename is deprecated. Use --mets/--directory instead"))
+            warn("--mets-basename is deprecated. Use --mets/--directory instead", DeprecationWarning)
 
         if directory and mets_url:
             # XXX check whether mets_url has no parents, i.e. is actually the mets_basename
