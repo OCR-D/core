@@ -10,47 +10,47 @@ ocrd-tesserocr-recognize:
     parameter_usage: 'without-extension'
     description: Tesseract LSTM model based on Austrian National Library newspaper data
     size: 4358948
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/equ.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/equ.traineddata
     name: equ.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract equ model
     size: 2251950
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/osd.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/osd.traineddata
     name: osd.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract osd model
     size: 10562727
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/eng.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata
     name: eng.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract eng model
     size: 4113088
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/deu.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/deu.traineddata
     name: deu.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract deu model
     size: 1525436
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/frk.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/frk.traineddata
     name: frk.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract frk model
     size: 6423052
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/script/Fraktur.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/script/Fraktur.traineddata
     name: Fraktur.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract Fraktur model
     size: 10915632
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/script/Latin.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/script/Latin.traineddata
     name: Latin.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract Latin model
     size: 89384811
-  - url: https://github.com/tesseract-ocr/tesseract/archive/master.tar.gz
+  - url: https://github.com/tesseract-ocr/tesseract/archive/main.tar.gz
     name: configs
     description: Tesseract configs (parameter sets) for use with the standalone tesseract CLI
-    size: 1973268
+    size: 1915529
     type: tarball
-    path_in_archive: 'tesseract-master/tessdata/configs'
+    path_in_archive: 'tesseract-main/tessdata/configs'
 ocrd-calamari-recognize:
   # XXX disabled since older ocrd_calamari versions don't support resource resolving
   #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz

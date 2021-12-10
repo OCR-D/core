@@ -3,12 +3,15 @@ def get_AllTextLines(self, region_order='document', respect_textline_order=True)
     Return all the TextLine in the document
 
     Arguments:
-        region_order ("document"|"reading-order"|"reading-order-only") Whether to
-            return regions sorted by document order (``document``, default) or by
-            reading order with regions not in the reading order at the end of the
-            returned list (``reading-order``) or regions not in the reading order
+        region_order ("document"|"reading-order"|"reading-order-only"): Whether to \
+            return regions sorted by document order (``document``, default) or by \
+            reading order with regions not in the reading order at the end of the \
+            returned list (``reading-order``) or regions not in the reading order \
             omitted (``reading-order-only``)
-        respect_textline_order (boolean) Whether to respect textlineOrder attribute
+        respect_textline_order (boolean): Whether to respect `@textLineOrder` attribute
+
+    Returns:
+        a list of :py:class:`TextLineType`
     """
     # TODO handle textLineOrder according to https://github.com/PRImA-Research-Lab/PAGE-XML/issues/26
     ret = []

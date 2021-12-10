@@ -1,9 +1,9 @@
 def set_orientation(self, orientation):
     """
-    Set deskewing angle to given number.
-    Moreover, invalidate self's AlternativeImages
+    Set deskewing angle to given `orientation` number.
+    Moreover, invalidate self's ``pc:AlternativeImage``s
     (because they will have been rotated and enlarged
-     with the angle of the previous value).
+    with the angle of the previous value).
     """
     if hasattr(self, 'invalidate_AlternativeImage'):
         # PageType, RegionType:

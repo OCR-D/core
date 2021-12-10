@@ -181,6 +181,13 @@ class TestOcrdMets(TestCase):
             mets.remove_physical_page('PHYS_0001')
             self.assertEqual(mets.physical_pages, ['PHYS_0002', 'PHYS_0005'])
 
+    def test_remove_physical_page_fptr(self):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
+            mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
+            self.assertEqual(mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), ['PHYS_0002'])
+            mets.remove_physical_page_fptr('FILE_0002_IMAGE')
+            self.assertEqual(mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), [None])
+
     def test_remove_page_after_remove_file(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
             mets = OcrdMets(filename=join(tempdir, 'mets.xml'))
@@ -247,6 +254,12 @@ class TestOcrdMets(TestCase):
         other_mets = OcrdMets(filename=assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
         self.mets.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
         assert len(self.mets.file_groups) == 18
+
+    def test_invalid_filegrp(self):
+        """https://github.com/OCR-D/core/issues/746"""
+        mets = OcrdMets(content="<mets></mets>")
+        with self.assertRaisesRegex(ValueError, "Invalid syntax for mets:fileGrp/@USE"):
+            mets.add_file('1:! bad filegrp', ID="foo123", pageId="foobar")
 
 if __name__ == '__main__':
     main(__file__)

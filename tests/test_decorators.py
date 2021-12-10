@@ -52,7 +52,11 @@ class TestDecorators(TestCase):
     def test_loglevel_invalid(self):
         code, _, err = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
         assert code
-        self.assertIn('invalid choice: foo', err)
+        import click
+        if int(click.__version__[0]) < 8:
+            assert 'invalid choice: foo' in err
+        else:
+            assert "'foo' is not one of" in err
 
     def test_loglevel_override(self):
         import logging

@@ -1,5 +1,4 @@
-from tests.base import TestCase, main, assets
-from tests.data.mock_file import MockOcrdFile as OcrdFile
+from tests.base import TestCase, main, assets, create_ocrd_file_with_defaults
 
 from ocrd_modelfactory import page_from_image
 from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
@@ -317,7 +316,7 @@ class TestOcrdPage(TestCase):
         """
         https://github.com/OCR-D/core/issues/602
         """
-        pcgts = page_from_image(OcrdFile(None, url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
+        pcgts = page_from_image(create_ocrd_file_with_defaults(url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
         pcgts.get_Page().set_ReadingOrder(ReadingOrderType())
         assert pcgts.get_Page().get_ReadingOrder()
         pcgts = parseString(to_xml(pcgts, skip_declaration=True))
@@ -327,11 +326,20 @@ class TestOcrdPage(TestCase):
         """
         https://github.com/OCR-D/ocrd_segment/issues/45
         """
-        pcgts = page_from_image(OcrdFile(None, url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
+        pcgts = page_from_image(create_ocrd_file_with_defaults(url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
         page = pcgts.get_Page()
         testset = set()
         testset.add(pcgts)
         testset.add(page)
+
+    def test_id(self):
+        """
+        https://github.com/OCR-D/core/issues/682
+        """
+        fpath_page = assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')
+        pcgts = parse(fpath_page)
+        assert pcgts.id == 'PAGE_0017_PAGE'
+        assert pcgts.get_Page().id == 'OCR-D-IMG/INPUT_0017.tif'
 
 if __name__ == '__main__':
     main(__file__)

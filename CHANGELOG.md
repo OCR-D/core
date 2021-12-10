@@ -5,6 +5,87 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.29.0] - 2021-12-08
+
+Changed:
+
+  * `ocrd_utils.make_file_id`: combine with output fileGrp if input has pageId, but don't extract numbers, #744
+  * `OcrdMets.add_file`: `mets:fileGrp/@USE` must be valid `xs:ID`, #746
+
+Added:
+
+  * `ocrd ocrd-tool`: wrap `list-resources` and `show-resource` from `Processor`
+  * bashlib `ocrd__parse_argv`: add `--list-resources` and `--show-resource`, #751
+  * `ocrd bashlib`: wrap `input-files` from `Processor` and `make_file_id`
+  * bashlib `ocrd__wrap`: offer `ocrd__files` and `ocrd__input_file`, #571
+
+## [2.28.0] - 2021-11-30
+
+Added:
+
+  * Store parameterization of processors in METS for provenance, #747
+  * `ocrd workspace find --download`: Add a `--wait` option to wait between downloads, #745
+  * bashlib: Check fileGrps when parsing CLI args, #743, OCR-D/ocrd_olena#76
+  * Dockerfile: Install `time` to have `/usr/bin/time` in the image, #748, OCR-D/ocrd_all#271
+
+Fixed:
+
+  * `ocrd-dummy`: Also set pcGtsId, v0.0.2, #739
+
+## [2.27.0] - 2021-11-09
+
+Fixed:
+
+  * remove dependency on six, #732
+  * `ocrd workspace remove-group`: handle files not in subdir gracefully, #734
+  * `ocrd resmgr`: fix "reference before assignment" issue #689, #733
+  * `OcrdWorkspace.remove_file`: handle empty regexes, #725
+
+Changed:
+
+  * `ocrd workspace rename-group` will now also rename filenames and `mets:file/@ID`, #736
+
+## [2.26.1] - 2021-10-14
+
+Fixed:
+
+  * `resmgr`: Correct URL for tesseract configs
+
+## [2.26.0] - 2021-09-20
+
+Added:
+
+  * `ocrd_utils`: functions for scaling images, #707
+
+Changed:
+
+  * `OcrdFile`: should only ever be instantiated in the context of `OcrdMets`, #324, #714
+  * Logging outputs to `STDERR` not `STDOUT`, OCR-D/spec#183, #713, #667
+
+Fixed:
+
+  * `ocrd workspace merge`: handle `file_grp` parameter, #715
+  * `ocrd workspace merge`: explicit --copy-files was --no-copy-files, #715
+  * `ocrd resmgr`: Fix tesseract URLs, #721
+
+## [2.25.1] - 2021-06-30
+
+Fixed:
+
+  * `ocrd_page`: fallback for `id` if none of the attributes are set, #683
+
+## [2.25.0] - 2021-06-30
+
+Added:
+
+  * `ocrd_page`: Universal attribute `id` to get either `id`, `imageFilename` or `pcGtsId`, #683, #682
+  * `ocrd_page`: function `parseTree` and `with_etree` kwarg to `workspace.page_from_*` to access PAGE with etree API, #699, #313
+
+Fixed:
+
+  * Version-independent URL of METS XSD, #695, #694
+  * Recrop if deskewed after cropping, #688
+
 ## [2.24.0] - 2021-04-27
 
 Changed:
@@ -1327,6 +1408,13 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.29.0]: ../../compare/v2.29.0..v2.28.0
+[2.28.0]: ../../compare/v2.28.0..v2.27.0
+[2.27.0]: ../../compare/v2.27.0..v2.26.1
+[2.26.1]: ../../compare/v2.26.1..v2.26.0
+[2.26.0]: ../../compare/v2.26.0..v2.25.1
+[2.25.1]: ../../compare/v2.25.1..v2.25.0
+[2.25.0]: ../../compare/v2.25.0..v2.24.0
 [2.24.0]: ../../compare/v2.24.0..v2.23.2
 [2.23.2]: ../../compare/v2.23.2..v2.23.1
 [2.23.1]: ../../compare/v2.23.1..v2.23.0

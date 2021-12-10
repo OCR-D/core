@@ -72,6 +72,20 @@ ocrd__dumpjson () {
     ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" dump
 }
 
+## 
+## Output file resource content.
+##
+ocrd__show_resource () {
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" show-resource "$1"
+}
+
+## 
+## Output file resources names.
+##
+ocrd__list_resources () {
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" list-resources
+}
+
 # END-INCLUDE 
 # BEGIN-INCLUDE ./src/usage.bash 
 ## ### `ocrd__usage`
@@ -122,6 +136,8 @@ ocrd__parse_argv () {
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
+            -C|--show-resource) ocrd__show_resource "$2"; exit ;;
+            -L|--list-resources) ocrd__list_resources; exit ;;
             -p|--parameter) __parameters+=(-p "$2") ; shift ;;
             -P|--parameter-override) __parameter_overrides+=(-P "$2" "$3") ; shift ; shift ;;
             -g|--page-id) ocrd__argv[page_id]=$2 ; shift ;;
@@ -156,6 +172,18 @@ ocrd__parse_argv () {
         ocrd__raise "Provide --output-file-grp/-O explicitly!"
     fi
 
+    # check fileGrps
+    local _valopts=( --workspace "${ocrd__argv[working_dir]}" )
+    if [[ ${ocrd__argv[overwrite]} = true ]]; then
+        _valopts+=( --overwrite )
+    fi
+    if [[ -n "${ocrd__argv[page_id]:-}" ]]; then
+        _valopts+=( --page-id "${ocrd__argv[page_id]}" )
+    fi
+    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]}" )
+    ocrd validate tasks "${_valopts[@]}" || exit $?
+
+    # check parameters
     local params_parsed retval
     params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params "${__parameters[@]}" "${__parameter_overrides[@]}")" || {
         retval=$?
@@ -197,6 +225,22 @@ ocrd__wrap () {
 
     ocrd__parse_argv "$@"
 
+    i=0
+    declare -ag ocrd__files
+    while read line; do
+        eval declare -Ag "ocrd__file$i=( $line )"
+        eval "ocrd__files[$i]=ocrd__file$i"
+        let ++i
+    done < <(ocrd bashlib input-files \
+                  -m "${ocrd__argv[mets_file]}" \
+                  -I "${ocrd__argv[input_file_grp]}" \
+                  -O "${ocrd__argv[output_file_grp]}" \
+                  ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-})
+}
+
+# usage: pageId=$(ocrd__input_file 3 pageId)
+ocrd__input_file() {
+    eval echo "\${${ocrd__files[$1]}[$2]}"
 }
 
 # END-INCLUDE 
