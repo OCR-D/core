@@ -9,6 +9,11 @@ from pathlib import (
 from unittest import (
     mock
 )
+from PIL import (
+    Image
+)
+
+from ocrd_models.ocrd_page import OcrdPage
 
 import pytest
 
@@ -19,6 +24,11 @@ from tests.base import (
 
 from ocrd.resolver import Resolver
 from ocrd_utils import pushd_popd
+
+from ocrd_modelfactory import (
+    page_from_file
+)
+
 
 # set pylint once on module level
 # pylint: disable=protected-access
@@ -188,20 +198,33 @@ def test_resolve_image0():
     assert img_pil2.size == (1, 1)
 
 
+@pytest.mark.skip(reason='usage unclear - neither #image_from_page nor #image_from_segment are drop-in replacements')
 @pytest.mark.parametrize(
-    "image_url,size1,size2",
-    [('OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png', (1457, 2083), (1, 1)),
-     ('OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017.png', (1457, 2083), (1, 1)),
+    "image_url,data_key,page_id,size1,size2",
+    [('OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png', 'INPUT_0017.tif', 'P_0017', (1457, 2083), (1, 1)),
+     ('OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017.png', 'INPUT_0020.tif', 'P_0020', (1457, 2083), (1, 1)),
      ])
-def test_resolve_image_grayscale(image_url, size1, size2):
+def test_resolve_image_grayscale(image_url, data_key, page_id, size1, size2):
     url_path = os.path.join(assets.url_of(
         'kant_aufklaerung_1784-binarized'), 'data/mets.xml')
     workspace = Resolver().workspace_from_url(url_path)
-    img_url = image_url
-    img_pil1 = workspace.resolve_image_as_pil(img_url)
+    pil_image = Image(url_path)
+    img_pil1 = workspace.image_from_segment('segment', pil_image, [[0, 0], [size1[0], size1[1]]])
     assert img_pil1.size == size1
-    img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
+    img_pil2 = workspace._resolve_image_as_pil(image_url, [[0, 0], [1, 1]])
     assert img_pil2.size == size2
+
+
+def test_resolve_image_as_pil_deprecated():
+    url_path = os.path.join(assets.url_of(
+        'kant_aufklaerung_1784-binarized'), 'data/mets.xml')
+    workspace = Resolver().workspace_from_url(url_path)
+    with pytest.warns(DeprecationWarning) as record:
+        workspace.resolve_image_as_pil('OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png')
+
+    # assert
+    assert len(record) == 1
+    assert 'Call to deprecated method resolve_image_as_pil.' in str(record[0].message)
 
 
 def test_workspace_from_nothing():
