@@ -399,7 +399,7 @@ class TestCli(TestCase):
             with self.assertRaisesRegex(ValueError, "inconsistent with --directory"):
                 self.invoke_cli(workspace_cli, ['-d', 'foo', '-m', '/somewhere/else', 'init'])
 
-    def test_mets_directory_html(self):
+    def test_mets_directory_http(self):
           with pushd_popd(tempdir=True) as tempdir:
             with self.assertRaisesRegex(ValueError, r"--mets is an http\(s\) URL but no --directory was given"):
                 self.invoke_cli(workspace_cli, ['-m', 'https://foo.bar/bla', 'init'])

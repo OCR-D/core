@@ -21,6 +21,10 @@ def monkey_patch_temp_xdg():
 
 def test_config_created():
     with monkey_patch_temp_xdg() as (tempdir, mgr):
+        print('DATA_HOME', ocrd_utils.constants.XDG_DATA_HOME)
+        print('CONFIG_HOME', ocrd_utils.constants.XDG_CONFIG_HOME)
+        print('tempdir', tempdir)
+        print('user_list', mgr.user_list)
         f = Path(tempdir, 'ocrd', 'resources.yml')
         assert f.exists()
         assert f == mgr.user_list

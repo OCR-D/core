@@ -28,7 +28,7 @@ class WorkspaceCtx():
     def __init__(self, directory, mets_url, mets_basename, automatic_backup):
         self.log = getLogger('ocrd.cli.workspace')
         self.resolver = Resolver()
-        if (mets_basename):
+        if mets_basename:
             self.log.warning(DeprecationWarning('--mets-basename is deprecated. Use --mets/--directory instead.'))
         self.directory, self.mets_url, self.mets_basename = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename)
         self.automatic_backup = automatic_backup
