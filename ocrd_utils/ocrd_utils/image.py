@@ -6,6 +6,10 @@ from PIL import Image, ImageStat, ImageDraw, ImageChops
 from .logging import getLogger
 from .introspect import membername
 
+# Allow processing of images with up to 1.6bn pixels
+# https://github.com/OCR-D/core/issues/735
+Image.MAX_IMAGE_PIXELS = 40_000 ** 2
+
 __all__ = [
     'adjust_canvas_to_rotation',
     'adjust_canvas_to_transposition',
