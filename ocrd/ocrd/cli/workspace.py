@@ -229,7 +229,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
-# ocrd workspace add-bulk
+# ocrd workspace bulk-add
 # ----------------------------------------------------------------------
 
 # pylint: disable=broad-except
@@ -247,7 +247,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
 def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, skip):
-    r"""
+    """
     Add files in bulk to an OCR-D workspace.
 
     FILE_GLOB can either be a shell glob expression or a list of files.
