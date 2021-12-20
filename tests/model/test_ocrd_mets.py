@@ -176,11 +176,20 @@ def test_add_file_id_already_exists(sbb_sample_01):
         'OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
     assert f._el == f2._el
 
+@pytest.mark.xfail(reason='check if 2x same ID are valid')
+def test_add_file_ignore(sbb_sample_01: OcrdMets):
+    """Behavior if ignore-Flag set to true:
+    delegate responsibility to overwrite existing files to user"""
 
-def test_add_file_ignore(sbb_sample_01):
-    sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
-    sbb_sample_01.add_file('OUTPUT', ID='best-id-ever',
+    the_file = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
+    assert the_file.ID == 'best-id-ever'
+    the_same = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever',
                            mimetype="boop/beep", ignore=True)
+    assert the_same.ID == 'best-id-ever'
+
+    # how many files inserted
+    the_files = list(sbb_sample_01.find_files(ID='best-id-ever'))
+    assert len(the_files) == 1
 
 
 def test_add_file_id_invalid(sbb_sample_01):
