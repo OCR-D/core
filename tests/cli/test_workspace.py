@@ -466,6 +466,22 @@ class TestCli(TestCase):
                 print('err', err)
                 assert 0
 
+    def test_bulk_add_gen_id(self):
+        with pushd_popd(tempdir=True) as wsdir:
+            ws = self.resolver.workspace_from_nothing(directory=wsdir)
+            Path(wsdir, 'c').write_text('')
+            _, out, err = self.invoke_cli(workspace_cli, [
+                'bulk-add',
+                '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',
+                '-G', '{{ filegrp }}',
+                '-g', '{{ pageid }}',
+                # '-i', '{{ fileid }}',  # XXX skip --file-id
+                '-m', '{{ mimetype }}',
+                '-u', "{{ url }}",
+                'a b c d e'])
+            ws.reload_mets()
+            assert next(ws.mets.find_files()).ID == 'a.b.c.d.e'
+
     def test_bulk_add_stdin(self):
         resolver = Resolver()
         with pushd_popd(tempdir=True) as wsdir:

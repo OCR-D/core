@@ -18,7 +18,7 @@ import time
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
@@ -237,7 +237,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-r', '--regex', help="Regular expression matching the FILE_GLOB filesystem paths to define named captures usable in the other parameters", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
 @click.option('-g', '--page-id', help="physical page ID of the file", required=False)
-@click.option('-i', '--file-id', help="ID of the file", required=True)
+@click.option('-i', '--file-id', help="ID of the file", required=False)
 @click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=True)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
@@ -314,6 +314,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             log.error("File '%s' not matched by regex: '%s'" % (file_path, regex))
             sys.exit(1)
         group_dict = m.groupdict()
+
+        # derive --file-id from filename if not --file-id not explicitly set
+        if not file_id:
+            file_id = safe_filename(str(file_path))
 
         # set up file info
         file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id, 'pageId': page_id, 'fileGrp': file_grp}
