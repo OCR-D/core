@@ -481,6 +481,24 @@ class TestCli(TestCase):
                 'a b c d e'])
             ws.reload_mets()
             assert next(ws.mets.find_files()).ID == 'a.b.c.d.e'
+            assert next(ws.mets.find_files()).url == 'd'
+
+    def test_bulk_add_derive_url(self):
+        with pushd_popd(tempdir=True) as wsdir:
+            ws = self.resolver.workspace_from_nothing(directory=wsdir)
+            Path(wsdir, 'srcdir').mkdir()
+            Path(wsdir, 'srcdir', 'src.xml').write_text('')
+            _, out, err = self.invoke_cli(workspace_cli, [
+                'bulk-add',
+                '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*)',
+                '-G', '{{ filegrp }}',
+                '-g', '{{ pageid }}',
+                # '-u', "{{ url }}", # XXX skip --url
+                'p0001 SEG srcdir/src.xml'])
+            # print('out', out)
+            # print('err', err)
+            ws.reload_mets()
+            assert next(ws.mets.find_files()).url == 'srcdir/src.xml'
 
     def test_bulk_add_stdin(self):
         resolver = Resolver()

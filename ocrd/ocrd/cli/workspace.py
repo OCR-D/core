@@ -238,7 +238,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
 @click.option('-g', '--page-id', help="physical page ID of the file", required=False)
 @click.option('-i', '--file-id', help="ID of the file", required=False)
-@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=True)
+@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
 @click.option('-S', '--source-path', help="File path to copy from", default='{{ src }}')
@@ -319,6 +319,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         if not file_id:
             file_id = safe_filename(str(file_path))
 
+        # if not url
+
         # set up file info
         file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id, 'pageId': page_id, 'fileGrp': file_grp}
 
@@ -329,19 +331,29 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             except KeyError:
                 log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
 
+        # Flag to track whether 'url' should be 'src'
+        url_is_src = False
+
         # expand templates
         for param_name in file_dict:
             if not file_dict[param_name]:
+                if param_name == 'url':
+                    url_is_src = True
+                    continue
                 raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
                 file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
 
-        # copy files
-        if file_dict['url']:
-            if 'src' in group_dict:
-                srcpath = Path(group_dict['src'])
-            else:
-                srcpath = file_path
+        # Where to copy from
+        if 'src' in group_dict:
+            srcpath = Path(group_dict['src'])
+        else:
+            srcpath = file_path
+
+        # copy files if src != url
+        if url_is_src:
+            file_dict['url'] = str(srcpath)
+        else:
             destpath = Path(workspace.directory, file_dict['url'])
             if srcpath != destpath and not destpath.exists():
                 log.info("cp '%s' '%s'", srcpath, destpath)
