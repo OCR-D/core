@@ -449,6 +449,23 @@ class TestCli(TestCase):
                     self.assertEqual(len(ws.mets.find_all_files(pageId='PHYS_0001')), 2)
                     self.assertEqual(ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].url, 'OCR-D-PAGE/FILE_0001.xml')
 
+    def test_bulk_add_missing_param(self):
+        with pushd_popd(tempdir=True) as wsdir:
+            ws = self.resolver.workspace_from_nothing(directory=wsdir)
+            with pytest.raises(ValueError, match=r"OcrdFile attribute 'pageId' unset"):
+                _, out, err = self.invoke_cli(workspace_cli, [
+                    'bulk-add',
+                    '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',
+                    '-G', '{{ filegrp }}',
+                    # '-g', '{{ pageid }}', # XXX skip --page-id
+                    '-i', '{{ fileid }}',
+                    '-m', '{{ mimetype }}',
+                    '-u', "{{ url }}",
+                    'a b c d e f', '1 2 3 4 5 6'])
+                print('out', out)
+                print('err', err)
+                assert 0
+
     def test_bulk_add_stdin(self):
         resolver = Resolver()
         with pushd_popd(tempdir=True) as wsdir:
@@ -479,6 +496,7 @@ class TestCli(TestCase):
                 f = next(ws.mets.find_files())
                 assert f.mimetype == 'image/png'
                 assert f.ID == 'FILE_0001_BIN.IMG-wolf'
+                assert f.url == 'BIN/FILE_0001_BIN.IMG-wolf.png'
 
 if __name__ == '__main__':
     main(__file__)

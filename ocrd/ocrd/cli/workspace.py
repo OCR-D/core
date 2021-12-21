@@ -297,7 +297,11 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         file_paths += [Path(x.strip()) for x in sys.stdin.readlines()]
     else:
         for fglob in file_glob:
-            file_paths += [Path(x) for x in glob(fglob)]
+            expanded = glob(fglob)
+            if not expanded:
+                file_paths += [Path(fglob)]
+            else:
+                file_paths += [Path(x) for x in glob(fglob)]
 
     for i, file_path in enumerate(file_paths):
         log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
@@ -323,6 +327,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 
         # expand templates
         for param_name in file_dict:
+            if not file_dict[param_name]:
+                raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
                 file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
 
