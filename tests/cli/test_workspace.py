@@ -3,8 +3,12 @@ from pathlib import Path
 from filecmp import dircmp
 from shutil import copytree
 from tempfile import TemporaryDirectory
+from io import StringIO
+from contextlib import contextmanager
+import sys
 
 from click.testing import CliRunner
+import pytest
 
 # pylint: disable=import-error, no-name-in-module
 from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory, main
@@ -12,6 +16,13 @@ from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory,
 from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel, disableLogging
 from ocrd.cli.workspace import workspace_cli
 from ocrd import Resolver
+
+@contextmanager
+def mock_stdin(inp):
+    old_stdin = sys.stdin
+    sys.stdin = StringIO(inp)
+    yield
+    sys.stdin = old_stdin
 
 class TestCli(TestCase):
 
@@ -437,6 +448,37 @@ class TestCli(TestCase):
                     self.assertEqual(len(ws.mets.find_all_files(ID='//FILE_.*_000.*')), 20)
                     self.assertEqual(len(ws.mets.find_all_files(pageId='PHYS_0001')), 2)
                     self.assertEqual(ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].url, 'OCR-D-PAGE/FILE_0001.xml')
+
+    def test_bulk_add_stdin(self):
+        resolver = Resolver()
+        with pushd_popd(tempdir=True) as wsdir:
+            ws = resolver.workspace_from_nothing(directory=wsdir)
+            Path(wsdir, 'BIN').mkdir()
+            Path(wsdir, 'BIN/FILE_0001_BIN.IMG-wolf.png').write_text('')
+            Path(wsdir, 'BIN/FILE_0002_BIN.IMG-wolf.png').write_text('')
+            Path(wsdir, 'BIN/FILE_0001_BIN.xml').write_text('')
+            Path(wsdir, 'BIN/FILE_0002_BIN.xml').write_text('')
+            with mock_stdin(
+                    'PHYS_0001 BIN FILE_0001_BIN.IMG-wolf BIN/FILE_0001_BIN.IMG-wolf.png BIN/FILE_0001_BIN.IMG-wolf.png image/png\n'
+                    'PHYS_0002 BIN FILE_0002_BIN.IMG-wolf BIN/FILE_0002_BIN.IMG-wolf.png BIN/FILE_0002_BIN.IMG-wolf.png image/png\n'
+                    'PHYS_0001 BIN FILE_0001_BIN BIN/FILE_0001_BIN.xml BIN/FILE_0001_BIN.xml application/vnd.prima.page+xml\n'
+                    'PHYS_0002 BIN FILE_0002_BIN BIN/FILE_0002_BIN.xml BIN/FILE_0002_BIN.xml application/vnd.prima.page+xml\n'):
+                assert len(ws.mets.file_groups) == 0
+                exit_code, out, err = self.invoke_cli(workspace_cli, [
+                    'bulk-add',
+                    '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<src>.*) (?P<dest>.*) (?P<mimetype>.*)',
+                    '-G', '{{ filegrp }}',
+                    '-g', '{{ pageid }}',
+                    '-i', '{{ fileid }}',
+                    '-m', '{{ mimetype }}',
+                    '-u', "{{ dest }}",
+                    '-'])
+                ws.reload_mets()
+                assert len(ws.mets.file_groups) == 1
+                assert len(list(ws.mets.find_files())) == 4
+                f = next(ws.mets.find_files())
+                assert f.mimetype == 'image/png'
+                assert f.ID == 'FILE_0001_BIN.IMG-wolf'
 
 if __name__ == '__main__':
     main(__file__)

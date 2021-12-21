@@ -241,16 +241,18 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=True)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
+@click.option('-S', '--source-path', help="File path to copy from", default='{{ src }}')
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
 @click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, skip):
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, source_path, ignore, force, skip):
     """
     Add files in bulk to an OCR-D workspace.
 
-    FILE_GLOB can either be a shell glob expression or a list of files.
+    FILE_GLOB can either be a shell glob expression or a list of files or '-'
+    in which case file paths are read from STDIN.
 
     --regex is applied to the absolute path of every file in FILE_GLOB and can
     define named groups that can be used in --page-id, --file-id, --mimetype, --url and
@@ -277,8 +279,12 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         sys.exit(1)
 
     file_paths = []
-    for fglob in file_glob:
-        file_paths += [Path(x).resolve() for x in glob(fglob)]
+    from_stdin = file_glob == ('-',)
+    if from_stdin:
+        file_paths += [Path(x) for x in sys.stdin.readlines()]
+    else:
+        for fglob in file_glob:
+            file_paths += [Path(x).resolve() for x in glob(fglob)]
 
     for i, file_path in enumerate(file_paths):
         log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
@@ -309,13 +315,17 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 
         # copy files
         if file_dict['url']:
-            urlpath = Path(workspace.directory, file_dict['url'])
-            if not urlpath.exists():
-                log.info("cp '%s' '%s'", file_path, urlpath)
+            if 'src' in group_dict:
+                srcpath = Path(group_dict['src']).resolve()
+            else:
+                srcpath = file_path
+            destpath = Path(workspace.directory, file_dict['url'])
+            if srcpath != destpath and not destpath.exists():
+                log.info("cp '%s' '%s'", srcpath, destpath)
                 if not dry_run:
-                    if not urlpath.parent.is_dir():
-                        urlpath.parent.mkdir()
-                    urlpath.write_bytes(file_path.read_bytes())
+                    if not destpath.parent.is_dir():
+                        destpath.parent.mkdir()
+                    destpath.write_bytes(srcpath.read_bytes())
 
         # Add to workspace (or not)
         fileGrp = file_dict.pop('fileGrp')
