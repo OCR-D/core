@@ -104,7 +104,7 @@ class Processor():
                 print(res)
             return
         if show_resource:
-            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource, is_file=True)
+            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource)
             if not res_fname:
                 initLogging()
                 logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
