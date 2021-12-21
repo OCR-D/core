@@ -258,15 +258,28 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
     define named groups that can be used in --page-id, --file-id, --mimetype, --url and
     --file-grp by referencing the named group 'grp' in the regex as '{{ grp }}'.
 
+    If the file paths aren't really file paths but CSV data that *contain* a
+    filename, the part that contains the actual filename should be in the named
+    group 'src'. If not explicitly defined, 'src' is equal to the file path.
+
     \b
-    Example:
+    Examples:
         ocrd workspace bulk-add \\
-                --regex '^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$' \\
+                --regex '(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$' \\
                 --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
                 --page-id 'PHYS_{{ pageid }}' \\
                 --file-grp "{{ fileGrp }}" \\
                 --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
                 path/to/files/*/*.*
+        \b
+        echo "path/to/src/file.xml SEG/page_p0001.xml" \\
+        | ocrd workspace bulk-add \\
+                --regex '(?P<src>.*?) (?P<fileGrp>.+?)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)' \\
+                --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
+                --page-id 'PHYS_{{ pageid }}' \\
+                --file-grp "{{ fileGrp }}" \\
+                --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
+                -
 
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
@@ -281,10 +294,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
     file_paths = []
     from_stdin = file_glob == ('-',)
     if from_stdin:
-        file_paths += [Path(x) for x in sys.stdin.readlines()]
+        file_paths += [Path(x.strip()) for x in sys.stdin.readlines()]
     else:
         for fglob in file_glob:
-            file_paths += [Path(x).resolve() for x in glob(fglob)]
+            file_paths += [Path(x) for x in glob(fglob)]
 
     for i, file_path in enumerate(file_paths):
         log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
@@ -294,7 +307,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         if not m:
             if skip:
                 continue
-            log.error("File not matched by regex: '%s'" % file_path)
+            log.error("File '%s' not matched by regex: '%s'" % (file_path, regex))
             sys.exit(1)
         group_dict = m.groupdict()
 
@@ -316,7 +329,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         # copy files
         if file_dict['url']:
             if 'src' in group_dict:
-                srcpath = Path(group_dict['src']).resolve()
+                srcpath = Path(group_dict['src'])
             else:
                 srcpath = file_path
             destpath = Path(workspace.directory, file_dict['url'])
