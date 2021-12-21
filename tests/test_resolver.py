@@ -18,16 +18,12 @@ from ocrd_models.ocrd_page import OcrdPage
 import pytest
 
 from tests.base import (
-    assets, 
+    assets,
     main
 )
 
 from ocrd.resolver import Resolver
 from ocrd_utils import pushd_popd
-
-from ocrd_modelfactory import (
-    page_from_file
-)
 
 
 # set pylint once on module level
@@ -83,8 +79,7 @@ def test_workspace_from_url_kant(mock_request, tmp_path):
 
     # act
     resolver = Resolver()
-    resolver.workspace_from_url(
-        url_src, mets_basename='foo.xml', dst_dir=dst_dir)
+    resolver.workspace_from_url(url_src, mets_basename='foo.xml', dst_dir=dst_dir)
 
     # assert
     local_path = dst_dir / 'foo.xml'
@@ -104,11 +99,7 @@ def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
 
     # act
     resolver = Resolver()
-    resolver.workspace_from_url(
-        url_src,
-        mets_basename='kant_aufklaerung_1784.xml',
-        dst_dir=dst_dir,
-        download=True)
+    resolver.workspace_from_url(url_src, mets_basename='kant_aufklaerung_1784.xml', dst_dir=dst_dir, download=True)
 
     # assert files present under local tmp_path
     local_path_mets = dst_dir / 'kant_aufklaerung_1784.xml'
@@ -130,15 +121,12 @@ def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp
     mock_request.side_effect = request_behavior
     dst_dir = tmp_path / 'workspace_kant'
     dst_dir.mkdir()
-    src_mets = Path(assets.path_to(
-        'kant_aufklaerung_1784-binarized/data/mets.xml'))
+    src_mets = Path(assets.path_to('kant_aufklaerung_1784-binarized/data/mets.xml'))
     dst_mets = Path(dst_dir, 'mets.xml')
     shutil.copyfile(src_mets, dst_mets)
 
     # act
-    Resolver().workspace_from_url(url_src,
-                                  clobber_mets=False,
-                                  dst_dir=dst_dir)
+    Resolver().workspace_from_url(url_src, clobber_mets=False, dst_dir=dst_dir)
 
     # assert
     # no real request was made, since mets already present
@@ -163,8 +151,7 @@ def test_workspace_from_url_404(mock_request):
 
 
 def test_workspace_from_url_with_rel_dir(tmp_path):
-    bogus_dst_dir = '../../../../../../../../../../../../../../../../%s' % str(tmp_path)[
-        1:]
+    bogus_dst_dir = '../../../../../../../../../../../../../../../../%s' % str(tmp_path)[1:]
 
     # act
     with pushd_popd(FOLDER_KANT):
@@ -205,8 +192,7 @@ def test_resolve_image0():
      ('OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017.png', 'INPUT_0020.tif', 'P_0020', (1457, 2083), (1, 1)),
      ])
 def test_resolve_image_grayscale(image_url, data_key, page_id, size1, size2):
-    url_path = os.path.join(assets.url_of(
-        'kant_aufklaerung_1784-binarized'), 'data/mets.xml')
+    url_path = os.path.join(assets.url_of('kant_aufklaerung_1784-binarized'), 'data/mets.xml')
     workspace = Resolver().workspace_from_url(url_path)
     pil_image = Image(url_path)
     img_pil1 = workspace.image_from_segment('segment', pil_image, [[0, 0], [size1[0], size1[1]]])
@@ -216,8 +202,7 @@ def test_resolve_image_grayscale(image_url, data_key, page_id, size1, size2):
 
 
 def test_resolve_image_as_pil_deprecated():
-    url_path = os.path.join(assets.url_of(
-        'kant_aufklaerung_1784-binarized'), 'data/mets.xml')
+    url_path = os.path.join(assets.url_of('kant_aufklaerung_1784-binarized'), 'data/mets.xml')
     workspace = Resolver().workspace_from_url(url_path)
     with pytest.warns(DeprecationWarning) as record:
         workspace.resolve_image_as_pil('OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png')
@@ -253,11 +238,10 @@ def test_workspace_from_nothing_noclobber(tmp_path):
     assert the_msg in str(exc)
 
 
-@pytest.mark.parametrize(
-    "url,basename,exc_msg",
-    [(None, None, "'url' must be a string"),
-     (None, 'foo', "'directory' must be a string")]
-)
+@pytest.mark.parametrize("url,basename,exc_msg",
+                         [(None, None, "'url' must be a string"),
+                          (None, 'foo', "'directory' must be a string")]
+                         )
 def test_download_to_directory_with_badargs(url, basename, exc_msg):
 
     with pytest.raises(Exception) as exc:
@@ -285,8 +269,7 @@ def test_download_to_directory_default(fixture_copy_kant):
 def test_download_to_directory_basename(fixture_copy_kant):
     tmp_root = fixture_copy_kant.parent
     phil_data = fixture_copy_kant / 'data' / 'mets.xml'
-    fn = Resolver().download_to_directory(
-        str(tmp_root), str(phil_data), basename='foo')
+    fn = Resolver().download_to_directory(str(tmp_root), str(phil_data), basename='foo')
     assert Path(tmp_root, fn).exists()
     assert fn == 'foo'
 
@@ -294,8 +277,7 @@ def test_download_to_directory_basename(fixture_copy_kant):
 def test_download_to_directory_subdir(fixture_copy_kant):
     tmp_root = fixture_copy_kant.parent
     phil_data = fixture_copy_kant / 'data' / 'mets.xml'
-    fn = Resolver().download_to_directory(
-        str(tmp_root), str(phil_data), subdir='baz')
+    fn = Resolver().download_to_directory(str(tmp_root), str(phil_data), subdir='baz')
     assert Path(tmp_root, fn).exists()
     assert fn == 'baz/mets.xml'
 

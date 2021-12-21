@@ -3,8 +3,8 @@
 import pytest
 
 from tests.base import (
-    main, 
-    create_ocrd_file, 
+    main,
+    create_ocrd_file,
     create_ocrd_file_with_defaults
 )
 from ocrd_models import (
@@ -126,8 +126,7 @@ def test_ocrd_file_equality():
 
 def test_fptr_changed_for_change_id():
     mets = OcrdMets.empty_mets()
-    f1 = mets.add_file('FOO', ID='FOO_1',
-                       mimetype='image/tiff', pageId='p0001')
+    f1 = mets.add_file('FOO', ID='FOO_1', mimetype='image/tiff', pageId='p0001')
     assert mets.get_physical_pages(for_fileIds=['FOO_1']) == ['p0001']
     f1.ID = 'BAZ_1'
     assert mets.get_physical_pages(for_fileIds=['FOO_1']) == [None]
