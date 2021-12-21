@@ -98,6 +98,10 @@ def list_all_resources(executable):
     systemdir = join('/usr/local/share/ocrd-resources', executable)
     if isdir(systemdir):
         candidates += list(scandir(systemdir))
+    # recurse once
+    for parent in [Path(x) for x in candidates]:
+        if Path(parent).is_dir():
+            candidates += list(scandir(parent))
     return [x.path for x in candidates]
 
 # ht @pabs3
