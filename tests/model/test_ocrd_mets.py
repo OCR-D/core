@@ -29,8 +29,7 @@ def _fixture():
 
 
 def test_unique_identifier():
-    mets = OcrdMets(filename=assets.url_of(
-        'SBB0000F29300010000/data/mets.xml'))
+    mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'))
     assert mets.unique_identifier == 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier'
     mets.unique_identifier = 'foo'
     assert mets.unique_identifier == 'foo', 'Right identifier after change'
@@ -43,11 +42,7 @@ def test_unique_identifier_from_nothing():
     assert mets.unique_identifier == 'foo', 'Right identifier after change is "foo"'
     as_string = mets.to_xml().decode('utf-8')
     assert 'ocrd/core v%s' % VERSION in as_string
-    assert 'CREATEDATE="%04u-%02u-%02uT' % (
-        datetime.now().year,
-        datetime.now().month,
-        datetime.now().day,
-    ) in as_string
+    assert 'CREATEDATE="%04u-%02u-%02uT' % (datetime.now().year, datetime.now().month, datetime.now().day,) in as_string
 
 
 def test_str():
@@ -68,28 +63,17 @@ def test_file_groups(sbb_sample_01):
 
 def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files()) == 35, '35 files total'
-    assert len(sbb_sample_01.find_all_files(
-        fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
-    assert len(sbb_sample_01.find_all_files(fileGrp='//OCR-D-I.*')
-               ) == 13, '13 files in "//OCR-D-I.*"'
-    assert len(sbb_sample_01.find_all_files(ID="FILE_0001_IMAGE")
-               ) == 1, '1 files with ID "FILE_0001_IMAGE"'
-    assert len(sbb_sample_01.find_all_files(ID="//FILE_0005_.*")
-               ) == 1, '1 files with ID "//FILE_0005_.*"'
-    assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001')
-               ) == 17, '17 files for page "PHYS_0001"'
-    assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001-NOTEXIST')
-               ) == 0, '0 pages for "PHYS_0001-NOTEXIST"'
-    assert len(sbb_sample_01.find_all_files(
-        mimetype='image/tiff')) == 13, '13 image/tiff'
-    assert len(sbb_sample_01.find_all_files(
-        mimetype='//application/.*')) == 22, '22 application/.*'
-    assert len(sbb_sample_01.find_all_files(
-        mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
-    assert len(sbb_sample_01.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')
-               ) == 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
-    assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')
-               ) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
+    assert len(sbb_sample_01.find_all_files(fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
+    assert len(sbb_sample_01.find_all_files(fileGrp='//OCR-D-I.*')) == 13, '13 files in "//OCR-D-I.*"'
+    assert len(sbb_sample_01.find_all_files(ID="FILE_0001_IMAGE")) == 1, '1 files with ID "FILE_0001_IMAGE"'
+    assert len(sbb_sample_01.find_all_files(ID="//FILE_0005_.*")) == 1, '1 files with ID "//FILE_0005_.*"'
+    assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001')) == 17, '17 files for page "PHYS_0001"'
+    assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001-NOTEXIST')) == 0, '0 pages for "PHYS_0001-NOTEXIST"'
+    assert len(sbb_sample_01.find_all_files(mimetype='image/tiff')) == 13, '13 image/tiff'
+    assert len(sbb_sample_01.find_all_files(mimetype='//application/.*')) == 22, '22 application/.*'
+    assert len(sbb_sample_01.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
+    assert len(sbb_sample_01.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
+    assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
 
 
 def test_find_all_files_no_regex_for_pageid(sbb_sample_01):
@@ -123,6 +107,7 @@ def _fixture_sbb(tmp_path):
     mets_path = str(join(dst_path, 'mets.xml'))
     yield OcrdMets(filename=mets_path)
 
+
 def test_physical_pages_for_fileids(sbb_directory_ocrd_mets):
     assert sbb_directory_ocrd_mets.get_physical_pages(
         for_fileIds=['FILE_0002_IMAGE']) == ['PHYS_0002']
@@ -140,40 +125,30 @@ def test_add_group():
 def test_add_file():
     mets = OcrdMets.empty_mets()
     assert len(mets.file_groups) == 0, '0 file groups'
-    assert len(list(mets.find_all_files(fileGrp='OUTPUT'))
-               ) == 0, '0 files in "OUTPUT"'
-    f = mets.add_file('OUTPUT', ID="foo123",
-                      mimetype="bla/quux", pageId="foobar")
-    f2 = mets.add_file('OUTPUT', ID="foo1232",
-                       mimetype="bla/quux", pageId="foobar")
+    assert len(list(mets.find_all_files(fileGrp='OUTPUT'))) == 0, '0 files in "OUTPUT"'
+    f = mets.add_file('OUTPUT', ID="foo123", mimetype="bla/quux", pageId="foobar")
+    f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
     assert f.pageId == 'foobar', 'pageId set'
     assert len(mets.file_groups) == 1, '1 file groups'
-    assert len(list(mets.find_all_files(fileGrp='OUTPUT'))
-               ) == 2, '2 files in "OUTPUT"'
-    mets.set_physical_page_for_file(
-        'barfoo', f, order='300', orderlabel="page 300")
+    assert len(list(mets.find_all_files(fileGrp='OUTPUT'))) == 2, '2 files in "OUTPUT"'
+    mets.set_physical_page_for_file('barfoo', f, order='300', orderlabel="page 300")
     assert f.pageId == 'barfoo', 'pageId changed'
-    mets.set_physical_page_for_file(
-        'quux', f2, order='302', orderlabel="page 302")
+    mets.set_physical_page_for_file('quux', f2, order='302', orderlabel="page 302")
     assert f2.pageId == 'quux', 'pageId changed'
-    mets.set_physical_page_for_file(
-        'barfoo', f2, order='301', orderlabel="page 301")
+    mets.set_physical_page_for_file('barfoo', f2, order='301', orderlabel="page 301")
     assert f2.pageId == 'barfoo', 'pageId changed'
     assert len(mets.file_groups) == 1, '1 file group'
 
 
 def test_add_file_id_already_exists(sbb_sample_01):
-    f = sbb_sample_01.add_file(
-        'OUTPUT', ID='best-id-ever', mimetype="beep/boop")
+    f = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
     assert f.ID == 'best-id-ever', "ID kept"
     with pytest.raises(Exception) as exc:
-        sbb_sample_01.add_file(
-            'OUTPUT', ID='best-id-ever', mimetype="boop/beep")
+        sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep")
 
     assert "File with ID='best-id-ever' already exists" in str(exc)
 
-    f2 = sbb_sample_01.add_file(
-        'OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
+    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
     assert f._el == f2._el
 
 @pytest.mark.xfail(reason='2x same ID is valid if ignore == True')
@@ -183,8 +158,7 @@ def test_add_file_ignore(sbb_sample_01: OcrdMets):
 
     the_file = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
     assert the_file.ID == 'best-id-ever'
-    the_same = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever',
-                           mimetype="boop/beep", ignore=True)
+    the_same = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", ignore=True)
     assert the_same.ID == 'best-id-ever'
 
     # how many files inserted
@@ -223,8 +197,7 @@ def test_file_pageid(sbb_sample_01):
 
 def test_agent(sbb_sample_01):
     beforelen = len(sbb_sample_01.agents)
-    sbb_sample_01.add_agent('foo bar v0.0.1', 'OTHER',
-                            'OTHER', 'YETOTHERSTILL')
+    sbb_sample_01.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'YETOTHERSTILL')
     assert len(sbb_sample_01.agents) == beforelen + 1
 
 
@@ -265,8 +238,7 @@ def test_remove_page(sbb_directory_ocrd_mets):
 
 
 def test_remove_physical_page_fptr(sbb_directory_ocrd_mets):
-    assert sbb_directory_ocrd_mets.get_physical_pages(
-        for_fileIds=['FILE_0002_IMAGE']), ['PHYS_0002']
+    assert sbb_directory_ocrd_mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), ['PHYS_0002']
     sbb_directory_ocrd_mets.remove_physical_page_fptr('FILE_0002_IMAGE')
     assert sbb_directory_ocrd_mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), [None]
 
@@ -331,7 +303,7 @@ def test_remove_file_group_regex(sbb_directory_ocrd_mets):
     """
     Test removal of filegrp
     """
- 
+
     assert len(sbb_directory_ocrd_mets.file_groups) == 17
     assert len(sbb_directory_ocrd_mets.find_all_files()) == 35
 
@@ -345,8 +317,7 @@ def test_remove_file_group_regex(sbb_directory_ocrd_mets):
 
 def test_merge(sbb_sample_01):
     assert len(sbb_sample_01.file_groups) == 17
-    other_mets = OcrdMets(filename=assets.path_to(
-        'kant_aufklaerung_1784/data/mets.xml'))
+    other_mets = OcrdMets(filename=assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
     sbb_sample_01.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
     assert len(sbb_sample_01.file_groups) == 18
 
@@ -357,8 +328,9 @@ def test_invalid_filegrp():
     mets = OcrdMets(content="<mets></mets>")
     with pytest.raises(ValueError) as val_err:
         mets.add_file('1:! bad filegrp', ID="foo123", pageId="foobar")
-        
+
     assert "Invalid syntax for mets:fileGrp/@USE" in str(val_err.value)
+
 
 if __name__ == '__main__':
     main(__file__)
