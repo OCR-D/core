@@ -198,15 +198,14 @@ def test_resolve_image0():
     assert img_pil2.size == (1, 1)
 
 
-@pytest.mark.skip(reason='usage unclear - neither #image_from_page nor #image_from_segment are drop-in replacements')
+# @pytest.mark.skip(reason='usage unclear - neither #image_from_page nor #image_from_segment are drop-in replacements')
 @pytest.mark.parametrize(
     "image_url,data_key,page_id,size1,size2",
     [('OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png', 'INPUT_0017.tif', 'P_0017', (1457, 2083), (1, 1)),
      ('OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017.png', 'INPUT_0020.tif', 'P_0020', (1457, 2083), (1, 1)),
      ])
 def test_resolve_image_grayscale(image_url, data_key, page_id, size1, size2):
-    url_path = os.path.join(assets.url_of(
-        'kant_aufklaerung_1784-binarized'), 'data/mets.xml')
+    url_path = assets.url_of('kant_aufklaerung_1784-binarized/data/mets.xml')
     workspace = Resolver().workspace_from_url(url_path)
     pil_image = Image(url_path)
     img_pil1 = workspace.image_from_segment('segment', pil_image, [[0, 0], [size1[0], size1[1]]])

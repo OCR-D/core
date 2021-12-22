@@ -176,7 +176,7 @@ def test_add_file_id_already_exists(sbb_sample_01):
         'OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
     assert f._el == f2._el
 
-@pytest.mark.xfail(reason='check if 2x same ID are valid')
+@pytest.mark.xfail(reason='2x same ID is valid if ignore == True')
 def test_add_file_ignore(sbb_sample_01: OcrdMets):
     """Behavior if ignore-Flag set to true:
     delegate responsibility to overwrite existing files to user"""

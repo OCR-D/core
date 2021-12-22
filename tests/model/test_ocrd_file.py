@@ -95,7 +95,7 @@ def test_create_ocrd_file_with_defaults_basename_wo_extension(local_filename, wo
     assert f.basename_without_extension == wo_extension
 
 
-@pytest.mark.xfail(reason="not possible anymore as of Fri Sep  3 13:11:00 CEST 2021")
+@pytest.mark.skip(reason="not possible anymore as of Fri Sep  3 13:11:00 CEST 2021")
 def test_file_group_wo_parent():
     with pytest.raises(ValueError) as val_err:
         OcrdFile(None)
@@ -105,11 +105,8 @@ def test_file_group_wo_parent():
 def test_file_group_wo_parent_new_version():
     """Test for new error message
     """
-    with pytest.raises(ValueError) as val_err:
+    with pytest.raises(ValueError, match=r"Must provide mets:file element this OcrdFile represent"):
         OcrdFile(None)
-    assert "Must provide mets:file element this OcrdFile represent" in str(
-        val_err.value)
-
 
 def test_ocrd_file_equality():
     mets = OcrdMets.empty_mets()
