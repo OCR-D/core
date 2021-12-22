@@ -251,25 +251,23 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
     """
     Add files in bulk to an OCR-D workspace.
 
-    FILE_GLOB can either be a shell glob expression or a list of files or '-'
-    in which case file paths are read from STDIN.
+    FILE_GLOB can either be a shell glob expression to match file names,
+    or a list of expressions or '-', in which case expressions are read from STDIN.
 
-    --regex is applied to the absolute path of every file in FILE_GLOB and can
-    define named groups that can be used in --page-id, --file-id, --mimetype, --url and
-    --file-grp by referencing the named group 'grp' in the regex as '{{ grp }}'.
+    After globbing, --regex is matched against each expression resulting from FILE_GLOB, and can
+    define named groups reusable in the --page-id, --file-id, --mimetype, --url, --source-path and
+    --file-grp options, e.g. by referencing the group name 'grp' from the regex as '{{ grp }}'.
 
-    If the file paths aren't really file paths but CSV data that *contain* a
-    filename, the part that contains the actual filename should be in the named
-    group 'src'. If not explicitly defined, 'src' is equal to the file path.
+    If the FILE_GLOB expressions do not denote the file names themselves
+    (but arbitrary strings for --regex matching), then use --source-path to set
+    the actual file paths to use. (This could involve fixed strings or group references.)
 
     \b
     Examples:
         ocrd workspace bulk-add \\
-                --regex '(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$' \\
-                --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
+                --regex '(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^.]+' \\
                 --page-id 'PHYS_{{ pageid }}' \\
                 --file-grp "{{ fileGrp }}" \\
-                --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
                 path/to/files/*/*.*
         \b
         echo "path/to/src/file.xml SEG/page_p0001.xml" \\
