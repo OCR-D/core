@@ -86,7 +86,7 @@ class OcrdResourceManager():
         """
         if executable:
             return [(executable, self.database[executable])]
-        return [(x, y) for x, y in self.database.items()]
+        return self.database.items()
 
     def list_installed(self, executable=None):
         """
@@ -142,6 +142,7 @@ class OcrdResourceManager():
             f.write(RESOURCE_USER_LIST_COMMENT)
             f.write('\n')
             f.write(safe_dump(user_database))
+        self.load_resource_list(self.user_list)
         return resdict
 
     def find_resources(self, executable=None, name=None, url=None, database=None):
@@ -182,8 +183,9 @@ class OcrdResourceManager():
     def parameter_usage(self, name, usage='as-is'):
         if usage == 'as-is':
             return name
-        if usage == 'without-extension':
+        elif usage == 'without-extension':
             return Path(name).stem
+        raise ValueError("No such usage '%s'" % usage)
 
     def _download_impl(self, url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')

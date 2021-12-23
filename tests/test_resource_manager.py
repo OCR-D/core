@@ -25,6 +25,7 @@ def test_resources_manager_config_default():
     assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed()
     proc = 'ocrd-anybaseocr-layout-analysis'
+    # TODO mock request
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
@@ -78,6 +79,32 @@ def test_resources_manager_config_explicit_invalid(tmp_path):
     # assert
     with raises(ValueError, match='is invalid'):
         OcrdResourceManager(xdg_config_home=tmp_path)
+
+def test_find_resources(tmp_path):
+
+    # act
+    f = tmp_path / 'ocrd-foo' / 'foo.bar'
+    f.parent.mkdir()
+    f.write_text('foobar')
+    mgr = OcrdResourceManager(xdg_config_home=tmp_path)
+
+    # assert
+    assert mgr.find_resources(executable='ocrd-foo') == []
+    assert mgr.add_to_user_database('ocrd-foo', f, url='http://foo/bar')
+    assert 'ocrd-foo' in [x for x, _ in mgr.find_resources()]
+    assert 'ocrd-foo' in [x for x, _ in mgr.find_resources(url='http://foo/bar')]
+
+def test_parameter_usage(tmp_path):
+    mgr = OcrdResourceManager(xdg_config_home=tmp_path)
+    assert mgr.parameter_usage('foo.bar') == 'foo.bar'
+    assert mgr.parameter_usage('foo.bar', 'without-extension') == 'foo'
+    with raises(ValueError, match='No such usage'):
+        mgr.parameter_usage('foo.bar', 'baz')
+
+def test_default_resource_dir(tmp_path):
+    mgr = OcrdResourceManager(xdg_data_home=tmp_path)
+    assert mgr.xdg_config_home != mgr.xdg_data_home
+    assert mgr.default_resource_dir == str(mgr.xdg_data_home / 'ocrd-resources')
 
 
 if __name__ == "__main__":
