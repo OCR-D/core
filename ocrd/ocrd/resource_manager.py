@@ -20,18 +20,16 @@ class OcrdResourceManager():
     """
     Managing processor resources
     """
-    def __init__(self, xdb_config_home=None, xdb_data_home=None):
+    def __init__(self, xdg_config_home=None):
         self.log = getLogger('ocrd.resource_manager')
         self.database = {}
 
-        self.xdb_data_home = xdb_data_home
-        if not self.xdb_data_home:
-            self._init_data_home()
-        self.xdb_config_home = xdb_config_home
-        if not self.xdb_config_home:
-            self._init_config_home()
+        self._xdg_data_home = None
+        self.xdg_config_home = xdg_config_home
+        if not self.xdg_config_home:
+            self._calculate_xdg_config_home()
         self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
-        self.user_list = Path(self.xdb_config_home, 'ocrd', 'resources.yml')
+        self.user_list = Path(self.xdg_config_home, 'ocrd', 'resources.yml')
         if not self.user_list.exists():
             if not self.user_list.parent.exists():
                 self.user_list.parent.mkdir(parents=True)
@@ -44,14 +42,23 @@ class OcrdResourceManager():
         if 'HOME' in environ and environ['HOME'] != path.expanduser('~'):
             the_home = environ['HOME']
         return the_home
-        
-    def _init_config_home(self):
-        the_home = self.__init_home()
-        self.xdb_config_home = environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in environ else join(the_home, '.config')
 
-    def _init_data_home(self):
-        the_home = self.__init_home()
-        self.xdb_data_home = environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in environ else join(the_home, '.local', 'share')
+    @property
+    def xdg_data_home(self):
+        if not self._xdg_data_home:
+            if 'XDG_DATA_HOME' in environ:
+                self._xdg_data_home = environ['XDG_DATA_HOME'] 
+            else:
+                the_home = self.__init_home()
+                self._xdg_data_home = join(the_home, '.local', 'share')
+        return self._xdg_data_home
+        
+    def _calculate_xdg_config_home(self):
+        if 'XDG_CONFIG_HOME' in environ:
+            self.xdg_config_home = environ['XDG_CONFIG_HOME'] 
+        else:
+            the_home = self.__init_home()
+            self.xdg_config_home = join(the_home, '.config')
 
     def load_resource_list(self, list_filename, database=None):
         if not database:
@@ -89,7 +96,7 @@ class OcrdResourceManager():
             # resources we know about
             all_executables = list(self.database.keys())
             # resources in the file system
-            parent_dirs = [join(x, 'ocrd-resources') for x in [self.xdb_data_home, '/usr/local/share']]
+            parent_dirs = [join(x, 'ocrd-resources') for x in [self.xdg_data_home, '/usr/local/share']]
             for parent_dir in parent_dirs:
                 if Path(parent_dir).exists():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
@@ -159,13 +166,13 @@ class OcrdResourceManager():
 
     def location_to_resource_dir(self, location):
         return '/usr/local/share/ocrd-resources' if location == 'system' else \
-                join(self.xdb_data_home, 'ocrd-resources') if location == 'data' else \
+                join(self.xdg_data_home, 'ocrd-resources') if location == 'data' else \
                 getcwd()
 
     def resource_dir_to_location(self, resource_path):
         resource_path = str(resource_path)
         return 'system' if resource_path.startswith('/usr/local/share/ocrd-resources') else \
-               'data' if resource_path.startswith(join(self.xdb_data_home, 'ocrd-resources')) else \
+               'data' if resource_path.startswith(join(self.xdg_data_home, 'ocrd-resources')) else \
                'cwd' if resource_path.startswith(getcwd()) else \
                resource_path
 

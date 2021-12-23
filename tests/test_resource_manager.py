@@ -53,7 +53,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
 def test_resources_manager_config_explicite(tmp_path):
 
     # act
-    mgr = OcrdResourceManager(xdb_config_home=str(tmp_path), xdb_data_home=str(tmp_path))
+    mgr = OcrdResourceManager(xdg_config_home=str(tmp_path))
 
     # assert
     f = tmp_path / 'ocrd' / CONST_RESOURCE_YML
