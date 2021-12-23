@@ -5,6 +5,7 @@ import pathlib
 
 from ocrd.resource_manager import OcrdResourceManager
 
+from pytest import raises
 from tests.base import main
 
 CONST_RESOURCE_YML = 'resources.yml'
@@ -34,6 +35,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     # arrange
     monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path))
     monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path))
+    monkeypatch.setenv('HOME', str(tmp_path))
 
     # act
     mgr = OcrdResourceManager()
@@ -48,6 +50,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
+    assert mgr.userdir == str(tmp_path)
 
 
 def test_resources_manager_config_explicite(tmp_path):
@@ -65,6 +68,16 @@ def test_resources_manager_config_explicite(tmp_path):
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
+
+def test_resources_manager_config_explicit_invalid(tmp_path):
+
+    # act
+    (tmp_path / 'ocrd').mkdir()
+    (tmp_path / 'ocrd' / CONST_RESOURCE_YML).write_text('::INVALID::')
+
+    # assert
+    with raises(ValueError, match='is invalid'):
+        OcrdResourceManager(xdg_config_home=tmp_path)
 
 
 if __name__ == "__main__":

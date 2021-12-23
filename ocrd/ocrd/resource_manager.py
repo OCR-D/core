@@ -20,16 +20,16 @@ class OcrdResourceManager():
     """
     Managing processor resources
     """
-    def __init__(self, xdg_config_home=None):
+    def __init__(self, userdir=None, xdg_config_home=None, xdg_data_home=None):
         self.log = getLogger('ocrd.resource_manager')
         self.database = {}
 
-        self._xdg_data_home = None
-        self.xdg_config_home = xdg_config_home
-        if not self.xdg_config_home:
-            self._calculate_xdg_config_home()
-        self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
+        self._xdg_data_home = xdg_data_home
+        self._xdg_config_home = xdg_config_home
+        self._userdir = userdir
         self.user_list = Path(self.xdg_config_home, 'ocrd', 'resources.yml')
+
+        self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
         if not self.user_list.exists():
             if not self.user_list.parent.exists():
                 self.user_list.parent.mkdir(parents=True)
@@ -37,28 +37,31 @@ class OcrdResourceManager():
                 f.write(RESOURCE_USER_LIST_COMMENT)
         self.load_resource_list(self.user_list)
 
-    def __init_home(self):
-        the_home = path.expanduser('~')
-        if 'HOME' in environ and environ['HOME'] != path.expanduser('~'):
-            the_home = environ['HOME']
-        return the_home
+    @property
+    def userdir(self):
+        if not self._userdir:
+            self._userdir = path.expanduser('~')
+            if 'HOME' in environ and environ['HOME'] != path.expanduser('~'):
+                self._userdir = environ['HOME']
+        return self._userdir
 
     @property
     def xdg_data_home(self):
         if not self._xdg_data_home:
             if 'XDG_DATA_HOME' in environ:
-                self._xdg_data_home = environ['XDG_DATA_HOME'] 
+                self._xdg_data_home = environ['XDG_DATA_HOME']
             else:
-                the_home = self.__init_home()
-                self._xdg_data_home = join(the_home, '.local', 'share')
+                self._xdg_data_home = join(self.userdir, '.local', 'share')
         return self._xdg_data_home
-        
-    def _calculate_xdg_config_home(self):
-        if 'XDG_CONFIG_HOME' in environ:
-            self.xdg_config_home = environ['XDG_CONFIG_HOME'] 
-        else:
-            the_home = self.__init_home()
-            self.xdg_config_home = join(the_home, '.config')
+
+    @property
+    def xdg_config_home(self):
+        if not self._xdg_config_home:
+            if 'XDG_CONFIG_HOME' in environ:
+                self._xdg_config_home = environ['XDG_CONFIG_HOME']
+            else:
+                self._xdg_config_home = join(self.userdir, '.config')
+        return self._xdg_config_home
 
     def load_resource_list(self, list_filename, database=None):
         if not database:
@@ -106,7 +109,7 @@ class OcrdResourceManager():
                 res_name = Path(res_filename).name
                 resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if not resdict:
-                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'" % (this_executable, res_name, res_filename, self.user_list))
+                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, res_name, res_filename, self.user_list)
                     resdict = [self.add_to_user_database(this_executable, res_filename)]
                 resdict[0]['path'] = res_filename
                 reslist.append(resdict[0])
