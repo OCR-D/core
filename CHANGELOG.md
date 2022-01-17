@@ -5,6 +5,20 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.29.0] - 2021-12-08
+
+Changed:
+
+  * `ocrd_utils.make_file_id`: combine with output fileGrp if input has pageId, but don't extract numbers, #744
+  * `OcrdMets.add_file`: `mets:fileGrp/@USE` must be valid `xs:ID`, #746
+
+Added:
+
+  * `ocrd ocrd-tool`: wrap `list-resources` and `show-resource` from `Processor`
+  * bashlib `ocrd__parse_argv`: add `--list-resources` and `--show-resource`, #751
+  * `ocrd bashlib`: wrap `input-files` from `Processor` and `make_file_id`
+  * bashlib `ocrd__wrap`: offer `ocrd__files` and `ocrd__input_file`, #571
+
 ## [2.28.0] - 2021-11-30
 
 Added:
@@ -1394,6 +1408,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.29.0]: ../../compare/v2.29.0..v2.28.0
 [2.28.0]: ../../compare/v2.28.0..v2.27.0
 [2.27.0]: ../../compare/v2.27.0..v2.26.1
 [2.26.1]: ../../compare/v2.26.1..v2.26.0
