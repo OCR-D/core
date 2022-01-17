@@ -1,3 +1,4 @@
+autopep8
 pytest >= 4.0.0
 generateDS == 2.35.20
 coverage >= 4.5.2
@@ -8,7 +9,7 @@ recommonmark >= 0.5.0
 docstr-coverage
 pylint
 atomicwrites
-opencv-python
+opencv-python-headless
 deprecated
 click
 twine

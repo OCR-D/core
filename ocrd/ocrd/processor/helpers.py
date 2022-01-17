@@ -124,20 +124,25 @@ def run_api(processor,
         os.chdir(oldcwd)
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
-    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s']" % (
+    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
         ocrd_tool['executable'],
         t1_wall,
         t1_cpu,
         processor.input_file_grp or '',
         processor.output_file_grp or '',
-        json.dumps(processor.parameter) if processor.parameter else {}
+        json.dumps(processor.parameter or {}),
+        processor.page_id or ''
     ))
     processor.workspace.mets.add_agent(
         name=name,
         _type='OTHER',
         othertype='SOFTWARE',
         role='OTHER',
-        otherrole=otherrole
+        otherrole=otherrole,
+        notes=[({'option': 'input-file-grp'}, processor.input_file_grp or ''),
+               ({'option': 'output-file-grp'}, processor.output_file_grp or ''),
+               ({'option': 'parameter'}, json.dumps(processor.parameter or {})),
+               ({'option': 'page-id'}, processor.page_id or '')]
     )
 
 def run_cli(
