@@ -489,7 +489,7 @@ class Workspace():
 
     def image_from_page(self, page, page_id,
                         fill='background', transparency=False,
-                        feature_selector='', feature_filter=''):
+                        feature_selector='', feature_filter='', filename=''):
         """Extract an image for a PAGE-XML page from the workspace.
 
         Args:
@@ -500,15 +500,19 @@ class Workspace():
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of `@comments` classes
             feature_filter (string): a comma-separated list of `@comments` classes
+            filename (string): which file path to use
 
         Extract a `PIL.Image` from ``page``, either from its `AlternativeImage`
         (if it exists), or from its `@imageFilename` (otherwise). Also crop it,
         if a `Border` exists, and rotate it, if any `@orientation` angle is
         annotated.
 
+        If ``filename`` is given, then among `@imageFilename` and the available
+        `AlternativeImage/@filename` images, pick that one, or raise an error.
+
         If ``feature_selector`` and/or ``feature_filter`` is given, then
-        select/filter among the `@imageFilename` image and the available
-        AlternativeImages the richest one which contains all of the selected,
+        among the `@imageFilename` image and the available AlternativeImages,
+        select/filter the richest one which contains all of the selected,
         but none of the filtered features (i.e. `@comments` classes), or
         raise an error.
 
@@ -527,6 +531,7 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to ``fill``:
 
+        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
@@ -601,6 +606,8 @@ class Workspace():
             # but also ensure that we get the richest feature set, i.e. most
             # of those features that we cannot reproduce automatically below
             for alternative_image in alternative_images:
+                if filename and filename != alternative_image.filename:
+                    continue
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
@@ -688,6 +695,10 @@ class Workspace():
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
+        if filename and not getattr(page_image, 'filename', '').endswith(filename):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filename="%s" in page "%s"' % (
+                                filename, page_id))
         if not all(feature in page_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
@@ -703,7 +714,7 @@ class Workspace():
 
     def image_from_segment(self, segment, parent_image, parent_coords,
                            fill='background', transparency=False,
-                           feature_selector='', feature_filter=''):
+                           feature_selector='', feature_filter='', filename=''):
         """Extract an image for a PAGE-XML hierarchy segment from its parent's image.
 
         Args:
@@ -732,9 +743,12 @@ class Workspace():
         (otherwise). Pass in `parent_image` and `parent_coords` from the result
         of the next higher-level of this function or from :py:meth:`image_from_page`.
 
-        If `feature_selector` and/or `feature_filter` is given, then
-        select/filter among the cropped `parent_image` and the available
-        AlternativeImages the richest one which contains all of the selected,
+        If ``filename`` is given, then among the available `AlternativeImage/@filename`
+        images, pick that one, or raise an error.
+
+        If ``feature_selector`` and/or ``feature_filter`` is given, then
+        among the cropped `parent_image` and the available AlternativeImages,
+        select/filter the richest one which contains all of the selected,
         but none of the filtered features (i.e. ``@comments`` classes), or
         raise an error.
 
@@ -745,6 +759,7 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to `fill`:
 
+        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
@@ -859,6 +874,8 @@ class Workspace():
             # but also ensure that we get the richest feature set, i.e. most
             # of those features that we cannot reproduce automatically below
             for alternative_image in alternative_images:
+                if filename and filename != alternative_image.filename:
+                    continue
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
@@ -930,6 +947,10 @@ class Workspace():
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
+        if filename and not getattr(segment_image, 'filename', '').endswith(filename):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filename="%s" in segment "%s"' % (
+                                filename, segment.id))
         if not all(feature in segment_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements' +
