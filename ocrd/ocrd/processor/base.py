@@ -116,8 +116,16 @@ class Processor():
                 logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
                 logger.error("Failed to resolve %s for processor %s" % (show_resource, ocrd_tool['executable']))
             else:
-                with open(res_fname[0], 'rb') as f:
-                    copyfileobj(f, sys.stdout.buffer)
+                fpath = Path(res_fname[0])
+                if fpath.is_dir():
+                    with pushd_popd(fpath):
+                        fileobj = io.BytesIO()
+                        with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
+                            tarball.add('.')
+                        fileobj.seek(0)
+                        copyfileobj(fileobj, sys.stdout.buffer)
+                else:
+                    sys.stdout.buffer.write(fpath.read_bytes())
             return
         self.ocrd_tool = ocrd_tool
         if show_help:
