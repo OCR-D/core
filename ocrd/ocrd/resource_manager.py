@@ -1,7 +1,6 @@
 from pathlib import Path
 from os.path import join
 from os import environ, listdir, getcwd, path
-import re
 from shutil import copytree
 from datetime import datetime
 from tarfile import open as open_tarfile

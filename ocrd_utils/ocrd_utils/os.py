@@ -12,6 +12,7 @@ __all__ = [
 
 from tempfile import TemporaryDirectory
 import contextlib
+from distutils.spawn import find_executable as which
 from json import loads
 from os import getcwd, chdir, stat, chmod, umask, environ
 from pathlib import Path
@@ -118,7 +119,10 @@ def are_processor_resources_directories(executable, ocrd_tool=None):
     point to directories, not files
     """
     if not ocrd_tool:
-        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True))
+        if not which(executable):
+            return False
+        result = run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
+        ocrd_tool = loads(result.stdout)
     return next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p and p['content-type'] == 'text/directory'), False)
 
 # ht @pabs3
