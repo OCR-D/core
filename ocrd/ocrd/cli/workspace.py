@@ -299,7 +299,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             if not expanded:
                 file_paths += [Path(fglob)]
             else:
-                file_paths += [Path(x) for x in glob(fglob)]
+                file_paths += [Path(x) for x in expanded]
 
     for i, file_path in enumerate(file_paths):
         log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
