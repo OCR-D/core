@@ -343,8 +343,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
 
         # Where to copy from
-        if 'src' in group_dict:
-            srcpath = Path(group_dict['src'])
+        if file_dict['src']:
+            srcpath = Path(file_dict['src'])
         else:
             srcpath = file_path
 
