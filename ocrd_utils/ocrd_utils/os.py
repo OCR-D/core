@@ -3,6 +3,7 @@ Operating system functions.
 """
 __all__ = [
     'abspath',
+    'are_processor_resources_directories',
     'pushd_popd',
     'unzip_file_to_dir',
     'list_resource_candidates',
@@ -11,10 +12,12 @@ __all__ = [
 
 from tempfile import TemporaryDirectory
 import contextlib
-from os import getcwd, chdir, stat, chmod, umask, environ, scandir
+from json import loads
+from os import getcwd, chdir, stat, chmod, umask, environ
 from pathlib import Path
 from os.path import exists, abspath as abspath_, join, isdir
 from zipfile import ZipFile
+from subprocess import run, PIPE
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
@@ -77,7 +80,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_
         candidates = [c for c in candidates if Path(c).is_dir()]
     return candidates
 
-def list_all_resources(executable):
+def list_all_resources(executable, is_dir=False):
     """
     List all processor resources in the filesystem according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
@@ -90,19 +93,33 @@ def list_all_resources(executable):
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         for processor_path in environ[processor_path_var].split(':'):
-            if isdir(processor_path):
-                candidates += list(scandir(processor_path))
-    datadir = join(XDG_DATA_HOME, 'ocrd-resources', executable)
-    if isdir(datadir):
-        candidates += list(scandir(datadir))
-    systemdir = join('/usr/local/share/ocrd-resources', executable)
-    if isdir(systemdir):
-        candidates += list(scandir(systemdir))
+            if Path(processor_path).is_dir():
+                candidates += Path(processor_path).iterdir()
+    datadir = Path(XDG_DATA_HOME, 'ocrd-resources', executable)
+    if datadir.is_dir():
+        candidates += datadir.iterdir()
+    systemdir = Path('/usr/local/share/ocrd-resources', executable)
+    if systemdir.is_dir():
+        candidates += systemdir.iterdir()
     # recurse once
-    for parent in [Path(x) for x in candidates]:
-        if Path(parent).is_dir():
-            candidates += list(scandir(parent))
-    return [x.path for x in candidates]
+    for parent in candidates:
+        if parent.is_dir():
+            candidates += parent.iterdir()
+    if is_dir:
+        candidates = [x for x in candidates if x.is_dir()]
+    else:
+        candidates = [x for x in candidates if not x.is_dir()]
+    return [str(x) for x in candidates]
+
+def are_processor_resources_directories(executable, ocrd_tool=None):
+    """
+    XXX if a processor has at least one parameter with
+    `content-type == text/directory`, assume ALL file parameters
+    point to directories, not files
+    """
+    if not ocrd_tool:
+        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True))
+    return next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p and p['content-type'] == 'text/directory'), False)
 
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42

@@ -12,7 +12,7 @@ from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.os import list_all_resources, pushd_popd
+from ocrd_utils.os import are_processor_resources_directories, list_all_resources, pushd_popd
 from ocrd_utils.constants import XDG_CONFIG_HOME, XDG_DATA_HOME
 
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
@@ -76,7 +76,7 @@ class OcrdResourceManager():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
         for this_executable in set(all_executables):
             reslist = []
-            for res_filename in list_all_resources(this_executable):
+            for res_filename in list_all_resources(this_executable, is_dir=are_processor_resources_directories(this_executable)):
                 res_name = Path(res_filename).name
                 resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if not resdict:

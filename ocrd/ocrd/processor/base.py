@@ -27,6 +27,7 @@ from ocrd_utils import (
     list_resource_candidates,
     pushd_popd,
     list_all_resources,
+    are_processor_resources_directories,
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
@@ -99,16 +100,11 @@ class Processor():
             print(json.dumps(ocrd_tool, indent=True))
             return
         if list_resources:
-            for res in list_all_resources(ocrd_tool['executable']):
+            for res in list_all_resources(ocrd_tool['executable'], is_dir=are_processor_resources_directories(None, ocrd_tool)):
                 print(res)
             return
         if show_resource:
-            # XXX if a processor has at least one parameter with
-            # `content-type == text/directory`, assume ALL file parameters
-            # point to directories, not files
-            has_at_least_one_directory_parameter = next((True for p in ocrd_tool['parameters'].values()
-                if 'content-type' in p and p['content-type'] == 'text/directory'), False)
-            is_dir = has_at_least_one_directory_parameter
+            is_dir = are_processor_resources_directories(None, ocrd_tool)
             is_file = not(is_dir)
             res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource, is_file=is_file, is_dir=is_dir)
             if not res_fname:

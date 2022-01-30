@@ -165,6 +165,7 @@ from .logging import (
 
 from .os import (
     abspath,
+    are_processor_resources_directories,
     list_all_resources,
     list_resource_candidates,
     atomic_write,
