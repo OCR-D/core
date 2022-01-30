@@ -9,16 +9,15 @@ __all__ = [
     'run_processor'
 ]
 
-from os import makedirs
-from os.path import exists, isdir, join
+from os.path import exists
 from shutil import copyfileobj
 import json
 import os
 from os import getcwd
-import re
+from pathlib import Path
 import sys
-
-import requests
+import tarfile
+import io
 
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
@@ -26,11 +25,11 @@ from ocrd_utils import (
     getLogger,
     initLogging,
     list_resource_candidates,
+    pushd_popd,
     list_all_resources,
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
-from ..resource_manager import OcrdResourceManager
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
@@ -104,7 +103,14 @@ class Processor():
                 print(res)
             return
         if show_resource:
-            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource)
+            # XXX if a processor has at least one parameter with
+            # `content-type == text/directory`, assume ALL file parameters
+            # point to directories, not files
+            has_at_least_one_directory_parameter = next((True for p in ocrd_tool['parameters'].values()
+                if 'content-type' in p and p['content-type'] == 'text/directory'), False)
+            is_dir = has_at_least_one_directory_parameter
+            is_file = not(is_dir)
+            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource, is_file=is_file, is_dir=is_dir)
             if not res_fname:
                 initLogging()
                 logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
