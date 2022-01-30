@@ -292,7 +292,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
     file_paths = []
     from_stdin = file_glob == ('-',)
     if from_stdin:
-        file_paths += [Path(x.strip()) for x in sys.stdin.readlines()]
+        file_paths += [Path(x.strip('\n')) for x in sys.stdin.readlines()]
     else:
         for fglob in file_glob:
             expanded = glob(fglob)
