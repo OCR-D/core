@@ -317,8 +317,6 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         if not file_id:
             file_id = safe_filename(str(file_path))
 
-        # if not url
-
         # set up file info
         file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id, 'pageId': page_id, 'fileGrp': file_grp}
 
