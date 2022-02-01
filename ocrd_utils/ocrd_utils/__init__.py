@@ -115,8 +115,7 @@ from .constants import (
     LOG_FORMAT,
     LOG_TIMEFMT,
     VERSION,
-    XDG_CONFIG_HOME,
-    XDG_DATA_HOME)
+    )
 
 from .deprecate import (
     deprecated_alias)

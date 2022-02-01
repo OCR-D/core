@@ -13,19 +13,12 @@ from tests.base import (
 
 from ocrd_models import OcrdExif
 
-# pylint: disable=no-member
-
-pil_version_major, pil_version_minor = [
-    int(x) for x in pil_version.split('.')][:2]
-pil_below_83 = pil_version_major < 8 or (
-    pil_version_major == 8 and pil_version_minor < 3)
-
 
 @pytest.mark.parametrize("path,width,height,xResolution,yResolution,resolution,resolutionUnit,photometricInterpretation,compression", [
     ('SBB0000F29300010000/data/OCR-D-IMG/FILE_0001_IMAGE.tif',
      2875, 3749, 300, 300, 300, 'inches', 'RGB', 'jpeg'),
     ('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png',
-     1457, 2084, 295 if pil_below_83 else 294, 295 if pil_below_83 else 294, 295 if pil_below_83 else 294, 'inches', '1', None),
+     1457, 2084, 116, 116, 116 , 'cm', '1', None),
     ('scribo-test/data/OCR-D-PRE-BIN-SAUVOLA/OCR-D-PRE-BIN-SAUVOLA_0001-BIN_sauvola.png',
      2097, 3062, 1, 1, 1, 'inches', '1', None),
     ('leptonica_samples/data/OCR-D-IMG/OCR-D-IMG_1555_007.jpg',
@@ -71,7 +64,6 @@ def test_ocrd_exif_serialize_xml():
                 '<resolution>300</resolution>'
                 '</exif>')
     assert expected == exif.to_xml()
-
 
 if __name__ == '__main__':
     main(__file__)
