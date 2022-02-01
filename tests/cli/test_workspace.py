@@ -415,7 +415,7 @@ class TestCli(TestCase):
             with self.assertRaisesRegex(ValueError, r"--mets is an http\(s\) URL but no --directory was given"):
                 self.invoke_cli(workspace_cli, ['-m', 'https://foo.bar/bla', 'init'])
 
-    def test_bulk_add(self):
+    def test_bulk_add0(self):
         NO_FILES=100
         with TemporaryDirectory() as srcdir:
             Path(srcdir, "OCR-D-IMG").mkdir()
@@ -475,6 +475,7 @@ class TestCli(TestCase):
                 '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',
                 '-G', '{{ filegrp }}',
                 '-g', '{{ pageid }}',
+                '-S', '{{ src }}',
                 # '-i', '{{ fileid }}',  # XXX skip --file-id
                 '-m', '{{ mimetype }}',
                 '-u', "{{ url }}",
@@ -493,6 +494,7 @@ class TestCli(TestCase):
                 '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*)',
                 '-G', '{{ filegrp }}',
                 '-g', '{{ pageid }}',
+                '-S', '{{ src }}',
                 # '-u', "{{ url }}", # XXX skip --url
                 'p0001 SEG srcdir/src.xml'])
             # print('out', out)

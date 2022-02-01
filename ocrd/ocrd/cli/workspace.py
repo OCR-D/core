@@ -241,13 +241,13 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
-@click.option('-S', '--source-path', help="File path to copy from (if different from FILE_GLOB values)", required=False)
+@click.option('-S', '--source-path', 'src_path_option', help="File path to copy from (if different from FILE_GLOB values)", required=False)
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
 @click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, source_path, ignore, force, skip):
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, src_path_option, ignore, force, skip):
     """
     Add files in bulk to an OCR-D workspace.
 
@@ -348,8 +348,11 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
 
         # Where to copy from
-        if file_dict['src']:
-            srcpath = Path(file_dict['src'])
+        if src_path_option:
+            src_path = src_path_option
+            for group_name in group_dict:
+                src_path = src_path.replace('{{ %s }}' % group_name, group_dict[group_name])
+            srcpath = Path(src_path)
         else:
             srcpath = file_path
 
