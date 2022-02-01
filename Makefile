@@ -89,6 +89,7 @@ generate-page: repo/assets
 		--root-element='PcGts' \
 		-o $(GDS_PAGE) \
 		--silence \
+		--export "write etree" \
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
 		ocrd_validators/ocrd_validators/page.xsd
@@ -99,6 +100,8 @@ generate-page: repo/assets
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
 	# hack to ensure child nodes also have pc: prefix...
 	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
+	# replace the need for six since we target python 3.6+
+	sed -i 's/from six.moves/from itertools/' $(GDS_PAGE)
 
 #
 # Repos
@@ -168,7 +171,10 @@ coverage: assets
 .PHONY: docs
 # Build documentation
 docs:
-	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e -o docs/api/$$mod $$mod/$$mod 'ocrd_models/ocrd_models/ocrd_page_generateds.py';done
+	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e \
+		-o docs/api/$$mod $$mod/$$mod \
+		'ocrd_models/ocrd_models/ocrd_page_generateds.py' \
+		;done
 	cd docs ; $(MAKE) html
 
 docs-push: gh-pages docs

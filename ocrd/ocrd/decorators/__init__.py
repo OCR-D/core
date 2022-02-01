@@ -18,6 +18,7 @@ from ..processor.base import run_processor
 from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
+from .mets_find_options import mets_find_options
 
 def ocrd_cli_wrap_processor(
     processorClass,

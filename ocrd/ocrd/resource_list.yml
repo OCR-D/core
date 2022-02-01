@@ -10,41 +10,47 @@ ocrd-tesserocr-recognize:
     parameter_usage: 'without-extension'
     description: Tesseract LSTM model based on Austrian National Library newspaper data
     size: 4358948
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/equ.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/equ.traineddata
     name: equ.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract equ model
     size: 2251950
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/osd.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/osd.traineddata
     name: osd.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract osd model
     size: 10562727
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/eng.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata
     name: eng.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract eng model
     size: 4113088
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/deu.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/deu.traineddata
     name: deu.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract deu model
     size: 1525436
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/frk.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/frk.traineddata
     name: frk.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract frk model
     size: 6423052
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/script/Fraktur.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/script/Fraktur.traineddata
     name: Fraktur.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract Fraktur model
     size: 10915632
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/master/script/Latin.traineddata
+  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/script/Latin.traineddata
     name: Latin.traineddata
     parameter_usage: 'without-extension'
     description: Tesseract Latin model
     size: 89384811
+  - url: https://github.com/tesseract-ocr/tesseract/archive/main.tar.gz
+    name: configs
+    description: Tesseract configs (parameter sets) for use with the standalone tesseract CLI
+    size: 1915529
+    type: tarball
+    path_in_archive: 'tesseract-main/tessdata/configs'
 ocrd-calamari-recognize:
   # XXX disabled since older ocrd_calamari versions don't support resource resolving
   #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
@@ -60,6 +66,20 @@ ocrd-calamari-recognize:
     description: Calamari model trained with GT4HistOCR
     size: 90275264
     path_in_archive: '.'
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_fraktur19-1.tar.gz
+    type: tarball
+    name: zpd-fraktur19
+    description: Model trained on 19th century german fraktur
+    path_in_archive: 'c1_fraktur19-1'
+    size: 86009886
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_latin-script-hist-3.tar.gz
+    type: tarball
+    name: zpd-latin-script-hist-3
+    path_in_archive: 'c1_latin-script-hist-3'
+    description: Model trained on historical latin-script texts
+    size: 88416863
     version_range: '>= 1.0.0'
 ocrd-cis-ocropy-recognize:
   - url: https://github.com/zuphilip/ocropy-models/raw/master/en-default.pyrnn.gz
@@ -84,6 +104,12 @@ ocrd-typegroups-classifier:
     description: Network to predict font families with. Bundled with standard installation.
     size: 28509377
 ocrd-sbb-binarize:
+  - url: https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz
+    description: updated default models provided by github.com/qurator-spk
+    name: default-2021-03-09
+    type: tarball
+    path_in_archive: models
+    size: 133363179
   - url: https://qurator-data.de/sbb_binarization/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
@@ -130,3 +156,10 @@ ocrd-kraken-recognize:
     name: en_best.mlmodel
     description: This model has been trained on a large corpus of modern printed English text\naugmented with ~10000 lines of historical pages
     size: 2930723
+ocrd-eynollah-segment:
+  - url: https://qurator-data.de/eynollah/models_eynollah.tar.gz
+    name: default
+    description: models for eynollah
+    size: 3241866640
+    type: tarball
+    path_in_archive: 'models_eynollah'

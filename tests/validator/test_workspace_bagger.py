@@ -14,6 +14,8 @@ README_FILE = abspath('README.md')
 class TestWorkspaceBagger(TestCase):
 
     def setUp(self):
+        super().setUp()
+        pass
         if exists(BACKUPDIR):
             rmtree(BACKUPDIR)
         self.resolver = Resolver()

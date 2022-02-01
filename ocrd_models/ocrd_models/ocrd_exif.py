@@ -11,25 +11,27 @@ from ocrd_utils import getLogger
 class OcrdExif():
     """Represents technical image metadata.
 
-    Members:
+    Attributes:
+        width (int): pixel dimensions
+        height (int): pixel dimensions
+        photometricInterpretation (str): pixel type/depth, e.g. \
 
-    - `width` / `height`: pixel dimensions
-    - `photometricInterpretation`: pixel type/depth, e.g.
-      '1' for b/w,
-      'L' for 8-bit grayscale,
-      'RGB' for 24-bit truecolor,
-      'I' for 32-bit signed integer grayscale,
-      'F' for floating-point grayscale
-      (see PIL concept `mode`)
-    - `resolution` / `xResolution` / `yResolution`: pixel density
-    - `resolutionUnit`: unit of measurement (either `inches` or `cm`)
-
+            * ``1`` for b/w,
+            * ``L`` for 8-bit grayscale,
+            * ``RGB`` for 24-bit truecolor,
+            * ``I`` for 32-bit signed integer grayscale,
+            * ``F`` for floating-point grayscale
+          (see PIL concept **mode**)
+        resolution (int): pixel density
+        xResolution (int): pixel density
+        yResolution (int): pixel density
+        resolutionUnit (str): unit of measurement (either ``inches`` or ``cm``)
     """
 
     def __init__(self, img):
         """
         Arguments:
-            img (PIL.Image): PIL image technical metadata is about.
+            img (`PIL.Image`): PIL image technical metadata is about.
         """
         #  print(img.__dict__)
         self.width = img.width
@@ -65,7 +67,7 @@ class OcrdExif():
 
     def to_xml(self):
         """
-        Serialize all properties as XML
+        Serialize all properties as XML string.
         """
         ret = '<exif>'
         for k in self.__dict__:

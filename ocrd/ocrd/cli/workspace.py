@@ -1,15 +1,25 @@
+"""
+OCR-D CLI: workspace management
+
+.. click:: ocrd.cli.workspace:workspace_cli
+    :prog: ocrd workspace
+    :nested: full
+"""
 import os
 from os import getcwd
 from os.path import relpath, exists, join, isabs, dirname, basename, abspath
 from pathlib import Path
+from json import loads
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
+import time
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME
+from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
 
@@ -323,10 +333,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('find')
-@click.option('-G', '--file-grp', help="fileGrp USE", metavar='FILTER')
-@click.option('-m', '--mimetype', help="Media type to look for", metavar='FILTER')
-@click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
-@click.option('-i', '--file-id', help="ID", metavar='FILTER')
+@mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
         default=['url'],
         multiple=True,
@@ -341,8 +348,9 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             'local_filename',
         ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
+@click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download, wait):
     """
     Find files.
 
@@ -361,6 +369,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         if download and not f.local_filename:
             workspace.download_file(f)
             modified_mets = True
+            if wait:
+                time.sleep(wait)
         ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
                     for field in output_field])
     if modified_mets:
@@ -525,6 +535,40 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
     workspace.mets.unique_identifier = id
+    workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace merge
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('merge')
+@click.argument('METS_PATH')
+@click.option('--copy-files/--no-copy-files', is_flag=True, help="Copy files as well", default=True, show_default=True)
+@click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp")
+@mets_find_options
+@pass_workspace
+def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+    """
+    Merges this workspace with the workspace that contains ``METS_PATH``
+
+    The ``--file-id``, ``--page-id``, ``--mimetype`` and ``--file-grp`` options have
+    the same semantics as in ``ocrd workspace find``, see ``ocrd workspace find --help``
+    for an explanation.
+    """
+    mets_path = Path(mets_path)
+    if filegrp_mapping:
+        filegrp_mapping = loads(filegrp_mapping)
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
+    other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
+    workspace.merge(
+        other_workspace,
+        copy_files=copy_files,
+        fileGrp_mapping=filegrp_mapping,
+        fileGrp=file_grp,
+        ID=file_id,
+        pageId=page_id,
+        mimetype=mimetype,
+    )
     workspace.save_mets()
 
 # ----------------------------------------------------------------------

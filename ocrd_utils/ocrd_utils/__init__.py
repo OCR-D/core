@@ -78,6 +78,7 @@ Utility functions and constants usable in various circumstances.
   :py:func:`set_json_key_value_overrides`,
   :py:func:`assert_file_grp_cardinality`,
   :py:func:`make_file_id`
+  :py:func:`generate_range`
 
     String and OOP utilities
 
@@ -113,8 +114,7 @@ from .constants import (
     LOG_FORMAT,
     LOG_TIMEFMT,
     VERSION,
-    XDG_CONFIG_HOME,
-    XDG_DATA_HOME)
+    )
 
 from .deprecate import (
     deprecated_alias)
@@ -173,6 +173,7 @@ from .os import (
 from .str import (
     assert_file_grp_cardinality,
     concat_padded,
+    generate_range,
     get_local_filename,
     is_local_filename,
     is_string,

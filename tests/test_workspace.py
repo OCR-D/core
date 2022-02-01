@@ -32,6 +32,7 @@ def count_files():
 class TestWorkspace(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
 
     def test_workspace_add_file(self):
@@ -98,7 +99,7 @@ class TestWorkspace(TestCase):
         with TemporaryDirectory() as directory:
             ws1 = self.resolver.workspace_from_nothing(directory)
             fn = ws1.download_url(abspath(__file__))
-            self.assertEqual(fn, join('TEMP', basename(__file__)))
+            self.assertEqual(fn, join('DEPRECATED', basename(__file__)))
 
     def test_download_url_without_baseurl(self):
         with TemporaryDirectory() as tempdir:
@@ -114,7 +115,7 @@ class TestWorkspace(TestCase):
             copyfile(SRC_METS, dst_mets)
             ws1 = self.resolver.workspace_from_url(dst_mets, src_baseurl=dirname(SRC_METS))
             f = Path(ws1.download_url(SAMPLE_FILE_URL))
-            self.assertEqual(f, Path('TEMP', '%s.tif' % SAMPLE_FILE_ID))
+            self.assertEqual(f, Path('DEPRECATED', '%s.tif' % SAMPLE_FILE_ID))
             self.assertTrue(Path(ws1.directory, f).exists())
 
     def test_from_url_dst_dir_download(self):
@@ -181,14 +182,13 @@ class TestWorkspace(TestCase):
             with pushd_popd(tempdir):
                 pcgts_before = page_from_file(next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001')))
                 assert pcgts_before.get_Page().imageFilename == 'OCR-D-IMG/OCR-D-IMG_0001.tif'
-                # from os import system
-                # print(system('find'))
                 workspace.rename_file_group('OCR-D-IMG', 'FOOBAR')
-                # print(system('find'))
                 pcgts_after = page_from_file(next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001')))
-                assert pcgts_after.get_Page().imageFilename == 'FOOBAR/OCR-D-IMG_0001.tif'
-                assert Path('FOOBAR/OCR-D-IMG_0001.tif').exists()
+                assert pcgts_after.get_Page().imageFilename == 'FOOBAR/FOOBAR_0001.tif'
+                assert Path('FOOBAR/FOOBAR_0001.tif').exists()
                 assert not Path('OCR-D-IMG/OCR-D-IMG_0001.tif').exists()
+                assert workspace.mets.get_physical_pages(for_fileIds=['OCR-D-IMG_0001']) == [None]
+                assert workspace.mets.get_physical_pages(for_fileIds=['FOOBAR_0001']) == ['phys_0001']
 
     def test_remove_file_group_force(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
@@ -208,6 +208,16 @@ class TestWorkspace(TestCase):
             self.assertTrue(exists(join(tempdir, 'OCR-D-IMG')))
             workspace.remove_file_group('OCR-D-IMG', recursive=True)
             self.assertFalse(exists(join(tempdir, 'OCR-D-IMG')))
+
+    def test_remove_file_group_flat(self):
+        """
+        https://github.com/OCR-D/core/issues/728
+        """
+        with pushd_popd(tempdir=True) as tempdir:
+            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
+            f1 = Path(workspace.add_file('FOO', ID='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', pageId=None).url)
+            assert f1.exists()
+            workspace.remove_file_group('FOO', recursive=True)
 
     def test_remove_file_page_recursive(self):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784-complex/data')) as tempdir:
@@ -292,9 +302,23 @@ class TestWorkspace(TestCase):
             with open('TEMP1/PAGE_TEMP1.xml', 'r') as f:
                 pcgts = parseString(f.read().encode('utf8'), silence=True)
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017', feature_selector='clipped', feature_filter='cropped')
-            self.assertEquals(info['features'], 'binarized,clipped')
+            self.assertEqual(info['features'], 'binarized,clipped')
             img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
-            self.assertEquals(info['features'], 'binarized,clipped')
+            self.assertEqual(info['features'], 'binarized,clipped')
+
+    def test_image_feature_selectoro(self):
+        with pushd_popd('tests/data/sample-features'):
+            ws = self.resolver.workspace_from_url('mets.xml')
+            with open('image_features.page.xml', 'r') as f:
+                pcgts = parseString(f.read().encode('utf8'), silence=True)
+            # richest feature set is not last:
+            img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped')
+            # recropped because foo4 contains cropped+deskewed but not recropped yet:
+            self.assertEqual(info['features'], 'cropped,dewarped,binarized,despeckled,deskewed,recropped')
+            # richest feature set is also last:
+            img, info, exif = ws.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped', feature_filter='binarized')
+            # no deskewing here, thus no recropping:
+            self.assertEqual(info['features'], 'cropped,dewarped,despeckled')
 
     def test_downsample_16bit_image(self):
         with pushd_popd(tempdir=True) as tempdir:
@@ -319,6 +343,16 @@ class TestWorkspace(TestCase):
             chmod(mets_path, 0o777)
             ws.save_mets()
             assert filemode(stat(mets_path).st_mode) == '-rwxrwxrwx'
+
+    def test_merge(self):
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as ws1dir, \
+            copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as ws2dir:
+            ws1 = Workspace(self.resolver, ws1dir)
+            ws2 = Workspace(self.resolver, ws2dir)
+            assert len(ws1.mets.find_all_files()) == 6
+            ws1.merge(ws2)
+            assert len(ws1.mets.find_all_files()) == 41
+            assert exists(join(ws1dir, 'OCR-D-IMG/FILE_0001_IMAGE.tif'))
 
 
 if __name__ == '__main__':
