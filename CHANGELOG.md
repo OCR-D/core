@@ -17,6 +17,7 @@ Fixed:
 
   * PAGE validation: handle `pc:ImageRegion` as well, #781
   * bashlib: pass on parameters for task validation, #784
+  * `<processor> --list-resources`: List only the relevant type of resource (directory or file), #750, #777
 
 ## [2.29.0] - 2021-12-08
 
