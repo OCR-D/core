@@ -117,6 +117,11 @@ def get_processor_resource_types(executable, ocrd_tool=None):
             return (True, True)
         result = run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
         ocrd_tool = loads(result.stdout)
+    if not next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p), False):
+        # None of the parameters for this processor are resources (or not
+        # the resource parametrs are not properly declared, so output both
+        # directories and files
+        return (True, True)
     has_dirs = next((True for p in ocrd_tool['parameters'].values() if p.get('content-type', None) == 'text/directory'), False)
     has_files = next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p and p['content-type'] != 'text/directory'), False)
     return (has_dirs, has_files)
