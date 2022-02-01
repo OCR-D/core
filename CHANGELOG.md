@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Images processed by OCR-D can now be up to 40,000 by 40,000 pixels, #735, #768
+
 ## [2.29.0] - 2021-12-08
 
 Changed:
