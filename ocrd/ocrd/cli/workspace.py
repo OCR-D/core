@@ -279,6 +279,13 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
                 -
 
+        \b
+        { echo PHYS_0001 BIN FILE_0001_BIN.IMG-wolf BIN/FILE_0001_BIN.IMG-wolf.png; \\
+          echo PHYS_0001 BIN FILE_0001_BIN BIN/FILE_0001_BIN.xml; \\
+          echo PHYS_0002 BIN FILE_0002_BIN.IMG-wolf BIN/FILE_0002_BIN.IMG-wolf.png; \\
+          echo PHYS_0002 BIN FILE_0002_BIN BIN/FILE_0002_BIN.xml; \\
+        } | ocrd workspace bulk-add -r '(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<url>.*)' \\
+          -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ url }}' -
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=basename(ctx.mets_url), automatic_backup=ctx.automatic_backup)
