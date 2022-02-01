@@ -241,7 +241,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
-@click.option('-S', '--source-path', help="File path to copy from", default='{{ src }}')
+@click.option('-S', '--source-path', help="File path to copy from (if different from FILE_GLOB values)", required=False)
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
 @click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
