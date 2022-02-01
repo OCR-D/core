@@ -180,7 +180,7 @@ ocrd__parse_argv () {
     if [[ -n "${ocrd__argv[page_id]:-}" ]]; then
         _valopts+=( --page-id "${ocrd__argv[page_id]}" )
     fi
-    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]}" )
+    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]} ${__parameters[*]@Q} ${__parameter_overrides[*]@Q}" )
     ocrd validate tasks "${_valopts[@]}" || exit $?
 
     # check parameters
