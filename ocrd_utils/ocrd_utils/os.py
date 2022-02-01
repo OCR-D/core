@@ -3,7 +3,7 @@ Operating system functions.
 """
 __all__ = [
     'abspath',
-    'are_processor_resources_directories',
+    'get_processor_resource_types',
     'pushd_popd',
     'unzip_file_to_dir',
     'list_resource_candidates',
@@ -63,7 +63,7 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
-def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_dir=False):
+def list_resource_candidates(executable, fname, cwd=getcwd()):
     """
     Generate candidates for processor resources according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
@@ -75,13 +75,9 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), is_file=False, is_
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
     candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
     candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
-    if is_file:
-        candidates = [c for c in candidates if Path(c).is_file()]
-    if is_dir:
-        candidates = [c for c in candidates if Path(c).is_dir()]
     return candidates
 
-def list_all_resources(executable, is_dir=False):
+def list_all_resources(executable):
     """
     List all processor resources in the filesystem according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
@@ -106,24 +102,24 @@ def list_all_resources(executable, is_dir=False):
     for parent in candidates:
         if parent.is_dir():
             candidates += parent.iterdir()
-    if is_dir:
-        candidates = [x for x in candidates if x.is_dir()]
-    else:
-        candidates = [x for x in candidates if not x.is_dir()]
     return [str(x) for x in candidates]
 
-def are_processor_resources_directories(executable, ocrd_tool=None):
+def get_processor_resource_types(executable, ocrd_tool=None):
     """
-    XXX if a processor has at least one parameter with
-    `content-type == text/directory`, assume ALL file parameters
-    point to directories, not files
+    Determine whether a processor has resource parameters that represent
+    directories (``has_dirs``), files (``has_files``) or neither.
+
+    Returns a pair ``(has_dir, has_files)``
     """
     if not ocrd_tool:
+        # if the processor in question is not installed, assume both files and directories
         if not which(executable):
-            return False
+            return (True, True)
         result = run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
         ocrd_tool = loads(result.stdout)
-    return next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p and p['content-type'] == 'text/directory'), False)
+    has_dirs = next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p and p['content-type'] == 'text/directory'), False)
+    has_files = next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p and p['content-type'] != 'text/directory'), False)
+    return (has_dirs, has_files)
 
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42
