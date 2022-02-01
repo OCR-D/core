@@ -11,6 +11,7 @@ Changed:
   * `OcrdExif`: get pixel density metadata from ImageMagick's `identify`, not PIL, #676
   * Refactor parsing of `--mets`/`--mets-basename`/`--working-dir` to reduce ambiguities, #693, #696
   * bashlib: implify (i.e. remove) build process, #742, #785
+  * `ocrd workspace bulk-add`: Make bulk-add more flexible and (hopefully) user-friendly, #641, #754, #769, #776
 
 Fixed:
 
