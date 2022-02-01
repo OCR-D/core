@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.30.0] - 2022-02-01
+
 Changed:
 
   * Images processed by OCR-D can now be up to 40,000 by 40,000 pixels, #735, #768
@@ -1422,6 +1424,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.30.0]: ../../compare/v2.30.0..v2.29.0
 [2.29.0]: ../../compare/v2.29.0..v2.28.0
 [2.28.0]: ../../compare/v2.28.0..v2.27.0
 [2.27.0]: ../../compare/v2.27.0..v2.26.1
