@@ -11,6 +11,11 @@ Changed:
   * `OcrdExif`: get pixel density metadata from ImageMagick's `identify`, not PIL, #676
   * Refactor parsing of `--mets`/`--mets-basename`/`--working-dir` to reduce ambiguities, #693, #696
 
+Fixed:
+
+  * PAGE validation: handle `pc:ImageRegion` as well, #781
+  * bashlib: pass on parameters for task validation, #784
+
 ## [2.29.0] - 2021-12-08
 
 Changed:
