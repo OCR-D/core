@@ -18,7 +18,7 @@ import time
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
@@ -211,7 +211,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
-# ocrd workspace add-bulk
+# ocrd workspace bulk-add
 # ----------------------------------------------------------------------
 
 # pylint: disable=broad-except
@@ -219,35 +219,55 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-r', '--regex', help="Regular expression matching the FILE_GLOB filesystem paths to define named captures usable in the other parameters", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
 @click.option('-g', '--page-id', help="physical page ID of the file", required=False)
-@click.option('-i', '--file-id', help="ID of the file", required=True)
-@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=True)
+@click.option('-i', '--file-id', help="ID of the file", required=False)
+@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
+@click.option('-S', '--source-path', 'src_path_option', help="File path to copy from (if different from FILE_GLOB values)", required=False)
 @click.option('-I', '--ignore', help="Disable checking for existing file entries (faster)", default=False, is_flag=True)
 @click.option('-f', '--force', help="Replace existing file entries with the same ID (no effect when --ignore is set, too)", default=False, is_flag=True)
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, ignore, force, skip):
-    r"""
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, src_path_option, ignore, force, skip):
+    """
     Add files in bulk to an OCR-D workspace.
 
-    FILE_GLOB can either be a shell glob expression or a list of files.
+    FILE_GLOB can either be a shell glob expression to match file names,
+    or a list of expressions or '-', in which case expressions are read from STDIN.
 
-    --regex is applied to the absolute path of every file in FILE_GLOB and can
-    define named groups that can be used in --page-id, --file-id, --mimetype, --url and
-    --file-grp by referencing the named group 'grp' in the regex as '{{ grp }}'.
+    After globbing, --regex is matched against each expression resulting from FILE_GLOB, and can
+    define named groups reusable in the --page-id, --file-id, --mimetype, --url, --source-path and
+    --file-grp options, e.g. by referencing the group name 'grp' from the regex as '{{ grp }}'.
+
+    If the FILE_GLOB expressions do not denote the file names themselves
+    (but arbitrary strings for --regex matching), then use --source-path to set
+    the actual file paths to use. (This could involve fixed strings or group references.)
 
     \b
-    Example:
+    Examples:
         ocrd workspace bulk-add \\
-                --regex '^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$' \\
+                --regex '(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^.]+' \\
+                --page-id 'PHYS_{{ pageid }}' \\
+                --file-grp "{{ fileGrp }}" \\
+                path/to/files/*/*.*
+        \b
+        echo "path/to/src/file.xml SEG/page_p0001.xml" \\
+        | ocrd workspace bulk-add \\
+                --regex '(?P<src>.*?) (?P<fileGrp>.+?)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)' \\
                 --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
                 --page-id 'PHYS_{{ pageid }}' \\
                 --file-grp "{{ fileGrp }}" \\
                 --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
-                path/to/files/*/*.*
+                -
 
+        \b
+        { echo PHYS_0001 BIN FILE_0001_BIN.IMG-wolf BIN/FILE_0001_BIN.IMG-wolf.png; \\
+          echo PHYS_0001 BIN FILE_0001_BIN BIN/FILE_0001_BIN.xml; \\
+          echo PHYS_0002 BIN FILE_0002_BIN.IMG-wolf BIN/FILE_0002_BIN.IMG-wolf.png; \\
+          echo PHYS_0002 BIN FILE_0002_BIN BIN/FILE_0002_BIN.xml; \\
+        } | ocrd workspace bulk-add -r '(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<url>.*)' \\
+          -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ url }}' -
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
@@ -259,8 +279,16 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         sys.exit(1)
 
     file_paths = []
-    for fglob in file_glob:
-        file_paths += [Path(x).resolve() for x in glob(fglob)]
+    from_stdin = file_glob == ('-',)
+    if from_stdin:
+        file_paths += [Path(x.strip('\n')) for x in sys.stdin.readlines()]
+    else:
+        for fglob in file_glob:
+            expanded = glob(fglob)
+            if not expanded:
+                file_paths += [Path(fglob)]
+            else:
+                file_paths += [Path(x) for x in expanded]
 
     for i, file_path in enumerate(file_paths):
         log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
@@ -270,9 +298,13 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         if not m:
             if skip:
                 continue
-            log.error("File not matched by regex: '%s'" % file_path)
+            log.error("File '%s' not matched by regex: '%s'" % (file_path, regex))
             sys.exit(1)
         group_dict = m.groupdict()
+
+        # derive --file-id from filename if not --file-id not explicitly set
+        if not file_id:
+            file_id = safe_filename(str(file_path))
 
         # set up file info
         file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id, 'pageId': page_id, 'fileGrp': file_grp}
@@ -284,20 +316,39 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             except KeyError:
                 log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
 
+        # Flag to track whether 'url' should be 'src'
+        url_is_src = False
+
         # expand templates
         for param_name in file_dict:
+            if not file_dict[param_name]:
+                if param_name == 'url':
+                    url_is_src = True
+                    continue
+                raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
                 file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
 
-        # copy files
-        if file_dict['url']:
-            urlpath = Path(workspace.directory, file_dict['url'])
-            if not urlpath.exists():
-                log.info("cp '%s' '%s'", file_path, urlpath)
+        # Where to copy from
+        if src_path_option:
+            src_path = src_path_option
+            for group_name in group_dict:
+                src_path = src_path.replace('{{ %s }}' % group_name, group_dict[group_name])
+            srcpath = Path(src_path)
+        else:
+            srcpath = file_path
+
+        # copy files if src != url
+        if url_is_src:
+            file_dict['url'] = str(srcpath)
+        else:
+            destpath = Path(workspace.directory, file_dict['url'])
+            if srcpath != destpath and not destpath.exists():
+                log.info("cp '%s' '%s'", srcpath, destpath)
                 if not dry_run:
-                    if not urlpath.parent.is_dir():
-                        urlpath.parent.mkdir()
-                    urlpath.write_bytes(file_path.read_bytes())
+                    if not destpath.parent.is_dir():
+                        destpath.parent.mkdir()
+                    destpath.write_bytes(srcpath.read_bytes())
 
         # Add to workspace (or not)
         fileGrp = file_dict.pop('fileGrp')

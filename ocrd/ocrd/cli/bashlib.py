@@ -65,6 +65,7 @@ def bashlib_constants(name):
             all_constants[k] = src.__dict__[k]
     if name in ['*', 'KEYS', '__all__']:
         print(sorted(all_constants.keys()))
+        sys.exit(0)
     if name not in all_constants:
         print("ERROR: name '%s' is not a known constant" % name, file=sys.stderr)
         sys.exit(1)
