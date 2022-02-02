@@ -61,12 +61,14 @@ def list_installed(executable=None):
 
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
+@click.option('-t', '--resource-type', help='Type of resource', type=click.Choice(['file', 'github-dir', 'tarball']), default='file')
+@click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.')
 @click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
 @click.argument('executable', required=True)
 @click.argument('name', required=False)
-def download(any_url, allow_uninstalled, overwrite, location, executable, name):
+def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwrite, location, executable, name):
     """
     Download resource NAME for processor EXECUTABLE.
 
@@ -76,6 +78,9 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, name):
 
     If ``--any-url=URL`` or ``-n URL`` is given, then URL is accepted regardless of registered resources for ``NAME``.
     (This can be used for unknown resources or for replacing registered resources.)
+
+    If ``--resource-type`` is set to `tarball`, then that archive gets unpacked after download,
+    and its ``--path-in-archive`` will subsequently be renamed to NAME.
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
@@ -101,7 +106,9 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, name):
     if not reslist:
         log.info("No resources found in registry")
         if executable and name:
-            reslist = [(executable, {'url': '???', 'name': name})]
+            reslist = [(executable, {'url': '???', 'name': name,
+                                     'type': resource_type,
+                                     'path_in_archive': path_in_archive})]
     for executable, resdict in reslist:
         if 'size' in resdict:
             registered = "registered"
@@ -126,8 +133,8 @@ def download(any_url, allow_uninstalled, overwrite, location, executable, name):
                 executable,
                 resdict['url'],
                 name=resdict['name'],
-                resource_type=resdict.get('type', 'file'),
-                path_in_archive=resdict.get('path_in_archive', '.'),
+                resource_type=resdict.get('type', resource_type),
+                path_in_archive=resdict.get('path_in_archive', path_in_archive),
                 overwrite=overwrite,
                 size=resdict['size'],
                 no_subdir=location == 'cwd',
