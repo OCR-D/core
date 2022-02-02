@@ -60,89 +60,82 @@ def list_installed(executable=None):
         print_resources(executable, reslist, resmgr)
 
 @resmgr_cli.command('download')
-@click.option('-n', '--any-url', help='Allow downloading/copying unregistered resources', is_flag=True)
+@click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
 @click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
 @click.argument('executable', required=True)
-@click.argument('url_or_name', required=False)
-def download(any_url, allow_uninstalled, overwrite, location, executable, url_or_name):
+@click.argument('name', required=False)
+def download(any_url, allow_uninstalled, overwrite, location, executable, name):
     """
-    Download resource URL_OR_NAME for processor EXECUTABLE.
+    Download resource NAME for processor EXECUTABLE.
 
-    URL_OR_NAME can either be the ``name`` or ``url`` of a registered resource.
+    NAME is the name of the resource made available by downloading or copying.
 
-    If URL_OR_NAME is '*' (asterisk), download all known resources for this processor
+    If NAME is '*' (asterisk), then download all known registered resources for this processor.
 
-    If ``--any-url`` is given, also accepts URL or filenames of non-registered resources for ``URL_OR_NAME``.
+    If ``--any-url=URL`` or ``-n URL`` is given, then URL is accepted regardless of registered resources for ``NAME``.
+    (This can be used for unknown resources or for replacing registered resources.)
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
     basedir = resmgr.location_to_resource_dir(location)
-    if executable != '*' and not url_or_name:
-        log.error("Unless EXECUTABLE ('%s') is the '*' wildcard, URL_OR_NAME is required" % executable)
+    if executable != '*' and not name:
+        log.error("Unless EXECUTABLE ('%s') is the '*' wildcard, NAME is required" % executable)
         sys.exit(1)
     elif executable == '*':
         executable = None
-    is_url = (url_or_name.startswith('https://') or url_or_name.startswith('http://')) if url_or_name else False
-    is_filename = Path(url_or_name).exists() if url_or_name else False
+    if name == '*':
+        name = None
+    is_url = (any_url.startswith('https://') or any_url.startswith('http://')) if any_url else False
+    is_filename = Path(any_url).exists() if any_url else False
     if executable and not which(executable):
         if not allow_uninstalled:
-            log.error("Executable %s is not installed. Is there a typo in the executable? " \
-                "To install resources for uninstalled processor, use the -a/--allow-uninstalled flag" % executable)
+            log.error("Executable '%s' is not installed. " \
+                      "To download resources anyway, use the -a/--allow-uninstalled flag", executable)
             sys.exit(1)
         else:
-            log.warning("Executable %s is not installed but -a/--allow-uninstalled was given, so proceeding" % executable)
-    find_kwargs = {'executable': executable}
-    if url_or_name and url_or_name != '*':
-        find_kwargs['url' if is_url else 'name'] = url_or_name
-    reslist = resmgr.find_resources(**find_kwargs)
+            log.info("Executable %s is not installed, but " \
+                     "downloading resources anyway", executable)
+    reslist = resmgr.find_resources(executable=executable, name=name)
     if not reslist:
         log.info("No resources found in registry")
-        if any_url and (is_url or is_filename):
-            log.info("%s unregistered resource %s" % ("Downloading" if is_url else "Copying", url_or_name))
-            if is_url:
-                with requests.get(url_or_name, stream=True) as r:
-                    content_length = int(r.headers.get('content-length'))
-            else:
-                url_or_name = str(Path(url_or_name).resolve())
-                content_length = Path(url_or_name).stat().st_size
-            with click.progressbar(length=content_length, label="Downloading" if is_url else "Copying") as bar:
-                fpath = resmgr.download(
-                    executable,
-                    url_or_name,
-                    overwrite=overwrite,
-                    basedir=basedir,
-                    no_subdir=location == 'cwd',
-                    progress_cb=lambda delta: bar.update(delta))
-            log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'" % (executable, fpath.name, url_or_name, resmgr.user_list))
-            resmgr.add_to_user_database(executable, fpath, url_or_name)
-            log.info("%s %s to %s" % ("Downloaded" if is_url else "Copied", url_or_name, fpath))
-            log.info("Use in parameters as '%s'" % fpath.name)
+        if executable and name:
+            reslist = [(executable, {'url': '???', 'name': name})]
+    for executable, resdict in reslist:
+        if 'size' in resdict:
+            registered = "registered"
         else:
-            sys.exit(1)
-    else:
-        for executable, resdict in reslist:
-            if not allow_uninstalled and not which(executable):
-                log.info("Skipping installing resources for %s as it is not installed. (Use -a/--allow-uninstalled to force)")
-                continue
-            if resdict['url'] == '???':
-                log.info("Cannot download user resource %s" % (resdict['name'])),
-                continue
-            log.info("Downloading resource %s" % resdict)
-            with click.progressbar(length=resdict['size']) as bar:
-                fpath = resmgr.download(
-                    executable,
-                    resdict['url'],
-                    name=resdict['name'],
-                    resource_type=resdict['type'],
-                    path_in_archive=resdict.get('path_in_archive', '.'),
-                    overwrite=overwrite,
-                    size=resdict['size'],
-                    no_subdir=location == 'cwd',
-                    basedir=basedir,
-                    progress_cb=lambda delta: bar.update(delta)
-                )
-            log.info("Downloaded %s to %s" % (resdict['url'], fpath))
-            log.info("Use in parameters as '%s'" % resmgr.parameter_usage(resdict['name'], usage=resdict['parameter_usage']))
-
+            registered = "unregistered"
+        if any_url:
+            resdict['url'] = any_url
+        if resdict['url'] == '???':
+            log.warning("Cannot download user resource %s", resdict['name'])
+            continue
+        if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
+            log.info("Downloading %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
+            with requests.get(resdict['url'], stream=True) as r:
+                resdict['size'] = int(r.headers.get('content-length'))
+        else:
+            log.info("Copying %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
+            urlpath = Path(resdict['url'])
+            resdict['url'] = str(urlpath.resolve())
+            resdict['size'] = urlpath.stat().st_size
+        with click.progressbar(length=resdict['size']) as bar:
+            fpath = resmgr.download(
+                executable,
+                resdict['url'],
+                name=resdict['name'],
+                resource_type=resdict.get('type', 'file'),
+                path_in_archive=resdict.get('path_in_archive', '.'),
+                overwrite=overwrite,
+                size=resdict['size'],
+                no_subdir=location == 'cwd',
+                basedir=basedir,
+                progress_cb=lambda delta: bar.update(delta)
+            )
+        if registered == 'unregistered':
+            log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", executable, name, any_url, resmgr.user_list)
+            resdict = resmgr.add_to_user_database(executable, fpath, url=any_url)
+        log.info("Installed resource %s under %s", resdict['url'], fpath)
+        log.info("Use in parameters as '%s'", resmgr.parameter_usage(resdict['name'], usage=resdict['parameter_usage']))
