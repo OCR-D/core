@@ -117,6 +117,7 @@ class OcrdResourceManager():
                     resdict = [self.add_to_user_database(this_executable, res_filename)]
                 resdict[0]['path'] = res_filename
                 reslist.append(resdict[0])
+            reslist = sorted(reslist, key=lambda resdict: resdict['name'])
             ret.append((this_executable, reslist))
         return ret
 
