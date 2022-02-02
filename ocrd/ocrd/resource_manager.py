@@ -141,7 +141,7 @@ class OcrdResourceManager():
             }
             user_database[executable].append(resdict)
         else:
-            resdict = resources_found[0]
+            resdict = resources_found[0][1]
         with open(self.user_list, 'w', encoding='utf-8') as f:
             f.write(RESOURCE_USER_LIST_COMMENT)
             f.write('\n')
