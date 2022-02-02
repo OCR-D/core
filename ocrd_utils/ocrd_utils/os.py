@@ -102,7 +102,7 @@ def list_all_resources(executable):
     for parent in candidates:
         if parent.is_dir():
             candidates += parent.iterdir()
-    return [str(x) for x in candidates]
+    return sorted([str(x) for x in candidates])
 
 def get_processor_resource_types(executable, ocrd_tool=None):
     """
