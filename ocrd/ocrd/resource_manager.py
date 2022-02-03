@@ -1,7 +1,6 @@
 from pathlib import Path
 from os.path import join
 from os import environ, listdir, getcwd, path
-import re
 from shutil import copytree
 from datetime import datetime
 from tarfile import open as open_tarfile
@@ -12,7 +11,7 @@ from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.os import list_all_resources, pushd_popd
+from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
 class OcrdResourceManager():
@@ -105,7 +104,12 @@ class OcrdResourceManager():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
         for this_executable in set(all_executables):
             reslist = []
+            has_dirs, has_files = get_processor_resource_types(this_executable)
             for res_filename in list_all_resources(this_executable):
+                if Path(res_filename).is_dir() and not has_dirs:
+                    continue
+                if Path(res_filename).is_file() and not has_files:
+                    continue
                 res_name = Path(res_filename).name
                 resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if not resdict:

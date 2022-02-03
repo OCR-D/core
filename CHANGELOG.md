@@ -5,6 +5,22 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.30.0] - 2022-02-01
+
+Changed:
+
+  * Images processed by OCR-D can now be up to 40,000 by 40,000 pixels, #735, #768
+  * `OcrdExif`: get pixel density metadata from ImageMagick's `identify`, not PIL, #676
+  * Refactor parsing of `--mets`/`--mets-basename`/`--working-dir` to reduce ambiguities, #693, #696
+  * bashlib: implify (i.e. remove) build process, #742, #785
+  * `ocrd workspace bulk-add`: Make bulk-add more flexible and (hopefully) user-friendly, #641, #754, #769, #776
+
+Fixed:
+
+  * PAGE validation: handle `pc:ImageRegion` as well, #781
+  * bashlib: pass on parameters for task validation, #784
+  * `<processor> --list-resources`: List only the relevant type of resource (directory or file), #750, #777
+
 ## [2.29.0] - 2021-12-08
 
 Changed:
@@ -1408,6 +1424,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.30.0]: ../../compare/v2.30.0..v2.29.0
 [2.29.0]: ../../compare/v2.29.0..v2.28.0
 [2.28.0]: ../../compare/v2.28.0..v2.27.0
 [2.27.0]: ../../compare/v2.27.0..v2.26.1

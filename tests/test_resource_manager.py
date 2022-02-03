@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import pathlib
 
@@ -105,7 +103,6 @@ def test_default_resource_dir(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     assert mgr.xdg_config_home != mgr.xdg_data_home
     assert mgr.default_resource_dir == str(mgr.xdg_data_home / 'ocrd-resources')
-
 
 if __name__ == "__main__":
     main(__file__)

@@ -34,7 +34,6 @@ help:
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker GPU / CUDA image"
-	@echo "    bashlib        Build bash library"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
@@ -243,15 +242,6 @@ cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
 	@echo /usr/local/cuda-11.0/targets/x86_64-linux/lib >> $@
 	@echo /usr/local/cuda-11.1/lib64 >> $@
 	@echo /usr/local/cuda-11.1/targets/x86_64-linux/lib >> $@
-
-#
-# bash library
-#
-.PHONY: bashlib
-
-# Build bash library
-bashlib:
-	cd ocrd/bashlib; make lib
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install
