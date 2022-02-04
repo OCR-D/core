@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `make cuda-ubuntu` installs all CUDA versions, OCR-D/core#704, OCR-D/ocrd_all#270
+
 ## [2.30.0] - 2022-02-01
 
 Changed:

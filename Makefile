@@ -34,6 +34,7 @@ help:
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker GPU / CUDA image"
+	@echo "    cuda-ubuntu    Install native CUDA toolkit in different versions"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
