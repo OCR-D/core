@@ -104,18 +104,20 @@ class OcrdResourceManager():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
         for this_executable in set(all_executables):
             reslist = []
-            has_dirs, has_files = get_processor_resource_types(this_executable)
+            mimetypes = get_processor_resource_types(this_executable)
             for res_filename in list_all_resources(this_executable):
-                if Path(res_filename).is_dir() and not has_dirs:
-                    continue
-                if Path(res_filename).is_file() and not has_files:
-                    continue
-                res_name = Path(res_filename).name
+                res_filename = Path(res_filename)
+                if not '*/*' in mimetypes:
+                    if res_filename.is_dir() and not 'text/directory' in mimetypes:
+                        continue
+                    if res_filename.is_file() and ['text/directory'] == mimetypes:
+                        continue
+                res_name = res_filename.name
                 resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if not resdict:
-                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, res_name, res_filename, self.user_list)
+                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, res_name, str(res_filename), self.user_list)
                     resdict = [self.add_to_user_database(this_executable, res_filename)]
-                resdict[0]['path'] = res_filename
+                resdict[0]['path'] = str(res_filename)
                 reslist.append(resdict[0])
             ret.append((this_executable, reslist))
         return ret

@@ -121,25 +121,24 @@ def list_all_resources(executable, moduled=None):
 
 def get_processor_resource_types(executable, ocrd_tool=None):
     """
-    Determine whether a processor has resource parameters that represent
-    directories (``has_dirs``), files (``has_files``) or neither.
+    Determine what type of resource parameters a processor needs.
 
-    Returns a pair ``(has_dir, has_files)``
+    Return a list of MIME types (with the special value `*/*` to
+    designate that arbitrary files or directories are allowed).
     """
     if not ocrd_tool:
         # if the processor in question is not installed, assume both files and directories
         if not which(executable):
-            return (True, True)
+            return ['*/*']
         result = run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
         ocrd_tool = loads(result.stdout)
     if not next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p), False):
         # None of the parameters for this processor are resources (or not
         # the resource parametrs are not properly declared, so output both
         # directories and files
-        return (True, True)
-    has_dirs = next((True for p in ocrd_tool['parameters'].values() if p.get('content-type', None) == 'text/directory'), False)
-    has_files = next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p and p['content-type'] != 'text/directory'), False)
-    return (has_dirs, has_files)
+        return ['*/*']
+    return [p['content-type'] for p in ocrd_tool['parameters'].values()
+            if 'content-type' in p]
 
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42
