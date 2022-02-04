@@ -1,6 +1,7 @@
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 import yaml
+import pytest
 
 from ocrd.cli.bashlib import bashlib_cli
 
@@ -41,9 +42,9 @@ class TestBashlibCli(TestCase):
         self.assertTrue(len(out) >= 40)
 
     def test_constants_fail(self):
-        exit_code, _, err = self.invoke_cli(bashlib_cli, ['constants', '1234!@#$--'])
-        self.assertEqual(exit_code, 1)
-        self.assertEqual(err, "ERROR: name '1234!@#$--' is not a known constant\n")
+        exit_code, out, err = self.invoke_cli(bashlib_cli, ['constants', '1234!@#$--'])
+        assert exit_code == 1
+        assert err == "ERROR: name '1234!@#$--' is not a known constant\n"
 
 if __name__ == "__main__":
     main(__file__)

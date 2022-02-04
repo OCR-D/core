@@ -1,10 +1,7 @@
-# BEGIN-INCLUDE ./src/bash_version_check.bash 
 ((BASH_VERSINFO<4 || BASH_VERSINFO==4 && BASH_VERSINFO[1]<4)) && \
     echo >&2 "bash $BASH_VERSION is too old. Please install bash 4.4 or newer." && \
     exit 1
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/logging.bash 
 ## ### `ocrd__raise`
 ## 
 ## Raise an error and exit.
@@ -55,8 +52,6 @@ ocrd__minversion () {
     ocrd__raise "ocrd/core is too old (${version[*]} < ${minversion[*]}). Please update OCR-D/core"
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/dumpjson.bash 
 ## ### `ocrd__dumpjson`
 ## 
 ## Output ocrd-tool.json.
@@ -86,8 +81,6 @@ ocrd__list_resources () {
     ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" list-resources
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/usage.bash 
 ## ### `ocrd__usage`
 ## 
 ## Print usage
@@ -98,8 +91,6 @@ ocrd__usage () {
 
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/parse_argv.bash 
 ## ### `ocrd__parse_argv`
 ## 
 ## Expects an associative array ("hash"/"dict") `ocrd__argv` to be defined:
@@ -180,7 +171,7 @@ ocrd__parse_argv () {
     if [[ -n "${ocrd__argv[page_id]:-}" ]]; then
         _valopts+=( --page-id "${ocrd__argv[page_id]}" )
     fi
-    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]}" )
+    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]} ${__parameters[*]@Q} ${__parameter_overrides[*]@Q}" )
     ocrd validate tasks "${_valopts[@]}" || exit $?
 
     # check parameters
@@ -194,8 +185,6 @@ $params_parsed"
 
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/wrap.bash 
 ocrd__wrap () {
 
     declare -gx OCRD_TOOL_JSON="$1"
@@ -238,9 +227,7 @@ ocrd__wrap () {
                   ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-})
 }
 
-# usage: pageId=$(ocrd__input_file 3 pageId)
+## usage: pageId=$(ocrd__input_file 3 pageId)
 ocrd__input_file() {
     eval echo "\${${ocrd__files[$1]}[$2]}"
 }
-
-# END-INCLUDE 

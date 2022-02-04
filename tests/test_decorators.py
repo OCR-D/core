@@ -212,5 +212,6 @@ class TestDecorators(TestCase):
                 print(out)
                 self.assertEqual(out, '{"baz": "two"}\n')
 
+
 if __name__ == '__main__':
-    main(__file__)
+    main()

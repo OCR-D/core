@@ -9,16 +9,15 @@ __all__ = [
     'run_processor'
 ]
 
-from os import makedirs
-from os.path import exists, isdir, join
+from os.path import exists
 from shutil import copyfileobj
 import json
 import os
 from os import getcwd
-import re
+from pathlib import Path
 import sys
-
-import requests
+import tarfile
+import io
 
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
@@ -26,11 +25,12 @@ from ocrd_utils import (
     getLogger,
     initLogging,
     list_resource_candidates,
+    pushd_popd,
     list_all_resources,
+    get_processor_resource_types
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
-from ..resource_manager import OcrdResourceManager
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
@@ -100,18 +100,32 @@ class Processor():
             print(json.dumps(ocrd_tool, indent=True))
             return
         if list_resources:
+            has_dirs, has_files = get_processor_resource_types(None, ocrd_tool)
             for res in list_all_resources(ocrd_tool['executable']):
+                if Path(res).is_dir() and not has_dirs:
+                    continue
+                if not Path(res).is_dir() and not has_files:
+                    continue
                 print(res)
             return
         if show_resource:
-            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource, is_file=True)
+            has_dirs, has_files = get_processor_resource_types(None, ocrd_tool)
+            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource)
             if not res_fname:
                 initLogging()
                 logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
                 logger.error("Failed to resolve %s for processor %s" % (show_resource, ocrd_tool['executable']))
             else:
-                with open(res_fname[0], 'rb') as f:
-                    copyfileobj(f, sys.stdout.buffer)
+                fpath = Path(res_fname[0])
+                if fpath.is_dir():
+                    with pushd_popd(fpath):
+                        fileobj = io.BytesIO()
+                        with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
+                            tarball.add('.')
+                        fileobj.seek(0)
+                        copyfileobj(fileobj, sys.stdout.buffer)
+                else:
+                    sys.stdout.buffer.write(fpath.read_bytes())
             return
         self.ocrd_tool = ocrd_tool
         if show_help:
