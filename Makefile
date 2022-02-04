@@ -206,13 +206,42 @@ pyclean:
 # Docker
 #
 
+.PHONY: docker docker-cuda
+
 # Build docker image
 docker docker-cuda:
 	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build docker GPU / CUDA image
-docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:10.0-cudnn7-runtime-ubuntu18.04
+docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu18.04
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
+docker-cuda: DOCKER_ARGS += --build-arg FIXUP="make cuda-ubuntu cuda-ldconfig"
+
+#
+# CUDA
+#
+
+.PHONY: cuda-ubuntu cuda-ldconfig
+
+# Install native CUDA toolkit in different versions
+cuda-ubuntu: cuda-ldconfig
+	apt-get -y install --no-install-recommends cuda-runtime-10-0 cuda-runtime-10-1 cuda-runtime-10-2 cuda-runtime-11-0 cuda-runtime-11-1 cuda-runtime-11-3 libcudnn7
+
+cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
+	ldconfig
+
+/etc/ld.so.conf.d/cuda.conf:
+	@echo > $@
+	@echo /usr/local/cuda-10.0/lib64 >> $@
+	@echo /usr/local/cuda-10.0/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-10.1/lib64 >> $@
+	@echo /usr/local/cuda-10.1/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-10.2/lib64 >> $@
+	@echo /usr/local/cuda-10.2/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-11.0/lib64 >> $@
+	@echo /usr/local/cuda-11.0/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-11.1/lib64 >> $@
+	@echo /usr/local/cuda-11.1/targets/x86_64-linux/lib >> $@
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install
