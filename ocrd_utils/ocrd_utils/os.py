@@ -63,10 +63,10 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
-def list_resource_candidates(executable, fname, cwd=getcwd()):
+def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None):
     """
     Generate candidates for processor resources according to
-    https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
+    https://ocr-d.de/en/spec/ocrd_tool#file-parameters
     """
     candidates = []
     candidates.append(join(cwd, fname))
@@ -75,12 +75,14 @@ def list_resource_candidates(executable, fname, cwd=getcwd()):
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
     candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
     candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
+    if moduled:
+        candidates.append(join(moduled, fname))
     return candidates
 
-def list_all_resources(executable):
+def list_all_resources(executable, moduled=None):
     """
     List all processor resources in the filesystem according to
-    https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
+    https://ocr-d.de/en/spec/ocrd_tool#file-parameters
     """
     candidates = []
     # XXX cwd would list too many false positives
@@ -98,6 +100,19 @@ def list_all_resources(executable):
     systemdir = Path('/usr/local/share/ocrd-resources', executable)
     if systemdir.is_dir():
         candidates += systemdir.iterdir()
+    if moduled:
+        # recurse fully
+        for resource in itertree(Path(moduled)):
+            if resource.is_dir():
+                continue
+            if any(resource.match(pattern) for pattern in
+                   # Python distributions do not distinguish between
+                   # code and data; `is_resource()` only singles out
+                   # files over directories; but we want data files only
+                   # todo: more code and cache exclusion patterns!
+                   ['*.py', '*.py[cod]', '*~', 'ocrd-tool.json']):
+                continue
+            candidates.append(resource)
     # recurse once
     for parent in candidates:
         if parent.is_dir():
@@ -155,3 +170,14 @@ def is_file_in_directory(directory, file):
     directory = Path(directory)
     file = Path(file)
     return list(file.parts)[:len(directory.parts)] == list(directory.parts)
+
+def itertree(path):
+    """
+    Generate a list of paths by recursively enumerating ``path``
+    """
+    if not isinstance(path, Path):
+        path = Path(path)
+    if path.is_dir():
+        for subpath in path.iterdir():
+            yield from itertree(subpath)
+    yield path
