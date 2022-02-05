@@ -125,7 +125,7 @@ def test_set_image_filename(faulty_glyphs):
     faulty_glyphs.get_Page().imageFilename = 'foo'
 
     # assert
-    assert faulty_glyphs.get_Page().imageFilename, 'foo'
+    assert faulty_glyphs.get_Page().imageFilename == 'foo'
 
 
 def test_alternative_image_additions():
@@ -290,15 +290,15 @@ def test_all_regions_with_reading_order():
         pg = parseString(f.read().encode('utf8'), silence=True).get_Page()
 
     # assert
-    assert len(pg.get_AllRegions(order='reading-order-only')), 40
-    assert len(pg.get_AllRegions(order='reading-order-only', depth=1)), 20
-    assert len(pg.get_AllRegions(order='reading-order-only', depth=2)), 40
-    assert len(pg.get_AllRegions(order='reading-order', depth=0)), 65
-    assert len(pg.get_AllRegions(order='reading-order', depth=1)), 45
-    assert len(pg.get_AllRegions(order='reading-order', depth=2)), 6
-    assert len(pg.get_AllRegions(classes=['Table'], order='reading-order')), 3
-    assert len(pg.get_AllRegions(classes=['Text'], order='reading-order')), 37
-    assert len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)), 17
+    assert len(pg.get_AllRegions(order='reading-order-only')) == 40
+    assert len(pg.get_AllRegions(order='reading-order-only', depth=1)) == 20
+    assert len(pg.get_AllRegions(order='reading-order-only', depth=2)) == 40
+    assert len(pg.get_AllRegions(order='reading-order', depth=0)) == 65
+    assert len(pg.get_AllRegions(order='reading-order', depth=1)) == 45
+    assert len(pg.get_AllRegions(order='reading-order', depth=2)) == 6
+    assert len(pg.get_AllRegions(classes=['Table'], order='reading-order')) == 3
+    assert len(pg.get_AllRegions(classes=['Text'], order='reading-order')) == 37
+    assert len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)) == 17
 
 
 def test_get_unorderd_group_children():
