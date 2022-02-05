@@ -4,7 +4,7 @@ from os import chdir, curdir, walk, stat, chmod, umask
 import shutil
 from stat import filemode
 from os.path import join, exists, abspath, basename, dirname
-from shutil import copyfile
+from shutil import copyfile, copytree as copytree_, rmtree
 from pathlib import Path
 from gzip import open as gzip_open
 
@@ -33,6 +33,11 @@ SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
 SAMPLE_FILE_FILEGRP = 'OCR-D-IMG'
 SAMPLE_FILE_ID = 'INPUT_0017'
 SAMPLE_FILE_URL = join(SAMPLE_FILE_FILEGRP, '%s.tif' % SAMPLE_FILE_ID)
+
+
+def copytree(src, dst, *args, **kwargs):
+    rmtree(dst)
+    copytree_(src, dst, *args, **kwargs)
 
 
 def count_files(d): return sum(len(files) for _, _, files in walk(d))
@@ -198,7 +203,7 @@ def test_superfluous_copies_in_ws_dir(tmp_path):
     # arrange
     src_path = assets.path_to('SBB0000F29300010000/data/mets_one_file.xml')
     dst_path = join(tmp_path, 'mets.xml')
-    shutil.copyfile(src_path, dst_path)
+    copyfile(src_path, dst_path)
     ws1 = Workspace(Resolver(), tmp_path)
 
     # assert directory files
@@ -215,7 +220,7 @@ def test_superfluous_copies_in_ws_dir(tmp_path):
 
 @pytest.fixture(name='sbb_data_tmp')
 def _fixture_sbb_data_tmp(tmp_path):
-    shutil.copytree(assets.path_to('SBB0000F29300010000/data'), str(tmp_path), dirs_exist_ok=True)
+    copytree(assets.path_to('SBB0000F29300010000/data'), str(tmp_path))
     yield str(tmp_path)
 
 
@@ -271,7 +276,7 @@ def test_remove_file_remote(plain_workspace):
 
 def test_rename_file_group(tmp_path):
     # arrange
-    shutil.copytree(assets.path_to('kant_aufklaerung_1784-page-region-line-word_glyph/data'), str(tmp_path), dirs_exist_ok=True)
+    copytree(assets.path_to('kant_aufklaerung_1784-page-region-line-word_glyph/data'), str(tmp_path))
     workspace = Workspace(Resolver(), directory=str(tmp_path))
 
     # before act
@@ -341,7 +346,7 @@ def test_remove_file_group_flat(plain_workspace):
 
 @pytest.fixture(name='kant_complex_workspace')
 def _fixture_kant_complex(tmp_path):
-    shutil.copytree(assets.path_to('kant_aufklaerung_1784-complex/data'), str(tmp_path), dirs_exist_ok=True)
+    copytree(assets.path_to('kant_aufklaerung_1784-complex/data'), str(tmp_path))
     yield Workspace(Resolver, directory=tmp_path)
 
 
@@ -411,7 +416,7 @@ def test_save_image_file(plain_workspace):
 
 @pytest.fixture(name='workspace_kant_aufklaerung')
 def _fixture_workspace_kant_aufklaerung(tmp_path):
-    shutil.copytree(assets.path_to('kant_aufklaerung_1784/data/'), str(tmp_path), dirs_exist_ok=True)
+    copytree(assets.path_to('kant_aufklaerung_1784/data/'), str(tmp_path))
     resolver = Resolver()
     ws = resolver.workspace_from_url(join(tmp_path, 'mets.xml'), src_baseurl=tmp_path)
     prev_dir = abspath(curdir)
@@ -441,7 +446,7 @@ def test_resolve_image_as_pil(workspace_kant_aufklaerung):
 
 @pytest.fixture(name='workspace_gutachten_data')
 def _fixture_workspace_gutachten_data(tmp_path):
-    shutil.copytree(assets.path_to('gutachten/data'), str(tmp_path), dirs_exist_ok=True)
+    copytree(assets.path_to('gutachten/data'), str(tmp_path))
     resolver = Resolver()
     ws = resolver.workspace_from_url(join(str(tmp_path), 'mets.xml'))
     prev_path = abspath(curdir)
@@ -464,7 +469,7 @@ def test_image_from_page_basic(workspace_gutachten_data):
 
 @pytest.fixture(name='workspace_sample_features')
 def _fixture_workspace_sample_features(tmp_path):
-    shutil.copytree('tests/data/sample-features', str(tmp_path), dirs_exist_ok=True)
+    copytree('tests/data/sample-features', str(tmp_path))
     resolver = Resolver()
     ws = resolver.workspace_from_url(join(str(tmp_path), 'mets.xml'))
     prev_path = abspath(curdir)
@@ -523,8 +528,8 @@ def test_merge(tmp_path):
     dst_path1.mkdir()
     dst_path2 = tmp_path / 'sbb'
     dst_path2.mkdir()
-    shutil.copytree(assets.path_to('kant_aufklaerung_1784/data'), dst_path1, dirs_exist_ok=True)
-    shutil.copytree(assets.path_to('SBB0000F29300010000/data'), dst_path2, dirs_exist_ok=True)
+    copytree(assets.path_to('kant_aufklaerung_1784/data'), dst_path1)
+    copytree(assets.path_to('SBB0000F29300010000/data'), dst_path2)
 
     ws1 = Workspace(Resolver(), dst_path1)
     ws2 = Workspace(Resolver(), dst_path2)
