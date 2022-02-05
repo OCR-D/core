@@ -1,7 +1,8 @@
 # pylint: disable=unused-import
 
-from os.path import dirname, realpath
 from os import chdir
+from os.path import dirname, realpath, join
+from pathlib import Path
 import sys
 import logging
 import io
@@ -26,7 +27,7 @@ class TestCase(VanillaTestCase):
     def setUp(self):
         chdir(dirname(realpath(__file__)) + '/..')
         disableLogging()
-        initLogging()
+        initLogging(config_paths=[LOG_CONFIG_PATH])
 
 class CapturingTestCase(TestCase):
     """
@@ -94,3 +95,6 @@ class FIFOIO(io.TextIOBase):
             size -= len(x)
 
 sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
+
+# use provided logging configuration as default
+LOG_CONFIG_PATH = join(Path(dirname(__file__)).parent, 'ocrd_utils', 'ocrd_logging.conf')
