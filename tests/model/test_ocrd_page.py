@@ -295,7 +295,7 @@ def test_all_regions_with_reading_order():
     assert len(pg.get_AllRegions(order='reading-order-only', depth=2)) == 40
     assert len(pg.get_AllRegions(order='reading-order', depth=0)) == 65
     assert len(pg.get_AllRegions(order='reading-order', depth=1)) == 45
-    assert len(pg.get_AllRegions(order='reading-order', depth=2)) == 6
+    assert len(pg.get_AllRegions(order='reading-order', depth=2)) == 65
     assert len(pg.get_AllRegions(classes=['Table'], order='reading-order')) == 3
     assert len(pg.get_AllRegions(classes=['Text'], order='reading-order')) == 37
     assert len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)) == 17
