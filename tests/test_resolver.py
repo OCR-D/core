@@ -278,5 +278,26 @@ def test_download_to_directory_subdir(fixture_copy_kant):
     assert fn == 'baz/mets.xml'
 
 
+def test_resolve_mets_arguments():
+    """
+    https://github.com/OCR-D/core/issues/693
+    https://github.com/OCR-D/core/issues/517
+    """
+    resolver = Resolver()
+    assert resolver.resolve_mets_arguments(None, None, None) == (str(Path.cwd()), str(Path.cwd() / 'mets.xml'), 'mets.xml')
+    assert resolver.resolve_mets_arguments('/', None, 'mets.xml') == ('/', '/mets.xml', 'mets.xml')
+    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
+    assert resolver.resolve_mets_arguments(None, '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
+    assert resolver.resolve_mets_arguments('/foo', 'foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
+    assert resolver.resolve_mets_arguments('/foo', 'http://bar/foo.xml', None) == ('/foo', 'http://bar/foo.xml', 'foo.xml')
+    with pytest.raises(ValueError, match="Use either --mets or --mets-basename, not both"):
+        resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml')
+    with pytest.raises(ValueError, match="inconsistent with --directory"):
+        resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None)
+    with pytest.warns(DeprecationWarning):
+        resolver.resolve_mets_arguments('/foo', None, 'not_mets.xml')
+    with pytest.raises(ValueError, match=r"--mets is an http\(s\) URL but no --directory was given"):
+        resolver.resolve_mets_arguments(None, 'http://bar/foo.xml', None)
+
 if __name__ == '__main__':
     main(__file__)

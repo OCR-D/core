@@ -25,6 +25,14 @@
 	* [ocrd_modelfactory](#ocrd_modelfactory)
 	* [ocrd_validators](#ocrd_validators)
 	* [ocrd](#ocrd)
+* [bash library](#bash-library)
+	* [bashlib API](#bashlib-api)
+	* [`ocrd__raise`](#ocrd__raise)
+	* [`ocrd__log`](#ocrd__log)
+	* [`ocrd__minversion`](#ocrd__minversion)
+	* [`ocrd__dumpjson`](#ocrd__dumpjson)
+	* [`ocrd__usage`](#ocrd__usage)
+	* [`ocrd__parse_argv`](#ocrd__parse_argv)
 * [Testing](#testing)
 * [See Also](#see-also)
 
@@ -102,6 +110,54 @@ Depends on all of the above, also contains decorators and classes for creating O
 Also contains the command line tool `ocrd`.
 
 See [README for `ocrd`](./ocrd/README.md) for further information.
+
+## bash library
+
+Builds a bash script that can be sourced by other bash scripts to create OCRD-compliant CLI.
+
+### bashlib API
+
+<!-- BEGIN-RENDER ./ocrd/ocrd/lib.bash -->
+### `ocrd__raise`
+
+Raise an error and exit.
+### `ocrd__log`
+
+Delegate logging to `ocrd log`
+### `ocrd__minversion`
+
+Ensure minimum version
+### `ocrd__dumpjson`
+
+Output ocrd-tool.json.
+
+Requires `$OCRD_TOOL_JSON` and `$OCRD_TOOL_NAME` to be set:
+
+```sh
+export OCRD_TOOL_JSON=/path/to/ocrd-tool.json
+export OCRD_TOOL_NAME=ocrd-foo-bar
+```
+
+
+Output file resource content.
+
+
+Output file resources names.
+
+### `ocrd__usage`
+
+Print usage
+
+### `ocrd__parse_argv`
+
+Expects an associative array ("hash"/"dict") `ocrd__argv` to be defined:
+
+```sh
+declare -A ocrd__argv=()
+```
+usage: pageId=$(ocrd__input_file 3 pageId)
+
+<!-- END-RENDER -->
 
 ## Testing
 

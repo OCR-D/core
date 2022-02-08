@@ -1,5 +1,6 @@
 from tempfile import mkdtemp
 from pathlib import Path
+from warnings import warn
 
 import requests
 
@@ -9,6 +10,7 @@ from ocrd_utils import (
     is_local_filename,
     get_local_filename,
     remove_non_path_from_url,
+    is_file_in_directory,
     nth_url_segment
 )
 from ocrd.workspace import Workspace
@@ -198,4 +200,55 @@ class Resolver():
         mets_path.write_bytes(mets.to_xml(xmllint=True))
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
+
+    def resolve_mets_arguments(self, directory, mets_url, mets_basename):
+        """
+        Resolve the ``--mets``, ``--mets-basename`` and `--directory`` argument
+        into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
+        """
+        log = getLogger('ocrd.resolver.resolve_mets_arguments')
+        mets_is_remote = mets_url and (mets_url.startswith('http://') or mets_url.startswith('https://'))
+
+        # XXX we might want to be more strict like this but it might break # legacy code
+        # Allow --mets and --directory together iff --mets is a remote URL
+        # if directory and mets_url and not mets_is_remote:
+        #     raise ValueError("Use either --mets or --directory, not both")
+
+        # If --mets is a URL, a directory must be explicitly provided (not strictly necessary, but retained for legacy behavior)
+        if not directory and mets_is_remote:
+            raise ValueError("--mets is an http(s) URL but no --directory was given")
+
+        # Determine --mets-basename
+        if not mets_basename and mets_url:
+            mets_basename = Path(mets_url).name
+        elif not mets_basename and not mets_url:
+            mets_basename = 'mets.xml'
+        elif mets_basename and mets_url:
+            raise ValueError("Use either --mets or --mets-basename, not both")
+        else:
+            warn("--mets-basename is deprecated. Use --mets/--directory instead", DeprecationWarning)
+
+        # Determine --directory and --mets-url
+        if not directory and not mets_url:
+            directory = Path.cwd()
+            mets_url = Path(directory, mets_basename)
+        elif directory and not mets_url:
+            directory = Path(directory).resolve()
+            mets_url = directory / mets_basename
+        elif not directory and mets_url:
+            mets_url = Path(mets_url).resolve()
+            directory = mets_url.parent
+        else: # == directory and mets_url:
+            directory = Path(directory).resolve()
+            if not mets_is_remote:
+                # --mets is just a basename and --directory is set, so treat --mets as --mets-basename
+                if Path(mets_url).parent == Path('.'):
+                    mets_url = directory / mets_url
+                else:
+                    mets_url = Path(mets_url).resolve()
+                    if not is_file_in_directory(directory, mets_url):
+                        raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
+
+        return str(Path(directory).resolve()), str(mets_url), str(mets_basename)
+
 

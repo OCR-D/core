@@ -78,11 +78,8 @@ def ocrd_cli_wrap_processor(
         #     raise ValueError('-I/--input-file-grp is required')
         # if not kwargs['output_file_grp']:
         #     raise ValueError('-O/--output-file-grp is required')
-        if is_local_filename(mets) and not isfile(get_local_filename(mets)):
-            msg = "File does not exist: %s" % mets
-            LOG.error(msg)
-            raise Exception(msg)
         resolver = Resolver()
+        working_dir, mets, _ = resolver.resolve_mets_arguments(working_dir, mets, None)
         workspace = resolver.workspace_from_url(mets, working_dir)
         page_id = kwargs.get('page_id')
         # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
