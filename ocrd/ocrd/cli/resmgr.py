@@ -106,7 +106,7 @@ def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwri
     if not reslist:
         log.info("No resources found in registry")
         if executable and name:
-            reslist = [(executable, {'url': '???', 'name': name,
+            reslist = [(executable, {'url': any_url or '???', 'name': name,
                                      'type': resource_type,
                                      'path_in_archive': path_in_archive})]
     for executable, resdict in reslist:
