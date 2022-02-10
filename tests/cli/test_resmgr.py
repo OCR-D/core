@@ -27,6 +27,9 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     name = 'dzo.traineddata'
     r = runner.invoke(resmgr_cli, ['download', '--any-url', url, executable, name], env=env)
     mgr.load_resource_list(mgr.user_list)
+    print(r.output)
+    with open(mgr.user_list, 'r') as f:
+        print(f.read())
 
     # assert
     rsrcs = mgr.list_installed('ocrd-tesserocr-recognize')[0][1]
@@ -38,8 +41,6 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     url2 = url.replace('dzo', 'bos')
     r = runner.invoke(resmgr_cli, ['download', '--overwrite', '--any-url', url2, executable, name], env=env)
     mgr.load_resource_list(mgr.user_list)
-    # with open(mgr.user_list, 'r') as f:
-        # print(f.read())
 
     # assert
     rsrcs = mgr.list_installed('ocrd-tesserocr-recognize')[0][1]
