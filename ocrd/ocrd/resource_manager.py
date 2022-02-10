@@ -32,8 +32,7 @@ class OcrdResourceManager():
         if not self.user_list.exists():
             if not self.user_list.parent.exists():
                 self.user_list.parent.mkdir(parents=True)
-            with open(str(self.user_list), 'w', encoding='utf-8') as f:
-                f.write(RESOURCE_USER_LIST_COMMENT)
+            self.save_user_list()
         self.load_resource_list(self.user_list)
 
     @property
@@ -61,6 +60,14 @@ class OcrdResourceManager():
             else:
                 self._xdg_config_home = join(self.userdir, '.config')
         return self._xdg_config_home
+
+    def save_user_list(self, database=None):
+        if not database:
+            database = self.database
+        with open(self.user_list, 'w', encoding='utf-8') as f:
+            f.write(RESOURCE_USER_LIST_COMMENT)
+            f.write('\n')
+            f.write(safe_dump(database))
 
     def load_resource_list(self, list_filename, database=None):
         if not database:
@@ -144,10 +151,7 @@ class OcrdResourceManager():
             user_database[executable].append(resdict)
         else:
             resdict = resources_found[0][1]
-        with open(self.user_list, 'w', encoding='utf-8') as f:
-            f.write(RESOURCE_USER_LIST_COMMENT)
-            f.write('\n')
-            f.write(safe_dump(user_database))
+        self.save_user_list(user_database)
         self.load_resource_list(self.user_list)
         return resdict
 

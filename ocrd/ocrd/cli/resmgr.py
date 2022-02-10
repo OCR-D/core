@@ -144,5 +144,6 @@ def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwri
         if registered == 'unregistered':
             log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", executable, name, any_url, resmgr.user_list)
             resmgr.add_to_user_database(executable, fpath, url=any_url)
+        resmgr.save_user_list()
         log.info("Installed resource %s under %s", resdict['url'], fpath)
         log.info("Use in parameters as '%s'", resmgr.parameter_usage(resdict['name'], usage=resdict.get('parameter_usage', 'as-is')))
