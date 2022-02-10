@@ -1,5 +1,6 @@
 import os
 import pathlib
+import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
 
@@ -7,10 +8,12 @@ from pytest import raises
 from tests.base import main
 
 CONST_RESOURCE_YML = 'resources.yml'
-CONST_RESOURCE_URL_LAYOUT = 'https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle'
+CONST_RESOURCE_URL_LAYOUT = 'https://github.com/tesseract-ocr/tessdata_best/raw/main/bos.traineddata'
 
+def test_resources_manager_config_default(monkeypatch, tmp_path):
 
-def test_resources_manager_config_default():
+    # arrange
+    monkeypatch.setenv('HOME', str(tmp_path))
 
     # act
     mgr = OcrdResourceManager()
@@ -21,8 +24,10 @@ def test_resources_manager_config_default():
     assert f.exists()
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
+    # pdb.set_trace()
+
     mgr.list_installed()
-    proc = 'ocrd-anybaseocr-layout-analysis'
+    proc = 'ocrd-tesserocr-recognize'
     # TODO mock request
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
@@ -45,7 +50,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed()
-    proc = 'ocrd-anybaseocr-layout-analysis'
+    proc = 'ocrd-tesserocr-recognize'
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
@@ -63,7 +68,7 @@ def test_resources_manager_config_explicite(tmp_path):
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed()
-    proc = 'ocrd-anybaseocr-layout-analysis'
+    proc = 'ocrd-tesserocr-recognize'
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
