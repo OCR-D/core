@@ -115,7 +115,7 @@ def list_all_resources(executable, moduled=None):
             candidates.append(resource)
     # recurse once
     for parent in candidates:
-        if parent.is_dir():
+        if parent.is_dir() and parent.name != '.git':
             candidates += parent.iterdir()
     return sorted([str(x) for x in candidates])
 
