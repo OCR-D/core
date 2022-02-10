@@ -105,7 +105,7 @@ class OcrdResourceManager():
         for this_executable in set(all_executables):
             reslist = []
             mimetypes = get_processor_resource_types(this_executable)
-            for res_filename in list_all_resources(this_executable):
+            for res_filename in list_all_resources(this_executable, xdg_data_home=self.xdg_data_home):
                 res_filename = Path(res_filename)
                 if not '*/*' in mimetypes:
                     if res_filename.is_dir() and not 'text/directory' in mimetypes:

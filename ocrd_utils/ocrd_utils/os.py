@@ -63,28 +63,30 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
-def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None):
+def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):
     """
     Generate candidates for processor resources according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters
     """
     candidates = []
     candidates.append(join(cwd, fname))
+    xdg_data_home = XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
-    candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
+    candidates.append(join(xdg_data_home, 'ocrd-resources', executable, fname))
     candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
     if moduled:
         candidates.append(join(moduled, fname))
     return candidates
 
-def list_all_resources(executable, moduled=None):
+def list_all_resources(executable, moduled=None, xdg_data_home=None):
     """
     List all processor resources in the filesystem according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters
     """
     candidates = []
+    xdg_data_home = XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     # XXX cwd would list too many false positives
     # cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
     # if Path(cwd_candidate).exists():
@@ -94,7 +96,7 @@ def list_all_resources(executable, moduled=None):
         for processor_path in environ[processor_path_var].split(':'):
             if Path(processor_path).is_dir():
                 candidates += Path(processor_path).iterdir()
-    datadir = Path(XDG_DATA_HOME, 'ocrd-resources', executable)
+    datadir = Path(xdg_data_home, 'ocrd-resources', executable)
     if datadir.is_dir():
         candidates += datadir.iterdir()
     systemdir = Path('/usr/local/share/ocrd-resources', executable)
