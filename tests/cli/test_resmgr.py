@@ -39,7 +39,7 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
 
     # add resource with different URL but sanem name
     url2 = url.replace('dzo', 'bos')
-    r = runner.invoke(resmgr_cli, ['download', '--overwrite', '--any-url', url2, executable, name], env=env)
+    r = runner.invoke(resmgr_cli, ['download', '--overwrite', '-a', '--any-url', url2, executable, name], env=env)
     mgr.load_resource_list(mgr.user_list)
 
     # assert
