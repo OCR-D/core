@@ -25,7 +25,7 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     # add an unregistered resource
     url = 'https://github.com/tesseract-ocr/tessdata_best/raw/main/dzo.traineddata'
     name = 'dzo.traineddata'
-    r = runner.invoke(resmgr_cli, ['download', '--any-url', url, executable, name], env=env)
+    r = runner.invoke(resmgr_cli, ['download', '-a', '--any-url', url, executable, name], env=env)
     mgr.load_resource_list(mgr.user_list)
     print(r.output)
     with open(mgr.user_list, 'r') as f:
