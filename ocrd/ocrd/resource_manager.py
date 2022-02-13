@@ -1,7 +1,7 @@
 from pathlib import Path
 from os.path import join
-from os import environ, listdir, getcwd, path
-from shutil import copytree
+from os import environ, listdir, getcwd, path, unlink
+from shutil import copytree as copytree_, rmtree
 from datetime import datetime
 from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
@@ -13,6 +13,11 @@ from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
+
+def copytree(src, dst, *args, overwrite=False, **kwargs):
+    if overwrite:
+        rmtree(dst)
+    return copytree_(src, dst, *args, **kwargs)
 
 class OcrdResourceManager():
 
@@ -191,9 +196,11 @@ class OcrdResourceManager():
             return Path(name).stem
         raise ValueError("No such usage '%s'" % usage)
 
-    def _download_impl(self, url, filename, progress_cb=None, size=None):
+    def _download_impl(self, url, filename, progress_cb=None, size=None, overwrite=False):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
+        if Path(filename).exists() and overwrite:
+            unlink(filename)
         with open(filename, 'wb') as f:
             with requests.get(url, stream=True) as r:
                 total = size if size else int(r.headers.get('content-length'))
@@ -202,9 +209,11 @@ class OcrdResourceManager():
                         progress_cb(len(data))
                     f.write(data)
 
-    def _copy_impl(self, src_filename, filename, progress_cb=None):
+    def _copy_impl(self, src_filename, filename, progress_cb=None, overwrite=False):
         log = getLogger('ocrd.resource_manager._copy_impl')
         log.info("Copying %s" % src_filename)
+        if Path(filename).exists() and overwrite:
+            unlink(filename)
         with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
             while True:
                 chunk = f_in.read(4096)
@@ -245,22 +254,22 @@ class OcrdResourceManager():
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type == 'file':
             if is_url:
-                self._download_impl(url, fpath, progress_cb)
+                self._download_impl(url, fpath, progress_cb, overwrite=overwrite)
             else:
-                self._copy_impl(url, fpath, progress_cb)
+                self._copy_impl(url, fpath, progress_cb, overwrite=overwrite)
         elif resource_type == 'tarball':
             with pushd_popd(tempdir=True):
                 if is_url:
-                    self._download_impl(url, 'download.tar.xx', progress_cb, size)
+                    self._download_impl(url, 'download.tar.xx', progress_cb, size, overwrite=overwrite)
                 else:
-                    self._copy_impl(url, 'download.tar.xx', progress_cb)
+                    self._copy_impl(url, 'download.tar.xx', progress_cb, overwrite=overwrite)
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     log.info("Extracting tarball")
                     with open_tarfile('../download.tar.xx', 'r:*') as tar:
                         tar.extractall()
                     log.info("Copying '%s' from tarball to %s" % (path_in_archive, fpath))
-                    copytree(path_in_archive, str(fpath))
+                    copytree(path_in_archive, str(fpath), overwrite=overwrite)
         # TODO
         # elif resource_type == 'github-dir':
         return fpath
