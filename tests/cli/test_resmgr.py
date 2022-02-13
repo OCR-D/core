@@ -1,7 +1,9 @@
 from pathlib import Path
 from click.testing import CliRunner
 from pytest import fixture
+from tempfile import TemporaryDirectory
 
+from ocrd_utils import disableLogging, directory_size
 from ocrd.cli.resmgr import resmgr_cli
 from ocrd.resource_manager import OcrdResourceManager
 
@@ -48,3 +50,28 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     assert len(rsrcs) == rsrcs_before + 1
     assert rsrcs[0]['name'] == name
     assert rsrcs[0]['url'] == url2
+
+def test_directory_copy(mgr_with_tmp_path):
+    """
+    https://github.com/OCR-D/core/issues/691#issuecomment-1038152665
+    ocrd resmgr download -a -n ~/.local/share/ocrd-resources/ocrd-origami-segment/bbz ocrd-origami-segment bbz2
+    """
+    mgr_path, mgr, env = mgr_with_tmp_path
+    proc = 'ocrd-foo-bar'
+    res_name = 'baz'
+    with TemporaryDirectory() as tmp_path:
+        for i in range(10):
+            with open(Path(tmp_path, f'f{i}'), 'w', encoding='utf-8') as f:
+                f.write('foo')
+        assert directory_size(tmp_path) == 30
+        assert mgr.list_installed(executable=proc) == [(proc, [])]
+
+        r = runner.invoke(
+            resmgr_cli,
+            ['download', '--allow-uninstalled', '--any-url', tmp_path, proc, res_name],
+            env=env,
+            catch_exceptions=False
+        )
+        assert not r.exception
+        assert Path(mgr_path / 'ocrd-resources' / proc).exists()
+        assert directory_size(mgr_path / 'ocrd-resources' / proc /  res_name) == 30

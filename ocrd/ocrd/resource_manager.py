@@ -10,7 +10,7 @@ import requests
 from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, directory_size
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -134,7 +134,12 @@ class OcrdResourceManager():
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
-        res_size = Path(res_filename).stat().st_size
+        print(Path(res_filename))
+        print(Path(res_filename).exists())
+        if Path(res_filename).is_dir():
+            res_size = directory_size(res_filename)
+        else:
+            res_size = Path(res_filename).stat().st_size
         with open(self.user_list, 'r', encoding='utf-8') as f:
             user_database = safe_load(f) or {}
         if executable not in user_database:
@@ -210,16 +215,31 @@ class OcrdResourceManager():
 
     def _copy_impl(self, src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
-        log.info("Copying %s" % src_filename)
-        with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
-            while True:
-                chunk = f_in.read(4096)
-                if chunk:
-                    f_out.write(chunk)
-                    if progress_cb:
-                        progress_cb(len(chunk))
-                else:
-                    break
+        log.info("Copying %s to %s", src_filename, filename)
+        if Path(src_filename).is_dir():
+            log.info(f"Copying recursively from {src_filename} to {filename}")
+            for child in Path(src_filename).rglob('*'):
+                child_dst = Path(filename) / child.relative_to(src_filename)
+                child_dst.parent.mkdir(parents=True, exist_ok=True)
+                with open(child_dst, 'wb') as f_out, open(child, 'rb') as f_in:
+                    while True:
+                        chunk = f_in.read(4096)
+                        if chunk:
+                            f_out.write(chunk)
+                            if progress_cb:
+                                progress_cb(len(chunk))
+                        else:
+                            break
+        else:
+            with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
+                while True:
+                    chunk = f_in.read(4096)
+                    if chunk:
+                        f_out.write(chunk)
+                        if progress_cb:
+                            progress_cb(len(chunk))
+                    else:
+                        break
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(

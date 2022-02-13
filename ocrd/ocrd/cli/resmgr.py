@@ -14,6 +14,7 @@ import click
 
 from ocrd_utils import (
     initLogging,
+    directory_size,
     getLogger,
     RESOURCE_LOCATIONS
 )
@@ -127,7 +128,10 @@ def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwri
             log.info("Copying %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
             urlpath = Path(resdict['url'])
             resdict['url'] = str(urlpath.resolve())
-            resdict['size'] = urlpath.stat().st_size
+            if Path(urlpath).is_dir():
+                resdict['size'] = directory_size(urlpath)
+            else:
+                resdict['size'] = urlpath.stat().st_size
         with click.progressbar(length=resdict['size']) as bar:
             fpath = resmgr.download(
                 executable,
