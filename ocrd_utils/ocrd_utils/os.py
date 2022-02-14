@@ -63,6 +63,20 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
+_ocrd_tool_cache = {}
+def get_ocrd_tool_json(executable, no_cache=False):
+    """
+    Get the ``ocrd-tool`` description of ``executable``. Use module-level
+    cache unless ``no_cache`` is ``True``.
+    """
+    executable_name = Path(executable).name
+    if no_cache or executable_name not in _ocrd_tool_cache:
+        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+        if no_cache:
+            return ocrd_tool
+        _ocrd_tool_cache[executable_name] = ocrd_tool
+    return _ocrd_tool_cache[executable_name]
+
 def list_resource_candidates(executable, fname, cwd=getcwd()):
     """
     Generate candidates for processor resources according to
