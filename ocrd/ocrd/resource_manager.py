@@ -134,8 +134,6 @@ class OcrdResourceManager():
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
-        print(Path(res_filename))
-        print(Path(res_filename).exists())
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
