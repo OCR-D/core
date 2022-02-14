@@ -6,6 +6,7 @@ OCR-D CLI: management of processor resources
     :nested: full
 """
 import sys
+from os import environ
 from pathlib import Path
 from distutils.spawn import find_executable as which
 
@@ -37,6 +38,15 @@ def resmgr_cli():
     Managing processor resources
     """
     initLogging()
+
+@resmgr_cli.command('discover')
+@click.option('-e', '--executable', 'glob', default='ocrd-*', help="Glob pattern for executables to inspect")
+@click.option('-n', '--dry-run', is_flag=True, default=False, help="Do not save to user resource_list.yml")
+def discover(glob, dry_run):
+    resmgr = OcrdResourceManager()
+    ocrd_processors = []
+    for executable, reslist in resmgr.discover(glob=glob, dry_run=dry_run):
+        print_resources(executable, reslist, resmgr)
 
 @resmgr_cli.command('list-available')
 @click.option('-e', '--executable', help='Show only resources for executable EXEC', metavar='EXEC')

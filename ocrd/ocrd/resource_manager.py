@@ -1,10 +1,12 @@
 from pathlib import Path
 from os.path import join
+from json import loads
 from os import environ, listdir, getcwd, path
 from shutil import copytree
 from datetime import datetime
 from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
+from subprocess import run, PIPE
 
 import requests
 from yaml import safe_load, safe_dump
@@ -79,6 +81,33 @@ class OcrdResourceManager():
                 database[executable] = list_loaded[executable] + database[executable]
         return database
 
+    def discover(self, dry_run=False, glob='ocrd-*'):
+        """
+        Discover resources by checking all the executables matching the
+        ``glob`` glob and add them to the user resource_list.yml
+        unless ``dry_run`` is ``True``.
+        """
+        ret = []
+        if not dry_run:
+            with open(self.user_list, 'r', encoding='utf-8') as f:
+                user_database = safe_load(f) or {}
+        for exec_dir in environ['PATH'].split(':'):
+            for exec_path in Path(exec_dir).glob(glob):
+                self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
+                result = run([exec_path, '--dump-json'], stdout=PIPE)
+                ocrd_tool = loads(result.stdout)
+                if not dry_run:
+                    if exec_path.name not in user_database:
+                        user_database[exec_path.name] = []
+                    user_database[exec_path.name] += ocrd_tool.get('resources', ())
+                ret.append((exec_path.name, ocrd_tool.get('resources', ())))
+        if not dry_run:
+            with open(self.user_list, 'w', encoding='utf-8') as f:
+                f.write(RESOURCE_USER_LIST_COMMENT)
+                f.write('\n')
+                f.write(safe_dump(user_database))
+        return ret
+
     def list_available(self, executable=None):
         """
         List models available for download by processor
@@ -120,7 +149,7 @@ class OcrdResourceManager():
             ret.append((this_executable, reslist))
         return ret
 
-    def add_to_user_database(self, executable, res_filename, url=None):
+    def add_to_user_database(self, executable, res_filename, url=None, resource_type='file'):
         """
         Add a stub entry to the user resource.yml
         """
@@ -137,6 +166,7 @@ class OcrdResourceManager():
                 'url': url if url else '???',
                 'description': 'Found at %s on %s' % (self.resource_dir_to_location(res_filename), datetime.now()),
                 'version_range': '???',
+                'type': resource_type,
                 'size': res_size
             }
             user_database[executable].append(resdict)
