@@ -10,7 +10,7 @@ import requests
 from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, nth_url_segment
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -235,8 +235,7 @@ class OcrdResourceManager():
         log = getLogger('ocrd.resource_manager.download')
         destdir = Path(basedir) if no_subdir else Path(basedir, executable)
         if not name:
-            url_parsed = urlparse(url)
-            name = Path(unquote(url_parsed.path)).name
+            name = nth_url_segment(url)
         fpath = Path(destdir, name)
         is_url = url.startswith('https://') or url.startswith('http://')
         if fpath.exists() and not overwrite:
