@@ -81,38 +81,24 @@ class OcrdResourceManager():
                 database[executable] = list_loaded[executable] + database[executable]
         return database
 
-    def discover(self, dry_run=False, glob='ocrd-*'):
-        """
-        Discover resources by checking all the executables matching the
-        ``glob`` glob and add them to the user resource_list.yml
-        unless ``dry_run`` is ``True``.
-        """
-        ret = []
-        if not dry_run:
-            with open(self.user_list, 'r', encoding='utf-8') as f:
-                user_database = safe_load(f) or {}
-        for exec_dir in environ['PATH'].split(':'):
-            for exec_path in Path(exec_dir).glob(glob):
-                self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
-                ocrd_tool = get_ocrd_tool_json(exec_path)
-                if not dry_run:
-                    if exec_path.name not in user_database:
-                        user_database[exec_path.name] = []
-                    user_database[exec_path.name] += ocrd_tool.get('resources', ())
-                ret.append((exec_path.name, ocrd_tool.get('resources', ())))
-        if not dry_run:
-            with open(self.user_list, 'w', encoding='utf-8') as f:
-                f.write(RESOURCE_USER_LIST_COMMENT)
-                f.write('\n')
-                f.write(safe_dump(user_database))
-        return ret
-
-    def list_available(self, executable=None):
+    def list_available(self, executable=None, dynamic=True):
         """
         List models available for download by processor
         """
+        if dynamic:
+            for exec_dir in environ['PATH'].split(':'):
+                for exec_path in Path(exec_dir).glob(f'{executable}*'):
+                    self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
+                    ocrd_tool = get_ocrd_tool_json(exec_path)
+                    for resdict in ocrd_tool.get('resources', ()):
+                        if not any(x['name'] == resdict['name'] for x in self.database.get(executable, [])):
+                            self.database[exec_path.name].append(resdict)
         if executable:
-            return [(executable, self.database[executable])]
+            ret = []
+            for k in self.database:
+                if k.startswith(executable):
+                    ret.append((k, self.database[k]))
+            return ret
         return self.database.items()
 
     def list_installed(self, executable=None):

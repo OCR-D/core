@@ -39,23 +39,15 @@ def resmgr_cli():
     """
     initLogging()
 
-@resmgr_cli.command('discover')
-@click.option('-e', '--executable', 'glob', default='ocrd-*', help="Glob pattern for executables to inspect")
-@click.option('-n', '--dry-run', is_flag=True, default=False, help="Do not save to user resource_list.yml")
-def discover(glob, dry_run):
-    resmgr = OcrdResourceManager()
-    ocrd_processors = []
-    for executable, reslist in resmgr.discover(glob=glob, dry_run=dry_run):
-        print_resources(executable, reslist, resmgr)
-
 @resmgr_cli.command('list-available')
-@click.option('-e', '--executable', help='Show only resources for executable EXEC', metavar='EXEC')
-def list_available(executable=None):
+@click.option('-d/-D', '--dynamic/--no-dynamic', is_flag=True, default=True, help="Whether to look in processor --dump-json for resources")
+@click.option('-e', '--executable', help='Show only resources for executable beginning with EXEC', metavar='EXEC', default='ocrd-')
+def list_available(executable, dynamic):
     """
     List available resources
     """
     resmgr = OcrdResourceManager()
-    for executable, reslist in resmgr.list_available(executable):
+    for executable, reslist in resmgr.list_available(executable=executable, dynamic=dynamic):
         print_resources(executable, reslist, resmgr)
 
 @resmgr_cli.command('list-installed')
