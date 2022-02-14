@@ -4,6 +4,7 @@ Operating system functions.
 __all__ = [
     'abspath',
     'is_file_in_directory',
+    'get_ocrd_tool_json',
     'get_processor_resource_types',
     'pushd_popd',
     'unzip_file_to_dir',
@@ -72,6 +73,8 @@ def get_ocrd_tool_json(executable, no_cache=False):
     executable_name = Path(executable).name
     if no_cache or executable_name not in _ocrd_tool_cache:
         ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+        if 'resource_locations' not in ocrd_tool:
+            ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
         if no_cache:
             return ocrd_tool
         _ocrd_tool_cache[executable_name] = ocrd_tool
@@ -83,12 +86,16 @@ def list_resource_candidates(executable, fname, cwd=getcwd()):
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
     """
     candidates = []
-    candidates.append(join(cwd, fname))
+    resource_locations = get_ocrd_tool_json(executable)['resource_locations']
+    if 'cwd' in resource_locations:
+        candidates.append(join(cwd, fname))
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
-    candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
-    candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
+    if 'data' in resource_locations:
+        candidates.append(join(XDG_DATA_HOME, 'ocrd-resources', executable, fname))
+    if 'system' in resource_locations:
+        candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
     return candidates
 
 def list_all_resources(executable):
@@ -97,21 +104,25 @@ def list_all_resources(executable):
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters (except python-bundled)
     """
     candidates = []
+    resource_locations = get_ocrd_tool_json(executable)['resource_locations']
     # XXX cwd would list too many false positives
-    # cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
-    # if Path(cwd_candidate).exists():
-    #     candidates.append(cwd_candidate)
+    # if 'cwd' in resource_locations:
+    #     cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
+    #     if Path(cwd_candidate).exists():
+    #         candidates.append(cwd_candidate)
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         for processor_path in environ[processor_path_var].split(':'):
             if Path(processor_path).is_dir():
                 candidates += Path(processor_path).iterdir()
-    datadir = Path(XDG_DATA_HOME, 'ocrd-resources', executable)
-    if datadir.is_dir():
-        candidates += datadir.iterdir()
-    systemdir = Path('/usr/local/share/ocrd-resources', executable)
-    if systemdir.is_dir():
-        candidates += systemdir.iterdir()
+    if 'data' in resource_locations:
+        datadir = Path(XDG_DATA_HOME, 'ocrd-resources', executable)
+        if datadir.is_dir():
+            candidates += datadir.iterdir()
+    if 'system' in resource_locations:
+        systemdir = Path('/usr/local/share/ocrd-resources', executable)
+        if systemdir.is_dir():
+            candidates += systemdir.iterdir()
     # recurse once
     for parent in candidates:
         if parent.is_dir():
@@ -129,8 +140,7 @@ def get_processor_resource_types(executable, ocrd_tool=None):
         # if the processor in question is not installed, assume both files and directories
         if not which(executable):
             return (True, True)
-        result = run([executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
-        ocrd_tool = loads(result.stdout)
+        ocrd_tool = get_ocrd_tool_json(executable)
     if not next((True for p in ocrd_tool['parameters'].values() if 'content-type' in p), False):
         # None of the parameters for this processor are resources (or not
         # the resource parametrs are not properly declared, so output both

@@ -13,7 +13,7 @@ from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
-from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd
+from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
 class OcrdResourceManager():
@@ -94,8 +94,7 @@ class OcrdResourceManager():
         for exec_dir in environ['PATH'].split(':'):
             for exec_path in Path(exec_dir).glob(glob):
                 self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
-                result = run([exec_path, '--dump-json'], stdout=PIPE)
-                ocrd_tool = loads(result.stdout)
+                ocrd_tool = get_ocrd_tool_json(exec_path)
                 if not dry_run:
                     if exec_path.name not in user_database:
                         user_database[exec_path.name] = []
