@@ -15,6 +15,7 @@ from tempfile import TemporaryDirectory
 import contextlib
 from distutils.spawn import find_executable as which
 from json import loads
+from json.decoder import JSONDecodeError
 from os import getcwd, chdir, stat, chmod, umask, environ
 from pathlib import Path
 from os.path import exists, abspath as abspath_, join, isdir
@@ -72,7 +73,12 @@ def get_ocrd_tool_json(executable, no_cache=False):
     """
     executable_name = Path(executable).name
     if no_cache or executable_name not in _ocrd_tool_cache:
-        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+        try:
+            ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+        except FileNotFoundError:
+            ocrd_tool = {}
+        except JSONDecodeError:
+            ocrd_tool = {}
         if 'resource_locations' not in ocrd_tool:
             ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
         if no_cache:
