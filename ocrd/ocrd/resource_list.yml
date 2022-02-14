@@ -49,33 +49,33 @@ ocrd-tesserocr-recognize:
     name: configs
     description: Tesseract configs (parameter sets) for use with the standalone tesseract CLI
     size: 1915529
-    type: tarball
+    type: archive
     path_in_archive: 'tesseract-main/tessdata/configs'
 ocrd-calamari-recognize:
   # XXX disabled since older ocrd_calamari versions don't support resource resolving
   #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
-  #  type: tarball
+  #  type: archive
   #  name: qurator-gt4histocr-0.3
   #  description: Calamari model trained with GT4HistOCR
   #  size: 116439072
   #  path_in_archive: '.'
   #  version_range: '< 1.0.0'
   - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-12-11T11_10+0100/model.tar.xz
-    type: tarball
+    type: archive
     name: qurator-gt4histocr-1.0
     description: Calamari model trained with GT4HistOCR
     size: 90275264
     path_in_archive: '.'
     version_range: '>= 1.0.0'
   - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_fraktur19-1.tar.gz
-    type: tarball
+    type: archive
     name: zpd-fraktur19
     description: Model trained on 19th century german fraktur
     path_in_archive: 'c1_fraktur19-1'
     size: 86009886
     version_range: '>= 1.0.0'
   - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_latin-script-hist-3.tar.gz
-    type: tarball
+    type: archive
     name: zpd-latin-script-hist-3
     path_in_archive: 'c1_latin-script-hist-3'
     description: Model trained on historical latin-script texts
@@ -107,20 +107,20 @@ ocrd-sbb-binarize:
   - url: https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz
     description: updated default models provided by github.com/qurator-spk
     name: default-2021-03-09
-    type: tarball
+    type: archive
     path_in_archive: models
     size: 133363179
   - url: https://qurator-data.de/sbb_binarization/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
-    type: tarball
+    type: archive
     path_in_archive: models
     size: 1654623597
 ocrd-sbb-textline-detector:
   - url: https://qurator-data.de/sbb_textline_detector/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
-    type: tarball
+    type: archive
     size: 1194551551
 ocrd-anybaseocr-dewarp:
   - url: https://ocr-d-repo.scc.kit.edu/models/dfki/dewarping/latest_net_G.pth
@@ -161,5 +161,5 @@ ocrd-eynollah-segment:
     name: default
     description: models for eynollah
     size: 3241866640
-    type: tarball
+    type: archive
     path_in_archive: 'models_eynollah'

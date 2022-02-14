@@ -269,12 +269,12 @@ class OcrdResourceManager():
             log.info("%s to be %s to %s which already exists and overwrite is False" % (url, 'downloaded' if is_url else 'copied', fpath))
             return fpath
         destdir.mkdir(parents=True, exist_ok=True)
-        if resource_type == 'file':
+        if resource_type in ('file', 'directory'):
             if is_url:
                 self._download_impl(url, fpath, progress_cb)
             else:
                 self._copy_impl(url, fpath, progress_cb)
-        elif resource_type == 'tarball':
+        elif resource_type == 'archive':
             with pushd_popd(tempdir=True):
                 if is_url:
                     self._download_impl(url, 'download.tar.xx', progress_cb, size)
@@ -282,11 +282,9 @@ class OcrdResourceManager():
                     self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    log.info("Extracting tarball")
+                    log.info("Extracting archive")
                     with open_tarfile('../download.tar.xx', 'r:*') as tar:
                         tar.extractall()
-                    log.info("Copying '%s' from tarball to %s" % (path_in_archive, fpath))
+                    log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
                     copytree(path_in_archive, str(fpath))
-        # TODO
-        # elif resource_type == 'github-dir':
         return fpath

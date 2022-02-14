@@ -23,7 +23,7 @@ patternProperties:
           description: Name to store the resource as
         type:
           type: string
-          enum: ['file', 'github-dir', 'tarball']
+          enum: ['file', 'directory', 'archive']
           default: file
           description: Type of the URL
         parameter_usage:
