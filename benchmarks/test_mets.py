@@ -47,7 +47,7 @@ def _build_mets(number_of_pages, force=False):
 def generated_mets(number_of_pages):
     mets = _build_mets(number_of_pages)
     def assert_len(kwargs, should):
-        assert len(mets.find_files(**kwargs)) == should
+        assert len(mets.find_all_files(**kwargs)) == should
     yield mets, assert_len
 
 def benchmark_find_files(number_of_pages):
@@ -67,23 +67,23 @@ def benchmark_find_files_filegrp(number_of_pages):
 
 def benchmark_find_files_pageid(number_of_pages):
     with generated_mets(number_of_pages) as (mets, assert_len):
-        print(mets.find_files()[0].pageId)
+        print(mets.find_all_files()[0].pageId)
         assert_len(dict(pageId='PHYS_0001'), FILES_PER_PAGE)
 
 def benchmark_find_files_exclude(number_of_pages):
     with generated_mets(number_of_pages) as (mets, assert_len):
-        print(mets.find_files()[0].pageId)
+        print(mets.find_all_files()[0].pageId)
         assert_len(dict(pageId_exclude='PHYS_0001'), (number_of_pages - 1) * FILES_PER_PAGE)
     # def test_find_files(self):
-    #     self.assertEqual(len(self.mets.find_files()), 35, '35 files total')
-    #     self.assertEqual(len(self.mets.find_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
-    #     self.assertEqual(len(self.mets.find_files(fileGrp='//OCR-D-I.*')), 13, '13 files in "//OCR-D-I.*"')
-    #     self.assertEqual(len(self.mets.find_files(ID="FILE_0001_IMAGE")), 1, '1 files with ID "FILE_0001_IMAGE"')
-    #     self.assertEqual(len(self.mets.find_files(ID="//FILE_0005_.*")), 1, '1 files with ID "//FILE_0005_.*"')
-    #     self.assertEqual(len(self.mets.find_files(mimetype='image/tiff')), 13, '13 image/tiff')
-    #     self.assertEqual(len(self.mets.find_files(mimetype='//application/.*')), 22, '22 application/.*')
-    #     self.assertEqual(len(self.mets.find_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
-    #     self.assertEqual(len(self.mets.find_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
+    #     self.assertEqual(len(self.mets.find_all_files()), 35, '35 files total')
+    #     self.assertEqual(len(self.mets.find_all_files(fileGrp='OCR-D-IMG')), 3, '3 files in "OCR-D-IMG"')
+    #     self.assertEqual(len(self.mets.find_all_files(fileGrp='//OCR-D-I.*')), 13, '13 files in "//OCR-D-I.*"')
+    #     self.assertEqual(len(self.mets.find_all_files(ID="FILE_0001_IMAGE")), 1, '1 files with ID "FILE_0001_IMAGE"')
+    #     self.assertEqual(len(self.mets.find_all_files(ID="//FILE_0005_.*")), 1, '1 files with ID "//FILE_0005_.*"')
+    #     self.assertEqual(len(self.mets.find_all_files(mimetype='image/tiff')), 13, '13 image/tiff')
+    #     self.assertEqual(len(self.mets.find_all_files(mimetype='//application/.*')), 22, '22 application/.*')
+    #     self.assertEqual(len(self.mets.find_all_files(mimetype=MIMETYPE_PAGE)), 20, '20 ' + MIMETYPE_PAGE)
+    #     self.assertEqual(len(self.mets.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')), 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"')
 
 # @mark.benchmark(group="build")
 # def test_add_1(benchmark):
