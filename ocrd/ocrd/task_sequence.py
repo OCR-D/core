@@ -2,7 +2,6 @@ import json
 from shlex import split as shlex_split
 from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
 from subprocess import run, PIPE
-from collections import Counter
 
 from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides
 # from collections import Counter
@@ -37,7 +36,7 @@ class ProcessorTask():
                 tokens = tokens[3:]
             else:
                 raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
-        return ProcessorTask(executable, input_file_grps, output_file_grps, parameters)
+        return cls(executable, input_file_grps, output_file_grps, parameters)
 
     def __init__(self, executable, input_file_grps, output_file_grps, parameters):
         self.executable = executable
@@ -87,9 +86,6 @@ class ProcessorTask():
         if self.parameters:
             ret += " -p '%s'" % json.dumps(self.parameters)
         return ret
-from ocrd_validators import WorkspaceValidator
-from ocrd_utils import getLogger
-from ocrd_models import ValidationReport
 
 def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     report = ValidationReport()
@@ -135,7 +131,7 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
         log.info("Start processing task '%s'", task)
 
         # execute cli
-        returncode, out, err = run_cli(
+        returncode = run_cli(
             task.executable,
             mets,
             resolver,
@@ -150,7 +146,7 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
 
         # check return code
         if returncode != 0:
-            raise Exception("%s exited with non-zero return value %s. STDOUT:\n%s\nSTDERR:\n%s" % (task.executable, returncode, out, err))
+            raise Exception("%s exited with non-zero return value %s." % (task.executable, returncode))
 
         log.info("Finished processing task '%s'", task)
 
@@ -160,4 +156,4 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
         # check output file groups are in mets
         for output_file_grp in task.output_file_grps:
             if not output_file_grp in workspace.mets.file_groups:
-                raise Exception("Invalid state: expected output file group not in mets: %s\nSTDOUT:\n%s\nSTDERR:\n%s" % (output_file_grp, out, err))
+                raise Exception("Invalid state: expected output file group '%s' not in METS (despite processor success)" % output_file_grp)

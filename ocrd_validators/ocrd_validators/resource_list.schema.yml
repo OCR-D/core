@@ -1,0 +1,44 @@
+type: object
+additionalProperties: false
+patternProperties:
+  '^ocrd-.*':
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - url
+        - description
+        - name
+        - size
+      properties:
+        url:
+          type: string
+          description: URLs of all components of this resource
+        description:
+          type: string
+          description: A description of the resource
+        name:
+          type: string
+          description: Name to store the resource as
+        type:
+          type: string
+          enum: ['file', 'github-dir', 'tarball']
+          default: file
+          description: Type of the URL
+        parameter_usage:
+          type: string
+          description: Defines how the parameter is to be used
+          enum: ['as-is', 'without-extension']
+          default: 'as-is'
+        path_in_archive:
+          type: string
+          description: if type is archive, the resource is at this location in the archive
+          default: '.'
+        version_range:
+          type: string
+          description: Range of supported versions, syntax like in PEP 440
+          default: '>= 0.0.1'
+        size:
+          type: number
+          description: Size of the resource in bytes

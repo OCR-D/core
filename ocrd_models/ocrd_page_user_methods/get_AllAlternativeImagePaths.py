@@ -1,13 +1,16 @@
 def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
     """
-    Get all the pc:AlternativeImage/@filename paths referenced in the PAGE-XML document.
+    Get all the ``pc:AlternativeImage/@filename`` paths referenced in the PAGE-XML document.
 
+    Arguments:
+        page (boolean): Get images on ``pc:Page`` level
+        region (boolean): Get images on ``pc:*Region`` level
+        line (boolean): Get images on ``pc:TextLine`` level
+        word (boolean): Get images on ``pc:Word`` level
+        glyph (boolean): Get images on ``pc:Glyph`` level
 
-    page (boolean): Get pc:Page level images
-    region (boolean): Get images on pc:*Region level
-    line (boolean) Get images on pc:TextLine level
-    word (boolean) Get images on pc:Word level
-    glyph (boolean) Get images on pc:Glyph level
+    Returns:
+        a list of image filename strings
     """
     from .constants import NAMESPACES, PAGE_REGION_TYPES # pylint: disable=relative-beyond-top-level,import-outside-toplevel
     from io import StringIO  # pylint: disable=import-outside-toplevel

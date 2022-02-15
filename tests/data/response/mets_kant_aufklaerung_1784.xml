@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="info:lc/xmlns/premis-v2 http://www.loc.gov/standards/premis/v2/premis-v2-0.xsd http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-6.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/version17/mets.v1-7.xsd http://www.loc.gov/mix/v10 http://www.loc.gov/standards/mix/mix10/mix10.xsd">
+  <mets:metsHdr CREATEDATE="2017-11-30T16:18:26">
+    <mets:agent OTHERTYPE="SOFTWARE" ROLE="CREATOR" TYPE="OTHER">
+      <mets:name>DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)</mets:name>
+      <mets:note>OCR-D</mets:note>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="DMDLOG_0001">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:identifier type="purl">http://kant_aufklaerung_1784</mods:identifier>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="OCR-D-IMG">
+      <mets:file ID="INPUT_0017" MIMETYPE="image/tiff">
+        <mets:FLocat LOCTYPE="URL" xlink:href="OCR-D-IMG/INPUT_0017.tif"/>
+      </mets:file>
+      <mets:file ID="INPUT_0020" MIMETYPE="image/tiff">
+        <mets:FLocat LOCTYPE="URL" xlink:href="OCR-D-IMG/INPUT_0020.tif"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="OCR-D-GT-PAGE">
+      <mets:file ID="PAGE_0017_PAGE" MIMETYPE="application/vnd.prima.page+xml">
+        <mets:FLocat LOCTYPE="URL" xlink:href="OCR-D-GT-PAGE/PAGE_0017_PAGE.xml"/>
+      </mets:file>
+      <mets:file ID="PAGE_0020_PAGE" MIMETYPE="application/vnd.prima.page+xml">
+        <mets:FLocat LOCTYPE="URL" xlink:href="OCR-D-GT-PAGE/PAGE_0020_PAGE.xml"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="OCR-D-GT-ALTO">
+      <mets:file ID="PAGE_0017_ALTO" MIMETYPE="application/alto+xml">
+        <mets:FLocat LOCTYPE="URL" xlink:href="OCR-D-GT-ALTO/PAGE_0017_ALTO.xml"/>
+      </mets:file>
+      <mets:file ID="PAGE_0020_ALTO" MIMETYPE="application/alto+xml">
+        <mets:FLocat LOCTYPE="URL" xlink:href="OCR-D-GT-ALTO/PAGE_0020_ALTO.xml"/>
+      </mets:file>
+    </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div TYPE="physSequence">
+      <mets:div TYPE="page" ID="PHYS_0017">
+        <mets:fptr FILEID="INPUT_0017"/>
+        <mets:fptr FILEID="PAGE_0017_PAGE"/>
+        <mets:fptr FILEID="PAGE_0017_ALTO"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0020">
+        <mets:fptr FILEID="INPUT_0020"/>
+        <mets:fptr FILEID="PAGE_0020_PAGE"/>
+        <mets:fptr FILEID="PAGE_0020_ALTO"/>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+</mets:mets>

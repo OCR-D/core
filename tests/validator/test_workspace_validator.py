@@ -13,6 +13,7 @@ from tests.base import TestCase, assets, main, copy_of_directory # pylint: disab
 class TestWorkspaceValidator(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
 
     def test_check_file_grp_basic(self):
@@ -62,6 +63,7 @@ class TestWorkspaceValidator(TestCase):
         validator = WorkspaceValidator(self.resolver, assets.url_of('SBB0000F29300010000/data/mets_one_file.xml'), download=True)
         report = validator._validate() # pylint: disable=protected-access
         report = validator._validate() # pylint: disable=protected-access
+        print(report.errors)
         self.assertTrue(report.is_valid)
 
     def test_validate_empty(self):
@@ -95,6 +97,7 @@ class TestWorkspaceValidator(TestCase):
             workspace.mets.add_file_group('OCR-D-INVALID-FILEGRP')
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
+            print(report.notices)
             self.assertEqual(len(report.errors), 1)
             self.assertEqual(len(report.notices), 1)
             self.assertEqual(report.notices[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
@@ -131,8 +134,9 @@ class TestWorkspaceValidator(TestCase):
             f._el.set('GROUPID', 'donotuse') # pylint: disable=protected-access
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
-            self.assertEqual(len(report.errors), 1)
-            self.assertIn("Invalid (java) URL", report.errors[0])
+            assert not report.is_valid
+            assert len(report.errors) == 2
+            assert "invalid (Java-specific) file URL" in report.errors[0]
 
     def test_validate_pixel_no_download(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')

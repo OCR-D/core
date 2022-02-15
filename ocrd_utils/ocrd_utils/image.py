@@ -6,6 +6,10 @@ from PIL import Image, ImageStat, ImageDraw, ImageChops
 from .logging import getLogger
 from .introspect import membername
 
+# Allow processing of images with up to 1.6bn pixels
+# https://github.com/OCR-D/core/issues/735
+Image.MAX_IMAGE_PIXELS = 40_000 ** 2
+
 __all__ = [
     'adjust_canvas_to_rotation',
     'adjust_canvas_to_transposition',
@@ -27,6 +31,7 @@ __all__ = [
     'polygon_mask',
     'rotate_coordinates',
     'shift_coordinates',
+    'scale_coordinates',
     'transform_coordinates',
     'transpose_coordinates',
     'xywh_from_bbox',
@@ -188,8 +193,7 @@ def polygon_mask(image, coordinates):
     Return the new PIL.Image.
     """
     mask = Image.new('L', image.size, 0)
-    if isinstance(coordinates, np.ndarray):
-        coordinates = list(map(tuple, coordinates))
+    coordinates = list(map(tuple, coordinates))
     ImageDraw.Draw(mask).polygon(coordinates, outline=255, fill=255)
     return mask
 
@@ -259,10 +263,14 @@ def rotate_image(image, angle, fill='background', transparency=False):
         image = image.copy()
         image.putalpha(255)
     if fill == 'background':
-        background = ImageStat.Stat(image).median
-        if image.mode in ['RGBA', 'LA']:
-            background[-1] = 0 # fully transparent
-        background = tuple(background)
+        background = ImageStat.Stat(image)
+        if len(background.bands) > 1:
+            background = background.median
+            if image.mode in ['RGBA', 'LA']:
+                background[-1] = 0 # fully transparent
+            background = tuple(background)
+        else:
+            background = background.median[0]
     else:
         background = fill
     new_image = image.rotate(angle,
@@ -296,6 +304,23 @@ def shift_coordinates(transform, offset):
     shift[0, 2] = offset[0]
     shift[1, 2] = offset[1]
     return np.dot(shift, transform)
+
+def scale_coordinates(transform, factors):
+    """Compose an affine coordinate transformation with a proportional scaling.
+    Given a numpy array ``transform`` of an existing transformation
+    matrix in homogeneous (3d) coordinates, and a numpy array
+    ``factors`` of the scaling factors, calculate the affine
+    coordinate transform corresponding to the composition of both
+    transformations.
+    
+    Return a numpy array of the resulting affine transformation matrix.
+    """
+    LOG = getLogger('ocrd_utils.coords.scale_coordinates')
+    LOG.debug('scaling coordinates by %s', str(factors))
+    scale = np.eye(3)
+    scale[0, 0] = factors[0]
+    scale[1, 1] = factors[1]
+    return np.dot(scale, transform)
 
 def transform_coordinates(polygon, transform=None):
     """Apply an affine transformation to a set of points.
@@ -443,7 +468,12 @@ def crop_image(image, box=None):
                     str(box), image.width, image.height)
     LOG.debug('cropping image to %s', str(box))
     xywh = xywh_from_bbox(*box)
-    background = tuple(ImageStat.Stat(image).median)
+    poly = polygon_from_bbox(*box)
+    background = ImageStat.Stat(image, mask=polygon_mask(image, poly))
+    if len(background.bands) > 1:
+        background = tuple(background.median)
+    else:
+        background = background.median[0]
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
                           background) # or 'white'
     new_image.paste(image, (-xywh['x'], -xywh['y']))
@@ -471,7 +501,11 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     """
     mask = polygon_mask(image, polygon)
     if fill == 'background':
-        background = tuple(ImageStat.Stat(image).median)
+        background = ImageStat.Stat(image, mask=mask)
+        if len(background.bands) > 1:
+            background = tuple(background.median)
+        else:
+            background = background.median[0]
     else:
         background = fill
     new_image = Image.new(image.mode, image.size, background)

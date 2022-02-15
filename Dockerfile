@@ -1,4 +1,6 @@
-FROM ubuntu:18.04
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
+ARG FIXUP=echo
 MAINTAINER OCR-D
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
@@ -22,12 +24,15 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     python3-pip \
     make \
     wget \
+    time \
     curl \
     sudo \
     git \
     && pip3 install --upgrade pip setuptools \
     && make install \
+    && $FIXUP \
     && rm -rf /build-ocrd
+
 
 WORKDIR /data
 

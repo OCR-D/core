@@ -14,6 +14,8 @@ README_FILE = abspath('README.md')
 class TestWorkspaceBagger(TestCase):
 
     def setUp(self):
+        super().setUp()
+        pass
         if exists(BACKUPDIR):
             rmtree(BACKUPDIR)
         self.resolver = Resolver()
@@ -53,8 +55,8 @@ class TestWorkspaceBagger(TestCase):
         )
 
     def test_bag_zip_and_spill(self):
-        self.workspace.mets.find_files(ID='INPUT_0017')[0].url = 'bad-scheme://foo'
-        self.workspace.mets.find_files(ID='INPUT_0020')[0].url = 'http://google.com'
+        self.workspace.mets.find_all_files(ID='INPUT_0017')[0].url = 'bad-scheme://foo'
+        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
         self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='full', skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), join(self.tempdir, 'out'))
 
@@ -73,19 +75,19 @@ class TestWorkspaceBagger(TestCase):
     def test_bag_partial_http_nostrict(self):
         self.bagger.strict = False
         makedirs(BACKUPDIR)
-        self.workspace.mets.find_files(ID='INPUT_0020')[0].url = 'http://google.com'
+        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
         self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False)
 
     def test_bag_partial_http_strict(self):
         self.bagger.strict = True
         makedirs(BACKUPDIR)
-        self.workspace.mets.find_files(ID='INPUT_0020')[0].url = 'http://google.com'
+        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
         with self.assertRaisesRegex(Exception, "Not fetching non-local files"):
             self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False)
 
     def test_bag_full(self):
         self.bagger.strict = True
-        f = self.workspace.mets.find_files(ID='INPUT_0017')[0]
+        f = self.workspace.mets.find_all_files(ID='INPUT_0017')[0]
         f.url = 'bad-scheme://foo'
         f.local_filename = None
         with self.assertRaisesRegex(Exception, "Not an http URL"):

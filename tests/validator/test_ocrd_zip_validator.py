@@ -14,6 +14,7 @@ from ocrd.resolver import Resolver
 class TestOcrdZipValidator(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
         self.bagger = WorkspaceBagger(self.resolver)
         self.tempdir = mkdtemp()

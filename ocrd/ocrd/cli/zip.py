@@ -1,7 +1,15 @@
+"""
+OCR-D CLI: OCRD-ZIP (BagIt) management
+
+.. click:: ocrd.cli.zip:zip_cli
+    :prog: ocrd zip
+    :nested: full
+"""
 import sys
 
 import click
 
+from ocrd_utils import initLogging
 from ocrd_validators import OcrdZipValidator
 
 from ..resolver import Resolver
@@ -13,6 +21,7 @@ def zip_cli():
     """
     Bag/Spill/Validate OCRD-ZIP bags
     """
+    initLogging()
 
 # ----------------------------------------------------------------------
 # ocrd zip bag

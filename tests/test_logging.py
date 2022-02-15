@@ -2,7 +2,7 @@ import logging
 from re import match
 from tempfile import TemporaryDirectory
 
-from tests.base import TestCase, main, FIFOIO, assets
+from tests.base import CapturingTestCase as TestCase, main, FIFOIO, assets
 from tests.data import DummyProcessor
 from ocrd import Resolver, run_processor
 
@@ -10,6 +10,7 @@ from ocrd_utils import (
     pushd_popd,
     getLevelName,
     setOverrideLogLevel,
+    disableLogging,
     initLogging,
     getLogger,
     LOG_FORMAT,
@@ -22,14 +23,14 @@ TIMEFMT_RE = r'\d\d:\d\d:\d\d\.(\d+)? '
 class TestLogging(TestCase):
 
     def setUp(self):
-        initLogging()
+        super().setUp()
+        disableLogging()
 
     def test_setOverrideLogLevel(self):
+        initLogging()
         rootLogger = logging.getLogger('')
         somelogger = getLogger('foo.bar')
         somelogger.setLevel(getLevelName('ERROR'))
-        self.assertEqual(rootLogger.getEffectiveLevel(), logging.INFO)
-        self.assertEqual(somelogger.getEffectiveLevel(), logging.ERROR)
         setOverrideLogLevel('ERROR')
         self.assertEqual(rootLogger.getEffectiveLevel(), logging.ERROR)
         self.assertEqual(somelogger.getEffectiveLevel(), logging.ERROR)
@@ -38,12 +39,31 @@ class TestLogging(TestCase):
         setOverrideLogLevel('INFO')
         somelogger = getLogger('foo.bar')
 
+    def test_multiple_initLogging(self):
+        disableLogging()
+        initLogging()
+        self.capture_out_err()
+        initLogging()
+        out = '\n'.join(self.capture_out_err())
+        assert 'initLogging was called multiple times' in out
+        assert __file__ in out
+
+    def test_getLogger_before_initLogging(self):
+        disableLogging()
+        self.capture_out_err()
+        getLogger('foo')
+        out = '\n'.join(self.capture_out_err())
+        print(out)
+        assert 'getLogger was called before initLogging' in out
+        assert __file__ in out
+
     def test_getLevelName(self):
         self.assertEqual(getLevelName('ERROR'), logging.ERROR)
         self.assertEqual(getLevelName('FATAL'), logging.ERROR)
         self.assertEqual(getLevelName('OFF'), logging.CRITICAL)
 
     def test_logging_really_non_duplicate(self):
+        initLogging()
         child_logger = getLogger('a.b')
         print(child_logger)
         parent_logger = getLogger('a')
@@ -71,6 +91,8 @@ class TestLogging(TestCase):
 
         root_str = root_capture.getvalue()
         parent_str = parent_capture.getvalue()
+        print('root_str=%s' % root_str)
+        print('parent_str=%s' % parent_str)
 
         self.assertEqual(root_str.count('\n'), 0)
         self.assertEqual(parent_str.count('\n'), 1)
@@ -83,6 +105,7 @@ class TestLogging(TestCase):
         """
         Verify that child loggers don't propagate a log message they handle
         """
+        initLogging()
 
         root_logger = logging.getLogger('')
         self.assertTrue(root_logger.handlers, 'root logger has at least 1 handler')
@@ -131,6 +154,7 @@ class TestLogging(TestCase):
                 'child received second error and debug but not first error and debug')
 
     def testProcessorProfiling(self):
+        initLogging()
         log_capture_string = FIFOIO(256)
         ch = logging.StreamHandler(log_capture_string)
         ch.setFormatter(logging.Formatter(LOG_FORMAT))
@@ -146,38 +170,35 @@ class TestLogging(TestCase):
         # Check whether profile information has been logged. Dummy should finish in under 0.1s
         self.assertTrue(match(r'.*Executing processor \'ocrd-test\' took 0.\d+s.*', log_contents))
 
-class TestLoggingConfiguration(TestCase):
-
     def test_tmpConfigfile(self):
         self.assertNotEqual(logging.getLogger('').getEffectiveLevel(), logging.NOTSET)
-        with TemporaryDirectory() as tempdir:
-            with pushd_popd(tempdir):
-                with open('ocrd_logging.conf', 'w') as f:
-                    # write logging configuration file (MWE)
-                    f.write('''
-                        [loggers]
-                        keys=root
+        with pushd_popd(tempdir=True) as tempdir:
+            with open('ocrd_logging.conf', 'w') as f:
+                # write logging configuration file (MWE)
+                f.write('''
+                    [loggers]
+                    keys=root
 
-                        [handlers]
-                        keys=consoleHandler
+                    [handlers]
+                    keys=consoleHandler
 
-                        [formatters]
-                        keys=
+                    [formatters]
+                    keys=
 
-                        [logger_root]
-                        level=ERROR
-                        handlers=consoleHandler
+                    [logger_root]
+                    level=ERROR
+                    handlers=consoleHandler
 
-                        [handler_consoleHandler]
-                        class=StreamHandler
-                        formatter=
-                        args=(sys.stdout,)
-                        ''')
-                # this will call logging.config.fileConfig with disable_existing_loggers=True,
-                # so the defaults from the import-time initLogging should be invalided
-                initLogging()
-                # ensure log level is set from temporary config file
-                self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
+                    [handler_consoleHandler]
+                    class=StreamHandler
+                    formatter=
+                    args=(sys.stdout,)
+                    ''')
+            # this will call logging.config.fileConfig with disable_existing_loggers=True,
+            # so the defaults from the import-time initLogging should be invalided
+            initLogging()
+            # ensure log level is set from temporary config file
+            self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
 
 if __name__ == '__main__':
-    main()
+    main(__file__)

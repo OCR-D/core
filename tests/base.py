@@ -8,7 +8,8 @@ import io
 import collections
 from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
-from ocrd_utils import initLogging
+from ocrd_utils import disableLogging, initLogging
+from ocrd_models import OcrdMets
 
 from tests.assets import assets, copy_of_directory
 
@@ -22,11 +23,9 @@ def main(fn=None):
 
 class TestCase(VanillaTestCase):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         chdir(dirname(realpath(__file__)) + '/..')
-
-    def tearDown(self):
+        disableLogging()
         initLogging()
 
 class CapturingTestCase(TestCase):
@@ -45,6 +44,7 @@ class CapturingTestCase(TestCase):
         """
         self.capture_out_err()  # XXX snapshot just before executing the CLI
         code = 0
+        sys.argv[1:] = args # XXX necessary because sys.argv reflects pytest args not cli args
         try:
             cli.main(args=args)
         except SystemExit as e:
@@ -54,6 +54,15 @@ class CapturingTestCase(TestCase):
 
     def capture_out_err(self):
         return self.capfd.readouterr()
+
+def create_ocrd_file_with_defaults(**kwargs):
+    print('create_ocrd_file_with_defaults kwargs', kwargs)
+    return create_ocrd_file('FOO', **{'ID': 'foo', **kwargs})
+
+def create_ocrd_file(*args, **kwargs):
+    mets = OcrdMets.empty_mets()
+    return mets.add_file(*args, **kwargs)
+
 
 #  import traceback
 #  import warnings

@@ -19,14 +19,13 @@ from ocrd_modelfactory import page_from_file
 
 OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
 
-LOG = getLogger('ocrd.dummy')
-
 class DummyProcessor(Processor):
     """
-    Bare-bones processor that copies mets:file from input group to output group.
+    Bare-bones processor that only copies mets:file from input group to output group.
     """
 
     def process(self):
+        LOG = getLogger('ocrd.dummy')
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
         for input_file in self.input_files:
@@ -35,6 +34,7 @@ class DummyProcessor(Processor):
             ext = MIME_TO_EXT.get(input_file.mimetype, '')
             local_filename = join(self.output_file_grp, file_id + ext)
             pcgts = page_from_file(self.workspace.download_file(input_file))
+            pcgts.set_pcGtsId(file_id)
             self.add_metadata(pcgts)
             LOG.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
             if input_file.mimetype == MIMETYPE_PAGE:
@@ -76,7 +76,7 @@ class DummyProcessor(Processor):
 
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = OCRD_TOOL
-        kwargs['version'] = '0.0.1'
+        kwargs['version'] = '0.0.2'
         super(DummyProcessor, self).__init__(*args, **kwargs)
 
 @click.command()

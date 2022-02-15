@@ -6,6 +6,7 @@ from pkg_resources import resource_string, resource_filename
 
 __all__ = [
     'OCRD_TOOL_SCHEMA',
+    'RESOURCE_LIST_SCHEMA',
     'OCRD_BAGIT_PROFILE',
     'BAGIT_TXT',
     'FILE_GROUP_PREFIX',
@@ -18,6 +19,7 @@ __all__ = [
 ]
 
 OCRD_TOOL_SCHEMA = yaml.safe_load(resource_string(__name__, 'ocrd_tool.schema.yml'))
+RESOURCE_LIST_SCHEMA = yaml.safe_load(resource_string(__name__, 'resource_list.schema.yml'))
 OCRD_BAGIT_PROFILE = yaml.safe_load(resource_string(__name__, 'bagit-profile.yml'))
 
 BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'

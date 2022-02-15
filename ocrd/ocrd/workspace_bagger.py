@@ -26,7 +26,6 @@ from ocrd_models.ocrd_page import to_xml
 from .workspace import Workspace
 
 tempfile.tempdir = '/tmp' # TODO hard-coded
-log = getLogger('ocrd.workspace_bagger')
 
 BACKUPDIR = join('/tmp', TMP_BAGIT_PREFIX + 'backup')
 
@@ -54,6 +53,7 @@ class WorkspaceBagger():
             rmtree(bagdir)
 
     def _log_or_raise(self, msg):
+        log = getLogger('ocrd.workspace_bagger')
         if self.strict:
             raise(Exception(msg))
         else:
@@ -63,6 +63,7 @@ class WorkspaceBagger():
         mets = workspace.mets
         changed_urls = {}
 
+        log = getLogger('ocrd.workspace_bagger')
         # TODO allow filtering by fileGrp@USE and such
         with pushd_popd(workspace.directory):
             # URLs of the files before changing
@@ -183,6 +184,7 @@ class WorkspaceBagger():
             else:
                 dest = '%s.ocrd' % workspace.directory
 
+        log = getLogger('ocrd.workspace_bagger')
         log.info("Bagging %s to %s (temp dir %s)", workspace.directory, '(in-place)' if in_place else dest, bagdir)
 
         # create data dir
@@ -221,7 +223,7 @@ class WorkspaceBagger():
             src (string): Path to OCRD-ZIP
             dest (string): Path to directory to unpack data folder to
         """
-        #  print(dest)
+        log = getLogger('ocrd.workspace_bagger')
 
         if exists(dest) and not isdir(dest):
             raise Exception("Not a directory: %s" % dest)

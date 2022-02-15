@@ -25,6 +25,14 @@
 	* [ocrd_modelfactory](#ocrd_modelfactory)
 	* [ocrd_validators](#ocrd_validators)
 	* [ocrd](#ocrd)
+* [bash library](#bash-library)
+	* [bashlib API](#bashlib-api)
+	* [`ocrd__raise`](#ocrd__raise)
+	* [`ocrd__log`](#ocrd__log)
+	* [`ocrd__minversion`](#ocrd__minversion)
+	* [`ocrd__dumpjson`](#ocrd__dumpjson)
+	* [`ocrd__usage`](#ocrd__usage)
+	* [`ocrd__parse_argv`](#ocrd__parse_argv)
 * [Testing](#testing)
 * [See Also](#see-also)
 
@@ -53,7 +61,7 @@ pip install ocrd
 pip install ocrd_modelfactory
 ```
 
-All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.5 or higher.
+All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.6 or higher.
 
 ## Command line tools
 
@@ -103,6 +111,54 @@ Also contains the command line tool `ocrd`.
 
 See [README for `ocrd`](./ocrd/README.md) for further information.
 
+## bash library
+
+Builds a bash script that can be sourced by other bash scripts to create OCRD-compliant CLI.
+
+### bashlib API
+
+<!-- BEGIN-RENDER ./ocrd/ocrd/lib.bash -->
+### `ocrd__raise`
+
+Raise an error and exit.
+### `ocrd__log`
+
+Delegate logging to `ocrd log`
+### `ocrd__minversion`
+
+Ensure minimum version
+### `ocrd__dumpjson`
+
+Output ocrd-tool.json.
+
+Requires `$OCRD_TOOL_JSON` and `$OCRD_TOOL_NAME` to be set:
+
+```sh
+export OCRD_TOOL_JSON=/path/to/ocrd-tool.json
+export OCRD_TOOL_NAME=ocrd-foo-bar
+```
+
+
+Output file resource content.
+
+
+Output file resources names.
+
+### `ocrd__usage`
+
+Print usage
+
+### `ocrd__parse_argv`
+
+Expects an associative array ("hash"/"dict") `ocrd__argv` to be defined:
+
+```sh
+declare -A ocrd__argv=()
+```
+usage: pageId=$(ocrd__input_file 3 pageId)
+
+<!-- END-RENDER -->
+
 ## Testing
 
 Download assets (`make assets`)
@@ -118,5 +174,6 @@ Test with local files: `make test`
 
 ## See Also
 
-  - [OCR-D Specifications](https://ocr-d.github.io) ([Repo](https://github.com/ocr-d/spec))
-  - [OCR-D Documentation](https://ocr-d.github.io/docs) ([Repo](https://github.com/ocr-d/docs))
+  - [OCR-D Specifications](https://https://ocr-d.de/en/spec/) ([Repo](https://github.com/ocr-d/spec))
+  - [OCR-D core API documentation](https://ocr-d.de/core) (built here via `make docs`)
+  - [OCR-D Website](https://ocr-d.de) ([Repo](https://github.com/ocr-d/ocrd-website))

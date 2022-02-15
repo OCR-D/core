@@ -1,13 +1,17 @@
 """
-CLI for task_sequence
+OCR-D CLI: running task sequences (workflow processing)
+
+.. click:: ocrd.cli.process:process_cli
+    :prog: ocrd process
+    :nested: full
+
 """
 import click
 
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, initLogging
 from ocrd.task_sequence import run_tasks
 
 from ..decorators import ocrd_loglevel
-
 
 # ----------------------------------------------------------------------
 # ocrd process
@@ -22,7 +26,7 @@ def process_cli(log_level, mets, page_id, tasks, overwrite):
     """
     Process a series of tasks
     """
+    initLogging()
     log = getLogger('ocrd.cli.process')
-
     run_tasks(mets, log_level, page_id, tasks, overwrite)
     log.info("Finished")
