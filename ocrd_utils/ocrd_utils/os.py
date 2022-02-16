@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 from tempfile import TemporaryDirectory
+from functools import lru_cache
 import contextlib
 from distutils.spawn import find_executable as which
 from json import loads
@@ -65,26 +66,22 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
-_ocrd_tool_cache = {}
-def get_ocrd_tool_json(executable, no_cache=False):
+@lru_cache()
+def get_ocrd_tool_json(executable):
     """
-    Get the ``ocrd-tool`` description of ``executable``. Use module-level
-    cache unless ``no_cache`` is ``True``.
+    Get the ``ocrd-tool`` description of ``executable``.
     """
     executable_name = Path(executable).name
-    if no_cache or executable_name not in _ocrd_tool_cache:
-        try:
-            ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
-        except FileNotFoundError:
-            ocrd_tool = {}
-        except JSONDecodeError:
-            ocrd_tool = {}
-        if 'resource_locations' not in ocrd_tool:
-            ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
-        if no_cache:
-            return ocrd_tool
-        _ocrd_tool_cache[executable_name] = ocrd_tool
-    return _ocrd_tool_cache[executable_name]
+    try:
+        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+    except FileNotFoundError:
+        ocrd_tool = {}
+    except JSONDecodeError:
+        ocrd_tool = {}
+    if 'resource_locations' not in ocrd_tool:
+        ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
+    return ocrd_tool
+
 
 def list_resource_candidates(executable, fname, cwd=getcwd()):
     """
