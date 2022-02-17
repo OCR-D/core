@@ -18,7 +18,7 @@ from ocrd_models import OcrdExif
     ('SBB0000F29300010000/data/OCR-D-IMG/FILE_0001_IMAGE.tif',
      2875, 3749, 300, 300, 300, 'inches', 'RGB', 'jpeg'),
     ('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png',
-     1457, 2084, 116, 116, 116 , 'cm', '1', None),
+     1457, 2084, 1, 1, 1 , 'inches', '1', None),
     ('scribo-test/data/OCR-D-PRE-BIN-SAUVOLA/OCR-D-PRE-BIN-SAUVOLA_0001-BIN_sauvola.png',
      2097, 3062, 1, 1, 1, 'inches', '1', None),
     ('leptonica_samples/data/OCR-D-IMG/OCR-D-IMG_1555_007.jpg',
