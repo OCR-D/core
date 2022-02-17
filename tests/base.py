@@ -98,3 +98,16 @@ sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
 
 # use provided logging configuration as default
 LOG_CONFIG_PATH = join(Path(dirname(__file__)).parent, 'ocrd_utils', 'ocrd_logging.conf')
+
+def invoke_cli(cli, args, capfd):
+    """
+    capture stdout/sterr on filedescriptor level
+    """
+    code = 0
+    sys.argv[1:] = args  # XXX necessary because sys.argv reflects pytest args not cli args
+    try:
+        cli.main(args=args)
+    except SystemExit as e:
+        code = e.code
+    out, err = capfd.readouterr()
+    return code, out, err
