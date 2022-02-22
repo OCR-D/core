@@ -65,7 +65,7 @@ def list_installed(executable=None):
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
 @click.option('-t', '--resource-type', help='Type of resource', type=click.Choice(['file', 'directory', 'archive']), default='file')
-@click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.'),
+@click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.')
 @click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
@@ -82,7 +82,7 @@ def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwri
     If ``--any-url=URL`` or ``-n URL`` is given, then URL is accepted regardless of registered resources for ``NAME``.
     (This can be used for unknown resources or for replacing registered resources.)
 
-    If ``--resource-type`` is set to `tarball`, then that archive gets unpacked after download,
+    If ``--resource-type`` is set to `archive`, then that archive gets unpacked after download,
     and its ``--path-in-archive`` will subsequently be renamed to NAME.
     """
     log = getLogger('ocrd.cli.resmgr')
