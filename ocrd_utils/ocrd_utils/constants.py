@@ -42,6 +42,7 @@ EXT_TO_MIME = {
     '.pnm': 'image/x-portable-anymap',
     '.pbm': 'image/x-portable-bitmap',
     '.txt': 'text/plain',
+    '.xsl': 'text/xsl',
 }
 
 MIME_TO_EXT = {
@@ -56,10 +57,15 @@ MIME_TO_EXT = {
     'application/pdf': '.pdf',
     'application/postscript': '.ps',
     'application/oxps': '.xps',
+    'application/x-hdf': '.h5',
+    'application/x-hdf;subtype=bag': '.h5',
+    'application/vnd.pytorch': '.pth',
     'image/x-portable-pixmap': '.ppm',
     'image/x-portable-anymap': '.pnm',
     'image/x-portable-bitmap': '.pbm',
     'text/plain': '.txt',
+    'text/xsl': '.xsl',
+    'text/xml': '.xml',
 }
 
 #

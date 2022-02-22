@@ -34,8 +34,7 @@ class OcrdResourceManager():
         if not self.user_list.exists():
             if not self.user_list.parent.exists():
                 self.user_list.parent.mkdir(parents=True)
-            with open(str(self.user_list), 'w', encoding='utf-8') as f:
-                f.write(RESOURCE_USER_LIST_COMMENT)
+            self.save_user_list()
         self.load_resource_list(self.user_list)
 
     @property
@@ -63,6 +62,14 @@ class OcrdResourceManager():
             else:
                 self._xdg_config_home = join(self.userdir, '.config')
         return self._xdg_config_home
+
+    def save_user_list(self, database=None):
+        if not database:
+            database = self.database
+        with open(self.user_list, 'w', encoding='utf-8') as f:
+            f.write(RESOURCE_USER_LIST_COMMENT)
+            f.write('\n')
+            f.write(safe_dump(database))
 
     def load_resource_list(self, list_filename, database=None):
         if not database:
@@ -118,18 +125,20 @@ class OcrdResourceManager():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
         for this_executable in set(all_executables):
             reslist = []
-            has_dirs, has_files = get_processor_resource_types(this_executable)
-            for res_filename in list_all_resources(this_executable):
-                if Path(res_filename).is_dir() and not has_dirs:
-                    continue
-                if Path(res_filename).is_file() and not has_files:
-                    continue
-                res_name = Path(res_filename).name
+            mimetypes = get_processor_resource_types(this_executable)
+            for res_filename in list_all_resources(this_executable, xdg_data_home=self.xdg_data_home):
+                res_filename = Path(res_filename)
+                if not '*/*' in mimetypes:
+                    if res_filename.is_dir() and not 'text/directory' in mimetypes:
+                        continue
+                    if res_filename.is_file() and ['text/directory'] == mimetypes:
+                        continue
+                res_name = res_filename.name
                 resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if not resdict:
-                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, res_name, res_filename, self.user_list)
+                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, res_name, str(res_filename), self.user_list)
                     resdict = [self.add_to_user_database(this_executable, res_filename)]
-                resdict[0]['path'] = res_filename
+                resdict[0]['path'] = str(res_filename)
                 reslist.append(resdict[0])
             ret.append((this_executable, reslist))
         return ret
@@ -156,11 +165,8 @@ class OcrdResourceManager():
             }
             user_database[executable].append(resdict)
         else:
-            resdict = resources_found[0]
-        with open(self.user_list, 'w', encoding='utf-8') as f:
-            f.write(RESOURCE_USER_LIST_COMMENT)
-            f.write('\n')
-            f.write(safe_dump(user_database))
+            resdict = resources_found[0][1]
+        self.save_user_list(user_database)
         self.load_resource_list(self.user_list)
         return resdict
 
