@@ -63,7 +63,7 @@ def list_installed(executable=None):
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
 @click.option('-t', '--resource-type', help='Type of resource', type=click.Choice(['file', 'directory', 'archive']), default='file')
-@click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.'),
+@click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.')
 @click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
