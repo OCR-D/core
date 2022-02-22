@@ -12,7 +12,7 @@ import requests
 from yaml import safe_load, safe_dump
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, directory_size
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
