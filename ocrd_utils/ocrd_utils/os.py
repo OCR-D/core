@@ -74,14 +74,19 @@ def get_ocrd_tool_json(executable):
     executable_name = Path(executable).name
     try:
         ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
-    except FileNotFoundError:
-        ocrd_tool = {}
+    # except FileNotFoundError:
+    #     ocrd_tool = {}
     except JSONDecodeError:
         ocrd_tool = {}
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
     return ocrd_tool
 
+# def get_processor_resources_list(executable):
+#     """
+#     Get the list of resources that a processor is providing via
+#     ``-list-resources``
+#     """
 
 def list_resource_candidates(executable, fname, cwd=getcwd()):
     """
