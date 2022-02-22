@@ -148,7 +148,10 @@ class OcrdResourceManager():
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
-        res_size = Path(res_filename).stat().st_size
+        if Path(res_filename).is_dir():
+            res_size = directory_size(res_filename)
+        else:
+            res_size = Path(res_filename).stat().st_size
         with open(self.user_list, 'r', encoding='utf-8') as f:
             user_database = safe_load(f) or {}
         if executable not in user_database:
@@ -225,16 +228,31 @@ class OcrdResourceManager():
 
     def _copy_impl(self, src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
-        log.info("Copying %s" % src_filename)
-        with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
-            while True:
-                chunk = f_in.read(4096)
-                if chunk:
-                    f_out.write(chunk)
-                    if progress_cb:
-                        progress_cb(len(chunk))
-                else:
-                    break
+        log.info("Copying %s to %s", src_filename, filename)
+        if Path(src_filename).is_dir():
+            log.info(f"Copying recursively from {src_filename} to {filename}")
+            for child in Path(src_filename).rglob('*'):
+                child_dst = Path(filename) / child.relative_to(src_filename)
+                child_dst.parent.mkdir(parents=True, exist_ok=True)
+                with open(child_dst, 'wb') as f_out, open(child, 'rb') as f_in:
+                    while True:
+                        chunk = f_in.read(4096)
+                        if chunk:
+                            f_out.write(chunk)
+                            if progress_cb:
+                                progress_cb(len(chunk))
+                        else:
+                            break
+        else:
+            with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
+                while True:
+                    chunk = f_in.read(4096)
+                    if chunk:
+                        f_out.write(chunk)
+                        if progress_cb:
+                            progress_cb(len(chunk))
+                    else:
+                        break
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(
@@ -264,12 +282,12 @@ class OcrdResourceManager():
             log.info("%s to be %s to %s which already exists and overwrite is False" % (url, 'downloaded' if is_url else 'copied', fpath))
             return fpath
         destdir.mkdir(parents=True, exist_ok=True)
-        if resource_type == 'file':
+        if resource_type in ('file', 'directory'):
             if is_url:
                 self._download_impl(url, fpath, progress_cb)
             else:
                 self._copy_impl(url, fpath, progress_cb)
-        elif resource_type == 'tarball':
+        elif resource_type == 'archive':
             with pushd_popd(tempdir=True):
                 if is_url:
                     self._download_impl(url, 'download.tar.xx', progress_cb, size)
@@ -277,11 +295,9 @@ class OcrdResourceManager():
                     self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    log.info("Extracting tarball")
+                    log.info("Extracting archive")
                     with open_tarfile('../download.tar.xx', 'r:*') as tar:
                         tar.extractall()
-                    log.info("Copying '%s' from tarball to %s" % (path_in_archive, fpath))
+                    log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
                     copytree(path_in_archive, str(fpath))
-        # TODO
-        # elif resource_type == 'github-dir':
         return fpath

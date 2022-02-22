@@ -15,6 +15,7 @@ import click
 
 from ocrd_utils import (
     initLogging,
+    directory_size,
     getLogger,
     RESOURCE_LOCATIONS
 )
@@ -63,8 +64,8 @@ def list_installed(executable=None):
 
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
-@click.option('-t', '--resource-type', help='Type of resource', type=click.Choice(['file', 'github-dir', 'tarball']), default='file')
-@click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.')
+@click.option('-t', '--resource-type', help='Type of resource', type=click.Choice(['file', 'directory', 'archive']), default='file')
+@click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.'),
 @click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
@@ -129,7 +130,10 @@ def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwri
             log.info("Copying %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
             urlpath = Path(resdict['url'])
             resdict['url'] = str(urlpath.resolve())
-            resdict['size'] = urlpath.stat().st_size
+            if Path(urlpath).is_dir():
+                resdict['size'] = directory_size(urlpath)
+            else:
+                resdict['size'] = urlpath.stat().st_size
         with click.progressbar(length=resdict['size']) as bar:
             fpath = resmgr.download(
                 executable,

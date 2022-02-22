@@ -165,6 +165,7 @@ from .logging import (
 
 from .os import (
     abspath,
+    directory_size,
     get_processor_resource_types,
     get_ocrd_tool_json,
     list_all_resources,

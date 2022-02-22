@@ -3,6 +3,7 @@ Operating system functions.
 """
 __all__ = [
     'abspath',
+    'directory_size',
     'is_file_in_directory',
     'get_ocrd_tool_json',
     'get_processor_resource_types',
@@ -210,3 +211,10 @@ def itertree(path):
         for subpath in path.iterdir():
             yield from itertree(subpath)
     yield path
+
+def directory_size(path):
+    """
+    Calculcates size of all files in directory ``path``
+    """
+    path = Path(path)
+    return sum(f.stat().st_size for f in path.glob('**/*') if f.is_file())
