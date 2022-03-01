@@ -73,12 +73,7 @@ def get_ocrd_tool_json(executable):
     Get the ``ocrd-tool`` description of ``executable``.
     """
     executable_name = Path(executable).name
-    try:
-        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
-    # except FileNotFoundError:
-    #     ocrd_tool = {}
-    except JSONDecodeError:
-        ocrd_tool = {}
+    ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
     return ocrd_tool
@@ -112,7 +107,12 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters
     """
     candidates = []
-    resource_locations = get_ocrd_tool_json(executable)['resource_locations']
+    try:
+        resource_locations = get_ocrd_tool_json(executable)['resource_locations']
+    except FileNotFoundError:
+        # processor we're looking for ressource_locations of is not installed.
+        # Assume the default
+        resource_locations = ['data', 'cwd', 'system', 'module']
     xdg_data_home = XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     # XXX cwd would list too many false positives
     # if 'cwd' in resource_locations:
