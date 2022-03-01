@@ -67,8 +67,7 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.extractall(output_directory)
     z.close()
 
-# XXX Tue Feb 22 19:23:35 CET 2022 caching disabled as it interferes with testing 
-# @lru_cache()
+@lru_cache()
 def get_ocrd_tool_json(executable):
     """
     Get the ``ocrd-tool`` description of ``executable``.
