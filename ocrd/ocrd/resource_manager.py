@@ -1,6 +1,7 @@
 from pathlib import Path
 from os.path import join
 from json import loads
+from json.decoder import JSONDecodeError
 from os import environ, listdir, getcwd, path
 from fnmatch import filter as apply_glob
 from shutil import copytree
@@ -99,7 +100,10 @@ class OcrdResourceManager():
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
                     self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
-                    ocrd_tool = get_ocrd_tool_json(exec_path)
+                    try:
+                        ocrd_tool = get_ocrd_tool_json(exec_path)
+                    except JSONDecodeError:
+                        self.log.info(f"Failed to parse {exec_path} --dump-json output - not an OCR-D processor?")
                     for resdict in ocrd_tool.get('resources', ()):
                         for res_remove in (res for res in self.database.get(executable, []) if res['name'] == resdict['name']):
                             self.database.get(executable).remove(res_remove)
