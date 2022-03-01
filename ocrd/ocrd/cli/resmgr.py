@@ -41,7 +41,7 @@ def resmgr_cli():
     initLogging()
 
 @resmgr_cli.command('list-available')
-@click.option('-d/-D', '--dynamic/--no-dynamic', is_flag=True, default=True, help="Whether to look in processor --dump-json for resources")
+@click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-json for module-level resources")
 @click.option('-e', '--executable', help='Show only resources for executable beginning with EXEC', metavar='EXEC', default='ocrd-')
 def list_available(executable, dynamic):
     """
