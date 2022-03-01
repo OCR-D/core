@@ -97,7 +97,7 @@ class OcrdResourceManager():
             return self.database.items()
         if dynamic:
             for exec_dir in environ['PATH'].split(':'):
-                for exec_path in Path(exec_dir).glob(f'{executable}*'):
+                for exec_path in Path(exec_dir).glob(f'{executable}'):
                     self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
                     ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
@@ -106,7 +106,7 @@ class OcrdResourceManager():
                         self.database[exec_path.name].append(resdict)
         ret = []
         for k in self.database:
-            if apply_glob(k, executable):
+            if apply_glob([k], executable):
                 ret.append((k, self.database[k]))
         return ret
 
