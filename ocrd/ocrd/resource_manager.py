@@ -2,6 +2,7 @@ from pathlib import Path
 from os.path import join
 from json import loads
 from os import environ, listdir, getcwd, path
+from fnmatch import filter as apply_glob
 from shutil import copytree
 from datetime import datetime
 from tarfile import open as open_tarfile
@@ -92,6 +93,8 @@ class OcrdResourceManager():
         """
         List models available for download by processor
         """
+        if not executable:
+            return self.database.items()
         if dynamic:
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}*'):
@@ -101,13 +104,11 @@ class OcrdResourceManager():
                         for res_remove in (res for res in self.database.get(executable, []) if res['name'] == resdict['name']):
                             self.database.get(executable).remove(res_remove)
                         self.database[exec_path.name].append(resdict)
-        if executable:
-            ret = []
-            for k in self.database:
-                if k.startswith(executable):
-                    ret.append((k, self.database[k]))
-            return ret
-        return self.database.items()
+        ret = []
+        for k in self.database:
+            if apply_glob(k, executable):
+                ret.append((k, self.database[k]))
+        return ret
 
     def list_installed(self, executable=None):
         """
