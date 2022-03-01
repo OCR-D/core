@@ -43,12 +43,12 @@ def resmgr_cli():
 @resmgr_cli.command('list-available')
 @click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-json for module-level resources")
 @click.option('-e', '--executable', help='Show only resources for executable beginning with EXEC', metavar='EXEC', default='ocrd-')
-def list_available(executable, dynamic):
+def list_available(executable, no_dynamic):
     """
     List available resources
     """
     resmgr = OcrdResourceManager()
-    for executable, reslist in resmgr.list_available(executable=executable, dynamic=dynamic):
+    for executable, reslist in resmgr.list_available(executable=executable, dynamic=not no_dynamic):
         print_resources(executable, reslist, resmgr)
 
 @resmgr_cli.command('list-installed')
