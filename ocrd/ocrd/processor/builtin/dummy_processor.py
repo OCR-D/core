@@ -21,13 +21,14 @@ OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'dummy/ocr
 
 class DummyProcessor(Processor):
     """
-    Bare-bones processor that only copies mets:file from input group to output group.
+    Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
     """
 
     def process(self):
         LOG = getLogger('ocrd.dummy')
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
+        copy_files = self.parameter['copy_files']
         for input_file in self.input_files:
             input_file = self.workspace.download_file(input_file)
             file_id = make_file_id(input_file, self.output_file_grp)
@@ -39,24 +40,26 @@ class DummyProcessor(Processor):
             LOG.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
             if input_file.mimetype == MIMETYPE_PAGE:
                 # Source file is PAGE-XML: Write out in-memory PcGtsType
-                self.workspace.add_file(
-                    ID=file_id,
-                    file_grp=self.output_file_grp,
-                    pageId=input_file.pageId,
-                    mimetype=input_file.mimetype,
-                    local_filename=local_filename,
-                    content=to_xml(pcgts).encode('utf-8'))
-            else:
-                # Source file is not PAGE-XML: Copy byte-by-byte
-                with open(input_file.local_filename, 'rb') as f:
-                    content = f.read()
+                if copy_files:
                     self.workspace.add_file(
                         ID=file_id,
                         file_grp=self.output_file_grp,
                         pageId=input_file.pageId,
                         mimetype=input_file.mimetype,
                         local_filename=local_filename,
-                        content=content)
+                        content=to_xml(pcgts).encode('utf-8'))
+            else:
+                # Source file is not PAGE-XML: Copy byte-by-byte
+                if copy_files:
+                    with open(input_file.local_filename, 'rb') as f:
+                        content = f.read()
+                        self.workspace.add_file(
+                            ID=file_id,
+                            file_grp=self.output_file_grp,
+                            pageId=input_file.pageId,
+                            mimetype=input_file.mimetype,
+                            local_filename=local_filename,
+                            content=content)
                 if input_file.mimetype.startswith('image/'):
                     # write out the PAGE-XML representation for this image
                     page_file_id = file_id + '_PAGE'
@@ -76,7 +79,7 @@ class DummyProcessor(Processor):
 
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = OCRD_TOOL
-        kwargs['version'] = '0.0.2'
+        kwargs['version'] = '0.0.3'
         super(DummyProcessor, self).__init__(*args, **kwargs)
 
 @click.command()

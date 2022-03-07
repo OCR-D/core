@@ -21,6 +21,7 @@ class TestDummyProcessor(TestCase):
                 DummyProcessor,
                 input_file_grp='OCR-D-IMG',
                 output_file_grp='OUTPUT',
+                parameter={'copy_files': True},
                 workspace=workspace
             )
             output_files = workspace.mets.find_all_files(fileGrp='OUTPUT')
@@ -38,6 +39,7 @@ class TestDummyProcessor(TestCase):
                 DummyProcessor,
                 input_file_grp='OUTPUT',
                 output_file_grp='OUTPUT2',
+                parameter={'copy_files': True},
                 workspace=workspace
             )
             output2_files = workspace.mets.find_all_files(fileGrp='OUTPUT2')
