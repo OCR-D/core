@@ -47,7 +47,8 @@ def test_configured_dateformat(logging_conf, capsys):
         # act
         test_logger.info("test logger initialized")
 
-        log_info_output = capsys.readouterr().err
+        (out, err) = capsys.readouterr()
+        log_info_output = out if out else err
         must_not_match = r"^\d{4}-\d{2}-\d{2}.*"
         assert not re.match(must_not_match, log_info_output)
         match_pattern = r"^\d{2}:\d{2}:\d{2}.*"
@@ -64,12 +65,14 @@ def test_configured_tensorflow_logger_present(logging_conf, capsys):
 
     # act info
     logger_under_test.info("tensorflow logger initialized")
-    log_info_output = capsys.readouterr().err
+    (out, err) = capsys.readouterr()
+    log_info_output = out if out else err
     assert not log_info_output
 
     # act error
     logger_under_test.error("tensorflow has error")
-    log_error_output = capsys.readouterr().err
+    (out, err) = capsys.readouterr()
+    log_error_output = out if out else err
     assert log_error_output
 
 
@@ -83,12 +86,14 @@ def test_configured_shapely_logger_present(logging_conf, capsys):
 
     # act info
     logger_under_test.info("shapely.geos logger initialized")
-    log_info_output = capsys.readouterr().err
-    assert not log_info_output
+    (out, err) = capsys.readouterr()
+    log_error_output = out if out else err
+    assert not log_error_output
 
     # act error
     logger_under_test.error("shapely alert")
-    log_error_output = capsys.readouterr().err
+    (out, err) = capsys.readouterr()
+    log_error_output = out if out else err
     assert log_error_output
 
 if __name__ == '__main__':

@@ -41,6 +41,12 @@ _ocrdLevel2pythonLevel = {
     'FATAL': 'ERROR',
 }
 
+DEFAULT_LOG_CONFIG_PATHS = [
+    os.path.curdir,
+    os.path.join(os.path.expanduser('~')),
+    '/etc',
+    ]
+
 class PropagationShyLogger(logging.Logger):
 
     def addHandler(self, hdlr):
@@ -103,9 +109,10 @@ def getLogger(*args, **kwargs):
         logger.setLevel(logging.NOTSET)
     return logger
 
-def initLogging():
+def initLogging(config_paths=DEFAULT_LOG_CONFIG_PATHS):
     """
     Reset root logger, read logging configuration if exists, otherwise use basicConfig
+    If not explicite configuration paths provided, search at DEFAULT_LOG_CONFIG_PATHS
     """
     global _initialized_flag # pylint: disable=global-statement
     if _initialized_flag:
@@ -117,13 +124,8 @@ def initLogging():
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
-    CONFIG_PATHS = [
-        os.path.curdir,
-        os.path.join(os.path.expanduser('~')),
-        '/etc',
-    ]
     config_file = next((f for f \
-            in [os.path.join(p, 'ocrd_logging.conf') for p in CONFIG_PATHS] \
+            in [os.path.join(p, 'ocrd_logging.conf') for p in config_paths] \
             if os.path.exists(f)),
             None)
     if config_file:
