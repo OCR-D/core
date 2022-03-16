@@ -2,6 +2,7 @@
 
 from os import chdir, curdir, walk, stat, chmod, umask
 import shutil
+import logging
 from stat import filemode
 from os.path import join, exists, abspath, basename, dirname
 from shutil import copyfile, copytree as copytree_, rmtree
@@ -15,7 +16,8 @@ import pytest
 
 from tests.base import (
     assets,
-    main
+    main,
+    FIFOIO
 )
 
 from ocrd_models import (
@@ -508,6 +510,7 @@ def test_deskewing(plain_workspace):
     skew = 4.625
     image = Image.new('L', size)
     image = polygon_mask(image, poly)
+    #image.show(title='image')
     pixels = np.count_nonzero(np.array(image) > 0)
     name = 'foo0'
     assert plain_workspace.save_image_file(image, name, 'IMG')
@@ -518,6 +521,7 @@ def test_deskewing(plain_workspace):
                             orientation=-skew)
     page.add_TextRegion(region)
     page_image, page_coords, _ = plain_workspace.image_from_page(page, '')
+    #page_image.show(title='page_image')
     assert list(image.getdata()) == list(page_image.getdata())
     assert np.all(page_coords['transform'] == np.eye(3))
     reg_image, reg_coords = plain_workspace.image_from_segment(region, page_image, page_coords,
@@ -532,6 +536,7 @@ def test_deskewing(plain_workspace):
     assert pixels == reg_pixels
     # now with deskewing (test for size after recropping)
     reg_image, reg_coords = plain_workspace.image_from_segment(region, page_image, page_coords, fill=0)
+    #reg_image.show(title='reg_image')
     assert reg_image.width == 932 > xywh['w']
     assert reg_image.height == 382 > xywh['h']
     assert reg_coords['transform'][0, 1] != 0
@@ -540,11 +545,20 @@ def test_deskewing(plain_workspace):
     # same fg after cropping to minimal bbox (roughly - due to aliasing)
     reg_pixels = np.count_nonzero(np.array(reg_image) > 0)
     assert np.abs(pixels - reg_pixels) / pixels < 0.005
-    #reg_image.show()
+    reg_array = np.array(reg_image) > 0
     # now via AlternativeImage
     path = plain_workspace.save_image_file(reg_image, region.id + '_img', 'IMG')
     region.add_AlternativeImage(AlternativeImageType(filename=path, comments=reg_coords['features']))
+    logger_capture = FIFOIO(256)
+    logger_handler = logging.StreamHandler(logger_capture)
+    #logger_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
+    logger = logging.getLogger('ocrd_utils.crop_image')
+    logger.addHandler(logger_handler)
     reg_image2, reg_coords2 = plain_workspace.image_from_segment(region, page_image, page_coords, fill=0)
+    #reg_image2.show(title='reg_image2')
+    logger_output = logger_capture.getvalue()
+    logger_capture.close()
+    assert logger_output == ''
     assert reg_image2.width == reg_image.width
     assert reg_image2.height == reg_image.height
     assert np.allclose(reg_coords2['transform'], reg_coords['transform'])
@@ -552,7 +566,8 @@ def test_deskewing(plain_workspace):
     # same fg after cropping to minimal bbox (roughly - due to aliasing)
     reg_pixels2 = np.count_nonzero(np.array(reg_image) > 0)
     assert reg_pixels2 == reg_pixels
-    #reg_image2.show()
+    reg_array2 = np.array(reg_image2) > 0
+    assert 0.98 < np.sum(reg_array == reg_array2) / reg_array.size <= 1.0
 
 def test_downsample_16bit_image(plain_workspace):
     # arrange image
