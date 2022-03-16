@@ -493,7 +493,7 @@ def test_image_feature_selectoro(workspace_sample_features):
     # richest feature set is not last:
     _, info, _ = workspace_sample_features.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped')
     # recropped because foo4 contains cropped+deskewed but not recropped yet:
-    assert info['features'] == 'cropped,dewarped,binarized,despeckled,deskewed,recropped'
+    assert info['features'] == 'cropped,dewarped,binarized,despeckled,deskewed'
     # richest feature set is also last:
     _, info, _ = workspace_sample_features.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped', feature_filter='binarized')
     # no deskewing here, thus no recropping:
