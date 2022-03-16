@@ -998,7 +998,9 @@ def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwarg
     # crop, if (still) necessary:
     if (not isinstance(segment, BorderType) or # always crop below page level
         not op in parent_coords['features']):
-        if isinstance(segment, BorderType):
+        if op == 'recropped':
+            log.info("Recropping %s", name)
+        elif isinstance(segment, BorderType):
             log.info("Cropping %s", name)
             segment_coords['features'] += ',' + op
         # create a mask from the segment polygon:
