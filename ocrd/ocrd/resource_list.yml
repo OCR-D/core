@@ -133,10 +133,12 @@ ocrd-anybaseocr-block-segmentation:
     description: block segmentation model for anybaseocr
     size: 256139800
 ocrd-anybaseocr-layout-analysis:
-  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/structure_analysis.h5
-    name: structure_analysis.h5
+  - url: https://ocr-d.kba.cloud/structure_analysis.tar.gz
+    name: structure_analysis
     description: structure analysis model for anybaseocr
-    size: 31477056
+    type: tarball
+    path_in_archive: 'structure_analysis'
+    size: 29002514
   - url: https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle
     name: mapping_densenet.pickle
     description: mapping model for anybaseocr
