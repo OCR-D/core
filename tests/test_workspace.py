@@ -46,9 +46,11 @@ def count_files(d): return sum(len(files) for _, _, files in walk(d))
 @pytest.fixture(name='plain_workspace')
 def _fixture_plain_workspace(tmp_path):
     resolver = Resolver()
-    workspace = resolver.workspace_from_nothing(directory=tmp_path)
-    yield workspace
-
+    ws = resolver.workspace_from_nothing(directory=tmp_path)
+    prev_dir = abspath(curdir)
+    chdir(tmp_path)
+    yield ws
+    chdir(prev_dir)
 
 def test_workspace_add_file(plain_workspace):
     fpath = str(plain_workspace.directory / 'ID1.tif')
@@ -188,7 +190,7 @@ def test_from_url_dst_dir_download(plain_workspace):
     """
     ws_dir = join(plain_workspace.directory, 'non-existing-for-good-measure')
     # Create a relative path to trigger #319
-    src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
+    src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')))
     plain_workspace.resolver.workspace_from_url(src_path, dst_dir=ws_dir, download=True)
 
     # assert
