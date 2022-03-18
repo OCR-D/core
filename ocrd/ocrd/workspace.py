@@ -974,8 +974,8 @@ class Workspace():
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
+            file_grp,
             ID=file_id,
-            file_grp=file_grp,
             pageId=page_id,
             local_filename=file_path,
             mimetype=mimetype,
