@@ -144,7 +144,7 @@ class OcrdMets(OcrdXmlDocument):
         is done with string equality.
 
         The :py:attr:`pageId` parameter supports the numeric range operator ``..``. For
-        example, to find all files in pages ``PHYS_0001`` to ``PHYS_0003``, 
+        example, to find all files in pages ``PHYS_0001`` to ``PHYS_0003``,
         ``PHYS_0001..PHYS_0003`` will be expanded to ``PHYS_0001,PHYS_0002,PHYS_0003``.
 
         Keyword Args:
@@ -158,7 +158,6 @@ class OcrdMets(OcrdXmlDocument):
         Yields:
             :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
         """
-        ret = []
         if pageId:
             if pageId.startswith(REGEX_PREFIX):
                 raise Exception("find_files does not support regex search for pageId")
@@ -298,7 +297,7 @@ class OcrdMets(OcrdXmlDocument):
         if not REGEX_FILE_ID.fullmatch(ID):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
-            raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % ID)
+            raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
@@ -338,10 +337,10 @@ class OcrdMets(OcrdXmlDocument):
     def remove_one_file(self, ID):
         """
         Delete an existing :py:class:`ocrd_models.ocrd_file.OcrdFile`.
-        
+
         Arguments:
             ID (string): ``@ID`` of the ``mets:file`` to delete
-            
+
         Returns:
             The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
@@ -401,7 +400,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         Set the physical page ID (``@ID`` of the physical ``mets:structMap`` ``mets:div`` entry)
         corresponding to the ``mets:file`` :py:attr:`ocrd_file`, creating all structures if necessary.
-        
+
         Arguments:
             pageId (string): ``@ID`` of the physical ``mets:structMap`` entry to use
             ocrd_file (object): existing :py:class:`ocrd_models.ocrd_file.OcrdFile` object
@@ -495,4 +494,3 @@ class OcrdMets(OcrdXmlDocument):
                     pageId=f_src.pageId)
             if after_add_cb:
                 after_add_cb(f_dest)
-
