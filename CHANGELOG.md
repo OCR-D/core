@@ -13,6 +13,7 @@ Fixed:
 
   * Error message erroneously referenced `mets:file/@ID` instead `mets:fileGrp/@USE`, #823
   * Consistently use kwargs/args in `OcrdWorkspace.save_image_file`, #822
+  * Missing arg for log message in WorkspaceValidator, #811
 
 ## [2.30.0] - 2022-02-01
 
