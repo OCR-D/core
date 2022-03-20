@@ -144,10 +144,12 @@ ocrd-anybaseocr-layout-analysis:
     description: mapping model for anybaseocr
     size: 374
 ocrd-anybaseocr-tiseg:
-  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/tiseg/seg_model.hdf5
-    name: seg_model.hdf5
+  - url: https://ocr-d.kba.cloud/seg_model.tar.gz
+    name: seg_model
     description: text image segmentation model for anybaseocr
-    size: 66080688
+    type: tarball
+    path_in_archive: 'seg_model'
+    size: 61388872
 ocrd-kraken-segment:
   - url: https://github.com/mittagessen/kraken/raw/master/kraken/blla.mlmodel
     description: Pretrained baseline segmentation model
