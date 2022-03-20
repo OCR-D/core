@@ -9,6 +9,10 @@ Changed:
 
   * `make cuda-ubuntu` installs all CUDA versions, OCR-D/core#704, OCR-D/ocrd_all#270
 
+Fixed:
+
+  * Error message erroneously referenced `mets:file/@ID` instead `mets:fileGrp/@USE`, #823
+
 ## [2.30.0] - 2022-02-01
 
 Changed:
