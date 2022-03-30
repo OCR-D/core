@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd zip bag`: `-I` is *not* required, #828, #829
+
 ## [2.31.0] - 2022-03-20
 
 Changed:
