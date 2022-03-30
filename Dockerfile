@@ -28,6 +28,7 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     curl \
     sudo \
     git \
+    && make deps-ubuntu \
     && pip3 install --upgrade pip setuptools \
     && make install \
     && $FIXUP \
