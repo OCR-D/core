@@ -12,6 +12,7 @@ Fixed:
 Changed:
 
   * `OcrdExif`: fallback to PIL if ImageMagick's `identify` is not available, #796, #676
+  * `OcrdWorkspace.image_from_*`: Handle recropping after deskewing properly, #820, #687
 
 ## [2.31.0] - 2022-03-20
 
