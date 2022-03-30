@@ -9,6 +9,10 @@ Fixed:
 
   * `ocrd zip bag`: `-I` is *not* required, #828, #829
 
+Changed:
+
+  * `OcrdExif`: fallback to PIL if ImageMagick's `identify` is not available, #796, #676
+
 ## [2.31.0] - 2022-03-20
 
 Changed:
