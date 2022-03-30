@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.32.0] - 2022-03-30
+
 Fixed:
 
   * `ocrd zip bag`: `-I` is *not* required, #828, #829
@@ -1446,6 +1448,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.32.0]: ../../compare/v2.32.0..v2.31.0
 [2.31.0]: ../../compare/v2.31.0..v2.30.0
 [2.30.0]: ../../compare/v2.30.0..v2.29.0
 [2.29.0]: ../../compare/v2.29.0..v2.28.0
