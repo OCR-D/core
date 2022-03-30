@@ -245,7 +245,7 @@ class Workspace():
                     if f_dir:
                         file_dirs.append(f_dir)
 
-        self.mets.remove_file_group(USE, force=force)
+        self.mets.remove_file_group(USE, force=force, recursive=recursive)
 
         # PLEASE NOTE: this only removes directories in the workspace if they are empty
         # and named after the fileGrp which is a convention in OCR-D.
