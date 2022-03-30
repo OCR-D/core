@@ -194,7 +194,7 @@ def polygon_mask(image, coordinates):
     """
     mask = Image.new('L', image.size, 0)
     coordinates = list(map(tuple, coordinates))
-    ImageDraw.Draw(mask).polygon(coordinates, outline=255, fill=255)
+    ImageDraw.Draw(mask).polygon(coordinates, outline=0, fill=255)
     return mask
 
 def rotate_coordinates(transform, angle, orig=np.array([0, 0])):

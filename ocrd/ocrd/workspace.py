@@ -998,7 +998,9 @@ def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwarg
     # crop, if (still) necessary:
     if (not isinstance(segment, BorderType) or # always crop below page level
         not op in parent_coords['features']):
-        if isinstance(segment, BorderType):
+        if op == 'recropped':
+            log.info("Recropping %s", name)
+        elif isinstance(segment, BorderType):
             log.info("Cropping %s", name)
             segment_coords['features'] += ',' + op
         # create a mask from the segment polygon:
@@ -1064,9 +1066,13 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
           (not isinstance(segment, BorderType) or # always crop below page level
            'cropped' in segment_coords['features'])):
         # only shift coordinates as if re-cropping
-        _, segment_coords, segment_xywh = _crop(
-            log, name, segment, segment_image, segment_coords,
-            op='recropped', **kwargs)
+        segment_polygon = coordinates_of_segment(segment, segment_image, segment_coords)
+        segment_bbox = bbox_from_polygon(segment_polygon)
+        segment_xywh = xywh_from_bbox(*segment_bbox)
+        segment_coords['transform'] = shift_coordinates(
+            segment_coords['transform'],
+            np.array([-segment_bbox[0],
+                      -segment_bbox[1]]))
     return segment_image, segment_coords, segment_xywh
 
 def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwargs):

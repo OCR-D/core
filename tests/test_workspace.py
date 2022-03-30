@@ -2,6 +2,7 @@
 
 from os import chdir, curdir, walk, stat, chmod, umask
 import shutil
+import logging
 from stat import filemode
 from os.path import join, exists, abspath, basename, dirname
 from shutil import copyfile, copytree as copytree_, rmtree
@@ -9,12 +10,14 @@ from pathlib import Path
 from gzip import open as gzip_open
 
 from PIL import Image
+import numpy as np
 
 import pytest
 
 from tests.base import (
     assets,
-    main
+    main,
+    FIFOIO
 )
 
 from ocrd_models import (
@@ -22,6 +25,8 @@ from ocrd_models import (
     OcrdMets
 )
 from ocrd_models.ocrd_page import parseString
+from ocrd_models.ocrd_page import TextRegionType, CoordsType, AlternativeImageType
+from ocrd_utils import polygon_mask, xywh_from_polygon, bbox_from_polygon, points_from_polygon
 from ocrd_modelfactory import page_from_file
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
@@ -46,9 +51,11 @@ def count_files(d): return sum(len(files) for _, _, files in walk(d))
 @pytest.fixture(name='plain_workspace')
 def _fixture_plain_workspace(tmp_path):
     resolver = Resolver()
-    workspace = resolver.workspace_from_nothing(directory=tmp_path)
-    yield workspace
-
+    ws = resolver.workspace_from_nothing(directory=tmp_path)
+    prev_dir = abspath(curdir)
+    chdir(tmp_path)
+    yield ws
+    chdir(prev_dir)
 
 def test_workspace_add_file(plain_workspace):
     fpath = str(plain_workspace.directory / 'ID1.tif')
@@ -188,7 +195,7 @@ def test_from_url_dst_dir_download(plain_workspace):
     """
     ws_dir = join(plain_workspace.directory, 'non-existing-for-good-measure')
     # Create a relative path to trigger #319
-    src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')).relative_to(Path.cwd()))
+    src_path = str(Path(assets.path_to('kant_aufklaerung_1784/data/mets.xml')))
     plain_workspace.resolver.workspace_from_url(src_path, dst_dir=ws_dir, download=True)
 
     # assert
@@ -486,12 +493,81 @@ def test_image_feature_selectoro(workspace_sample_features):
     # richest feature set is not last:
     _, info, _ = workspace_sample_features.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped')
     # recropped because foo4 contains cropped+deskewed but not recropped yet:
-    assert info['features'] == 'cropped,dewarped,binarized,despeckled,deskewed,recropped'
+    assert info['features'] == 'cropped,dewarped,binarized,despeckled,deskewed'
     # richest feature set is also last:
     _, info, _ = workspace_sample_features.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped', feature_filter='binarized')
     # no deskewing here, thus no recropping:
     assert info['features'] == 'cropped,dewarped,despeckled'
 
+def test_deskewing(plain_workspace):
+    #from ocrd_utils import initLogging, setOverrideLogLevel
+    #setOverrideLogLevel('DEBUG')
+    size = (3000, 4000)
+    poly = [[1403, 2573], [1560, 2573], [1560, 2598], [2311, 2598], [2311, 2757],
+            [2220, 2757], [2220, 2798], [2311, 2798], [2311, 2908], [1403, 2908]]
+    xywh = xywh_from_polygon(poly)
+    bbox = bbox_from_polygon(poly)
+    skew = 4.625
+    image = Image.new('L', size)
+    image = polygon_mask(image, poly)
+    #image.show(title='image')
+    pixels = np.count_nonzero(np.array(image) > 0)
+    name = 'foo0'
+    assert plain_workspace.save_image_file(image, name, 'IMG')
+    pcgts = page_from_file(next(plain_workspace.mets.find_files(ID=name)))
+    page = pcgts.get_Page()
+    region = TextRegionType(id='nonrect',
+                            Coords=CoordsType(points=points_from_polygon(poly)),
+                            orientation=-skew)
+    page.add_TextRegion(region)
+    page_image, page_coords, _ = plain_workspace.image_from_page(page, '')
+    #page_image.show(title='page_image')
+    assert list(image.getdata()) == list(page_image.getdata())
+    assert np.all(page_coords['transform'] == np.eye(3))
+    reg_image, reg_coords = plain_workspace.image_from_segment(region, page_image, page_coords,
+                                                               feature_filter='deskewed', fill=0)
+    assert list(image.crop(bbox).getdata()) == list(reg_image.getdata())
+    assert reg_image.width == xywh['w'] == 908
+    assert reg_image.height == xywh['h'] == 335
+    assert reg_coords['transform'][0, 2] == -xywh['x']
+    assert reg_coords['transform'][1, 2] == -xywh['y']
+    # same fg after cropping to minimal bbox
+    reg_pixels = np.count_nonzero(np.array(reg_image) > 0)
+    assert pixels == reg_pixels
+    # now with deskewing (test for size after recropping)
+    reg_image, reg_coords = plain_workspace.image_from_segment(region, page_image, page_coords, fill=0)
+    #reg_image.show(title='reg_image')
+    assert reg_image.width == 932 > xywh['w']
+    assert reg_image.height == 382 > xywh['h']
+    assert reg_coords['transform'][0, 1] != 0
+    assert reg_coords['transform'][1, 0] != 0
+    assert 'deskewed' in reg_coords['features']
+    # same fg after cropping to minimal bbox (roughly - due to aliasing)
+    reg_pixels = np.count_nonzero(np.array(reg_image) > 0)
+    assert np.abs(pixels - reg_pixels) / pixels < 0.005
+    reg_array = np.array(reg_image) > 0
+    # now via AlternativeImage
+    path = plain_workspace.save_image_file(reg_image, region.id + '_img', 'IMG')
+    region.add_AlternativeImage(AlternativeImageType(filename=path, comments=reg_coords['features']))
+    logger_capture = FIFOIO(256)
+    logger_handler = logging.StreamHandler(logger_capture)
+    #logger_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
+    logger = logging.getLogger('ocrd_utils.crop_image')
+    logger.addHandler(logger_handler)
+    reg_image2, reg_coords2 = plain_workspace.image_from_segment(region, page_image, page_coords, fill=0)
+    #reg_image2.show(title='reg_image2')
+    logger_output = logger_capture.getvalue()
+    logger_capture.close()
+    assert logger_output == ''
+    assert reg_image2.width == reg_image.width
+    assert reg_image2.height == reg_image.height
+    assert np.allclose(reg_coords2['transform'], reg_coords['transform'])
+    assert reg_coords2['features'] == reg_coords['features']
+    # same fg after cropping to minimal bbox (roughly - due to aliasing)
+    reg_pixels2 = np.count_nonzero(np.array(reg_image) > 0)
+    assert reg_pixels2 == reg_pixels
+    reg_array2 = np.array(reg_image2) > 0
+    assert 0.98 < np.sum(reg_array == reg_array2) / reg_array.size <= 1.0
 
 def test_downsample_16bit_image(plain_workspace):
     # arrange image
