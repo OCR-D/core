@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file`, #831, #832
+
 ## [2.32.0] - 2022-03-30
 
 Fixed:
