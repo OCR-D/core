@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
+
 ## [2.32.0] - 2022-03-30
 
 Fixed:
@@ -14,7 +18,7 @@ Fixed:
 Changed:
 
   * `OcrdExif`: fallback to PIL if ImageMagick's `identify` is not available, #796, #676
-  * `OcrdWorkspace.image_from_*`: Handle recropping after deskewing properly, #820, #687
+  * `OcrdWorkspace.image_from_*`: Avoid false warning when recropping, #820, #687
 
 ## [2.31.0] - 2022-03-20
 
