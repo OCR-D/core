@@ -64,12 +64,12 @@ deps-ubuntu:
 
 # Install test python deps via pip
 deps-test:
-	$(PIP) install -U "pip>=19.0.0,!=20.3.2"
+	$(PIP) install -U pip
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
 install:
-	$(PIP) install -U "pip>=19.0.0,!=20.3.2" wheel
+	$(PIP) install -U pip wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
 # Install with pip install -e
