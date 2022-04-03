@@ -17,7 +17,8 @@ COPY ocrd_validators/ ./ocrd_validators
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
-RUN apt-get update && apt-get -y install --no-install-recommends \
+RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
+RUN apt-get update && apt-get -y install \
     ca-certificates \
     software-properties-common \
     python3-dev \
@@ -33,7 +34,6 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     && make install \
     && $FIXUP \
     && rm -rf /build-ocrd
-
 
 WORKDIR /data
 
