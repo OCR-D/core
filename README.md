@@ -170,7 +170,7 @@ Download assets (`make assets`)
 Test with local files: `make test`
 
 - Test with local asset server:
-  - Start asset-server: `make asset-server`
+  - Start asset-server: `make assets-server`
   - `make test OCRD_BASEURL='http://localhost:5001/'`
 
 - Test with remote assets:
