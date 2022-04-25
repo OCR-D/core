@@ -140,7 +140,7 @@ assets: repo/assets
 
 # Start asset server at http://localhost:5001
 assets-server:
-	cd assets && make start
+	cd repo/assets && make start
 
 
 #
