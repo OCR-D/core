@@ -138,10 +138,6 @@ assets: repo/assets
 	mkdir -p $(TESTDIR)/assets
 	cp -r -t $(TESTDIR)/assets repo/assets/data/*
 
-# Start asset server at http://localhost:5001
-assets-server:
-	cd assets && make start
-
 
 #
 # Tests
