@@ -27,7 +27,6 @@ help:
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
-	@echo "    assets-server  Start asset server at http://localhost:5001"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
