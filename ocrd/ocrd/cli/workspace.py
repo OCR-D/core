@@ -303,11 +303,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         group_dict = m.groupdict()
 
         # derive --file-id from filename if not --file-id not explicitly set
-        if not file_id:
-            file_id = safe_filename(str(file_path))
+        file_id_ = file_id or safe_filename(str(file_path))
 
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id, 'pageId': page_id, 'fileGrp': file_grp}
+        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id_, 'pageId': page_id, 'fileGrp': file_grp}
 
         # guess mime type
         if not file_dict['mimetype']:
