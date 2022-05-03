@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
+  * `ocrd workspace bulk-add`: handle unset file_id properly, #812, #846
 
 ## [2.32.0] - 2022-03-30
 
