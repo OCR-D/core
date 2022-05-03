@@ -9,6 +9,7 @@ Fixed:
 
   * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
   * `ocrd workspace bulk-add`: handle unset file_id properly, #812, #846
+  * `io.BufferedReader` filename attribute should be `name` not `filename`, #838, #839
 
 Changed:
 
