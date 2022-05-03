@@ -169,10 +169,6 @@ Download assets (`make assets`)
 
 Test with local files: `make test`
 
-- Test with local asset server:
-  - Start asset-server: `make asset-server`
-  - `make test OCRD_BASEURL='http://localhost:5001/'`
-
 - Test with remote assets:
   - `make test OCRD_BASEURL='https://github.com/OCR-D/assets/raw/master/data/'`
 
