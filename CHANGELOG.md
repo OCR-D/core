@@ -18,6 +18,7 @@ Changed:
 Removed:
 
   * `make asset-server` feature no longer used, #843
+  * `python3-pip` dependency is redundant, #813
 
 ## [2.32.0] - 2022-03-30
 
