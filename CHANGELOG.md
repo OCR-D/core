@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.33.0] - 2022-05-03
+
 Fixed:
 
   * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
@@ -1463,6 +1465,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.33.0]: ../../compare/v2.33.0..v2.32.0
 [2.32.0]: ../../compare/v2.32.0..v2.31.0
 [2.31.0]: ../../compare/v2.31.0..v2.30.0
 [2.30.0]: ../../compare/v2.30.0..v2.29.0
