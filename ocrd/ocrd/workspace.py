@@ -60,7 +60,7 @@ class Workspace():
     Args:
 
         directory (string) : Filesystem folder to work in
-        mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace. 
+        mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace.
             Loaded from `'mets.xml'` if `None`.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
         overwrite_mode (boolean) : Whether to force add operations on this workspace globally
@@ -225,9 +225,9 @@ class Workspace():
             recursive (boolean): Whether to recursively delete all files in the group
             force (boolean): Continue removing even if group or containing files not found in METS
             keep_files (boolean): When deleting recursively whether to keep files on disk
-            page_recursive (boolean): Whether to remove all images referenced in the file 
+            page_recursive (boolean): Whether to remove all images referenced in the file
                 if the file is a PAGE-XML document.
-            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. 
+            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML.
                 Has no effect unless ``page_recursive`` is `True`.
         """
         if not force and self.overwrite_mode:
@@ -329,7 +329,7 @@ class Workspace():
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
-        
+
         Arguments:
             file_grp (string): `@USE` of the METS `fileGrp` to add to
         Keyword Args:
@@ -337,7 +337,7 @@ class Workspace():
                 in the filesystem
             **kwargs: See :py:func:`ocrd_models.ocrd_mets.OcrdMets.add_file`
         Returns:
-            a new :py:class:`ocrd_models.ocrd_file.OcrdFile` 
+            a new :py:class:`ocrd_models.ocrd_file.OcrdFile`
         """
         log = getLogger('ocrd.workspace.add_file')
         log.debug(
@@ -402,7 +402,7 @@ class Workspace():
             ocrd_exif = exif_from_filename(image_filename)
         except StopIteration:
             with download_temporary_file(image_url) as f:
-                ocrd_exif = exif_from_filename(f.filename)
+                ocrd_exif = exif_from_filename(f.name)
         return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
@@ -432,7 +432,7 @@ class Workspace():
                 pil_image = Image.open(self.download_file(f).local_filename)
             except StopIteration:
                 with download_temporary_file(image_url) as f:
-                    pil_image = Image.open(f.filename)
+                    pil_image = Image.open(f.name)
             pil_image.load() # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
@@ -553,7 +553,7 @@ class Workspace():
                - `"angle"`: the rotation/reflection angle applied to the image so far,
                - `"features"`: the `AlternativeImage` `@comments` for the image, i.e.
                  names of all applied operations that lead up to this result,
-             * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with 
+             * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with
                the original image.
 
         (The first two can be used to annotate a new `AlternativeImage`,
@@ -736,8 +736,8 @@ class Workspace():
             fill (string): a `PIL` color specifier
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of ``@comments`` classes
-            feature_filter (string): a comma-separated list of ``@comments`` classes            
-        
+            feature_filter (string): a comma-separated list of ``@comments`` classes
+
         Extract a `PIL.Image` from `segment`, either from ``AlternativeImage``
         (if it exists), or producing a new image via cropping from `parent_image`
         (otherwise). Pass in `parent_image` and `parent_coords` from the result
@@ -981,7 +981,7 @@ class Workspace():
             page_id (string): `@ID` in the METS physical `structMap` to use
             mimetype (string): MIME type of the image format to serialize as
             force (boolean): whether to replace any existing `file` with that `@ID`
-        
+
         Serialize the image into the filesystem, and add a `file` for it in the METS.
         Use a filename extension based on ``mimetype``.
 
