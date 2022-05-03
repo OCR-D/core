@@ -10,6 +10,10 @@ Fixed:
   * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
   * `ocrd workspace bulk-add`: handle unset file_id properly, #812, #846
 
+Changed:
+
+  * `OcrdWorkspace.image_from_*`: support passing explicit AlternativeImage filename, #845
+
 ## [2.32.0] - 2022-03-30
 
 Fixed:
