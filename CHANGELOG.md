@@ -14,6 +14,10 @@ Changed:
 
   * `OcrdWorkspace.image_from_*`: support passing explicit AlternativeImage filename, #845
 
+Removed:
+
+  * `make asset-server` feature no longer used, #843
+
 ## [2.32.0] - 2022-03-30
 
 Fixed:
