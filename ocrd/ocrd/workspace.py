@@ -60,7 +60,7 @@ class Workspace():
     Args:
 
         directory (string) : Filesystem folder to work in
-        mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace. 
+        mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace.
             Loaded from `'mets.xml'` if `None`.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
         overwrite_mode (boolean) : Whether to force add operations on this workspace globally
@@ -225,9 +225,9 @@ class Workspace():
             recursive (boolean): Whether to recursively delete all files in the group
             force (boolean): Continue removing even if group or containing files not found in METS
             keep_files (boolean): When deleting recursively whether to keep files on disk
-            page_recursive (boolean): Whether to remove all images referenced in the file 
+            page_recursive (boolean): Whether to remove all images referenced in the file
                 if the file is a PAGE-XML document.
-            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. 
+            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML.
                 Has no effect unless ``page_recursive`` is `True`.
         """
         if not force and self.overwrite_mode:
@@ -245,7 +245,7 @@ class Workspace():
                     if f_dir:
                         file_dirs.append(f_dir)
 
-        self.mets.remove_file_group(USE, force=force)
+        self.mets.remove_file_group(USE, force=force, recursive=recursive)
 
         # PLEASE NOTE: this only removes directories in the workspace if they are empty
         # and named after the fileGrp which is a convention in OCR-D.
@@ -329,7 +329,7 @@ class Workspace():
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
-        
+
         Arguments:
             file_grp (string): `@USE` of the METS `fileGrp` to add to
         Keyword Args:
@@ -337,7 +337,7 @@ class Workspace():
                 in the filesystem
             **kwargs: See :py:func:`ocrd_models.ocrd_mets.OcrdMets.add_file`
         Returns:
-            a new :py:class:`ocrd_models.ocrd_file.OcrdFile` 
+            a new :py:class:`ocrd_models.ocrd_file.OcrdFile`
         """
         log = getLogger('ocrd.workspace.add_file')
         log.debug(
@@ -402,7 +402,7 @@ class Workspace():
             ocrd_exif = exif_from_filename(image_filename)
         except StopIteration:
             with download_temporary_file(image_url) as f:
-                ocrd_exif = exif_from_filename(f.filename)
+                ocrd_exif = exif_from_filename(f.name)
         return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
@@ -432,7 +432,7 @@ class Workspace():
                 pil_image = Image.open(self.download_file(f).local_filename)
             except StopIteration:
                 with download_temporary_file(image_url) as f:
-                    pil_image = Image.open(f.filename)
+                    pil_image = Image.open(f.name)
             pil_image.load() # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
@@ -489,7 +489,7 @@ class Workspace():
 
     def image_from_page(self, page, page_id,
                         fill='background', transparency=False,
-                        feature_selector='', feature_filter=''):
+                        feature_selector='', feature_filter='', filename=''):
         """Extract an image for a PAGE-XML page from the workspace.
 
         Args:
@@ -500,15 +500,19 @@ class Workspace():
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of `@comments` classes
             feature_filter (string): a comma-separated list of `@comments` classes
+            filename (string): which file path to use
 
         Extract a `PIL.Image` from ``page``, either from its `AlternativeImage`
         (if it exists), or from its `@imageFilename` (otherwise). Also crop it,
         if a `Border` exists, and rotate it, if any `@orientation` angle is
         annotated.
 
+        If ``filename`` is given, then among `@imageFilename` and the available
+        `AlternativeImage/@filename` images, pick that one, or raise an error.
+
         If ``feature_selector`` and/or ``feature_filter`` is given, then
-        select/filter among the `@imageFilename` image and the available
-        AlternativeImages the richest one which contains all of the selected,
+        among the `@imageFilename` image and the available AlternativeImages,
+        select/filter the richest one which contains all of the selected,
         but none of the filtered features (i.e. `@comments` classes), or
         raise an error.
 
@@ -527,6 +531,7 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to ``fill``:
 
+        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
@@ -548,7 +553,7 @@ class Workspace():
                - `"angle"`: the rotation/reflection angle applied to the image so far,
                - `"features"`: the `AlternativeImage` `@comments` for the image, i.e.
                  names of all applied operations that lead up to this result,
-             * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with 
+             * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with
                the original image.
 
         (The first two can be used to annotate a new `AlternativeImage`,
@@ -601,6 +606,8 @@ class Workspace():
             # but also ensure that we get the richest feature set, i.e. most
             # of those features that we cannot reproduce automatically below
             for alternative_image in alternative_images:
+                if filename and filename != alternative_image.filename:
+                    continue
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
@@ -688,6 +695,10 @@ class Workspace():
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
+        if filename and not getattr(page_image, 'filename', '').endswith(filename):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filename="%s" in page "%s"' % (
+                                filename, page_id))
         if not all(feature in page_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
@@ -703,7 +714,7 @@ class Workspace():
 
     def image_from_segment(self, segment, parent_image, parent_coords,
                            fill='background', transparency=False,
-                           feature_selector='', feature_filter=''):
+                           feature_selector='', feature_filter='', filename=''):
         """Extract an image for a PAGE-XML hierarchy segment from its parent's image.
 
         Args:
@@ -725,16 +736,19 @@ class Workspace():
             fill (string): a `PIL` color specifier
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of ``@comments`` classes
-            feature_filter (string): a comma-separated list of ``@comments`` classes            
-        
+            feature_filter (string): a comma-separated list of ``@comments`` classes
+
         Extract a `PIL.Image` from `segment`, either from ``AlternativeImage``
         (if it exists), or producing a new image via cropping from `parent_image`
         (otherwise). Pass in `parent_image` and `parent_coords` from the result
         of the next higher-level of this function or from :py:meth:`image_from_page`.
 
-        If `feature_selector` and/or `feature_filter` is given, then
-        select/filter among the cropped `parent_image` and the available
-        AlternativeImages the richest one which contains all of the selected,
+        If ``filename`` is given, then among the available `AlternativeImage/@filename`
+        images, pick that one, or raise an error.
+
+        If ``feature_selector`` and/or ``feature_filter`` is given, then
+        among the cropped `parent_image` and the available AlternativeImages,
+        select/filter the richest one which contains all of the selected,
         but none of the filtered features (i.e. ``@comments`` classes), or
         raise an error.
 
@@ -745,6 +759,7 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to `fill`:
 
+        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
@@ -859,6 +874,8 @@ class Workspace():
             # but also ensure that we get the richest feature set, i.e. most
             # of those features that we cannot reproduce automatically below
             for alternative_image in alternative_images:
+                if filename and filename != alternative_image.filename:
+                    continue
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
@@ -930,6 +947,10 @@ class Workspace():
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
+        if filename and not getattr(segment_image, 'filename', '').endswith(filename):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filename="%s" in segment "%s"' % (
+                                filename, segment.id))
         if not all(feature in segment_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements' +
@@ -960,7 +981,7 @@ class Workspace():
             page_id (string): `@ID` in the METS physical `structMap` to use
             mimetype (string): MIME type of the image format to serialize as
             force (boolean): whether to replace any existing `file` with that `@ID`
-        
+
         Serialize the image into the filesystem, and add a `file` for it in the METS.
         Use a filename extension based on ``mimetype``.
 
@@ -974,8 +995,8 @@ class Workspace():
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
+            file_grp,
             ID=file_id,
-            file_grp=file_grp,
             pageId=page_id,
             local_filename=file_path,
             mimetype=mimetype,
@@ -998,7 +1019,9 @@ def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwarg
     # crop, if (still) necessary:
     if (not isinstance(segment, BorderType) or # always crop below page level
         not op in parent_coords['features']):
-        if isinstance(segment, BorderType):
+        if op == 'recropped':
+            log.info("Recropping %s", name)
+        elif isinstance(segment, BorderType):
             log.info("Cropping %s", name)
             segment_coords['features'] += ',' + op
         # create a mask from the segment polygon:
@@ -1064,9 +1087,13 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
           (not isinstance(segment, BorderType) or # always crop below page level
            'cropped' in segment_coords['features'])):
         # only shift coordinates as if re-cropping
-        _, segment_coords, segment_xywh = _crop(
-            log, name, segment, segment_image, segment_coords,
-            op='recropped', **kwargs)
+        segment_polygon = coordinates_of_segment(segment, segment_image, segment_coords)
+        segment_bbox = bbox_from_polygon(segment_polygon)
+        segment_xywh = xywh_from_bbox(*segment_bbox)
+        segment_coords['transform'] = shift_coordinates(
+            segment_coords['transform'],
+            np.array([-segment_bbox[0],
+                      -segment_bbox[1]]))
     return segment_image, segment_coords, segment_xywh
 
 def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwargs):

@@ -38,6 +38,13 @@ class OcrdExif():
         self.height = img.height
         self.photometricInterpretation = img.mode
         self.n_frames = img.n_frames if 'n_frames' in img.__dict__ else 1
+        if which('identify'):
+            self.run_identify(img)
+        else:
+            getLogger('ocrd_exif').warning("ImageMagick 'identify' not available, Consider installing ImageMagick for more robust pixel density estimation")
+            self.run_pil(img)
+
+    def run_identify(self, img):
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
         if img.filename:
@@ -48,8 +55,6 @@ class OcrdExif():
                 ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U', '/dev/stdin'], check=False, stderr=PIPE, stdout=PIPE, input=bio.getvalue())
         if ret.returncode:
             stderr = ret.stderr.decode('utf-8')
-            if not which('identify'):
-                raise Exception("The 'identify' command is not available. Install with 'sudo apt install imagemagick'")
             if 'no decode delegate for this image format' in stderr:
                 getLogger('ocrd_exif').warning("ImageMagick does not support the '%s' image format. ", img.format)
             else:
@@ -63,6 +68,32 @@ class OcrdExif():
             self.resolutionUnit = 'inches' if tokens[2] == 'undefined' else \
                                   'cm' if tokens[2] == 'PixelsPerCentimeter' else \
                                   'inches'
+        self.resolution = round(sqrt(self.xResolution * self.yResolution))
+
+    def run_pil(self, img):
+        if img.format in ('TIFF', 'PNG') and 'dpi' in img.info:
+            self.xResolution = int(img.info['dpi'][0])
+            self.yResolution = int(img.info['dpi'][1])
+            if img.format == 'TIFF':
+                self.resolutionUnit = 'cm' if img.tag.get(296) == 3 else 'inches'
+            else:
+                self.resolutionUnit = 'inches'
+        elif img.format == 'JPEG' and 'jfif_density' in img.info:
+            self.xResolution = img.info['jfif_density'][0]
+            self.yResolution = img.info['jfif_density'][1]
+            self.resolutionUnit = 'cm' if img.info['jfif_unit'] == 2 else 'inches'
+        elif img.format == 'PNG' and 'aspect' in img.info:
+            self.xResolution = img.info['aspect'][0]
+            self.yResolution = img.info['aspect'][1]
+            self.resolutionUnit = 'inches'
+        else:
+            #  if img.format == 'JPEG2000':
+            #      import sys
+            #      print('JPEG 2000 not supported yet :(', file=sys.stderr)
+            self.xResolution = 1
+            self.yResolution = 1
+            self.resolutionUnit = 'inches'
+        #  print('format=%s type=%s' % (img.format, type(self.xResolution))
         self.resolution = round(sqrt(self.xResolution * self.yResolution))
 
     def to_xml(self):

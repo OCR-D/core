@@ -5,9 +5,46 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.33.0] - 2022-05-03
+
+Fixed:
+
+  * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
+  * `ocrd workspace bulk-add`: handle unset file_id properly, #812, #846
+  * `io.BufferedReader` filename attribute should be `name` not `filename`, #838, #839
+
+Changed:
+
+  * `OcrdWorkspace.image_from_*`: support passing explicit AlternativeImage filename, #845
+
+Removed:
+
+  * `make asset-server` feature no longer used, #843
+  * `python3-pip` dependency is redundant, #813
+
+## [2.32.0] - 2022-03-30
+
+Fixed:
+
+  * `ocrd zip bag`: `-I` is *not* required, #828, #829
+
+Changed:
+
+  * `OcrdExif`: fallback to PIL if ImageMagick's `identify` is not available, #796, #676
+  * `OcrdWorkspace.image_from_*`: Avoid false warning when recropping, #820, #687
+
+## [2.31.0] - 2022-03-20
+
 Changed:
 
   * `make cuda-ubuntu` installs all CUDA versions, OCR-D/core#704, OCR-D/ocrd_all#270
+  * `ocrd resmgr`: updated models for ocrd-anybaseocr-{tiseg,layout-analysis}, #819, OCR-D/ocrd_anybaseocr#89
+
+Fixed:
+
+  * Error message erroneously referenced `mets:file/@ID` instead `mets:fileGrp/@USE`, #823
+  * Consistently use kwargs/args in `OcrdWorkspace.save_image_file`, #822
+  * Missing arg for log message in WorkspaceValidator, #811
 
 ## [2.30.0] - 2022-02-01
 
@@ -1428,6 +1465,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.33.0]: ../../compare/v2.33.0..v2.32.0
+[2.32.0]: ../../compare/v2.32.0..v2.31.0
+[2.31.0]: ../../compare/v2.31.0..v2.30.0
 [2.30.0]: ../../compare/v2.30.0..v2.29.0
 [2.29.0]: ../../compare/v2.29.0..v2.28.0
 [2.28.0]: ../../compare/v2.28.0..v2.27.0

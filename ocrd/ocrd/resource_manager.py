@@ -249,17 +249,17 @@ class OcrdResourceManager():
             else:
                 self._copy_impl(url, fpath, progress_cb)
         elif resource_type == 'tarball':
-            with pushd_popd(tempdir=True):
+            with pushd_popd(tempdir=True) as tempdir:
                 if is_url:
                     self._download_impl(url, 'download.tar.xx', progress_cb, size)
                 else:
                     self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    log.info("Extracting tarball")
+                    log.info("Extracting tarball to %s/out" % tempdir)
                     with open_tarfile('../download.tar.xx', 'r:*') as tar:
                         tar.extractall()
-                    log.info("Copying '%s' from tarball to %s" % (path_in_archive, fpath))
+                    log.info("Copying '%s' from extracted tarball %s/out to %s" % (path_in_archive, tempdir, fpath))
                     copytree(path_in_archive, str(fpath))
         # TODO
         # elif resource_type == 'github-dir':

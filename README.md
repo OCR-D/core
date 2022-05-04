@@ -63,6 +63,10 @@ pip install ocrd_modelfactory
 
 All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.6 or higher.
 
+**NOTE** Some OCR-D-Tools (or even test cases) _might_ reveal an unintended behavior if you have specific enviroment modifications, like:
+* using a custom build of [ImageMagick](https://github.com/ImageMagick/ImageMagick), whose format delegates are different from what OCR-D supposes
+* custom Python logging configurations in your personal account
+
 ## Command line tools
 
 **NOTE:** All OCR-D CLI tools support a `--help` flag which shows usage and
@@ -164,10 +168,6 @@ usage: pageId=$(ocrd__input_file 3 pageId)
 Download assets (`make assets`)
 
 Test with local files: `make test`
-
-- Test with local asset server:
-  - Start asset-server: `make asset-server`
-  - `make test OCRD_BASEURL='http://localhost:5001/'`
 
 - Test with remote assets:
   - `make test OCRD_BASEURL='https://github.com/OCR-D/assets/raw/master/data/'`
