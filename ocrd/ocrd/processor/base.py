@@ -25,12 +25,14 @@ from ocrd_utils import (
     getLogger,
     initLogging,
     list_resource_candidates,
+    nth_url_segment,
     pushd_popd,
     list_all_resources,
     get_processor_resource_types
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
+from ocrd.resource_manager import OcrdResourceManager
 
 # XXX imports must remain for backwards-compatibilty
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
@@ -217,9 +219,27 @@ class Processor():
         if ret:
             log.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
-        log.error("Could not find resource '%s' for executable '%s'. Try 'ocrd resmgr download %s %s' to download this resource.",
+        elif (val.startswith('http://') or val.startswith('https://')):
+            resmgr = OcrdResourceManager()
+            reslist = resmgr.find_resources(executable, url=val)
+            if reslist:
+                _, resdict = reslist[0]
+                log.info("Found registered resource for %s: '%s' (%s)." % (executable, val, resdict))
+            else:
+                resdict = {}
+                log.info("Not a registered resource for %s: '%s'." % (executable, val))
+            return str(resmgr.download(
+                executable,
+                val,
+                basedir = resmgr.location_to_resource_dir('data'),
+                name=resdict.get('name', nth_url_segment(val)),
+                path_in_archive=resdict.get('path_in_archive', '.'),
+                resource_type=resdict.get('type', 'file')
+                ))
+        else:
+            log.error("Could not find resource '%s' for executable '%s'. Try 'ocrd resmgr download %s %s' to download this resource or use a URL for the parameter value.",
                 val, executable, executable, val)
-        sys.exit(1)
+            sys.exit(1)
 
     def list_all_resources(self):
         """
