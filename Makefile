@@ -135,7 +135,7 @@ spec: repo/spec
 assets: repo/assets
 	rm -rf $(TESTDIR)/assets
 	mkdir -p $(TESTDIR)/assets
-	cp -r -t $(TESTDIR)/assets repo/assets/data/*
+	cp -r repo/assets/data/* $(TESTDIR)/assets
 
 
 #
