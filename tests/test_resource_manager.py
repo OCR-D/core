@@ -104,5 +104,12 @@ def test_default_resource_dir(tmp_path):
     assert mgr.xdg_config_home != mgr.xdg_data_home
     assert mgr.default_resource_dir == str(mgr.xdg_data_home / 'ocrd-resources')
 
+def test_resmgr_list_available_uninstalled_executable(tmp_path):
+    """
+    https://github.com/OCR-D/core/issues/854
+    """
+    mgr = OcrdResourceManager(xdg_data_home=tmp_path)
+    assert mgr.list_available('ocrd-does-not-exist') == [('ocrd-does-not-exist', [])]
+
 if __name__ == "__main__":
     main(__file__)
