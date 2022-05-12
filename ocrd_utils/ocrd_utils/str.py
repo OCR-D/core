@@ -175,7 +175,7 @@ def safe_filename(url):
     """
     Sanitize input to be safely used as the basename of a local file.
     """
-    ret = re.sub(r'[^A-Za-z0-9]+', '.', url)
+    ret = re.sub(r'[^A-Za-z0-9_]+', '_', url)
     ret = re.sub(r'^\.*', '', ret)
     ret = re.sub(r'\.\.*', '.', ret)
     #  print('safe filename: %s -> %s' % (url, ret))
