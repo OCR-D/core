@@ -149,11 +149,11 @@ class OcrdAgent():
         """
         Set the ``mets:note`` element values.
         """
-        el_notes = self._el.findall(TAG_METS_NOTE)
-        if el_notes:
-            for el_note in el_notes:
-                self._el.remove(el_note)
-        if notes:
+        if notes is not None:
+            el_notes = self._el.findall(TAG_METS_NOTE)
+            if el_notes:
+                for el_note in el_notes:
+                    self._el.remove(el_note)
             for note in notes:
                 el_note = ET.SubElement(self._el, TAG_METS_NOTE, nsmap={'ocrd': NS['ocrd']})
                 attrib, text = note
