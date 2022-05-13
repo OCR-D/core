@@ -2,7 +2,7 @@
 API to METS
 """
 from datetime import datetime
-from re import fullmatch, search
+import re
 from lxml import etree as ET
 
 from ocrd_utils import (
@@ -160,49 +160,59 @@ class OcrdMets(OcrdXmlDocument):
         """
         if pageId:
             if pageId.startswith(REGEX_PREFIX):
-                raise Exception("find_files does not support regex search for pageId")
-            pageIds, pageId = pageId.split(','), list()
-            pageIds_expanded = []
-            for pageId_ in pageIds:
-                if '..' in pageId_:
-                    pageIds_expanded += generate_range(*pageId_.split('..', 2))
-            pageIds += pageIds_expanded
+                pageIds, pageId = re.compile(pageId[REGEX_PREFIX_LEN:]), list()
+            else:
+                pageIds, pageId = pageId.split(','), list()
+                pageIds_expanded = []
+                for pageId_ in pageIds:
+                    if '..' in pageId_:
+                        pageIds_expanded += generate_range(*pageId_.split('..', 2))
+                pageIds += pageIds_expanded
             for page in self._tree.getroot().xpath(
                 '//mets:div[@TYPE="page"]', namespaces=NS):
-                if page.get('ID') in pageIds:
+                if (page.get('ID') in pageIds if isinstance(pageIds, list) else
+                    pageIds.fullmatch(page.get('ID'))):
                     pageId.extend(
                         [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)])
+        if ID and ID.startswith(REGEX_PREFIX):
+            ID = re.compile(ID[REGEX_PREFIX_LEN:])
+        if fileGrp and fileGrp.startswith(REGEX_PREFIX):
+            fileGrp = re.compile(fileGrp[REGEX_PREFIX_LEN:])
+        if mimetype and mimetype.startswith(REGEX_PREFIX):
+            mimetype = re.compile(mimetype[REGEX_PREFIX_LEN:])
+        if url and url.startswith(REGEX_PREFIX):
+            url = re.compile(url[REGEX_PREFIX_LEN:])
         for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
             if ID:
-                if ID.startswith(REGEX_PREFIX):
-                    if not fullmatch(ID[REGEX_PREFIX_LEN:], cand.get('ID')): continue
-                else:
+                if isinstance(ID, str):
                     if not ID == cand.get('ID'): continue
+                else:
+                    if not ID.fullmatch(cand.get('ID')): continue
 
             if pageId is not None and cand.get('ID') not in pageId:
                 continue
 
             if fileGrp:
-                if fileGrp.startswith(REGEX_PREFIX):
-                    if not fullmatch(fileGrp[REGEX_PREFIX_LEN:], cand.getparent().get('USE')): continue
-                else:
+                if isinstance(fileGrp, str):
                     if cand.getparent().get('USE') != fileGrp: continue
+                else:
+                    if not fileGrp.fullmatch(cand.getparent().get('USE')): continue
 
             if mimetype:
-                if mimetype.startswith(REGEX_PREFIX):
-                    if not fullmatch(mimetype[REGEX_PREFIX_LEN:], cand.get('MIMETYPE') or ''): continue
-                else:
+                if isinstance(mimetype, str):
                     if cand.get('MIMETYPE') != mimetype: continue
+                else:
+                    if not mimetype.fullmatch(cand.get('MIMETYPE') or ''): continue
 
             if url:
                 cand_locat = cand.find('mets:FLocat', namespaces=NS)
                 if cand_locat is None:
                     continue
                 cand_url = cand_locat.get('{%s}href' % NS['xlink'])
-                if url.startswith(REGEX_PREFIX):
-                    if not fullmatch(url[REGEX_PREFIX_LEN:], cand_url): continue
-                else:
+                if isinstance(url, str):
                     if cand_url != url: continue
+                else:
+                    if not url.fullmatch(cand_url): continue
 
             f = OcrdFile(cand, mets=self)
 
