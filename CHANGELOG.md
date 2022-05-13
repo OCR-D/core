@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd_utils.safe_filename`: replace with `_` instead of `.` and retain pre-existing `_`, #858, #859
+
 ## [2.33.0] - 2022-05-03
 
 Fixed:
