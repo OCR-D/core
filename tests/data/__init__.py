@@ -1,5 +1,7 @@
 import json
+import os
 from ocrd import Processor
+from ocrd_utils import make_file_id
 
 DUMMY_TOOL = {
     'executable': 'ocrd-test',
@@ -36,6 +38,24 @@ class DummyProcessorWithRequiredParameters(Processor):
             }
         }
         super(DummyProcessorWithRequiredParameters, self).__init__(*args, **kwargs)
+
+class DummyProcessorWithOutput(Processor):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['ocrd_tool'] = DUMMY_TOOL
+        kwargs['version'] = '0.0.1'
+        super().__init__(*args, **kwargs)
+
+    def process(self):
+        for input_file in self.input_files:
+            file_id = make_file_id(input_file, self.output_file_grp)
+            self.workspace.add_file(
+                ID=file_id,
+                file_grp=self.output_file_grp,
+                pageId=input_file.pageId,
+                mimetype=input_file.mimetype,
+                local_filename=os.path.join(self.output_file_grp, file_id),
+                content='CONTENT')
 
 class IncompleteProcessor(Processor):
     pass
