@@ -79,6 +79,45 @@ def test_workspace_add_file(plain_workspace):
     assert exists(fpath)
 
 
+def test_workspace_add_file_overwrite(plain_workspace):
+    fpath = str(plain_workspace.directory / 'ID1.tif')
+
+    # act
+    plain_workspace.add_file(
+        'GRP',
+        ID='ID1',
+        mimetype='image/tiff',
+        content='CONTENT',
+        pageId='phys1',
+        local_filename=fpath)
+    with pytest.raises(Exception) as fn_exc:
+        plain_workspace.add_file(
+            'GRP',
+            ID='ID1',
+            mimetype='image/tiff',
+            content='CONTENT',
+            pageId='phys2',
+            local_filename=fpath)    
+    assert str(fn_exc.value) == "File with ID='ID1' already exists"
+    plain_workspace.add_file(
+        'GRP',
+        ID='ID1',
+        mimetype='image/tiff',
+        content='CONTENT',
+        pageId='phys2',
+        local_filename=fpath,
+        force=True)
+    f = plain_workspace.mets.find_all_files()[0]
+
+    # assert
+    assert f.ID == 'ID1'
+    assert f.mimetype == 'image/tiff'
+    assert f.url == fpath
+    assert f.local_filename == fpath
+    assert f.pageId == 'phys2'
+    assert exists(fpath)
+
+
 def test_workspace_add_file_basename_no_content(plain_workspace):
     plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', pageId=None)
     f = next(plain_workspace.mets.find_files())
