@@ -93,7 +93,7 @@ class TestProcessor(TestCase):
         self.assertEqual(len(self.workspace.mets.find_all_files(fileGrp="OCR-D-OUT")), 2)
 
     def test_run_output_exists(self):
-        with self.assertRaisesRegex(Exception, 'File with ID='.*' already exists"'):
+        with self.assertRaisesRegex(Exception, "File with ID='.*' already exists"):
             run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=self.workspace, 
                           input_file_grp="OCR-D-IMG",
                           output_file_grp="OCR-D-SEG-PAGE")
