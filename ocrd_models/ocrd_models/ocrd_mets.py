@@ -135,9 +135,10 @@ class OcrdMets(OcrdXmlDocument):
         Search ``mets:file`` entries in this METS document and yield results.
 
 
-        The :py:attr:`ID`, :py:attr:`fileGrp`, :py:attr:`url` and :py:attr:`mimetype`
-        parameters can each be either a literal string, or a regular expression if
-        the string starts with ``//`` (double slash).
+        The :py:attr:`ID`, :py:attr:`pageId`, :py:attr:`fileGrp`,
+        :py:attr:`url` and :py:attr:`mimetype` parameters can each be either a
+        literal string, or a regular expression if the string starts with
+        ``//`` (double slash).
 
         If it is a regex, the leading ``//`` is removed and candidates are matched
         against the regex with `re.fullmatch`. If it is a literal string, comparison

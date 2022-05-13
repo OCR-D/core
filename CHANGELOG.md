@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * `ocrd_utils.safe_filename`: replace with `_` instead of `.` and retain pre-existing `_`, #858, #859
+  * `OcrdMets.find_files`: allow pageId regex, precompile all regexes, #855, #856
 
 ## [2.33.0] - 2022-05-03
 
