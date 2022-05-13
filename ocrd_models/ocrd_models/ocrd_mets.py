@@ -264,8 +264,9 @@ class OcrdMets(OcrdXmlDocument):
             raise Exception("No fileSec!")
         if isinstance(USE, str):
             if USE.startswith(REGEX_PREFIX):
+                use = re.compile(USE[REGEX_PREFIX_LEN:])
                 for cand in el_fileSec.findall('mets:fileGrp', NS):
-                    if fullmatch(USE[REGEX_PREFIX_LEN:], cand.get('USE')):
+                    if use.fullmatch(cand.get('USE')):
                         self.remove_file_group(cand, recursive=recursive)
                 return
             else:
