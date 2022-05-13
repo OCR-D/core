@@ -44,10 +44,6 @@ class TestProcessor(TestCase):
         self.assertEqual(len(processor.input_files), 2)
         self.assertTrue(all([f.mimetype == MIMETYPE_PAGE for f in processor.input_files]))
 
-    def test_with_output(self):
-        processor = run_processor(DummyProcessorWithOutput,
-                                  input_file_grp='OCR-D-IMG',
-                                  output_file_grp='OCR-D-SEG-PAGE',
     def test_parameter(self):
         with TemporaryDirectory() as tempdir:
             jsonpath = join(tempdir, 'params.json')
