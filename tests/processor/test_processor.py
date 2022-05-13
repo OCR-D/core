@@ -3,7 +3,7 @@ import json
 from tempfile import TemporaryDirectory
 from os.path import join
 from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, IncompleteProcessor, DUMMY_TOOL
+from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor, DUMMY_TOOL
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
@@ -44,6 +44,10 @@ class TestProcessor(TestCase):
         self.assertEqual(len(processor.input_files), 2)
         self.assertTrue(all([f.mimetype == MIMETYPE_PAGE for f in processor.input_files]))
 
+    def test_with_output(self):
+        processor = run_processor(DummyProcessorWithOutput,
+                                  input_file_grp='OCR-D-IMG',
+                                  output_file_grp='OCR-D-SEG-PAGE',
     def test_parameter(self):
         with TemporaryDirectory() as tempdir:
             jsonpath = join(tempdir, 'params.json')
@@ -79,6 +83,31 @@ class TestProcessor(TestCase):
         run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace)
         self.assertEqual(len(self.workspace.mets.agents), no_agents_before + 1, 'one more agent')
         #  print(self.workspace.mets.agents[no_agents_before])
+
+    def test_run_input(self):
+        run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace, 
+                      input_file_grp="OCR-D-IMG")
+        self.assertTrue(len(self.workspace.mets.agents) > 0)
+        self.assertTrue(("input-file-grp", "OCR-D-IMG") in self.workspace.mets.agents[-1].notes)
+
+    def test_run_output(self):
+        run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=self.workspace, 
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT")
+        self.assertEqual(len(self.workspace.mets.find_all_files(fileGrp="OCR-D-OUT")), 2)
+
+    def test_run_output_exists(self):
+        with self.assertRaisesRegex(Exception, 'File with ID='.*' already exists"'):
+            run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=self.workspace, 
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-SEG-PAGE")
+
+    def test_run_output_overwrite(self):
+        self.workspace.overwrite_mode = True
+        run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=self.workspace, 
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-SEG-PAGE")
+        self.assertEqual(len(self.workspace.mets.find_all_files(fileGrp="OCR-D-SEG-PAGE")), 2)
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
