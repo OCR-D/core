@@ -32,7 +32,7 @@ class TestProcessor(TestCase):
     def test_no_input_file_grp(self):
         processor = run_processor(DummyProcessor,
                                   resolver=self.resolver,
-                                  mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+                                  workspace=self.workspace)
         with self.assertRaisesRegex(Exception, 'Processor is missing input fileGrp'):
             _ = processor.input_files
 
@@ -40,7 +40,7 @@ class TestProcessor(TestCase):
         processor = run_processor(DummyProcessor,
                                   input_file_grp='OCR-D-SEG-PAGE',
                                   resolver=self.resolver,
-                                  mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+                                  workspace=self.workspace)
         self.assertEqual(len(processor.input_files), 2)
         self.assertTrue(all([f.mimetype == MIMETYPE_PAGE for f in processor.input_files]))
 
@@ -55,7 +55,7 @@ class TestProcessor(TestCase):
                     parameter=json.load(f),
                     input_file_grp="OCR-D-IMG",
                     resolver=self.resolver,
-                    mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml')
+                    workspace=self.workspace
                 )
             self.assertEqual(len(processor.input_files), 3)
 
