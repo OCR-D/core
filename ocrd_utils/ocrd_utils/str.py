@@ -62,15 +62,22 @@ def make_file_id(ocrd_file, output_file_grp):
     Derive a new file ID for an output file from an existing input file ``ocrd_file``
     and the name of the output file's ``fileGrp/@USE``, ``output_file_grp``.
     If ``ocrd_file``'s ID contains the input file's fileGrp name, then replace it by ``output_file_grp``.
-    Else if ``ocrd_file``'s ID contains the input file's pageId, then merely append ``output_file_grp``.
-    Otherwise use ``output_file_grp`` together with the position of ``ocrd_file`` within the input fileGrp
-    (as a fallback counter), and increment counter until there is no more ID conflict.
+    Else if ``ocrd_file``'s ID contains the input file's pageId, then merely append it to ``output_file_grp``.
+    Else if ``ocrd_file`` has a pageId at all, then merely append it to ``output_file_grp``.
+    Otherwise use ``output_file_grp`` together with the position of ``ocrd_file`` within the input fileGrp.
     """
+    # considerations for this behaviour:
+    # - uniqueness (in spite of different METS and processor conventions)
+    # - predictability (i.e. output name can be anticipated from the input name)
+    # - stability (i.e. output at least as much sorted and consistent as the input)
+    # ... and all this in spite of --page-id selection and --overwrite
     ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
     if ret == ocrd_file.ID:
         if ocrd_file.pageId and ocrd_file.pageId in ocrd_file.ID:
             # still sufficiently unique
             ret = output_file_grp + '_' + ocrd_file.ID
+        elif ocrd_file.pageId:
+            ret = output_file_grp + '_' + ocrd_file.pageId
         else:
             ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
             try:
@@ -78,9 +85,6 @@ def make_file_id(ocrd_file, output_file_grp):
             except ValueError:
                 n = len(ids)
             ret = concat_padded(output_file_grp, n)
-            while next(ocrd_file.mets.find_files(ID=ret), None):
-                n += 1
-                ret = concat_padded(output_file_grp, n)
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
