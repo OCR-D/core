@@ -52,8 +52,10 @@ def ocrd_cli_wrap_processor(
         import uvicorn
         from ocrd.cli.server import app
 
+        initLogging()
+
         # Init a processor instance before starting the server
-        processor = processorClass(workspace=None, ocrd_tool=ocrd_tool, **kwargs)
+        processor = processorClass(workspace=None, ocrd_tool=ocrd_tool, parameter=kwargs['parameter'])
         app.processor = processor
 
         uvicorn.run(app, host='0.0.0.0', port=80)
