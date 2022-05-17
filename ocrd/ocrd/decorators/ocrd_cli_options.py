@@ -26,6 +26,7 @@ def ocrd_cli_options(f):
         option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         option('-g', '--page-id', help="ID(s) of the pages to process"),
         option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
+        option('-s', '--server', help='Run a web server instead of one-shot processing.', is_flag=True),
         option('-C', '--show-resource', help='Dump the content of processor resource RESNAME', metavar='RESNAME'),
         option('-L', '--list-resources', is_flag=True, default=False, help='List names of processor resources'),
         parameter_option,

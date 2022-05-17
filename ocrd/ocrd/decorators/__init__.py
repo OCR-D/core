@@ -1,5 +1,6 @@
 from os.path import isfile
 import sys
+from typing import Type
 
 import click
 
@@ -13,7 +14,7 @@ from ocrd_utils import getLogger, initLogging
 from ocrd_validators import WorkspaceValidator
 
 from ..resolver import Resolver
-from ..processor.base import run_processor
+from ..processor.base import run_processor, Processor
 
 from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
@@ -21,10 +22,11 @@ from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
 def ocrd_cli_wrap_processor(
-    processorClass,
+    processorClass: Type[Processor],
     ocrd_tool=None,
     mets=None,
     working_dir=None,
+    server=None,
     dump_json=False,
     help=False, # pylint: disable=redefined-builtin
     version=False,
@@ -46,6 +48,15 @@ def ocrd_cli_wrap_processor(
             list_resources=list_resources
         )
         sys.exit()
+    if server:
+        import uvicorn
+        from ocrd.cli.server import app
+
+        # Init a processor instance before starting the server
+        processor = processorClass(workspace=None, ocrd_tool=ocrd_tool, **kwargs)
+        app.processor = processor
+
+        uvicorn.run(app, host='0.0.0.0', port=80)
     else:
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
