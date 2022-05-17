@@ -125,3 +125,5 @@ sanders*
 ws1
 *.doctree
 .vscode
+
+.idea/
