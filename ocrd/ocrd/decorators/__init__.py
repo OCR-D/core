@@ -63,7 +63,8 @@ def ocrd_cli_wrap_processor(
         from ..server.server_definition import app
 
         # Init a processor instance before starting the server
-        processor = processorClass(workspace=None, parameter=kwargs['parameter'])
+        processor = processorClass(workspace=None, parameter=kwargs['parameter'], page_id=kwargs['page_id'],
+                                   input_file_grp=kwargs['input_file_grp'], output_file_grp=kwargs['output_file_grp'])
         app.processor = processor
 
         # Set other meta-data
