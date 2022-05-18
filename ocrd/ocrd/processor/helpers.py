@@ -216,6 +216,10 @@ Options:
                                   (with --page-id, remove only those)
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
                                   or JSON file path
+  --server-ip IP                  Host name/IP to listen at. When this value is set,
+                                  --server-port must be set as well.
+  --server-port NUMBER            TCP port to listen at. When this value is set,
+                                  --server-ip must be set as well.
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
                                   taking precedence over --parameter
   -m, --mets URL-PATH             URL or file path of METS to process
