@@ -5,11 +5,7 @@ from ocrd_utils import initLogging
 
 initLogging()
 
-app = FastAPI(
-    title='OCR-D Processor',
-    description='Processing Server',
-    version='0.0.1'
-)
+app = FastAPI()
 
 
 def get_processor() -> Processor | None:

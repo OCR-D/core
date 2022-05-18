@@ -26,7 +26,8 @@ def ocrd_cli_wrap_processor(
     ocrd_tool=None,
     mets=None,
     working_dir=None,
-    server=None,
+    server_ip=None,
+    server_port=None,
     dump_json=False,
     help=False, # pylint: disable=redefined-builtin
     version=False,
@@ -48,15 +49,29 @@ def ocrd_cli_wrap_processor(
             list_resources=list_resources
         )
         sys.exit()
-    if server:
+    if server_ip or server_port:
+        # IP provided without port
+        if server_ip and not server_port:
+            raise click.UsageError('--server-port is missing.')
+
+        # Port is provided without IP
+        if server_port and not server_ip:
+            raise click.UsageError('--server-ip is missing.')
+
+        # Proceed when both IP and port are provided
         import uvicorn
-        from ocrd.server import app
+        from ..server.server_definition import app
 
         # Init a processor instance before starting the server
-        processor = processorClass(workspace=None, ocrd_tool=ocrd_tool, parameter=kwargs['parameter'])
+        processor = processorClass(workspace=None, parameter=kwargs['parameter'])
         app.processor = processor
 
-        uvicorn.run(app, host='0.0.0.0', port=80, access_log=False)
+        # Set other meta-data
+        app.title = processor.ocrd_tool['executable']
+        app.description = processor.ocrd_tool['description']
+        app.version = processor.version
+
+        uvicorn.run(app, host=server_ip, port=server_port, access_log=False)
     else:
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
