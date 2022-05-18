@@ -12,9 +12,12 @@ app = FastAPI(
 )
 
 
-def get_processor():
+def get_processor() -> Processor | None:
+    # If the processor is loaded into memory before, use it
     if hasattr(app, 'processor'):
         return app.processor
+
+    # The server was started from a non-Python processor
     return None
 
 
