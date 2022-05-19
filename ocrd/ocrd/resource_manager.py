@@ -84,7 +84,10 @@ class OcrdResourceManager():
         List models available for download by processor
         """
         if executable:
+            if executable not in self.database:
+                return []
             return [(executable, self.database[executable])]
+
         return self.database.items()
 
     def list_installed(self, executable=None):
