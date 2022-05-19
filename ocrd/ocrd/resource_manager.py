@@ -87,7 +87,6 @@ class OcrdResourceManager():
             if executable not in self.database:
                 return []
             return [(executable, self.database[executable])]
-
         return self.database.items()
 
     def list_installed(self, executable=None):
