@@ -16,9 +16,10 @@ from ocrd_validators import OcrdToolValidator
 
 @click.command('server')
 @click.argument('json_file', type=click.File(mode='r'))
+@click.option('-t', '--tool', help='Name of the tool in the ocrd-tool.json file', required=True)
 @click.option('--ip', help='Host name/IP to listen at.', required=True)
 @click.option('--port', help='TCP port to listen at', required=True, type=click.INT)
-def server_cli(json_file, ip, port):
+def server_cli(json_file, tool, ip, port):
     content = json_file.read()
     ocrd_tool = parse_json_string_with_comments(content)
 
@@ -30,13 +31,10 @@ def server_cli(json_file, ip, port):
 
     initLogging()
 
-    # Get the first key name under "tools"
-    processor_name = next(iter(ocrd_tool['tools']))
-
     # Set other meta-data
-    app.title = ocrd_tool['tools'][processor_name]['executable']
-    app.description = ocrd_tool['tools'][processor_name]['description']
+    app.title = ocrd_tool['tools'][tool]['executable']
+    app.description = ocrd_tool['tools'][tool]['description']
     app.version = ocrd_tool['version']
-    app.processor_info = ocrd_tool['tools'][processor_name]
+    app.processor_info = ocrd_tool['tools'][tool]
 
     uvicorn.run(app, host=ip, port=port, access_log=False)
