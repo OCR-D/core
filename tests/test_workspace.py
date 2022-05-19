@@ -96,9 +96,9 @@ def test_workspace_add_file_overwrite(plain_workspace):
             ID='ID1',
             mimetype='image/tiff',
             content='CONTENT',
-            pageId='phys2',
-            local_filename=fpath)    
-    assert str(fn_exc.value) == "File with ID='ID1' already exists"
+            pageId=None,
+            local_filename=fpath)
+        assert str(fn_exc.value) == "File with ID='ID1' already exists"
     plain_workspace.add_file(
         'GRP',
         ID='ID1',
@@ -651,6 +651,7 @@ def test_merge(tmp_path):
 
     # assert number of files before
     assert len(ws1.mets.find_all_files()) == 6
+    assert len(ws2.mets.find_all_files()) == 35
 
     # act
     ws1.merge(ws2)
