@@ -1,8 +1,18 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, APIRouter, status, Depends
 
 from ocrd import Processor
+from ocrd.server.models.ocrd_tool import OcrdTool
 
-app = FastAPI()
+tags_metadata = [
+    {
+        'name': 'Processing',
+        'description': 'OCR-D processing and processors'
+    }
+]
+
+app = FastAPI(
+    openapi_tags=tags_metadata
+)
 
 
 def get_processor() -> Processor | None:
@@ -14,8 +24,15 @@ def get_processor() -> Processor | None:
     return None
 
 
-@app.get('/')
-async def hello(processor: Processor = Depends(get_processor)):
+router = APIRouter()
+
+
+@router.get('/', tags=['Processing'], status_code=status.HTTP_200_OK, summary='Get information about this processor.',
+            response_model=OcrdTool)
+async def get_processor(processor: Processor = Depends(get_processor)):
     if processor:
         return processor.ocrd_tool
     return app.processor_info
+
+
+app.include_router(router, prefix='/processor')
