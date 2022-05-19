@@ -60,7 +60,9 @@ def ocrd_cli_wrap_processor(
 
         # Proceed when both IP and port are provided
         import uvicorn
-        from ..server.server_definition import app
+        from ocrd.server.main import app
+
+        initLogging()
 
         # Init a processor instance before starting the server
         processor = processorClass(workspace=None, parameter=kwargs['parameter'], page_id=kwargs['page_id'],

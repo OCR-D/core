@@ -1,9 +1,6 @@
 from fastapi import FastAPI, Depends
 
 from ocrd import Processor
-from ocrd_utils import initLogging
-
-initLogging()
 
 app = FastAPI()
 
@@ -21,4 +18,4 @@ def get_processor() -> Processor | None:
 async def hello(processor: Processor = Depends(get_processor)):
     if processor:
         return processor.ocrd_tool
-    return {'message': 'No processor object'}
+    return app.processor_info
