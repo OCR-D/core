@@ -10,6 +10,10 @@ Changed:
   * `ocrd_utils.safe_filename`: replace with `_` instead of `.` and retain pre-existing `_`, #858, #859
   * `OcrdMets.find_files`: allow pageId regex, precompile all regexes, #855, #856
 
+Fixed:
+
+  * `ocrd resmgr list-available`: handle processors not in resource list gracefully, #854, #865
+
 ## [2.33.0] - 2022-05-03
 
 Fixed:
