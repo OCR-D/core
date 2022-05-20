@@ -45,11 +45,7 @@ def list_available(executable=None):
     List available resources
     """
     resmgr = OcrdResourceManager()
-    resources = resmgr.list_available(executable)
-    if executable and not resources:
-        print("Error: No resources available for '%s'" % executable)
-        sys.exit(1)
-    for executable, reslist in resources:
+    for executable, reslist in resmgr.list_available(executable):
         print_resources(executable, reslist, resmgr)
 
 @resmgr_cli.command('list-installed')
