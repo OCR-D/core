@@ -112,7 +112,7 @@ def test_list_available(tmp_path):
 def test_list_available_with_unknown_executable(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     res = mgr.list_available(executable="ocrd-non-existing-processor")
-    assert len(res) == 0
+    assert len(res[0][1])  == 0
 
 
 if __name__ == "__main__":
