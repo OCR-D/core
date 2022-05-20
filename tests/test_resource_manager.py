@@ -104,5 +104,21 @@ def test_default_resource_dir(tmp_path):
     assert mgr.xdg_config_home != mgr.xdg_data_home
     assert mgr.default_resource_dir == str(mgr.xdg_data_home / 'ocrd-resources')
 
+def test_date_as_string(tmp_path):
+    mgr = OcrdResourceManager(xdg_data_home=tmp_path)
+    test_list = tmp_path / 'test-list.yml'
+    with open(test_list, 'w', encoding='utf-8') as fout:
+        fout.write("""\
+    ocrd-eynollah-segment:
+      - url: https://qurator-data.de/eynollah/2022-04-05/models_eynollah_renamed.tar.gz
+        name: 2022-04-05
+        description: models for eynollah
+        type: tarball
+        path_in_archive: 'models_eynollah'
+        size: 1889719626
+        """)
+    mgr.load_resource_list(test_list)
+    mgr.list_available(executable='ocrd-eynollah-segment')
+
 if __name__ == "__main__":
     main(__file__)
