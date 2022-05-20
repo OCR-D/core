@@ -43,14 +43,17 @@ jobs:
       - image: circleci/buildpack-deps:stretch
     steps:
       - checkout
-      - setup_remote_docker      # https://circleci.com/docs/2.0/building-docker-images/
+      - setup_remote_docker # https://circleci.com/docs/2.0/building-docker-images/
       - run: make docker
       - run: make docker-cuda
       - run:
           name: Login to Docker Hub
-          command: echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+          command: echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME"
+            --password-stdin
       - run: docker push ocrd/core
       - run: docker push ocrd/core-cuda
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
 
 workflows:
   version: 2
