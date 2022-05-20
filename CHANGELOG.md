@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd log` now accepts `-` argument to read messages from STDIN, #852, #870
+
 Changed:
 
   * `ocrd_utils.safe_filename`: replace with `_` instead of `.` and retain pre-existing `_`, #858, #859
