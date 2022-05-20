@@ -27,7 +27,6 @@ help:
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
-	@echo "    assets-server  Start asset server at http://localhost:5001"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
@@ -60,16 +59,16 @@ PIP_INSTALL = pip install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt-get install -y python3 python3-pip python3-venv
+	apt-get install -y python3 python3-venv imagemagick
 
 # Install test python deps via pip
 deps-test:
-	$(PIP) install -U "pip>=19.0.0,!=20.3.2"
+	$(PIP) install -U pip
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
 install:
-	$(PIP) install -U "pip>=19.0.0,!=20.3.2" wheel
+	$(PIP) install -U pip wheel
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
 # Install with pip install -e
@@ -136,11 +135,7 @@ spec: repo/spec
 assets: repo/assets
 	rm -rf $(TESTDIR)/assets
 	mkdir -p $(TESTDIR)/assets
-	cp -r -t $(TESTDIR)/assets repo/assets/data/*
-
-# Start asset server at http://localhost:5001
-assets-server:
-	cd assets && make start
+	cp -r repo/assets/data/* $(TESTDIR)/assets
 
 
 #

@@ -294,14 +294,14 @@ class OcrdResourceManager():
             else:
                 self._copy_impl(url, fpath, progress_cb)
         elif resource_type == 'archive':
-            with pushd_popd(tempdir=True):
+            with pushd_popd(tempdir=True) as tempdir:
                 if is_url:
                     self._download_impl(url, 'download.tar.xx', progress_cb, size)
                 else:
                     self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    log.info("Extracting archive")
+                    log.info("Extracting archive to %s/out" % tempdir)
                     with open_tarfile('../download.tar.xx', 'r:*') as tar:
                         tar.extractall()
                     log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))

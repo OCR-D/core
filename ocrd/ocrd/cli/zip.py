@@ -39,7 +39,7 @@ def zip_cli():
               help='Basename of the METS file.',
               show_default=True)
 @click.option('-i', '--identifier', '--id', help="Ocrd-Identifier", required=True)
-@click.option('-I', '--in-place', help="Replace workspace with bag (like bagit.py does)", required=True, is_flag=True)
+@click.option('-I', '--in-place', help="Replace workspace with bag (like bagit.py does)", is_flag=True)
 @click.option('-D', '--manifestation-depth', help="Ocrd-Manifestation-Depth", type=click.Choice(['full', 'partial']), default='partial')
 @click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
