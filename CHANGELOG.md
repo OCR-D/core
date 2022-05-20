@@ -17,6 +17,7 @@ Changed:
 Fixed:
 
   * `ocrd resmgr list-available`: handle processors not in resource list gracefully, #854, #865
+  * `ocrd resmgr`: do not try to parse strings as dates, #867, #869
 
 ## [2.33.0] - 2022-05-03
 
