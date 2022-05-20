@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.34.0] - 2022-05-20
+
 Added:
 
   * `ocrd log` now accepts `-` argument to read messages from STDIN, #852, #870
@@ -1480,6 +1482,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.34.0]: ../../compare/v2.34.0..v2.33.0
 [2.33.0]: ../../compare/v2.33.0..v2.32.0
 [2.32.0]: ../../compare/v2.32.0..v2.31.0
 [2.31.0]: ../../compare/v2.31.0..v2.30.0
