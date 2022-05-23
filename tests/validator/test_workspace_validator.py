@@ -190,7 +190,7 @@ class TestWorkspaceValidator(TestCase):
             wsdir = join(tempdir, 'foo')
             copytree(assets.path_to('kant_aufklaerung_1784/data'), wsdir)
             with pushd_popd(wsdir):
-                os.system("""sed -i 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
+                os.system("""sed -i.bak 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
                 report = WorkspaceValidator.validate(
                     self.resolver,
                     join(wsdir, 'mets.xml'),
@@ -229,7 +229,7 @@ class TestWorkspaceValidator(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 # remove the @pcGtsId attribute for testing
-                os.system("""sed -i 's,pcGtsId.*,pcGtsId="foo">,' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
+                os.system("""sed -i.bak 's,pcGtsId.*,pcGtsId="foo">,' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
                 report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'))
                 self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "foo" !== "PAGE_0017_PAGE"', report.warnings)
 

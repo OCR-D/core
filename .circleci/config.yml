@@ -1,6 +1,20 @@
 version: 2
 
+orbs:
+    python: circleci/python@2.0.3
+
 jobs:
+
+  test-macos:
+    macos:
+      xcode: "12.5.1"
+    # resource_class: macos.x86.medium.gen2
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick
+      - run: make deps-test install PIP=pip3
+      - run: make test PYTHON=python3
 
   test-python36:
     docker:
@@ -66,3 +80,4 @@ workflows:
       - test-python37
       - test-python38
       - test-python39
+      - test-macos
