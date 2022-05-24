@@ -136,7 +136,7 @@ ocrd-anybaseocr-layout-analysis:
   - url: https://ocr-d.kba.cloud/structure_analysis.tar.gz
     name: structure_analysis
     description: structure analysis model for anybaseocr
-    type: tarball
+    type: archive
     path_in_archive: 'structure_analysis'
     size: 29002514
   - url: https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle
@@ -147,7 +147,7 @@ ocrd-anybaseocr-tiseg:
   - url: https://ocr-d.kba.cloud/seg_model.tar.gz
     name: seg_model
     description: text image segmentation model for anybaseocr
-    type: tarball
+    type: archive
     path_in_archive: 'seg_model'
     size: 61388872
 ocrd-kraken-segment:
