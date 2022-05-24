@@ -119,10 +119,10 @@ class TestDecorators(TestCase):
         resolver = Resolver()
         with TemporaryDirectory() as tempdir:
             ws = resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('IN-GRP',  pageId='pID1', ID='fID1', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID1.tif'))
-            ws.add_file('OUT-GRP', pageId='pID2', ID='fID2', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID2.tif'))
-            ws.add_file('OUT-GRP', pageId='pID3', ID='fID3', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID3.tif'))
-            ws.add_file('OUT-GRP', pageId='pID4', ID='fID4', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID4.tif'))
+            ws.add_file('IN-GRP',  page_id='pID1', ID='fID1', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID1.tif'))
+            ws.add_file('OUT-GRP', page_id='pID2', ID='fID2', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID2.tif'))
+            ws.add_file('OUT-GRP', page_id='pID3', ID='fID3', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID3.tif'))
+            ws.add_file('OUT-GRP', page_id='pID4', ID='fID4', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID4.tif'))
             ws.save_mets()
             yield ws
 

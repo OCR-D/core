@@ -105,10 +105,10 @@ class TestProcessor(TestCase):
         class ZipTestProcessor(Processor): pass
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP2', mimetype='application/alto+xml', ID='foobar2', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', pageId='phys_0002')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar4', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', page_id='phys_0001')
+            ws.add_file('GRP2', mimetype='application/alto+xml', ID='foobar2', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', page_id='phys_0002')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar4', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -125,12 +125,12 @@ class TestProcessor(TestCase):
         class ZipTestProcessor(Processor): pass
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype='image/png', ID='foobar1img1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype='image/png', ID='foobar1img2', pageId='phys_0001')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', pageId='phys_0002')
-            ws.add_file('GRP2', mimetype='image/tiff', ID='foobar4', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype='image/png', ID='foobar1img1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype='image/png', ID='foobar1img2', page_id='phys_0001')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', page_id='phys_0002')
+            ws.add_file('GRP2', mimetype='image/tiff', ID='foobar4', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -141,7 +141,7 @@ class TestProcessor(TestCase):
                     print("PAGE-filtered")
                     tuples = [(one.ID, two) for one, two in proc.zip_input_files(mimetype=MIMETYPE_PAGE)]
                     assert ('foobar3', None) in tuples
-            ws.add_file('GRP2', mimetype='image/tiff', ID='foobar4dup', pageId='phys_0002')
+            ws.add_file('GRP2', mimetype='image/tiff', ID='foobar4dup', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -152,7 +152,7 @@ class TestProcessor(TestCase):
                     assert ('foobar3', None) in tuples
                     with self.assertRaisesRegex(Exception, "No PAGE-XML for page .* in fileGrp .* but multiple matches."):
                         tuples = proc.zip_input_files(on_error='abort')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2dup', pageId='phys_0001')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2dup', page_id='phys_0001')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -164,8 +164,8 @@ class TestProcessor(TestCase):
         self.capture_out_err()
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId=None)
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', page_id=None)
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', page_id='phys_0001')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)

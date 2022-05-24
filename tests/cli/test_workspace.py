@@ -53,7 +53,7 @@ class TestCli(TestCase):
                 file_grp,
                 ID=ID,
                 content=content,
-                pageId=page_id,
+                page_id=page_id,
                 mimetype=mimetype,
                 local_filename=local_filename
             )
@@ -452,7 +452,7 @@ class TestCli(TestCase):
     def test_bulk_add_missing_param(self):
         with pushd_popd(tempdir=True) as wsdir:
             ws = self.resolver.workspace_from_nothing(directory=wsdir)
-            with pytest.raises(ValueError, match=r"OcrdFile attribute 'pageId' unset"):
+            with pytest.raises(ValueError, match=r"OcrdFile attribute 'page_id' unset"):
                 _, out, err = self.invoke_cli(workspace_cli, [
                     'bulk-add',
                     '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',

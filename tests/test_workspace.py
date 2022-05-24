@@ -66,7 +66,7 @@ def test_workspace_add_file(plain_workspace):
         ID='ID1',
         mimetype='image/tiff',
         content='CONTENT',
-        pageId=None,
+        page_id=None,
         local_filename=fpath
     )
     f = plain_workspace.mets.find_all_files()[0]
@@ -80,7 +80,7 @@ def test_workspace_add_file(plain_workspace):
 
 
 def test_workspace_add_file_basename_no_content(plain_workspace):
-    plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', pageId=None)
+    plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', page_id=None)
     f = next(plain_workspace.mets.find_files())
 
     # assert
@@ -89,7 +89,7 @@ def test_workspace_add_file_basename_no_content(plain_workspace):
 
 def test_workspace_add_file_binary_content(plain_workspace):
     fpath = join(plain_workspace.directory, 'subdir', 'ID1.tif')
-    plain_workspace.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar', pageId=None)
+    plain_workspace.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename=fpath, url='http://foo/bar', page_id=None)
 
     # assert
     assert exists(fpath)
@@ -98,7 +98,7 @@ def test_workspace_add_file_binary_content(plain_workspace):
 def test_workspacec_add_file_content_wo_local_filename(plain_workspace):
     # act
     with pytest.raises(Exception) as fn_exc:
-        plain_workspace.add_file('GRP', ID='ID1', content=b'CONTENT', pageId='foo1234')
+        plain_workspace.add_file('GRP', ID='ID1', content=b'CONTENT', page_id='foo1234')
 
     assert "'content' was set but no 'local_filename'" in str(fn_exc.value)
 
@@ -108,7 +108,7 @@ def test_workspacec_add_file_content_wo_pageid(plain_workspace):
     with pytest.raises(ValueError) as val_err:
         plain_workspace.add_file('GRP', ID='ID1', content=b'CONTENT', local_filename='foo')
 
-    assert "workspace.add_file must be passed a 'pageId' kwarg, even if it is None." in str(val_err.value)
+    assert "workspace.add_file must be passed a 'page_id' kwarg, even if it is None." in str(val_err.value)
 
 
 def test_workspace_str(plain_workspace):
@@ -260,7 +260,7 @@ def test_remove_file_force(sbb_data_workspace):
 
 
 def test_remove_file_remote_not_available_raises_exception(plain_workspace):
-    plain_workspace.add_file('IMG', ID='page1_img', mimetype='image/tiff', url='http://remote', pageId=None)
+    plain_workspace.add_file('IMG', ID='page1_img', mimetype='image/tiff', url='http://remote', page_id=None)
     with pytest.raises(Exception) as not_avail_exc:
         plain_workspace.remove_file('page1_img')
 
@@ -270,7 +270,7 @@ def test_remove_file_remote_not_available_raises_exception(plain_workspace):
 def test_remove_file_remote(plain_workspace):
 
     # act
-    plain_workspace.add_file('IMG', ID='page1_img', mimetype='image/tiff', url='http://remote', pageId=None)
+    plain_workspace.add_file('IMG', ID='page1_img', mimetype='image/tiff', url='http://remote', page_id=None)
 
     # must succeed because removal is enforced
     assert plain_workspace.remove_file('page1_img', force=True)
@@ -342,7 +342,7 @@ def test_remove_file_group_flat(plain_workspace):
     """
 
     # act
-    added_res = plain_workspace.add_file('FOO', ID='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', pageId=None).url
+    added_res = plain_workspace.add_file('FOO', ID='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', page_id=None).url
     # requires additional prepending of current path because not pushd_popd-magic at work
     added_path = Path(join(plain_workspace.directory, added_res))
 
@@ -382,8 +382,8 @@ def test_download_to_directory_from_workspace_download_file(plain_workspace):
     """
     https://github.com/OCR-D/core/issues/342
     """
-    f1 = plain_workspace.add_file('IMG', ID='page1_img', mimetype='image/tiff', local_filename='test.tif', content='', pageId=None)
-    f2 = plain_workspace.add_file('GT', ID='page1_gt', mimetype='text/xml', local_filename='test.xml', content='', pageId=None)
+    f1 = plain_workspace.add_file('IMG', ID='page1_img', mimetype='image/tiff', local_filename='test.tif', content='', page_id=None)
+    f2 = plain_workspace.add_file('GT', ID='page1_gt', mimetype='text/xml', local_filename='test.xml', content='', page_id=None)
 
     assert f1.url == 'test.tif'
     assert f2.url == 'test.xml'
@@ -577,7 +577,7 @@ def test_downsample_16bit_image(plain_workspace):
             tif_out.write(gzip_in.read())
 
     # act
-    plain_workspace.add_file('IMG', ID='foo', url=img_path, mimetype='image/tiff', pageId=None)
+    plain_workspace.add_file('IMG', ID='foo', url=img_path, mimetype='image/tiff', page_id=None)
 
     # assert
     pil_before = Image.open(img_path)
