@@ -42,7 +42,7 @@ class DummyProcessor(Processor):
                 self.workspace.add_file(
                     ID=file_id,
                     file_grp=self.output_file_grp,
-                    pageId=input_file.pageId,
+                    page_id=input_file.pageId,
                     mimetype=input_file.mimetype,
                     local_filename=local_filename,
                     content=to_xml(pcgts).encode('utf-8'))
@@ -53,7 +53,7 @@ class DummyProcessor(Processor):
                     self.workspace.add_file(
                         ID=file_id,
                         file_grp=self.output_file_grp,
-                        pageId=input_file.pageId,
+                        page_id=input_file.pageId,
                         mimetype=input_file.mimetype,
                         local_filename=local_filename,
                         content=content)
@@ -68,7 +68,7 @@ class DummyProcessor(Processor):
                     self.workspace.add_file(
                         ID=page_file_id,
                         file_grp=self.output_file_grp,
-                        pageId=input_file.pageId,
+                        page_id=input_file.pageId,
                         mimetype=MIMETYPE_PAGE,
                         local_filename=page_filename,
                         content=to_xml(pcgts).encode('utf-8'))

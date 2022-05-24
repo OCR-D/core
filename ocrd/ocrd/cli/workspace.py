@@ -67,10 +67,10 @@ def workspace_cli(ctx, directory, mets, mets_basename, backup):
 def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
     """
     Validate a workspace
-    
+
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
     If not given, use --mets accordingly.
-    
+
     Check that the METS and its referenced file contents
     abide by the OCR-D specifications.
     """
@@ -183,7 +183,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         except KeyError:
             log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (Path(fname).suffix, fname))
 
-    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
+    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'page_id': page_id, 'force': force, 'ignore': ignore}
     log.debug("Adding '%s' (%s)", fname, kwargs)
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
@@ -306,7 +306,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         file_id_ = file_id or safe_filename(str(file_path))
 
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id_, 'pageId': page_id, 'fileGrp': file_grp}
+        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id_, 'page_id': page_id, 'fileGrp': file_grp}
 
         # guess mime type
         if not file_dict['mimetype']:
@@ -428,7 +428,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
 def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefined-builtin
     """
     Delete files (given by their ID attribute ``ID``).
-    
+
     (If any ``ID`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
@@ -467,7 +467,7 @@ def rename_group(ctx, old, new):
 def remove_group(ctx, group, recursive, force, keep_files):
     """
     Delete fileGrps (given by their USE attribute ``GROUP``).
-    
+
     (If any ``GROUP`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
@@ -598,7 +598,7 @@ def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype
         fileGrp_mapping=filegrp_mapping,
         fileGrp=file_grp,
         ID=file_id,
-        pageId=page_id,
+        page_id=page_id,
         mimetype=mimetype,
     )
     workspace.save_mets()

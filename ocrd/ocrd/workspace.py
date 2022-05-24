@@ -33,6 +33,7 @@ from ocrd_utils import (
     polygon_from_points,
     xywh_from_bbox,
     pushd_popd,
+    deprecated_alias,
     MIME_TO_EXT,
     MIME_TO_PIL,
     MIMETYPE_PAGE,
@@ -93,6 +94,7 @@ class Workspace():
         """
         self.mets = OcrdMets(filename=self.mets_target)
 
+    @deprecated_alias(pageId="page_id")
     def merge(self, other_workspace, copy_files=True, **kwargs):
         """
         Merge ``other_workspace`` into this one
@@ -114,6 +116,8 @@ class Workspace():
                     makedirs(str(fpath_dest.parent))
                 with open(str(fpath_src), 'rb') as fstream_in, open(str(fpath_dest), 'wb') as fstream_out:
                     copyfileobj(fstream_in, fstream_out)
+        if 'page_id' in kwargs:
+            kwargs['pageId'] = kwargs.pop('page_id')
         self.mets.merge(other_workspace.mets, after_add_cb=after_add_cb, **kwargs)
 
 
@@ -326,6 +330,7 @@ class Workspace():
             if Path(old).is_dir() and not listdir(old):
                 Path(old).rmdir()
 
+    @deprecated_alias(pageId="page_id")
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
@@ -345,8 +350,8 @@ class Workspace():
             file_grp,
             kwargs.get('local_filename'),
             content is not None)
-        if 'pageId' not in kwargs:
-            raise ValueError("workspace.add_file must be passed a 'pageId' kwarg, even if it is None.")
+        if 'page_id' not in kwargs:
+            raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
         if content is not None and 'local_filename' not in kwargs:
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
@@ -362,6 +367,7 @@ class Workspace():
                     kwargs['url'] = kwargs['local_filename']
 
             #  print(kwargs)
+            kwargs["pageId"] = kwargs.pop("page_id")
             ret = self.mets.add_file(file_grp, **kwargs)
 
             if content is not None:
@@ -997,7 +1003,7 @@ class Workspace():
         out = self.add_file(
             file_grp,
             ID=file_id,
-            pageId=page_id,
+            page_id=page_id,
             local_filename=file_path,
             mimetype=mimetype,
             content=image_bytes.getvalue(),
