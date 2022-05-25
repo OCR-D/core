@@ -1,15 +1,16 @@
 from functools import lru_cache
-from typing import Type, Dict
+from typing import Type
 
 from fastapi import FastAPI, APIRouter, status
 
 from ocrd import Processor
 from ocrd.server.database import initiate_database
 from ocrd.server.models.ocrd_tool import OcrdTool
+from ocrd.server.models.processing import Processing
 
 
 def create_server(title: str, description: str, version: str,
-                  ocrd_tool: Dict, processor_class: Type[Processor] | None) -> FastAPI:
+                  ocrd_tool: dict, db_url: str, processor_class: Type[Processor] | None) -> FastAPI:
     tags_metadata = [
         {
             'name': 'Processing',
@@ -33,14 +34,15 @@ def create_server(title: str, description: str, version: str,
         return ocrd_tool
 
     @router.post('/', tags=['Processing'])
-    async def process():
-        pass
+    async def process(data: Processing):
+        await data.create()
+        return {'message': 'Done'}
 
     app.include_router(router, prefix='/processor')
 
-    @app.on_event("startup")
-    async def start_database():
-        await initiate_database()
+    @app.on_event('startup')
+    async def startup():
+        await initiate_database(db_url=db_url)
 
     return app
 

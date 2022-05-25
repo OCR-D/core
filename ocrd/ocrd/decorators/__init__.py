@@ -21,6 +21,10 @@ from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
+# Name of the collection in the MongoDB.
+# Needed when run the processor as a server
+collection_name = ''
+
 def ocrd_cli_wrap_processor(
     processorClass: Type[Processor],
     ocrd_tool=None,
@@ -28,6 +32,7 @@ def ocrd_cli_wrap_processor(
     working_dir=None,
     server_ip=None,
     server_port=None,
+    mongo_url=None,
     dump_json=False,
     help=False, # pylint: disable=redefined-builtin
     version=False,
@@ -58,20 +63,29 @@ def ocrd_cli_wrap_processor(
         if server_port and not server_ip:
             raise click.UsageError('--server-ip is missing.')
 
+        # IP and port but without database
+        if server_ip and server_port and not mongo_url:
+            raise click.UsageError('--mongo-url is missing.')
+
         # Proceed when both IP and port are provided
         import uvicorn
-        from ocrd.server.main import create_server
 
         initLogging()
 
         # Init a processor instance to get access to its information
         processor = processorClass(workspace=None)
 
+        # Set collection name to the processor name
+        global collection_name
+        collection_name = processor.ocrd_tool['executable']
+
         # Create the server
+        from ocrd.server.main import create_server
         app = create_server(title=processor.ocrd_tool['executable'],
                             description=processor.ocrd_tool['description'],
                             version=processor.version,
                             ocrd_tool=processor.ocrd_tool,
+                            db_url=mongo_url,
                             processor_class=processorClass)
 
         uvicorn.run(app, host=server_ip, port=server_port, access_log=False)

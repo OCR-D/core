@@ -29,6 +29,7 @@ def ocrd_cli_options(f):
         option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
         option('--server-ip', help='Host name/IP to listen at.'),
         option('--server-port', help='TCP port to listen at', type=click.INT),
+        option('--mongo-url', help='Connection string to a Mongo database.', type=click.STRING),
         option('-C', '--show-resource', help='Dump the content of processor resource RESNAME', metavar='RESNAME'),
         option('-L', '--list-resources', is_flag=True, default=False, help='List names of processor resources'),
         parameter_option,

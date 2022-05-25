@@ -220,6 +220,8 @@ Options:
                                   --server-port must be set as well.
   --server-port NUMBER            TCP port to listen at. When this value is set,
                                   --server-ip must be set as well.
+  --mongo-url URL                 Connection string to a Mongo database. If the processor runs as a server,
+                                  this value must be set.
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
                                   taking precedence over --parameter
   -m, --mets URL-PATH             URL or file path of METS to process
