@@ -20,10 +20,8 @@ from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
+from ..server.config import Config
 
-# Name of the collection in the MongoDB.
-# Needed when run the processor as a server
-collection_name = ''
 
 def ocrd_cli_wrap_processor(
     processorClass: Type[Processor],
@@ -68,26 +66,25 @@ def ocrd_cli_wrap_processor(
             raise click.UsageError('--mongo-url is missing.')
 
         # Proceed when both IP and port are provided
-        import uvicorn
-
         initLogging()
 
         # Init a processor instance to get access to its information
         processor = processorClass(workspace=None)
 
         # Set collection name to the processor name
-        global collection_name
-        collection_name = processor.ocrd_tool['executable']
+        Config.collection_name = processor.ocrd_tool['executable']
 
-        # Create the server
-        from ocrd.server.main import create_server
-        app = create_server(title=processor.ocrd_tool['executable'],
-                            description=processor.ocrd_tool['description'],
-                            version=processor.version,
-                            ocrd_tool=processor.ocrd_tool,
-                            db_url=mongo_url,
-                            processor_class=processorClass)
+        # Set other meta-data
+        Config.processor_class = processorClass
+        Config.title = processor.ocrd_tool['executable']
+        Config.description = processor.ocrd_tool['description']
+        Config.version = processor.version
+        Config.ocrd_tool = processor.ocrd_tool
+        Config.db_url = mongo_url
 
+        # Start the server
+        from ocrd.server.main import app
+        import uvicorn
         uvicorn.run(app, host=server_ip, port=server_port, access_log=False)
     else:
         initLogging()

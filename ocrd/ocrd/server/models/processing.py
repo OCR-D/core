@@ -2,7 +2,7 @@ from beanie import Document
 from pydantic import BaseModel, Field
 from pymongo import IndexModel, TEXT
 
-from ocrd.decorators import collection_name
+from ocrd.server.config import Config
 
 
 class Workspace(BaseModel):
@@ -18,7 +18,7 @@ class Processing(Document):
     parameters: dict
 
     class Settings:
-        name = collection_name
+        name = Config.collection_name
         indexes = [
             IndexModel(
                 [('workspace.@id', TEXT)],
