@@ -9,6 +9,12 @@ from urllib.parse import urlparse, unquote
 import requests
 from yaml import safe_load, safe_dump
 
+# https://github.com/OCR-D/core/issues/867
+# https://stackoverflow.com/questions/50900727/skip-converting-entities-while-loading-a-yaml-string-using-pyyaml
+import yaml.constructor
+yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp'] = \
+    yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
+
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd
@@ -84,7 +90,7 @@ class OcrdResourceManager():
         List models available for download by processor
         """
         if executable:
-            return [(executable, self.database[executable])]
+            return [(executable, self.database.get(executable, []))]
         return self.database.items()
 
     def list_installed(self, executable=None):
