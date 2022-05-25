@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from beanie import PydanticObjectId
-from fastapi import FastAPI, APIRouter, status
+from fastapi import FastAPI, APIRouter, status, HTTPException
 
 from ocrd import Processor
 from ocrd.server.config import Config
@@ -47,7 +47,12 @@ async def process(data: JobInput):
             response_model=Job)
 async def get_job(job_id: PydanticObjectId):
     job = await Job.get(job_id)
-    return job
+    if job:
+        return job
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail='Job not found.'
+    )
 
 
 app.include_router(router, prefix='/processor')
