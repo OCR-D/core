@@ -9,7 +9,7 @@ OCR-D CLI: start the processing server
 import click
 import uvicorn
 
-from ocrd.server.main import app
+from ocrd.server.main import create_server
 from ocrd_utils import parse_json_string_with_comments, initLogging
 from ocrd_validators import OcrdToolValidator
 
@@ -31,10 +31,11 @@ def server_cli(json_file, tool, ip, port):
 
     initLogging()
 
-    # Set other meta-data
-    app.title = ocrd_tool['tools'][tool]['executable']
-    app.description = ocrd_tool['tools'][tool]['description']
-    app.version = ocrd_tool['version']
-    app.processor_info = ocrd_tool['tools'][tool]
+    # Create the server
+    app = create_server(title=ocrd_tool['tools'][tool]['executable'],
+                        description=ocrd_tool['tools'][tool]['description'],
+                        version=ocrd_tool['version'],
+                        ocrd_tool=ocrd_tool['tools'][tool],
+                        processor_class=None)
 
     uvicorn.run(app, host=ip, port=port, access_log=False)

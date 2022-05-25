@@ -60,19 +60,19 @@ def ocrd_cli_wrap_processor(
 
         # Proceed when both IP and port are provided
         import uvicorn
-        from ocrd.server.main import app
+        from ocrd.server.main import create_server
 
         initLogging()
 
-        # Init a processor instance before starting the server
-        processor = processorClass(workspace=None, parameter=kwargs['parameter'], page_id=kwargs['page_id'],
-                                   input_file_grp=kwargs['input_file_grp'], output_file_grp=kwargs['output_file_grp'])
-        app.processor = processor
+        # Init a processor instance to get access to its information
+        processor = processorClass(workspace=None)
 
-        # Set other meta-data
-        app.title = processor.ocrd_tool['executable']
-        app.description = processor.ocrd_tool['description']
-        app.version = processor.version
+        # Create the server
+        app = create_server(title=processor.ocrd_tool['executable'],
+                            description=processor.ocrd_tool['description'],
+                            version=processor.version,
+                            ocrd_tool=processor.ocrd_tool,
+                            processor_class=processorClass)
 
         uvicorn.run(app, host=server_ip, port=server_port, access_log=False)
     else:
