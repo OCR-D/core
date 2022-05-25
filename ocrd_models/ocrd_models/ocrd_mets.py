@@ -4,6 +4,7 @@ API to METS
 from datetime import datetime
 import re
 from lxml import etree as ET
+from copy import deepcopy
 
 from ocrd_utils import (
     is_local_filename,
@@ -41,7 +42,7 @@ class OcrdMets(OcrdXmlDocument):
     """
 
     @staticmethod
-    def empty_mets(now=None):
+    def empty_mets(now=None, cache_flag=False):
         """
         Create an empty METS file from bundled template.
         """
@@ -50,7 +51,7 @@ class OcrdMets(OcrdXmlDocument):
         tpl = METS_XML_EMPTY.decode('utf-8')
         tpl = tpl.replace('{{ VERSION }}', VERSION)
         tpl = tpl.replace('{{ NOW }}', '%s' % now)
-        return OcrdMets(content=tpl.encode('utf-8'))
+        return OcrdMets(content=tpl.encode('utf-8'), cache_flag=cache_flag)
 
     def __init__(self, **kwargs):
         """
@@ -58,11 +59,75 @@ class OcrdMets(OcrdXmlDocument):
         """
         super(OcrdMets, self).__init__(**kwargs)
 
+        # If cache is enabled
+        if self._cache_flag:
+            # Cache for the fileGrps (mets:fileGrp) - a dictionary with Key and Value pair:
+            # Key: 'fileGrp.USE'
+            # Value: a 'fileGrp' object at some memory location 
+            self._fileGrp_cache = {}
+
+            # Cache for the files (mets:file) - two nested dictionaries
+            # The outer dictionary's Key: 'fileGrp.USE'
+            # The outer dictionary's Value: Inner dictionary
+            # The inner dictionary's Key: 'file.ID'
+            # The inner dictionary's Value: a 'file' object at some memory location
+            self._file_cache = {}
+
+            # Note, if the empty_mets() function is used to instantiate OcrdMets
+            # Then the cache is empty even after this operation
+            self._fill_caches()
+
+    def __exit__(self):
+        if self._cache_flag:
+            self._clear_caches()
+
     def __str__(self):
         """
         String representation
         """
         return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, list(self.find_files()))
+
+    def _fill_caches(self):
+        """
+        Fills the caches with fileGrps and FileIDs
+        """
+
+        tree_root = self._tree.getroot()
+        el_fileGrp_list = tree_root.find(".//mets:fileSec", NS)
+
+        for el_fileGrp in el_fileGrp_list:
+            fileGrp_use = el_fileGrp.get('USE')
+
+            self._fileGrp_cache[fileGrp_use] = el_fileGrp
+            print("_fill_caches> file group added to the cache: %s" % fileGrp_use)
+
+            # Assign an empty dictionary that will hold the files of the added fileGrp
+            self._file_cache[fileGrp_use] = {}
+
+            for el_file in el_fileGrp:
+                file_id_ = el_file.get('ID')
+                self._file_cache[fileGrp_use].update({file_id : el_file})
+                print("_fill_caches> file added to the cache: %s" % file_id)
+
+        print("_fill_caches> total fileGrp cache elements: %s" % len(self._fileGrp_cache))
+
+    def _clear_caches(self):
+        """
+        Deallocates the caches
+        """
+
+        fileGrp_counter = 0
+
+        for key in list(self._fileGrp_cache):
+            del self._fileGrp_cache[key]
+            fileGrp_counter += 1
+
+        # print("_clear_caches> total cleared fileGrp cache elements: %d" % fileGrp_counter)
+
+        for key in list(self._file_cache):
+            for inner_key in list(self._file_cache[key]):
+                del self._file_cache[key][inner_key]
+            del self._file_cache[key]
 
     @property
     def unique_identifier(self):
@@ -127,6 +192,22 @@ class OcrdMets(OcrdXmlDocument):
 
         Equivalent to ``list(self.find_files(...))``
         """
+
+        # If only the fileGrp parameter has been passed
+        # Return a list with all files of that fileGrp from the cache
+        if self._cache_flag:
+            if 'fileGrp' in kwargs and 'ID' not in kwargs and 'pageId' not in kwargs and 'mimetype' not in kwargs and 'url' not in kwargs:
+                fileGrp = kwargs['fileGrp']
+                if fileGrp in self._file_cache:
+                    # print("fileGrp[%s] is in the cache!" % fileGrp)
+                    files = []
+                    for file in self._file_cache[fileGrp]:
+                        files.append(OcrdFile(self._file_cache[fileGrp][file], mets=self))
+                    return files
+                else:
+                    # print("fileGrp[%s] not in the cache!" % fileGrp)
+                    return []
+
         return list(self.find_files(*args, **kwargs))
 
     # pylint: disable=multiple-statements
@@ -183,6 +264,51 @@ class OcrdMets(OcrdXmlDocument):
             mimetype = re.compile(mimetype[REGEX_PREFIX_LEN:])
         if url and url.startswith(REGEX_PREFIX):
             url = re.compile(url[REGEX_PREFIX_LEN:])
+
+        
+        # If the cache is enabled, search inside
+        if self._cache_flag:
+            el_file = None
+
+            # If both ID and fileGrp has been passed as a parameter
+            if ID and fileGrp:
+                if fileGrp in self._file_cache:
+                    if ID in self._file_cache[fileGrp]:
+                        # print("_+_ID in cache![%s][%s]" % (ID, fileGrp))
+                        # print("1 find_files> Found %s in the cache." % self._file_cache[fileGrp])
+                        el_file = self._file_cache[fileGrp][ID]
+
+            # If only ID has been passed as a parameter
+            elif ID:
+                for fileGrp_str in self._file_cache:
+                    # print("_-_Checking ID[%s] inside [%s]" % (ID, fileGrp_str))
+                    if ID in self._file_cache[fileGrp_str]:
+                        # print("_-_ID in cache![%s]" % ID)
+                        # print("2 find_files> Found %s in the cache." % self._file_cache[fileGrp])
+                        el_file = self._file_cache[fileGrp_str][ID]
+
+            # If the file has been found in the cache
+            if el_file is not None:
+                # print("_-_el_file found ID[%s]" % el_file)
+                # TODO: This should be implemented in a more convinient way
+                # Why instantiating an OcrdFile then checking if the url is local?
+                # Couldn't we do that before instantiation of OcrdFile?
+                f = OcrdFile(el_file, mets=self)
+                if local_only and not is_local_filename(f.url):
+                    pass
+                else:
+                    yield f
+                    return
+            else:
+                # print("_-_el_file not found ID[%s]" % el_file)
+                # If there are no other searching parameters set, leave the function
+                if pageId is None and mimetype is None and url is None:
+                    return
+
+            # print("_-_find_files> ID [%s] not in the cache." % ID)
+
+        # Use the old routine if cache is not enabled
+        # Or parameters other than ID and fileGrp are passed
         for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
             if ID:
                 if isinstance(ID, str):
@@ -216,6 +342,7 @@ class OcrdMets(OcrdXmlDocument):
                     if not url.fullmatch(cand_url): continue
 
             f = OcrdFile(cand, mets=self)
+            # print("___Generating file with ID: %s" % f.ID)
 
             # If only local resources should be returned and f is not a file path: skip the file
             if local_only and not is_local_filename(f.url):
@@ -238,6 +365,13 @@ class OcrdMets(OcrdXmlDocument):
         if el_fileGrp is None:
             el_fileGrp = ET.SubElement(el_fileSec, TAG_METS_FILEGRP)
             el_fileGrp.set('USE', fileGrp)
+
+            # Add the fileGrp to both caches
+            if self._cache_flag:
+                self._fileGrp_cache[fileGrp] = el_fileGrp 
+                # Assign an empty dictionary that will hold the files of the added fileGrp
+                self._file_cache[fileGrp] = {}
+
         return el_fileGrp
 
     def rename_file_group(self, old, new):
@@ -248,6 +382,11 @@ class OcrdMets(OcrdXmlDocument):
         if el_fileGrp is None:
             raise FileNotFoundError("No such fileGrp '%s'" % old)
         el_fileGrp.set('USE', new)
+
+        # Rename the fileGrp in both caches
+        if self._cache_flag:
+            self._fileGrp_cache[new] = self._fileGrp_cache.pop(old)
+            self._file_cache[new] = copy.deepcopy(self._file_cache.pop(old))
 
     def remove_file_group(self, USE, recursive=False, force=False):
         """
@@ -285,6 +424,17 @@ class OcrdMets(OcrdXmlDocument):
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
                 self.remove_one_file(f.get('ID'))
+
+        # Remove the fileGrp from the caches
+        if self._cache_flag:
+            del self._fileGrp_cache[el_fileGrp.get('USE')]
+
+            # Note: Since the files inside the group are removed
+            # with the 'remove_one_file method' above, 
+            # we should not take care of that again.
+            # We just remove the fileGrp.
+            del self._file_cache[el_fileGrp.get('USE')]
+
         el_fileGrp.getparent().remove(el_fileGrp)
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
@@ -310,10 +460,25 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
-        el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
+
+        el_fileGrp = None
+
+        # If cache is enabled, check there
+        if self._cache_flag: 
+            if fileGrp in self._fileGrp_cache:
+                el_fileGrp = self._fileGrp_cache[fileGrp]
+
+        # cache is not enabled or fileGrp not in the cache
+        if el_fileGrp is None:
+            el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
+
+        # the fileGrp is not in the XML tree as well
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
-        mets_file = next(self.find_files(ID=ID), None)
+
+        # Since we are sure that fileGrp parameter is set,
+        # we could send that parameter to find_files for direct search
+        mets_file = next(self.find_files(ID=ID, fileGrp=fileGrp), None)
         if mets_file and not ignore:
             if not force:
                 raise Exception("File with ID='%s' already exists" % ID)
@@ -324,7 +489,13 @@ class OcrdMets(OcrdXmlDocument):
             mets_file.local_filename = local_filename
         else:
             kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v}
-            mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self, **kwargs)
+            el_mets_file = ET.SubElement(el_fileGrp, TAG_METS_FILE)
+            mets_file = OcrdFile(el_mets_file, mets=self, **kwargs)
+
+            # Add the file to the cache
+            if self._cache_flag:
+                # print("add_file> Adding to the cache.[%s]" % ID)
+                self._file_cache[fileGrp].update({ID: el_mets_file})
 
         return mets_file
 
@@ -376,6 +547,16 @@ class OcrdMets(OcrdXmlDocument):
             if not page_div.getchildren():
                 log.info("Delete empty page %s", page_div)
                 page_div.getparent().remove(page_div)
+
+        # Remove the file from the file cache
+        if self._cache_flag:
+            parent_use = ocrd_file._el.getparent().get('USE')
+            # Note: if the file is in the XML tree,
+            # it should alse be in the file cache.
+            # Anyway, we perform the checks, then remove
+            if parent_use in self._file_cache:
+                if ocrd_file.ID in self._file_cache[parent_use]:
+                    del self._file_cache[parent_use][ocrd_file.ID]
 
         # Delete the file reference
         # pylint: disable=protected-access
