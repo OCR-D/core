@@ -1,3 +1,4 @@
+import json
 from functools import lru_cache
 
 from beanie import PydanticObjectId
@@ -8,6 +9,7 @@ from ocrd.server.config import Config
 from ocrd.server.database import initiate_database
 from ocrd.server.models.ocrd_tool import OcrdTool
 from ocrd.server.models.job import StateEnum, JobInput, Job
+from ocrd_validators import ParameterValidator
 
 tags_metadata = [
     {
@@ -37,6 +39,11 @@ async def get_processor_info():
              summary='Submit a job to this processor.',
              response_model=Job)
 async def process(data: JobInput):
+    processor = get_processor(json.dumps(data.parameters))
+    processor.input_file_grp = data.input_file_grps
+    processor.output_file_grp = data.output_file_grps
+    # TODO: call run_api in the helpers.py
+
     job = Job(**data.dict(skip_defaults=True), state=StateEnum.queued)
     await job.insert()
     return job
@@ -64,7 +71,30 @@ async def startup():
 
 
 @lru_cache
-async def get_processor(parameter) -> Processor | None:
+def get_processor(parameter_str: str) -> Processor | None:
+    """
+    Call this function to get back an instance of a processor. The results are cached based on the parameters.
+    The parameters must be passed as a string because
+    `dict <https://docs.python.org/3/tutorial/datastructures.html#dictionaries>`_ is unhashable,
+    therefore cannot be cached.
+    Args:
+        parameter_str (string): a serialized version of a dictionary of parameters.
+
+    Returns:
+        When the server is started by the `ocrd server` command, the concrete class of the processor is unknown.
+        In this case, `None` is returned. Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
+    """
+    parameter = json.loads(parameter_str)
+
+    # Validate the parameter
+    parameter_validator = ParameterValidator(Config.ocrd_tool)
+    report = parameter_validator.validate(parameter)
+    if not report.is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=report.errors,
+        )
+
     if Config.processor_class:
         return Config.processor_class(workspace=None, parameter=parameter)
     return None
