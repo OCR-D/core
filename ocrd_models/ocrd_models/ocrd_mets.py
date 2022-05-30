@@ -94,9 +94,16 @@ class OcrdMets(OcrdXmlDocument):
 
         tree_root = self._tree.getroot()
         el_fileGrp_list = tree_root.find(".//mets:fileSec", NS)
+        if el_fileGrp_list is None or len(el_fileGrp_list) == 0:
+            return
 
         for el_fileGrp in el_fileGrp_list:
             fileGrp_use = el_fileGrp.get('USE')
+
+            # NOTE: For some reason the el_fileGrp_list contains None values
+            # when testing with the SBB0000F29300010000/data/mets.xml
+            if fileGrp_use is None:
+                continue
 
             self._fileGrp_cache[fileGrp_use] = el_fileGrp
             print("_fill_caches> file group added to the cache: %s" % fileGrp_use)
@@ -105,7 +112,7 @@ class OcrdMets(OcrdXmlDocument):
             self._file_cache[fileGrp_use] = {}
 
             for el_file in el_fileGrp:
-                file_id_ = el_file.get('ID')
+                file_id = el_file.get('ID')
                 self._file_cache[fileGrp_use].update({file_id : el_file})
                 print("_fill_caches> file added to the cache: %s" % file_id)
 
@@ -193,21 +200,94 @@ class OcrdMets(OcrdXmlDocument):
         Equivalent to ``list(self.find_files(...))``
         """
 
-        # If only the fileGrp parameter has been passed
-        # Return a list with all files of that fileGrp from the cache
+        # NOTE: This code gets complex with the REGEX.
+        # Having two separate funcitons: with REGEX and without REGEX would simplify things
         if self._cache_flag:
+            matches = []
+
+            # If only both the fileGrp and ID parameters have been passed
+            # Faster search in the cache
+            if 'ID' in kwargs and 'fileGrp' in kwargs and 'pageId' not in kwargs and 'mimetype' not in kwargs and 'url' not in kwargs:
+                fileGrp = kwargs['fileGrp']
+                fileID = kwargs['ID']
+
+                if fileID.startswith(REGEX_PREFIX):
+                    fileID = re.compile(fileID[REGEX_PREFIX_LEN:])
+                if fileGrp.startswith(REGEX_PREFIX):
+                    fileGrp = re.compile(fileGrp[REGEX_PREFIX_LEN:])
+
+                # Case where no regex pattern is given and
+                # exact match could be obtained
+                if (isinstance(fileID, str) and isinstance(fileGrp, str)):
+                    if fileGrp in self._file_cache:  
+                        if fileID in self._file_cache[fileGrp]:
+                            matches.append(OcrdFile(self._file_cache[fileGrp][fileID], mets=self))
+                elif isinstance(fileGrp, str):
+                    # fileGrp is str and fileID is regex
+                    if fileGrp in self._file_cache:
+                        for fileID_str in self._file_cache[fileGrp]:
+                            if fileID.fullmatch(fileID_str):
+                                matches.append(OcrdFile(self._file_cache[fileGrp_str][fileID_str], mets=self))
+
+                elif isinstance(fileID, str):
+                    # fileID is str and fileGrp is regex
+                    for fileGrp_str in self._file_cache:
+                        if fileGrp.fullmatch(fileGrp_str):
+                            if fileID in self._file_cache[fileGrp_str]:
+                                matches.append(OcrdFile(self._file_cache[fileGrp_str][fileID], mets=self))
+
+                else:
+                    # both are regex: this has a really bad performance since
+                    # we have to iterate all groups and all files to check for matches
+                    for fileGrp_str in self._file_cache:
+                        if fileGrp.fullmatch(fileGrp_str):
+                            for fileID_str in self._file_cache[fileGrp_str]:
+                                if fileID.fullmatch(fileID_str):
+                                    matches.append(OcrdFile(self._file_cache[fileGrp_str][fileID_str], mets=self))
+
+                return matches
+
+            # If only the fileGrp parameter has been passed
+            # Return a list with all files of that fileGrp from the cache
             if 'fileGrp' in kwargs and 'ID' not in kwargs and 'pageId' not in kwargs and 'mimetype' not in kwargs and 'url' not in kwargs:
                 fileGrp = kwargs['fileGrp']
-                if fileGrp in self._file_cache:
-                    # print("fileGrp[%s] is in the cache!" % fileGrp)
-                    files = []
-                    for file in self._file_cache[fileGrp]:
-                        files.append(OcrdFile(self._file_cache[fileGrp][file], mets=self))
-                    return files
-                else:
-                    # print("fileGrp[%s] not in the cache!" % fileGrp)
-                    return []
 
+                if fileGrp.startswith(REGEX_PREFIX):
+                    fileGrp = re.compile(fileGrp[REGEX_PREFIX_LEN:])
+
+                    for fileGrp_str in self._file_cache:
+                        print("Type(fileGrp): %s, Type(fileGrp_str): %s" % (type(fileGrp), type(fileGrp_str)))
+                        if fileGrp.fullmatch(fileGrp_str):
+                            for fileID in self._file_cache[fileGrp_str]:
+                                matches.append(OcrdFile(self._file_cache[fileGrp_str][fileID], mets=self))
+                else:
+                    if fileGrp in self._file_cache:
+                        for fileID in self._file_cache[fileGrp]:
+                            matches.append(OcrdFile(self._file_cache[fileGrp][fileID], mets=self))
+
+                return matches
+
+            # If only the ID parameter has been passed
+            # Return a list with that fileID inside or an empty list if not in cache
+            if 'ID' in kwargs and 'fileGrp' not in kwargs and 'pageId' not in kwargs and 'mimetype' not in kwargs and 'url' not in kwargs:
+                fileID = kwargs['ID']
+
+                if fileID.startswith(REGEX_PREFIX):
+                    fileID = re.compile(fileID[REGEX_PREFIX_LEN:])
+                    for fileGrp_str in self._file_cache:
+                        for fileID_str in self._file_cache[fileGrp_str]:
+                            if fileID.fullmatch(fileID_str):
+                                matches.append(OcrdFile(self._file_cache[fileGrp_str][fileID_str], mets=self))
+
+                else:
+                    for fileGrp_str in self._file_cache:
+                        if fileID in self._file_cache[fileGrp_str]:
+                            matches.append(OcrdFile(self._file_cache[fileGrp_str][fileID], mets=self))
+
+                return matches
+
+        # Run the old routine if cache is not enabled
+        # or search based on parameters other than fileGrp and fileID are used
         return list(self.find_files(*args, **kwargs))
 
     # pylint: disable=multiple-statements
@@ -265,50 +345,6 @@ class OcrdMets(OcrdXmlDocument):
         if url and url.startswith(REGEX_PREFIX):
             url = re.compile(url[REGEX_PREFIX_LEN:])
 
-        
-        # If the cache is enabled, search inside
-        if self._cache_flag:
-            el_file = None
-
-            # If both ID and fileGrp has been passed as a parameter
-            if ID and fileGrp:
-                if fileGrp in self._file_cache:
-                    if ID in self._file_cache[fileGrp]:
-                        # print("_+_ID in cache![%s][%s]" % (ID, fileGrp))
-                        # print("1 find_files> Found %s in the cache." % self._file_cache[fileGrp])
-                        el_file = self._file_cache[fileGrp][ID]
-
-            # If only ID has been passed as a parameter
-            elif ID:
-                for fileGrp_str in self._file_cache:
-                    # print("_-_Checking ID[%s] inside [%s]" % (ID, fileGrp_str))
-                    if ID in self._file_cache[fileGrp_str]:
-                        # print("_-_ID in cache![%s]" % ID)
-                        # print("2 find_files> Found %s in the cache." % self._file_cache[fileGrp])
-                        el_file = self._file_cache[fileGrp_str][ID]
-
-            # If the file has been found in the cache
-            if el_file is not None:
-                # print("_-_el_file found ID[%s]" % el_file)
-                # TODO: This should be implemented in a more convinient way
-                # Why instantiating an OcrdFile then checking if the url is local?
-                # Couldn't we do that before instantiation of OcrdFile?
-                f = OcrdFile(el_file, mets=self)
-                if local_only and not is_local_filename(f.url):
-                    pass
-                else:
-                    yield f
-                    return
-            else:
-                # print("_-_el_file not found ID[%s]" % el_file)
-                # If there are no other searching parameters set, leave the function
-                if pageId is None and mimetype is None and url is None:
-                    return
-
-            # print("_-_find_files> ID [%s] not in the cache." % ID)
-
-        # Use the old routine if cache is not enabled
-        # Or parameters other than ID and fileGrp are passed
         for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
             if ID:
                 if isinstance(ID, str):
@@ -342,7 +378,6 @@ class OcrdMets(OcrdXmlDocument):
                     if not url.fullmatch(cand_url): continue
 
             f = OcrdFile(cand, mets=self)
-            # print("___Generating file with ID: %s" % f.ID)
 
             # If only local resources should be returned and f is not a file path: skip the file
             if local_only and not is_local_filename(f.url):
@@ -386,7 +421,7 @@ class OcrdMets(OcrdXmlDocument):
         # Rename the fileGrp in both caches
         if self._cache_flag:
             self._fileGrp_cache[new] = self._fileGrp_cache.pop(old)
-            self._file_cache[new] = copy.deepcopy(self._file_cache.pop(old))
+            self._file_cache[new] = deepcopy(self._file_cache.pop(old))
 
     def remove_file_group(self, USE, recursive=False, force=False):
         """
