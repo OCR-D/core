@@ -227,7 +227,7 @@ class OcrdMets(OcrdXmlDocument):
                     if fileGrp in self._file_cache:
                         for fileID_str in self._file_cache[fileGrp]:
                             if fileID.fullmatch(fileID_str):
-                                matches.append(OcrdFile(self._file_cache[fileGrp_str][fileID_str], mets=self))
+                                matches.append(OcrdFile(self._file_cache[fileGrp][fileID_str], mets=self))
 
                 elif isinstance(fileID, str):
                     # fileID is str and fileGrp is regex
