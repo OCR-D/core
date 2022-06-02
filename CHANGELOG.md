@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * OCRD-ZIP: Drop `Ocrd-Manifestation-Depth` and disallow `fetch.txt`, OCR-D/spec#182
+  * Parameters can now be described with most JSON-Schema constructs, OCR-D/spec#206, #848
+
 ## [2.34.0] - 2022-05-20
 
 Added:
