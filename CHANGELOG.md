@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.35.0] - 2022-06-02
+
 Changed:
 
   * OCRD-ZIP: Drop `Ocrd-Manifestation-Depth` and disallow `fetch.txt`, OCR-D/spec#182
@@ -1487,6 +1489,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.35.0]: ../../compare/v2.35.0..v2.34.0
 [2.34.0]: ../../compare/v2.34.0..v2.33.0
 [2.33.0]: ../../compare/v2.33.0..v2.32.0
 [2.32.0]: ../../compare/v2.32.0..v2.31.0
