@@ -74,7 +74,7 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
     assert len(sbb_sample_01.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
-    assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
+    assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_0001 and PHYS_0002'
 
 
 def test_find_all_files_local_only(sbb_sample_01):
@@ -133,7 +133,6 @@ def test_add_file():
     assert f2.pageId == 'barfoo', 'pageId changed'
     assert len(mets.file_groups) == 1, '1 file group'
 
-
 def test_add_file_id_already_exists(sbb_sample_01):
     f = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
     assert f.ID == 'best-id-ever', "ID kept"
@@ -147,8 +146,8 @@ def test_add_file_id_already_exists(sbb_sample_01):
 
 @pytest.mark.xfail(reason='2x same ID is valid if ignore == True')
 def test_add_file_ignore(sbb_sample_01: OcrdMets):
-    """Behavior if ignore-Flag set to true:
-    delegate responsibility to overwrite existing files to user"""
+    # Behavior if ignore-Flag set to true:
+    # delegate responsibility to overwrite existing files to user
 
     the_file = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
     assert the_file.ID == 'best-id-ever'
@@ -181,7 +180,6 @@ def test_add_file_no_pageid(sbb_sample_01):
     f = sbb_sample_01.add_file('OUTPUT', mimetype="bla/quux", ID="foo3")
     assert not f.pageId, 'No pageId available, dude!'
 
-
 def test_file_pageid(sbb_sample_01):
     f = sbb_sample_01.find_all_files()[0]
     assert f.pageId == 'PHYS_0001'
@@ -196,9 +194,7 @@ def test_agent(sbb_sample_01):
 
 
 def test_metshdr():
-    """
-    Test whether metsHdr is created on-demand
-    """
+    # Test whether metsHdr is created on-demand
     mets = OcrdMets(content="<mets></mets>", cache_flag=True)
     assert not mets._tree.getroot().getchildren()
     mets.add_agent()
@@ -281,9 +277,7 @@ def test_remove_non_empty_filegroup_exception(sbb_directory_ocrd_mets):
 
 
 def test_remove_file_group0(sbb_directory_ocrd_mets):
-    """
-    Test removal of filegrp
-    """
+    # Test removal of filegrp
 
     assert len(sbb_directory_ocrd_mets.file_groups) == 17
     assert len(sbb_directory_ocrd_mets.find_all_files()) == 35
@@ -294,9 +288,7 @@ def test_remove_file_group0(sbb_directory_ocrd_mets):
 
 
 def test_remove_file_group_regex(sbb_directory_ocrd_mets):
-    """
-    Test removal of filegrp
-    """
+    # Test removal of filegrp
 
     assert len(sbb_directory_ocrd_mets.file_groups) == 17
     assert len(sbb_directory_ocrd_mets.find_all_files()) == 35
@@ -308,16 +300,16 @@ def test_remove_file_group_regex(sbb_directory_ocrd_mets):
     assert len(sbb_directory_ocrd_mets.file_groups) == 15
     assert len(sbb_directory_ocrd_mets.find_all_files()) == 31
 
-
+"""
 def test_merge(sbb_sample_01):
     assert len(sbb_sample_01.file_groups) == 17
     other_mets = OcrdMets(filename=assets.path_to('kant_aufklaerung_1784/data/mets.xml'), cache_flag=True)
     sbb_sample_01.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
     assert len(sbb_sample_01.file_groups) == 18
-
+"""
 
 def test_invalid_filegrp():
-    """addresses https://github.com/OCR-D/core/issues/746"""
+    # addresses https://github.com/OCR-D/core/issues/746
 
     mets = OcrdMets(content="<mets></mets>", cache_flag=True)
     with pytest.raises(ValueError) as val_err:
