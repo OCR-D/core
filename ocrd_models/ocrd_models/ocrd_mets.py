@@ -163,6 +163,7 @@ class OcrdMets(OcrdXmlDocument):
         """
 
         self._file_cache = None
+        self._page_cache = None
         self._fptr_cache = None
 
         """
