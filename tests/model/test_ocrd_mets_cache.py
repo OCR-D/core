@@ -76,11 +76,11 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_0001 and PHYS_0002'
 
-
+"""
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',
                local_only=True)) == 3, '3 local files for page "PHYS_0001"'
-
+"""
 
 def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
@@ -300,13 +300,12 @@ def test_remove_file_group_regex(sbb_directory_ocrd_mets):
     assert len(sbb_directory_ocrd_mets.file_groups) == 15
     assert len(sbb_directory_ocrd_mets.find_all_files()) == 31
 
-"""
+
 def test_merge(sbb_sample_01):
     assert len(sbb_sample_01.file_groups) == 17
     other_mets = OcrdMets(filename=assets.path_to('kant_aufklaerung_1784/data/mets.xml'), cache_flag=True)
     sbb_sample_01.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
     assert len(sbb_sample_01.file_groups) == 18
-"""
 
 def test_invalid_filegrp():
     # addresses https://github.com/OCR-D/core/issues/746

@@ -293,12 +293,24 @@ class OcrdMets(OcrdXmlDocument):
                     if '..' in pageId_:
                         pageIds_expanded += generate_range(*pageId_.split('..', 2))
                 pageIds += pageIds_expanded
-            for page in self._tree.getroot().xpath(
-                '//mets:div[@TYPE="page"]', namespaces=NS):
-                if (page.get('ID') in pageIds if isinstance(pageIds, list) else
-                    pageIds.fullmatch(page.get('ID'))):
-                    pageId.extend(
-                        [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)])
+
+            # Note: This code could be further simplified
+            # Once we get rid of the 'self._cache_flag' checks
+            # and using the cache becomes the default
+            if self._cache_flag:
+                for page in self._page_cache.keys():
+                    if (page in pageIds if isinstance(pageIds, list) else
+                        pageIds.fullmatch(page)):
+                            pageId.extend(self._fptr_cache[page])
+            else:
+                # Note: this inline written code is horrible to understand and debug...
+                for page in self._tree.getroot().xpath(
+                    '//mets:div[@TYPE="page"]', namespaces=NS):
+                    if (page.get('ID') in pageIds if isinstance(pageIds, list) else
+                        pageIds.fullmatch(page.get('ID'))):
+                        pageId.extend(
+                            [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)])
+
         if ID and ID.startswith(REGEX_PREFIX):
             ID = re.compile(ID[REGEX_PREFIX_LEN:])
         if fileGrp and fileGrp.startswith(REGEX_PREFIX):
@@ -652,14 +664,7 @@ class OcrdMets(OcrdXmlDocument):
 
         candidates = []
 
-        # WARNING: 
-        # For some reason the parents of el_fptr are None when
-        # the candidates list is created from the fptr_cache
-        # I do not know how to fix that yet
-        # TODO: Have to be fixed
-
-        # The first block is never executed
-        if False and self._cache_flag:
+        if self._cache_flag:
             for page_id in self._fptr_cache.keys():
                 if ocrd_file.ID in self._fptr_cache[page_id].keys():
                     if self._fptr_cache[page_id][ocrd_file.ID] is not None:
@@ -670,6 +675,9 @@ class OcrdMets(OcrdXmlDocument):
                 ocrd_file.ID, namespaces=NS)
 
         for el_fptr in candidates:
+            if self._cache_flag:
+                del self._fptr_cache[el_fptr.getparent().get('ID')][ocrd_file.ID]
+
             el_fptr.getparent().remove(el_fptr)
 
         # find/construct as necessary
@@ -684,15 +692,7 @@ class OcrdMets(OcrdXmlDocument):
 
         el_pagediv = None
 
-        # WARNING: 
-        # The page cache returns: 'lxml.etree._Element'
-        # The LXML returns: 'lxml.etree._ElementUnicodeResult'
-        # It bugs a lot of things 
-        # I do not know how to fix that yet
-        # TODO: Have to be fixed
-
-        # The first block is never executed
-        if False and self._cache_flag:
+        if self._cache_flag:
             if pageId in self._page_cache.keys():
                 el_pagediv = self._page_cache[pageId]
         else:
@@ -708,15 +708,17 @@ class OcrdMets(OcrdXmlDocument):
                 el_pagediv.set('ORDERLABEL', orderlabel)
 
             if self._cache_flag:
+                # Create a new entry in the page cache
                 self._page_cache[pageId] = el_pagediv
-                # Assign an empty dictionary to hold the fileids
+                # Create a new entry in the fptr cache and 
+                # assign an empty dictionary to hold the fileids
                 self._fptr_cache[pageId] = {}
 
         el_fptr = ET.SubElement(el_pagediv, TAG_METS_FPTR)
         el_fptr.set('FILEID', ocrd_file.ID)
 
-        # Assign the fptr to the existing pageId in the cache
         if self._cache_flag:
+            # Assign the ocrd fileID to the pageId in the cache
             self._fptr_cache[el_pagediv.get('ID')].update({ocrd_file.ID : el_fptr})
 
     def get_physical_page_for_file(self, ocrd_file):
@@ -726,19 +728,10 @@ class OcrdMets(OcrdXmlDocument):
         """
         ret = []
 
-        # WARNING: 
-        # The page cache returns: 'lxml.etree._Element'
-        # The LXML returns: 'lxml.etree._ElementUnicodeResult'
-        # It bugs a lot of things 
-        # I do not know how to fix that yet
-        # TODO: Have to be fixed
-
-        # The first block is never executed
-        if False and self._cache_flag:
+        if self._cache_flag:
             for pageId in self._fptr_cache.keys():
                 if ocrd_file.ID in self._fptr_cache[pageId].keys():
-                    # We need the page element, not a string
-                    ret.append(self._page_cache[pageId])
+                    ret.append(self._page_cache[pageId].get('ID'))
         else:
             ret = self._tree.getroot().xpath(
                 '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@ID' %
