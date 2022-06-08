@@ -46,30 +46,28 @@ def _build_mets(number_of_pages, force=False, cache_flag=False):
 
 def assert_len(expected_len, mets, kwargs):
     test_list = mets.find_all_files(**kwargs)
-    # print("kwargs: %s" % kwargs)
-    # print("expected_len= %s, assert_len= %s" %(expected_len, len(test_list)))
     assert expected_len == len(test_list)
 
 def benchmark_find_files(number_of_pages, mets):
     benchmark_find_files_filegrp(number_of_pages, mets)
     benchmark_find_files_fileid(number_of_pages, mets)
-    #benchmark_find_files_all(number_of_pages, mets)
+    benchmark_find_files_all(number_of_pages, mets)
 
 def benchmark_find_files_filegrp(number_of_pages, mets):
-		# Best case - first fileGrp
+	# Best case - first fileGrp
         assert_len((number_of_pages * REGIONS_PER_PAGE), mets, dict(fileGrp='SEG-REG'))
         # Worst case - does not exist
         assert_len(0, mets, dict(fileGrp='SEG-REG-NOTEXIST'))
 
 def benchmark_find_files_fileid(number_of_pages, mets):
-		# Best case - first file ID
+	# Best case - first file ID
         assert_len(1, mets, dict(ID='FULL_0001_TIF'))
         # Worst case - does not exist
         assert_len(0, mets, dict(ID='FULL_0001_TIF-NOTEXISTS'))
 
 # Get all files, i.e., pass an empty search parameter -> dict()
-#def benchmark_find_files_all(number_of_pages, mets):
-#        assert_len((number_of_pages * FILES_PER_PAGE), mets, dict())
+def benchmark_find_files_all(number_of_pages, mets):
+        assert_len((number_of_pages * FILES_PER_PAGE), mets, dict())
 
 
 # ----- METS files global variables ----- #
@@ -77,8 +75,9 @@ mets_5 = None
 mets_10 = None
 mets_20 = None
 mets_50 = None
+mets_200 = None
 
-# ----- Build mets files with 5-10-20-50 pages ----- #
+# ----- Build mets files with 5-10-20-50-200 pages ----- #
 @mark.benchmark(group="build")
 def test_b5(benchmark):
     @benchmark
@@ -106,8 +105,15 @@ def test_b50(benchmark):
     def result():
         global mets_50
         mets_50 = _build_mets(50, force=True)
+        
+@mark.benchmark(group="build")
+def test_b200(benchmark):
+    @benchmark
+    def result():
+        global mets_200
+        mets_200 = _build_mets(200, force=True)
 
-# ----- Search for files with 5-10-20-50 pages ----- #
+# ----- Search for files with 5-10-20-50-200 pages ----- #
 @mark.benchmark(group="search")
 def test_s5(benchmark):
     @benchmark
@@ -136,11 +142,18 @@ def test_s50(benchmark):
         global mets_50
         benchmark_find_files(50, mets_50)
 
+@mark.benchmark(group="search")
+def test_s200(benchmark):
+    @benchmark
+    def ret(): 
+        global mets_200
+        benchmark_find_files(200, mets_200)
+
 del mets_5
 del mets_10
 del mets_20
 del mets_50
-
+del mets_200
 
 
 # ----- METS files (cached) global variables ----- #
@@ -148,8 +161,9 @@ mets_c_5 = None
 mets_c_10 = None
 mets_c_20 = None
 mets_c_50 = None
+mets_c_200 = None
 
-# ----- Build mets files (cached) with 5-10-20-50 pages ----- #
+# ----- Build mets files (cached) with 5-10-20-50-200 pages ----- #
 @mark.benchmark(group="build")
 def test_b5_c(benchmark):
     @benchmark
@@ -177,8 +191,15 @@ def test_b50_c(benchmark):
     def result():
         global mets_c_50
         mets_c_50 = _build_mets(50, force=True, cache_flag=True)
+        
+@mark.benchmark(group="build")
+def test_b200_c(benchmark):
+    @benchmark
+    def result():
+        global mets_c_200
+        mets_c_200 = _build_mets(200, force=True, cache_flag=True)
 
-# ----- Search for files (cached) with 5-10-20-50 pages ----- #
+# ----- Search for files (cached) with 5-10-20-50-200 pages ----- #
 @mark.benchmark(group="search")
 def test_s5_c(benchmark):
     @benchmark
@@ -207,10 +228,18 @@ def test_s50_c(benchmark):
         global mets_c_50
         benchmark_find_files(50, mets_c_50)
 
+@mark.benchmark(group="search")
+def test_s200_c(benchmark):
+    @benchmark
+    def ret(): 
+        global mets_c_200
+        benchmark_find_files(200, mets_c_200)
+        
 del mets_c_5
 del mets_c_10
 del mets_c_20
 del mets_c_50
+del mets_c_200
 
 def manual_t():
     mets = _build_mets(2, cache_flag=False)

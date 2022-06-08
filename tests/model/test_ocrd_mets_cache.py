@@ -76,11 +76,11 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_0001 and PHYS_0002'
 
-"""
+
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',
                local_only=True)) == 3, '3 local files for page "PHYS_0001"'
-"""
+
 
 def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
