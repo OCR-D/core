@@ -105,13 +105,15 @@ def test_b50(benchmark):
     def result():
         global mets_50
         mets_50 = _build_mets(50, force=True)
-        
+  
+"""      
 @mark.benchmark(group="build")
 def test_b200(benchmark):
     @benchmark
     def result():
         global mets_200
         mets_200 = _build_mets(200, force=True)
+"""
 
 # ----- Search for files with 5-10-20-50-200 pages ----- #
 @mark.benchmark(group="search")
@@ -142,12 +144,14 @@ def test_s50(benchmark):
         global mets_50
         benchmark_find_files(50, mets_50)
 
+"""
 @mark.benchmark(group="search")
 def test_s200(benchmark):
     @benchmark
     def ret(): 
         global mets_200
         benchmark_find_files(200, mets_200)
+"""
 
 del mets_5
 del mets_10
@@ -191,13 +195,15 @@ def test_b50_c(benchmark):
     def result():
         global mets_c_50
         mets_c_50 = _build_mets(50, force=True, cache_flag=True)
-        
+       
+""" 
 @mark.benchmark(group="build")
 def test_b200_c(benchmark):
     @benchmark
     def result():
         global mets_c_200
         mets_c_200 = _build_mets(200, force=True, cache_flag=True)
+"""
 
 # ----- Search for files (cached) with 5-10-20-50-200 pages ----- #
 @mark.benchmark(group="search")
@@ -228,13 +234,15 @@ def test_s50_c(benchmark):
         global mets_c_50
         benchmark_find_files(50, mets_c_50)
 
+"""
 @mark.benchmark(group="search")
 def test_s200_c(benchmark):
     @benchmark
     def ret(): 
         global mets_c_200
         benchmark_find_files(200, mets_c_200)
-        
+"""
+     
 del mets_c_5
 del mets_c_10
 del mets_c_20
