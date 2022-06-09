@@ -183,7 +183,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         except KeyError:
             log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (Path(fname).suffix, fname))
 
-    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'page_id': page_id, 'force': force, 'ignore': ignore}
+    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
     log.debug("Adding '%s' (%s)", fname, kwargs)
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
