@@ -262,7 +262,7 @@ def rotate_image(image, angle, fill='background', transparency=False):
         # expose areas as transparent):
         image = image.copy()
         image.putalpha(255)
-    if fill == 'background':
+    if fill is None or fill in ['background', 'none']:
         background = ImageStat.Stat(image)
         if len(background.bands) > 1:
             background = background.median
