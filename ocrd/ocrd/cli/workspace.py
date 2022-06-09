@@ -306,7 +306,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         file_id_ = file_id or safe_filename(str(file_path))
 
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id_, 'page_id': page_id, 'fileGrp': file_grp}
+        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id_, 'page_id': page_id, 'file_grp': file_grp}
 
         # guess mime type
         if not file_dict['mimetype']:
@@ -350,7 +350,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                     destpath.write_bytes(srcpath.read_bytes())
 
         # Add to workspace (or not)
-        fileGrp = file_dict.pop('fileGrp')
+        fileGrp = file_dict.pop('file_grp')
         if dry_run:
             log.info('workspace.add_file(%s)' % file_dict)
         else:
@@ -596,8 +596,8 @@ def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype
         other_workspace,
         copy_files=copy_files,
         fileGrp_mapping=filegrp_mapping,
-        fileGrp=file_grp,
-        ID=file_id,
+        file_grp=file_grp,
+        file_id=file_id,
         page_id=page_id,
         mimetype=mimetype,
     )

@@ -95,6 +95,9 @@ class Workspace():
         self.mets = OcrdMets(filename=self.mets_target)
 
     @deprecated_alias(pageId="page_id")
+    @deprecated_alias(ID="file_id")
+    @deprecated_alias(fileGrp="file_grp")
+    @deprecated_alias(fileGrp_mapping="filegrp_mapping")
     def merge(self, other_workspace, copy_files=True, **kwargs):
         """
         Merge ``other_workspace`` into this one
@@ -118,6 +121,13 @@ class Workspace():
                     copyfileobj(fstream_in, fstream_out)
         if 'page_id' in kwargs:
             kwargs['pageId'] = kwargs.pop('page_id')
+        if 'file_id' in kwargs:
+            kwargs['ID'] = kwargs.pop('file_id')
+        if 'file_grp' in kwargs:
+            kwargs['fileGrp'] = kwargs.pop('file_grp')
+        if 'filegrp_mapping' in kwargs:
+            kwargs['fileGrp_mapping'] = kwargs.pop('filegrp_mapping')
+
         self.mets.merge(other_workspace.mets, after_add_cb=after_add_cb, **kwargs)
 
 
@@ -165,12 +175,12 @@ class Workspace():
             f.local_filename = f.url
             return f
 
-    def remove_file(self, ID, force=False, keep_file=False, page_recursive=False, page_same_group=False):
+    def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """
         Remove a METS `file` from the workspace.
 
         Arguments:
-            ID (string|:py:class:`ocrd_models.ocrd_file.OcrdFile`): `@ID` of the METS `file`
+            file_id (string|:py:class:`ocrd_models.ocrd_file.OcrdFile`): `@ID` of the METS `file`
                 to delete or the file itself
         Keyword Args:
             force (boolean): Continue removing even if file not found in METS
@@ -181,19 +191,19 @@ class Workspace():
                 Has no effect unless ``page_recursive`` is `True`.
         """
         log = getLogger('ocrd.workspace.remove_file')
-        log.debug('Deleting mets:file %s', ID)
+        log.debug('Deleting mets:file %s', file_id)
         if not force and self.overwrite_mode:
             force = True
-        if isinstance(ID, OcrdFile):
-            ID = ID.ID
+        if isinstance(file_id, OcrdFile):
+            file_id = file_id.ID
         try:
             try:
-                ocrd_file = next(self.mets.find_files(ID=ID))
+                ocrd_file = next(self.mets.find_files(ID=file_id))
             except StopIteration:
-                if ID.startswith(REGEX_PREFIX):
+                if file_id.startswith(REGEX_PREFIX):
                     # allow empty results if filter criteria involve a regex
                     return None
-                raise FileNotFoundError("File %s not found in METS" % ID)
+                raise FileNotFoundError("File %s not found in METS" % file_id)
             if page_recursive and ocrd_file.mimetype == MIMETYPE_PAGE:
                 with pushd_popd(self.directory):
                     ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
@@ -213,7 +223,7 @@ class Workspace():
                         log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
                         unlink(ocrd_file.local_filename)
             # Remove from METS only after the recursion of AlternativeImages
-            self.mets.remove_file(ID)
+            self.mets.remove_file(file_id)
             return ocrd_file
         except FileNotFoundError as e:
             if not force:
@@ -331,6 +341,7 @@ class Workspace():
                 Path(old).rmdir()
 
     @deprecated_alias(pageId="page_id")
+    @deprecated_alias(ID="file_id")
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
@@ -368,6 +379,9 @@ class Workspace():
 
             #  print(kwargs)
             kwargs["pageId"] = kwargs.pop("page_id")
+            if "file_id" in kwargs:
+                kwargs["ID"] = kwargs.pop("file_id")
+
             ret = self.mets.add_file(file_grp, **kwargs)
 
             if content is not None:
@@ -1002,7 +1016,7 @@ class Workspace():
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
             file_grp,
-            ID=file_id,
+            file_id=file_id,
             page_id=page_id,
             local_filename=file_path,
             mimetype=mimetype,
