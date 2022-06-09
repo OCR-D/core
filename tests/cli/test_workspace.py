@@ -51,7 +51,7 @@ class TestCli(TestCase):
             ws_api = self.resolver.workspace_from_nothing(directory=tempdir)
             ws_api.add_file(
                 file_grp,
-                ID=ID,
+                file_id=ID,
                 content=content,
                 page_id=page_id,
                 mimetype=mimetype,
