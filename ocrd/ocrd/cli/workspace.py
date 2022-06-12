@@ -392,11 +392,11 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     modified_mets = False
     ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
-    for f in workspace.mets.find_files(
-            ID=file_id,
-            fileGrp=file_grp,
+    for f in workspace.find_files(
+            file_id=file_id,
+            file_grp=file_grp,
             mimetype=mimetype,
-            pageId=page_id,
+            page_id=page_id,
         ):
         if download and not f.local_filename:
             workspace.download_file(f)
@@ -495,11 +495,11 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     with pushd_popd(workspace.directory):
-        for f in workspace.mets.find_files(
-            ID=file_id,
-            fileGrp=file_grp,
+        for f in workspace.find_files(
+            file_id=file_id,
+            file_grp=file_grp,
             mimetype=mimetype,
-            pageId=page_id,
+            page_id=page_id,
         ):
             try:
                 if not f.local_filename or not exists(f.local_filename):

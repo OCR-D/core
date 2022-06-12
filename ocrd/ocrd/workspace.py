@@ -1026,6 +1026,28 @@ class Workspace():
                  file_id, file_grp, out.local_filename)
         return file_path
 
+    def find_files(self, **kwargs):
+        """
+        Search ``mets:file`` entries in wrapped METS document and yield results.
+
+        Delegator to :py:func:`ocrd_models.ocrd_mets.OcrdMets.find_files`
+
+        Keyword Args:
+            **kwargs: See :py:func:`ocrd_models.ocrd_mets.OcrdMets.find_files`
+        Returns:
+            Generator which yields :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
+        """
+        log = getLogger('ocrd.workspace.find_files')
+        log.debug('find files in mets. kwargs=%s' % kwargs)
+        if "page_id" in kwargs:
+            kwargs["pageId"] = kwargs.pop("page_id")
+        if "file_id" in kwargs:
+            kwargs["ID"] = kwargs.pop("file_id")
+        if "file_grp" in kwargs:
+            kwargs["fileGrp"] = kwargs.pop("file_grp")
+        with pushd_popd(self.directory):
+            return self.mets.find_files(**kwargs)
+
 def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwargs):
     segment_coords = parent_coords.copy()
     # get polygon outline of segment relative to parent image:
