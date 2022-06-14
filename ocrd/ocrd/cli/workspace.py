@@ -372,8 +372,11 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         type=click.Choice([
             'url',
             'mimetype',
+            'page_id',
             'pageId',
+            'file_id',
             'ID',
+            'file_grp',
             'fileGrp',
             'basename',
             'basename_without_extension',
@@ -389,6 +392,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     (If any ``FILTER`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
+    snake_to_camel = {"file_id": "ID", "page_id": "pageId", "file_grp": "fileGrp"}
+    output_field = [x if x not in snake_to_camel else snake_to_camel[x] for x in output_field]
     modified_mets = False
     ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
