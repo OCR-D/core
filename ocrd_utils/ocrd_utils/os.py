@@ -142,7 +142,8 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
                    # code and data; `is_resource()` only singles out
                    # files over directories; but we want data files only
                    # todo: more code and cache exclusion patterns!
-                   ['*.py', '*.py[cod]', '*~', 'ocrd-tool.json']):
+                   ['*.py', '*.py[cod]', '*~', 'ocrd-tool.json', 
+                    'environment.pickle', 'resource_list.yml', 'lib.bash']):
                 continue
             candidates.append(resource)
     # recurse once
