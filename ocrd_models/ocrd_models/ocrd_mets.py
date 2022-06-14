@@ -167,7 +167,7 @@ class OcrdMets(OcrdXmlDocument):
                 pageIds_expanded = []
                 for pageId_ in pageIds:
                     if '..' in pageId_:
-                        pageIds_expanded += generate_range(*pageId_.split('..', 2))
+                        pageIds_expanded += generate_range(*pageId_.split('..', 1))
                 pageIds += pageIds_expanded
             for page in self._tree.getroot().xpath(
                 '//mets:div[@TYPE="page"]', namespaces=NS):
