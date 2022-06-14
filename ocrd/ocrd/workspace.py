@@ -1026,7 +1026,7 @@ class Workspace():
                  file_id, file_grp, out.local_filename)
         return file_path
 
-    def find_files(self, **kwargs):
+    def find_files(self, *args, **kwargs):
         """
         Search ``mets:file`` entries in wrapped METS document and yield results.
 
@@ -1046,7 +1046,7 @@ class Workspace():
         if "file_grp" in kwargs:
             kwargs["fileGrp"] = kwargs.pop("file_grp")
         with pushd_popd(self.directory):
-            return self.mets.find_files(**kwargs)
+            return self.mets.find_files(*args, **kwargs)
 
 def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwargs):
     segment_coords = parent_coords.copy()
