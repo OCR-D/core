@@ -393,7 +393,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
      will be interpreted as a regular expression.)
     """
     snake_to_camel = {"file_id": "ID", "page_id": "pageId", "file_grp": "fileGrp"}
-    output_field = [x if x not in snake_to_camel else snake_to_camel[x] for x in output_field]
+    output_field = [snake_to_camel.get(x, x) for x in output_field]
     modified_mets = False
     ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
