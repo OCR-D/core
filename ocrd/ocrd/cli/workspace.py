@@ -291,7 +291,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 file_paths += [Path(x) for x in expanded]
 
     for i, file_path in enumerate(file_paths):
-        log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
+        log.info("[%4d/%d] %s" % (i + 1, len(file_paths), file_path))
 
         # match regex
         m = pat.match(str(file_path))

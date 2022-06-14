@@ -5,10 +5,29 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.35.0] - 2022-06-02
+
+Changed:
+
+  * OCRD-ZIP: Drop `Ocrd-Manifestation-Depth` and disallow `fetch.txt`, OCR-D/spec#182
+  * Parameters can now be described with most JSON-Schema constructs, OCR-D/spec#206, #848
+
+## [2.34.0] - 2022-05-20
+
+Added:
+
+  * `ocrd log` now accepts `-` argument to read messages from STDIN, #852, #870
+
 Changed:
 
   * `ocrd_utils.safe_filename`: replace with `_` instead of `.` and retain pre-existing `_`, #858, #859
   * `OcrdMets.find_files`: allow pageId regex, precompile all regexes, #855, #856
+
+Fixed:
+
+  * `ocrd resmgr list-available`: handle processors not in resource list gracefully, #854, #865
+  * `ocrd resmgr`: do not try to parse strings as dates, #867, #869
+  * `ocrd workspace bulk-add`: use 1-based counter, #864
 
 ## [2.33.0] - 2022-05-03
 
@@ -1470,6 +1489,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.35.0]: ../../compare/v2.35.0..v2.34.0
+[2.34.0]: ../../compare/v2.34.0..v2.33.0
 [2.33.0]: ../../compare/v2.33.0..v2.32.0
 [2.32.0]: ../../compare/v2.32.0..v2.31.0
 [2.31.0]: ../../compare/v2.31.0..v2.30.0

@@ -41,13 +41,13 @@ properties:
             type: array
             items:
               type: string
-              pattern: '^OCR-D-[A-Z0-9-]+$'
+              # pattern: '^OCR-D-[A-Z0-9-]+$'
           output_file_grp:
             description: Output fileGrp@USE this tool produces by default
             type: array
             items:
               type: string
-              pattern: '^OCR-D-[A-Z0-9-]+$'
+              # pattern: '^OCR-D-[A-Z0-9-]+$'
           parameters:
             description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
             type: object
@@ -73,6 +73,30 @@ properties:
                     description: Subtype, such as `float` for type `number` or `uri` for type `string`.
                   description:
                     description: Concise description of syntax and semantics of this parameter
+                  items:
+                    type: object
+                    description: describe the items of an array further
+                  minimum:
+                    type: number
+                    description: Minimum value for number parameters, including the minimum
+                  maximum:
+                    type: number
+                    description: Maximum value for number parameters, including the maximum
+                  exclusiveMinimum:
+                    type: number
+                    description: Minimum value for number parameters, excluding the minimum
+                  exclusiveMaximum:
+                    type: number
+                    description: Maximum value for number parameters, excluding the maximum
+                  multipleOf:
+                    type: number
+                    description: For number values, those values must be multiple of this number
+                  properties:
+                    type: object
+                    description: Describe the properties of an object value
+                  additionalProperties:
+                    type: boolean
+                    description: Whether an object value may contain properties not explicitly defined
                   required:
                     type: boolean
                     description: Whether this parameter is required
