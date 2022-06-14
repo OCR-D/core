@@ -496,7 +496,7 @@ class Workspace():
             page (:py:class:`ocrd_models.ocrd_page.PageType`): a PAGE `PageType` object
             page_id (string): its `@ID` in the METS physical `structMap`
         Keyword Args:
-            fill (string): a `PIL` color specifier
+            fill (string): a `PIL` color specifier, or `background` or `none`
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of `@comments` classes
             feature_filter (string): a comma-separated list of `@comments` classes
@@ -534,6 +534,8 @@ class Workspace():
         \b
         - if `"background"` (the default),
           then fill with the median color of the image;
+        - else if `"none"`, then avoid masking polygons where possible
+          (i.e. when cropping) or revert to the default (i.e. when rotating)
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
 
         Moreover, if ``transparency`` is true, and unless the image already
@@ -733,7 +735,7 @@ class Workspace():
                - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all operations that lead up to this result, and
         Keyword Args:
-            fill (string): a `PIL` color specifier
+            fill (string): a `PIL` color specifier, or `background` or `none`
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of ``@comments`` classes
             feature_filter (string): a comma-separated list of ``@comments`` classes
@@ -762,6 +764,8 @@ class Workspace():
         \b
         - if `"background"` (the default),
           then fill with the median color of the image;
+        - else if `"none"`, then avoid masking polygons where possible
+          (i.e. when cropping) or revert to the default (i.e. when rotating)
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
 
         Moreover, if `transparency` is true, and unless the image already
