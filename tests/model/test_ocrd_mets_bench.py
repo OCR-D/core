@@ -11,6 +11,7 @@ from ocrd_models import OcrdMets
 
 import pprint
 
+
 # LOG = getLogger('ocrd.benchmark.mets')
 
 GRPS_REG = ['SEG-REG', 'SEG-REPAIR', 'SEG-REG-DESKEW', 'SEG-REG-DESKEW-CLIP', 'SEG-LINE', 'SEG-REPAIR-LINE', 'SEG-LINE-RESEG-DEWARP']
