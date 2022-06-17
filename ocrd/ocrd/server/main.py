@@ -4,7 +4,8 @@ from functools import lru_cache
 from beanie import PydanticObjectId
 from fastapi import FastAPI, APIRouter, status, HTTPException, BackgroundTasks
 
-from ocrd import Processor, Resolver, run_cli_from_api, run_processor_from_api
+from ocrd import Processor, Resolver
+from ocrd.processor.helpers import run_processor_from_api, run_cli_from_api
 from ocrd.server.config import Config
 from ocrd.server.database import initiate_database
 from ocrd.server.models.job import StateEnum, JobInput, Job

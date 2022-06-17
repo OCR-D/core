@@ -6,21 +6,20 @@ __all__ = [
     'Processor',
     'generate_processor_help',
     'run_cli',
-    'run_processor',
-    'run_cli_from_api',
-    'run_processor_from_api'
+    'run_processor'
 ]
 
-from os.path import exists
-from shutil import copyfileobj
+import io
 import json
 import os
-from os import getcwd
-from pathlib import Path
 import sys
 import tarfile
-import io
+from os import getcwd
+from os.path import exists
+from pathlib import Path
+from shutil import copyfileobj
 
+from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
@@ -32,11 +31,9 @@ from ocrd_utils import (
     get_processor_resource_types
 )
 from ocrd_validators import ParameterValidator
-from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
-
 # XXX imports must remain for backwards-compatibilty
-from .helpers import run_cli, run_processor, generate_processor_help, run_cli_from_api, \
-    run_processor_from_api  # pylint: disable=unused-import
+from .helpers import run_cli, run_processor, generate_processor_help  # pylint: disable=unused-import
+
 
 class Processor():
     """

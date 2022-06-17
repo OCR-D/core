@@ -9,8 +9,6 @@ from subprocess import run, PIPE
 from beanie import PydanticObjectId
 from click import wrap_text
 
-from ocrd import Workspace, Processor
-from ocrd.server.models.job import Job, StateEnum
 from ocrd_utils import getLogger
 
 __all__ = [
@@ -174,7 +172,7 @@ def run_cli(
     return result.returncode
 
 
-async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace: Workspace, page_id: str,
+async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace, page_id: str,
                            input_file_grp: str, output_file_grp: str, parameter: dict):
     # Execute the processor
     return_code = run_cli(executable, workspace=workspace, page_id=page_id, input_file_grp=input_file_grp,
@@ -185,6 +183,7 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace:
     log.debug('Finish processing')
 
     # Save the job status to the database
+    from ocrd.server.models.job import Job, StateEnum
     job = await Job.get(job_id)
     if return_code != 0:
         job.state = StateEnum.failed
@@ -193,9 +192,9 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace:
     await job.save()
 
 
-async def run_processor_from_api(job_id: PydanticObjectId, processor: Processor, workspace: Workspace, page_id: str,
+async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace, page_id: str,
                                  input_file_grp: str, output_file_grp: str):
-    # Setup the log
+    # Set up the log
     log = getLogger('ocrd.processor.helpers.run_processor')
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
@@ -225,6 +224,7 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor: Processor,
             page_id or ''
         ))
 
+    from ocrd.server.models.job import Job, StateEnum
     job = await Job.get(job_id)
     if is_success:
         workspace.mets.add_agent(
