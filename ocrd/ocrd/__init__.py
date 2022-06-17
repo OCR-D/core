@@ -14,7 +14,7 @@ Related (and dependent) packages:
 
 """
 
-from ocrd.processor.base import run_processor, run_cli, Processor
+from ocrd.processor.base import run_processor, run_cli, Processor, run_cli_from_api, run_processor_from_api
 from ocrd_models import OcrdMets, OcrdExif, OcrdFile, OcrdAgent
 from ocrd.resolver import Resolver
 from ocrd_validators import *

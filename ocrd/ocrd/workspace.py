@@ -38,6 +38,7 @@ from ocrd_utils import (
     MIMETYPE_PAGE,
     REGEX_PREFIX
 )
+from ocrd_utils.image import scale_coordinates
 
 from .workspace_backup import WorkspaceBackupManager
 

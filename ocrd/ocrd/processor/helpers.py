@@ -6,14 +6,21 @@ import json
 import inspect
 from subprocess import run, PIPE
 
+from beanie import PydanticObjectId
 from click import wrap_text
+
+from ocrd import Workspace, Processor
+from ocrd.server.models.job import Job, StateEnum
 from ocrd_utils import getLogger
 
 __all__ = [
     'generate_processor_help',
     'run_cli',
-    'run_processor'
+    'run_processor',
+    'run_cli_from_api',
+    'run_processor_from_api'
 ]
+
 
 def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
     if workspace is None:
@@ -24,6 +31,7 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
         workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir)
     return workspace
 
+
 def run_processor(
         processorClass,
         ocrd_tool=None,
@@ -31,7 +39,7 @@ def run_processor(
         resolver=None,
         workspace=None,
         page_id=None,
-        log_level=None,         # TODO actually use this!
+        log_level=None,  # TODO actually use this!
         input_file_grp=None,
         output_file_grp=None,
         show_resource=None,
@@ -39,7 +47,7 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
-): # pylint: disable=too-many-locals
+):  # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
 
@@ -88,15 +96,16 @@ def run_processor(
     processor.process()
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
-    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
-        ocrd_tool['executable'],
-        t1_wall,
-        t1_cpu,
-        input_file_grp or '',
-        output_file_grp or '',
-        json.dumps(parameter) or '',
-        page_id or ''
-    ))
+    logProfile.info(
+        "Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
+            ocrd_tool['executable'],
+            t1_wall,
+            t1_cpu,
+            input_file_grp or '',
+            output_file_grp or '',
+            json.dumps(parameter) or '',
+            page_id or ''
+        ))
     workspace.mets.add_agent(
         name=name,
         _type='OTHER',
@@ -110,6 +119,7 @@ def run_processor(
     )
     workspace.save_mets()
     return processor
+
 
 def run_cli(
         executable,
@@ -163,6 +173,80 @@ def run_cli(
     result = run(args, check=False)
     return result.returncode
 
+
+async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace: Workspace, page_id: str,
+                           input_file_grp: str, output_file_grp: str, parameter: dict):
+    # Execute the processor
+    return_code = run_cli(executable, workspace=workspace, page_id=page_id, input_file_grp=input_file_grp,
+                          output_file_grp=output_file_grp, parameter=json.dumps(parameter))
+    workspace.save_mets()
+
+    log = getLogger('ocrd.processor.helpers.run_cli')
+    log.debug('Finish processing')
+
+    # Save the job status to the database
+    job = await Job.get(job_id)
+    if return_code != 0:
+        job.state = StateEnum.failed
+    else:
+        job.state = StateEnum.success
+    await job.save()
+
+
+async def run_processor_from_api(job_id: PydanticObjectId, processor: Processor, workspace: Workspace, page_id: str,
+                                 input_file_grp: str, output_file_grp: str):
+    # Setup the log
+    log = getLogger('ocrd.processor.helpers.run_processor')
+    ocrd_tool = processor.ocrd_tool
+    name = '%s v%s' % (ocrd_tool['executable'], processor.version)
+    otherrole = ocrd_tool['steps'][0]
+    logProfile = getLogger('ocrd.process.profile')
+    log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
+    t0_wall = perf_counter()
+    t0_cpu = process_time()
+
+    # Run the processor
+    is_success = True
+    try:
+        processor.process()
+    except Exception:
+        is_success = False
+
+    t1_wall = perf_counter() - t0_wall
+    t1_cpu = process_time() - t0_cpu
+    logProfile.info(
+        "Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
+            ocrd_tool['executable'],
+            t1_wall,
+            t1_cpu,
+            input_file_grp or '',
+            output_file_grp or '',
+            json.dumps(processor.parameter) or '',
+            page_id or ''
+        ))
+
+    job = await Job.get(job_id)
+    if is_success:
+        workspace.mets.add_agent(
+            name=name,
+            _type='OTHER',
+            othertype='SOFTWARE',
+            role='OTHER',
+            otherrole=otherrole,
+            notes=[({'option': 'input-file-grp'}, input_file_grp or ''),
+                   ({'option': 'output-file-grp'}, output_file_grp or ''),
+                   ({'option': 'parameter'}, json.dumps(processor.parameter or '')),
+                   ({'option': 'page-id'}, page_id or '')]
+        )
+        workspace.save_mets()
+
+        # Save the job status to the database
+        job.state = StateEnum.success
+    else:
+        job.state = StateEnum.failed
+    await job.save()
+
+
 def generate_processor_help(ocrd_tool, processor_instance=None):
     """Generate a string describing the full CLI of this processor including params.
     
@@ -176,9 +260,10 @@ def generate_processor_help(ocrd_tool, processor_instance=None):
         parameter_help = '  NONE\n'
     else:
         def wrap(s):
-            return wrap_text(s, initial_indent=' '*3,
-                             subsequent_indent=' '*4,
+            return wrap_text(s, initial_indent=' ' * 3,
+                             subsequent_indent=' ' * 4,
                              width=72, preserve_paragraphs=True)
+
         for param_name, param in ocrd_tool['parameters'].items():
             parameter_help += wrap('"%s" [%s%s]' % (
                 param_name,
@@ -240,10 +325,10 @@ Default Wiring:
   %s -> %s
 
 ''' % (
-    ocrd_tool['executable'],
-    ocrd_tool['description'],
-    doc_help,
-    parameter_help,
-    ocrd_tool.get('input_file_grp', 'NONE'),
-    ocrd_tool.get('output_file_grp', 'NONE')
-)
+        ocrd_tool['executable'],
+        ocrd_tool['description'],
+        doc_help,
+        parameter_help,
+        ocrd_tool.get('input_file_grp', 'NONE'),
+        ocrd_tool.get('output_file_grp', 'NONE')
+    )

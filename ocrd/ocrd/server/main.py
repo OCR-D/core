@@ -2,13 +2,13 @@ import json
 from functools import lru_cache
 
 from beanie import PydanticObjectId
-from fastapi import FastAPI, APIRouter, status, HTTPException
+from fastapi import FastAPI, APIRouter, status, HTTPException, BackgroundTasks
 
-from ocrd import Processor
+from ocrd import Processor, Resolver, run_cli_from_api, run_processor_from_api
 from ocrd.server.config import Config
 from ocrd.server.database import initiate_database
-from ocrd.server.models.ocrd_tool import OcrdTool
 from ocrd.server.models.job import StateEnum, JobInput, Job
+from ocrd.server.models.ocrd_tool import OcrdTool
 from ocrd_validators import ParameterValidator
 
 tags_metadata = [
@@ -35,17 +35,48 @@ async def get_processor_info():
     return Config.ocrd_tool
 
 
-@router.post('/', tags=['Processing'], status_code=status.HTTP_200_OK,
+@router.post('/', tags=['Processing'], status_code=status.HTTP_202_ACCEPTED,
              summary='Submit a job to this processor.',
              response_model=Job)
-async def process(data: JobInput):
-    processor = get_processor(json.dumps(data.parameters))
-    processor.input_file_grp = data.input_file_grps
-    processor.output_file_grp = data.output_file_grps
-    # TODO: call run_api in the helpers.py
-
+async def process(data: JobInput, background_tasks: BackgroundTasks):
     job = Job(**data.dict(skip_defaults=True), state=StateEnum.queued)
     await job.insert()
+
+    # Build the workspace
+    resolver = Resolver()
+    workspace = resolver.workspace_from_url(data.path)
+
+    # Get the processor, if possible
+    processor = get_processor(json.dumps(data.parameters))
+
+    if processor:
+        processor.input_file_grp = data.input_file_grps
+        processor.output_file_grp = data.output_file_grps
+        processor.page_id = data.page_id
+
+        # Run the processor in the background
+        background_tasks.add_task(
+            run_processor_from_api,
+            job_id=job.id,
+            processor=processor,
+            workspace=workspace,
+            page_id=data.page_id,
+            input_file_grp=data.input_file_grps,
+            output_file_grp=data.output_file_grps,
+        )
+    else:
+        # Run the CLI in the background
+        background_tasks.add_task(
+            run_cli_from_api,
+            job_id=job.id,
+            executable=Config.title,
+            workspace=workspace,
+            page_id=data.page_id,
+            input_file_grp=data.input_file_grps,
+            output_file_grp=data.output_file_grps,
+            parameter=data.parameters
+        )
+
     return job
 
 
