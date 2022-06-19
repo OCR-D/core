@@ -621,5 +621,31 @@ def test_merge(tmp_path):
     assert exists(join(dst_path1, 'OCR-D-IMG/FILE_0001_IMAGE.tif'))
 
 
+def test_merge_with_camelcase_args(plain_workspace, tmp_path):
+    # arrange
+    page_id1, file_id1, file_grp1 = 'page1', 'ID1', 'GRP1'
+    plain_workspace.add_file(file_grp1, file_id='ID1', mimetype='image/tiff', page_id='page1')
+
+    dst_path2 = tmp_path / 'foo'
+    resolver = Resolver()
+    ws2 = resolver.workspace_from_nothing(directory=dst_path2)
+    page_id2, file_id2, file_grp2 = 'page2', 'ID2', 'GRP2'
+    ws2.add_file('GRP2', file_id=file_id2, mimetype='image/tiff', page_id=page_id2)
+    ws2.add_file('GRP2', file_id='ID2-2', mimetype='image/tiff', page_id='page3')
+
+    # act
+    plain_workspace.merge(ws2, copy_files=False, page_id=page_id2, file_id=file_id2,
+                          file_grp=file_grp2, filegrp_mapping={file_grp2: file_grp1})
+
+    # assert:
+    files = list(plain_workspace.find_files())
+    assert len(files) == 2
+
+    for f in files:
+        assert f.fileGrp == file_grp1
+        assert f.pageId in [page_id1, page_id2]
+        assert f.ID in [file_id1, file_id2]
+
+
 if __name__ == '__main__':
     main(__file__)

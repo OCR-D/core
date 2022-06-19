@@ -255,7 +255,6 @@ class TestCli(TestCase):
             f = ws.mets.find_all_files()[0]
             self.assertEqual(f.url, 'test.tif')
 
-
     def test_find_all_files(self):
         with TemporaryDirectory() as tempdir:
             wsdir = join(tempdir, 'ws')
@@ -264,6 +263,18 @@ class TestCli(TestCase):
                 result = self.runner.invoke(workspace_cli, ['find', '-G', 'OCR-D-IMG-BIN', '-k', 'fileGrp'])
                 self.assertEqual(result.output, 'OCR-D-IMG-BIN\nOCR-D-IMG-BIN\n')
                 self.assertEqual(result.exit_code, 0)
+
+    def test_find_all_files_camelcase_outputfield(self):
+        with TemporaryDirectory() as tempdir:
+            wsdir = join(tempdir, 'ws')
+            copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
+            with pushd_popd(wsdir):
+                result = self.runner.invoke(workspace_cli,
+                                            ['find', '-G', 'OCR-D-IMG-BIN', '-k',
+                                             'file_grp', '-k', 'file_id', '-k', 'page_id'])
+                self.assertEqual(result.exit_code, 0)
+                self.assertEqual(result.output, 'OCR-D-IMG-BIN\tFILE_0001_IMAGE_BIN\tPHYS_0001\n'
+                                                'OCR-D-IMG-BIN\tFILE_0002_IMAGE_BIN\tPHYS_0002\n')
 
     def test_prune_files(self):
         with TemporaryDirectory() as tempdir:
