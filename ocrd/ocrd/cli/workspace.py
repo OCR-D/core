@@ -183,8 +183,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         except KeyError:
             log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (Path(fname).suffix, fname))
 
-    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
-    log.debug("Adding '%s' (%s)", fname, kwargs)
+    log.debug("Adding '%s'", fname)
+    local_filename = None
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
             if not isabs(fname) and exists(join(ctx.directory, fname)):
@@ -202,12 +202,11 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
             sys.exit(1)
         if fname.startswith(ctx.directory):
             fname = relpath(fname, ctx.directory)
-        kwargs['local_filename'] = fname
+        local_filename = fname
 
-    kwargs['url'] = fname
     if not page_id:
         log.warning("You did not provide '--page-id/-g', so the file you added is not linked to a specific page.")
-    workspace.mets.add_file(**kwargs)
+    workspace.add_file(file_grp, file_id=file_id, mimetype=mimetype, page_id=page_id, force=force, ignore=ignore, local_filename=local_filename, url=fname)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------

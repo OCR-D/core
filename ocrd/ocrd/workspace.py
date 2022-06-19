@@ -363,13 +363,13 @@ class Workspace():
             content is not None)
         if 'page_id' not in kwargs:
             raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
-        if content is not None and 'local_filename' not in kwargs:
+        if content is not None and not kwargs.get('local_filename'):
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
             kwargs['force'] = True
 
         with pushd_popd(self.directory):
-            if 'local_filename' in kwargs:
+            if kwargs.get('local_filename'):
                 # If the local filename has folder components, create those folders
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
                 if local_filename_dir != kwargs['local_filename'] and not Path(local_filename_dir).is_dir():
