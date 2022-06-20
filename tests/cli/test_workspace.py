@@ -264,7 +264,7 @@ class TestCli(TestCase):
                 self.assertEqual(result.output, 'OCR-D-IMG-BIN\nOCR-D-IMG-BIN\n')
                 self.assertEqual(result.exit_code, 0)
 
-    def test_find_all_files_camelcase_outputfield(self):
+    def test_find_all_files_outputfield(self):
         with TemporaryDirectory() as tempdir:
             wsdir = join(tempdir, 'ws')
             copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)

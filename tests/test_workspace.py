@@ -621,7 +621,7 @@ def test_merge(tmp_path):
     assert exists(join(dst_path1, 'OCR-D-IMG/FILE_0001_IMAGE.tif'))
 
 
-def test_merge_with_camelcase_args(plain_workspace, tmp_path):
+def test_merge_with_filter(plain_workspace, tmp_path):
     # arrange
     page_id1, file_id1, file_grp1 = 'page1', 'ID1', 'GRP1'
     plain_workspace.add_file(file_grp1, file_id='ID1', mimetype='image/tiff', page_id='page1')
