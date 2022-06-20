@@ -206,9 +206,11 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
 
     # Run the processor
     is_success = True
+    processor.workspace = workspace
     try:
         processor.process()
-    except Exception:
+    except Exception as e:
+        log.exception(e)
         is_success = False
 
     t1_wall = perf_counter() - t0_wall
