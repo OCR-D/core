@@ -1,6 +1,7 @@
 """
 Helper methods for running and documenting processors
 """
+import os
 from time import perf_counter, process_time
 import json
 import inspect
@@ -204,14 +205,23 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
     t0_wall = perf_counter()
     t0_cpu = process_time()
 
-    # Run the processor
-    is_success = True
+    # Save the current working directory
+    old_cwd = os.getcwd()
+
     processor.workspace = workspace
+
+    # Move inside the workspace (so that files in the METS can be found)
+    os.chdir(workspace.directory)
+
+    is_success = True
     try:
         processor.process()
     except Exception as e:
         log.exception(e)
         is_success = False
+    finally:
+        # Move back to the old directory
+        os.chdir(old_cwd)
 
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
