@@ -1,10 +1,13 @@
 """
 Constants for ocrd_utils.
 """
-from pkg_resources import get_distribution
 from re import compile as regex_compile
 from os import environ
 from os.path import join, expanduser
+try:
+    from importlib.metadata import version
+except ImportError:
+    from importlib_metadata import version
 
 __all__ = [
     'EXT_TO_MIME',
@@ -22,7 +25,7 @@ __all__ = [
     'XDG_DATA_HOME',
 ]
 
-VERSION = get_distribution('ocrd_utils').version
+VERSION = version('ocrd_utils')
 
 MIMETYPE_PAGE = 'application/vnd.prima.page+xml'
 
