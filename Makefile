@@ -68,7 +68,7 @@ deps-test:
 
 # (Re)install the tool
 install:
-	$(PIP) install -U pip wheel setuptools
+	$(PIP) install -U pip wheel setuptools fastentrypoints
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
 # Install with pip install -e
