@@ -174,13 +174,25 @@ def run_cli(
 
 
 async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace, page_id: str,
-                           input_file_grp: str, output_file_grp: str, parameter: dict):
+                           input_file_grps: list[str], output_file_grps: list[str], parameter: dict):
+    # Turn input/output file groups into a comma separated string
+    input_file_grps_str = ','.join(input_file_grps)
+    output_file_grps_str = ','.join(output_file_grps)
+
     # Execute the processor
-    return_code = run_cli(executable, workspace=workspace, page_id=page_id, input_file_grp=input_file_grp,
-                          output_file_grp=output_file_grp, parameter=json.dumps(parameter))
-    workspace.save_mets()
+    return_code = run_cli(executable, workspace=workspace, page_id=page_id, input_file_grp=input_file_grps_str,
+                          output_file_grp=output_file_grps_str, parameter=json.dumps(parameter), mets_url='')
+
+    workspace.reload_mets()
 
     log = getLogger('ocrd.processor.helpers.run_cli')
+
+    # check output file groups are in METS
+    for output_file_grp in output_file_grps:
+        if output_file_grp not in workspace.mets.file_groups:
+            log.error(
+                f'Invalid state: expected output file group "{output_file_grp}" not in METS (despite processor success)')
+
     log.debug('Finish processing')
 
     # Save the job status to the database
@@ -188,13 +200,14 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace,
     job = await Job.get(job_id)
     if return_code != 0:
         job.state = StateEnum.failed
+        log.error(f'{executable} exited with non-zero return value {return_code}.')
     else:
         job.state = StateEnum.success
     await job.save()
 
 
 async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace, page_id: str,
-                                 input_file_grp: str, output_file_grp: str):
+                                 input_file_grps: list[str], output_file_grps: list[str]):
     # Set up the log
     log = getLogger('ocrd.processor.helpers.run_processor')
     ocrd_tool = processor.ocrd_tool
@@ -208,6 +221,14 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
     # Save the current working directory
     old_cwd = os.getcwd()
 
+    # Turn input/output file groups into a comma separated string
+    input_file_grps_str = ','.join(input_file_grps)
+    output_file_grps_str = ','.join(output_file_grps)
+
+    # Set values for the processor
+    processor.input_file_grp = input_file_grps_str
+    processor.output_file_grp = output_file_grps_str
+    processor.page_id = page_id
     processor.workspace = workspace
 
     # Move inside the workspace (so that files in the METS can be found)
@@ -216,6 +237,12 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
     is_success = True
     try:
         processor.process()
+
+        # check output file groups are in METS
+        for output_file_grp in output_file_grps:
+            if output_file_grp not in workspace.mets.file_groups:
+                log.error(
+                    f'Invalid state: expected output file group "{output_file_grp}" not in METS (despite processor success)')
     except Exception as e:
         log.exception(e)
         is_success = False
@@ -230,8 +257,8 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
             ocrd_tool['executable'],
             t1_wall,
             t1_cpu,
-            input_file_grp or '',
-            output_file_grp or '',
+            input_file_grps_str or '',
+            output_file_grps_str or '',
             json.dumps(processor.parameter) or '',
             page_id or ''
         ))
@@ -245,8 +272,8 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
             othertype='SOFTWARE',
             role='OTHER',
             otherrole=otherrole,
-            notes=[({'option': 'input-file-grp'}, input_file_grp or ''),
-                   ({'option': 'output-file-grp'}, output_file_grp or ''),
+            notes=[({'option': 'input-file-grp'}, input_file_grps_str or ''),
+                   ({'option': 'output-file-grp'}, output_file_grps_str or ''),
                    ({'option': 'parameter'}, json.dumps(processor.parameter or '')),
                    ({'option': 'page-id'}, page_id or '')]
         )

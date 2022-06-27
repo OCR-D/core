@@ -16,8 +16,8 @@ class StateEnum(str, Enum):
 class JobInput(BaseModel):
     path: str
     description: str = None
-    input_file_grps: str
-    output_file_grps: str
+    input_file_grps: list[str]
+    output_file_grps: list[str]
     page_id: str = None
     parameters: dict
 
@@ -26,8 +26,8 @@ class JobInput(BaseModel):
             "example": {
                 "path": "/path/to/mets.xml",
                 "description": "The description of this execution",
-                "input_file_grps": "INPUT_FILE_GROUP",
-                "output_file_grps": "OUTPUT_FILE_GROUP",
+                "input_file_grps": ["INPUT_FILE_GROUP"],
+                "output_file_grps": ["OUTPUT_FILE_GROUP"],
                 "page_id": "PAGE_ID",
                 "parameters": {}
             }
@@ -38,8 +38,8 @@ class Job(Document):
     path: str
     description: str = None
     state: StateEnum
-    input_file_grps: str
-    output_file_grps: str
+    input_file_grps: list[str]
+    output_file_grps: list[str]
     page_id: str = None
     parameters: dict
 

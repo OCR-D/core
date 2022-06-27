@@ -51,10 +51,6 @@ async def process(data: JobInput, background_tasks: BackgroundTasks):
     processor = get_processor(json.dumps(data.parameters))
 
     if processor:
-        processor.input_file_grp = data.input_file_grps
-        processor.output_file_grp = data.output_file_grps
-        processor.page_id = data.page_id
-
         # Run the processor in the background
         background_tasks.add_task(
             run_processor_from_api,
@@ -62,8 +58,8 @@ async def process(data: JobInput, background_tasks: BackgroundTasks):
             processor=processor,
             workspace=workspace,
             page_id=data.page_id,
-            input_file_grp=data.input_file_grps,
-            output_file_grp=data.output_file_grps,
+            input_file_grps=data.input_file_grps,
+            output_file_grps=data.output_file_grps,
         )
     else:
         # Run the CLI in the background
@@ -73,8 +69,8 @@ async def process(data: JobInput, background_tasks: BackgroundTasks):
             executable=Config.title,
             workspace=workspace,
             page_id=data.page_id,
-            input_file_grp=data.input_file_grps,
-            output_file_grp=data.output_file_grps,
+            input_file_grps=data.input_file_grps,
+            output_file_grps=data.output_file_grps,
             parameter=data.parameters
         )
 
