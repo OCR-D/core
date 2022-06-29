@@ -20,14 +20,9 @@ from ocrd_utils import (
 from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
 from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import to_xml
+from ocrd_utils.package_resources import get_distribution
 
 from .workspace import Workspace
-
-try:
-    from importlib.metadata import version
-except ImportError:
-    from importlib_metadata import version
-
 
 tempfile.tempdir = '/tmp' # TODO hard-coded
 
@@ -127,8 +122,8 @@ class WorkspaceBagger():
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
         bag.info['Bag-Software-Agent'] = 'ocrd/core %s (bagit.py %s, bagit_profile %s) [cmdline: "%s"]' % (
             VERSION, # TODO
-            version('bagit'),
-            version('bagit_profile'),
+            get_distribution('bagit').version,
+            get_distribution('bagit_profile').version,
             ' '.join(sys.argv))
 
         bag.info['Ocrd-Identifier'] = ocrd_identifier

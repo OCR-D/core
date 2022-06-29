@@ -7,6 +7,10 @@ try:
 except ImportError:
     from importlib_resources import path, read_binary  # type: ignore
 
+try:
+    from importlib.metadata import distribution as get_distribution
+except ImportError:
+    from importlib_metadata import distribution as get_distribution
 
 _file_manager = ExitStack()
 atexit.register(_file_manager.close)
@@ -42,4 +46,4 @@ def resource_string(package: str, resource: str) -> bytes:
     return read_binary(parent_package, resource)
 
 
-__all__ = ['resource_filename', 'resource_string']
+__all__ = ['resource_filename', 'resource_string', 'get_distribution']
