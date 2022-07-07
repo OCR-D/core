@@ -186,7 +186,7 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace,
 
     workspace.reload_mets()
 
-    log = getLogger('ocrd.processor.helpers.run_cli')
+    log = getLogger('ocrd.processor.helpers.run_cli_from_api')
 
     # check output file groups are in METS
     for output_file_grp in output_file_grps:
@@ -210,7 +210,7 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace,
 async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace, page_id: str,
                                  input_file_grps: List[str], output_file_grps: List[str]):
     # Set up the log
-    log = getLogger('ocrd.processor.helpers.run_processor')
+    log = getLogger('ocrd.processor.helpers.run_processor_from_api')
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
@@ -341,18 +341,18 @@ Options:
                                   (with --page-id, remove only those)
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
                                   or JSON file path
-  --server-ip IP                  Host name/IP to listen at. When this value is set,
-                                  --server-port must be set as well.
-  --server-port NUMBER            TCP port to listen at. When this value is set,
-                                  --server-ip must be set as well.
-  --mongo-url URL                 Connection string to a Mongo database. If the processor runs as a server,
-                                  this value must be set.
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
                                   taking precedence over --parameter
   -m, --mets URL-PATH             URL or file path of METS to process
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Log level
+  --server-ip IP                  Host name/IP to listen at. When this value is set,
+                                  --server-port must be set as well.
+  --server-port NUMBER            TCP port to listen at. When this value is set,
+                                  --server-ip must be set as well.
+  --mongo-url URL                 Connection string to a Mongo database. If the processor runs as a server,
+                                  this value must be set.
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON and exit
