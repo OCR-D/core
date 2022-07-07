@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 
 from beanie import Document
 from pydantic import BaseModel
@@ -16,8 +17,8 @@ class StateEnum(str, Enum):
 class JobInput(BaseModel):
     path: str
     description: str = None
-    input_file_grps: list[str]
-    output_file_grps: list[str]
+    input_file_grps: List[str]
+    output_file_grps: List[str]
     page_id: str = None
     parameters: dict
 
@@ -38,8 +39,8 @@ class Job(Document):
     path: str
     description: str = None
     state: StateEnum
-    input_file_grps: list[str]
-    output_file_grps: list[str]
+    input_file_grps: List[str]
+    output_file_grps: List[str]
     page_id: str = None
     parameters: dict
 

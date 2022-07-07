@@ -6,6 +6,7 @@ from time import perf_counter, process_time
 import json
 import inspect
 from subprocess import run, PIPE
+from typing import List
 
 from beanie import PydanticObjectId
 from click import wrap_text
@@ -174,7 +175,7 @@ def run_cli(
 
 
 async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace, page_id: str,
-                           input_file_grps: list[str], output_file_grps: list[str], parameter: dict):
+                           input_file_grps: List[str], output_file_grps: List[str], parameter: dict):
     # Turn input/output file groups into a comma separated string
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
@@ -207,7 +208,7 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace,
 
 
 async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace, page_id: str,
-                                 input_file_grps: list[str], output_file_grps: list[str]):
+                                 input_file_grps: List[str], output_file_grps: List[str]):
     # Set up the log
     log = getLogger('ocrd.processor.helpers.run_processor')
     ocrd_tool = processor.ocrd_tool

@@ -1,5 +1,6 @@
 import json
 from functools import lru_cache
+from typing import Union
 
 from beanie import PydanticObjectId
 from fastapi import FastAPI, APIRouter, status, HTTPException, BackgroundTasks
@@ -99,7 +100,7 @@ async def startup():
 
 
 @lru_cache
-def get_processor(parameter_str: str) -> Processor | None:
+def get_processor(parameter_str: str) -> Union[Processor, None]:
     """
     Call this function to get back an instance of a processor. The results are cached based on the parameters.
     The parameters must be passed as a string because
