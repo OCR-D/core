@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -10,4 +10,4 @@ class OcrdTool(BaseModel):
     input_file_grp: List[str]
     output_file_grp: List[str]
     steps: List[str]
-    parameters: dict
+    parameters: Optional[dict] = None

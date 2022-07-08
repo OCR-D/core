@@ -9,7 +9,7 @@ OCR-D CLI: start the processing server
 import click
 import uvicorn
 
-from ocrd.server.config import Config
+from ocrd.server.main import ProcessorAPI
 from ocrd_utils import parse_json_string_with_comments, initLogging
 from ocrd_validators import OcrdToolValidator
 
@@ -32,16 +32,12 @@ def server_cli(json_file, tool, ip, port, mongo_url):
 
     initLogging()
 
-    # Set collection name to the processor name
-    Config.collection_name = ocrd_tool['tools'][tool]['executable']
-
-    # Set other meta-data
-    Config.title = ocrd_tool['tools'][tool]['executable']
-    Config.description = ocrd_tool['tools'][tool]['description']
-    Config.version = ocrd_tool['version']
-    Config.ocrd_tool = ocrd_tool['tools'][tool]
-    Config.db_url = mongo_url
-
     # Start the server
-    from ocrd.server.main import app
+    app = ProcessorAPI(
+        title=ocrd_tool['tools'][tool]['executable'],
+        description=ocrd_tool['tools'][tool]['description'],
+        version=ocrd_tool['version'],
+        ocrd_tool=ocrd_tool['tools'][tool],
+        db_url=mongo_url
+    )
     uvicorn.run(app, host=ip, port=port, access_log=False)

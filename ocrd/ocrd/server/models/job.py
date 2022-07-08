@@ -1,10 +1,8 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from beanie import Document
 from pydantic import BaseModel
-
-from ocrd.server.config import Config
 
 
 class StateEnum(str, Enum):
@@ -16,11 +14,11 @@ class StateEnum(str, Enum):
 
 class JobInput(BaseModel):
     path: str
-    description: str = None
+    description: Optional[str] = None
     input_file_grps: List[str]
     output_file_grps: List[str]
-    page_id: str = None
-    parameters: dict
+    page_id: Optional[str] = None
+    parameters: dict = {}  # Default to empty object, otherwise it won't pass the ocrd validation
 
     class Config:
         schema_extra = {
@@ -37,13 +35,12 @@ class JobInput(BaseModel):
 
 class Job(Document):
     path: str
-    description: str = None
+    description: Optional[str]
     state: StateEnum
     input_file_grps: List[str]
     output_file_grps: List[str]
-    page_id: str = None
-    parameters: dict
+    page_id: Optional[str]
+    parameters: Optional[dict]
 
     class Settings:
-        name = Config.collection_name
         use_enum_values = True
