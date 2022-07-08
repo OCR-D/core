@@ -20,7 +20,6 @@ from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
-from ..server.config import Config
 
 
 def ocrd_cli_wrap_processor(
@@ -69,22 +68,21 @@ def ocrd_cli_wrap_processor(
         initLogging()
 
         # Init a processor instance to get access to its information
+        # FIXME: this won't work. The ocrd-tool.json should be passed in from the CLI
         processor = processorClass(workspace=None)
 
-        # Set collection name to the processor name
-        Config.collection_name = processor.ocrd_tool['executable']
-
-        # Set other meta-data
-        Config.processor_class = processorClass
-        Config.title = processor.ocrd_tool['executable']
-        Config.description = processor.ocrd_tool['description']
-        Config.version = processor.version
-        Config.ocrd_tool = processor.ocrd_tool
-        Config.db_url = mongo_url
-
         # Start the server
-        from ocrd.server.main import app
+        from ocrd.server.main import ProcessorAPI
         import uvicorn
+        app = ProcessorAPI(
+            title=processor.ocrd_tool['executable'],
+            description=processor.ocrd_tool['description'],
+            version=processor.version,
+            ocrd_tool=processor.ocrd_tool,
+            db_url=mongo_url,
+            processor_class=processorClass
+        )
+
         uvicorn.run(app, host=server_ip, port=server_port, access_log=False)
     else:
         initLogging()
