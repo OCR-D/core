@@ -5,6 +5,9 @@ DUMMY_TOOL = {
     'executable': 'ocrd-test',
     'description': 'dolor sit',
     'steps': ['recognition/post-correction'],
+    "categories": ["Image preprocessing"],
+    "input_file_grp": ["DUMMY_INPUT"],
+    "output_file_grp": ["DUMMY_OUTPUT"],
     'parameters': {
         'baz': {
             'type': 'string',
@@ -13,6 +16,7 @@ DUMMY_TOOL = {
         }
     }
 }
+
 
 class DummyProcessor(Processor):
 
@@ -24,8 +28,11 @@ class DummyProcessor(Processor):
     def process(self):
         print(json.dumps(self.parameter))
 
+
 class DummyProcessorWithRequiredParameters(Processor):
-    def process(self): pass
+    def process(self):
+        pass
+
     def __init__(self, *args, **kwargs):
         kwargs['version'] = '0.0.1'
         kwargs['ocrd_tool'] = {
@@ -37,7 +44,6 @@ class DummyProcessorWithRequiredParameters(Processor):
         }
         super(DummyProcessorWithRequiredParameters, self).__init__(*args, **kwargs)
 
+
 class IncompleteProcessor(Processor):
     pass
-
-
