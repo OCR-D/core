@@ -1,8 +1,6 @@
 import pytest
-
 from fastapi.testclient import TestClient
 
-import ocrd.server.database
 from ocrd.processor.builtin.dummy_processor import DummyProcessor
 from ocrd.server.main import ProcessorAPI
 
@@ -26,10 +24,13 @@ class TestServer:
 
     @pytest.fixture(scope='class')
     def client(self, monkey_class):
-        def mock_db_init():
-            print('Database initiated.')
+        is_db_init = False
 
-        monkey_class.setattr(ocrd.server.database, 'initiate_database', mock_db_init)
+        def mock_db_init(_):
+            nonlocal is_db_init
+            is_db_init = True
+
+        monkey_class.setattr(ProcessorAPI, 'startup', mock_db_init)
 
         app = ProcessorAPI(
             title=TestServer.ocrd_tool['executable'],
@@ -39,10 +40,14 @@ class TestServer:
             db_url='',
             processor_class=DummyProcessor
         )
-        client = TestClient(app)
-        return client
+
+        with TestClient(app) as c:
+            # Make sure that the database is initialized
+            assert is_db_init, 'Database is not initialized.'
+
+            yield c
 
     def test_get_info(self, client):
         response = client.get('/')
-        assert response.status_code == 200
-        assert response.json() == TestServer.ocrd_tool
+        assert response.status_code == 200, 'The status code is not 200.'
+        assert response.json() == TestServer.ocrd_tool, 'The response is not the same as the input ocrd-tool.'
