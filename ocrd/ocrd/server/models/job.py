@@ -38,7 +38,7 @@ class Job(Document):
     description: Optional[str]
     state: StateEnum
     input_file_grps: List[str]
-    output_file_grps: List[str]
+    output_file_grps: Optional[List[str]]
     page_id: Optional[str]
     parameters: Optional[dict]
 
