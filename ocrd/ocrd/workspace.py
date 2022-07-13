@@ -33,6 +33,7 @@ from ocrd_utils import (
     polygon_from_points,
     xywh_from_bbox,
     pushd_popd,
+    is_local_filename,
     MIME_TO_EXT,
     MIME_TO_PIL,
     MIMETYPE_PAGE,
@@ -108,7 +109,8 @@ class Workspace():
                 fpath_src = Path(other_workspace.directory).resolve()
                 fpath_dst = Path(self.directory).resolve()
                 dstprefix = fpath_src.relative_to(fpath_dst) # raises ValueError if not a subpath
-                f.url = str(Path(dstprefix, f.url))
+                if is_local_filename(f.url):
+                    f.url = str(Path(dstprefix, f.url))
                 return
             fpath_src = Path(other_workspace.directory, f.url)
             fpath_dest = Path(self.directory, f.url)
