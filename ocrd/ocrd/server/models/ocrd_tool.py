@@ -8,6 +8,6 @@ class OcrdTool(BaseModel):
     categories: List[str]
     description: str
     input_file_grp: List[str]
-    output_file_grp: List[str]
+    output_file_grp: Optional[List[str]]
     steps: List[str]
     parameters: Optional[dict] = None
