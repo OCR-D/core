@@ -14,3 +14,4 @@ deprecated
 click
 twine
 wheel
+pytest-mock
