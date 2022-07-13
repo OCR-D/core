@@ -103,7 +103,12 @@ class Workspace():
             copy_files (boolean): Whether to copy files from `other_workspace` to this one
         """
         def after_add_cb(f):
+            """callback to run on merged OcrdFile instances in the destination"""
             if not copy_files:
+                fpath_src = Path(other_workspace.directory).resolve()
+                fpath_dst = Path(self.directory).resolve()
+                dstprefix = fpath_src.relative_to(fpath_dst) # raises ValueError if not a subpath
+                f.url = str(Path(dstprefix, f.url))
                 return
             fpath_src = Path(other_workspace.directory, f.url)
             fpath_dest = Path(self.directory, f.url)
