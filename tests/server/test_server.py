@@ -41,8 +41,12 @@ class TestServer:
 
         class_mocker.MagicMock.__await__ = lambda x: async_magic().__await__()
 
-        # Patch the connection to MongoDB
-        class_mocker.patch('beanie.odm.interfaces.getters.OtherGettersInterface.get_motor_collection')
+        try:
+            # Patch the connection to MongoDB
+            class_mocker.patch('beanie.odm.interfaces.getters.OtherGettersInterface.get_motor_collection')
+        except ModuleNotFoundError:
+            # For Python 3.6 with older Beanie version
+            class_mocker.patch('beanie.odm.documents.Document.get_motor_collection')
 
         return ProcessorAPI(
             title=DUMMY_TOOL['executable'],
