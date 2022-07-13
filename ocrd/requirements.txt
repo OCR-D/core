@@ -9,5 +9,5 @@ jsonschema
 pyyaml
 Deprecated == 1.2.0
 fastapi~=0.78.0
-uvicorn~=0.17.0
-beanie~=1.11.0
+uvicorn~=0.16
+beanie~=1.7
