@@ -620,6 +620,39 @@ def test_merge(tmp_path):
     assert len(ws1.mets.find_all_files()) == 41
     assert exists(join(dst_path1, 'OCR-D-IMG/FILE_0001_IMAGE.tif'))
 
+def test_merge_no_copy_files(tmp_path):
+
+    # arrange
+    dst_path1 = tmp_path / 'ws1'
+    dst_path1.mkdir()
+    dst_path2 = dst_path1 / 'ws2'
+    dst_path2.mkdir()
+
+    ws1 = Resolver().workspace_from_nothing(directory=dst_path1)
+    ws2 = Resolver().workspace_from_nothing(directory=dst_path2)
+
+    ws2.add_file('GRP2', pageId='p01', mimetype='text/plain', ID='f1', local_filename='GRP2/f1', content='ws2')
+
+    ws1.merge(ws2, copy_files=False, fileId_mapping={'f1': 'f1_copy_files'})
+    assert next(ws1.mets.find_files(ID='f1_copy_files')).url == 'ws2/GRP2/f1'
+    ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_no_copy_files'})
+    assert next(ws1.mets.find_files(ID='f1_no_copy_files')).url == 'GRP2/f1'
+
+def test_merge_overwrite(tmp_path):
+    # arrange
+    dst_path1 = tmp_path / 'ws1'
+    dst_path1.mkdir()
+    dst_path2 = dst_path1 / 'ws2'
+    dst_path2.mkdir()
+
+    ws1 = Resolver().workspace_from_nothing(directory=dst_path1)
+    ws2 = Resolver().workspace_from_nothing(directory=dst_path2)
+
+    with pytest.raises(Exception) as exc:
+        ws1.add_file('X', pageId='X', mimetype='X', ID='id123', local_filename='X/X', content='ws1')
+        ws2.add_file('X', pageId='X', mimetype='X', ID='id456', local_filename='X/X', content='ws2')
+        ws1.merge(ws2)
+        assert "would overwrite" == str(exc.value)
 
 if __name__ == '__main__':
     main(__file__)
