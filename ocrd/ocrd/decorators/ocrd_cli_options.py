@@ -35,6 +35,7 @@ def ocrd_cli_options(f):
         option('-V', '--version', help="Show version", is_flag=True, default=False),
         option('-h', '--help', help="This help message", is_flag=True, default=False),
         option('--profile', help="Enable profiling", is_flag=True, default=False),
+        option('--profile-file', help="Write cProfile stats to this file. Implies --profile"),
     ]
     for param in params:
         param(f)

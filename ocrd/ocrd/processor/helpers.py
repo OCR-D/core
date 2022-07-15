@@ -215,6 +215,7 @@ Options:
   --overwrite                     Remove existing output pages/images
                                   (with --page-id, remove only those)
   --profile                       Enable profiling
+  --profile-file                  Write cProfile stats to this file. Implies --profile
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
                                   or JSON file path
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,

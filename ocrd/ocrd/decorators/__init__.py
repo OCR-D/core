@@ -28,6 +28,7 @@ def ocrd_cli_wrap_processor(
     dump_json=False,
     help=False, # pylint: disable=redefined-builtin
     profile=False,
+    profile_file=None,
     version=False,
     overwrite=False,
     show_resource=None,
@@ -86,7 +87,7 @@ def ocrd_cli_wrap_processor(
         report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
         if not report.is_valid:
             raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
-        if profile:
+        if profile or profile_file:
             import cProfile
             import pstats
             import io
@@ -97,6 +98,9 @@ def ocrd_cli_wrap_processor(
             def exit():
                 pr.disable()
                 print("Profiling completed")
+                if profile_file:
+                    with open(profile_file, 'wb') as f:
+                        pr.dump_stats(profile_file)
                 s = io.StringIO()
                 pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
                 print(s.getvalue())
