@@ -55,7 +55,6 @@ def list_installed(executable=None):
     List installed resources
     """
     resmgr = OcrdResourceManager()
-    ret = []
     for executable, reslist in resmgr.list_installed(executable):
         print_resources(executable, reslist, resmgr)
 
