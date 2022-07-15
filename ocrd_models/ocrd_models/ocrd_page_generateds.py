@@ -6318,7 +6318,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             rri.index = group.index
             rri.regionRef = group.regionRef
             cleaned.append(rri)
-        # remove emtpy groups and replace with RegionRefIndexedType
+        # remove empty groups and replace with RegionRefIndexedType
         for entry in self.get_AllIndexed():
             # pylint: disable=undefined-variable
             if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
@@ -7250,7 +7250,7 @@ class OrderedGroupType(GeneratedsSuper):
             rri.index = group.index
             rri.regionRef = group.regionRef
             cleaned.append(rri)
-        # remove emtpy groups and replace with RegionRefIndexedType
+        # remove empty groups and replace with RegionRefIndexedType
         for entry in self.get_AllIndexed():
             # pylint: disable=undefined-variable
             if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():

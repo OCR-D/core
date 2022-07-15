@@ -329,7 +329,7 @@ Changed:
 
 Fixed:
 
-  * As a workaround for tensorflow compatiblity, require `numpy < 1.19.0`, #620
+  * As a workaround for tensorflow compatibility, require `numpy < 1.19.0`, #620
 
 ## [2.17.1] - 2020-10-05
 
@@ -560,7 +560,7 @@ Changed:
   * `Workspace.remove_file`: Optional `page_same_gropup` parameter to remove
     only those images linked in PAGE that are in the same group as the PAGE-XML
   * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
-  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
+  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will not raise an error if an existing
     output file group is targeted but for pages that aren't in that group, #471
   * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
   * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
