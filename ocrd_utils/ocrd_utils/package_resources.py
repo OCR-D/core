@@ -12,6 +12,7 @@ try:
 except ImportError:
     from importlib_metadata import distribution as get_distribution
 
+# See https://importlib-resources.readthedocs.io/en/latest/migration.html#pkg-resources-resource-filename
 _file_manager = ExitStack()
 atexit.register(_file_manager.close)
 
