@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd_utils.generate_range`: `maxsplits` should be 1, not 2, #880
+
 ## [2.35.0] - 2022-06-02
 
 Changed:
