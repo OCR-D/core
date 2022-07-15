@@ -1,7 +1,7 @@
 """
 Validate parameters against ocrd-tool.json.
 """
-from .json_validator import JsonValidator, DefaultValidatingDraft4Validator
+from .json_validator import JsonValidator, DefaultValidatingDraft6Validator
 
 #
 # -------------------------------------------------
@@ -45,4 +45,4 @@ class ParameterValidator(JsonValidator):
             "required": required,
             "additionalProperties": False,
             "properties": p
-        }, DefaultValidatingDraft4Validator)
+        }, DefaultValidatingDraft6Validator)
