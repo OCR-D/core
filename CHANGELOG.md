@@ -9,6 +9,10 @@ Fixed:
 
   * `ocrd_utils.generate_range`: `maxsplits` should be 1, not 2, #880
 
+Changed:
+
+  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+
 ## [2.35.0] - 2022-06-02
 
 Changed:
