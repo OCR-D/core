@@ -12,6 +12,7 @@ Fixed:
 Changed:
 
   * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
 
 ## [2.35.0] - 2022-06-02
 
