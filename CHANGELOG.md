@@ -13,6 +13,8 @@ Changed:
 
   * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
   * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
+  * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
+  * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
 
 ## [2.35.0] - 2022-06-02
 
