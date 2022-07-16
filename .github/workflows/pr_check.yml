@@ -1,0 +1,21 @@
+# Check pull requests.
+
+name: Check pull request
+
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+on:
+  # Trigger workflow on pull request.
+  pull_request:
+  #   branches: [ ci ]
+
+jobs:
+  check_pull_request:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+    - name: Check for whitespace issues.
+      run: git diff --check HEAD^
+    # TODO: Add more checks here (codespell, ...).
