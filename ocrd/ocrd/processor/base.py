@@ -33,7 +33,7 @@ from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
 # XXX imports must remain for backwards-compatibilty
-from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
+from .helpers import run_api, run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
 
 class Processor():
     """
@@ -50,12 +50,10 @@ class Processor():
             workspace,
             ocrd_tool=None,
             parameter=None,
-            # TODO OCR-D/core#274
-            # input_file_grp=None,
-            # output_file_grp=None,
-            input_file_grp="INPUT",
-            output_file_grp="OUTPUT",
+            input_file_grp=None,
+            output_file_grp=None,
             page_id=None,
+            server=None,
             show_resource=None,
             list_resources=False,
             show_help=False,
@@ -139,6 +137,7 @@ class Processor():
         # FIXME HACK would be better to use pushd_popd(self.workspace.directory)
         # but there is no way to do that in process here since it's an
         # overridden method. chdir is almost always an anti-pattern.
+        self.old_pwd = getcwd()
         if self.workspace:
             self.old_pwd = getcwd()
             os.chdir(self.workspace.directory)

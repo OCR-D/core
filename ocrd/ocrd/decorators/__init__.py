@@ -14,6 +14,7 @@ from ocrd_validators import WorkspaceValidator
 
 from ..resolver import Resolver
 from ..processor.base import run_processor
+from ..server import ProcessingServer
 
 from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
@@ -21,18 +22,19 @@ from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
 def ocrd_cli_wrap_processor(
-    processorClass,
-    ocrd_tool=None,
-    mets=None,
-    working_dir=None,
-    dump_json=False,
-    help=False, # pylint: disable=redefined-builtin
-    version=False,
-    overwrite=False,
-    show_resource=None,
-    list_resources=False,
-    **kwargs
-):
+        processorClass,
+        ocrd_tool=None,
+        mets=None,
+        working_dir=None,
+        server=None,
+        log_level=None,
+        dump_json=False,
+        help=False, # pylint: disable=redefined-builtin
+        version=False,
+        overwrite=False,
+        show_resource=None,
+        list_resources=False,
+        **kwargs):
     if not sys.argv[1:]:
         processorClass(workspace=None, show_help=True)
         sys.exit(1)
@@ -46,6 +48,23 @@ def ocrd_cli_wrap_processor(
             list_resources=list_resources
         )
         sys.exit()
+    elif server:
+        initLogging()
+        LOG = getLogger('ocrd_cli_wrap_processor')
+        # Merge parameter overrides and parameters
+        if 'parameter_override' in kwargs:
+            set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
+        # instantiate processor without workspace
+        processorArgs = dict()
+        for param in kwargs:
+            if param in ['parameter', 'input_file_grp', 'output_file_grp', 'page_timeout']:
+                processorArgs[param] = kwargs[param]
+        host, port, workers = server
+        options = {'bind': '%s:%s' % (host, port),
+                   'workers': workers,
+                   'loglevel': log_level}
+        server = ProcessingServer(processorClass, processorArgs, options)
+        server.run()
     else:
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
