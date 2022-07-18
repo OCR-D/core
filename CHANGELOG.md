@@ -5,6 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd_utils.generate_range`: `maxsplits` should be 1, not 2, #880
+  * Typos in CHANGELOG, README and code comments, #890
+
+Changed:
+
+  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
+  * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
+  * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
+  * Replace `resource_filename` et al from pkg_resources with faster alternatives, #881, #882
+
 ## [2.35.0] - 2022-06-02
 
 Changed:

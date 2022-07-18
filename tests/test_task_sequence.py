@@ -138,7 +138,7 @@ class TestOcrdWfStep(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 ws = resolver.workspace_from_url('mets.xml')
-                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE, pageId=None)
+                ws.add_file('GRP0', content='', local_filename='GRP0/foo', file_id='file0', mimetype=MIMETYPE_PAGE, page_id=None)
                 ws.save_mets()
                 files_before = len(ws.mets.find_all_files())
                 run_tasks('mets.xml', 'DEBUG', None, [

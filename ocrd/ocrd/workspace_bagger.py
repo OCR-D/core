@@ -6,8 +6,6 @@ from tempfile import mkdtemp
 import re
 import tempfile
 import sys
-
-from pkg_resources import get_distribution
 from bagit import Bag, make_manifests  # pylint: disable=no-name-in-module
 
 from ocrd_utils import (
@@ -22,6 +20,7 @@ from ocrd_utils import (
 from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
 from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import to_xml
+from ocrd_utils.package_resources import get_distribution
 
 from .workspace import Workspace
 

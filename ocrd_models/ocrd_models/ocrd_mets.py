@@ -167,7 +167,7 @@ class OcrdMets(OcrdXmlDocument):
                 pageIds_expanded = []
                 for pageId_ in pageIds:
                     if '..' in pageId_:
-                        pageIds_expanded += generate_range(*pageId_.split('..', 2))
+                        pageIds_expanded += generate_range(*pageId_.split('..', 1))
                 pageIds += pageIds_expanded
             for page in self._tree.getroot().xpath(
                 '//mets:div[@TYPE="page"]', namespaces=NS):
@@ -485,7 +485,7 @@ class OcrdMets(OcrdXmlDocument):
             mets_div.remove(mets_fptr)
         return ret
 
-    def merge(self, other_mets, fileGrp_mapping=None, after_add_cb=None, **kwargs):
+    def merge(self, other_mets, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None, after_add_cb=None, **kwargs):
         """
         Add all files from other_mets.
 
@@ -493,16 +493,24 @@ class OcrdMets(OcrdXmlDocument):
 
         Keyword Args:
             fileGrp_mapping (dict): Map :py:attr:`other_mets` fileGrp to fileGrp in this METS
+            fileId_mapping (dict): Map :py:attr:`other_mets` file ID to file ID in this METS
+            pageId_mapping (dict): Map :py:attr:`other_mets` page ID to page ID in this METS
             after_add_cb (function): Callback received after file is added to the METS
         """
         if not fileGrp_mapping:
             fileGrp_mapping = {}
+        if not fileId_mapping:
+            fileId_mapping = {}
+        if not pageId_mapping:
+            pageId_mapping = {}
         for f_src in other_mets.find_files(**kwargs):
             f_dest = self.add_file(
                     fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
                     mimetype=f_src.mimetype,
                     url=f_src.url,
-                    ID=f_src.ID,
-                    pageId=f_src.pageId)
+                    ID=fileId_mapping.get(f_src.ID, f_src.ID),
+                    pageId=pageId_mapping.get(f_src.pageId, f_src.pageId))
+            # FIXME: merge metsHdr, amdSec, dmdSec as well
+            # FIXME: merge structMap logical and structLink as well
             if after_add_cb:
                 after_add_cb(f_dest)
