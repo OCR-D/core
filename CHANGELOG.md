@@ -4,6 +4,8 @@ Change Log
 Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+p
+## [2.36.0] - 2022-07-18
 
 Fixed:
 
@@ -1502,6 +1504,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.36.0]: ../../compare/v2.36.0..v2.35.0
 [2.35.0]: ../../compare/v2.35.0..v2.34.0
 [2.34.0]: ../../compare/v2.34.0..v2.33.0
 [2.33.0]: ../../compare/v2.33.0..v2.32.0
