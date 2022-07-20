@@ -35,7 +35,7 @@ from ocrd_validators import ParameterValidator
 from .helpers import run_cli, run_processor, generate_processor_help  # pylint: disable=unused-import
 
 
-class Processor():
+class Processor:
     """
     A processor is a tool that implements the uniform OCR-D command-line interface
     for run-time data processing. That is, it executes a single workflow step,
