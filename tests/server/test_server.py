@@ -1,103 +1,34 @@
 import json
 
-import pytest
-from fastapi import HTTPException, BackgroundTasks
-from fastapi.testclient import TestClient
-from pytest_mock import MockerFixture
-
-from ocrd.server.main import ProcessorAPI
+from ocrd.processor.helpers import get_processor
 from ocrd.server.models.job import JobInput, StateEnum
 from tests.base import copy_of_directory, assets
-from .mock_job import MockJob
 from ..data import DUMMY_TOOL, DummyProcessor
 
 
 class TestServer:
-
-    @pytest.fixture(scope='class')
-    def monkey_class(self):
-        from _pytest.monkeypatch import MonkeyPatch
-        monkey_patch = MonkeyPatch()
-        yield monkey_patch
-        monkey_patch.undo()
-
-    @pytest.fixture(scope='class')
-    def app(self, monkey_class, class_mocker: MockerFixture):
-        def mock_db_init(_):
-            pass
-
-        def mock_background_task(*args, **kwargs):
-            pass
-
-        # Patch the startup function
-        monkey_class.setattr(ProcessorAPI, 'startup', mock_db_init)
-
-        # Patch the BackgroundTasks.add_task function
-        monkey_class.setattr(BackgroundTasks, 'add_task', mock_background_task)
-
-        # Make MagicMock work with async. AsyncMock is only available from Python 3.8
-        async def async_magic():
-            pass
-
-        class_mocker.MagicMock.__await__ = lambda x: async_magic().__await__()
-
-        try:
-            # Patch the connection to MongoDB
-            class_mocker.patch('beanie.odm.interfaces.getters.OtherGettersInterface.get_motor_collection')
-        except ModuleNotFoundError:
-            # For Python 3.6 with older Beanie version
-            class_mocker.patch('beanie.odm.documents.Document.get_motor_collection')
-
-        return ProcessorAPI(
-            title=DUMMY_TOOL['executable'],
-            description=DUMMY_TOOL['description'],
-            version='0.0.1',
-            ocrd_tool=DUMMY_TOOL,
-            db_url='',
-            processor_class=DummyProcessor
-        )
-
-    @pytest.fixture(scope='class')
-    def client(self, monkey_class, app):
-        with TestClient(app) as c:
-            yield c
 
     def test_get_info(self, client):
         response = client.get('/')
         assert response.status_code == 200, 'The status code is not 200.'
         assert response.json() == DUMMY_TOOL, 'The response is not the same as the input ocrd-tool.'
 
-    def test_get_processor_cached(self, app):
+    def test_get_processor_cached(self):
         parameters = {}
-        processor_1 = app.get_processor(json.dumps(parameters))
-        processor_2 = app.get_processor(json.dumps(parameters))
+        processor_1 = get_processor(json.dumps(parameters), DummyProcessor)
+        processor_2 = get_processor(json.dumps(parameters), DummyProcessor)
+        assert isinstance(processor_1, DummyProcessor), 'The processor is not from the correct class.'
         assert processor_1 is processor_2, 'The processor is not cached.'
 
-    def test_get_processor_uncached(self, app):
+    def test_get_processor_uncached(self):
         parameters_1 = {}
-        processor_1 = app.get_processor(json.dumps(parameters_1))
+        processor_1 = get_processor(json.dumps(parameters_1), DummyProcessor)
 
         parameters_2 = {'baz': 'foo'}
-        processor_2 = app.get_processor(json.dumps(parameters_2))
+        processor_2 = get_processor(json.dumps(parameters_2), DummyProcessor)
         assert processor_1 is not processor_2, 'The processor must not be cached.'
 
-    def test_get_processor_invalid_parameters(self, app):
-        parameters = {'unknown-key': 'unknown-value'}
-        with pytest.raises(HTTPException) as exception_info:
-            app.get_processor(json.dumps(parameters))
-
-        assert exception_info.value.status_code == 400, 'Status code is not 400.'
-        assert 'Invalid parameters' in exception_info.value.detail, 'Wrong message in the detail.'
-
-    def test_post_data(self, client, mocker: MockerFixture):
-        # Patch the Job class to return the MockJob
-        mocked_job = mocker.patch('ocrd.server.main.Job', autospec=MockJob)
-        mocked_job.return_value = MockJob(path='', state=StateEnum.failed, input_file_grps=['TEST'])
-
-        # Mock the id field
-        mocked_id = mocker.PropertyMock(return_value=1)
-        type(mocked_job.return_value).id = mocked_id
-
+    def test_post_data(self, mocked_job, mocked_add_task, client):
         with copy_of_directory(assets.url_of('SBB0000F29300010000/data')) as ws_dir:
             job_input = JobInput(
                 path=f'{ws_dir}/mets.xml',
@@ -107,5 +38,29 @@ class TestServer:
             )
             response = client.post(url='/', json=job_input.dict(exclude_unset=True, exclude_none=True))
 
+        # Make sure that the job is created with proper arguments (esp. state == QUEUED)
         mocked_job.assert_called_with(**job_input.dict(exclude_unset=True, exclude_none=True), state=StateEnum.queued)
+
+        # Make sure that the background task is run with proper arguments
+        args, kwargs = mocked_add_task.call_args
+        assert isinstance(kwargs['processor'], DummyProcessor)
+        assert kwargs['job_id'] == mocked_job.return_value.id
+        assert kwargs['page_id'] == job_input.page_id
+        assert kwargs['input_file_grps'] == job_input.input_file_grps
+        assert kwargs['output_file_grps'] == job_input.output_file_grps
+
         assert response.status_code == 202, 'The status code is not 202.'
+
+    def test_post_invalid_parameter(self, mocked_job, client):
+        with copy_of_directory(assets.url_of('SBB0000F29300010000/data')) as ws_dir:
+            job_input = JobInput(
+                path=f'{ws_dir}/mets.xml',
+                description='Test run',
+                input_file_grps=['OCR-D-IMG'],
+                output_file_grps=['OUTPUT'],
+                parameters={'unknown-key': 'unknown-value'}
+            )
+            response = client.post(url='/', json=job_input.dict(exclude_unset=True, exclude_none=True))
+
+            assert response.status_code == 400, 'Status code is not 400.'
+            assert 'Invalid parameters' in response.json()['detail'], 'Wrong message in the detail.'
