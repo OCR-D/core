@@ -1,11 +1,11 @@
 import pytest
+from beanie import PydanticObjectId
+from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 
-from ..data import DUMMY_TOOL, DummyProcessor
 from ocrd.server.main import ProcessorAPI
-from fastapi.testclient import TestClient
-
 from ocrd.server.models.job import StateEnum
+from ..data import DUMMY_TOOL, DummyProcessor
 from ..server.mock_job import MockJob
 
 
@@ -60,6 +60,20 @@ def mocked_job(class_mocker: MockerFixture):
     type(mocked_job.return_value).id = mocked_id
 
     return mocked_job
+
+
+@pytest.fixture
+def mocked_job_get(mocker: MockerFixture):
+
+    async def get(doc_id: PydanticObjectId):
+        if doc_id == PydanticObjectId('60cd778664dc9f75f4aadec8'):
+            return MockJob(path='', state=StateEnum.failed, input_file_grps=['TEST'])
+        return None
+
+    # Patch the static Job.get method
+    mock_job_get = mocker.patch('ocrd.server.main.Job.get')
+    mock_job_get.side_effect = get
+    return mock_job_get
 
 
 @pytest.fixture(scope='class')
