@@ -5,9 +5,9 @@ DUMMY_TOOL = {
     'executable': 'ocrd-test',
     'description': 'dolor sit',
     'steps': ['recognition/post-correction'],
-    "categories": ["Image preprocessing"],
-    "input_file_grp": ["DUMMY_INPUT"],
-    "output_file_grp": ["DUMMY_OUTPUT"],
+    'categories': ['Image preprocessing'],
+    'input_file_grp': ['DUMMY_INPUT'],
+    'output_file_grp': ['DUMMY_OUTPUT'],
     'parameters': {
         'baz': {
             'type': 'string',
