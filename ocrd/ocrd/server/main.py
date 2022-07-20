@@ -1,12 +1,11 @@
 import json
-from functools import lru_cache
-from typing import Type, Union
+from typing import Type
 
 from beanie import PydanticObjectId
 from fastapi import FastAPI, HTTPException, status, BackgroundTasks
 
 from ocrd import Processor, Resolver
-from ocrd.processor.helpers import run_processor_from_api, run_cli_from_api
+from ocrd.processor.helpers import run_processor_from_api, run_cli_from_api, get_processor
 from ocrd.server.database import initiate_database
 from ocrd.server.models.job import Job, JobInput, StateEnum
 from ocrd.server.models.ocrd_tool import OcrdTool
@@ -84,8 +83,15 @@ class ProcessorAPI(FastAPI):
         resolver = Resolver()
         workspace = resolver.workspace_from_url(data.path)
 
-        # Get the processor, if possible
-        processor = self.get_processor(json.dumps(data.parameters))
+        try:
+            # Get the processor, if possible
+            processor = get_processor(json.dumps(data.parameters), self.processor_class)
+        except Exception as e:
+            # In case of bad parameters
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
 
         if processor:
             # Run the processor in the background
@@ -121,28 +127,3 @@ class ProcessorAPI(FastAPI):
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Job not found.'
         )
-
-    @lru_cache(maxsize=32)
-    def get_processor(self, parameter_str: str) -> Union[Processor, None]:
-        """
-        Call this function to get back an instance of a processor. The results are cached based on the parameters.
-        The parameters must be passed as a string because
-        `dict <https://docs.python.org/3/tutorial/datastructures.html#dictionaries>`_ is unhashable,
-        therefore cannot be cached.
-        Args:
-            parameter_str (string): a serialized version of a dictionary of parameters.
-
-        Returns:
-            When the server is started by the `ocrd server` command, the concrete class of the processor is unknown.
-            In this case, `None` is returned. Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
-        """
-        parameter = json.loads(parameter_str)
-        if self.processor_class:
-            try:
-                return self.processor_class(workspace=None, parameter=parameter)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=str(e),
-                )
-        return None

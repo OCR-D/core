@@ -2,6 +2,7 @@
 Helper methods for running and documenting processors
 """
 import os
+from functools import lru_cache
 from time import perf_counter, process_time
 import json
 import inspect
@@ -18,7 +19,8 @@ __all__ = [
     'run_cli',
     'run_processor',
     'run_cli_from_api',
-    'run_processor_from_api'
+    'run_processor_from_api',
+    'get_processor'
 ]
 
 
@@ -285,6 +287,28 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
     else:
         job.state = StateEnum.failed
     await job.save()
+
+
+@lru_cache(maxsize=32)
+def get_processor(parameter_str: str, processor_class=None):
+    """
+    Call this function to get back an instance of a processor. The results are cached based on the parameters.
+    The parameters must be passed as a string because
+    `dict <https://docs.python.org/3/tutorial/datastructures.html#dictionaries>`_ is unhashable,
+    therefore cannot be cached.
+
+    Args:
+        parameter_str (string): a serialized version of a dictionary of parameters.
+        processor_class: the concrete `:py:class:~ocrd.Processor` class.
+
+    Returns:
+        When the server is started by the `ocrd server` command, the concrete class of the processor is unknown.
+        In this case, `None` is returned. Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
+    """
+    parameter = json.loads(parameter_str)
+    if processor_class:
+        return processor_class(workspace=None, parameter=parameter)
+    return None
 
 
 def generate_processor_help(ocrd_tool, processor_instance=None):

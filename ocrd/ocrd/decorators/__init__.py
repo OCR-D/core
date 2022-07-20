@@ -1,3 +1,4 @@
+import json
 from os.path import isfile
 import sys
 from typing import Type
@@ -12,6 +13,7 @@ from ocrd_utils import (
 
 from ocrd_utils import getLogger, initLogging
 from ocrd_validators import WorkspaceValidator
+from ..processor.helpers import get_processor
 
 from ..resolver import Resolver
 from ..processor.base import run_processor, Processor
@@ -67,9 +69,9 @@ def ocrd_cli_wrap_processor(
         # Proceed when both IP and port are provided
         initLogging()
 
-        # Init a processor instance to get access to its information
-        # FIXME: this won't work. The ocrd-tool.json should be passed in from the CLI
-        processor = processorClass(workspace=None)
+        # Init a processor instance to get access to its information (also warm up the cache with default parameters)
+        params = {}
+        processor = get_processor(json.dumps(params), processorClass)
 
         # Start the server
         from ocrd.server.main import ProcessorAPI
