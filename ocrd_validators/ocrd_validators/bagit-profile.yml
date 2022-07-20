@@ -1,5 +1,5 @@
 BagIt-Profile-Info:
-  BagIt-Profile-Identifier: https://ocr-d.de/bagit-profile.json
+  BagIt-Profile-Identifier: https://ocr-d.de/en/spec/bagit-profile.json
   BagIt-Profile-Version: '1.2.0'
   Source-Organization: OCR-D
   External-Description: BagIt profile for OCR data
@@ -14,10 +14,6 @@ Bag-Info:
   Ocrd-Mets:
     required: false
     default: 'mets.xml'
-  Ocrd-Manifestation-Depth:
-    required: false
-    default: partial
-    values: ["partial", "full"]
   Ocrd-Identifier:
     required: true
   Ocrd-Checksum:
@@ -34,7 +30,7 @@ Tag-Files-Allowed:
   - sources.csv
   - metadata/*.xml
   - metadata/*.txt
-Allow-Fetch.txt: true
+Allow-Fetch.txt: false
 Serialization: required
 Accept-Serialization: application/zip
 Accept-BagIt-Version:
