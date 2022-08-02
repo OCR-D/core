@@ -108,6 +108,8 @@ class OcrdResourceManager():
                     self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
                     ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
+                        if exec_path.name not in self.database:
+                            self.database[exec_path.name] = []
                         for res_remove in (res for res in self.database.get(executable, []) if res['name'] == resdict['name']):
                             self.database.get(executable).remove(res_remove)
                         self.database[exec_path.name].append(resdict)
