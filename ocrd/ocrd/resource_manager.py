@@ -106,18 +106,19 @@ class OcrdResourceManager():
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
                     self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
-                    try:
-                        ocrd_tool = get_ocrd_tool_json(exec_path)
-                    except JSONDecodeError:
-                        self.log.info(f"Failed to parse {exec_path} --dump-json output - not an OCR-D processor?")
+                    ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
                         for res_remove in (res for res in self.database.get(executable, []) if res['name'] == resdict['name']):
                             self.database.get(executable).remove(res_remove)
                         self.database[exec_path.name].append(resdict)
         ret = []
+        found = False
         for k in self.database:
             if apply_glob([k], executable):
+                found = True
                 ret.append((k, self.database[k]))
+        if not found:
+            ret = [(executable, [])]
         return ret
 
     def list_installed(self, executable=None):

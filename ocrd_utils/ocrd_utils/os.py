@@ -27,6 +27,7 @@ from subprocess import run, PIPE
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
 from .constants import XDG_DATA_HOME
+from .logging import getLogger
 
 def abspath(url):
     """
@@ -73,7 +74,11 @@ def get_ocrd_tool_json(executable):
     Get the ``ocrd-tool`` description of ``executable``.
     """
     executable_name = Path(executable).name
-    ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+    try:
+        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+    except JSONDecodeError as e:
+        getLogger('ocrd_utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
+        ocrd_tool = {}
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
     return ocrd_tool
@@ -163,7 +168,7 @@ def get_processor_resource_types(executable, ocrd_tool=None):
         # if the processor in question is not installed, assume both files and directories
         if not which(executable):
             return ['*/*']
-        ocrd_tool = get_ocrd_tool_json(executable)
+    ocrd_tool = get_ocrd_tool_json(executable)
     if not next((True for p in ocrd_tool.get('parameters', {}).values() if 'content-type' in p), False):
         # None of the parameters for this processor are resources (or not
         # the resource parametrs are not properly declared, so output both

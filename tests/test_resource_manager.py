@@ -115,7 +115,7 @@ def test_default_resource_dir(tmp_path):
     assert mgr.xdg_config_home != mgr.xdg_data_home
     assert mgr.default_resource_dir == str(mgr.xdg_data_home / 'ocrd-resources')
 
-def test_list_available(tmp_path):
+def test_list_available0(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     res = mgr.list_available()
     assert len(res) > 0
@@ -134,7 +134,7 @@ def test_date_as_string(tmp_path):
       - url: https://qurator-data.de/eynollah/2022-04-05/models_eynollah_renamed.tar.gz
         name: 2022-04-05
         description: models for eynollah
-        type: tarball
+        type: archive
         path_in_archive: 'models_eynollah'
         size: 1889719626
         """)
