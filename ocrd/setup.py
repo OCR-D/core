@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fastentrypoints
 from setuptools import setup, find_packages
 from ocrd_utils import VERSION
 

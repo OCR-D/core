@@ -33,6 +33,8 @@ from ocrd_utils import (
     polygon_from_points,
     xywh_from_bbox,
     pushd_popd,
+    is_local_filename,
+    deprecated_alias,
     MIME_TO_EXT,
     MIME_TO_PIL,
     MIMETYPE_PAGE,
@@ -93,6 +95,10 @@ class Workspace():
         """
         self.mets = OcrdMets(filename=self.mets_target)
 
+    @deprecated_alias(pageId="page_id")
+    @deprecated_alias(ID="file_id")
+    @deprecated_alias(fileGrp="file_grp")
+    @deprecated_alias(fileGrp_mapping="filegrp_mapping")
     def merge(self, other_workspace, copy_files=True, overwrite=False, **kwargs):
         """
         Merge ``other_workspace`` into this one
@@ -103,7 +109,13 @@ class Workspace():
             copy_files (boolean): Whether to copy files from `other_workspace` to this one
         """
         def after_add_cb(f):
+            """callback to run on merged OcrdFile instances in the destination"""
             if not copy_files:
+                fpath_src = Path(other_workspace.directory).resolve()
+                fpath_dst = Path(self.directory).resolve()
+                dstprefix = fpath_src.relative_to(fpath_dst) # raises ValueError if not a subpath
+                if is_local_filename(f.url):
+                    f.url = str(Path(dstprefix, f.url))
                 return
             fpath_src = Path(other_workspace.directory, f.url)
             fpath_dest = Path(self.directory, f.url)
@@ -114,6 +126,15 @@ class Workspace():
                     makedirs(str(fpath_dest.parent))
                 with open(str(fpath_src), 'rb') as fstream_in, open(str(fpath_dest), 'wb') as fstream_out:
                     copyfileobj(fstream_in, fstream_out)
+        if 'page_id' in kwargs:
+            kwargs['pageId'] = kwargs.pop('page_id')
+        if 'file_id' in kwargs:
+            kwargs['ID'] = kwargs.pop('file_id')
+        if 'file_grp' in kwargs:
+            kwargs['fileGrp'] = kwargs.pop('file_grp')
+        if 'filegrp_mapping' in kwargs:
+            kwargs['fileGrp_mapping'] = kwargs.pop('filegrp_mapping')
+
         self.mets.merge(other_workspace.mets, after_add_cb=after_add_cb, **kwargs)
 
 
@@ -161,12 +182,12 @@ class Workspace():
             f.local_filename = f.url
             return f
 
-    def remove_file(self, ID, force=False, keep_file=False, page_recursive=False, page_same_group=False):
+    def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """
         Remove a METS `file` from the workspace.
 
         Arguments:
-            ID (string|:py:class:`ocrd_models.ocrd_file.OcrdFile`): `@ID` of the METS `file`
+            file_id (string|:py:class:`ocrd_models.ocrd_file.OcrdFile`): `@ID` of the METS `file`
                 to delete or the file itself
         Keyword Args:
             force (boolean): Continue removing even if file not found in METS
@@ -177,19 +198,19 @@ class Workspace():
                 Has no effect unless ``page_recursive`` is `True`.
         """
         log = getLogger('ocrd.workspace.remove_file')
-        log.debug('Deleting mets:file %s', ID)
+        log.debug('Deleting mets:file %s', file_id)
         if not force and self.overwrite_mode:
             force = True
-        if isinstance(ID, OcrdFile):
-            ID = ID.ID
+        if isinstance(file_id, OcrdFile):
+            file_id = file_id.ID
         try:
             try:
-                ocrd_file = next(self.mets.find_files(ID=ID))
+                ocrd_file = next(self.mets.find_files(ID=file_id))
             except StopIteration:
-                if ID.startswith(REGEX_PREFIX):
+                if file_id.startswith(REGEX_PREFIX):
                     # allow empty results if filter criteria involve a regex
                     return None
-                raise FileNotFoundError("File %s not found in METS" % ID)
+                raise FileNotFoundError("File %s not found in METS" % file_id)
             if page_recursive and ocrd_file.mimetype == MIMETYPE_PAGE:
                 with pushd_popd(self.directory):
                     ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
@@ -209,7 +230,7 @@ class Workspace():
                         log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
                         unlink(ocrd_file.local_filename)
             # Remove from METS only after the recursion of AlternativeImages
-            self.mets.remove_file(ID)
+            self.mets.remove_file(file_id)
             return ocrd_file
         except FileNotFoundError as e:
             if not force:
@@ -326,6 +347,8 @@ class Workspace():
             if Path(old).is_dir() and not listdir(old):
                 Path(old).rmdir()
 
+    @deprecated_alias(pageId="page_id")
+    @deprecated_alias(ID="file_id")
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
@@ -345,15 +368,15 @@ class Workspace():
             file_grp,
             kwargs.get('local_filename'),
             content is not None)
-        if 'pageId' not in kwargs:
-            raise ValueError("workspace.add_file must be passed a 'pageId' kwarg, even if it is None.")
-        if content is not None and 'local_filename' not in kwargs:
+        if 'page_id' not in kwargs:
+            raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
+        if content is not None and not kwargs.get('local_filename'):
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
             kwargs['force'] = True
 
         with pushd_popd(self.directory):
-            if 'local_filename' in kwargs:
+            if kwargs.get('local_filename'):
                 # If the local filename has folder components, create those folders
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
                 if local_filename_dir != kwargs['local_filename'] and not Path(local_filename_dir).is_dir():
@@ -362,6 +385,10 @@ class Workspace():
                     kwargs['url'] = kwargs['local_filename']
 
             #  print(kwargs)
+            kwargs["pageId"] = kwargs.pop("page_id")
+            if "file_id" in kwargs:
+                kwargs["ID"] = kwargs.pop("file_id")
+
             ret = self.mets.add_file(file_grp, **kwargs)
 
             if content is not None:
@@ -496,7 +523,7 @@ class Workspace():
             page (:py:class:`ocrd_models.ocrd_page.PageType`): a PAGE `PageType` object
             page_id (string): its `@ID` in the METS physical `structMap`
         Keyword Args:
-            fill (string): a `PIL` color specifier
+            fill (string): a `PIL` color specifier, or `background` or `none`
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of `@comments` classes
             feature_filter (string): a comma-separated list of `@comments` classes
@@ -534,6 +561,8 @@ class Workspace():
         \b
         - if `"background"` (the default),
           then fill with the median color of the image;
+        - else if `"none"`, then avoid masking polygons where possible
+          (i.e. when cropping) or revert to the default (i.e. when rotating)
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
 
         Moreover, if ``transparency`` is true, and unless the image already
@@ -733,7 +762,7 @@ class Workspace():
                - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all operations that lead up to this result, and
         Keyword Args:
-            fill (string): a `PIL` color specifier
+            fill (string): a `PIL` color specifier, or `background` or `none`
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of ``@comments`` classes
             feature_filter (string): a comma-separated list of ``@comments`` classes
@@ -762,6 +791,8 @@ class Workspace():
         \b
         - if `"background"` (the default),
           then fill with the median color of the image;
+        - else if `"none"`, then avoid masking polygons where possible
+          (i.e. when cropping) or revert to the default (i.e. when rotating)
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
 
         Moreover, if `transparency` is true, and unless the image already
@@ -996,8 +1027,8 @@ class Workspace():
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
             file_grp,
-            ID=file_id,
-            pageId=page_id,
+            file_id=file_id,
+            page_id=page_id,
             local_filename=file_path,
             mimetype=mimetype,
             content=image_bytes.getvalue(),
@@ -1005,6 +1036,28 @@ class Workspace():
         log.info('created file ID: %s, file_grp: %s, path: %s',
                  file_id, file_grp, out.local_filename)
         return file_path
+
+    def find_files(self, *args, **kwargs):
+        """
+        Search ``mets:file`` entries in wrapped METS document and yield results.
+
+        Delegator to :py:func:`ocrd_models.ocrd_mets.OcrdMets.find_files`
+
+        Keyword Args:
+            **kwargs: See :py:func:`ocrd_models.ocrd_mets.OcrdMets.find_files`
+        Returns:
+            Generator which yields :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
+        """
+        log = getLogger('ocrd.workspace.find_files')
+        log.debug('find files in mets. kwargs=%s' % kwargs)
+        if "page_id" in kwargs:
+            kwargs["pageId"] = kwargs.pop("page_id")
+        if "file_id" in kwargs:
+            kwargs["ID"] = kwargs.pop("file_id")
+        if "file_grp" in kwargs:
+            kwargs["fileGrp"] = kwargs.pop("file_grp")
+        with pushd_popd(self.directory):
+            return self.mets.find_files(*args, **kwargs)
 
 def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwargs):
     segment_coords = parent_coords.copy()

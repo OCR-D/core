@@ -63,7 +63,7 @@ pip install ocrd_modelfactory
 
 All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.6 or higher.
 
-**NOTE** Some OCR-D-Tools (or even test cases) _might_ reveal an unintended behavior if you have specific enviroment modifications, like:
+**NOTE** Some OCR-D-Tools (or even test cases) _might_ reveal an unintended behavior if you have specific environment modifications, like:
 * using a custom build of [ImageMagick](https://github.com/ImageMagick/ImageMagick), whose format delegates are different from what OCR-D supposes
 * custom Python logging configurations in your personal account
 

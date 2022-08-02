@@ -2,7 +2,7 @@
 Constants for ocrd_validators.
 """
 import yaml
-from pkg_resources import resource_string, resource_filename
+from ocrd_utils.package_resources import resource_string, resource_filename
 
 __all__ = [
     'OCRD_TOOL_SCHEMA',

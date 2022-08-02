@@ -109,7 +109,7 @@ ocrd-kraken-recognize:
     description: This model has been trained on a large corpus of modern printed English text\naugmented with ~10000 lines of historical pages
     size: 2930723
 ocrd-eynollah-segment:
-  - url: https://qurator-data.de/eynollah/models_eynollah.tar.gz
+  - url: https://qurator-data.de/eynollah/2021-04-25/models_eynollah.tar.gz
     name: default
     description: models for eynollah
     size: 3241866640

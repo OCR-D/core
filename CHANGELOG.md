@@ -4,6 +4,21 @@ Change Log
 Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+p
+## [2.36.0] - 2022-07-18
+
+Fixed:
+
+  * `ocrd_utils.generate_range`: `maxsplits` should be 1, not 2, #880
+  * Typos in CHANGELOG, README and code comments, #890
+
+Changed:
+
+  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
+  * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
+  * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
+  * Replace `resource_filename` et al from pkg_resources with faster alternatives, #881, #882
 
 ## [2.35.0] - 2022-06-02
 
@@ -329,7 +344,7 @@ Changed:
 
 Fixed:
 
-  * As a workaround for tensorflow compatiblity, require `numpy < 1.19.0`, #620
+  * As a workaround for tensorflow compatibility, require `numpy < 1.19.0`, #620
 
 ## [2.17.1] - 2020-10-05
 
@@ -560,7 +575,7 @@ Changed:
   * `Workspace.remove_file`: Optional `page_same_gropup` parameter to remove
     only those images linked in PAGE that are in the same group as the PAGE-XML
   * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
-  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
+  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will not raise an error if an existing
     output file group is targeted but for pages that aren't in that group, #471
   * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
   * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
@@ -1489,6 +1504,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.36.0]: ../../compare/v2.36.0..v2.35.0
 [2.35.0]: ../../compare/v2.35.0..v2.34.0
 [2.34.0]: ../../compare/v2.34.0..v2.33.0
 [2.33.0]: ../../compare/v2.33.0..v2.32.0
