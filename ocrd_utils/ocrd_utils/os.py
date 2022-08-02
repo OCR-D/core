@@ -76,7 +76,7 @@ def get_ocrd_tool_json(executable):
     executable_name = Path(executable).name
     try:
         ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
-    except JSONDecodeError as e:
+    except (JSONDecodeError, OSError) as e:
         getLogger('ocrd_utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
         ocrd_tool = {}
     if 'resource_locations' not in ocrd_tool:

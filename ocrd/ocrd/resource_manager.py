@@ -1,7 +1,6 @@
 from pathlib import Path
 from os.path import join
 from json import loads
-from json.decoder import JSONDecodeError
 from os import environ, listdir, getcwd, path
 from fnmatch import filter as apply_glob
 from shutil import copytree
