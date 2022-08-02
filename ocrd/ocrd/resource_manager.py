@@ -28,7 +28,7 @@ class OcrdResourceManager():
     """
     Managing processor resources
     """
-    def __init__(self, userdir=None, xdg_config_home=None, xdg_data_home=None):
+    def __init__(self, userdir=None, xdg_config_home=None, xdg_data_home=None, skip_init=False):
         self.log = getLogger('ocrd.resource_manager')
         self.database = {}
 
@@ -37,12 +37,13 @@ class OcrdResourceManager():
         self._userdir = userdir
         self.user_list = Path(self.xdg_config_home, 'ocrd', 'resources.yml')
 
-        self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
-        if not self.user_list.exists():
-            if not self.user_list.parent.exists():
-                self.user_list.parent.mkdir(parents=True)
-            self.save_user_list()
-        self.load_resource_list(self.user_list)
+        if not skip_init:
+            self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
+            if not self.user_list.exists():
+                if not self.user_list.parent.exists():
+                    self.user_list.parent.mkdir(parents=True)
+                self.save_user_list()
+            self.load_resource_list(self.user_list)
 
     @property
     def userdir(self):

@@ -9,6 +9,7 @@ import sys
 from os import environ
 from pathlib import Path
 from distutils.spawn import find_executable as which
+from yaml import safe_load, safe_dump
 
 import requests
 import click
@@ -17,8 +18,9 @@ from ocrd_utils import (
     initLogging,
     directory_size,
     getLogger,
-    RESOURCE_LOCATIONS
+    RESOURCE_LOCATIONS,
 )
+from ocrd.constants import RESOURCE_USER_LIST_COMMENT
 
 from ..resource_manager import OcrdResourceManager
 
@@ -153,3 +155,39 @@ def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwri
         resmgr.save_user_list()
         log.info("Installed resource %s under %s", resdict['url'], fpath)
         log.info("Use in parameters as '%s'", resmgr.parameter_usage(resdict['name'], usage=resdict.get('parameter_usage', 'as-is')))
+
+@resmgr_cli.command('migrate')
+@click.argument('migration', type=click.Choice(['2.37.0']))
+def migrate(migration):
+    """
+    Update the configuration after updating core to MIGRATION
+    """
+    resmgr = OcrdResourceManager(skip_init=True)
+    log = getLogger('ocrd.resmgr.migrate')
+    if not resmgr.user_list.exists():
+        log.info(f'No configuration file found at {resmgr.user_list}, nothing to do')
+    if migration == '2.37.0':
+        backup_file = resmgr.user_list.with_suffix(f'.yml.before-{migration}')
+        yaml_in_str = resmgr.user_list.read_text()
+        log.info(f'Backing {resmgr.user_list} to {backup_file}')
+        backup_file.write_text(yaml_in_str)
+        log.info(f'Applying migration {migration} to {resmgr.user_list}')
+        yaml_in = safe_load(yaml_in_str)
+        yaml_out = {}
+        for executable, reslist_in in yaml_in.items():
+            yaml_out[executable] = []
+            for resdict_in in reslist_in:
+                resdict_out = {}
+                for k_in, v_in in resdict_in.items():
+                    k_out, v_out = k_in, v_in
+                    if k_in == 'type' and v_in in ['github-dir', 'tarball']:
+                        if v_in == 'github-dir':
+                            v_out = 'directory'
+                        elif v_in == 'tarball':
+                            v_out = 'directory'
+                    resdict_out[k_out] = v_out
+                yaml_out[executable].append(resdict_out)
+        resmgr.user_list.write_text(RESOURCE_USER_LIST_COMMENT +
+                '\n# migrated with ocrd resmgr migrate {migration}\n' +
+                safe_dump(yaml_out))
+        log.info(f'Applied migration {migration} to {resmgr.user_list}')
