@@ -4,7 +4,13 @@ Change Log
 Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
-p
+
+## [2.37.0] - 2022-08-03
+
+Added:
+
+  * `ocrd resmgr`: Resources of processors can be described in the `ocrd-tool.json`, #800
+
 ## [2.36.0] - 2022-07-18
 
 Fixed:
@@ -1504,6 +1510,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.37.0]: ../../compare/v2.37.0..v2.36.0
 [2.36.0]: ../../compare/v2.36.0..v2.35.0
 [2.35.0]: ../../compare/v2.35.0..v2.34.0
 [2.34.0]: ../../compare/v2.34.0..v2.33.0
