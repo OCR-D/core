@@ -6,7 +6,7 @@ from tempfile import mkdtemp
 import re
 import tempfile
 import sys
-from bagit import Bag, make_manifests  # pylint: disable=no-name-in-module
+from bagit import Bag, make_manifests, _load_tag_file  # pylint: disable=no-name-in-module
 
 from ocrd_utils import (
     pushd_popd,
@@ -96,7 +96,7 @@ class WorkspaceBagger():
         # Walk through bagged workspace and fix the PAGE
         # Page/@imageFilename and
         # AlternativeImage/@filename
-        bag_workspace = Workspace(self.resolver, directory=join(bagdir, 'data'))
+        bag_workspace = Workspace(self.resolver, directory=join(bagdir, 'data'), mets_basename=ocrd_mets)
         with pushd_popd(bag_workspace.directory):
             for page_file in bag_workspace.mets.find_files(mimetype=MIMETYPE_PAGE):
                 pcgts = page_from_file(page_file)
@@ -118,7 +118,8 @@ class WorkspaceBagger():
             log.info("New vs. old: %s" % changed_urls)
         return total_bytes, total_files
 
-    def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum):
+    def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier,
+                      ocrd_manifestation_depth, ocrd_base_version_checksum, ocrd_mets='mets.xml'):
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
         bag.info['Bag-Software-Agent'] = 'ocrd/core %s (bagit.py %s, bagit_profile %s) [cmdline: "%s"]' % (
             VERSION, # TODO
@@ -132,6 +133,8 @@ class WorkspaceBagger():
             bag.info['Ocrd-Base-Version-Checksum'] = ocrd_base_version_checksum
         bag.info['Bagging-Date'] = str(datetime.now())
         bag.info['Payload-Oxum'] = '%s.%s' % (total_bytes, total_files)
+        if ocrd_mets != 'mets.xml':
+            bag.info['Ocrd-Mets'] = ocrd_mets
 
     def bag(self,
             workspace,
@@ -198,7 +201,8 @@ class WorkspaceBagger():
 
         # create bag-info.txt
         bag = Bag(bagdir)
-        self._set_bag_info(bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth, ocrd_base_version_checksum)
+        self._set_bag_info(bag, total_bytes, total_files, ocrd_identifier, ocrd_manifestation_depth,
+                           ocrd_base_version_checksum, ocrd_mets=ocrd_mets)
 
         for tag_file in tag_files:
             copyfile(tag_file, join(bagdir, basename(tag_file)))
@@ -239,6 +243,7 @@ class WorkspaceBagger():
 
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
         unzip_file_to_dir(src, bagdir)
+        bag_info = _load_tag_file(join(bagdir, "bag-info.txt"))
 
         datadir = join(bagdir, 'data')
         for root, _, files in walk(datadir):
@@ -259,7 +264,8 @@ class WorkspaceBagger():
         rmtree(bagdir)
 
         # Create workspace
-        workspace = Workspace(self.resolver, directory=dest)
+        mets_basename = bag_info.get("Ocrd-Mets", "mets.xml")
+        workspace = Workspace(self.resolver, directory=dest, mets_basename=mets_basename)
 
         # TODO validate workspace
 

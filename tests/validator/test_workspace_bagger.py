@@ -1,7 +1,8 @@
 from os import makedirs
 from os.path import join, abspath, exists
-from shutil import copytree, rmtree
+from shutil import copytree, rmtree, move
 from tempfile import mkdtemp
+from bagit import _load_tag_file
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
 
@@ -109,6 +110,49 @@ class TestWorkspaceBagger(TestCase):
         self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False, skip_zip=False, dest=bag_dest)
         self.bagger.spill(bag_dest, self.bagdir)
         self.assertTrue(exists(spill_dest))
+
+    def test_bag_with_changed_metsname(self):
+        # arrange
+        workspace_dir = join(self.bagdir, "changed-mets-test")
+        copytree(join(assets.path_to('kant_aufklaerung_1784'), "data"), workspace_dir)
+        new_metsname = "other-metsname.xml"
+        old_metspath = join(workspace_dir, "mets.xml")
+        new_metspath = join(workspace_dir, new_metsname)
+        move(old_metspath, new_metspath)
+        workspace = Workspace(self.resolver, directory=workspace_dir, mets_basename=new_metsname)
+
+        # act
+        self.bagger.bag(workspace, "changed-mets-test", ocrd_mets=new_metsname,
+                        ocrd_manifestation_depth='partial', in_place=True, skip_zip=True)
+
+        # assert
+        bag_metspath = join(workspace_dir, "data", new_metsname)
+        self.assertTrue(exists(bag_metspath), f"Mets not existing. Expected: {bag_metspath}")
+
+        bag_info_path = join(workspace_dir, "bag-info.txt")
+        tags = _load_tag_file(bag_info_path)
+        self.assertTrue("Ocrd-Mets" in tags, "expect 'Ocrd-Mets'-key in bag-info.txt")
+        self.assertEqual(tags["Ocrd-Mets"], new_metsname, "Ocrd-Mets key present but wrong value")
+
+    def test_spill_with_changed_metsname(self):
+        # arrange
+        new_metsname = "other-metsname.xml"
+        example_workspace_dir = join(self.bagdir, "example_workspace_dir")
+        makedirs(join(example_workspace_dir))
+        bag_dest = join(self.bagdir, 'foo.ocrd.zip')
+        workspace = self.resolver.workspace_from_nothing(example_workspace_dir, new_metsname)
+        self.bagger.bag(workspace, "mets-changed-test", bag_dest, new_metsname)
+
+        # act
+        spill_dest = join(self.bagdir, 'spilled_changed_mets')
+        self.bagger.spill(bag_dest, spill_dest)
+
+        # assert
+        self.assertTrue(exists(spill_dest), "spill-destination-directory was not created")
+        self.assertFalse(exists(join(spill_dest, "mets.xml")), "'mets.xml' should not be present")
+        self.assertTrue(exists(join(spill_dest, new_metsname)),
+                        "expected mets-file to be '{new_metsname}'")
+
 
 if __name__ == '__main__':
     main()
