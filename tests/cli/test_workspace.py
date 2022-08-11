@@ -287,7 +287,7 @@ class TestCli(TestCase):
             self.assertEqual(result.exit_code, 0)
 
             ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
-            self.assertEqual(len(ws2.mets.find_all_files()), 7)
+            self.assertEqual(len(ws2.mets.find_all_files()), 29)
 
     def test_clone_into_nonexisting_dir(self):
         """
