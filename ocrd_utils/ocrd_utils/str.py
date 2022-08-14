@@ -85,6 +85,9 @@ def make_file_id(ocrd_file, output_file_grp):
             except ValueError:
                 n = len(ids)
             ret = concat_padded(output_file_grp, n)
+            while next(ocrd_file.mets.find_files(ID=ret), None):
+                n += 1
+                ret = concat_padded(output_file_grp, n)
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
