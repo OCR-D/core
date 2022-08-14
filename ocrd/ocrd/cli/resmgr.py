@@ -65,6 +65,7 @@ def list_installed(executable=None):
 
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
+@click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-json for module-level resources")
 @click.option('-t', '--resource-type', help='Type of resource', type=click.Choice(['file', 'directory', 'archive']), default='file')
 @click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.')
 @click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
@@ -72,7 +73,7 @@ def list_installed(executable=None):
 @click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
 @click.argument('executable', required=True)
 @click.argument('name', required=False)
-def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwrite, location, executable, name):
+def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstalled, overwrite, location, executable, name):
     """
     Download resource NAME for processor EXECUTABLE.
 
@@ -106,9 +107,11 @@ def download(any_url, resource_type, path_in_archive, allow_uninstalled, overwri
         else:
             log.info("Executable %s is not installed, but " \
                      "downloading resources anyway", executable)
-    reslist = resmgr.find_resources(executable=executable, name=name)
+    reslist = resmgr.list_available(executable=executable, dynamic=not no_dynamic)
+    if name:
+        reslist = [(executable, r) for _, rs in reslist for r in rs if r['name'] == name]
     if not reslist:
-        log.info("No resources found in registry")
+        log.info(f"No resources {name} found in registry for executable {executable}")
         if executable and name:
             reslist = [(executable, {'url': any_url or '???', 'name': name,
                                      'type': resource_type,
