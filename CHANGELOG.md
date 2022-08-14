@@ -15,6 +15,10 @@ Added:
 
   * Processors allow profiling with `--profile` and `--profile-file`, #878, bertsky/core#4
 
+Removed:
+
+  * `ocrd zip`: remove support for obsolete `Ocrd-Manifestation-Depth`, #902, OCR-D/spec#182
+
 ## [2.37.0] - 2022-08-03
 
 Added:
