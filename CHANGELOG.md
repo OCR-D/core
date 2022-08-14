@@ -9,6 +9,7 @@ Fixed:
 
   * `ocrd zip`: Properly respect `Ocrd-Mets`, #899
   * `ocrd workspace merge`: missing arguments, #896
+  * `ocrd resmgr download`: Support dynamic discovery, #901
 
 Added:
 
