@@ -10,6 +10,10 @@ Fixed:
   * `ocrd zip`: Properly respect `Ocrd-Mets`, #899
   * `ocrd workspace merge`: missing arguments, #896
 
+Added:
+
+  * Processors allow profiling with `--profile` and `--profile-file`, #878, bertsky/core#4
+
 ## [2.37.0] - 2022-08-03
 
 Added:
