@@ -589,7 +589,7 @@ def _handle_json_option(ctx, param, value):
 @click.option('--pageId-mapping', help="JSON object mapping src to dest page ID", callback=_handle_json_option)
 @mets_find_options
 @pass_workspace
-def merge(ctx, overwrite, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, overwrite, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
 
