@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd zip`: Properly respect `Ocrd-Mets`, #899
+  * `ocrd workspace merge`: missing arguments, #896
 
 ## [2.37.0] - 2022-08-03
 
