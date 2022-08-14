@@ -68,7 +68,7 @@ def make_file_id(ocrd_file, output_file_grp):
     """
     ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
     if ret == ocrd_file.ID:
-        if ocrd_file.pageId:
+        elif ocrd_file.pageId:
             ret = output_file_grp + '_' + ocrd_file.pageId
             n = 1
             while next(ocrd_file.mets.find_files(ID=ret), None):
