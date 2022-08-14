@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd zip`: Properly respect `Ocrd-Mets`, #899
+
 ## [2.37.0] - 2022-08-03
 
 Added:
