@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.38.0] - 2022-08-14
+
 Fixed:
 
   * `ocrd zip`: Properly respect `Ocrd-Mets`, #899
@@ -13,7 +15,7 @@ Fixed:
 
 Added:
 
-  * Processors allow profiling with `--profile` and `--profile-file`, #878, bertsky/core#4
+  * Processors support profiling with `--profile` and `--profile-file`, #878, bertsky/core#4
 
 Removed:
 
@@ -1524,6 +1526,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.38.0]: ../../compare/v2.38.0..v2.37.0
 [2.37.0]: ../../compare/v2.37.0..v2.36.0
 [2.36.0]: ../../compare/v2.36.0..v2.35.0
 [2.35.0]: ../../compare/v2.35.0..v2.34.0
