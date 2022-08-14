@@ -47,8 +47,10 @@ class DummyProcessorWithOutput(Processor):
         super().__init__(*args, **kwargs)
 
     def process(self):
+        # print([str(x) for x in self.input_files]
         for input_file in self.input_files:
             file_id = make_file_id(input_file, self.output_file_grp)
+            # print(input_file.ID, file_id)
             self.workspace.add_file(
                 ID=file_id,
                 file_grp=self.output_file_grp,

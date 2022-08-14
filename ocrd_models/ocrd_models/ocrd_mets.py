@@ -310,19 +310,36 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
+        log = getLogger('ocrd_models.ocrd_mets.remove_file_group')
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
-        mets_file = next(self.find_files(ID=ID), None)
-        if mets_file and not ignore:
-            if not force:
-                raise Exception("File with ID='%s' already exists" % ID)
-            mets_file.url = url
-            mets_file.mimetype = mimetype
-            mets_file.ID = ID
-            mets_file.pageId = pageId
-            mets_file.local_filename = local_filename
-        else:
+        mets_file = None
+        if not ignore:
+            if pageId:
+                mets_file = next(self.find_files(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId), None)
+                if mets_file:
+                    if not force:
+                        # TODO this should be an exception
+                        log.info(f"File with pageId='{pageId}' and mimetype '{mimetype}' already exists in fileGrp '{fileGrp}'.")
+                        mets_file = None
+                    else:
+                        # XXX explicitly DO NOT set the ID but reuse the existing ID
+                        # XXX https://github.com/OCR-D/core/pull/861
+                        # mets_file.ID = ID
+                        mets_file.url = url
+                        mets_file.local_filename = local_filename
+                        mets_file.mimetype = mimetype
+            if not mets_file:
+                mets_file = next(self.find_files(ID=ID), None)
+                if mets_file:
+                    if not force:
+                        raise Exception(f"File with ID='{ID}' already exists")
+                    mets_file.url = url
+                    mets_file.mimetype = mimetype
+                    mets_file.pageId = pageId
+                    mets_file.local_filename = local_filename
+        if not mets_file:
             kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v}
             mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self, **kwargs)
 
