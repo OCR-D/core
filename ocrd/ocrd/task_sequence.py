@@ -3,7 +3,7 @@ from shlex import split as shlex_split
 from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
 from subprocess import run, PIPE
 
-from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides
+from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides, get_ocrd_tool_json
 # from collections import Counter
 from ocrd.processor.base import run_cli
 from ocrd.resolver import Resolver
@@ -49,8 +49,7 @@ class ProcessorTask():
     def ocrd_tool_json(self):
         if self._ocrd_tool_json:
             return self._ocrd_tool_json
-        result = run([self.executable, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True)
-        self._ocrd_tool_json = json.loads(result.stdout)
+        self._ocrd_tool_json = get_ocrd_tool_json(self.executable)
         return self._ocrd_tool_json
 
     def validate(self):

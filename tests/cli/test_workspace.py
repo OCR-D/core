@@ -51,9 +51,9 @@ class TestCli(TestCase):
             ws_api = self.resolver.workspace_from_nothing(directory=tempdir)
             ws_api.add_file(
                 file_grp,
-                ID=ID,
+                file_id=ID,
                 content=content,
-                pageId=page_id,
+                page_id=page_id,
                 mimetype=mimetype,
                 local_filename=local_filename
             )
@@ -257,7 +257,6 @@ class TestCli(TestCase):
             f = ws.mets.find_all_files()[0]
             self.assertEqual(f.url, 'test.tif')
 
-
     def test_find_all_files(self):
         with TemporaryDirectory() as tempdir:
             wsdir = join(tempdir, 'ws')
@@ -266,6 +265,18 @@ class TestCli(TestCase):
                 result = self.runner.invoke(workspace_cli, ['find', '-G', 'OCR-D-IMG-BIN', '-k', 'fileGrp'])
                 self.assertEqual(result.output, 'OCR-D-IMG-BIN\nOCR-D-IMG-BIN\n')
                 self.assertEqual(result.exit_code, 0)
+
+    def test_find_all_files_outputfield(self):
+        with TemporaryDirectory() as tempdir:
+            wsdir = join(tempdir, 'ws')
+            copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
+            with pushd_popd(wsdir):
+                result = self.runner.invoke(workspace_cli,
+                                            ['find', '-G', 'OCR-D-IMG-BIN', '-k',
+                                             'file_grp', '-k', 'file_id', '-k', 'page_id'])
+                self.assertEqual(result.exit_code, 0)
+                self.assertEqual(result.output, 'OCR-D-IMG-BIN\tFILE_0001_IMAGE_BIN\tPHYS_0001\n'
+                                                'OCR-D-IMG-BIN\tFILE_0002_IMAGE_BIN\tPHYS_0002\n')
 
     def test_prune_files(self):
         with TemporaryDirectory() as tempdir:
@@ -278,7 +289,7 @@ class TestCli(TestCase):
             self.assertEqual(result.exit_code, 0)
 
             ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
-            self.assertEqual(len(ws2.mets.find_all_files()), 7)
+            self.assertEqual(len(ws2.mets.find_all_files()), 29)
 
     def test_clone_into_nonexisting_dir(self):
         """
@@ -455,7 +466,7 @@ class TestCli(TestCase):
     def test_bulk_add_missing_param(self):
         with pushd_popd(tempdir=True) as wsdir:
             ws = self.resolver.workspace_from_nothing(directory=wsdir)
-            with pytest.raises(ValueError, match=r"OcrdFile attribute 'pageId' unset"):
+            with pytest.raises(ValueError, match=r"OcrdFile attribute 'page_id' unset"):
                 _, out, err = self.invoke_cli(workspace_cli, [
                     'bulk-add',
                     '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',

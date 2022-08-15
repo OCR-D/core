@@ -1,6 +1,6 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from os.path import join, basename
-from pkg_resources import resource_string
+from ocrd_utils.package_resources import resource_string
 
 import click
 
@@ -17,7 +17,7 @@ from ocrd_utils import (
 )
 from ocrd_modelfactory import page_from_file
 
-OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
+OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'ocrd-tool.json').decode('utf8'))
 
 class DummyProcessor(Processor):
     """
@@ -40,9 +40,9 @@ class DummyProcessor(Processor):
             if input_file.mimetype == MIMETYPE_PAGE:
                 # Source file is PAGE-XML: Write out in-memory PcGtsType
                 self.workspace.add_file(
-                    ID=file_id,
+                    file_id=file_id,
                     file_grp=self.output_file_grp,
-                    pageId=input_file.pageId,
+                    page_id=input_file.pageId,
                     mimetype=input_file.mimetype,
                     local_filename=local_filename,
                     content=to_xml(pcgts).encode('utf-8'))
@@ -51,9 +51,9 @@ class DummyProcessor(Processor):
                 with open(input_file.local_filename, 'rb') as f:
                     content = f.read()
                     self.workspace.add_file(
-                        ID=file_id,
+                        file_id=file_id,
                         file_grp=self.output_file_grp,
-                        pageId=input_file.pageId,
+                        page_id=input_file.pageId,
                         mimetype=input_file.mimetype,
                         local_filename=local_filename,
                         content=content)
@@ -66,9 +66,9 @@ class DummyProcessor(Processor):
                     LOG.info("Add PAGE-XML %s generated for %s at %s",
                              page_file_id, file_id, page_filename)
                     self.workspace.add_file(
-                        ID=page_file_id,
+                        file_id=page_file_id,
                         file_grp=self.output_file_grp,
-                        pageId=input_file.pageId,
+                        page_id=input_file.pageId,
                         mimetype=MIMETYPE_PAGE,
                         local_filename=page_filename,
                         content=to_xml(pcgts).encode('utf-8'))
