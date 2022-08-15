@@ -45,8 +45,6 @@ from ocrd_utils import (
 from ocrd_models.utils import xmllint_format
 from ocrd_models import OcrdMets
 
-def _resolve(path):
-    return str(Path(path).resolve())
 
 class TestUtils(TestCase):
 
@@ -149,15 +147,20 @@ class TestUtils(TestCase):
 
     def test_pushd_popd_newcwd(self):
         cwd = getcwd()
-        with pushd_popd('/tmp'):
-            assert _resolve(getcwd()) == _resolve('/tmp')
+        tmp_dir = Path(gettempdir()).resolve()
+        with pushd_popd(tmp_dir):
+            self.assertEqual(getcwd(), str(tmp_dir))
+        self.assertEqual(getcwd(), cwd)
         assert getcwd() == cwd
 
     def test_pushd_popd_tempdir(self):
         cwd = getcwd()
+        tmp_dir = str(Path(gettempdir()).resolve())
         with pushd_popd(tempdir=True) as newcwd:
-            assert _resolve(getcwd()) == _resolve(newcwd)
-            assert _resolve(newcwd).startswith(_resolve(gettempdir()))
+            newcwd_str = str(newcwd)
+            self.assertEqual(getcwd(), newcwd_str)
+            self.assertTrue(newcwd_str.startswith(tmp_dir))
+        self.assertEqual(getcwd(), cwd)
         assert getcwd() == cwd
 
     def test_pushd_popd_bad_call(self):
