@@ -18,6 +18,8 @@ from ocrd_utils import (
     initLogging,
     directory_size,
     getLogger,
+    get_ocrd_tool_json,
+    get_moduledir,
     RESOURCE_LOCATIONS,
 )
 from ocrd.constants import RESOURCE_USER_LIST_COMMENT
@@ -43,7 +45,7 @@ def resmgr_cli():
     initLogging()
 
 @resmgr_cli.command('list-available')
-@click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-json for module-level resources")
+@click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-{json,module-dir} for module-level resources")
 @click.option('-e', '--executable', help='Show only resources for executable beginning with EXEC', metavar='EXEC', default='ocrd-*')
 def list_available(executable, no_dynamic):
     """
@@ -65,12 +67,12 @@ def list_installed(executable=None):
 
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
-@click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-json for module-level resources")
+@click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-{json,module-dir} for module-level resources")
 @click.option('-t', '--resource-type', help='Type of resource', type=click.Choice(['file', 'directory', 'archive']), default='file')
 @click.option('-P', '--path-in-archive', help='Path to extract in case of archive type', default='.')
 @click.option('-a', '--allow-uninstalled', help="Allow installing resources for uninstalled processors", is_flag=True)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
-@click.option('-l', '--location', help='Where to store resources', type=click.Choice(RESOURCE_LOCATIONS), default='data', show_default=True)
+@click.option('-l', '--location', help="Where to store resources - defaults to first location in processor's 'resource_locations' list or finally 'data'", type=click.Choice(RESOURCE_LOCATIONS))
 @click.argument('executable', required=True)
 @click.argument('name', required=False)
 def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstalled, overwrite, location, executable, name):
@@ -89,7 +91,6 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
     """
     log = getLogger('ocrd.cli.resmgr')
     resmgr = OcrdResourceManager()
-    basedir = resmgr.location_to_resource_dir(location)
     if executable != '*' and not name:
         log.error("Unless EXECUTABLE ('%s') is the '*' wildcard, NAME is required" % executable)
         sys.exit(1)
@@ -108,8 +109,10 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
             log.info("Executable %s is not installed, but " \
                      "downloading resources anyway", executable)
     reslist = resmgr.list_available(executable=executable, dynamic=not no_dynamic)
-    if name:
-        reslist = [(executable, r) for _, rs in reslist for r in rs if r['name'] == name]
+    if name and reslist:
+        # if name is given, find the resource with that name in the first
+        # element of reslist which is the resource list for that executable
+        reslist = [(executable, next(r for r in reslist[0][1] if r['name'] == name))]
     if not reslist:
         log.info(f"No resources {name} found in registry for executable {executable}")
         if executable and name:
@@ -138,6 +141,18 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 resdict['size'] = directory_size(urlpath)
             else:
                 resdict['size'] = urlpath.stat().st_size
+        if not location:
+            location = get_ocrd_tool_json(executable)['resource_locations'][0]
+        elif location not in get_ocrd_tool_json(executable)['resource_locations']:
+            log.error("The selected --location {location} is not in the {executable}'s resource search path, refusing to install to invalid location")
+            sys.exit(1)
+        if location != 'module':
+            basedir = resmgr.location_to_resource_dir(location)
+        else:
+            basedir = get_moduledir(executable)
+            if not basedir:
+                basedir = resmgr.location_to_resource_dir('data')
+
         with click.progressbar(length=resdict['size']) as bar:
             fpath = resmgr.download(
                 executable,

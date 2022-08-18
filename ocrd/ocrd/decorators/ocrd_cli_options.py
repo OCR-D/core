@@ -31,6 +31,7 @@ def ocrd_cli_options(f):
         parameter_option,
         parameter_override_option,
         option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
+        option('-D', '--dump-module-dir', help="Print processor's 'moduledir' of resourcess", is_flag=True, default=False),
         loglevel_option,
         option('-V', '--version', help="Show version", is_flag=True, default=False),
         option('-h', '--help', help="This help message", is_flag=True, default=False),

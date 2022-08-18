@@ -63,13 +63,14 @@ class Processor():
             show_help=False,
             show_version=False,
             dump_json=False,
+            dump_module_dir=False,
             version=None
     ):
         """
         Instantiate, but do not process. Unless ``list_resources`` or
         ``show_resource`` or ``show_help`` or ``show_version`` or
-        ``dump_json`` is true, setup for processing (parsing and
-        validating parameters, entering the workspace directory).
+        ``dump_json`` or ``dump_module_dir`` is true, setup for processing
+        (parsing and validating parameters, entering the workspace directory).
 
         Args:
              workspace (:py:class:`~ocrd.Workspace`): The workspace to process. \
@@ -95,12 +96,17 @@ class Processor():
                  this processor's version and OCR-D version. Exit afterwards.
              dump_json (boolean): If true, then instead of processing, print :py:attr:`ocrd_tool` \
                  on stdout.
+             dump_module_dir (boolean): If true, then instead of processing, print :py:attr:`moduledir` \
+                 on stdout.
         """
         self.ocrd_tool = ocrd_tool
         if parameter is None:
             parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
+            return
+        if dump_module_dir:
+            print(self.moduledir)
             return
         if list_resources:
             for res in self.list_all_resources():

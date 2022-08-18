@@ -19,7 +19,7 @@ yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp
     yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger, directory_size
+from ocrd_utils import getLogger, directory_size, get_moduledir
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -110,9 +110,8 @@ class OcrdResourceManager():
                     for resdict in ocrd_tool.get('resources', ()):
                         if exec_path.name not in self.database:
                             self.database[exec_path.name] = []
-                        for res_remove in (res for res in self.database.get(executable, []) if res['name'] == resdict['name']):
-                            self.database.get(executable).remove(res_remove)
                         self.database[exec_path.name].append(resdict)
+                    self.database = self._dedup_database(self.database)
         ret = []
         found = False
         for k in self.database:
@@ -141,7 +140,8 @@ class OcrdResourceManager():
         for this_executable in set(all_executables):
             reslist = []
             mimetypes = get_processor_resource_types(this_executable)
-            for res_filename in list_all_resources(this_executable, xdg_data_home=self.xdg_data_home):
+            moduledir = get_moduledir(this_executable)
+            for res_filename in list_all_resources(this_executable, moduled=moduledir, xdg_data_home=self.xdg_data_home):
                 res_filename = Path(res_filename)
                 if not '*/*' in mimetypes:
                     if res_filename.is_dir() and not 'text/directory' in mimetypes:
@@ -149,12 +149,13 @@ class OcrdResourceManager():
                     if res_filename.is_file() and ['text/directory'] == mimetypes:
                         continue
                 res_name = res_filename.name
-                resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
-                if not resdict:
-                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, res_name, str(res_filename), self.user_list)
-                    resdict = [self.add_to_user_database(this_executable, res_filename)]
-                resdict[0]['path'] = str(res_filename)
-                reslist.append(resdict[0])
+                resdict_list = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
+                if resdict_list:
+                    resdict = resdict_list[0]
+                else:
+                    resdict = self.add_to_user_database(this_executable, res_filename)
+                resdict['path'] = str(res_filename)
+                reslist.append(resdict)
             ret.append((this_executable, reslist))
         return ret
 
@@ -163,6 +164,7 @@ class OcrdResourceManager():
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
+        self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", executable, res_name, str(res_filename), self.user_list)
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
@@ -187,25 +189,6 @@ class OcrdResourceManager():
         self.save_user_list(user_database)
         self.load_resource_list(self.user_list)
         return resdict
-
-    def find_resources(self, executable=None, name=None, url=None, database=None):
-        """
-        Find resources in the registry
-        """
-        if not database:
-            database = self.database
-        ret = []
-        if executable and executable not in database.keys():
-            return ret
-        for executable in [executable] if executable else database.keys():
-            for resdict in database[executable]:
-                if not name and not url:
-                    ret.append((executable, resdict))
-                elif url and url == resdict['url']:
-                    ret.append((executable, resdict))
-                elif name and name == resdict['name']:
-                    ret.append((executable, resdict))
-        return ret
 
     @property
     def default_resource_dir(self):
@@ -316,3 +299,19 @@ class OcrdResourceManager():
                     log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
                     copytree(path_in_archive, str(fpath))
         return fpath
+
+    def _dedup_database(self, database=None):
+        """
+        Deduplicate resources by name
+        """
+        if not database:
+            database = self.database
+        for executable, reslist in database.items():
+            reslist_dedup = []
+            for resdict in reslist:
+                if any(r['name'] == resdict['name'] for r in reslist_dedup):
+                    continue
+                else:
+                    reslist_dedup.append(resdict)
+            database[executable] = reslist_dedup
+        return database

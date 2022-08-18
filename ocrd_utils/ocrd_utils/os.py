@@ -6,6 +6,7 @@ __all__ = [
     'directory_size',
     'is_file_in_directory',
     'get_ocrd_tool_json',
+    'get_moduledir',
     'get_processor_resource_types',
     'pushd_popd',
     'unzip_file_to_dir',
@@ -83,11 +84,14 @@ def get_ocrd_tool_json(executable):
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
     return ocrd_tool
 
-# def get_processor_resources_list(executable):
-#     """
-#     Get the list of resources that a processor is providing via
-#     ``-list-resources``
-#     """
+@lru_cache()
+def get_moduledir(executable):
+    moduledir = None
+    try:
+        moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout
+    except (JSONDecodeError, OSError) as e:
+        getLogger('ocrd_utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
+    return moduledir
 
 def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):
     """

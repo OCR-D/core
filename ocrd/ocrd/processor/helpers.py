@@ -227,6 +227,7 @@ Options:
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON and exit
+  -D, --dump-module-dir           Output the 'module' directory with resources for this processor
   -h, --help                      This help message
   -V, --version                   Show version
 
