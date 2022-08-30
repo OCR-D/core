@@ -108,70 +108,67 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
         else:
             log.info("Executable %s is not installed, but " \
                      "downloading resources anyway", executable)
-    reslist = resmgr.list_available(executable=executable, dynamic=not no_dynamic)
-    if name and reslist:
-        # if name is given, find the resource with that name in the first
-        # element of reslist which is the resource list for that executable
-        reslist = [(executable, next(r for r in reslist[0][1] if r['name'] == name))]
-    if not reslist:
+    reslist = resmgr.list_available(executable=executable, dynamic=not no_dynamic, name=name)
+    if not any(r[1] for r in reslist):
         log.info(f"No resources {name} found in registry for executable {executable}")
         if executable and name:
-            reslist = [(executable, {'url': any_url or '???', 'name': name,
+            reslist = [(executable, [{'url': any_url or '???', 'name': name,
                                      'type': resource_type,
-                                     'path_in_archive': path_in_archive})]
-    for executable, resdict in reslist:
-        if 'size' in resdict:
-            registered = "registered"
-        else:
-            registered = "unregistered"
-        if any_url:
-            resdict['url'] = any_url
-        if resdict['url'] == '???':
-            log.warning("Cannot download user resource %s", resdict['name'])
-            continue
-        if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
-            log.info("Downloading %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
-            with requests.get(resdict['url'], stream=True) as r:
-                resdict['size'] = int(r.headers.get('content-length'))
-        else:
-            log.info("Copying %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
-            urlpath = Path(resdict['url'])
-            resdict['url'] = str(urlpath.resolve())
-            if Path(urlpath).is_dir():
-                resdict['size'] = directory_size(urlpath)
+                                     'path_in_archive': path_in_archive}])]
+    for this_executable, this_reslist in reslist:
+        for resdict in this_reslist:
+            if 'size' in resdict:
+                registered = "registered"
             else:
-                resdict['size'] = urlpath.stat().st_size
-        if not location:
-            location = get_ocrd_tool_json(executable)['resource_locations'][0]
-        elif location not in get_ocrd_tool_json(executable)['resource_locations']:
-            log.error("The selected --location {location} is not in the {executable}'s resource search path, refusing to install to invalid location")
-            sys.exit(1)
-        if location != 'module':
-            basedir = resmgr.location_to_resource_dir(location)
-        else:
-            basedir = get_moduledir(executable)
-            if not basedir:
-                basedir = resmgr.location_to_resource_dir('data')
+                registered = "unregistered"
+            if any_url:
+                resdict['url'] = any_url
+            if resdict['url'] == '???':
+                log.warning("Cannot download user resource %s", resdict['name'])
+                continue
+            if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
+                log.info("Downloading %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
+                with requests.get(resdict['url'], stream=True) as r:
+                    resdict['size'] = int(r.headers.get('content-length'))
+            else:
+                log.info("Copying %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
+                urlpath = Path(resdict['url'])
+                resdict['url'] = str(urlpath.resolve())
+                if Path(urlpath).is_dir():
+                    resdict['size'] = directory_size(urlpath)
+                else:
+                    resdict['size'] = urlpath.stat().st_size
+            if not location:
+                location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
+            elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
+                log.error("The selected --location {location} is not in the {this_executable}'s resource search path, refusing to install to invalid location")
+                sys.exit(1)
+            if location != 'module':
+                basedir = resmgr.location_to_resource_dir(location)
+            else:
+                basedir = get_moduledir(this_executable)
+                if not basedir:
+                    basedir = resmgr.location_to_resource_dir('data')
 
-        with click.progressbar(length=resdict['size']) as bar:
-            fpath = resmgr.download(
-                executable,
-                resdict['url'],
-                name=resdict['name'],
-                resource_type=resdict.get('type', resource_type),
-                path_in_archive=resdict.get('path_in_archive', path_in_archive),
-                overwrite=overwrite,
-                size=resdict['size'],
-                no_subdir=location == 'cwd',
-                basedir=basedir,
-                progress_cb=lambda delta: bar.update(delta)
-            )
-        if registered == 'unregistered':
-            log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", executable, name, any_url, resmgr.user_list)
-            resmgr.add_to_user_database(executable, fpath, url=any_url)
-        resmgr.save_user_list()
-        log.info("Installed resource %s under %s", resdict['url'], fpath)
-        log.info("Use in parameters as '%s'", resmgr.parameter_usage(resdict['name'], usage=resdict.get('parameter_usage', 'as-is')))
+            with click.progressbar(length=resdict['size']) as bar:
+                fpath = resmgr.download(
+                    this_executable,
+                    resdict['url'],
+                    name=resdict['name'],
+                    resource_type=resdict.get('type', resource_type),
+                    path_in_archive=resdict.get('path_in_archive', path_in_archive),
+                    overwrite=overwrite,
+                    size=resdict['size'],
+                    no_subdir=location == 'cwd',
+                    basedir=basedir,
+                    progress_cb=lambda delta: bar.update(delta)
+                )
+            if registered == 'unregistered':
+                log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, name, any_url, resmgr.user_list)
+                resmgr.add_to_user_database(this_executable, fpath, url=any_url)
+            resmgr.save_user_list()
+            log.info("Installed resource %s under %s", resdict['url'], fpath)
+            log.info("Use in parameters as '%s'", resmgr.parameter_usage(resdict['name'], usage=resdict.get('parameter_usage', 'as-is')))
 
 @resmgr_cli.command('migrate')
 @click.argument('migration', type=click.Choice(['2.37.0']))

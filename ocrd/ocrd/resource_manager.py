@@ -113,13 +113,13 @@ class OcrdResourceManager():
                         if exec_path.name not in database:
                             database[exec_path.name] = []
                         database[exec_path.name].append(resdict)
-                    # database = self._dedup_database(database)
+            database = self._dedup_database(database)
         found = False
         ret = []
         for k in database:
             if apply_glob([k], executable):
-                restuple = (executable, [])
                 found = True
+                restuple = (k, [])
                 ret.append(restuple)
                 for resdict in database[k]:
                     if name and resdict['name'] != name:
@@ -309,7 +309,7 @@ class OcrdResourceManager():
                     copytree(path_in_archive, str(fpath))
         return fpath
 
-    def _dedup_database(self, database=None):
+    def _dedup_database(self, database=None, dedup_key='name'):
         """
         Deduplicate resources by name
         """
@@ -318,9 +318,7 @@ class OcrdResourceManager():
         for executable, reslist in database.items():
             reslist_dedup = []
             for resdict in reslist:
-                if any(r['name'] == resdict['name'] for r in reslist_dedup):
-                    continue
-                else:
+                if not any(r[dedup_key] == resdict[dedup_key] for r in reslist_dedup):
                     reslist_dedup.append(resdict)
             database[executable] = reslist_dedup
         return database

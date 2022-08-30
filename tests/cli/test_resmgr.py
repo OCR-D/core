@@ -29,23 +29,20 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     name = 'dzo.traineddata'
     r = runner.invoke(resmgr_cli, ['download', '--allow-uninstalled', '--any-url', url, executable, name], env=env)
     mgr.load_resource_list(mgr.user_list)
-    print(r.output)
-    with open(mgr.user_list, 'r') as f:
-        print(f.read())
 
-    # assert
-    # print(mgr.list_installed('ocrd-tesserocr-recognize'))
     rsrcs = mgr.list_installed('ocrd-tesserocr-recognize')[0][1]
     assert len(rsrcs) == rsrcs_before + 1
     assert rsrcs[0]['name'] == name
     assert rsrcs[0]['url'] == url
 
-    # add resource with different URL but sanem name
+    # add resource with different URL but same name
     url2 = url.replace('dzo', 'bos')
-    r = runner.invoke(resmgr_cli, ['download', '--overwrite', '-a', '--any-url', url2, executable, name], env=env)
+    r = runner.invoke(resmgr_cli, ['download', '--allow-uninstalled', '--any-url', url2, executable, name], env=env)
+    assert 'already exists and overwrite is False' in r.output
+    r = runner.invoke(resmgr_cli, ['download', '--overwrite', '--allow-uninstalled', '--any-url', url2, executable, name], env=env)
+    assert 'already exists and overwrite is False' not in r.output
     mgr.load_resource_list(mgr.user_list)
 
-    # assert
     rsrcs = mgr.list_installed('ocrd-tesserocr-recognize')[0][1]
     print(rsrcs)
     assert len(rsrcs) == rsrcs_before + 1
