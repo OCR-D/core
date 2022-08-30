@@ -98,10 +98,10 @@ def test_find_resources(tmp_path):
     mgr = OcrdResourceManager(xdg_config_home=tmp_path)
 
     # assert
-    assert mgr.find_resources(executable='ocrd-foo') == []
+    assert mgr.list_available(executable='ocrd-foo') == [('ocrd-foo', [])]
     assert mgr.add_to_user_database('ocrd-foo', f, url='http://foo/bar')
-    assert 'ocrd-foo' in [x for x, _ in mgr.find_resources()]
-    assert 'ocrd-foo' in [x for x, _ in mgr.find_resources(url='http://foo/bar')]
+    assert 'ocrd-foo' in [x for x, _ in mgr.list_available()]
+    assert 'ocrd-foo' in [x for x, _ in mgr.list_available(url='http://foo/bar')]
 
 def test_parameter_usage(tmp_path):
     mgr = OcrdResourceManager(xdg_config_home=tmp_path)

@@ -96,28 +96,37 @@ class OcrdResourceManager():
                 database[executable] = list_loaded[executable] + database[executable]
         return database
 
-    def list_available(self, executable=None, dynamic=True):
+    def list_available(self, executable=None, dynamic=True, name=None, database=None, url=None):
         """
         List models available for download by processor
         """
+        if not database:
+            database = self.database
         if not executable:
-            return self.database.items()
+            return database.items()
         if dynamic:
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
                     self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
                     ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
-                        if exec_path.name not in self.database:
-                            self.database[exec_path.name] = []
-                        self.database[exec_path.name].append(resdict)
-                    self.database = self._dedup_database(self.database)
-        ret = []
+                        if exec_path.name not in database:
+                            database[exec_path.name] = []
+                        database[exec_path.name].append(resdict)
+                    # database = self._dedup_database(database)
         found = False
-        for k in self.database:
+        ret = []
+        for k in database:
             if apply_glob([k], executable):
+                restuple = (executable, [])
                 found = True
-                ret.append((k, self.database[k]))
+                ret.append(restuple)
+                for resdict in database[k]:
+                    if name and resdict['name'] != name:
+                        continue
+                    if url and resdict['url'] != url:
+                        continue
+                    restuple[1].append(resdict)
         if not found:
             ret = [(executable, [])]
         return ret
@@ -173,7 +182,7 @@ class OcrdResourceManager():
             user_database = safe_load(f) or {}
         if executable not in user_database:
             user_database[executable] = []
-        resources_found = self.find_resources(executable=executable, name=res_name, database=user_database)
+        resources_found = self.list_available(executable=executable, name=res_name, database=user_database)[0][1]
         if not resources_found:
             resdict = {
                 'name': res_name,
