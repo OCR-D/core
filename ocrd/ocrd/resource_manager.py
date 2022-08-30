@@ -194,7 +194,7 @@ class OcrdResourceManager():
             }
             user_database[executable].append(resdict)
         else:
-            resdict = resources_found[0][1]
+            resdict = resources_found[0]
         self.save_user_list(user_database)
         self.load_resource_list(self.user_list)
         return resdict

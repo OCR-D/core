@@ -88,7 +88,7 @@ def get_ocrd_tool_json(executable):
 def get_moduledir(executable):
     moduledir = None
     try:
-        moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout
+        moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout.rstrip('\n')
     except (JSONDecodeError, OSError) as e:
         getLogger('ocrd_utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
