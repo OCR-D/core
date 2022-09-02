@@ -108,8 +108,8 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
             log.info("Executable %s is not installed, but " \
                      "downloading resources anyway", executable)
     reslist = resmgr.list_available(executable=executable, dynamic=not no_dynamic)
-    if name:
-        reslist = [(executable, r) for _, rs in reslist for r in rs if r['name'] == name]
+    reslist = [(executable, r) for _, rs in reslist 
+               for r in rs if r['name'] == name or name is None]
     if not reslist:
         log.info(f"No resources {name} found in registry for executable {executable}")
         if executable and name:
