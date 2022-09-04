@@ -320,8 +320,7 @@ class OcrdMets(OcrdXmlDocument):
                 mets_file = next(self.find_files(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId), None)
                 if mets_file:
                     if not force:
-                        # TODO this should be an exception
-                        log.info(f"File with pageId='{pageId}' and mimetype '{mimetype}' already exists in fileGrp '{fileGrp}'.")
+                        raise FileExistsError(f"File with pageId='{pageId}' and mimetype '{mimetype}' already exists in fileGrp '{fileGrp}'.")
                         mets_file = None
                     else:
                         # XXX explicitly DO NOT set the ID but reuse the existing ID
@@ -334,7 +333,7 @@ class OcrdMets(OcrdXmlDocument):
                 mets_file = next(self.find_files(ID=ID), None)
                 if mets_file:
                     if not force:
-                        raise Exception(f"File with ID='{ID}' already exists")
+                        raise FileExistsError(f"File with ID='{ID}' already exists")
                     mets_file.url = url
                     mets_file.mimetype = mimetype
                     mets_file.pageId = pageId
