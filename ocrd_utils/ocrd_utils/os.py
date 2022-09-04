@@ -13,7 +13,7 @@ __all__ = [
     'atomic_write',
 ]
 
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, gettempdir
 from functools import lru_cache
 import contextlib
 from distutils.spawn import find_executable as which
@@ -48,16 +48,16 @@ def pushd_popd(newcwd=None, tempdir=False):
         oldcwd = getcwd()
     except FileNotFoundError:
         # This happens when a directory is deleted before the context is exited
-        oldcwd = '/tmp'
+        oldcwd = gettempdir()
     try:
         if tempdir:
             with TemporaryDirectory() as tempcwd:
                 chdir(tempcwd)
-                yield tempcwd
+                yield Path(tempcwd).resolve()
         else:
             if newcwd:
                 chdir(newcwd)
-            yield newcwd
+            yield Path(newcwd).resolve()
     finally:
         chdir(oldcwd)
 

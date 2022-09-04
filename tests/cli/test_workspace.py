@@ -131,6 +131,7 @@ class TestCli(TestCase):
         content = 'x'
         mimetype = 'image/tiff'
         with TemporaryDirectory() as tempdir:
+            tempdir = str(Path(tempdir).resolve())
             content_file = join(tempdir, 'testfile')
             with open(content_file, 'w') as f:
                 f.write(content)
@@ -236,6 +237,7 @@ class TestCli(TestCase):
         file_grp = 'TEST_GROUP'
         mimetype = 'image/tiff'
         with TemporaryDirectory() as tempdir:
+            tempdir = str(Path(tempdir).resolve())
             content_file = join(tempdir, 'test.tif')
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.save_mets()
@@ -308,6 +310,7 @@ class TestCli(TestCase):
         Test removal of filegrp
         """
         with TemporaryDirectory() as tempdir:
+            tempdir = str(Path(tempdir).resolve())
             wsdir = join(tempdir, 'ws')
             copytree(assets.path_to('SBB0000F29300010000/data'), wsdir)
             file_group = 'OCR-D-GT-PAGE'
