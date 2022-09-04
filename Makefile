@@ -68,7 +68,7 @@ deps-test:
 
 # (Re)install the tool
 install:
-	$(PIP) install -U pip wheel
+	$(PIP) install -U pip wheel setuptools fastentrypoints
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 
 # Install with pip install -e
@@ -147,7 +147,7 @@ assets: repo/assets
 test: assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	$(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
+	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10 --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)

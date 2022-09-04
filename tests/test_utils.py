@@ -45,6 +45,7 @@ from ocrd_utils import (
 from ocrd_models.utils import xmllint_format
 from ocrd_models import OcrdMets
 
+
 class TestUtils(TestCase):
 
     def test_abspath(self):
@@ -146,16 +147,21 @@ class TestUtils(TestCase):
 
     def test_pushd_popd_newcwd(self):
         cwd = getcwd()
-        with pushd_popd('/tmp'):
-            self.assertEqual(getcwd(), '/tmp')
+        tmp_dir = Path(gettempdir()).resolve()
+        with pushd_popd(tmp_dir):
+            self.assertEqual(getcwd(), str(tmp_dir))
         self.assertEqual(getcwd(), cwd)
+        assert getcwd() == cwd
 
     def test_pushd_popd_tempdir(self):
         cwd = getcwd()
+        tmp_dir = str(Path(gettempdir()).resolve())
         with pushd_popd(tempdir=True) as newcwd:
-            self.assertEqual(getcwd(), newcwd)
-            self.assertTrue(newcwd.startswith(gettempdir()))
+            newcwd_str = str(newcwd)
+            self.assertEqual(getcwd(), newcwd_str)
+            self.assertTrue(newcwd_str.startswith(tmp_dir))
         self.assertEqual(getcwd(), cwd)
+        assert getcwd() == cwd
 
     def test_pushd_popd_bad_call(self):
         with self.assertRaisesRegex(Exception, 'pushd_popd can accept either newcwd or tempdir, not both'):

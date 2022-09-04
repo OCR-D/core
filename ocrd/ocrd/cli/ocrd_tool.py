@@ -9,7 +9,7 @@ OCR-D CLI: ocrd-tool.json management
 from json import dumps
 import codecs
 import sys
-
+import os
 import click
 
 from ocrd.decorators import parameter_option, parameter_override_option
@@ -96,15 +96,23 @@ def ocrd_tool_tool_description(ctx):
 @ocrd_tool_tool.command('list-resources', help="List tool's file resources")
 @pass_ocrd_tool
 def ocrd_tool_tool_list_resources(ctx):
-    Processor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-              list_resources=True)
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
+    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+                  list_resources=True)
 
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
 @pass_ocrd_tool
 def ocrd_tool_tool_show_resource(ctx, res_name):
-    Processor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-              show_resource=res_name)
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
+    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+                  show_resource=res_name)
 
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @pass_ocrd_tool

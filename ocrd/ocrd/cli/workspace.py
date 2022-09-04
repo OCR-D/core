@@ -67,10 +67,10 @@ def workspace_cli(ctx, directory, mets, mets_basename, backup):
 def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
     """
     Validate a workspace
-    
+
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
     If not given, use --mets accordingly.
-    
+
     Check that the METS and its referenced file contents
     abide by the OCR-D specifications.
     """
@@ -183,8 +183,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         except KeyError:
             log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (Path(fname).suffix, fname))
 
-    kwargs = {'fileGrp': file_grp, 'ID': file_id, 'mimetype': mimetype, 'pageId': page_id, 'force': force, 'ignore': ignore}
-    log.debug("Adding '%s' (%s)", fname, kwargs)
+    log.debug("Adding '%s'", fname)
+    local_filename = None
     if not (fname.startswith('http://') or fname.startswith('https://')):
         if not fname.startswith(ctx.directory):
             if not isabs(fname) and exists(join(ctx.directory, fname)):
@@ -202,12 +202,11 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
             sys.exit(1)
         if fname.startswith(ctx.directory):
             fname = relpath(fname, ctx.directory)
-        kwargs['local_filename'] = fname
+        local_filename = fname
 
-    kwargs['url'] = fname
     if not page_id:
         log.warning("You did not provide '--page-id/-g', so the file you added is not linked to a specific page.")
-    workspace.mets.add_file(**kwargs)
+    workspace.add_file(file_grp, file_id=file_id, mimetype=mimetype, page_id=page_id, force=force, ignore=ignore, local_filename=local_filename, url=fname)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
@@ -291,7 +290,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 file_paths += [Path(x) for x in expanded]
 
     for i, file_path in enumerate(file_paths):
-        log.info("[%4d/%d] %s" % (i, len(file_paths), file_path))
+        log.info("[%4d/%d] %s" % (i + 1, len(file_paths), file_path))
 
         # match regex
         m = pat.match(str(file_path))
@@ -306,7 +305,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         file_id_ = file_id or safe_filename(str(file_path))
 
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'ID': file_id_, 'pageId': page_id, 'fileGrp': file_grp}
+        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id_, 'page_id': page_id, 'file_grp': file_grp}
 
         # guess mime type
         if not file_dict['mimetype']:
@@ -350,7 +349,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                     destpath.write_bytes(srcpath.read_bytes())
 
         # Add to workspace (or not)
-        fileGrp = file_dict.pop('fileGrp')
+        fileGrp = file_dict.pop('file_grp')
         if dry_run:
             log.info('workspace.add_file(%s)' % file_dict)
         else:
@@ -372,8 +371,11 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         type=click.Choice([
             'url',
             'mimetype',
+            'page_id',
             'pageId',
+            'file_id',
             'ID',
+            'file_grp',
             'fileGrp',
             'basename',
             'basename_without_extension',
@@ -389,14 +391,16 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     (If any ``FILTER`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
+    snake_to_camel = {"file_id": "ID", "page_id": "pageId", "file_grp": "fileGrp"}
+    output_field = [snake_to_camel.get(x, x) for x in output_field]
     modified_mets = False
     ret = list()
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
-    for f in workspace.mets.find_files(
-            ID=file_id,
-            fileGrp=file_grp,
+    for f in workspace.find_files(
+            file_id=file_id,
+            file_grp=file_grp,
             mimetype=mimetype,
-            pageId=page_id,
+            page_id=page_id,
         ):
         if download and not f.local_filename:
             workspace.download_file(f)
@@ -428,7 +432,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
 def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefined-builtin
     """
     Delete files (given by their ID attribute ``ID``).
-    
+
     (If any ``ID`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
@@ -467,7 +471,7 @@ def rename_group(ctx, old, new):
 def remove_group(ctx, group, recursive, force, keep_files):
     """
     Delete fileGrps (given by their USE attribute ``GROUP``).
-    
+
     (If any ``GROUP`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
@@ -495,11 +499,11 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     with pushd_popd(workspace.directory):
-        for f in workspace.mets.find_files(
-            ID=file_id,
-            fileGrp=file_grp,
+        for f in workspace.find_files(
+            file_id=file_id,
+            file_grp=file_grp,
             mimetype=mimetype,
-            pageId=page_id,
+            page_id=page_id,
         ):
             try:
                 if not f.local_filename or not exists(f.local_filename):
@@ -573,15 +577,24 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 # ocrd workspace merge
 # ----------------------------------------------------------------------
 
+def _handle_json_option(ctx, param, value):
+    return parse_json_string_or_file(value) if value else None
+
 @workspace_cli.command('merge')
 @click.argument('METS_PATH')
+@click.option('--overwrite/--no-overwrite', is_flag=True, default=False, help="Overwrite in case of file name conflicts with data from METS_PATH")
 @click.option('--copy-files/--no-copy-files', is_flag=True, help="Copy files as well", default=True, show_default=True)
-@click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp")
+@click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp", callback=_handle_json_option)
+@click.option('--fileId-mapping', help="JSON object mapping src to dest file ID", callback=_handle_json_option)
+@click.option('--pageId-mapping', help="JSON object mapping src to dest page ID", callback=_handle_json_option)
 @mets_find_options
 @pass_workspace
-def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, overwrite, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
+
+    Pass a JSON string or file to ``--fileGrp-mapping``, ``--fileId-mapping`` or ``--pageId-mapping``
+    in order to rename all fileGrp, file ID or page ID values, respectively.
 
     The ``--file-id``, ``--page-id``, ``--mimetype`` and ``--file-grp`` options have
     the same semantics as in ``ocrd workspace find``, see ``ocrd workspace find --help``
@@ -594,11 +607,14 @@ def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype
     other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
     workspace.merge(
         other_workspace,
+        overwrite=overwrite,
         copy_files=copy_files,
         fileGrp_mapping=filegrp_mapping,
-        fileGrp=file_grp,
-        ID=file_id,
-        pageId=page_id,
+        fileId_mapping=fileid_mapping,
+        pageId_mapping=pageid_mapping,
+        file_grp=file_grp,
+        file_id=file_id,
+        page_id=page_id,
         mimetype=mimetype,
     )
     workspace.save_mets()
