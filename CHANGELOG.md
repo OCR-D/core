@@ -5,6 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd resmgr download *` working again, #904, #908, #909
+  * Resource manager respects `moduledir` correctly, #904
+
+Added:
+
+  * Processors have a `--dump-module-dir` to print their implementation-specific module directory to STDOUT, #904
+
 ## [2.38.0] - 2022-08-14
 
 Fixed:
