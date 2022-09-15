@@ -1,5 +1,4 @@
 from os.path import isfile
-import sys
 
 import click
 
@@ -36,9 +35,10 @@ def ocrd_cli_wrap_processor(
     list_resources=False,
     **kwargs
 ):
-    if not sys.argv[1:]:
+    if not (mets or working_dir or 
+            dump_json or dump_module_dir or help or version or show_resource or list_resources):
         processorClass(workspace=None, show_help=True)
-        sys.exit(1)
+        return 1
     if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
             workspace=None,
@@ -49,7 +49,7 @@ def ocrd_cli_wrap_processor(
             show_resource=show_resource,
             list_resources=list_resources
         )
-        sys.exit()
+        return
     else:
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
