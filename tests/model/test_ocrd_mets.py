@@ -3,14 +3,20 @@
 from datetime import datetime
 
 from os.path import join
+from contextlib import contextmanager
 import shutil
+from logging import StreamHandler
 
 from tests.base import (
     main,
+    capture_log,
     assets,
 )
 
 from ocrd_utils import (
+    initLogging,
+    disableLogging,
+    getLogger,
     VERSION,
     MIMETYPE_PAGE
 )
@@ -48,13 +54,6 @@ def test_unique_identifier_from_nothing():
 def test_str():
     mets = OcrdMets(content='<mets/>')
     assert str(mets) == 'OcrdMets[fileGrps=[],files=[]]'
-
-
-@pytest.mark.xfail(reason='old test, was actually out-commented')
-def test_override_constructor_args():
-    id2file = {'foo': {}}
-    mets = OcrdMets(id2file, content='<mets/>')
-    assert mets._file_by_id == id2file
 
 
 def test_file_groups(sbb_sample_01):
@@ -149,7 +148,17 @@ def test_add_file_id_already_exists(sbb_sample_01):
     f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
     assert f._el == f2._el
 
-@pytest.mark.xfail(reason='2x same ID is valid if ignore == True')
+def test_add_file_nopageid_overwrite(sbb_sample_01: OcrdMets):
+    """
+    Test that when adding files without pageId
+    """
+    with capture_log('ocrd_models.ocrd_mets.add_file') as cap:
+        file1 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="application/tei+xml")
+        try:
+            file2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="application/tei+xml", ignore=False, force=False)
+        except: pass
+        assert "File with mimetype 'application/tei+xml' already exists in fileGrp 'OUTPUT'" in cap.getvalue()
+
 def test_add_file_ignore(sbb_sample_01: OcrdMets):
     """Behavior if ignore-Flag set to true:
     delegate responsibility to overwrite existing files to user"""
@@ -161,7 +170,7 @@ def test_add_file_ignore(sbb_sample_01: OcrdMets):
 
     # how many files inserted
     the_files = list(sbb_sample_01.find_files(ID='best-id-ever'))
-    assert len(the_files) == 1
+    assert len(the_files) == 2
 
 
 def test_add_file_id_invalid(sbb_sample_01):

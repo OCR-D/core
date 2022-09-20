@@ -310,26 +310,26 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
-        log = getLogger('ocrd_models.ocrd_mets.remove_file_group')
+        log = getLogger('ocrd_models.ocrd_mets.add_file')
         el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
         if el_fileGrp is None:
             el_fileGrp = self.add_file_group(fileGrp)
         mets_file = None
         if not ignore:
-            if pageId:
-                mets_file = next(self.find_files(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId), None)
-                if mets_file:
-                    if not force:
-                        # XXX should this be an exception?
-                        log.warning(FileExistsError(f"File with pageId='{pageId}' and mimetype '{mimetype}' already exists in fileGrp '{fileGrp}'."))
-                        mets_file = None
-                    else:
-                        # XXX explicitly DO NOT set the ID but reuse the existing ID
-                        # XXX https://github.com/OCR-D/core/pull/861
-                        # mets_file.ID = ID
-                        mets_file.url = url
-                        mets_file.local_filename = local_filename
-                        mets_file.mimetype = mimetype
+            mets_file = next(self.find_files(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId), None)
+            if mets_file:
+                if not force:
+                    # XXX should this be an exception?
+                    log.warning("File with%s mimetype '%s' already exists in fileGrp '%s'." %
+                            (f" pageId='{pageId}' and " if pageId else "", mimetype, fileGrp))
+                    mets_file = None
+                else:
+                    # XXX explicitly DO NOT set the ID but reuse the existing ID
+                    # XXX https://github.com/OCR-D/core/pull/861
+                    # mets_file.ID = ID
+                    mets_file.url = url
+                    mets_file.local_filename = local_filename
+                    mets_file.mimetype = mimetype
             if not mets_file:
                 mets_file = next(self.find_files(ID=ID), None)
                 if mets_file:
