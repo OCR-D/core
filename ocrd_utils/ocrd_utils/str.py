@@ -79,15 +79,16 @@ def make_file_id(ocrd_file, output_file_grp):
         elif ocrd_file.pageId:
             ret = output_file_grp + '_' + ocrd_file.pageId
         else:
-            ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
+            ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=output_file_grp, mimetype=ocrd_file.mimetype)]
             try:
                 n = ids.index(ocrd_file.ID) + 1
             except ValueError:
-                n = len(ids)
+                n = max(len(ids), 1)
             ret = concat_padded(output_file_grp, n)
-            while next(ocrd_file.mets.find_files(ID=ret), None):
-                n += 1
-                ret = concat_padded(output_file_grp, n)
+            if next(ocrd_file.mets.find_files(ID=ret), None):
+                raise FileExistsError("make_file_id exhausted all options for generating a unique file ID for "
+                        f"for the output file in {output_file_grp} from the input file {ocrd_file} "
+                        f"because '{ret}' already exists")
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)

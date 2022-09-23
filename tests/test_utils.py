@@ -5,6 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 from tests.base import TestCase, main, assets, create_ocrd_file
+from pytest import raises
 from ocrd_utils import (
     abspath,
 
@@ -278,13 +279,18 @@ class TestUtils(TestCase):
             mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff")
         self.assertEqual(make_file_id(mets.find_all_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
         f = mets.add_file('ABC', ID="BAR_7", mimetype="image/tiff")
-        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0010')
-        # self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0001')
         mets.remove_file(fileGrp='FOO')
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0001')
         mets.add_file('FOO', ID="FOO_0001", mimetype="image/tiff")
         # print('\n'.join(['%s' % of for of in mets.find_all_files()]))
-        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0002')
+        with raises(FileExistsError) as fnf_exc:
+            # make_file_id raises FEE because f does not have a pageId
+            # and there is one file in FOO with a clashing ID
+            make_file_id(f, 'FOO')
+        # But if we add another file to FOO the last-resort
+        # ID generation succeeds
+        mets.add_file('FOO', ID="FOO_0000", mimetype="image/tiff")
+        assert make_file_id(f, 'FOO') == 'FOO_0002'
 
     def test_make_file_id_570(self):
         """https://github.com/OCR-D/core/pull/570"""
