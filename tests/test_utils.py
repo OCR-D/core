@@ -275,22 +275,23 @@ class TestUtils(TestCase):
     def test_make_file_id_mets(self):
         mets = OcrdMets.empty_mets()
         for i in range(1, 10):
-            mets.add_file('FOO', ID="FOO_%04d" % (i), mimetype="image/tiff")
-            mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff")
+            mets.add_file('FOO', ID="FOO_%04d" % (i), mimetype="image/tiff", pageId='FOO_%04d' % i)
+            mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff", pageId='BAR_%04d' % i)
         self.assertEqual(make_file_id(mets.find_all_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
-        f = mets.add_file('ABC', ID="BAR_7", mimetype="image/tiff")
+        f = mets.add_file('ABC', ID="BAR_42", mimetype="image/tiff")
         mets.remove_file(fileGrp='FOO')
         self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0001')
         mets.add_file('FOO', ID="FOO_0001", mimetype="image/tiff")
-        # print('\n'.join(['%s' % of for of in mets.find_all_files()]))
         with raises(FileExistsError) as fnf_exc:
-            # make_file_id raises FEE because f does not have a pageId
+            # make_file_id raises FileExistsError because f does not have a pageId
             # and there is one file in FOO with a clashing ID
             make_file_id(f, 'FOO')
-        # But if we add another file to FOO the last-resort
-        # ID generation succeeds
-        mets.add_file('FOO', ID="FOO_0000", mimetype="image/tiff")
-        assert make_file_id(f, 'FOO') == 'FOO_0002'
+        # This does work because of a different mimetype and ID
+        mets.add_file('FOO', ID="FOO_0000", mimetype='foo/bar')
+        # This does NOT work because in absence of a pageId in f and there is
+        # already a pageId-less image/tiff file in output_file_grp
+        with raises(FileExistsError) as fnf_exc:
+            make_file_id(f, 'FOO')
 
     def test_make_file_id_570(self):
         """https://github.com/OCR-D/core/pull/570"""

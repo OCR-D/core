@@ -115,7 +115,7 @@ def test_add_group():
     assert len(mets.file_groups) == 1, '1 file groups'
 
 
-def test_add_file():
+def test_add_file0():
     mets = OcrdMets.empty_mets()
     assert len(mets.file_groups) == 0, '0 file groups'
     assert len(list(mets.find_all_files(fileGrp='OUTPUT'))) == 0, '0 files in "OUTPUT"'
@@ -124,7 +124,7 @@ def test_add_file():
     # with pytest.raises(Exception) as exc:
     #     f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
     # assert str(exc.value) == "Exception: File with pageId='foobar' already exists in fileGrp 'OUTPUTx'"
-    f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
+    f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar", is_alternative_image=True)
     assert f.pageId == 'foobar', 'pageId set'
     assert len(mets.file_groups) == 1, '1 file groups'
     assert len(list(mets.find_all_files(fileGrp='OUTPUT'))) == 2, '2 files in "OUTPUT"'
@@ -140,13 +140,13 @@ def test_add_file():
 def test_add_file_id_already_exists(sbb_sample_01):
     f = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
     assert f.ID == 'best-id-ever', "ID kept"
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(FileExistsError) as exc:
         sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep")
 
-    assert "File with ID='best-id-ever' already exists" in str(exc)
-
     f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
-    assert f._el == f2._el
+    # XXX != was == before but is no longer guaranteed, clashing files are removed with
+    # force=True before adding a new file with a new XML mets:file element
+    assert f._el != f2._el
 
 def test_add_file_nopageid_overwrite(sbb_sample_01: OcrdMets):
     """
@@ -154,10 +154,8 @@ def test_add_file_nopageid_overwrite(sbb_sample_01: OcrdMets):
     """
     with capture_log('ocrd_models.ocrd_mets.add_file') as cap:
         file1 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="application/tei+xml")
-        try:
+        with pytest.raises(FileExistsError):
             file2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="application/tei+xml", ignore=False, force=False)
-        except: pass
-        assert "File with mimetype 'application/tei+xml' already exists in fileGrp 'OUTPUT'" in cap.getvalue()
 
 def test_add_file_ignore(sbb_sample_01: OcrdMets):
     """Behavior if ignore-Flag set to true:

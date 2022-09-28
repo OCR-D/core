@@ -165,7 +165,7 @@ class TestProcessor(TestCase):
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
             ws.add_file('GRP1', mimetype='image/png', file_id='foobar1img1', page_id='phys_0001')
-            ws.add_file('GRP1', mimetype='image/png', file_id='foobar1img2', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype='image/png', file_id='foobar1img2', page_id='phys_0001', is_alternative_image=True)
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0001')
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
             ws.add_file('GRP2', mimetype='image/tiff', file_id='foobar4', page_id='phys_0002')
@@ -179,7 +179,7 @@ class TestProcessor(TestCase):
                     print("PAGE-filtered")
                     tuples = [(one.ID, two) for one, two in proc.zip_input_files(mimetype=MIMETYPE_PAGE)]
                     assert ('foobar3', None) in tuples
-            ws.add_file('GRP2', mimetype='image/tiff', file_id='foobar4dup', page_id='phys_0002')
+            ws.add_file('GRP2', mimetype='image/tiff', file_id='foobar4dup', page_id='phys_0002', is_alternative_image=True)
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -190,7 +190,7 @@ class TestProcessor(TestCase):
                     assert ('foobar3', None) in tuples
                     with self.assertRaisesRegex(Exception, "No PAGE-XML for page .* in fileGrp .* but multiple matches."):
                         tuples = proc.zip_input_files(on_error='abort')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2dup', page_id='phys_0001')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2dup', page_id='phys_0001', is_alternative_image=True)
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)

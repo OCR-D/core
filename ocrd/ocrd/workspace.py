@@ -1032,6 +1032,7 @@ class Workspace():
             local_filename=file_path,
             mimetype=mimetype,
             content=image_bytes.getvalue(),
+            is_alternative_image=True,
             force=force)
         log.info('created file ID: %s, file_grp: %s, path: %s',
                  file_id, file_grp, out.local_filename)

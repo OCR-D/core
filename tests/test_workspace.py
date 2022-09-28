@@ -675,7 +675,9 @@ def test_merge_no_copy_files(tmp_path):
 
     ws1.merge(ws2, copy_files=False, fileId_mapping={'f1': 'f1_copy_files'})
     assert next(ws1.mets.find_files(ID='f1_copy_files')).url == 'ws2/GRP2/f1'
-    ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_no_copy_files'})
+    with pytest.raises(FileExistsError):
+        ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_no_copy_files'})
+    ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_no_copy_files'}, force=True)
     assert next(ws1.mets.find_files(ID='f1_no_copy_files')).url == 'GRP2/f1'
 
 def test_merge_overwrite(tmp_path):

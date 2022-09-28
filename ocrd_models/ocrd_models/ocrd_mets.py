@@ -287,7 +287,7 @@ class OcrdMets(OcrdXmlDocument):
                 self.remove_one_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, is_alternative_image=False, local_filename=None, ignore=False, **kwargs):
         """
         Instantiate and add a new :py:class:`ocrd_models.ocrd_file.OcrdFile`.
 
@@ -299,6 +299,9 @@ class OcrdMets(OcrdXmlDocument):
             ID (string): ``@ID`` of the ``mets:file`` to use
             pageId (string): ``@ID`` in the physical ``mets:structMap`` to link to
             force (boolean): Whether to add the file even if a ``mets:file`` with the same ``@ID`` already exists.
+            is_alternative_image (boolean): Whether this is an AlternativeImage, in which case clashes with
+                                            combination of fileGrp, mimetype and pageId are to be expected and
+                                            should not result in a FileExistsError or removal of such files
             ignore (boolean): Do not look for existing files at all. Shift responsibility for preventing errors from duplicate ID to the user.
             local_filename (string):
         """
@@ -310,38 +313,30 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
+        if next(self.find_files(ID=ID), None) and not (force or ignore):
+            raise FileExistsError(f"A file with ID=={ID} already exists {next(self.find_files(ID=ID))} and neither force nor ignore are set")
         log = getLogger('ocrd_models.ocrd_mets.add_file')
-        el_fileGrp = self._tree.getroot().find(".//mets:fileGrp[@USE='%s']" % (fileGrp), NS)
-        if el_fileGrp is None:
-            el_fileGrp = self.add_file_group(fileGrp)
-        mets_file = None
+        el_fileGrp = self.add_file_group(fileGrp)
         if not ignore:
-            mets_file = next(self.find_files(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId), None)
+            mets_file = next(self.find_files(ID=ID), None)
             if mets_file:
                 if not force:
-                    # XXX should this be an exception?
-                    log.warning("File with%s mimetype '%s' already exists in fileGrp '%s'." %
+                    raise FileExistsError(f"File with ID='{ID}' already exists")
+                self.remove_file(ID=ID)
+            if not is_alternative_image:
+                mets_file = next(self.find_files(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId), None)
+                if not pageId and mets_file:
+                    # XXX There is a grp/mimetype/pageId clash but this is not
+                    # a page-specific image, so ignore the grp/mimetype clash
+                    pass
+                elif mets_file:
+                    if force:
+                        self.remove_file(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId)
+                    else:
+                        raise FileExistsError("File with%s mimetype '%s' already exists in fileGrp '%s'." %
                             (f" pageId='{pageId}' and " if pageId else "", mimetype, fileGrp))
-                    mets_file = None
-                else:
-                    # XXX explicitly DO NOT set the ID but reuse the existing ID
-                    # XXX https://github.com/OCR-D/core/pull/861
-                    # mets_file.ID = ID
-                    mets_file.url = url
-                    mets_file.local_filename = local_filename
-                    mets_file.mimetype = mimetype
-            if not mets_file:
-                mets_file = next(self.find_files(ID=ID), None)
-                if mets_file:
-                    if not force:
-                        raise FileExistsError(f"File with ID='{ID}' already exists")
-                    mets_file.url = url
-                    mets_file.mimetype = mimetype
-                    mets_file.pageId = pageId
-                    mets_file.local_filename = local_filename
-        if not mets_file:
-            kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v}
-            mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self, **kwargs)
+        kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v}
+        mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self, **kwargs)
 
         return mets_file
 
