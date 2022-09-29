@@ -46,16 +46,16 @@ help:
 # END-EVAL
 
 # Docker tag. Default: '$(DOCKER_TAG)'.
-DOCKER_TAG = ocrd/core
+DOCKER_TAG ?= ocrd/core
 
 # Docker base image. Default: '$(DOCKER_BASE_IMAGE)'.
-DOCKER_BASE_IMAGE = ubuntu:18.04
+DOCKER_BASE_IMAGE ?= ubuntu:18.04
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
+DOCKER_ARGS ?=
 
 # pip install command. Default: $(PIP_INSTALL)
-PIP_INSTALL = pip install
+PIP_INSTALL ?= pip install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
