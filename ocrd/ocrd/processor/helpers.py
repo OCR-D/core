@@ -371,12 +371,7 @@ Options:
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Log level
-  --server-ip IP                  Host name/IP to listen at. When this value is set,
-                                  --server-port must be set as well.
-  --server-port NUMBER            TCP port to listen at. When this value is set,
-                                  --server-ip must be set as well.
-  --mongo-url URL                 Connection string to a Mongo database. If the processor runs as a server,
-                                  this value must be set.
+  --server IP:PORT:MONGO_URL      Host name/IP, port, and connection string to a Mongo DB.
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON and exit

@@ -13,6 +13,7 @@ from ocrd_utils import (
 
 from ocrd_utils import getLogger, initLogging
 from ocrd_validators import WorkspaceValidator
+from ..helpers import parse_server_input
 from ..processor.helpers import get_processor
 
 from ..resolver import Resolver
@@ -29,9 +30,7 @@ def ocrd_cli_wrap_processor(
     ocrd_tool=None,
     mets=None,
     working_dir=None,
-    server_ip=None,
-    server_port=None,
-    mongo_url=None,
+    server=None,
     dump_json=False,
     help=False, # pylint: disable=redefined-builtin
     version=False,
@@ -53,18 +52,11 @@ def ocrd_cli_wrap_processor(
             list_resources=list_resources
         )
         sys.exit()
-    if server_ip or server_port:
-        # IP provided without port
-        if server_ip and not server_port:
-            raise click.UsageError('--server-port is missing.')
-
-        # Port is provided without IP
-        if server_port and not server_ip:
-            raise click.UsageError('--server-ip is missing.')
-
-        # IP and port but without database
-        if server_ip and server_port and not mongo_url:
-            raise click.UsageError('--mongo-url is missing.')
+    if server:
+        try:
+            ip, port, mongo_url = parse_server_input(server)
+        except ValueError:
+            raise click.UsageError('The --server option must have the format IP:PORT:MONGO_URL')
 
         # Proceed when both IP and port are provided
         initLogging()
@@ -85,7 +77,7 @@ def ocrd_cli_wrap_processor(
             processor_class=processorClass
         )
 
-        uvicorn.run(app, host=server_ip, port=server_port, access_log=False)
+        uvicorn.run(app, host=ip, port=port, access_log=False)
     else:
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
