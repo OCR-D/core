@@ -1,17 +1,18 @@
 """
 Helper methods for running and documenting processors
 """
+import inspect
+import json
 import os
 from functools import lru_cache
+from subprocess import run
 from time import perf_counter, process_time
-import json
-import inspect
-from subprocess import run, PIPE
 from typing import List
 
 from beanie import PydanticObjectId
 from click import wrap_text
 
+from ocrd.server.models.job import Job, StateEnum
 from ocrd_utils import getLogger
 
 __all__ = [
@@ -266,7 +267,6 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace,
             page_id or ''
         ))
 
-    from ocrd.server.models.job import Job, StateEnum
     job = await Job.get(job_id)
     if is_success:
         workspace.mets.add_agent(
