@@ -100,7 +100,7 @@ class Workspace():
     @deprecated_alias(ID="file_id")
     @deprecated_alias(fileGrp="file_grp")
     @deprecated_alias(fileGrp_mapping="filegrp_mapping")
-    def merge(self, other_workspace, copy_files=True, **kwargs):
+    def merge(self, other_workspace, copy_files=True, overwrite=False, **kwargs):
         """
         Merge ``other_workspace`` into this one
 
@@ -121,7 +121,7 @@ class Workspace():
             fpath_src = Path(other_workspace.directory, f.url)
             fpath_dest = Path(self.directory, f.url)
             if fpath_src.exists():
-                if fpath_dest.exists():
+                if fpath_dest.exists() and not overwrite:
                     raise Exception("Copying %s to %s would overwrite the latter" % (fpath_src, fpath_dest))
                 if not fpath_dest.parent.is_dir():
                     makedirs(str(fpath_dest.parent))

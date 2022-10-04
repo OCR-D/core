@@ -296,7 +296,7 @@ def test_rename_file_group(tmp_path):
     ocrd_file.local_filename = join(tmp_path, relative_name)
     pcgts_before = page_from_file(ocrd_file)
     # before assert
-    assert pcgts_before.get_Page().imageFilename == 'OCR-D-IMG/OCR-D-IMG_0001.tif'
+    assert pcgts_before.get_Page().imageFilename == 'OCR-D-IMG/INPUT_0017.tif'
 
     # act
     workspace.rename_file_group('OCR-D-IMG', 'FOOBAR')
@@ -305,8 +305,8 @@ def test_rename_file_group(tmp_path):
     pcgts_after = page_from_file(next_ocrd_file)
 
     # assert
-    assert pcgts_after.get_Page().imageFilename == 'FOOBAR/FOOBAR_0001.tif'
-    assert Path(tmp_path / 'FOOBAR/FOOBAR_0001.tif').exists()
+    assert pcgts_after.get_Page().imageFilename == 'FOOBAR/INPUT_0017.tif'
+    assert Path(tmp_path / 'FOOBAR/INPUT_0017.tif').exists()
     assert not Path('OCR-D-IMG/OCR-D-IMG_0001.tif').exists()
     assert workspace.mets.get_physical_pages(for_fileIds=['OCR-D-IMG_0001']) == [None]
     assert workspace.mets.get_physical_pages(for_fileIds=['FOOBAR_0001']) == ['phys_0001']
@@ -614,11 +614,11 @@ def test_merge(tmp_path):
     assert len(ws1.mets.find_all_files()) == 6
 
     # act
-    ws1.merge(ws2)
+    ws1.merge(ws2, overwrite=True)
 
     # assert
     assert len(ws1.mets.find_all_files()) == 41
-    assert exists(join(dst_path1, 'OCR-D-IMG/FILE_0001_IMAGE.tif'))
+    assert exists(join(dst_path1, 'OCR-D-IMG/INPUT_0017.tif'))
 
 def test_merge_no_copy_files(tmp_path):
 

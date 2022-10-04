@@ -1,10 +1,13 @@
 from pathlib import Path
 from os.path import join
+from json import loads
 from os import environ, listdir, getcwd, path
+from fnmatch import filter as apply_glob
 from shutil import copytree
 from datetime import datetime
 from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
+from subprocess import run, PIPE
 
 import requests
 from yaml import safe_load, safe_dump
@@ -16,8 +19,8 @@ yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp
     yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger
-from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd
+from ocrd_utils import getLogger, directory_size, get_moduledir
+from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
 class OcrdResourceManager():
@@ -25,7 +28,7 @@ class OcrdResourceManager():
     """
     Managing processor resources
     """
-    def __init__(self, userdir=None, xdg_config_home=None, xdg_data_home=None):
+    def __init__(self, userdir=None, xdg_config_home=None, xdg_data_home=None, skip_init=False):
         self.log = getLogger('ocrd.resource_manager')
         self.database = {}
 
@@ -34,13 +37,13 @@ class OcrdResourceManager():
         self._userdir = userdir
         self.user_list = Path(self.xdg_config_home, 'ocrd', 'resources.yml')
 
-        self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
-        if not self.user_list.exists():
-            if not self.user_list.parent.exists():
-                self.user_list.parent.mkdir(parents=True)
-            with open(str(self.user_list), 'w', encoding='utf-8') as f:
-                f.write(RESOURCE_USER_LIST_COMMENT)
-        self.load_resource_list(self.user_list)
+        if not skip_init:
+            self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
+            if not self.user_list.exists():
+                if not self.user_list.parent.exists():
+                    self.user_list.parent.mkdir(parents=True)
+                self.save_user_list()
+            self.load_resource_list(self.user_list)
 
     @property
     def userdir(self):
@@ -68,6 +71,14 @@ class OcrdResourceManager():
                 self._xdg_config_home = join(self.userdir, '.config')
         return self._xdg_config_home
 
+    def save_user_list(self, database=None):
+        if not database:
+            database = self.database
+        with open(self.user_list, 'w', encoding='utf-8') as f:
+            f.write(RESOURCE_USER_LIST_COMMENT)
+            f.write('\n')
+            f.write(safe_dump(database))
+
     def load_resource_list(self, list_filename, database=None):
         if not database:
             database = self.database
@@ -85,13 +96,40 @@ class OcrdResourceManager():
                 database[executable] = list_loaded[executable] + database[executable]
         return database
 
-    def list_available(self, executable=None):
+    def list_available(self, executable=None, dynamic=True, name=None, database=None, url=None):
         """
         List models available for download by processor
         """
-        if executable:
-            return [(executable, self.database.get(executable, []))]
-        return self.database.items()
+        if not database:
+            database = self.database
+        if not executable:
+            return database.items()
+        if dynamic:
+            for exec_dir in environ['PATH'].split(':'):
+                for exec_path in Path(exec_dir).glob(f'{executable}'):
+                    self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
+                    ocrd_tool = get_ocrd_tool_json(exec_path)
+                    for resdict in ocrd_tool.get('resources', ()):
+                        if exec_path.name not in database:
+                            database[exec_path.name] = []
+                        database[exec_path.name].append(resdict)
+            database = self._dedup_database(database)
+        found = False
+        ret = []
+        for k in database:
+            if apply_glob([k], executable):
+                found = True
+                restuple = (k, [])
+                ret.append(restuple)
+                for resdict in database[k]:
+                    if name and resdict['name'] != name:
+                        continue
+                    if url and resdict['url'] != url:
+                        continue
+                    restuple[1].append(resdict)
+        if not found:
+            ret = [(executable, [])]
+        return ret
 
     def list_installed(self, executable=None):
         """
@@ -110,69 +148,56 @@ class OcrdResourceManager():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
         for this_executable in set(all_executables):
             reslist = []
-            has_dirs, has_files = get_processor_resource_types(this_executable)
-            for res_filename in list_all_resources(this_executable):
-                if Path(res_filename).is_dir() and not has_dirs:
-                    continue
-                if Path(res_filename).is_file() and not has_files:
-                    continue
-                res_name = Path(res_filename).name
-                resdict = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
-                if not resdict:
-                    self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, res_name, res_filename, self.user_list)
-                    resdict = [self.add_to_user_database(this_executable, res_filename)]
-                resdict[0]['path'] = res_filename
-                reslist.append(resdict[0])
+            mimetypes = get_processor_resource_types(this_executable)
+            moduledir = get_moduledir(this_executable)
+            for res_filename in list_all_resources(this_executable, moduled=moduledir, xdg_data_home=self.xdg_data_home):
+                res_filename = Path(res_filename)
+                if not '*/*' in mimetypes:
+                    if res_filename.is_dir() and not 'text/directory' in mimetypes:
+                        continue
+                    if res_filename.is_file() and ['text/directory'] == mimetypes:
+                        continue
+                res_name = res_filename.name
+                resdict_list = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
+                if resdict_list:
+                    resdict = resdict_list[0]
+                else:
+                    resdict = self.add_to_user_database(this_executable, res_filename)
+                resdict['path'] = str(res_filename)
+                reslist.append(resdict)
             ret.append((this_executable, reslist))
         return ret
 
-    def add_to_user_database(self, executable, res_filename, url=None):
+    def add_to_user_database(self, executable, res_filename, url=None, resource_type='file'):
         """
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
-        res_size = Path(res_filename).stat().st_size
+        self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", executable, res_name, str(res_filename), self.user_list)
+        if Path(res_filename).is_dir():
+            res_size = directory_size(res_filename)
+        else:
+            res_size = Path(res_filename).stat().st_size
         with open(self.user_list, 'r', encoding='utf-8') as f:
             user_database = safe_load(f) or {}
         if executable not in user_database:
             user_database[executable] = []
-        resources_found = self.find_resources(executable=executable, name=res_name, database=user_database)
+        resources_found = self.list_available(executable=executable, name=res_name, database=user_database)[0][1]
         if not resources_found:
             resdict = {
                 'name': res_name,
                 'url': url if url else '???',
                 'description': 'Found at %s on %s' % (self.resource_dir_to_location(res_filename), datetime.now()),
                 'version_range': '???',
+                'type': resource_type,
                 'size': res_size
             }
             user_database[executable].append(resdict)
         else:
             resdict = resources_found[0]
-        with open(self.user_list, 'w', encoding='utf-8') as f:
-            f.write(RESOURCE_USER_LIST_COMMENT)
-            f.write('\n')
-            f.write(safe_dump(user_database))
+        self.save_user_list(user_database)
         self.load_resource_list(self.user_list)
         return resdict
-
-    def find_resources(self, executable=None, name=None, url=None, database=None):
-        """
-        Find resources in the registry
-        """
-        if not database:
-            database = self.database
-        ret = []
-        if executable and executable not in database.keys():
-            return ret
-        for executable in [executable] if executable else database.keys():
-            for resdict in database[executable]:
-                if not name and not url:
-                    ret.append((executable, resdict))
-                elif url and url == resdict['url']:
-                    ret.append((executable, resdict))
-                elif name and name == resdict['name']:
-                    ret.append((executable, resdict))
-        return ret
 
     @property
     def default_resource_dir(self):
@@ -210,16 +235,31 @@ class OcrdResourceManager():
 
     def _copy_impl(self, src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
-        log.info("Copying %s" % src_filename)
-        with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
-            while True:
-                chunk = f_in.read(4096)
-                if chunk:
-                    f_out.write(chunk)
-                    if progress_cb:
-                        progress_cb(len(chunk))
-                else:
-                    break
+        log.info("Copying %s to %s", src_filename, filename)
+        if Path(src_filename).is_dir():
+            log.info(f"Copying recursively from {src_filename} to {filename}")
+            for child in Path(src_filename).rglob('*'):
+                child_dst = Path(filename) / child.relative_to(src_filename)
+                child_dst.parent.mkdir(parents=True, exist_ok=True)
+                with open(child_dst, 'wb') as f_out, open(child, 'rb') as f_in:
+                    while True:
+                        chunk = f_in.read(4096)
+                        if chunk:
+                            f_out.write(chunk)
+                            if progress_cb:
+                                progress_cb(len(chunk))
+                        else:
+                            break
+        else:
+            with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
+                while True:
+                    chunk = f_in.read(4096)
+                    if chunk:
+                        f_out.write(chunk)
+                        if progress_cb:
+                            progress_cb(len(chunk))
+                    else:
+                        break
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(
@@ -249,12 +289,12 @@ class OcrdResourceManager():
             log.info("%s to be %s to %s which already exists and overwrite is False" % (url, 'downloaded' if is_url else 'copied', fpath))
             return fpath
         destdir.mkdir(parents=True, exist_ok=True)
-        if resource_type == 'file':
+        if resource_type in ('file', 'directory'):
             if is_url:
                 self._download_impl(url, fpath, progress_cb)
             else:
                 self._copy_impl(url, fpath, progress_cb)
-        elif resource_type == 'tarball':
+        elif resource_type == 'archive':
             with pushd_popd(tempdir=True) as tempdir:
                 if is_url:
                     self._download_impl(url, 'download.tar.xx', progress_cb, size)
@@ -262,11 +302,23 @@ class OcrdResourceManager():
                     self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    log.info("Extracting tarball to %s/out" % tempdir)
+                    log.info("Extracting archive to %s/out" % tempdir)
                     with open_tarfile('../download.tar.xx', 'r:*') as tar:
                         tar.extractall()
-                    log.info("Copying '%s' from extracted tarball %s/out to %s" % (path_in_archive, tempdir, fpath))
+                    log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
                     copytree(path_in_archive, str(fpath))
-        # TODO
-        # elif resource_type == 'github-dir':
         return fpath
+
+    def _dedup_database(self, database=None, dedup_key='name'):
+        """
+        Deduplicate resources by name
+        """
+        if not database:
+            database = self.database
+        for executable, reslist in database.items():
+            reslist_dedup = []
+            for resdict in reslist:
+                if not any(r[dedup_key] == resdict[dedup_key] for r in reslist_dedup):
+                    reslist_dedup.append(resdict)
+            database[executable] = reslist_dedup
+        return database

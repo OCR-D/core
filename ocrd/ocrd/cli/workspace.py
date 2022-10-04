@@ -582,13 +582,14 @@ def _handle_json_option(ctx, param, value):
 
 @workspace_cli.command('merge')
 @click.argument('METS_PATH')
+@click.option('--overwrite/--no-overwrite', is_flag=True, default=False, help="Overwrite in case of file name conflicts with data from METS_PATH")
 @click.option('--copy-files/--no-copy-files', is_flag=True, help="Copy files as well", default=True, show_default=True)
 @click.option('--fileGrp-mapping', help="JSON object mapping src to dest fileGrp", callback=_handle_json_option)
 @click.option('--fileId-mapping', help="JSON object mapping src to dest file ID", callback=_handle_json_option)
 @click.option('--pageId-mapping', help="JSON object mapping src to dest page ID", callback=_handle_json_option)
 @mets_find_options
 @pass_workspace
-def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, overwrite, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
 
@@ -606,6 +607,7 @@ def merge(ctx, copy_files, filegrp_mapping, file_grp, file_id, page_id, mimetype
     other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
     workspace.merge(
         other_workspace,
+        overwrite=overwrite,
         copy_files=copy_files,
         fileGrp_mapping=filegrp_mapping,
         fileId_mapping=fileid_mapping,

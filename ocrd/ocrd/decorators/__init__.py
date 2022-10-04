@@ -32,7 +32,10 @@ def ocrd_cli_wrap_processor(
     working_dir=None,
     server=None,
     dump_json=False,
+    dump_module_dir=False,
     help=False, # pylint: disable=redefined-builtin
+    profile=False,
+    profile_file=None,
     version=False,
     overwrite=False,
     show_resource=None,
@@ -42,10 +45,11 @@ def ocrd_cli_wrap_processor(
     if not sys.argv[1:]:
         processorClass(workspace=None, show_help=True)
         sys.exit(1)
-    if dump_json or help or version or show_resource or list_resources:
+    if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
             workspace=None,
             dump_json=dump_json,
+            dump_module_dir=dump_module_dir,
             show_help=help,
             show_version=version,
             show_resource=show_resource,
@@ -117,4 +121,22 @@ def ocrd_cli_wrap_processor(
         report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
         if not report.is_valid:
             raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
+        if profile or profile_file:
+            import cProfile
+            import pstats
+            import io
+            import atexit
+            print("Profiling...")
+            pr = cProfile.Profile()
+            pr.enable()
+            def exit():
+                pr.disable()
+                print("Profiling completed")
+                if profile_file:
+                    with open(profile_file, 'wb') as f:
+                        pr.dump_stats(profile_file)
+                s = io.StringIO()
+                pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
+                print(s.getvalue())
+            atexit.register(exit)
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)

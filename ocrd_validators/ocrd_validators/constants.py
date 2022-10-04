@@ -19,7 +19,13 @@ __all__ = [
 ]
 
 OCRD_TOOL_SCHEMA = yaml.safe_load(resource_string(__name__, 'ocrd_tool.schema.yml'))
-RESOURCE_LIST_SCHEMA = yaml.safe_load(resource_string(__name__, 'resource_list.schema.yml'))
+RESOURCE_LIST_SCHEMA = {
+    'type': 'object',
+    'additionalProperties': False,
+    'patternProperties': {
+        '^ocrd-.*': OCRD_TOOL_SCHEMA['properties']['tools']['patternProperties']['ocrd-.*']['properties']['resources']
+    }
+}
 OCRD_BAGIT_PROFILE = yaml.safe_load(resource_string(__name__, 'bagit-profile.yml'))
 
 BAGIT_TXT = 'BagIt-Version: 1.0\nTag-File-Character-Encoding: UTF-8'

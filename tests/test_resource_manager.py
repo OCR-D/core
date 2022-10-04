@@ -1,16 +1,25 @@
 import os
 import pathlib
+import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
+from ocrd_utils.os import get_ocrd_tool_json
 
-from pytest import raises
+from pytest import raises, fixture
 from tests.base import main
 
 CONST_RESOURCE_YML = 'resources.yml'
-CONST_RESOURCE_URL_LAYOUT = 'https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle'
+CONST_RESOURCE_URL_LAYOUT = 'https://github.com/tesseract-ocr/tessdata_best/raw/main/bos.traineddata'
 
+@fixture(autouse=True)
+def drop_get_ocrd_tool_json_cache():
+    get_ocrd_tool_json.cache_clear()
+    yield
 
-def test_resources_manager_config_default():
+def test_resources_manager_config_default(monkeypatch, tmp_path):
+
+    # arrange
+    monkeypatch.setenv('HOME', str(tmp_path))
 
     # act
     mgr = OcrdResourceManager()
@@ -21,8 +30,10 @@ def test_resources_manager_config_default():
     assert f.exists()
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
+    # pdb.set_trace()
+
     mgr.list_installed()
-    proc = 'ocrd-anybaseocr-layout-analysis'
+    proc = 'ocrd-tesserocr-recognize'
     # TODO mock request
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
@@ -45,7 +56,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed()
-    proc = 'ocrd-anybaseocr-layout-analysis'
+    proc = 'ocrd-tesserocr-recognize'
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
@@ -63,7 +74,7 @@ def test_resources_manager_config_explicite(tmp_path):
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed()
-    proc = 'ocrd-anybaseocr-layout-analysis'
+    proc = 'ocrd-tesserocr-recognize'
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
@@ -87,10 +98,10 @@ def test_find_resources(tmp_path):
     mgr = OcrdResourceManager(xdg_config_home=tmp_path)
 
     # assert
-    assert mgr.find_resources(executable='ocrd-foo') == []
+    assert mgr.list_available(executable='ocrd-foo') == [('ocrd-foo', [])]
     assert mgr.add_to_user_database('ocrd-foo', f, url='http://foo/bar')
-    assert 'ocrd-foo' in [x for x, _ in mgr.find_resources()]
-    assert 'ocrd-foo' in [x for x, _ in mgr.find_resources(url='http://foo/bar')]
+    assert 'ocrd-foo' in [x for x, _ in mgr.list_available()]
+    assert 'ocrd-foo' in [x for x, _ in mgr.list_available(url='http://foo/bar')]
 
 def test_parameter_usage(tmp_path):
     mgr = OcrdResourceManager(xdg_config_home=tmp_path)
@@ -104,7 +115,7 @@ def test_default_resource_dir(tmp_path):
     assert mgr.xdg_config_home != mgr.xdg_data_home
     assert mgr.default_resource_dir == str(mgr.xdg_data_home / 'ocrd-resources')
 
-def test_list_available(tmp_path):
+def test_list_available0(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     res = mgr.list_available()
     assert len(res) > 0
@@ -123,7 +134,7 @@ def test_date_as_string(tmp_path):
       - url: https://qurator-data.de/eynollah/2022-04-05/models_eynollah_renamed.tar.gz
         name: 2022-04-05
         description: models for eynollah
-        type: tarball
+        type: archive
         path_in_archive: 'models_eynollah'
         size: 1889719626
         """)
