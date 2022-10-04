@@ -85,6 +85,8 @@ class ProcessorAPI(FastAPI):
 
         try:
             # Get the processor, if possible
+            if not data.parameters:
+                data.parameters = {}
             processor = get_processor(json.dumps(data.parameters), self.processor_class)
         except Exception as e:
             # In case of bad parameters

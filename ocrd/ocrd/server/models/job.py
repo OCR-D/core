@@ -18,7 +18,7 @@ class JobInput(BaseModel):
     input_file_grps: List[str]
     output_file_grps: Optional[List[str]]
     page_id: Optional[str] = None
-    parameters: dict = {}  # Default to empty object, otherwise it won't pass the ocrd validation
+    parameters: dict = None  # Always set to an empty dict when it's None, otherwise it won't pass the ocrd validation
 
     class Config:
         schema_extra = {
