@@ -1,46 +1,42 @@
-import json
-from os.path import isfile
 import sys
+from contextlib import redirect_stdout
+from io import StringIO
 from typing import Type
 
 import click
+import uvicorn
 
-from ocrd_utils import (
-    is_local_filename,
-    get_local_filename,
-    set_json_key_value_overrides,
-)
-
+from ocrd.server.main import ProcessorAPI
 from ocrd_utils import getLogger, initLogging
+from ocrd_utils import (
+    set_json_key_value_overrides, parse_json_string_with_comments,
+)
 from ocrd_validators import WorkspaceValidator
-from ..helpers import parse_server_input
-from ..processor.helpers import get_processor
-
-from ..resolver import Resolver
-from ..processor.base import run_processor, Processor
-
-from .loglevel_option import ocrd_loglevel
-from .parameter_option import parameter_option, parameter_override_option
-from .ocrd_cli_options import ocrd_cli_options
-from .mets_find_options import mets_find_options
+from ocrd.decorators.loglevel_option import ocrd_loglevel
+from ocrd.decorators.mets_find_options import mets_find_options
+from ocrd.decorators.ocrd_cli_options import ocrd_cli_options
+from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
+from ocrd.helpers import parse_server_input, parse_version_string
+from ocrd.processor.base import run_processor, Processor
+from ocrd.resolver import Resolver
 
 
 def ocrd_cli_wrap_processor(
-    processorClass: Type[Processor],
-    ocrd_tool=None,
-    mets=None,
-    working_dir=None,
-    server=None,
-    dump_json=False,
-    dump_module_dir=False,
-    help=False, # pylint: disable=redefined-builtin
-    profile=False,
-    profile_file=None,
-    version=False,
-    overwrite=False,
-    show_resource=None,
-    list_resources=False,
-    **kwargs
+        processorClass: Type[Processor],
+        ocrd_tool=None,
+        mets=None,
+        working_dir=None,
+        server=None,
+        dump_json=False,
+        dump_module_dir=False,
+        help=False,  # pylint: disable=redefined-builtin
+        profile=False,
+        profile_file=None,
+        version=False,
+        overwrite=False,
+        show_resource=None,
+        list_resources=False,
+        **kwargs
 ):
     if not sys.argv[1:]:
         processorClass(workspace=None, show_help=True)
@@ -62,21 +58,26 @@ def ocrd_cli_wrap_processor(
         except ValueError:
             raise click.UsageError('The --server option must have the format IP:PORT:MONGO_URL')
 
-        # Proceed when both IP and port are provided
         initLogging()
 
-        # Init a processor instance to get access to its information (also warm up the cache with default parameters)
-        params = {}
-        processor = get_processor(json.dumps(params), processorClass)
+        # Read the ocrd_tool object
+        f1 = StringIO()
+        with redirect_stdout(f1):
+            processorClass(workspace=None, dump_json=True)
+        ocrd_tool = parse_json_string_with_comments(f1.getvalue())
+
+        # Read the version string
+        f2 = StringIO()
+        with redirect_stdout(f2):
+            processorClass(workspace=None, show_version=True)
+        version = parse_version_string(f2.getvalue())
 
         # Start the server
-        from ocrd.server.main import ProcessorAPI
-        import uvicorn
         app = ProcessorAPI(
-            title=processor.ocrd_tool['executable'],
-            description=processor.ocrd_tool['description'],
-            version=processor.version,
-            ocrd_tool=processor.ocrd_tool,
+            title=ocrd_tool['executable'],
+            description=ocrd_tool['description'],
+            version=version,
+            ocrd_tool=ocrd_tool,
             db_url=mongo_url,
             processor_class=processorClass
         )
@@ -118,7 +119,8 @@ def ocrd_cli_wrap_processor(
         # XXX While https://github.com/OCR-D/core/issues/505 is open, set 'overwrite_mode' globally on the workspace
         if overwrite:
             workspace.overwrite_mode = True
-        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
+        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'],
+                                                   '' if overwrite else kwargs['output_file_grp'], page_id)
         if not report.is_valid:
             raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
         if profile or profile_file:
@@ -129,6 +131,7 @@ def ocrd_cli_wrap_processor(
             print("Profiling...")
             pr = cProfile.Profile()
             pr.enable()
+
             def exit():
                 pr.disable()
                 print("Profiling completed")
@@ -138,5 +141,6 @@ def ocrd_cli_wrap_processor(
                 s = io.StringIO()
                 pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
                 print(s.getvalue())
+
             atexit.register(exit)
         run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
