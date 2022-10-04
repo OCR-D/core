@@ -65,14 +65,12 @@ class TestServer:
             assert response.status_code == 400, 'Status code is not 400.'
             assert 'Invalid parameters' in response.json()['detail'], 'Wrong message in the detail.'
 
-    def test_get_job(self, mocked_job_get, client):
+    def test_get_job(self, client):
         job_id = '60cd778664dc9f75f4aadec8'
         response = client.get(f'/{job_id}')
-        mocked_job_get.assert_called_once()
         assert response.status_code == 200, 'The status code is not 200.'
 
-    def test_get_unknown_job(self, mocked_job_get, client):
+    def test_get_unknown_job(self, client):
         job_id = '60cd778664dc9f75f4aadec9'
         response = client.get(f'/{job_id}')
-        mocked_job_get.assert_called_once()
         assert response.status_code == 404, 'The status code is not 404.'
