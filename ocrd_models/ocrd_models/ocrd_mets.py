@@ -287,7 +287,7 @@ class OcrdMets(OcrdXmlDocument):
                 self.remove_one_file(f.get('ID'))
         el_fileGrp.getparent().remove(el_fileGrp)
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, is_alternative_image=False, local_filename=None, ignore=False, **kwargs):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
         """
         Instantiate and add a new :py:class:`ocrd_models.ocrd_file.OcrdFile`.
 
@@ -299,9 +299,6 @@ class OcrdMets(OcrdXmlDocument):
             ID (string): ``@ID`` of the ``mets:file`` to use
             pageId (string): ``@ID`` in the physical ``mets:structMap`` to link to
             force (boolean): Whether to add the file even if a ``mets:file`` with the same ``@ID`` already exists.
-            is_alternative_image (boolean): Whether this is an AlternativeImage, in which case clashes with
-                                            combination of fileGrp, mimetype and pageId are to be expected and
-                                            should not result in a FileExistsError or removal of such files
             ignore (boolean): Do not look for existing files at all. Shift responsibility for preventing errors from duplicate ID to the user.
             local_filename (string):
         """
@@ -313,28 +310,19 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
-        if next(self.find_files(ID=ID), None) and not (force or ignore):
-            raise FileExistsError(f"A file with ID=={ID} already exists {next(self.find_files(ID=ID))} and neither force nor ignore are set")
         log = getLogger('ocrd_models.ocrd_mets.add_file')
         el_fileGrp = self.add_file_group(fileGrp)
         if not ignore:
             mets_file = next(self.find_files(ID=ID), None)
             if mets_file:
-                if not force:
-                    raise FileExistsError(f"File with ID='{ID}' already exists")
-                self.remove_file(ID=ID)
-            if not is_alternative_image:
-                mets_file = next(self.find_files(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId), None)
-                if not pageId and mets_file:
-                    # XXX There is a grp/mimetype/pageId clash but this is not
-                    # a page-specific image, so ignore the grp/mimetype clash
-                    pass
-                elif mets_file:
-                    if force:
-                        self.remove_file(fileGrp=fileGrp, mimetype=mimetype, pageId=pageId)
-                    else:
-                        raise FileExistsError("File with%s mimetype '%s' already exists in fileGrp '%s'." %
-                            (f" pageId='{pageId}' and " if pageId else "", mimetype, fileGrp))
+                if mets_file.fileGrp == fileGrp and \
+                   mets_file.pageId == pageId and \
+                   mets_file.mimetype == mimetype:
+                    if not force:
+                        raise FileExistsError(f"A file with ID=={ID} already exists {mets_file} and neither force nor ignore are set")
+                    self.remove_file(ID=ID)
+                else:
+                    raise FileExistsError(f"A file with ID=={ID} already exists {mets_file} but unrelated - cannot mitigate")
         kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v}
         mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self, **kwargs)
 
@@ -497,13 +485,14 @@ class OcrdMets(OcrdXmlDocument):
             mets_div.remove(mets_fptr)
         return ret
 
-    def merge(self, other_mets, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None, after_add_cb=None, **kwargs):
+    def merge(self, other_mets, force=False, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None, after_add_cb=None, **kwargs):
         """
         Add all files from other_mets.
 
         Accepts the same kwargs as :py:func:`find_files`
 
         Keyword Args:
+            force (boolean): Whether to add_files with force (overwriting existing mets:file)
             fileGrp_mapping (dict): Map :py:attr:`other_mets` fileGrp to fileGrp in this METS
             fileId_mapping (dict): Map :py:attr:`other_mets` file ID to file ID in this METS
             pageId_mapping (dict): Map :py:attr:`other_mets` page ID to page ID in this METS
@@ -520,6 +509,7 @@ class OcrdMets(OcrdXmlDocument):
                     fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
                     mimetype=f_src.mimetype,
                     url=f_src.url,
+                    force=force,
                     ID=fileId_mapping.get(f_src.ID, f_src.ID),
                     pageId=pageId_mapping.get(f_src.pageId, f_src.pageId))
             # FIXME: merge metsHdr, amdSec, dmdSec as well

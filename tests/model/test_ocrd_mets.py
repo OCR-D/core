@@ -143,10 +143,19 @@ def test_add_file_id_already_exists(sbb_sample_01):
     with pytest.raises(FileExistsError) as exc:
         sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep")
 
-    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
-    # XXX != was == before but is no longer guaranteed, clashing files are removed with
-    # force=True before adding a new file with a new XML mets:file element
-    assert f._el != f2._el
+    # Still fails because differing mimetypes
+    with pytest.raises(FileExistsError) as exc:
+        f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
+
+    # Works but is unwise, there are now two files with clashing ID in METS
+    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", ignore=True)
+    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 2
+
+    # Works because fileGrp, mimetype and pageId(== None) match and force is set
+    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
+
+    # Previous step removed duplicate mets:file
+    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1
 
 def test_add_file_nopageid_overwrite(sbb_sample_01: OcrdMets):
     """
