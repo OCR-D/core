@@ -41,7 +41,7 @@ class TestServer:
 
         # Make sure that the background task is run with proper arguments
         args, kwargs = mocked_add_task.call_args
-        assert type(kwargs['processor_class']) is type(DummyProcessor)
+        assert kwargs['processor_class'] is DummyProcessor
         assert kwargs['job_id'] == mocked_job.return_value.id
         assert kwargs['page_id'] == job_input.page_id
         assert kwargs['input_file_grps'] == job_input.input_file_grps
