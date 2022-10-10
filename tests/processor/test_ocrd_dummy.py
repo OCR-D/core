@@ -3,7 +3,7 @@
 
 from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from ocrd import Resolver, Workspace
-from ocrd_utils import MIMETYPE_PAGE
+from ocrd_utils import MIMETYPE_PAGE, pushd_popd
 from ocrd_modelfactory import page_from_file
 from ocrd.processor.base import run_processor
 from ocrd.processor.builtin.dummy_processor import DummyProcessor
@@ -28,8 +28,9 @@ class TestDummyProcessor(TestCase):
             print([str(s) for s in output_files])
             self.assertEqual(output_files[0].url, 'OUTPUT/OUTPUT_0001.tif')
             self.assertEqual(output_files[1].url, 'OUTPUT/OUTPUT_0001.xml')
-            self.assertEqual(page_from_file(output_files[1]).pcGtsId, output_files[1].ID)
-            self.assertEqual(page_from_file(output_files[1]).get_Page().imageFilename, output_files[0].url)
+            with pushd_popd(wsdir):
+                self.assertEqual(page_from_file(output_files[1]).pcGtsId, output_files[1].ID)
+                self.assertEqual(page_from_file(output_files[1]).get_Page().imageFilename, output_files[0].url)
             self.assertEqual(len(output_files), 6)
             self.assertEqual(len(workspace.mets.find_all_files(ID='//OUTPUT.*')), 6)
             self.assertEqual(len(workspace.mets.find_all_files(ID='//OUTPUT.*_PAGE')), 3)
