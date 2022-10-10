@@ -3,17 +3,19 @@ Helper methods for running and documenting processors
 """
 import inspect
 import json
-import os
-from functools import lru_cache
+from functools import lru_cache, wraps
 from subprocess import run
 from time import perf_counter, process_time
 from typing import List
 
 from beanie import PydanticObjectId
 from click import wrap_text
+from frozendict import frozendict
 
+# TODO: Fix this circular import
+# from ocrd import Processor, Workspace
 from ocrd.server.models.job import Job, StateEnum
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, pushd_popd
 
 __all__ = [
     'generate_processor_help',
@@ -81,14 +83,13 @@ def run_processor(
     )
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
-    processor = processorClass(
-        workspace,
-        ocrd_tool=ocrd_tool,
-        page_id=page_id,
-        input_file_grp=input_file_grp,
-        output_file_grp=output_file_grp,
-        parameter=parameter
-    )
+
+    processor = get_processor(parameter, processorClass)
+    processor.workspace = workspace
+    processor.page_id = page_id
+    processor.input_file_grp = input_file_grp
+    processor.output_file_grp = output_file_grp
+
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
@@ -96,7 +97,10 @@ def run_processor(
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
     t0_cpu = process_time()
-    processor.process()
+
+    with pushd_popd(workspace.directory):
+        processor.process()
+
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
     logProfile.info(
@@ -210,104 +214,65 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace,
     await job.save()
 
 
-async def run_processor_from_api(job_id: PydanticObjectId, processor, workspace, page_id: str,
+async def run_processor_from_api(job_id: PydanticObjectId, processor_class, workspace, page_id: str, parameter: dict,
                                  input_file_grps: List[str], output_file_grps: List[str]):
-    # Set up the log
     log = getLogger('ocrd.processor.helpers.run_processor_from_api')
-    ocrd_tool = processor.ocrd_tool
-    name = '%s v%s' % (ocrd_tool['executable'], processor.version)
-    otherrole = ocrd_tool['steps'][0]
-    logProfile = getLogger('ocrd.process.profile')
-    log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
-    t0_wall = perf_counter()
-    t0_cpu = process_time()
-
-    # Save the current working directory
-    old_cwd = os.getcwd()
 
     # Turn input/output file groups into a comma separated string
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
 
-    # Set values for the processor
-    processor.input_file_grp = input_file_grps_str
-    processor.output_file_grp = output_file_grps_str
-    processor.page_id = page_id
-    processor.workspace = workspace
-
-    # Move inside the workspace (so that files in the METS can be found)
-    os.chdir(workspace.directory)
-
     is_success = True
     try:
-        processor.process()
-
-        # check output file groups are in METS
-        for output_file_grp in output_file_grps:
-            if output_file_grp not in workspace.mets.file_groups:
-                log.error(
-                    f'Invalid state: expected output file group "{output_file_grp}" not in METS (despite processor success)')
+        run_processor(processorClass=processor_class, workspace=workspace, page_id=page_id, parameter=parameter,
+                      input_file_grp=input_file_grps_str, output_file_grp=output_file_grps_str)
     except Exception as e:
-        log.exception(e)
         is_success = False
-    finally:
-        # Move back to the old directory
-        os.chdir(old_cwd)
-
-    t1_wall = perf_counter() - t0_wall
-    t1_cpu = process_time() - t0_cpu
-    logProfile.info(
-        "Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
-            ocrd_tool['executable'],
-            t1_wall,
-            t1_cpu,
-            input_file_grps_str or '',
-            output_file_grps_str or '',
-            json.dumps(processor.parameter) or '',
-            page_id or ''
-        ))
+        log.exception(e)
 
     job = await Job.get(job_id)
-    if is_success:
-        workspace.mets.add_agent(
-            name=name,
-            _type='OTHER',
-            othertype='SOFTWARE',
-            role='OTHER',
-            otherrole=otherrole,
-            notes=[({'option': 'input-file-grp'}, input_file_grps_str or ''),
-                   ({'option': 'output-file-grp'}, output_file_grps_str or ''),
-                   ({'option': 'parameter'}, json.dumps(processor.parameter or '')),
-                   ({'option': 'page-id'}, page_id or '')]
-        )
-        workspace.save_mets()
 
-        # Save the job status to the database
+    # Save the job status to the database
+    if is_success:
         job.state = StateEnum.success
     else:
         job.state = StateEnum.failed
     await job.save()
 
 
+def freeze_args(func):
+    """
+    Transform mutable dictionary into immutable. Useful to be compatible with cache
+
+    Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
+    """
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
+        kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+        return func(*args, **kwargs)
+
+    return wrapped
+
+
+@freeze_args
 @lru_cache(maxsize=32)
-def get_processor(parameter_str: str, processor_class=None):
+def get_processor(parameter: dict, processor_class=None):
     """
     Call this function to get back an instance of a processor. The results are cached based on the parameters.
-    The parameters must be passed as a string because
-    `dict <https://docs.python.org/3/tutorial/datastructures.html#dictionaries>`_ is unhashable,
-    therefore cannot be cached.
 
     Args:
-        parameter_str (string): a serialized version of a dictionary of parameters.
+        parameter (dict): a dictionary of parameters.
         processor_class: the concrete `:py:class:~ocrd.Processor` class.
 
     Returns:
-        When the server is started by the `ocrd server` command, the concrete class of the processor is unknown.
-        In this case, `None` is returned. Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
+        When the concrete class of the processor is unknown, `None` is returned. Otherwise, an instance of the
+        `:py:class:~ocrd.Processor` is returned.
     """
-    parameter = json.loads(parameter_str)
     if processor_class:
-        return processor_class(workspace=None, parameter=parameter)
+        dict_params = dict(parameter) if parameter else None
+        return processor_class(workspace=None, parameter=dict_params)
     return None
 
 

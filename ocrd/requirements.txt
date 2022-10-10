@@ -11,3 +11,4 @@ Deprecated == 1.2.0
 fastapi~=0.78.0
 uvicorn~=0.16
 beanie~=1.7
+frozendict~=2.3.4

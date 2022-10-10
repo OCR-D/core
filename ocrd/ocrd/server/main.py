@@ -1,14 +1,14 @@
-import json
 from typing import Type
 
 from beanie import PydanticObjectId
 from fastapi import FastAPI, HTTPException, status, BackgroundTasks
 
 from ocrd import Processor, Resolver
-from ocrd.processor.helpers import run_processor_from_api, run_cli_from_api, get_processor
+from ocrd.processor.helpers import run_processor_from_api, run_cli_from_api
 from ocrd.server.database import initiate_database
 from ocrd.server.models.job import Job, JobInput, StateEnum
 from ocrd.server.models.ocrd_tool import OcrdTool
+from ocrd_validators import ParameterValidator
 
 
 class ProcessorAPI(FastAPI):
@@ -83,26 +83,25 @@ class ProcessorAPI(FastAPI):
         resolver = Resolver()
         workspace = resolver.workspace_from_url(data.path)
 
-        try:
-            # Get the processor, if possible
-            if not data.parameters:
-                data.parameters = {}
-            processor = get_processor(json.dumps(data.parameters), self.processor_class)
-        except Exception as e:
-            # In case of bad parameters
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
-            )
+        # Validate the parameters
+        if data.parameters:
+            validator = ParameterValidator(self.ocrd_tool)
+            report = validator.validate(data.parameters)
+            if not report.is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=report.errors,
+                )
 
-        if processor:
+        if self.processor_class:
             # Run the processor in the background
             background_tasks.add_task(
                 run_processor_from_api,
                 job_id=job.id,
-                processor=processor,
+                processor_class=self.processor_class,
                 workspace=workspace,
                 page_id=data.page_id,
+                parameter=data.parameters,
                 input_file_grps=data.input_file_grps,
                 output_file_grps=data.output_file_grps,
             )

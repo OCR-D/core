@@ -1,5 +1,3 @@
-import json
-
 from ocrd.processor.helpers import get_processor
 from ocrd.server.models.job import JobInput, StateEnum
 from tests.base import copy_of_directory, assets
@@ -15,17 +13,17 @@ class TestServer:
 
     def test_get_processor_cached(self):
         parameters = {}
-        processor_1 = get_processor(json.dumps(parameters), DummyProcessor)
-        processor_2 = get_processor(json.dumps(parameters), DummyProcessor)
+        processor_1 = get_processor(parameters, DummyProcessor)
+        processor_2 = get_processor(parameters, DummyProcessor)
         assert isinstance(processor_1, DummyProcessor), 'The processor is not from the correct class.'
         assert processor_1 is processor_2, 'The processor is not cached.'
 
     def test_get_processor_uncached(self):
         parameters_1 = {}
-        processor_1 = get_processor(json.dumps(parameters_1), DummyProcessor)
+        processor_1 = get_processor(parameters_1, DummyProcessor)
 
         parameters_2 = {'baz': 'foo'}
-        processor_2 = get_processor(json.dumps(parameters_2), DummyProcessor)
+        processor_2 = get_processor(parameters_2, DummyProcessor)
         assert processor_1 is not processor_2, 'The processor must not be cached.'
 
     def test_post_data(self, mocked_job, mocked_add_task, client):
@@ -43,7 +41,7 @@ class TestServer:
 
         # Make sure that the background task is run with proper arguments
         args, kwargs = mocked_add_task.call_args
-        assert isinstance(kwargs['processor'], DummyProcessor)
+        assert type(kwargs['processor_class']) is type(DummyProcessor)
         assert kwargs['job_id'] == mocked_job.return_value.id
         assert kwargs['page_id'] == job_input.page_id
         assert kwargs['input_file_grps'] == job_input.input_file_grps
@@ -63,7 +61,6 @@ class TestServer:
             response = client.post(url='/', json=job_input.dict(exclude_unset=True, exclude_none=True))
 
             assert response.status_code == 400, 'Status code is not 400.'
-            assert 'Invalid parameters' in response.json()['detail'], 'Wrong message in the detail.'
 
     def test_get_job(self, client):
         job_id = '60cd778664dc9f75f4aadec8'
