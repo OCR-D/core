@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -41,6 +42,8 @@ class Job(Document):
     output_file_grps: Optional[List[str]]
     page_id: Optional[str]
     parameters: Optional[dict]
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
 
     class Settings:
         use_enum_values = True

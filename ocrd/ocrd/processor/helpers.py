@@ -3,6 +3,7 @@ Helper methods for running and documenting processors
 """
 import inspect
 import json
+from datetime import datetime
 from functools import lru_cache, wraps
 from subprocess import run
 from time import perf_counter, process_time
@@ -187,25 +188,18 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace,
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
 
+    job = await Job.get(job_id)
+    job.state = StateEnum.running
+    job.start_time = datetime.now()
+
     # Execute the processor
     return_code = run_cli(executable, workspace=workspace, page_id=page_id, input_file_grp=input_file_grps_str,
                           output_file_grp=output_file_grps_str, parameter=json.dumps(parameter), mets_url='')
 
-    workspace.reload_mets()
-
     log = getLogger('ocrd.processor.helpers.run_cli_from_api')
 
-    # check output file groups are in METS
-    for output_file_grp in output_file_grps:
-        if output_file_grp not in workspace.mets.file_groups:
-            log.error(
-                f'Invalid state: expected output file group "{output_file_grp}" not in METS (despite processor success)')
-
-    log.debug('Finish processing')
-
     # Save the job status to the database
-    from ocrd.server.models.job import Job, StateEnum
-    job = await Job.get(job_id)
+    job.end_time = datetime.now()
     if return_code != 0:
         job.state = StateEnum.failed
         log.error(f'{executable} exited with non-zero return value {return_code}.')
@@ -223,6 +217,11 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor_class, work
     output_file_grps_str = ','.join(output_file_grps)
 
     is_success = True
+
+    job = await Job.get(job_id)
+    job.state = StateEnum.running
+    job.start_time = datetime.now()
+    await job.save()
     try:
         run_processor(processorClass=processor_class, workspace=workspace, page_id=page_id, parameter=parameter,
                       input_file_grp=input_file_grps_str, output_file_grp=output_file_grps_str)
@@ -230,9 +229,8 @@ async def run_processor_from_api(job_id: PydanticObjectId, processor_class, work
         is_success = False
         log.exception(e)
 
-    job = await Job.get(job_id)
-
     # Save the job status to the database
+    job.end_time = datetime.now()
     if is_success:
         job.state = StateEnum.success
     else:
