@@ -1,5 +1,9 @@
 """
-Logging CLI
+OCR-D CLI: Logging
+
+.. click:: ocrd.cli.log:log_cli
+    :prog: ocrd log
+    :nested: full
 """
 import click
 from ocrd_utils import initLogging, getLogger, getLevelName
@@ -32,6 +36,9 @@ def _bind_log_command(lvl):
     def _log_wrapper(ctx, msgs):
         if not msgs:
             ctx.log(lvl.upper(), '')
+        elif len(msgs) == 1 and msgs[0] == '-':
+            for stdin_line in click.get_text_stream('stdin'):
+                ctx.log(lvl.upper(), stdin_line.rstrip('\n'))
         else:
             msg = list(msgs) if '%s' in msgs[0] else ' '.join([x.replace('%', '%%') for x in msgs])
             ctx.log(lvl.upper(), msg)

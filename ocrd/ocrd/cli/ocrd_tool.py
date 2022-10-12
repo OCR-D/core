@@ -1,16 +1,24 @@
+"""
+OCR-D CLI: ocrd-tool.json management
+
+.. click:: ocrd.cli.ocrd_tool:ocrd_tool_cli
+    :prog: ocrd ocrd-tool
+    :nested: full
+
+"""
 from json import dumps
 import codecs
 import sys
-
+import os
 import click
 
 from ocrd.decorators import parameter_option, parameter_override_option
-from ocrd.processor import generate_processor_help
+from ocrd.processor import Processor
 from ocrd_utils import (
-        set_json_key_value_overrides,
-        VERSION as OCRD_VERSION,
-        parse_json_string_with_comments as loads
-        )
+    set_json_key_value_overrides,
+    VERSION as OCRD_VERSION,
+    parse_json_string_with_comments as loads
+)
 from ocrd_validators import ParameterValidator, OcrdToolValidator
 
 class OcrdToolCtx():
@@ -85,10 +93,32 @@ def ocrd_tool_tool(ctx, tool_name):
 def ocrd_tool_tool_description(ctx):
     print(ctx.json['tools'][ctx.tool_name]['description'])
 
+@ocrd_tool_tool.command('list-resources', help="List tool's file resources")
+@pass_ocrd_tool
+def ocrd_tool_tool_list_resources(ctx):
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
+    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+                  list_resources=True)
+
+@ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
+@click.argument('res_name')
+@pass_ocrd_tool
+def ocrd_tool_tool_show_resource(ctx, res_name):
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
+    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+                  show_resource=res_name)
+
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @pass_ocrd_tool
 def ocrd_tool_tool_params_help(ctx):
-    print(generate_processor_help(ctx.json['tools'][ctx.tool_name]))
+    Processor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+              show_help=True)
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories

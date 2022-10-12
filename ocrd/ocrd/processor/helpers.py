@@ -43,10 +43,26 @@ def run_processor(
         working_dir=None,
 ): # pylint: disable=too-many-locals
     """
-    Create a workspace for mets_url and run processor through it
+    Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
+
+    If :py:attr:`workspace` is not none, reuse that. Otherwise, instantiate an
+    :py:class:`~ocrd.Workspace` for :py:attr:`mets_url` (and :py:attr:`working_dir`)
+    by using :py:meth:`ocrd.Resolver.workspace_from_url` (i.e. open or clone local workspace).
+
+    Instantiate a Python object for :py:attr:`processorClass`, passing:
+    - the workspace,
+    - :py:attr:`ocrd_tool`
+    - :py:attr:`page_id`
+    - :py:attr:`input_file_grp`
+    - :py:attr:`output_file_grp`
+    - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
+
+    Run the processor on the workspace (creating output files in the filesystem).
+
+    Finally, write back the workspace (updating the METS in the filesystem).
 
     Args:
-        parameter (string): URL to the parameter
+        processorClass (object): Python class of the module processor.
     """
     workspace = _get_workspace(
         workspace,
@@ -79,20 +95,25 @@ def run_processor(
     logProfile.info(mem_output)
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
-    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s']" % (
+    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
         ocrd_tool['executable'],
         t1_wall,
         t1_cpu,
-        input_file_grp if input_file_grp else '',
-        output_file_grp if output_file_grp else '',
-        json.dumps(parameter) if parameter else {}
+        input_file_grp or '',
+        output_file_grp or '',
+        json.dumps(parameter) or '',
+        page_id or ''
     ))
     workspace.mets.add_agent(
         name=name,
         _type='OTHER',
         othertype='SOFTWARE',
         role='OTHER',
-        otherrole=otherrole
+        otherrole=otherrole,
+        notes=[({'option': 'input-file-grp'}, input_file_grp or ''),
+               ({'option': 'output-file-grp'}, output_file_grp or ''),
+               ({'option': 'parameter'}, json.dumps(parameter or '')),
+               ({'option': 'page-id'}, page_id or '')]
     )
     workspace.save_mets()
     return processor
@@ -111,7 +132,23 @@ def run_cli(
         working_dir=None,
 ):
     """
-    Create a workspace for mets_url and run MP CLI through it
+    Open a workspace and run a processor on the command line.
+
+    If :py:attr:`workspace` is not none, reuse that. Otherwise, instantiate an
+    :py:class:`~ocrd.Workspace` for :py:attr:`mets_url` (and :py:attr:`working_dir`)
+    by using :py:meth:`ocrd.Resolver.workspace_from_url` (i.e. open or clone local workspace).
+
+    Run the processor CLI :py:attr:`executable` on the workspace, passing:
+    - the workspace,
+    - :py:attr:`page_id`
+    - :py:attr:`input_file_grp`
+    - :py:attr:`output_file_grp`
+    - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
+
+    (Will create output files and update the in the filesystem).
+
+    Args:
+        executable (string): Executable name of the module processor.
     """
     workspace = _get_workspace(workspace, resolver, mets_url, working_dir)
     args = [executable, '--working-dir', workspace.directory]
@@ -184,6 +221,8 @@ Options:
   -g, --page-id ID                Physical page ID(s) to process
   --overwrite                     Remove existing output pages/images
                                   (with --page-id, remove only those)
+  --profile                       Enable profiling
+  --profile-file                  Write cProfile stats to this file. Implies --profile
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
                                   or JSON file path
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
@@ -195,6 +234,7 @@ Options:
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON and exit
+  -D, --dump-module-dir           Output the 'module' directory with resources for this processor
   -h, --help                      This help message
   -V, --version                   Show version
 

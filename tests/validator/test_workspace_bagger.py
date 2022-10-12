@@ -1,7 +1,8 @@
 from os import makedirs
 from os.path import join, abspath, exists
-from shutil import copytree, rmtree
+from shutil import copytree, rmtree, move
 from tempfile import mkdtemp
+from bagit import _load_tag_file
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
 
@@ -14,6 +15,8 @@ README_FILE = abspath('README.md')
 class TestWorkspaceBagger(TestCase):
 
     def setUp(self):
+        super().setUp()
+        pass
         if exists(BACKUPDIR):
             rmtree(BACKUPDIR)
         self.resolver = Resolver()
@@ -27,10 +30,6 @@ class TestWorkspaceBagger(TestCase):
     def tearDown(self):
         rmtree(self.tempdir)
 
-    def test_bad_manifestation_depth(self):
-        with self.assertRaisesRegex(Exception, "manifestation_depth must be 'full' or 'partial'"):
-            self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='foo')
-
     def test_bad_inplace_and_dest(self):
         with self.assertRaisesRegex(Exception, "Setting 'dest' and 'in_place' is a contradiction"):
             self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=True, dest='/x/y/z')
@@ -43,7 +42,6 @@ class TestWorkspaceBagger(TestCase):
         self.bagger.bag(
             self.workspace,
             'kant_aufklaerung_1784',
-            ocrd_manifestation_depth='partial',
             skip_zip=True,
             in_place=True,
             ocrd_base_version_checksum='123',
@@ -55,33 +53,26 @@ class TestWorkspaceBagger(TestCase):
     def test_bag_zip_and_spill(self):
         self.workspace.mets.find_all_files(ID='INPUT_0017')[0].url = 'bad-scheme://foo'
         self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='full', skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), join(self.tempdir, 'out'))
 
     def test_bag_zip_and_spill_wo_dest(self):
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False, skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False, skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), self.tempdir)
 
     def test_bag_wo_dest(self):
         makedirs(BACKUPDIR)
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=True, skip_zip=True)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=True, skip_zip=True)
 
     def test_bag_wo_dest_zip(self):
         makedirs(BACKUPDIR)
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False, skip_zip=True)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False, skip_zip=True)
 
     def test_bag_partial_http_nostrict(self):
         self.bagger.strict = False
         makedirs(BACKUPDIR)
         self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False)
-
-    def test_bag_partial_http_strict(self):
-        self.bagger.strict = True
-        makedirs(BACKUPDIR)
-        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
-        with self.assertRaisesRegex(Exception, "Not fetching non-local files"):
-            self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False)
 
     def test_bag_full(self):
         self.bagger.strict = True
@@ -89,7 +80,8 @@ class TestWorkspaceBagger(TestCase):
         f.url = 'bad-scheme://foo'
         f.local_filename = None
         with self.assertRaisesRegex(Exception, "Not an http URL"):
-            self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='full', skip_zip=False)
+            self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False)
+        self.bagger.strict = False
 
     def test_spill_dest_not_dir(self):
         with self.assertRaisesRegex(Exception, "Not a directory: /dev/stdout"):
@@ -104,9 +96,51 @@ class TestWorkspaceBagger(TestCase):
     def test_spill_derived_dest(self):
         bag_dest = join(self.bagdir, 'foo.ocrd.zip')
         spill_dest = join(self.bagdir, 'foo')
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', ocrd_manifestation_depth='partial', in_place=False, skip_zip=False, dest=bag_dest)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False, skip_zip=False, dest=bag_dest)
         self.bagger.spill(bag_dest, self.bagdir)
         self.assertTrue(exists(spill_dest))
+
+    def test_bag_with_changed_metsname(self):
+        # arrange
+        workspace_dir = join(self.bagdir, "changed-mets-test")
+        copytree(join(assets.path_to('kant_aufklaerung_1784'), "data"), workspace_dir)
+        new_metsname = "other-metsname.xml"
+        old_metspath = join(workspace_dir, "mets.xml")
+        new_metspath = join(workspace_dir, new_metsname)
+        move(old_metspath, new_metspath)
+        workspace = Workspace(self.resolver, directory=workspace_dir, mets_basename=new_metsname)
+
+        # act
+        self.bagger.bag(workspace, "changed-mets-test", ocrd_mets=new_metsname, in_place=True, skip_zip=True)
+
+        # assert
+        bag_metspath = join(workspace_dir, "data", new_metsname)
+        self.assertTrue(exists(bag_metspath), f"Mets not existing. Expected: {bag_metspath}")
+
+        bag_info_path = join(workspace_dir, "bag-info.txt")
+        tags = _load_tag_file(bag_info_path)
+        self.assertTrue("Ocrd-Mets" in tags, "expect 'Ocrd-Mets'-key in bag-info.txt")
+        self.assertEqual(tags["Ocrd-Mets"], new_metsname, "Ocrd-Mets key present but wrong value")
+
+    def test_spill_with_changed_metsname(self):
+        # arrange
+        new_metsname = "other-metsname.xml"
+        example_workspace_dir = join(self.bagdir, "example_workspace_dir")
+        makedirs(join(example_workspace_dir))
+        bag_dest = join(self.bagdir, 'foo.ocrd.zip')
+        workspace = self.resolver.workspace_from_nothing(example_workspace_dir, new_metsname)
+        self.bagger.bag(workspace, "mets-changed-test", bag_dest, new_metsname)
+
+        # act
+        spill_dest = join(self.bagdir, 'spilled_changed_mets')
+        self.bagger.spill(bag_dest, spill_dest)
+
+        # assert
+        self.assertTrue(exists(spill_dest), "spill-destination-directory was not created")
+        self.assertFalse(exists(join(spill_dest, "mets.xml")), "'mets.xml' should not be present")
+        self.assertTrue(exists(join(spill_dest, new_metsname)),
+                        "expected mets-file to be '{new_metsname}'")
+
 
 if __name__ == '__main__':
     main()

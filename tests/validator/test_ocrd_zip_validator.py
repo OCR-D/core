@@ -14,6 +14,7 @@ from ocrd.resolver import Resolver
 class TestOcrdZipValidator(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.resolver = Resolver()
         self.bagger = WorkspaceBagger(self.resolver)
         self.tempdir = mkdtemp()
@@ -26,7 +27,7 @@ class TestOcrdZipValidator(TestCase):
         rmtree(self.tempdir)
 
     def test_validation0(self):
-        ocrdzip = self.bagger.bag(self.workspace, 'SBB0000F29300010000', ocrd_manifestation_depth='partial')
+        ocrdzip = self.bagger.bag(self.workspace, 'SBB0000F29300010000')
         report = OcrdZipValidator(self.resolver, ocrdzip).validate()
         self.assertEqual(report.is_valid, True)
 

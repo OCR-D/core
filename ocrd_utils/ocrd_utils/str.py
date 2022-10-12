@@ -62,24 +62,25 @@ def make_file_id(ocrd_file, output_file_grp):
     Derive a new file ID for an output file from an existing input file ``ocrd_file``
     and the name of the output file's ``fileGrp/@USE``, ``output_file_grp``.
     If ``ocrd_file``'s ID contains the input file's fileGrp name, then replace it by ``output_file_grp``.
+    Else if ``ocrd_file``'s ID contains the input file's pageId, then merely append ``output_file_grp``.
     Otherwise use ``output_file_grp`` together with the position of ``ocrd_file`` within the input fileGrp
-    (as a fallback counter). Increment counter until there is no more ID conflict.
+    (as a fallback counter), and increment counter until there is no more ID conflict.
     """
     ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
     if ret == ocrd_file.ID:
-        m = re.match(r'.*?(\d{3,}).*', ocrd_file.pageId or '')
-        if m:
-            n = int(m.group(1))
+        if ocrd_file.pageId and ocrd_file.pageId in ocrd_file.ID:
+            # still sufficiently unique
+            ret = output_file_grp + '_' + ocrd_file.ID
         else:
             ids = [f.ID for f in ocrd_file.mets.find_files(fileGrp=ocrd_file.fileGrp, mimetype=ocrd_file.mimetype)]
             try:
                 n = ids.index(ocrd_file.ID) + 1
             except ValueError:
                 n = len(ids)
-        ret = concat_padded(output_file_grp, n)
-        while next(ocrd_file.mets.find_files(ID=ret), None):
-            n += 1
             ret = concat_padded(output_file_grp, n)
+            while next(ocrd_file.mets.find_files(ID=ret), None):
+                n += 1
+                ret = concat_padded(output_file_grp, n)
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
@@ -114,7 +115,7 @@ def get_local_filename(url, start=None):
         url = url[len('file://'):]
     # Goobi/Kitodo produces those, they are always absolute
     if url.startswith('file:/'):
-        raise Exception("Invalid (java) URL: %s" % url)
+        url = url[len('file:'):]
     if start:
         if not url.startswith(start):
             raise Exception("Cannot remove prefix %s from url %s" % (start, url))
@@ -174,7 +175,9 @@ def safe_filename(url):
     """
     Sanitize input to be safely used as the basename of a local file.
     """
-    ret = re.sub('[^A-Za-z0-9]+', '.', url)
+    ret = re.sub(r'[^A-Za-z0-9_]+', '_', url)
+    ret = re.sub(r'^\.*', '', ret)
+    ret = re.sub(r'\.\.*', '.', ret)
     #  print('safe filename: %s -> %s' % (url, ret))
     return ret
 

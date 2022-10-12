@@ -1,3 +1,10 @@
+"""
+OCR-D CLI: OCRD-ZIP (BagIt) management
+
+.. click:: ocrd.cli.zip:zip_cli
+    :prog: ocrd zip
+    :nested: full
+"""
 import sys
 
 import click
@@ -32,14 +39,13 @@ def zip_cli():
               help='Basename of the METS file.',
               show_default=True)
 @click.option('-i', '--identifier', '--id', help="Ocrd-Identifier", required=True)
-@click.option('-I', '--in-place', help="Replace workspace with bag (like bagit.py does)", required=True, is_flag=True)
-@click.option('-D', '--manifestation-depth', help="Ocrd-Manifestation-Depth", type=click.Choice(['full', 'partial']), default='partial')
+@click.option('-I', '--in-place', help="Replace workspace with bag (like bagit.py does)", is_flag=True)
 @click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
 @click.option('-t', '--tag-file', help="Add a non-payload file to bag", type=click.Path(file_okay=True, dir_okay=False, readable=True, resolve_path=True), multiple=True)
 @click.option('-Z', '--skip-zip', help="Create a directory but do not ZIP it", is_flag=True, default=False)
 @click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
-def bag(directory, mets_basename, dest, identifier, in_place, manifestation_depth, mets, base_version_checksum, tag_file, skip_zip, processes):
+def bag(directory, mets_basename, dest, identifier, in_place, mets, base_version_checksum, tag_file, skip_zip, processes):
     """
     Bag workspace as OCRD-ZIP at DEST
     """
@@ -50,7 +56,6 @@ def bag(directory, mets_basename, dest, identifier, in_place, manifestation_dept
         workspace,
         dest=dest,
         ocrd_identifier=identifier,
-        ocrd_manifestation_depth=manifestation_depth,
         ocrd_mets=mets,
         ocrd_base_version_checksum=base_version_checksum,
         processes=processes,

@@ -5,9 +5,243 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd resmgr download *` working again, #904, #908, #909
+  * Resource manager respects `moduledir` correctly, #904
+
+Added:
+
+  * Processors have a `--dump-module-dir` to print their implementation-specific module directory to STDOUT, #904
+
+## [2.38.0] - 2022-08-14
+
+Fixed:
+
+  * `ocrd zip`: Properly respect `Ocrd-Mets`, #899
+  * `ocrd workspace merge`: missing arguments, #896
+  * `ocrd resmgr download`: Support dynamic discovery, #901
+
+Added:
+
+  * Processors support profiling with `--profile` and `--profile-file`, #878, bertsky/core#4
+
+Removed:
+
+  * `ocrd zip`: remove support for obsolete `Ocrd-Manifestation-Depth`, #902, OCR-D/spec#182
+
+## [2.37.0] - 2022-08-03
+
+Added:
+
+  * `ocrd resmgr`: Resources of processors can be described in the `ocrd-tool.json`, #800
+
+## [2.36.0] - 2022-07-18
+
+Fixed:
+
+  * `ocrd_utils.generate_range`: `maxsplits` should be 1, not 2, #880
+  * Typos in CHANGELOG, README and code comments, #890
+
+Changed:
+
+  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
+  * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
+  * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
+  * Replace `resource_filename` et al from pkg_resources with faster alternatives, #881, #882
+
+## [2.35.0] - 2022-06-02
+
+Changed:
+
+  * OCRD-ZIP: Drop `Ocrd-Manifestation-Depth` and disallow `fetch.txt`, OCR-D/spec#182
+  * Parameters can now be described with most JSON-Schema constructs, OCR-D/spec#206, #848
+
+## [2.34.0] - 2022-05-20
+
+Added:
+
+  * `ocrd log` now accepts `-` argument to read messages from STDIN, #852, #870
+
+Changed:
+
+  * `ocrd_utils.safe_filename`: replace with `_` instead of `.` and retain pre-existing `_`, #858, #859
+  * `OcrdMets.find_files`: allow pageId regex, precompile all regexes, #855, #856
+
+Fixed:
+
+  * `ocrd resmgr list-available`: handle processors not in resource list gracefully, #854, #865
+  * `ocrd resmgr`: do not try to parse strings as dates, #867, #869
+  * `ocrd workspace bulk-add`: use 1-based counter, #864
+
+## [2.33.0] - 2022-05-03
+
+Fixed:
+
+  * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
+  * `ocrd workspace bulk-add`: handle unset file_id properly, #812, #846
+  * `io.BufferedReader` filename attribute should be `name` not `filename`, #838, #839
+
+Changed:
+
+  * `OcrdWorkspace.image_from_*`: support passing explicit AlternativeImage filename, #845
+
+Removed:
+
+  * `make asset-server` feature no longer used, #843
+  * `python3-pip` dependency is redundant, #813
+
+## [2.32.0] - 2022-03-30
+
+Fixed:
+
+  * `ocrd zip bag`: `-I` is *not* required, #828, #829
+
+Changed:
+
+  * `OcrdExif`: fallback to PIL if ImageMagick's `identify` is not available, #796, #676
+  * `OcrdWorkspace.image_from_*`: Avoid false warning when recropping, #820, #687
+
+## [2.31.0] - 2022-03-20
+
+Changed:
+
+  * `make cuda-ubuntu` installs all CUDA versions, OCR-D/core#704, OCR-D/ocrd_all#270
+  * `ocrd resmgr`: updated models for ocrd-anybaseocr-{tiseg,layout-analysis}, #819, OCR-D/ocrd_anybaseocr#89
+
+Fixed:
+
+  * Error message erroneously referenced `mets:file/@ID` instead `mets:fileGrp/@USE`, #823
+  * Consistently use kwargs/args in `OcrdWorkspace.save_image_file`, #822
+  * Missing arg for log message in WorkspaceValidator, #811
+
+## [2.30.0] - 2022-02-01
+
+Changed:
+
+  * Images processed by OCR-D can now be up to 40,000 by 40,000 pixels, #735, #768
+  * `OcrdExif`: get pixel density metadata from ImageMagick's `identify`, not PIL, #676
+  * Refactor parsing of `--mets`/`--mets-basename`/`--working-dir` to reduce ambiguities, #693, #696
+  * bashlib: implify (i.e. remove) build process, #742, #785
+  * `ocrd workspace bulk-add`: Make bulk-add more flexible and (hopefully) user-friendly, #641, #754, #769, #776
+
+Fixed:
+
+  * PAGE validation: handle `pc:ImageRegion` as well, #781
+  * bashlib: pass on parameters for task validation, #784
+  * `<processor> --list-resources`: List only the relevant type of resource (directory or file), #750, #777
+
+## [2.29.0] - 2021-12-08
+
+Changed:
+
+  * `ocrd_utils.make_file_id`: combine with output fileGrp if input has pageId, but don't extract numbers, #744
+  * `OcrdMets.add_file`: `mets:fileGrp/@USE` must be valid `xs:ID`, #746
+
+Added:
+
+  * `ocrd ocrd-tool`: wrap `list-resources` and `show-resource` from `Processor`
+  * bashlib `ocrd__parse_argv`: add `--list-resources` and `--show-resource`, #751
+  * `ocrd bashlib`: wrap `input-files` from `Processor` and `make_file_id`
+  * bashlib `ocrd__wrap`: offer `ocrd__files` and `ocrd__input_file`, #571
+
+## [2.28.0] - 2021-11-30
+
+Added:
+
+  * Store parameterization of processors in METS for provenance, #747
+  * `ocrd workspace find --download`: Add a `--wait` option to wait between downloads, #745
+  * bashlib: Check fileGrps when parsing CLI args, #743, OCR-D/ocrd_olena#76
+  * Dockerfile: Install `time` to have `/usr/bin/time` in the image, #748, OCR-D/ocrd_all#271
+
+Fixed:
+
+  * `ocrd-dummy`: Also set pcGtsId, v0.0.2, #739
+
+## [2.27.0] - 2021-11-09
+
+Fixed:
+
+  * remove dependency on six, #732
+  * `ocrd workspace remove-group`: handle files not in subdir gracefully, #734
+  * `ocrd resmgr`: fix "reference before assignment" issue #689, #733
+  * `OcrdWorkspace.remove_file`: handle empty regexes, #725
+
+Changed:
+
+  * `ocrd workspace rename-group` will now also rename filenames and `mets:file/@ID`, #736
+
+## [2.26.1] - 2021-10-14
+
+Fixed:
+
+  * `resmgr`: Correct URL for tesseract configs
+
+## [2.26.0] - 2021-09-20
+
+Added:
+
+  * `ocrd_utils`: functions for scaling images, #707
+
+Changed:
+
+  * `OcrdFile`: should only ever be instantiated in the context of `OcrdMets`, #324, #714
+  * Logging outputs to `STDERR` not `STDOUT`, OCR-D/spec#183, #713, #667
+
+Fixed:
+
+  * `ocrd workspace merge`: handle `file_grp` parameter, #715
+  * `ocrd workspace merge`: explicit --copy-files was --no-copy-files, #715
+  * `ocrd resmgr`: Fix tesseract URLs, #721
+
+## [2.25.1] - 2021-06-30
+
+Fixed:
+
+  * `ocrd_page`: fallback for `id` if none of the attributes are set, #683
+
+## [2.25.0] - 2021-06-30
+
+Added:
+
+  * `ocrd_page`: Universal attribute `id` to get either `id`, `imageFilename` or `pcGtsId`, #683, #682
+  * `ocrd_page`: function `parseTree` and `with_etree` kwarg to `workspace.page_from_*` to access PAGE with etree API, #699, #313
+
+Fixed:
+
+  * Version-independent URL of METS XSD, #695, #694
+  * Recrop if deskewed after cropping, #688
+
+## [2.24.0] - 2021-04-27
+
+Changed:
+
+  * `workspace.image_from_page` will return the AlternativeImage with most features matched, not the last one, #686
+  * `crop_image`: Ensures that masked areas do not influence the median for `fill='background'`, #686
+
+## [2.23.3] - 2021-04-14
+
+Added:
+
+  * `ocrd resmgr`: model `default` for eynollah, #668
+
+## [2.23.2] - 2021-03-10
+
+Added:
+
+  * `ocrd resmgr`: new model `default-2021-03-09` for sbb_binarization, #681
+
+## [2.23.1] - 2021-03-07
+
+Added:
+
+  * `configs` resource for `ocrd-tesserocr-recognize`, #680
+
 Changed:
 
   * Stop testing python 3.5, start testing python 3.9
+  * `ocrd resmgr`: skip redundant `content-length` request if `size` is known
 
 ## [2.23.0] - 2021-02-26
 
@@ -141,7 +375,7 @@ Changed:
 
 Fixed:
 
-  * As a workaround for tensorflow compatiblity, require `numpy < 1.19.0`, #620
+  * As a workaround for tensorflow compatibility, require `numpy < 1.19.0`, #620
 
 ## [2.17.1] - 2020-10-05
 
@@ -372,7 +606,7 @@ Changed:
   * `Workspace.remove_file`: Optional `page_same_gropup` parameter to remove
     only those images linked in PAGE that are in the same group as the PAGE-XML
   * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
-  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
+  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will not raise an error if an existing
     output file group is targeted but for pages that aren't in that group, #471
   * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
   * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
@@ -1301,6 +1535,25 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.38.0]: ../../compare/v2.38.0..v2.37.0
+[2.37.0]: ../../compare/v2.37.0..v2.36.0
+[2.36.0]: ../../compare/v2.36.0..v2.35.0
+[2.35.0]: ../../compare/v2.35.0..v2.34.0
+[2.34.0]: ../../compare/v2.34.0..v2.33.0
+[2.33.0]: ../../compare/v2.33.0..v2.32.0
+[2.32.0]: ../../compare/v2.32.0..v2.31.0
+[2.31.0]: ../../compare/v2.31.0..v2.30.0
+[2.30.0]: ../../compare/v2.30.0..v2.29.0
+[2.29.0]: ../../compare/v2.29.0..v2.28.0
+[2.28.0]: ../../compare/v2.28.0..v2.27.0
+[2.27.0]: ../../compare/v2.27.0..v2.26.1
+[2.26.1]: ../../compare/v2.26.1..v2.26.0
+[2.26.0]: ../../compare/v2.26.0..v2.25.1
+[2.25.1]: ../../compare/v2.25.1..v2.25.0
+[2.25.0]: ../../compare/v2.25.0..v2.24.0
+[2.24.0]: ../../compare/v2.24.0..v2.23.2
+[2.23.2]: ../../compare/v2.23.2..v2.23.1
+[2.23.1]: ../../compare/v2.23.1..v2.23.0
 [2.23.0]: ../../compare/v2.23.0..v2.22.4
 [2.22.4]: ../../compare/v2.22.4..v2.22.3
 [2.22.3]: ../../compare/v2.22.3..v2.22.2

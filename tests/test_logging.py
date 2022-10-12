@@ -23,6 +23,7 @@ TIMEFMT_RE = r'\d\d:\d\d:\d\d\.(\d+)? '
 class TestLogging(TestCase):
 
     def setUp(self):
+        super().setUp()
         disableLogging()
 
     def test_setOverrideLogLevel(self):

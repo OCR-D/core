@@ -134,8 +134,9 @@ class TestWorkspaceValidator(TestCase):
             f._el.set('GROUPID', 'donotuse') # pylint: disable=protected-access
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
-            self.assertEqual(len(report.errors), 1)
-            self.assertIn("Invalid (java) URL", report.errors[0])
+            assert not report.is_valid
+            assert len(report.errors) == 2
+            assert "invalid (Java-specific) file URL" in report.errors[0]
 
     def test_validate_pixel_no_download(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')
@@ -189,7 +190,7 @@ class TestWorkspaceValidator(TestCase):
             wsdir = join(tempdir, 'foo')
             copytree(assets.path_to('kant_aufklaerung_1784/data'), wsdir)
             with pushd_popd(wsdir):
-                os.system("""sed -i 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
+                os.system("""sed -i.bak 's,imageHeight="2083",imageHeight="1234",' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
                 report = WorkspaceValidator.validate(
                     self.resolver,
                     join(wsdir, 'mets.xml'),
@@ -228,7 +229,7 @@ class TestWorkspaceValidator(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 # remove the @pcGtsId attribute for testing
-                os.system("""sed -i 's,pcGtsId.*,pcGtsId="foo">,' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
+                os.system("""sed -i.bak 's,pcGtsId.*,pcGtsId="foo">,' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
                 report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'))
                 self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "foo" !== "PAGE_0017_PAGE"', report.warnings)
 

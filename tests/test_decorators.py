@@ -14,7 +14,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging
 
 @click.command()
 @ocrd_cli_options
@@ -40,6 +40,10 @@ DEFAULT_IN_OUT = ('-I', 'OCR-D-IMG', '-O', 'OUTPUT')
 
 class TestDecorators(TestCase):
 
+    def setUp(self):
+        super().setUp()
+        disableLogging()
+
     def test_minimal(self):
         exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
         print(out, err)
@@ -48,7 +52,11 @@ class TestDecorators(TestCase):
     def test_loglevel_invalid(self):
         code, _, err = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
         assert code
-        self.assertIn('invalid choice: foo', err)
+        import click
+        if int(click.__version__[0]) < 8:
+            assert 'invalid choice: foo' in err
+        else:
+            assert "'foo' is not one of" in err
 
     def test_loglevel_override(self):
         import logging
@@ -111,10 +119,10 @@ class TestDecorators(TestCase):
         resolver = Resolver()
         with TemporaryDirectory() as tempdir:
             ws = resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('IN-GRP',  pageId='pID1', ID='fID1', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID1.tif'))
-            ws.add_file('OUT-GRP', pageId='pID2', ID='fID2', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID2.tif'))
-            ws.add_file('OUT-GRP', pageId='pID3', ID='fID3', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID3.tif'))
-            ws.add_file('OUT-GRP', pageId='pID4', ID='fID4', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID4.tif'))
+            ws.add_file('IN-GRP',  page_id='pID1', file_id='fID1', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID1.tif'))
+            ws.add_file('OUT-GRP', page_id='pID2', file_id='fID2', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID2.tif'))
+            ws.add_file('OUT-GRP', page_id='pID3', file_id='fID3', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID3.tif'))
+            ws.add_file('OUT-GRP', page_id='pID4', file_id='fID4', mimetype='image/tiff', content='CONTENT', local_filename=join(tempdir, 'ID4.tif'))
             ws.save_mets()
             yield ws
 
@@ -204,5 +212,6 @@ class TestDecorators(TestCase):
                 print(out)
                 self.assertEqual(out, '{"baz": "two"}\n')
 
+
 if __name__ == '__main__':
-    main(__file__)
+    main()

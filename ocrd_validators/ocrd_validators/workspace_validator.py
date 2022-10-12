@@ -179,7 +179,7 @@ class WorkspaceValidator():
             if not self.mets.find_files(url=imageFilename):
                 self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file")
+                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.url, imageFilename))
 
     def _validate_dimension(self):
         """
@@ -208,9 +208,13 @@ class WorkspaceValidator():
             if not is_local_filename(f.url) and not self.download:
                 self.report.add_notice("Won't download remote image <%s>" % f.url)
                 continue
-            exif = self.workspace.resolve_image_exif(f.url)
-            if exif.n_frames > 1:
-                self.report.add_error("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
+            try:
+                exif = self.workspace.resolve_image_exif(f.url)
+                if exif.n_frames > 1:
+                    self.report.add_error("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
+            except FileNotFoundError:
+                self.report.add_error("Image %s: Could not retrieve %s" % (f.ID, f.url))
+                return
 
     def _validate_pixel_density(self):
         """

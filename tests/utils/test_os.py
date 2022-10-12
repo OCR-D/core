@@ -5,7 +5,7 @@ from os import environ as ENV, getcwd
 from os.path import expanduser, join
 
 from ocrd_utils.os import (
-    list_resource_candidates
+    list_resource_candidates,
 )
 
 class TestOsUtils(TestCase):
@@ -14,6 +14,7 @@ class TestOsUtils(TestCase):
         self.maxDiff = None
         self.tempdir_path = mkdtemp()
         ENV['OCRD_DUMMY_PATH'] = self.tempdir_path
+        super().setUp()
 
     def tearDown(self):
         rmtree(self.tempdir_path)
@@ -32,7 +33,6 @@ class TestOsUtils(TestCase):
             '$HOME/.local/share/ocrd-resources/ocrd-dummy',
             '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
-
 
 
 if __name__ == '__main__':
