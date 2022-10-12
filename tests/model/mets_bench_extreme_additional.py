@@ -14,9 +14,9 @@ logger = getLogger('ocrd.benchmark.mets')
 GRPS_REG = ['SEG-REG', 'SEG-REPAIR', 'SEG-REG-DESKEW', 'SEG-REG-DESKEW-CLIP', 'SEG-LINE', 'SEG-REPAIR-LINE', 'SEG-LINE-RESEG-DEWARP']
 GRPS_IMG = ['FULL', 'PRESENTATION', 'BIN', 'CROP', 'BIN2', 'BIN-DENOISE', 'BIN-DENOISE-DESKEW', 'OCR']
 
-# 750 files per page
-REGIONS_PER_PAGE = 50
-LINES_PER_REGION = 50
+# 1500 files per page
+REGIONS_PER_PAGE = 100
+LINES_PER_REGION = 100
 FILES_PER_PAGE = len(GRPS_IMG) * LINES_PER_REGION + len(GRPS_REG) * REGIONS_PER_PAGE
 
 # Caching is disabled by default
@@ -33,11 +33,9 @@ def _build_mets(number_of_pages, force=False, cache_flag=False):
             url='%s/%s%s' % (fileGrp, ID if ID else '%s_%s_%s' % (fileGrp, n, MIME_TO_EXT.get(mimetype)[1:].upper()), MIME_TO_EXT.get(mimetype))
         )
         for grp in GRPS_IMG:
-            # LINES_PER_REGION = 2
             _add_file(n, grp, 'image/tiff')
             _add_file(n, grp, 'application/vnd.prima.page+xml')
         for grp in GRPS_REG:
-            # REGIONS_PER_PAGE = 2
             for region_n in range(REGIONS_PER_PAGE):
                 _add_file(n, grp, 'image/png', '%s_%s_region%s' % (grp, n, region_n))
 
@@ -78,38 +76,38 @@ def benchmark_find_files_physical_page(number_of_pages, mets):
 def benchmark_find_files_all(number_of_pages, mets):
     assert_len((number_of_pages * FILES_PER_PAGE), mets, dict())
 
-# ----- 5000 pages -> build, search, build (cached), search (cached) ----- #
-mets_5000 = None
+# ----- 500 pages -> build, search, build (cached), search (cached) ----- #
+mets_500 = None
 @mark.benchmark(group="build", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
-def test_b5000(benchmark):
+def test_b500(benchmark):
     @benchmark
     def result():
-        global mets_5000
-        mets_5000 = _build_mets(5000, force=True)
+        global mets_500
+        mets_500 = _build_mets(500, force=True)
 
 @mark.benchmark(group="search", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
-def test_s5000(benchmark):
+def test_s500(benchmark):
     @benchmark
     def ret(): 
-        global mets_5000
-        benchmark_find_files(5000, mets_5000)
-del mets_5000
+        global mets_500
+        benchmark_find_files(500, mets_500)
+del mets_500
 
-mets_c_5000 = None
+mets_c_500 = None
 @mark.benchmark(group="build_cached", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
-def test_b5000_c(benchmark):
+def test_b500_c(benchmark):
     @benchmark
     def result():
-        global mets_c_5000
-        mets_c_5000 = _build_mets(5000, force=True, cache_flag=True)
+        global mets_c_500
+        mets_c_500 = _build_mets(500, force=True, cache_flag=True)
 
 @mark.benchmark(group="search_cached", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
-def test_s5000_c(benchmark):
+def test_s500_c(benchmark):
     @benchmark
     def ret():
-        global mets_c_5000
-        benchmark_find_files(5000, mets_c_5000)
-del mets_c_5000
+        global mets_c_500
+        benchmark_find_files(500, mets_c_500)
+del mets_c_500
 
 # ------------------------------------------------------------------------ #
 
