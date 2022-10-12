@@ -26,7 +26,7 @@ def ocrd_cli_wrap_processor(
         ocrd_tool=None,
         mets=None,
         working_dir=None,
-        server=None,
+        address=None,
         dump_json=False,
         dump_module_dir=False,
         help=False,  # pylint: disable=redefined-builtin
@@ -52,9 +52,9 @@ def ocrd_cli_wrap_processor(
             list_resources=list_resources
         )
         sys.exit()
-    if server:
+    if address:
         try:
-            ip, port, mongo_url = parse_server_input(server)
+            ip, port, mongo_url = parse_server_input(address)
         except ValueError:
             raise click.UsageError('The --server option must have the format IP:PORT:MONGO_URL')
 

@@ -16,15 +16,15 @@ from ocrd.server.main import ProcessorAPI
 from ocrd_utils import parse_json_string_with_comments, initLogging
 
 
-@click.command('server')
+@click.command('processing-server')
 @click.argument('processor_name', required=True, type=click.STRING)
-@click.option('--server',
+@click.option('--address',
               help='Host name/IP, port, and connection string to a Mongo DB in the format IP:PORT:MONGO_URL',
               required=True,
               type=click.STRING)
-def server_cli(processor_name, server):
+def server_cli(processor_name, address):
     try:
-        ip, port, mongo_url = parse_server_input(server)
+        ip, port, mongo_url = parse_server_input(address)
     except ValueError:
         raise click.UsageError('The --server option must have the format IP:PORT:MONGO_URL')
 

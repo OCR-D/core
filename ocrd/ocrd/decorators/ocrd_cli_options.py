@@ -27,7 +27,7 @@ def ocrd_cli_options(f):
         option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         option('-g', '--page-id', help="ID(s) of the pages to process"),
         option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
-        option('--server', help='Host name/IP, port, and connection string to a Mongo DB.', type=click.STRING),
+        option('--address', help='Host name/IP, port, and connection string to a Mongo DB.', type=click.STRING),
         option('-C', '--show-resource', help='Dump the content of processor resource RESNAME', metavar='RESNAME'),
         option('-L', '--list-resources', is_flag=True, default=False, help='List names of processor resources'),
         parameter_option,

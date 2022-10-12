@@ -336,7 +336,7 @@ Options:
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Log level
-  --server IP:PORT:MONGO_URL      Host name/IP, port, and connection string to a Mongo DB.
+  --address IP:PORT:MONGO_URL     Host name/IP, port, and connection string to a Mongo DB.
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON and exit
