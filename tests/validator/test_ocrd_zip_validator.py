@@ -27,7 +27,7 @@ class TestOcrdZipValidator(TestCase):
         rmtree(self.tempdir)
 
     def test_validation0(self):
-        ocrdzip = self.bagger.bag(self.workspace, 'SBB0000F29300010000', ocrd_manifestation_depth='partial')
+        ocrdzip = self.bagger.bag(self.workspace, 'SBB0000F29300010000')
         report = OcrdZipValidator(self.resolver, ocrdzip).validate()
         self.assertEqual(report.is_valid, True)
 

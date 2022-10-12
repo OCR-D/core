@@ -1,81 +1,29 @@
 # List available resources by processor for "ocrd resmgr"
-ocrd-tesserocr-recognize:
-  - url: https://ub-backup.bib.uni-mannheim.de/~stweil/ocrd-train/data/Fraktur_5000000/tessdata_fast/Fraktur_50000000.334_450937.traineddata
-    name: Fraktur_GT4HistOCR.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract LSTM model trained on GT4HistOCR
-    size: 1058487
-  - url: https://ub-backup.bib.uni-mannheim.de/~stweil/ocrd-train/data/ONB/tessdata_best/ONB_1.195_300718_989100.traineddata
-    name: ONB.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract LSTM model based on Austrian National Library newspaper data
-    size: 4358948
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/equ.traineddata
-    name: equ.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract equ model
-    size: 2251950
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/osd.traineddata
-    name: osd.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract osd model
-    size: 10562727
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata
-    name: eng.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract eng model
-    size: 4113088
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/deu.traineddata
-    name: deu.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract deu model
-    size: 1525436
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/frk.traineddata
-    name: frk.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract frk model
-    size: 6423052
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/script/Fraktur.traineddata
-    name: Fraktur.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract Fraktur model
-    size: 10915632
-  - url: https://github.com/tesseract-ocr/tessdata_fast/raw/main/script/Latin.traineddata
-    name: Latin.traineddata
-    parameter_usage: 'without-extension'
-    description: Tesseract Latin model
-    size: 89384811
-  - url: https://github.com/tesseract-ocr/tesseract/archive/main.tar.gz
-    name: configs
-    description: Tesseract configs (parameter sets) for use with the standalone tesseract CLI
-    size: 1915529
-    type: tarball
-    path_in_archive: 'tesseract-main/tessdata/configs'
 ocrd-calamari-recognize:
   # XXX disabled since older ocrd_calamari versions don't support resource resolving
   #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
-  #  type: tarball
+  #  type: archive
   #  name: qurator-gt4histocr-0.3
   #  description: Calamari model trained with GT4HistOCR
   #  size: 116439072
   #  path_in_archive: '.'
   #  version_range: '< 1.0.0'
   - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-12-11T11_10+0100/model.tar.xz
-    type: tarball
+    type: archive
     name: qurator-gt4histocr-1.0
     description: Calamari model trained with GT4HistOCR
     size: 90275264
     path_in_archive: '.'
     version_range: '>= 1.0.0'
   - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_fraktur19-1.tar.gz
-    type: tarball
+    type: archive
     name: zpd-fraktur19
     description: Model trained on 19th century german fraktur
     path_in_archive: 'c1_fraktur19-1'
     size: 86009886
     version_range: '>= 1.0.0'
   - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_latin-script-hist-3.tar.gz
-    type: tarball
+    type: archive
     name: zpd-latin-script-hist-3
     path_in_archive: 'c1_latin-script-hist-3'
     description: Model trained on historical latin-script texts
@@ -107,20 +55,20 @@ ocrd-sbb-binarize:
   - url: https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz
     description: updated default models provided by github.com/qurator-spk
     name: default-2021-03-09
-    type: tarball
+    type: archive
     path_in_archive: models
     size: 133363179
   - url: https://qurator-data.de/sbb_binarization/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
-    type: tarball
+    type: archive
     path_in_archive: models
     size: 1654623597
 ocrd-sbb-textline-detector:
   - url: https://qurator-data.de/sbb_textline_detector/models.tar.gz
     description: default models provided by github.com/qurator-spk
     name: default
-    type: tarball
+    type: archive
     size: 1194551551
 ocrd-anybaseocr-dewarp:
   - url: https://ocr-d-repo.scc.kit.edu/models/dfki/dewarping/latest_net_G.pth
@@ -136,7 +84,7 @@ ocrd-anybaseocr-layout-analysis:
   - url: https://ocr-d.kba.cloud/structure_analysis.tar.gz
     name: structure_analysis
     description: structure analysis model for anybaseocr
-    type: tarball
+    type: archive
     path_in_archive: 'structure_analysis'
     size: 29002514
   - url: https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle
@@ -147,7 +95,7 @@ ocrd-anybaseocr-tiseg:
   - url: https://ocr-d.kba.cloud/seg_model.tar.gz
     name: seg_model
     description: text image segmentation model for anybaseocr
-    type: tarball
+    type: archive
     path_in_archive: 'seg_model'
     size: 61388872
 ocrd-kraken-segment:
@@ -161,9 +109,9 @@ ocrd-kraken-recognize:
     description: This model has been trained on a large corpus of modern printed English text\naugmented with ~10000 lines of historical pages
     size: 2930723
 ocrd-eynollah-segment:
-  - url: https://qurator-data.de/eynollah/models_eynollah.tar.gz
+  - url: https://qurator-data.de/eynollah/2021-04-25/models_eynollah.tar.gz
     name: default
     description: models for eynollah
     size: 3241866640
-    type: tarball
+    type: archive
     path_in_archive: 'models_eynollah'
