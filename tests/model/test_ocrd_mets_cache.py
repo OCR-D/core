@@ -79,7 +79,8 @@ def test_find_all_files(sbb_sample_01):
 
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',
-               local_only=True)) == 3, '3 local files for page "PHYS_0001"'
+               local_only=True)) == 14, '14 local files for page "PHYS_0001"'
+    # 3 non-local files for page "PHYS_0001"
 
 
 def test_physical_pages(sbb_sample_01):
