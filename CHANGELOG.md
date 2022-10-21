@@ -9,6 +9,7 @@ Fixed:
 
   * `ocrd resmgr download *` working again, #904, #908, #909
   * Resource manager respects `moduledir` correctly, #904
+  * `moduledir` now be able to handle namespace packages properly, #917
 
 Added:
 
