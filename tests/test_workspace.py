@@ -679,6 +679,29 @@ def test_merge_with_filter(plain_workspace, tmp_path):
         assert f.pageId in [page_id1, page_id2]
         assert f.ID in [file_id1, file_id2]
 
+def test_merge_force(plain_workspace, tmp_path):
+    resolver = Resolver()
+
+    # target ws
+    page_id1, file_id1, file_grp1 = 'page1', 'ID1', 'GRP1'
+    plain_workspace.add_file(file_grp1, file_id=file_id1, mimetype='image/tiff', page_id=page_id1)
+
+    # source ws
+    dst_path2 = tmp_path / 'foo'
+    ws2 = resolver.workspace_from_nothing(directory=dst_path2)
+    page_id2, file_id2, file_grp2 = 'page2', 'ID1', 'GRP2'
+    ws2.add_file(file_grp2, file_id=file_id2, mimetype='image/tiff', page_id=page_id2, url='bar')
+
+    # fails because force is false
+    with pytest.raises(Exception) as fn_exc:
+        plain_workspace.merge(ws2, force=False)
+
+    # works because force overrides ID clash
+    plain_workspace.merge(ws2, force=True)
+
+    files = list(plain_workspace.find_files())
+    assert len(files) == 1
+
 
 if __name__ == '__main__':
     main(__file__)
