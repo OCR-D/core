@@ -492,7 +492,7 @@ class OcrdMets(OcrdXmlDocument):
         Accepts the same kwargs as :py:func:`find_files`
 
         Keyword Args:
-            force (boolean): Whether to add_files with force (overwriting existing mets:file)
+            force (boolean): Whether to :py:meth:`add_file`s with force (overwriting existing ``mets:file``s)
             fileGrp_mapping (dict): Map :py:attr:`other_mets` fileGrp to fileGrp in this METS
             fileId_mapping (dict): Map :py:attr:`other_mets` file ID to file ID in this METS
             pageId_mapping (dict): Map :py:attr:`other_mets` page ID to page ID in this METS
