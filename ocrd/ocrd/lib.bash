@@ -164,7 +164,7 @@ ocrd__parse_argv () {
     fi
 
     # check fileGrps
-    local _valopts=( --workspace "${ocrd__argv[working_dir]}" )
+    local _valopts=( --workspace "${ocrd__argv[working_dir]}" --mets-basename "$(basename ${ocrd__argv[mets_file]})" )
     if [[ ${ocrd__argv[overwrite]} = true ]]; then
         _valopts+=( --overwrite )
     fi
