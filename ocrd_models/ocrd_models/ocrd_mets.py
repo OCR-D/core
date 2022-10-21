@@ -509,7 +509,6 @@ class OcrdMets(OcrdXmlDocument):
                     fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
                     mimetype=f_src.mimetype,
                     url=f_src.url,
-                    force=force,
                     ID=fileId_mapping.get(f_src.ID, f_src.ID),
                     pageId=pageId_mapping.get(f_src.pageId, f_src.pageId),
                     force=force)
