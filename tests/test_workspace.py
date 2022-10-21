@@ -716,7 +716,7 @@ def test_merge_force(plain_workspace, tmp_path):
     # source ws
     dst_path2 = tmp_path / 'foo'
     ws2 = resolver.workspace_from_nothing(directory=dst_path2)
-    page_id2, file_id2, file_grp2 = 'page2', 'ID1', 'GRP2'
+    page_id2, file_id2, file_grp2 = 'page1', 'ID1', 'GRP1'
     ws2.add_file(file_grp2, file_id=file_id2, mimetype='image/tiff', page_id=page_id2, url='bar')
 
     # fails because force is false
