@@ -485,7 +485,7 @@ class OcrdMets(OcrdXmlDocument):
             mets_div.remove(mets_fptr)
         return ret
 
-    def merge(self, other_mets, overwrite=True, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None, after_add_cb=None, **kwargs):
+    def merge(self, other_mets, force=False, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None, after_add_cb=None, **kwargs):
         """
         Add all files from other_mets.
 
@@ -510,7 +510,7 @@ class OcrdMets(OcrdXmlDocument):
                     url=f_src.url,
                     ID=fileId_mapping.get(f_src.ID, f_src.ID),
                     pageId=pageId_mapping.get(f_src.pageId, f_src.pageId),
-                    force=overwrite)
+                    force=force)
             # FIXME: merge metsHdr, amdSec, dmdSec as well
             # FIXME: merge structMap logical and structLink as well
             if after_add_cb:

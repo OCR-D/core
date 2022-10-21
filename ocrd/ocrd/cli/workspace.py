@@ -607,7 +607,7 @@ def merge(ctx, overwrite, copy_files, filegrp_mapping, fileid_mapping, pageid_ma
     other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
     workspace.merge(
         other_workspace,
-        overwrite=overwrite,
+        overwrite=True, # This does not work as well!
         copy_files=copy_files,
         fileGrp_mapping=filegrp_mapping,
         fileId_mapping=fileid_mapping,
