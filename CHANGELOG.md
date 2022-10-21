@@ -9,10 +9,16 @@ Fixed:
 
   * `ocrd resmgr download *` working again, #904, #908, #909
   * Resource manager respects `moduledir` correctly, #904
+  * `moduledir` now be able to handle namespace packages properly, #917
 
 Added:
 
   * Processors have a `--dump-module-dir` to print their implementation-specific module directory to STDOUT, #904
+
+Changed:
+
+  * `make_file_id`: Generated IDs will always consist of `file_grp` and either `file_id` or `page_id`, #861
+  * `OcrdWorkspace.add_file`: raise FileExistErrors if there is an ID clash that cannot be mitigated, #861
 
 ## [2.38.0] - 2022-08-14
 

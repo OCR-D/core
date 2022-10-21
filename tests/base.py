@@ -2,13 +2,14 @@
 
 from os.path import dirname, realpath
 from os import chdir
+from contextlib import contextmanager
 import sys
 import logging
 import io
 import collections
 from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
-from ocrd_utils import disableLogging, initLogging
+from ocrd_utils import disableLogging, initLogging, getLogger
 from ocrd_models import OcrdMets
 
 from tests.assets import assets, copy_of_directory
@@ -63,7 +64,6 @@ def create_ocrd_file(*args, **kwargs):
     mets = OcrdMets.empty_mets()
     return mets.add_file(*args, **kwargs)
 
-
 #  import traceback
 #  import warnings
 #  def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
@@ -72,10 +72,11 @@ def create_ocrd_file(*args, **kwargs):
 #      log.write(warnings.formatwarning(message, category, filename, lineno, line))
 #  warnings.showwarning = warn_with_traceback
 
-# https://stackoverflow.com/questions/37944111/python-rolling-log-to-a-variable
-# Adapted from http://alanwsmith.com/capturing-python-log-output-in-a-variable
-
 class FIFOIO(io.TextIOBase):
+    """
+    https://stackoverflow.com/questions/37944111/python-rolling-log-to-a-variable
+    Adapted from http://alanwsmith.com/capturing-python-log-output-in-a-variable
+    """
     def __init__(self, size, *args):
         self.maxsize = size
         io.TextIOBase.__init__(self, *args)
@@ -92,5 +93,18 @@ class FIFOIO(io.TextIOBase):
         while size > self.maxsize:
             x = self.deque.popleft()
             size -= len(x)
+
+@contextmanager
+def capture_log(loggerName):
+    disableLogging()
+    initLogging()
+    log_capture_string = FIFOIO(1024)
+    ch = logging.StreamHandler(log_capture_string)
+    getLogger(loggerName).addHandler(ch)
+    getLogger(loggerName).setLevel('DEBUG')
+    try:
+        yield log_capture_string
+    finally:
+        log_capture_string.close()
 
 sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
