@@ -509,7 +509,8 @@ class OcrdMets(OcrdXmlDocument):
                     mimetype=f_src.mimetype,
                     url=f_src.url,
                     ID=fileId_mapping.get(f_src.ID, f_src.ID),
-                    pageId=pageId_mapping.get(f_src.pageId, f_src.pageId))
+                    pageId=pageId_mapping.get(f_src.pageId, f_src.pageId),
+                    force=True)
             # FIXME: merge metsHdr, amdSec, dmdSec as well
             # FIXME: merge structMap logical and structLink as well
             if after_add_cb:
