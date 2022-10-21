@@ -615,7 +615,7 @@ def merge(ctx, overwrite, copy_files, filegrp_mapping, fileid_mapping, pageid_ma
         file_grp=file_grp,
         file_id=file_id,
         page_id=page_id,
-        mimetype=mimetype,
+        mimetype=mimetype
     )
     workspace.save_mets()
 
