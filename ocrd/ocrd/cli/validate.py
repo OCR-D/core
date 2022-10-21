@@ -101,7 +101,7 @@ def validate_page(page, **kwargs):
 
 @validate_cli.command('tasks')
 @click.option('--workspace', nargs=1, required=False, help='Workspace directory these tasks are to be run. If omitted, only validate syntax')
-@click.option('-M', '--mets-basename', nargs=1, default='mets.xml', help='Baasename of the METS file, used in conjunction with --workspace')
+@click.option('-M', '--mets-basename', nargs=1, default='mets.xml', help='Basename of the METS file, used in conjunction with --workspace')
 @click.option('--overwrite', is_flag=True, default=False, help='When checking against a concrete workspace, simulate overwriting output or page range.')
 @click.option('-g', '--page-id', help="ID(s) of the pages to process")
 @click.argument('tasks', nargs=-1, required=True)
