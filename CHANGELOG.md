@@ -11,6 +11,7 @@ Fixed:
   * Resource manager respects `moduledir` correctly, #904
   * `moduledir` now be able to handle namespace packages properly, #917
   * processing with `--overwrite` does not create duplicates any more, #861
+  * bashlib: `ocrd validate tasks` call now supports non-standard METS name, #925
 
 Added:
 
