@@ -62,18 +62,28 @@ def make_file_id(ocrd_file, output_file_grp):
     Derive a new file ID for an output file from an existing input file ``ocrd_file``
     and the name of the output file's ``fileGrp/@USE``, ``output_file_grp``.
     If ``ocrd_file``'s ID contains the input file's fileGrp name, then replace it by ``output_file_grp``.
-    Else if ``ocrd_file`` has a ``pageId`` but it is not contained in the ``ocrd_file.ID``, concatenate ``output_file_grp`` and ``ocrd_file.pageId``.
+    Else if ``ocrd_file`` has a ``pageId`` but it is not contained in the ``ocrd_file.ID``, then
+        concatenate ``output_file_grp`` and ``ocrd_file.pageId``.
     Otherwise concatenate ``output_file_grp`` with the ``ocrd_file.ID``.
 
-    Note: ``make_file_id`` cannot guarantee that the ID is unique within an actual ``OcrdMets`` but will ensure uniqueness in a workflow with processors that consistently use ``make_file_id`` for ID generation.
+    Note: ``make_file_id`` cannot guarantee that the new ID is unique within an actual
+    :py:class:`ocrd_models.ocrd_mets.OcrdMets`.
+    The caller is responsible for ensuring uniqueness of files to be added.
+    Ultimately, ID conflicts will lead to :py:meth:`ocrd_models.ocrd_mets.OcrdMets.add_file`
+    raising an exception.
+    This can be avoided if all processors use ``make_file_id`` consistently for ID generation.
 
-    Note: ``make_file_id`` generates page-specific IDs. For IDs referencing sub-page-level files or ``pc:AlternativeImage``, the output of ``make_file_id`` might need to be concatenated with a unique string, such as a growing index number.
+    Note: ``make_file_id`` generates page-specific IDs. For IDs representing page segments
+    or ``pc:AlternativeImage`` files, the output of ``make_file_id`` may need to be concatenated
+    with a unique string for that sub-page element, such as `".IMG"` or the segment ID.
     """
     # considerations for this behaviour:
     # - uniqueness (in spite of different METS and processor conventions)
     # - predictability (i.e. output name can be anticipated from the input name)
     # - stability (i.e. output at least as much sorted and consistent as the input)
     # ... and all this in spite of --page-id selection and --overwrite
+    # (i.e. --overwrite should target the existing ID, and input vs output
+    #  IDs should be different, except when overwriting the input fileGrp)
     ret = ocrd_file.ID.replace(ocrd_file.fileGrp, output_file_grp)
     if ret == ocrd_file.ID and output_file_grp != ocrd_file.fileGrp:
         if ocrd_file.pageId and ocrd_file.pageId not in ocrd_file.ID:
