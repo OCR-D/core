@@ -124,7 +124,7 @@ def test_add_file0():
     # with pytest.raises(Exception) as exc:
     #     f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
     # assert str(exc.value) == "Exception: File with pageId='foobar' already exists in fileGrp 'OUTPUTx'"
-    f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar", is_alternative_image=True)
+    f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
     assert f.pageId == 'foobar', 'pageId set'
     assert len(mets.file_groups) == 1, '1 file groups'
     assert len(list(mets.find_all_files(fileGrp='OUTPUT'))) == 2, '2 files in "OUTPUT"'
