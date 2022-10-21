@@ -79,6 +79,28 @@ def test_workspace_add_file(plain_workspace):
     assert exists(fpath)
 
 
+def test_workspace_add_file_overwrite(plain_workspace):
+    fpath = str(plain_workspace.directory / 'ID1.tif')
+
+    # act
+    plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT', pageId='phys1', local_filename=fpath)
+    with pytest.raises(FileExistsError) as fn_exc:
+        plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT', pageId=None, local_filename=fpath)
+        assert str(fn_exc.value) == "File with ID='ID1' already exists"
+    with pytest.raises(FileExistsError) as fn_exc:
+        plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT', pageId='phys2', local_filename=fpath, force=True)
+        assert 'cannot mitigate' in str(fn_exc.value)
+    plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT2', pageId='phys1', local_filename=fpath, force=True)
+
+    f = plain_workspace.mets.find_all_files()[0]
+    assert f.ID == 'ID1'
+    assert f.mimetype == 'image/tiff'
+    assert f.url == fpath
+    assert f.local_filename == fpath
+    assert f.pageId == 'phys1'
+    assert exists(fpath)
+
+
 def test_workspace_add_file_basename_no_content(plain_workspace):
     plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', page_id=None)
     f = next(plain_workspace.mets.find_files())
@@ -612,6 +634,7 @@ def test_merge(tmp_path):
 
     # assert number of files before
     assert len(ws1.mets.find_all_files()) == 6
+    assert len(ws2.mets.find_all_files()) == 35
 
     # act
     ws1.merge(ws2, overwrite=True)
@@ -634,9 +657,13 @@ def test_merge_no_copy_files(tmp_path):
     ws2.add_file('GRP2', pageId='p01', mimetype='text/plain', ID='f1', local_filename='GRP2/f1', content='ws2')
 
     ws1.merge(ws2, copy_files=False, fileId_mapping={'f1': 'f1_copy_files'})
+
     assert next(ws1.mets.find_files(ID='f1_copy_files')).url == 'ws2/GRP2/f1'
-    ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_no_copy_files'})
-    assert next(ws1.mets.find_files(ID='f1_no_copy_files')).url == 'GRP2/f1'
+
+    with pytest.raises(FileExistsError):
+        ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_copy_files'})
+    ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_copy_files'}, force=True)
+    assert next(ws1.mets.find_files(ID='f1_copy_files')).url == 'GRP2/f1'
 
 def test_merge_overwrite(tmp_path):
     # arrange
