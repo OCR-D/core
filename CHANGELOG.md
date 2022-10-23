@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.39.0] - 2022-10-23
+
 Fixed:
 
   * `ocrd resmgr download '*'` working again, #904, #908, #909
@@ -1545,6 +1547,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.39.0]: ../../compare/v2.39.0..v2.38.0
 [2.38.0]: ../../compare/v2.38.0..v2.37.0
 [2.37.0]: ../../compare/v2.37.0..v2.36.0
 [2.36.0]: ../../compare/v2.36.0..v2.35.0
