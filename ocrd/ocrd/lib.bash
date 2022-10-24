@@ -117,6 +117,8 @@ ocrd__parse_argv () {
     fi
 
     ocrd__argv[overwrite]=false
+    ocrd__argv[profile]=false
+    ocrd__argv[profile_file]=
     ocrd__argv[mets_file]="$PWD/mets.xml"
 
     local __parameters=()
@@ -127,6 +129,7 @@ ocrd__parse_argv () {
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
+            -D|--dump-module-dir) echo $(dirname $OCRD_TOOL_JSON); exit ;;
             -C|--show-resource) ocrd__show_resource "$2"; exit ;;
             -L|--list-resources) ocrd__list_resources; exit ;;
             -p|--parameter) __parameters+=(-p "$2") ; shift ;;
@@ -137,6 +140,8 @@ ocrd__parse_argv () {
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
             --overwrite) ocrd__argv[overwrite]=true ;;
+            --profile) ocrd__argv[profile]=true ;;
+            --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
