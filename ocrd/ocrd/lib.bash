@@ -129,7 +129,7 @@ ocrd__parse_argv () {
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
-            -D|--dump-module-dir) echo $(dirname $OCRD_TOOL_JSON); exit ;;
+            -D|--dump-module-dir) echo $(dirname "$OCRD_TOOL_JSON"); exit ;;
             -C|--show-resource) ocrd__show_resource "$2"; exit ;;
             -L|--list-resources) ocrd__list_resources; exit ;;
             -p|--parameter) __parameters+=(-p "$2") ; shift ;;
@@ -166,6 +166,24 @@ ocrd__parse_argv () {
 
     if [[ -z "${ocrd__argv[output_file_grp]:=}" ]];then
         ocrd__raise "Provide --output-file-grp/-O explicitly!"
+    fi
+
+    # enable profiling (to be extended/acted upon by caller)
+    if [[ ${ocrd__argv[profile]} = true ]];then
+        if [[ -n "${ocrd__argv[profile_file]}" ]];then
+            exec 3> "${ocrd__argv[profile_file]}"
+        else
+            exec 3>&2
+        fi
+        BASH_XTRACEFD=3
+        # just the builtin tracer (without timing):
+        #set -x
+        # our own (including timing):
+        DEPTH=+++++++++++
+        shopt -s extdebug
+        showtime() { date "+${DEPTH:0:$BASH_SUBSHELL+1} %H:%M:%S $BASH_COMMAND" >&3; }
+        declare +t showtime # no trace here
+        trap showtime DEBUG
     fi
 
     # check fileGrps
