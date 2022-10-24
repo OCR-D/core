@@ -5,14 +5,26 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.39.0] - 2022-10-23
+
 Fixed:
 
-  * `ocrd resmgr download *` working again, #904, #908, #909
+  * `ocrd resmgr download '*'` working again, #904, #908, #909
   * Resource manager respects `moduledir` correctly, #904
+  * `moduledir` now be able to handle namespace packages properly, #917
+  * processing with `--overwrite` does not create duplicates any more, #861
+  * bashlib: `ocrd validate tasks` call now supports non-standard METS name, #925
 
 Added:
 
   * Processors have a `--dump-module-dir` to print their implementation-specific module directory to STDOUT, #904
+  * `ocrd workspace merge`: support `--force` to overwrite mets:file with clashing IDs, #926
+
+Changed:
+
+  * `ocrd_utils.make_file_id`: only fall back to output fileGrp + (page)ID instead of page counter, #861
+  * `OcrdWorkspace.add_file`: when ID already exists, remove (with overwrite) or fail instead of reusing
+  * Workspace.merge: delegate `force` to each `add_file`
 
 ## [2.38.0] - 2022-08-14
 
@@ -1535,6 +1547,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.39.0]: ../../compare/v2.39.0..v2.38.0
 [2.38.0]: ../../compare/v2.38.0..v2.37.0
 [2.37.0]: ../../compare/v2.37.0..v2.36.0
 [2.36.0]: ../../compare/v2.36.0..v2.35.0

@@ -247,7 +247,16 @@ class Processor():
         """
         The top-level module this processor belongs to.
         """
-        return self.__module__.split('.')[0]
+        # find shortest prefix path that is not just a namespace package
+        fqname = ''
+        for name in self.__module__.split('.'):
+            if fqname:
+                fqname += '.'
+            fqname += name
+            if sys.modules[fqname].__file__:
+                return fqname
+        # fall-back
+        return self.__module__
 
     @property
     def moduledir(self):
