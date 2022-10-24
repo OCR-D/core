@@ -51,7 +51,7 @@ class OcrdMets(OcrdXmlDocument):
         tpl = METS_XML_EMPTY.decode('utf-8')
         tpl = tpl.replace('{{ VERSION }}', VERSION)
         tpl = tpl.replace('{{ NOW }}', '%s' % now)
-        return OcrdMets(content=tpl.encode('utf-8'))
+        return OcrdMets(content=tpl.encode('utf-8'), cache_flag=cache_flag)
 
     def __init__(self, **kwargs):
         """
