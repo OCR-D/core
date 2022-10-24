@@ -42,7 +42,7 @@ class OcrdMets(OcrdXmlDocument):
     """
 
     @staticmethod
-    def empty_mets(now=None):
+    def empty_mets(now=None, cache_flag=False):
         """
         Create an empty METS file from bundled template.
         """
@@ -84,22 +84,18 @@ class OcrdMets(OcrdXmlDocument):
             # Then the cache is empty even after this operation
             self._fill_caches()
 
+    def __exit__(self):
+        """
+
+        """
+        if self._cache_flag:
+            self._clear_caches()
+
     def __str__(self):
         """
         String representation
         """
         return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, list(self.find_files()))
-
-    @property
-    def unique_identifier(self):
-        """
-        Get the unique identifier by looking through ``mods:identifier``
-        See `specs <https://ocr-d.de/en/spec/mets#unique-id-for-the-document-processed>`_ for details.
-        """
-        for t in IDENTIFIER_PRIORITY:
-            found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
-            if found is not None:
-                return found.text
 
     def _fill_caches(self):
         """
@@ -168,6 +164,17 @@ class OcrdMets(OcrdXmlDocument):
         self._file_cache = None
         self._page_cache = None
         self._fptr_cache = None
+
+    @property
+    def unique_identifier(self):
+        """
+        Get the unique identifier by looking through ``mods:identifier``
+        See `specs <https://ocr-d.de/en/spec/mets#unique-id-for-the-document-processed>`_ for details.
+        """
+        for t in IDENTIFIER_PRIORITY:
+            found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
+            if found is not None:
+                return found.text
         
     @unique_identifier.setter
     def unique_identifier(self, purl):
@@ -211,6 +218,11 @@ class OcrdMets(OcrdXmlDocument):
         """
         List the `@USE` of all `mets:fileGrp` entries.
         """
+
+        # WARNING: Actually we cannot return strings in place of elements!
+        #if self._cache_flag:
+        #    return self._file_cache.keys()
+
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
     def find_all_files(self, *args, **kwargs):
@@ -278,7 +290,6 @@ class OcrdMets(OcrdXmlDocument):
             url = re.compile(url[REGEX_PREFIX_LEN:])
             
         candidates = []
-        
         if self._cache_flag:
             if fileGrp:
                 if isinstance(fileGrp, str):
@@ -290,7 +301,7 @@ class OcrdMets(OcrdXmlDocument):
         else:
             candidates = self._tree.getroot().xpath('//mets:file', namespaces=NS)
             
-        for cand in self._tree.getroot().xpath('//mets:file', namespaces=NS):
+        for cand in candidates:
             if ID:
                 if isinstance(ID, str):
                     if not ID == cand.get('ID'): continue
@@ -300,7 +311,7 @@ class OcrdMets(OcrdXmlDocument):
             if pageId is not None and cand.get('ID') not in pageId:
                 continue
 
-            if fileGrp:
+            if not self._cache_flag and fileGrp:
                 if isinstance(fileGrp, str):
                     if cand.getparent().get('USE') != fileGrp: continue
                 else:
@@ -322,6 +333,8 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     if not url.fullmatch(cand_url): continue
 
+            # Note: why we instantiate a class only to find out that the local_only is set afterwards
+            # Checking local_only and url before instantiation should be better?
             f = OcrdFile(cand, mets=self)
 
             # If only local resources should be returned and f is not a file path: skip the file
@@ -397,6 +410,7 @@ class OcrdMets(OcrdXmlDocument):
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
+                # NOTE: Here we know the fileGrp, we should pass it as a parameter
                 self.remove_one_file(f.get('ID'))
                 
         if self._cache_flag:
@@ -431,21 +445,37 @@ class OcrdMets(OcrdXmlDocument):
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
         log = getLogger('ocrd_models.ocrd_mets.add_file')
+
+        """
+        # Note: we do not benefit enough from having 
+        # a separate cache for fileGrp elements
+
+        if self._cache_flag: 
+            if fileGrp in self._fileGrp_cache:
+                el_fileGrp = self._fileGrp_cache[fileGrp]
+        """
+
         el_fileGrp = self.add_file_group(fileGrp)
         if not ignore:
-            mets_file = next(self.find_files(ID=ID), None)
+            # Since we are sure that fileGrp parameter is set,
+            # we could send that parameter to find_files for direct search
+            mets_file = next(self.find_files(ID=ID, fileGrp=fileGrp), None)
             if mets_file:
                 if mets_file.fileGrp == fileGrp and \
                    mets_file.pageId == pageId and \
                    mets_file.mimetype == mimetype:
                     if not force:
                         raise FileExistsError(f"A file with ID=={ID} already exists {mets_file} and neither force nor ignore are set")
-                    self.remove_file(ID=ID)
+                    self.remove_file(ID=ID, fileGrp=fileGrp)
                 else:
                     raise FileExistsError(f"A file with ID=={ID} already exists {mets_file} but unrelated - cannot mitigate")
-        kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v}
+
+        # To get rid of Python's FutureWarning - checking if v is not None
+        kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v is not None}
+        # This separation is needed to reuse the same el_mets_file element in the caching if block
+        el_mets_file = ET.SubElement(el_fileGrp, TAG_METS_FILE)
         # The caching of the physical page is done in the OcrdFile constructor
-        mets_file = OcrdFile(ET.SubElement(el_fileGrp, TAG_METS_FILE), mets=self, **kwargs)
+        mets_file = OcrdFile(el_mets_file, mets=self, **kwargs)
 
         if self._cache_flag:
             # Add the file to the file cache
@@ -485,6 +515,8 @@ class OcrdMets(OcrdXmlDocument):
             ocrd_file = ID
             ID = ocrd_file.ID
         else:
+            # NOTE: We should pass the fileGrp, if known, as a parameter here as well
+            # Leaving that out for now
             ocrd_file = next(self.find_files(ID=ID), None)
 
         if not ocrd_file:
@@ -601,7 +633,6 @@ class OcrdMets(OcrdXmlDocument):
         for el_fptr in candidates:
             if self._cache_flag:
                 del self._fptr_cache[el_fptr.getparent().get('ID')][ocrd_file.ID]
-
             el_fptr.getparent().remove(el_fptr)
 
         # find/construct as necessary
@@ -614,6 +645,7 @@ class OcrdMets(OcrdXmlDocument):
             el_seqdiv = ET.SubElement(el_structmap, TAG_METS_DIV)
             el_seqdiv.set('TYPE', 'physSequence')
         
+        el_pagediv = None
         if self._cache_flag:
             if pageId in self._page_cache.keys():
                 el_pagediv = self._page_cache[pageId]
@@ -648,7 +680,6 @@ class OcrdMets(OcrdXmlDocument):
         corresponding to the ``mets:file`` :py:attr:`ocrd_file`.
         """
         ret = []
-
         if self._cache_flag:
             for pageId in self._fptr_cache.keys():
                 if ocrd_file.ID in self._fptr_cache[pageId].keys():
@@ -686,6 +717,12 @@ class OcrdMets(OcrdXmlDocument):
         Returns:
             List of pageIds that mets:fptrs were deleted from
         """
+
+        # Question: What is the reason to keep a list of mets_fptrs?
+        # Do we have a situation in which the fileId is same for different pageIds ?
+        # From the examples I have seen inside 'assets' that is not the case
+        # and the mets_fptrs list will always contain a single element.
+        # If that's the case then we do not need to iterate 2 loops, just one.
         mets_fptrs = []
         if self._cache_flag:
             for page_id in self._fptr_cache.keys():
