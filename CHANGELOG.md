@@ -11,6 +11,10 @@ Fixed:
   * Reduce logging noise in Ocrd{ResourceManager,Mets,Workspace}, #933, #916
   * Allow downloading resources explicitly to `module` location, #932
 
+Changed:
+
+  * bashlib processors support `--profile{-file}` and `--dump-module-dir`, #929
+
 ## [2.39.0] - 2022-10-23
 
 Fixed:
