@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Downloading to `moduledir` should not create subdirectory, #934
+
 ## [2.39.0] - 2022-10-23
 
 Fixed:
