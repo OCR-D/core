@@ -9,6 +9,7 @@ Fixed:
 
   * Downloading to `moduledir` should not create subdirectory, #934
   * Reduce logging noise in Ocrd{ResourceManager,Mets,Workspace}, #933, #916
+  * Allow downloading resources explicitly to `module` location, #932
 
 ## [2.39.0] - 2022-10-23
 
