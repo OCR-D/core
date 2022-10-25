@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.40.0] - 2022-10-25
+
 Fixed:
 
   * Downloading to `moduledir` should not create subdirectory, #934
@@ -1557,6 +1559,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.40.0]: ../../compare/v2.40.0..v2.39.0
 [2.39.0]: ../../compare/v2.39.0..v2.38.0
 [2.38.0]: ../../compare/v2.38.0..v2.37.0
 [2.37.0]: ../../compare/v2.37.0..v2.36.0
