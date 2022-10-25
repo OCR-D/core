@@ -357,7 +357,7 @@ class OcrdMets(OcrdXmlDocument):
             The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
         log = getLogger('ocrd_models.ocrd_mets.remove_one_file')
-        log.info("remove_one_file(%s)" % ID)
+        log.debug("remove_one_file(%s)" % ID)
         if isinstance(ID, OcrdFile):
             ocrd_file = ID
             ID = ocrd_file.ID
@@ -369,12 +369,12 @@ class OcrdMets(OcrdXmlDocument):
 
         # Delete the physical page ref
         for fptr in self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS):
-            log.info("Delete fptr element %s for page '%s'", fptr, ID)
+            log.debug("Delete fptr element %s for page '%s'", fptr, ID)
             page_div = fptr.getparent()
             page_div.remove(fptr)
             # delete empty pages
             if not page_div.getchildren():
-                log.info("Delete empty page %s", page_div)
+                log.debug("Delete empty page %s", page_div)
                 page_div.getparent().remove(page_div)
 
         # Delete the file reference
