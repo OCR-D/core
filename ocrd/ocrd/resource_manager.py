@@ -158,11 +158,21 @@ class OcrdResourceManager():
                     if res_filename.is_file() and ['text/directory'] == mimetypes:
                         continue
                 res_name = res_filename.name
+                res_type = 'file' if res_filename.is_file() else 'directory'
+                res_size = res_filename.stat().st_size if res_filename.is_file() else directory_size(res_filename)
                 resdict_list = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if resdict_list:
                     resdict = resdict_list[0]
+                elif str(res_filename.parent) == moduledir:
+                    resdict = {
+                        'name': res_name, 
+                        'url': str(res_filename), 
+                        'description': 'Found at module', 
+                        'type': res_type,
+                        'size': res_size
+                    }
                 else:
-                    resdict = self.add_to_user_database(this_executable, res_filename)
+                    resdict = self.add_to_user_database(this_executable, res_filename, resource_type=res_type)
                 resdict['path'] = str(res_filename)
                 reslist.append(resdict)
             ret.append((this_executable, reslist))
