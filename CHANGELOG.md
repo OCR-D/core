@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd workspace list-installed` should not create spurious entries for `moduledir` files, #940
+  * `OcrdResourceManager.download` does not need to query `size` via HTTP `Content-Length` in most cases, #924, #939
 
 ## [2.40.0] - 2022-10-25
 
