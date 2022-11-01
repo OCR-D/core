@@ -232,12 +232,11 @@ class OcrdResourceManager():
             return Path(name).stem
         raise ValueError("No such usage '%s'" % usage)
 
-    def _download_impl(self, url, filename, progress_cb=None, size=None):
+    def _download_impl(self, url, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
         with open(filename, 'wb') as f:
             with requests.get(url, stream=True) as r:
-                total = size if size else int(r.headers.get('content-length'))
                 for data in r.iter_content(chunk_size=4096):
                     if progress_cb:
                         progress_cb(len(data))
@@ -283,7 +282,6 @@ class OcrdResourceManager():
         resource_type='file',
         path_in_archive='.',
         progress_cb=None,
-        size=None,
     ):
         """
         Download a resource by URL
@@ -307,7 +305,7 @@ class OcrdResourceManager():
         elif resource_type == 'archive':
             with pushd_popd(tempdir=True) as tempdir:
                 if is_url:
-                    self._download_impl(url, 'download.tar.xx', progress_cb, size)
+                    self._download_impl(url, 'download.tar.xx', progress_cb)
                 else:
                     self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
