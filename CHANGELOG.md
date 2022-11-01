@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace list-installed` should not create spurious entries for `moduledir` files, #940
+
 ## [2.40.0] - 2022-10-25
 
 Fixed:
