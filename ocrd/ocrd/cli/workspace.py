@@ -301,11 +301,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             sys.exit(1)
         group_dict = m.groupdict()
 
-        # derive --file-id from filename if not --file-id not explicitly set
-        file_id_ = file_id or safe_filename(str(file_path))
-
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id_, 'page_id': page_id, 'file_grp': file_grp}
+        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id, 'page_id': page_id, 'file_grp': file_grp}
 
         # guess mime type
         if not file_dict['mimetype']:
@@ -323,6 +320,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 if param_name == 'url':
                     url_is_src = True
                     continue
+                elif param_name == 'file_id':
+                    # XXX file_id might be unset so we derive it once the other
+                    # replacements have happened
+                    continue
                 raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
                 file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
@@ -335,6 +336,11 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             srcpath = Path(src_path)
         else:
             srcpath = file_path
+
+        # derive --file-id from filename if not --file-id not explicitly set
+        if not file_id:
+            id_field = srcpath.name if file_path != srcpath else file_path.name
+            file_dict['file_id'] = safe_filename('%s_%s' % (file_dict['file_grp'], id_field))
 
         # copy files if src != url
         if url_is_src:

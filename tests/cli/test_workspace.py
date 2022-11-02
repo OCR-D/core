@@ -495,7 +495,8 @@ class TestCli(TestCase):
                 '-u', "{{ url }}",
                 'a b c d e'])
             ws.reload_mets()
-            assert next(ws.mets.find_files()).ID == 'a_b_c_d_e'
+            print(out)
+            assert next(ws.mets.find_files()).ID == 'b_c'
             assert next(ws.mets.find_files()).url == 'd'
 
     def test_bulk_add_derive_url(self):
