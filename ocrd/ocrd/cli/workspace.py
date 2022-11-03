@@ -332,7 +332,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 
         # derive --file-id from filename if not --file-id not explicitly set
         if not file_id:
-            id_field = srcpath.name if file_path != srcpath else file_path.name
+            id_field = srcpath.stem if file_path != srcpath else file_path.stem
             file_dict['file_id'] = safe_filename('%s_%s' % (file_dict['file_grp'], id_field))
         if not mimetype:
             try:
