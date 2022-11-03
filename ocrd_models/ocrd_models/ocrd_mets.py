@@ -134,7 +134,7 @@ class OcrdMets(OcrdXmlDocument):
 
         for el_div in el_div_list:
             div_id = el_div.get('ID')
-            print("DIV_ID: %s" % el_div.get('ID'))
+            log.debug("DIV_ID: %s" % el_div.get('ID'))
 
             # May not be needed if there are no comments inside the mets file
             if div_id is None:
