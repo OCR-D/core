@@ -105,18 +105,14 @@ class OcrdMets(OcrdXmlDocument):
         tree_root = self._tree.getroot()
 
         # Fill with files
-        el_fileGrp_list = tree_root.find(".//mets:fileSec", NS)
-        if el_fileGrp_list is None or len(el_fileGrp_list) == 0:
+        el_fileSec = tree_root.find("mets:fileSec", NS)
+        if el_fileSec is None:
             return
+
         log = getLogger('ocrd_models.ocrd_mets._fill_caches-files')
 
-        for el_fileGrp in el_fileGrp_list:
+        for el_fileGrp in el_fileSec.findall('mets:fileGrp', NS):
             fileGrp_use = el_fileGrp.get('USE')
-
-            # Note: SBB0000F29300010000/data/mets.xml contains None 
-            # values due to the comments inside the file
-            if fileGrp_use is None:
-                continue
 
             # Assign an empty dictionary that will hold the files of the added fileGrp
             self._file_cache[fileGrp_use] = {}
