@@ -148,12 +148,12 @@ def test_add_file_id_already_exists(sbb_sample_01):
     with pytest.raises(FileExistsError) as exc:
         f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
 
-    # Works but is unwise, there are now two files with clashing ID in METS
+    # Caching eliminates the duplicate, so still only one file with that ID
     f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", ignore=True)
-    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 2
+    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1
 
     # Works because fileGrp, mimetype and pageId(== None) match and force is set
-    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
+    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
 
     # Previous step removed duplicate mets:file
     assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1
@@ -178,7 +178,8 @@ def test_add_file_ignore(sbb_sample_01: OcrdMets):
 
     # how many files inserted
     the_files = list(sbb_sample_01.find_files(ID='best-id-ever'))
-    assert len(the_files) == 2
+    # 1 because caching eliminates the duplicate
+    assert len(the_files) == 1
 
 
 def test_add_file_id_invalid(sbb_sample_01):
