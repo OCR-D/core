@@ -108,50 +108,48 @@ class OcrdMets(OcrdXmlDocument):
         el_fileGrp_list = tree_root.find(".//mets:fileSec", NS)
         if el_fileGrp_list is None or len(el_fileGrp_list) == 0:
             return
-        else:
-            log = getLogger('ocrd_models.ocrd_mets._fill_caches-files')
+        log = getLogger('ocrd_models.ocrd_mets._fill_caches-files')
 
-            for el_fileGrp in el_fileGrp_list:
-                fileGrp_use = el_fileGrp.get('USE')
+        for el_fileGrp in el_fileGrp_list:
+            fileGrp_use = el_fileGrp.get('USE')
 
-                # Note: SBB0000F29300010000/data/mets.xml contains None 
-                # values due to the comments inside the file
-                if fileGrp_use is None:
-                    continue
+            # Note: SBB0000F29300010000/data/mets.xml contains None 
+            # values due to the comments inside the file
+            if fileGrp_use is None:
+                continue
 
-                # Assign an empty dictionary that will hold the files of the added fileGrp
-                self._file_cache[fileGrp_use] = {}
+            # Assign an empty dictionary that will hold the files of the added fileGrp
+            self._file_cache[fileGrp_use] = {}
 
-                for el_file in el_fileGrp:
-                    file_id = el_file.get('ID')
-                    self._file_cache[fileGrp_use].update({file_id : el_file})
-                    # log.info("File added to the cache: %s" % file_id)
+            for el_file in el_fileGrp:
+                file_id = el_file.get('ID')
+                self._file_cache[fileGrp_use].update({file_id : el_file})
+                # log.info("File added to the cache: %s" % file_id)
 
         # Fill with pages
         el_div_list = tree_root.findall(".//mets:div", NS)
         if el_div_list is None or len(el_div_list) == 0:
             return
-        else:
-            log = getLogger('ocrd_models.ocrd_mets._fill_caches-pages')
+        log = getLogger('ocrd_models.ocrd_mets._fill_caches-pages')
 
-            for el_div in el_div_list:
-                div_id = el_div.get('ID')
-                print("DIV_ID: %s" % el_div.get('ID'))
+        for el_div in el_div_list:
+            div_id = el_div.get('ID')
+            print("DIV_ID: %s" % el_div.get('ID'))
 
-                # May not be needed if there are no comments inside the mets file
-                if div_id is None:
-                    continue
+            # May not be needed if there are no comments inside the mets file
+            if div_id is None:
+                continue
 
-                self._page_cache[div_id] = el_div
+            self._page_cache[div_id] = el_div
 
-                # Assign an empty dictionary that will hold the fptr of the added page (div)
-                self._fptr_cache[div_id] = {}
+            # Assign an empty dictionary that will hold the fptr of the added page (div)
+            self._fptr_cache[div_id] = {}
 
-                # log.info("Page_id added to the cache: %s" % div_id)
+            # log.info("Page_id added to the cache: %s" % div_id)
 
-                for el_fptr in el_div:
-                    self._fptr_cache[div_id].update({el_fptr.get('FILEID') : el_fptr})
-                    # log.info("Fptr added to the cache: %s" % el_fptr.get('FILEID'))
+            for el_fptr in el_div:
+                self._fptr_cache[div_id].update({el_fptr.get('FILEID') : el_fptr})
+                # log.info("Fptr added to the cache: %s" % el_fptr.get('FILEID'))
 
         # log.info("Len of page_cache: %s" % len(self._page_cache))
         # log.info("Len of fptr_cache: %s" % len(self._fptr_cache))
