@@ -5,6 +5,23 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace list-installed` should not create spurious entries for `moduledir` files, #940
+  * `OcrdResourceManager.download` does not need to query `size` via HTTP `Content-Length` in most cases, #924, #939
+
+## [2.40.0] - 2022-10-25
+
+Fixed:
+
+  * Downloading to `moduledir` should not create subdirectory, #934
+  * Reduce logging noise in Ocrd{ResourceManager,Mets,Workspace}, #933, #916
+  * Allow downloading resources explicitly to `module` location, #932
+
+Changed:
+
+  * bashlib processors support `--profile{-file}` and `--dump-module-dir`, #929
+
 ## [2.39.0] - 2022-10-23
 
 Fixed:
@@ -1547,6 +1564,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.40.0]: ../../compare/v2.40.0..v2.39.0
 [2.39.0]: ../../compare/v2.39.0..v2.38.0
 [2.38.0]: ../../compare/v2.38.0..v2.37.0
 [2.37.0]: ../../compare/v2.37.0..v2.36.0

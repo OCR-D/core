@@ -500,7 +500,7 @@ class OcrdMets(OcrdXmlDocument):
             The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
         log = getLogger('ocrd_models.ocrd_mets.remove_one_file')
-        log.info("remove_one_file(%s)" % ID)
+        log.debug("remove_one_file(%s)" % ID)
         if isinstance(ID, OcrdFile):
             ocrd_file = ID
             ID = ocrd_file.ID
@@ -523,7 +523,7 @@ class OcrdMets(OcrdXmlDocument):
 
         # Delete the physical page ref
         for fptr in fptrs:
-            log.info("Delete fptr element %s for page '%s'", fptr, ID)
+            log.debug("Delete fptr element %s for page '%s'", fptr, ID)
             page_div = fptr.getparent()
             page_div.remove(fptr)
             # Remove the fptr from the cache as well
@@ -531,7 +531,7 @@ class OcrdMets(OcrdXmlDocument):
                 del self._fptr_cache[page_div.get('ID')][ID]
             # delete empty pages
             if not page_div.getchildren():
-                log.info("Delete empty page %s", page_div)
+                log.debug("Delete empty page %s", page_div)
                 page_div.getparent().remove(page_div)
                 # Delete the empty pages from caches as well
                 if self._cache_flag:

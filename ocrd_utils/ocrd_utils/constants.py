@@ -112,4 +112,4 @@ else:
 XDG_DATA_HOME = environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in environ else join(HOME, '.local', 'share')
 XDG_CONFIG_HOME = environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in environ else join(HOME, '.config')
 
-RESOURCE_LOCATIONS = ['data', 'cwd', 'system']
+RESOURCE_LOCATIONS = ['data', 'cwd', 'system', 'module']
