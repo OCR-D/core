@@ -123,18 +123,14 @@ class OcrdMets(OcrdXmlDocument):
                 # log.info("File added to the cache: %s" % file_id)
 
         # Fill with pages
-        el_div_list = tree_root.findall(".//mets:div", NS)
-        if el_div_list is None or len(el_div_list) == 0:
+        el_div_list = tree_root.findall(".//mets:div[@TYPE='page']", NS)
+        if len(el_div_list) == 0:
             return
         log = getLogger('ocrd_models.ocrd_mets._fill_caches-pages')
 
         for el_div in el_div_list:
             div_id = el_div.get('ID')
             log.debug("DIV_ID: %s" % el_div.get('ID'))
-
-            # May not be needed if there are no comments inside the mets file
-            if div_id is None:
-                continue
 
             self._page_cache[div_id] = el_div
 
