@@ -304,13 +304,6 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         # set up file info
         file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id, 'page_id': page_id, 'file_grp': file_grp}
 
-        # guess mime type
-        if not file_dict['mimetype']:
-            try:
-                file_dict['mimetype'] = EXT_TO_MIME[file_path.suffix]
-            except KeyError:
-                log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
-
         # Flag to track whether 'url' should be 'src'
         url_is_src = False
 
@@ -320,8 +313,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 if param_name == 'url':
                     url_is_src = True
                     continue
-                elif param_name == 'file_id':
-                    # XXX file_id might be unset so we derive it once the other
+                elif param_name in ['mimetype', 'file_id']:
+                    # auto-filled below once the other
                     # replacements have happened
                     continue
                 raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
@@ -341,6 +334,11 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         if not file_id:
             id_field = srcpath.name if file_path != srcpath else file_path.name
             file_dict['file_id'] = safe_filename('%s_%s' % (file_dict['file_grp'], id_field))
+        if not mimetype:
+            try:
+                file_dict['mimetype'] = EXT_TO_MIME[srcpath.suffix]
+            except KeyError:
+                log.error("Cannot guess MIME type from extension '%s' for '%s'. Set --mimetype explicitly" % (srcpath.suffix, srcpath))
 
         # copy files if src != url
         if url_is_src:
