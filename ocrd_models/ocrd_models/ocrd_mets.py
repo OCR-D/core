@@ -210,8 +210,8 @@ class OcrdMets(OcrdXmlDocument):
         """
 
         # WARNING: Actually we cannot return strings in place of elements!
-        #if self._cache_flag:
-        #    return self._file_cache.keys()
+        if self._cache_flag:
+           return list(self._file_cache.keys())
 
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
