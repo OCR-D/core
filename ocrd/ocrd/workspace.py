@@ -223,8 +223,9 @@ class Workspace():
             if not keep_file:
                 with pushd_popd(self.directory):
                     if not ocrd_file.local_filename:
-                        log.warning("File not locally available %s", ocrd_file)
-                        if not force:
+                        if force:
+                            log.debug("File not locally available but --force is set: %s", ocrd_file)
+                        else:
                             raise Exception("File not locally available %s" % ocrd_file)
                     else:
                         log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
@@ -404,7 +405,7 @@ class Workspace():
         Write out the current state of the METS file to the filesystem.
         """
         log = getLogger('ocrd.workspace.save_mets')
-        log.info("Saving mets '%s'", self.mets_target)
+        log.debug("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
         with atomic_write(self.mets_target) as f:

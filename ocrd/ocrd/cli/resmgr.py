@@ -128,8 +128,9 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 continue
             if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
                 log.info("Downloading %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
-                with requests.get(resdict['url'], stream=True) as r:
-                    resdict['size'] = int(r.headers.get('content-length'))
+                if 'size' not in resdict:
+                    with requests.head(resdict['url']) as r:
+                        resdict['size'] = int(r.headers.get('content-length', 0))
             else:
                 log.info("Copying %s resource '%s' (%s)", registered, resdict['name'], resdict['url'])
                 urlpath = Path(resdict['url'])
@@ -158,8 +159,7 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                     resource_type=resdict.get('type', resource_type),
                     path_in_archive=resdict.get('path_in_archive', path_in_archive),
                     overwrite=overwrite,
-                    size=resdict['size'],
-                    no_subdir=location == 'cwd',
+                    no_subdir=location in ['cwd', 'module'],
                     basedir=basedir,
                     progress_cb=lambda delta: bar.update(delta)
                 )

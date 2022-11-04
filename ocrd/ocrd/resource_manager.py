@@ -107,7 +107,7 @@ class OcrdResourceManager():
         if dynamic:
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
-                    self.log.info(f"Inspecting '{exec_path} --dump-json' for resources")
+                    self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
                     ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
                         if exec_path.name not in database:
@@ -158,11 +158,21 @@ class OcrdResourceManager():
                     if res_filename.is_file() and ['text/directory'] == mimetypes:
                         continue
                 res_name = res_filename.name
+                res_type = 'file' if res_filename.is_file() else 'directory'
+                res_size = res_filename.stat().st_size if res_filename.is_file() else directory_size(res_filename)
                 resdict_list = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if resdict_list:
                     resdict = resdict_list[0]
+                elif str(res_filename.parent) == moduledir:
+                    resdict = {
+                        'name': res_name, 
+                        'url': str(res_filename), 
+                        'description': 'Found at module', 
+                        'type': res_type,
+                        'size': res_size
+                    }
                 else:
-                    resdict = self.add_to_user_database(this_executable, res_filename)
+                    resdict = self.add_to_user_database(this_executable, res_filename, resource_type=res_type)
                 resdict['path'] = str(res_filename)
                 reslist.append(resdict)
             ret.append((this_executable, reslist))
@@ -222,12 +232,11 @@ class OcrdResourceManager():
             return Path(name).stem
         raise ValueError("No such usage '%s'" % usage)
 
-    def _download_impl(self, url, filename, progress_cb=None, size=None):
+    def _download_impl(self, url, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
         with open(filename, 'wb') as f:
             with requests.get(url, stream=True) as r:
-                total = size if size else int(r.headers.get('content-length'))
                 for data in r.iter_content(chunk_size=4096):
                     if progress_cb:
                         progress_cb(len(data))
@@ -273,7 +282,6 @@ class OcrdResourceManager():
         resource_type='file',
         path_in_archive='.',
         progress_cb=None,
-        size=None,
     ):
         """
         Download a resource by URL
@@ -297,7 +305,7 @@ class OcrdResourceManager():
         elif resource_type == 'archive':
             with pushd_popd(tempdir=True) as tempdir:
                 if is_url:
-                    self._download_impl(url, 'download.tar.xx', progress_cb, size)
+                    self._download_impl(url, 'download.tar.xx', progress_cb)
                 else:
                     self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
