@@ -110,3 +110,18 @@ def validate(src, **kwargs):
     print(report)
     if not report.is_valid:
         sys.exit(1)
+
+# ----------------------------------------------------------------------
+# ocrd zip update
+# ----------------------------------------------------------------------
+
+@zip_cli.command('update')
+@click.argument('src', type=click.Path(dir_okay=True, readable=True, resolve_path=True), required=True)
+@click.argument('dest', type=click.Path(dir_okay=True, readable=True, writable=True, resolve_path=True), required=False)
+@click.option('-', '--overwrite', help="overwrite bag in SRC", type=bool, default=False)
+def update(src, dest=None, overwrite=False):
+    """
+    Recretae checksums of an OCRD-ZIP
+
+    """
+    WorkspaceBagger(Resolver()).recreate_checksums(src, dest=dest, overwrite=overwrite)
