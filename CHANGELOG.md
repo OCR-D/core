@@ -9,6 +9,7 @@ Fixed:
 
   * `ocrd workspace list-installed` should not create spurious entries for `moduledir` files, #940
   * `OcrdResourceManager.download` does not need to query `size` via HTTP `Content-Length` in most cases, #924, #939
+  * `make install`: Reinstall shapely to work around shapely/shapely#1598
 
 ## [2.40.0] - 2022-10-25
 
