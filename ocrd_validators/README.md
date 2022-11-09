@@ -1,5 +1,5 @@
-# ocrd_models
+# ocrd_validators
 
 > OCR-D framework - data validators
 
-See https://github.com/OCR-D/core
+See also: https://github.com/OCR-D/core
