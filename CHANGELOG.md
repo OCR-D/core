@@ -11,6 +11,10 @@ Fixed:
   * `OcrdResourceManager.download` does not need to query `size` via HTTP `Content-Length` in most cases, #924, #939
   * `make install`: Reinstall shapely to work around shapely/shapely#1598
 
+Changed:
+
+  * `ocrd workspace bulk-add`: Generate file_id consistent with conventions from filename if no `--file-id` given, #943
+
 ## [2.40.0] - 2022-10-25
 
 Fixed:
