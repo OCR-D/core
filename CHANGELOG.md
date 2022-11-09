@@ -5,11 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.41.0] - 2022-11-09
+
 Fixed:
 
   * `ocrd workspace list-installed` should not create spurious entries for `moduledir` files, #940
   * `OcrdResourceManager.download` does not need to query `size` via HTTP `Content-Length` in most cases, #924, #939
-  * `make install`: Reinstall shapely to work around shapely/shapely#1598
+  * `make install`: Reinstall shapely to work around shapely/shapely#1598, #947
 
 Changed:
 
@@ -1569,6 +1571,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.41.0]: ../../compare/v2.41.0..v2.40.0
 [2.40.0]: ../../compare/v2.40.0..v2.39.0
 [2.39.0]: ../../compare/v2.39.0..v2.38.0
 [2.38.0]: ../../compare/v2.38.0..v2.37.0
