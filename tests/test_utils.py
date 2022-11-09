@@ -24,6 +24,7 @@ from ocrd_utils import (
 
     nth_url_segment,
     remove_non_path_from_url,
+    safe_filename,
 
     parse_json_string_or_file,
     set_json_key_value_overrides,
@@ -317,6 +318,10 @@ class TestUtils(TestCase):
         with self.assertRaisesRegex(ValueError, 'Unable to generate range'):
             generate_range('NONUMBER', 'ALSO_NONUMBER')
 
+    def test_safe_filename(self):
+        assert safe_filename('Hello world,!') == 'Hello_world_'
+        assert safe_filename(' Καλημέρα κόσμε,') == '_Καλημέρα_κόσμε_'
+        assert safe_filename(':コンニチハ:') == '_コンニチハ_'
 
 if __name__ == '__main__':
     main(__file__)
