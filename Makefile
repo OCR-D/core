@@ -59,7 +59,7 @@ PIP_INSTALL = pip install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt-get install -y python3 python3-venv imagemagick libgeos-dev
+	apt-get install -y python3 imagemagick libgeos-dev
 
 # Install test python deps via pip
 deps-test:

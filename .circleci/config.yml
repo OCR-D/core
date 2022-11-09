@@ -22,6 +22,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
       - run: make test
 
@@ -31,6 +32,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
       - run: make test
 
@@ -40,6 +42,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
       - run: make test
 
@@ -49,6 +52,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
       - run: make test
 
