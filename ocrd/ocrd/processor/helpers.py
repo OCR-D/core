@@ -194,7 +194,8 @@ async def run_cli_from_api(job_id: PydanticObjectId, executable: str, workspace,
 
     # Execute the processor
     return_code = run_cli(executable, workspace=workspace, page_id=page_id, input_file_grp=input_file_grps_str,
-                          output_file_grp=output_file_grps_str, parameter=json.dumps(parameter), mets_url='')
+                          output_file_grp=output_file_grps_str, parameter=json.dumps(parameter),
+                          mets_url=workspace.mets_target)
 
     log = getLogger('ocrd.processor.helpers.run_cli_from_api')
 
