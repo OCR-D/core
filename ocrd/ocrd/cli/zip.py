@@ -118,10 +118,14 @@ def validate(src, **kwargs):
 @zip_cli.command('update')
 @click.argument('src', type=click.Path(dir_okay=True, readable=True, resolve_path=True), required=True)
 @click.argument('dest', type=click.Path(dir_okay=True, readable=True, writable=True, resolve_path=True), required=False)
-@click.option('-', '--overwrite', help="overwrite bag in SRC", type=bool, default=False)
+@click.option('-o', '--overwrite', help="overwrite bag in SRC", is_flag=True)
 def update(src, dest=None, overwrite=False):
     """
-    Recretae checksums of an OCRD-ZIP
+    Recreate files containing checksums (manifest-sha512.txt, tagmanifest-sha512.txt and
+    'Payload-Oxum' contained in bag-info.txt) of an OCRD-ZIP.
 
+    Open the bag (zip file or directory) ``src``, create or update its manifests/checksums and
+    output to (zip file or directory) ``dest``. It is also possible to output to ``src`` / overwrite
+    ``src`` in place when ``--overwrite``-flag is given.
     """
     WorkspaceBagger(Resolver()).recreate_checksums(src, dest=dest, overwrite=overwrite)
