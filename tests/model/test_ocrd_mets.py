@@ -74,7 +74,8 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
-
+    assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
+    assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
 
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',
