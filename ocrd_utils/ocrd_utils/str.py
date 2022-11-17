@@ -199,6 +199,8 @@ def generate_range(start, end):
     if not (start_num and end_num):
         raise ValueError("Unable to generate range %s .. %s, could not detect number part" % (start, end))
     start_num, end_num = start_num.group(0), end_num.group(0)
+    if start_num == end_num:
+        raise ValueError("Range '%s..%s' evaluates to the same number")
     for i in range(int(start_num), int(end_num) + 1):
         ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
     return ret

@@ -317,6 +317,8 @@ class TestUtils(TestCase):
         assert generate_range('PHYS_0001', 'PHYS_0005') == ['PHYS_0001', 'PHYS_0002', 'PHYS_0003', 'PHYS_0004', 'PHYS_0005']
         with self.assertRaisesRegex(ValueError, 'Unable to generate range'):
             generate_range('NONUMBER', 'ALSO_NONUMBER')
+        with self.assertRaisesRegex(ValueError, 'evaluates to the same number'):
+            generate_range('PHYS_123_0001', 'PHYS_123_0010')
 
     def test_safe_filename(self):
         assert safe_filename('Hello world,!') == 'Hello_world_'
