@@ -12,7 +12,7 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick
+      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos
       - run: make deps-test install PIP=pip3
       - run: make test PYTHON=python3
 
@@ -22,7 +22,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
       - run: make test
 
   test-python37:
@@ -31,7 +32,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
       - run: make test
 
   test-python38:
@@ -40,7 +42,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
       - run: make test
 
   test-python39:
@@ -49,7 +52,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
       - run: make test
 
   deploy:

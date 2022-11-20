@@ -218,7 +218,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-r', '--regex', help="Regular expression matching the FILE_GLOB filesystem paths to define named captures usable in the other parameters", required=True)
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
 @click.option('-g', '--page-id', help="physical page ID of the file", required=False)
-@click.option('-i', '--file-id', help="ID of the file", required=False)
+@click.option('-i', '--file-id', help="ID of the file. If not provided, derive from fileGrp and filename", required=False)
 @click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
@@ -301,18 +301,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             sys.exit(1)
         group_dict = m.groupdict()
 
-        # derive --file-id from filename if not --file-id not explicitly set
-        file_id_ = file_id or safe_filename(str(file_path))
-
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id_, 'page_id': page_id, 'file_grp': file_grp}
-
-        # guess mime type
-        if not file_dict['mimetype']:
-            try:
-                file_dict['mimetype'] = EXT_TO_MIME[file_path.suffix]
-            except KeyError:
-                log.error("Cannot guess mimetype from extension '%s' for '%s'. Set --mimetype explicitly" % (file_path.suffix, file_path))
+        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id, 'page_id': page_id, 'file_grp': file_grp}
 
         # Flag to track whether 'url' should be 'src'
         url_is_src = False
@@ -322,6 +312,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             if not file_dict[param_name]:
                 if param_name == 'url':
                     url_is_src = True
+                    continue
+                elif param_name in ['mimetype', 'file_id']:
+                    # auto-filled below once the other
+                    # replacements have happened
                     continue
                 raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
@@ -335,6 +329,16 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             srcpath = Path(src_path)
         else:
             srcpath = file_path
+
+        # derive --file-id from filename if not --file-id not explicitly set
+        if not file_id:
+            id_field = srcpath.stem if file_path != srcpath else file_path.stem
+            file_dict['file_id'] = safe_filename('%s_%s' % (file_dict['file_grp'], id_field))
+        if not mimetype:
+            try:
+                file_dict['mimetype'] = EXT_TO_MIME[srcpath.suffix]
+            except KeyError:
+                log.error("Cannot guess MIME type from extension '%s' for '%s'. Set --mimetype explicitly" % (srcpath.suffix, srcpath))
 
         # copy files if src != url
         if url_is_src:

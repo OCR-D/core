@@ -74,8 +74,9 @@ supported flags, options and arguments.
 
 ### `ocrd` CLI
 
-* [OCR-D user guide](https://ocr-d.de/en/use)
+* [CLI usage](https://ocr-d.de/core/api/ocrd/ocrd.cli.html)
 * [Introduction to `ocrd workspace`](https://github.com/OCR-D/ocrd-website/wiki/Intro-ocrd-workspace-CLI)
+* [OCR-D user guide](https://ocr-d.de/en/use)
 
 ### `ocrd-dummy` CLI
 
@@ -119,21 +120,37 @@ See [README for `ocrd`](./ocrd/README.md) for further information.
 
 Builds a bash script that can be sourced by other bash scripts to create OCRD-compliant CLI.
 
+For example:
+
+    source `ocrd bashlib filename`
+    declare -A NAMESPACES MIMETYPES
+    eval NAMESPACES=( `ocrd bashlib constants NAMESPACES` )
+    echo ${NAMESPACES[page]}
+    eval MIMETYPES=( `ocrd bashlib constants EXT_TO_MIME` )
+    echo ${MIMETYPES[.jpg]}
+
+
+### bashlib CLI
+
+See [CLI usage](https://ocr-d.de/core/api/ocrd/ocrd.cli.bashlib.html)
+
 ### bashlib API
 
-<!-- BEGIN-RENDER ./ocrd/ocrd/lib.bash -->
 ### `ocrd__raise`
 
 Raise an error and exit.
+
 ### `ocrd__log`
 
-Delegate logging to `ocrd log`
+Delegate logging to [`ocrd log`](#ocrd-cli)
+
 ### `ocrd__minversion`
 
 Ensure minimum version
+
 ### `ocrd__dumpjson`
 
-Output ocrd-tool.json.
+Output ocrd-tool.json content verbatim.
 
 Requires `$OCRD_TOOL_JSON` and `$OCRD_TOOL_NAME` to be set:
 
@@ -142,26 +159,65 @@ export OCRD_TOOL_JSON=/path/to/ocrd-tool.json
 export OCRD_TOOL_NAME=ocrd-foo-bar
 ```
 
+(Which you automatically get from [`ocrd__wrap`](#ocrd__wrap).)
 
-Output file resource content.
+### `ocrd__show_resource`
 
+Output given resource file's content.
 
-Output file resources names.
+### `ocrd__list_resources`
+
+Output all resource files' names.
 
 ### `ocrd__usage`
 
-Print usage
+Print help on CLI usage.
 
 ### `ocrd__parse_argv`
 
-Expects an associative array ("hash"/"dict") `ocrd__argv` to be defined:
+Parses arguments according to [OCR-D CLI](https://ocr-d.de/en/spec/cli).
+In doing so, depending on the values passed to it, may delegate to …
+- [`ocrd__raise`](#ocrd__raise) and exit (if something went wrong)
+- [`ocrd__usage`](#ocrd__usage) and exit
+- [`ocrd__dumpjson`](#ocrd__dumpjson) and exit
+- [`ocrd__show_resource`](#ocrd__show_resource) and exit
+- [`ocrd__list_resources`](#ocrd__list_resources) and exit
+- [`ocrd validate tasks`](#ocrd-cli) and return
 
-```sh
-declare -A ocrd__argv=()
-```
-usage: pageId=$(ocrd__input_file 3 pageId)
+Expects an associative array ("hash"/"dict") `ocrd__argv` to be defined
+(to e filled by the parser):
 
-<!-- END-RENDER -->
+    declare -A ocrd__argv=()
+
+### `ocrd__wrap`
+
+Parses an [ocrd-tool.json](https://ocr-d.de/en/spec/ocrd_tool) for a specific `tool` (i.e. processor `executable`).
+
+(Delegates to [`ocrd__parse_argv`](#ocrd__parse_argv), creating the `ocrd__argv` associative array.)
+
+Usage: `ocrd__wrap PATH/TO/OCRD-TOOL.JSON EXECUTABLE ARGS`
+
+For example:
+
+    ocrd__wrap $SHAREDIR/ocrd-tool.json ocrd-olena-binarize "$@"
+
+### `ocrd__input_file`
+
+Access information on the input files according to the parsed CLI arguments:
+- their file `url`
+- their file `ID`
+- their `mimetype`
+- their `pageId`
+
+Usage: `ocrd__input_file NR KEY`
+
+For example:
+
+    pageId=`ocrd__input_file 3 pageId`
+
+To be used in conjunction with [`ocrd bashlib input-files`](#bashlib-cli) in a loop.
+
+(Requires [`ocrd__wrap`](#ocrd__wrap) to have been run first.)
 
 ## Testing
 

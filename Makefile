@@ -59,7 +59,7 @@ PIP_INSTALL = pip install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt-get install -y python3 python3-venv imagemagick
+	apt-get install -y python3 imagemagick libgeos-dev
 
 # Install test python deps via pip
 deps-test:
@@ -70,6 +70,8 @@ deps-test:
 install:
 	$(PIP) install -U pip wheel setuptools fastentrypoints
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+	@# workaround for shapely#1598
+	$(PIP) install --no-binary shapely --force-reinstall shapely
 
 # Install with pip install -e
 install-dev: uninstall

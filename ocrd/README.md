@@ -2,4 +2,6 @@
 
 > API and CLI for ocrd
 
-See https://github.com/OCR-D/core
+See [generated self-documentation of API and CLI](https://ocr-d.de/core/)
+
+See also: https://github.com/OCR-D/core

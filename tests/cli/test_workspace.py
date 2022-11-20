@@ -483,7 +483,7 @@ class TestCli(TestCase):
     def test_bulk_add_gen_id(self):
         with pushd_popd(tempdir=True) as wsdir:
             ws = self.resolver.workspace_from_nothing(directory=wsdir)
-            Path(wsdir, 'c').write_text('')
+            Path(wsdir, 'c.ext').write_text('')
             _, out, err = self.invoke_cli(workspace_cli, [
                 'bulk-add',
                 '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',
@@ -493,9 +493,10 @@ class TestCli(TestCase):
                 # '-i', '{{ fileid }}',  # XXX skip --file-id
                 '-m', '{{ mimetype }}',
                 '-u', "{{ url }}",
-                'a b c d e'])
+                'a b c.ext d e'])
             ws.reload_mets()
-            assert next(ws.mets.find_files()).ID == 'a_b_c_d_e'
+            print(out)
+            assert next(ws.mets.find_files()).ID == 'b_c'
             assert next(ws.mets.find_files()).url == 'd'
 
     def test_bulk_add_derive_url(self):
