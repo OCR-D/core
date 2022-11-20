@@ -26,11 +26,13 @@ from ocrd_models import (
 
 import pytest
 
+CACHING_ENABLED = [False, True]
 
-@pytest.fixture(name='sbb_sample_01')
-def _fixture():
+
+@pytest.fixture(name='sbb_sample_01', params=CACHING_ENABLED)
+def _fixture(request):
     mets = OcrdMets(filename=assets.url_of(
-        'SBB0000F29300010000/data/mets.xml'))
+        'SBB0000F29300010000/data/mets.xml'), cache_flag=request.param)
     yield mets
 
 
@@ -149,10 +151,15 @@ def test_add_file_id_already_exists(sbb_sample_01):
 
     # Works but is unwise, there are now two files with clashing ID in METS
     f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", ignore=True)
-    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 2
+    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1 if sbb_sample_01._cache_flag else 2
 
-    # Works because fileGrp, mimetype and pageId(== None) match and force is set
-    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
+    if sbb_sample_01._cache_flag:
+        # Does not work with caching 
+        with pytest.raises(FileExistsError) as val_err:
+             sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
+    else:
+        # Works because fileGrp, mimetype and pageId(== None) match and force is set
+        f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
 
     # Previous step removed duplicate mets:file
     assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1
@@ -177,7 +184,7 @@ def test_add_file_ignore(sbb_sample_01: OcrdMets):
 
     # how many files inserted
     the_files = list(sbb_sample_01.find_files(ID='best-id-ever'))
-    assert len(the_files) == 2
+    assert len(the_files) == 1 if sbb_sample_01._cache_flag else 2
 
 
 def test_add_file_id_invalid(sbb_sample_01):
