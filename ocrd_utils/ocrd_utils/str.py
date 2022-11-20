@@ -195,10 +195,12 @@ def generate_range(start, end):
     Generate a list of strings by incrementing the number part of ``start`` until including ``end``.
     """
     ret = []
-    start_num, end_num = re.search(r'\d+', start), re.search(r'\d+', end)
-    if not (start_num and end_num):
-        raise ValueError("Unable to generate range %s .. %s, could not detect number part" % (start, end))
-    start_num, end_num = start_num.group(0), end_num.group(0)
+    try:
+        start_num, end_num = re.findall(r'\d+', start)[-1], re.findall(r'\d+', end)[-1]
+    except IndexError:
+        raise ValueError("Range '%s..%s': could not find numeric part" % (start, end))
+    if start_num == end_num:
+        raise ValueError("Range '%s..%s': evaluates to the same number")
     for i in range(int(start_num), int(end_num) + 1):
         ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
     return ret

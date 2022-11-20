@@ -3,6 +3,7 @@ API to METS
 """
 from datetime import datetime
 import re
+import typing
 from lxml import etree as ET
 from copy import deepcopy
 
@@ -246,30 +247,28 @@ class OcrdMets(OcrdXmlDocument):
         Yields:
             :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
         """
+        pageId_list = []
         if pageId:
-            if pageId.startswith(REGEX_PREFIX):
-                pageIds, pageId = re.compile(pageId[REGEX_PREFIX_LEN:]), list()
-            else:
-                pageIds, pageId = pageId.split(','), list()
-                pageIds_expanded = []
-                for pageId_ in pageIds:
-                    if '..' in pageId_:
-                        pageIds_expanded += generate_range(*pageId_.split('..', 1))
-                pageIds += pageIds_expanded
-                
+            pageId_patterns = []
+            for pageId_token in re.split(r',', pageId):
+                if pageId_token.startswith(REGEX_PREFIX):
+                    pageId_patterns.append(re.compile(pageId_token[REGEX_PREFIX_LEN:]))
+                elif '..' in pageId_token:
+                    pageId_patterns += generate_range(*pageId_token.split('..', 1))
+                else:
+                    pageId_patterns += [pageId_token]
             if self._cache_flag:
-                for page in self._page_cache.keys():
-                    if (page in pageIds if isinstance(pageIds, list) else
-                        pageIds.fullmatch(page)):
-                            pageId.extend(self._fptr_cache[page])
+                for page_id in self._page_cache.keys():
+                    if page_id in pageId_patterns or \
+                        any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
+                        pageId_list += self._fptr_cache[page_id]
             else:
                 for page in self._tree.getroot().xpath(
                     '//mets:div[@TYPE="page"]', namespaces=NS):
-                    if (page.get('ID') in pageIds if isinstance(pageIds, list) else
-                        pageIds.fullmatch(page.get('ID'))):
-                        pageId.extend(
-                            [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)])
-                        
+                    if page.get('ID') in pageId_patterns or \
+                        any([isinstance(p, typing.Pattern) and p.fullmatch(page.get('ID')) for p in pageId_patterns]):
+                        pageId_list += [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)]
+
         if ID and ID.startswith(REGEX_PREFIX):
             ID = re.compile(ID[REGEX_PREFIX_LEN:])
         if fileGrp and fileGrp.startswith(REGEX_PREFIX):
@@ -298,7 +297,7 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     if not ID.fullmatch(cand.get('ID')): continue
 
-            if pageId is not None and cand.get('ID') not in pageId:
+            if pageId is not None and cand.get('ID') not in pageId_list:
                 continue
 
             if not self._cache_flag and fileGrp:
