@@ -394,13 +394,21 @@ class OcrdMets(OcrdXmlDocument):
                 log.warning(msg)
                 return
             raise Exception(msg)
-        files = el_fileGrp.findall('mets:file', NS)
+
+        # The cache should also be used here
+        if self._cache_flag:
+            files = self._file_cache.get(el_fileGrp.get('USE'), {}).values()
+        else:
+            files = el_fileGrp.findall('mets:file', NS)
+
         if files:
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
                 # NOTE: Here we know the fileGrp, we should pass it as a parameter
-                self.remove_one_file(f.get('ID'))
+                self.remove_one_file(ID=f.get('ID'), fileGrp=f.get('USE'))
+                # NOTE2: Since remove_one_file also takes OcrdFile, we could just pass the file
+                # self.remove_one_file(f)
                 
         if self._cache_flag:
             # Note: Since the files inside the group are removed
@@ -490,23 +498,27 @@ class OcrdMets(OcrdXmlDocument):
             return []
         raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
 
-    def remove_one_file(self, ID):
+    def remove_one_file(self, ID, fileGrp=None):
         """
         Delete an existing :py:class:`ocrd_models.ocrd_file.OcrdFile`.
         Arguments:
-            ID (string): ``@ID`` of the ``mets:file`` to delete
+            ID (string): ``@ID`` of the ``mets:file`` to delete 
+            -> ID could also be an OcrdFile, potentially misleading?
+            fileGrp (string):
         Returns:
             The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
         log = getLogger('ocrd_models.ocrd_mets.remove_one_file')
-        log.debug("remove_one_file(%s)" % ID)
+        log.debug("remove_one_file(%s %s)" % (ID, fileGrp))
         if isinstance(ID, OcrdFile):
             ocrd_file = ID
             ID = ocrd_file.ID
+            # fileGrp = ocrd_file.fileGrp 
+            # -> could this potentially help to improve the cached approach?
         else:
             # NOTE: We should pass the fileGrp, if known, as a parameter here as well
             # Leaving that out for now
-            ocrd_file = next(self.find_files(ID=ID), None)
+            ocrd_file = next(self.find_files(ID=ID, fileGrp=fileGrp), None)
 
         if not ocrd_file:
             raise FileNotFoundError("File not found: %s" % ID)
