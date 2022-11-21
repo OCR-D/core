@@ -96,7 +96,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         String representation
         """
-        return 'OcrdMets[fileGrps=%s,files=%s]' % (self.file_groups, list(self.find_files()))
+        return 'OcrdMets[cached=self._cached_flag, fileGrps=%s,files=%s]' % (self.file_groups, list(self.find_files()))
 
     def _fill_caches(self):
         """
