@@ -18,19 +18,21 @@ COPY Makefile .
 COPY README.md .
 COPY LICENSE .
 RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
-RUN apt-get update && apt-get -y install \
-    ca-certificates \
-    software-properties-common \
-    python3-dev \
-    python3-pip \
-    make \
-    wget \
-    time \
-    curl \
-    sudo \
-    git \
+RUN apt-get update && apt-get -y install software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get -y install \
+        ca-certificates \
+        python3.7-dev \
+        python3.7-venv \
+        make \
+        wget \
+        time \
+        curl \
+        sudo \
+        git \
     && make deps-ubuntu \
-    && pip3 install --upgrade pip setuptools \
+    && python3.7 -m ensurepip --default-pip \
+    && pip install --upgrade pip setuptools \
     && make install \
     && $FIXUP \
     && rm -rf /build-ocrd

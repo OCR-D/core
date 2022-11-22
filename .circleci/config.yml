@@ -16,16 +16,6 @@ jobs:
       - run: make deps-test install PIP=pip3
       - run: make test PYTHON=python3
 
-  test-python36:
-    docker:
-      - image: python:3.6.12
-    working_directory: ~/ocrd-core
-    steps:
-      - checkout
-      - run: apt-get -y update
-      - run: make deps-ubuntu deps-test install
-      - run: make test
-
   test-python37:
     docker:
       - image: python:3.7.9
@@ -56,6 +46,16 @@ jobs:
       - run: make deps-ubuntu deps-test install
       - run: make test
 
+  test-python310:
+    docker:
+      - image: python:3.10
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
+
   deploy:
     docker:
       - image: circleci/buildpack-deps:stretch
@@ -80,8 +80,8 @@ workflows:
               only: master
   test-pull-request:
     jobs:
-      - test-python36
       - test-python37
       - test-python38
       - test-python39
+      - test-python310
       - test-macos
