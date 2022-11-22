@@ -405,8 +405,7 @@ class OcrdMets(OcrdXmlDocument):
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
             for f in files:
-                # NOTE: Here we know the fileGrp, we should pass it as a parameter
-                self.remove_one_file(ID=f.get('ID'), fileGrp=f.get('USE'))
+                self.remove_one_file(ID=f.get('ID'), fileGrp=f.getparent().get('USE'))
 
         if self._cache_flag:
             # Note: Since the files inside the group are removed
@@ -414,7 +413,7 @@ class OcrdMets(OcrdXmlDocument):
             # we should not take care of that again.
             # We just remove the fileGrp.
             del self._file_cache[el_fileGrp.get('USE')]
-            
+
         el_fileGrp.getparent().remove(el_fileGrp)
 
     def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
@@ -489,9 +488,8 @@ class OcrdMets(OcrdXmlDocument):
         """
         Delete an existing :py:class:`ocrd_models.ocrd_file.OcrdFile`.
         Arguments:
-            ID (string): ``@ID`` of the ``mets:file`` to delete 
-            -> ID could also be an OcrdFile, potentially misleading?
-            fileGrp (string):
+            ID (string|OcrdFile): ``@ID`` of the ``mets:file`` to delete  Can also be an :py:class:`ocrd_models.ocrd_file.OcrdFile` to avoid search via ``ID``.
+            fileGrp (string): ``@USE`` of the ``mets:fileGrp`` containing the ``mets:file``. Used only for optimization.
         Returns:
             The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
@@ -500,13 +498,11 @@ class OcrdMets(OcrdXmlDocument):
         if isinstance(ID, OcrdFile):
             ocrd_file = ID
             ID = ocrd_file.ID
-            # fileGrp = ocrd_file.fileGrp 
-            # -> could this potentially help to improve the cached approach?
         else:
             ocrd_file = next(self.find_files(ID=ID, fileGrp=fileGrp), None)
 
         if not ocrd_file:
-            raise FileNotFoundError("File not found: %s" % ID)
+            raise FileNotFoundError("File not found: %s (fileGr=%s)" % (ID, fileGrp))
 
         # Delete the physical page ref
         fptrs = []
