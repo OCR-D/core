@@ -407,9 +407,7 @@ class OcrdMets(OcrdXmlDocument):
             for f in files:
                 # NOTE: Here we know the fileGrp, we should pass it as a parameter
                 self.remove_one_file(ID=f.get('ID'), fileGrp=f.get('USE'))
-                # NOTE2: Since remove_one_file also takes OcrdFile, we could just pass the file
-                # self.remove_one_file(f)
-                
+
         if self._cache_flag:
             # Note: Since the files inside the group are removed
             # with the 'remove_one_file' method above, 
@@ -443,19 +441,8 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
         log = getLogger('ocrd_models.ocrd_mets.add_file')
 
-        """
-        # Note: we do not benefit enough from having 
-        # a separate cache for fileGrp elements
-
-        if self._cache_flag: 
-            if fileGrp in self._fileGrp_cache:
-                el_fileGrp = self._fileGrp_cache[fileGrp]
-        """
-
         el_fileGrp = self.add_file_group(fileGrp)
         if not ignore:
-            # Since we are sure that fileGrp parameter is set,
-            # we could send that parameter to find_files for direct search
             mets_file = next(self.find_files(ID=ID, fileGrp=fileGrp), None)
             if mets_file:
                 if mets_file.fileGrp == fileGrp and \
@@ -516,8 +503,6 @@ class OcrdMets(OcrdXmlDocument):
             # fileGrp = ocrd_file.fileGrp 
             # -> could this potentially help to improve the cached approach?
         else:
-            # NOTE: We should pass the fileGrp, if known, as a parameter here as well
-            # Leaving that out for now
             ocrd_file = next(self.find_files(ID=ID, fileGrp=fileGrp), None)
 
         if not ocrd_file:
@@ -552,9 +537,6 @@ class OcrdMets(OcrdXmlDocument):
         # Delete the file reference from the cache
         if self._cache_flag:
             parent_use = ocrd_file._el.getparent().get('USE')
-            # Note: if the file is in the XML tree,
-            # it must also be in the file cache.
-            # Anyway, we perform the checks, then remove
             del self._file_cache[parent_use][ocrd_file.ID]
 
         # Delete the file reference
@@ -584,8 +566,6 @@ class OcrdMets(OcrdXmlDocument):
             return self.physical_pages
         ret = [None] * len(for_fileIds)
         
-        # Note: This entire function potentially could be further simplified
-        # TODO: Simplify
         if self._cache_flag:
             for pageId in self._fptr_cache.keys():
                 for fptr in self._fptr_cache[pageId].keys():
