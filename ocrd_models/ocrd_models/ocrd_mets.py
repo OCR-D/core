@@ -617,7 +617,8 @@ class OcrdMets(OcrdXmlDocument):
         
         el_pagediv = None
         if self._cache_flag:
-            el_pagediv = self._page_cache[pageId]
+            if pageId in self._page_cache:
+                el_pagediv = self._page_cache[pageId]
         else:
             el_pagediv = el_seqdiv.find('mets:div[@ID="%s"]' % pageId, NS)
         
