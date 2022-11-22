@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from os.path import join
+from os import environ
 from contextlib import contextmanager
 import shutil
 from logging import StreamHandler
@@ -355,6 +356,25 @@ def test_invalid_filegrp():
 
     assert "Invalid syntax for mets:fileGrp/@USE" in str(val_err.value)
 
+@contextmanager
+def temp_env_var(k, v):
+    v_before = environ.get(k, None)
+    environ[k] = v
+    yield
+    if v_before is not None:
+        environ[k] = v_before
+    else:
+        del environ[k]
+
+def test_envvar():
+    assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+    assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
+    with temp_env_var('OCRD_METS_CACHING', 'true'):
+        assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+        assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
+    with temp_env_var('OCRD_METS_CACHING', 'false'):
+        assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+        assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
 
 if __name__ == '__main__':
     main(__file__)

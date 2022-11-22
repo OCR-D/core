@@ -4,6 +4,7 @@ API to METS
 from datetime import datetime
 import re
 import typing
+from os import environ
 from lxml import etree as ET
 from copy import deepcopy
 
@@ -58,7 +59,16 @@ class OcrdMets(OcrdXmlDocument):
         """
         """
         super(OcrdMets, self).__init__(**kwargs)
-        
+
+        # XXX If the environment variable OCRD_METS_CACHING is set to "true",
+        # then enable caching, if "false", disable caching, overriding the
+        # kwarg to the constructor
+        if 'OCRD_METS_CACHING' in environ:
+            cache_override = environ['OCRD_METS_CACHING'] in ('true', '1')
+            getLogger('ocrd_models.ocrd_mets').debug('METS Caching %s because OCRD_METS_CACHING is %s',
+                    'enabled' if cache_override else 'disabled', environ['OCRD_METS_CACHING'])
+            self._cache_flag = cache_override
+
         # If cache is enabled
         if self._cache_flag:
 
