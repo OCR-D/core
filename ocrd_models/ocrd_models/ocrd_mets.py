@@ -555,9 +555,7 @@ class OcrdMets(OcrdXmlDocument):
             # Note: if the file is in the XML tree,
             # it must also be in the file cache.
             # Anyway, we perform the checks, then remove
-            if parent_use in self._file_cache:
-                if ocrd_file.ID in self._file_cache[parent_use]:
-                    del self._file_cache[parent_use][ocrd_file.ID]
+            del self._file_cache[parent_use][ocrd_file.ID]
 
         # Delete the file reference
         # pylint: disable=protected-access
