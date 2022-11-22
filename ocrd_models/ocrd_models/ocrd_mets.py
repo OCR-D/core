@@ -591,13 +591,8 @@ class OcrdMets(OcrdXmlDocument):
             order (string): ``@ORDER`` to use
             orderlabel (string): ``@ORDERLABEL`` to use
         """
-        #  print(pageId, ocrd_file)
+
         # delete any page mapping for this file.ID
-        
-        # NOTE: The pageId coming from 'test_merge(sbb_sample_01)' is an Element not a string
-        if not isinstance(pageId, str):
-            pageId = pageId.get('ID')
-            
         candidates = []
         if self._cache_flag:
             for page_id in self._fptr_cache.keys():
