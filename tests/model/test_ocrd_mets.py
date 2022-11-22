@@ -54,8 +54,10 @@ def test_unique_identifier_from_nothing():
 
 
 def test_str():
-    mets = OcrdMets(content='<mets/>')
-    assert str(mets) == 'OcrdMets[fileGrps=[],files=[]]'
+    mets = OcrdMets(content='<mets/>', cache_flag=False)
+    assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
+    mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
+    assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
 
 
 def test_file_groups(sbb_sample_01):
