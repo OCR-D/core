@@ -19,6 +19,7 @@
 * [Command line tools](#command-line-tools)
 	* [`ocrd` CLI](#ocrd-cli)
 	* [`ocrd-dummy` CLI](#ocrd-dummy-cli)
+* [Configuration](#configuration)
 * [Packages](#packages)
 	* [ocrd_utils](#ocrd_utils)
 	* [ocrd_models](#ocrd_models)
@@ -81,6 +82,14 @@ supported flags, options and arguments.
 ### `ocrd-dummy` CLI
 
 A minimal [OCR-D processor](https://ocr-d.de/en/user_guide#using-the-ocr-d-processors) that copies from `-I/-input-file-grp` to `-O/-output-file-grp`
+
+## Configuration
+
+Almost all behaviour of the OCR-D/core software is configured via CLI options and flags, which can be listed with the `--help` flag that all CLI support.
+
+Some parts of the software are configured via environement variables:
+
+* `OCRD_METS_CACHING`: If set to `true`, access to the METS file is cached, speeding in-memory search and modification.
 
 ## Packages
 
