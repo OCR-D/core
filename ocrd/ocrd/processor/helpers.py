@@ -87,7 +87,12 @@ def run_processor(
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
     t0_cpu = process_time()
-    mem_usage = memory_usage(proc=processor.process, interval=.1, timeout=None, timestamps=True, multiprocess=True, include_children=True)
+    mem_usage = memory_usage(proc=processor.process, 
+                            interval=.1, timeout=None, timestamps=True, 
+                            # include sub-processes
+                            multiprocess=True, include_children=True, 
+                            # get proportional set size instead of RSS
+                            backend='psutil_pss')
     mem_usage_values = [mem for mem, _ in mem_usage]
     mem_output = 'memory consumption: '
     mem_output += ''.join(sparklines(mem_usage_values))
