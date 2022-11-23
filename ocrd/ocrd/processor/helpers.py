@@ -87,7 +87,9 @@ def run_processor(
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
     t0_cpu = process_time()
-    mem_usage = memory_usage(proc=processor.process, 
+    mem_usage = memory_usage(proc=processor.process,
+                            # only run process once
+                            max_iterations=1,
                             interval=.1, timeout=None, timestamps=True, 
                             # include sub-processes
                             multiprocess=True, include_children=True, 
