@@ -5,9 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Symlinks in workspaces are properly resolved now, #802, #954
+
 Added:
 
   * Optional caching of access to METS, configured via [environment variable `OCRD_METS_CACHING`](https://github.com/OCR-D/core/#configuration), #875
+  * CPU and memory profiling , configured via [environment variable `OCRD_PROFILE` and `OCRD_PROFILE_FILE`](https://github.com/OCR-D/core/#configuration), #678
 
 Changed:
 
