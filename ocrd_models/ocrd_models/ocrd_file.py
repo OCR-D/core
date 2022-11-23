@@ -138,7 +138,6 @@ class OcrdFile():
             raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
         self.mets.set_physical_page_for_file(pageId, self)
 
-
     @property
     def loctype(self):
         """

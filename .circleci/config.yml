@@ -14,7 +14,7 @@ jobs:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos
       - run: make deps-test install PIP=pip3
-      - run: make test PYTHON=python3
+      - run: make test benchmark PYTHON=python3
 
   test-python36:
     docker:
@@ -24,7 +24,7 @@ jobs:
       - checkout
       - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
-      - run: make test
+      - run: make test benchmark
 
   test-python37:
     docker:
@@ -34,7 +34,7 @@ jobs:
       - checkout
       - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
-      - run: make test
+      - run: make test benchmark
 
   test-python38:
     docker:
@@ -44,7 +44,7 @@ jobs:
       - checkout
       - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
-      - run: make test
+      - run: make test benchmark
 
   test-python39:
     docker:
@@ -54,7 +54,7 @@ jobs:
       - checkout
       - run: apt-get -y update
       - run: make deps-ubuntu deps-test install
-      - run: make test
+      - run: make test benchmark
 
   deploy:
     docker:
