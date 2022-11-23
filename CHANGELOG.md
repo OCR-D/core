@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Optional caching of access to METS, configured via [environment variable `OCRD_METS_CACHING`](https://github.com/OCR-D/core/#configuration), #875
+
+Changed:
+
+  * `ocrd workspace find`: supports comma-separated regexes, ranges and literal values for `--page-id`, #955
+  * `ocrd workspace find`: ranges are generated with last number in string, #955
+
+
 ## [2.41.0] - 2022-11-09
 
 Fixed:
