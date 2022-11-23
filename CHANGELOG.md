@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.42.0] - 2022-11-23
+
 Fixed:
 
   * Symlinks in workspaces are properly resolved now, #802, #954
@@ -1586,6 +1588,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.42.0]: ../../compare/v2.42.0..v2.41.0
 [2.41.0]: ../../compare/v2.41.0..v2.40.0
 [2.40.0]: ../../compare/v2.40.0..v2.39.0
 [2.39.0]: ../../compare/v2.39.0..v2.38.0
