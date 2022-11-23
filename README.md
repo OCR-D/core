@@ -90,6 +90,11 @@ Almost all behaviour of the OCR-D/core software is configured via CLI options an
 Some parts of the software are configured via environement variables:
 
 * `OCRD_METS_CACHING`: If set to `true`, access to the METS file is cached, speeding in-memory search and modification.
+* `OCRD_PROFILE`: This variable configures the built-in CPU and memory profiling. If empty, no profiling is done. Otherwise expected to contain any of the following tokens:
+  * `CPU`: Enable CPU profiling of processor runs
+  * `RSS`: Enable RSS memory profiling
+  * `PSS`: Enable proportionate memory profiling
+* `OCRD_PROFILE_FILE`: If set, then the CPU profile is written to this file for later peruse with a analysis tools like [snakeviz](https://jiffyclub.github.io/snakeviz/)
 
 ## Packages
 
