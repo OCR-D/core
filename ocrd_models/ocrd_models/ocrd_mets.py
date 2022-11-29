@@ -557,7 +557,7 @@ class OcrdMets(OcrdXmlDocument):
         List all page IDs (the ``@ID`` of each physical ``mets:structMap`` ``mets:div``)
         """
         if self._cache_flag:
-            return self._page_cache.values()
+            return list(self._page_cache.keys())
             
         return self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
@@ -685,7 +685,7 @@ class OcrdMets(OcrdXmlDocument):
             mets_div = self._tree.getroot().xpath(
                 'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % ID,
                 namespaces=NS)
-        if mets_div is not None:
+        if mets_div:
             mets_div[0].getparent().remove(mets_div[0])
             if self._cache_flag:
                 del self._page_cache[ID]

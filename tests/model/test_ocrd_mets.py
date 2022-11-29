@@ -37,6 +37,15 @@ def _fixture(request):
     yield mets
 
 
+@pytest.fixture(name='sbb_directory_ocrd_mets', params=CACHING_ENABLED)
+def _fixture_sbb(tmp_path, request):
+    src_path = assets.path_to('SBB0000F29300010000/data')
+    dst_path = tmp_path / 'SBB_directory'
+    shutil.copytree(src_path, dst_path)
+    mets_path = str(join(dst_path, 'mets.xml'))
+    yield OcrdMets(filename=mets_path, cache_flag=request.param)
+
+
 def test_unique_identifier():
     mets = OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'))
     assert mets.unique_identifier == 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000', 'Right identifier'
@@ -89,22 +98,14 @@ def test_find_all_files_local_only(sbb_sample_01):
 
 def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
-
+    assert isinstance(sbb_sample_01.physical_pages, list)
+    assert isinstance(sbb_sample_01.physical_pages[0], str)
 
 def test_physical_pages_from_empty_mets():
     mets = OcrdMets(content="<mets></mets>")
     assert len(mets.physical_pages) == 0, 'no physical page'
     mets.add_file('OUTPUT', ID="foo123", pageId="foobar")
     assert len(mets.physical_pages) == 1, '1 physical page'
-
-
-@pytest.fixture(name='sbb_directory_ocrd_mets')
-def _fixture_sbb(tmp_path):
-    src_path = assets.path_to('SBB0000F29300010000/data')
-    dst_path = tmp_path / 'SBB_directory'
-    shutil.copytree(src_path, dst_path)
-    mets_path = str(join(dst_path, 'mets.xml'))
-    yield OcrdMets(filename=mets_path)
 
 
 def test_physical_pages_for_fileids(sbb_directory_ocrd_mets):
@@ -265,6 +266,7 @@ def test_remove_page(sbb_directory_ocrd_mets):
 def test_remove_physical_page_fptr(sbb_directory_ocrd_mets):
     assert sbb_directory_ocrd_mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), ['PHYS_0002']
     sbb_directory_ocrd_mets.remove_physical_page_fptr('FILE_0002_IMAGE')
+    sbb_directory_ocrd_mets.remove_physical_page_fptr('FILE_0002_IMAGE')
     assert sbb_directory_ocrd_mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), [None]
 
 
@@ -345,7 +347,6 @@ def test_merge(sbb_sample_01):
     other_mets = OcrdMets(filename=assets.path_to('kant_aufklaerung_1784/data/mets.xml'))
     sbb_sample_01.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
     assert len(sbb_sample_01.file_groups) == 18
-
 
 def test_invalid_filegrp():
     """addresses https://github.com/OCR-D/core/issues/746"""
