@@ -414,7 +414,7 @@ class OcrdMets(OcrdXmlDocument):
         if files:
             if not recursive:
                 raise Exception("fileGrp %s is not empty and recursive wasn't set" % USE)
-            for f in files:
+            for f in list(files):
                 self.remove_one_file(ID=f.get('ID'), fileGrp=f.getparent().get('USE'))
 
         if self._cache_flag:
