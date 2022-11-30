@@ -1,10 +1,13 @@
 """
 Helper methods for running and documenting processors
 """
+from os import environ
 from time import perf_counter, process_time
 import json
 import inspect
 from subprocess import run, PIPE
+from memory_profiler import memory_usage
+from sparklines import sparklines
 
 from click import wrap_text
 from ocrd_utils import getLogger
@@ -85,7 +88,23 @@ def run_processor(
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
     t0_cpu = process_time()
-    processor.process()
+    if any(x in environ.get('OCRD_PROFILE', '') for x in ['RSS', 'PSS']):
+        backend = 'psutil_pss' if 'PSS' in environ['OCRD_PROFILE'] else 'psutil'
+        mem_usage = memory_usage(proc=processor.process,
+                                # only run process once
+                                max_iterations=1,
+                                interval=.1, timeout=None, timestamps=True, 
+                                # include sub-processes
+                                multiprocess=True, include_children=True, 
+                                # get proportional set size instead of RSS
+                                backend=backend)
+        mem_usage_values = [mem for mem, _ in mem_usage]
+        mem_output = 'memory consumption: '
+        mem_output += ''.join(sparklines(mem_usage_values))
+        mem_output += ' max: %.2f MiB min: %.2f MiB' % (max(mem_usage_values), min(mem_usage_values))
+        logProfile.info(mem_output)
+    else:
+        processor.process()
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
     logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (

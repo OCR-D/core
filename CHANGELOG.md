@@ -5,6 +5,28 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Regressions from PR #875, #957, #958
+  * Missing import in `ocrd workspace merge`, #956
+
+## [2.42.0] - 2022-11-23
+
+Fixed:
+
+  * Symlinks in workspaces are properly resolved now, #802, #954
+
+Added:
+
+  * Optional caching of access to METS, configured via [environment variable `OCRD_METS_CACHING`](https://github.com/OCR-D/core/#configuration), #875
+  * CPU and memory profiling , configured via [environment variable `OCRD_PROFILE` and `OCRD_PROFILE_FILE`](https://github.com/OCR-D/core/#configuration), #678
+
+Changed:
+
+  * `ocrd workspace find`: supports comma-separated regexes, ranges and literal values for `--page-id`, #955
+  * `ocrd workspace find`: ranges are generated with last number in string, #955
+
+
 ## [2.41.0] - 2022-11-09
 
 Fixed:
@@ -1571,6 +1593,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.42.0]: ../../compare/v2.42.0..v2.41.0
 [2.41.0]: ../../compare/v2.41.0..v2.40.0
 [2.40.0]: ../../compare/v2.40.0..v2.39.0
 [2.39.0]: ../../compare/v2.39.0..v2.38.0

@@ -1,4 +1,5 @@
 from os.path import isfile
+from os import environ
 import sys
 
 import click
@@ -89,6 +90,12 @@ def ocrd_cli_wrap_processor(
         report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
         if not report.is_valid:
             raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
+        # Set up profiling behavior from environment variables/flags
+        if not profile and 'OCRD_PROFILE' in environ:
+            if 'CPU' in environ['OCRD_PROFILE']:
+                profile = True
+        if not profile_file and 'OCRD_PROFILE_FILE' in environ:
+            profile_file = environ['OCRD_PROFILE_FILE']
         if profile or profile_file:
             import cProfile
             import pstats

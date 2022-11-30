@@ -164,7 +164,7 @@ class Workspace():
         with pushd_popd(self.directory):
             try:
                 # If the f.url is already a file path, and is within self.directory, do nothing
-                url_path = Path(f.url).resolve()
+                url_path = Path(f.url).absolute()
                 if not (url_path.exists() and url_path.relative_to(str(Path(self.directory).resolve()))):
                     raise Exception("Not already downloaded, moving on")
             except Exception as e:

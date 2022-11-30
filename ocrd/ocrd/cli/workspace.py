@@ -18,7 +18,7 @@ import time
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 

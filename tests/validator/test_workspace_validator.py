@@ -1,5 +1,6 @@
 import os
 from tempfile import TemporaryDirectory
+from pathlib import Path
 from os.path import join
 from shutil import copytree
 
@@ -232,6 +233,18 @@ class TestWorkspaceValidator(TestCase):
                 os.system("""sed -i.bak 's,pcGtsId.*,pcGtsId="foo">,' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
                 report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'))
                 self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "foo" !== "PAGE_0017_PAGE"', report.warnings)
+
+    def test_symlink(self):
+        """
+        Data from https://github.com/OCR-D/core/issues/802
+        """
+        report = WorkspaceValidator.validate(
+            Resolver(), None, src_dir=str(Path(__file__).parent.parent / "data/symlink-workspace"),
+            skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page_xsd', 'mets_xsd'],
+            download=False,
+        )
+        print(report.errors)
+        assert report.is_valid
 
 
 if __name__ == '__main__':
