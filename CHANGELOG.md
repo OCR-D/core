@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Regressions from PR #875, #957, #958
+
 ## [2.42.0] - 2022-11-23
 
 Fixed:
