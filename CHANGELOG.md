@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * Regressions from PR #875, #957, #958
+  * Missing import in `ocrd workspace merge`, #956
 
 ## [2.42.0] - 2022-11-23
 
