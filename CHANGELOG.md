@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.42.1] - 2022-11-30
+
 Fixed:
 
   * Regressions from PR #875, #957, #958
@@ -1593,6 +1595,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.42.1]: ../../compare/v2.42.1..v2.42.0
 [2.42.0]: ../../compare/v2.42.0..v2.41.0
 [2.41.0]: ../../compare/v2.41.0..v2.40.0
 [2.40.0]: ../../compare/v2.40.0..v2.39.0
