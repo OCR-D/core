@@ -71,29 +71,7 @@ class OcrdMets(OcrdXmlDocument):
 
         # If cache is enabled
         if self._cache_flag:
-
-            # Cache for the files (mets:file) - two nested dictionaries
-            # The outer dictionary's Key: 'fileGrp.USE'
-            # The outer dictionary's Value: Inner dictionary
-            # The inner dictionary's Key: 'file.ID'
-            # The inner dictionary's Value: a 'file' object at some memory location
-            self._file_cache = {}
-
-            # Cache for the pages (mets:div)
-            # The dictionary's Key: 'div.ID'
-            # The dictionary's Value: a 'div' object at some memory location
-            self._page_cache = {}
-
-            # Cache for the file pointers (mets:fptr) - two nested dictionaries
-            # The outer dictionary's Key: 'div.ID'
-            # The outer dictionary's Value: Inner dictionary
-            # The inner dictionary's Key: 'fptr.FILEID'
-            # The inner dictionary's Value: a 'fptr' object at some memory location
-            self._fptr_cache = {}
-
-            # Note, if the empty_mets() function is used to instantiate OcrdMets
-            # Then the cache is empty even after this operation
-            self._fill_caches()
+            self.refresh_caches()
 
     def __exit__(self):
         """
@@ -165,7 +143,32 @@ class OcrdMets(OcrdXmlDocument):
         self._file_cache = None
         self._page_cache = None
         self._fptr_cache = None
+        
+    def refresh_caches(self):
+        if self._cache_flag:
+            # Cache for the files (mets:file) - two nested dictionaries
+            # The outer dictionary's Key: 'fileGrp.USE'
+            # The outer dictionary's Value: Inner dictionary
+            # The inner dictionary's Key: 'file.ID'
+            # The inner dictionary's Value: a 'file' object at some memory location
+            self._file_cache = {}
 
+            # Cache for the pages (mets:div)
+            # The dictionary's Key: 'div.ID'
+            # The dictionary's Value: a 'div' object at some memory location
+            self._page_cache = {}
+
+            # Cache for the file pointers (mets:fptr) - two nested dictionaries
+            # The outer dictionary's Key: 'div.ID'
+            # The outer dictionary's Value: Inner dictionary
+            # The inner dictionary's Key: 'fptr.FILEID'
+            # The inner dictionary's Value: a 'fptr' object at some memory location
+            self._fptr_cache = {}
+            
+            # Note, if the empty_mets() function is used to instantiate OcrdMets
+            # Then the cache is empty even after this operation
+            self._fill_caches()
+        
     @property
     def unique_identifier(self):
         """
