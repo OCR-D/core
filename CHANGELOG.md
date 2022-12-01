@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.43.0] - 2022-12-01
+
 Added:
 
   * `OcrdMets.refresh_caches` to update caches after changes to XML outside of `OcrdMets`, #957, #960
@@ -1599,6 +1601,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.43.0]: ../../compare/v2.43.0..v2.42.1
 [2.42.1]: ../../compare/v2.42.1..v2.42.0
 [2.42.0]: ../../compare/v2.42.0..v2.41.0
 [2.41.0]: ../../compare/v2.41.0..v2.40.0
