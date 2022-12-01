@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `OcrdMets.refresh_caches` to update caches after changes to XML outside of `OcrdMets`, #957, #960
+
 ## [2.42.1] - 2022-11-30
 
 Fixed:
