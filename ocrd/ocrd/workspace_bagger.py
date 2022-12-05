@@ -9,7 +9,6 @@ import tempfile
 import sys
 from bagit import Bag, make_manifests, _load_tag_file, _make_tag_file, _make_tagmanifest_file  # pylint: disable=no-name-in-module
 from distutils.dir_util import copy_tree
-from contextlib import nullcontext
 
 from ocrd_utils import (
     pushd_popd,
@@ -298,7 +297,7 @@ class WorkspaceBagger():
             raise Exception("Path to bag not existing")
         is_zipped = src_path.is_file()
 
-        with TemporaryDirectory() if is_zipped else nullcontext() as tempdir:
+        with TemporaryDirectory() as tempdir:
             if is_zipped:
                 unzip_file_to_dir(src, tempdir)
                 path_to_bag = Path(tempdir)
