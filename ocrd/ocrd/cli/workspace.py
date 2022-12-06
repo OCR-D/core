@@ -16,6 +16,7 @@ import re
 import time
 
 import click
+import uvicorn
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file
@@ -32,6 +33,8 @@ class WorkspaceCtx():
             self.log.warning(DeprecationWarning('--mets-basename is deprecated. Use --mets/--directory instead.'))
         self.directory, self.mets_url, self.mets_basename = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename)
         self.automatic_backup = automatic_backup
+        self.server_options = {}
+
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
@@ -674,3 +677,28 @@ def workspace_backup_undo(ctx):
     """
     backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
     backup_manager.undo()
+
+
+# ----------------------------------------------------------------------
+# ocrd workspace serve
+# ----------------------------------------------------------------------
+
+@workspace_cli.group('server')
+@click.option('-h', '--hostname', help="Hostname for the server", default="localhost")
+@click.option('-p', '--port', help="Port for the server", default=8899)
+@click.pass_context
+def workspace_serve_cli(ctx, hostname, port): # pylint: disable=unused-argument
+    ctx.obj.server_options['hostname'] = hostname
+    ctx.obj.server_options['port'] = port
+
+@workspace_serve_cli.command('start')
+@pass_workspace
+def workspace_serve_start(ctx): # pylint: disable=unused-argument
+    """
+    Start a METS server
+    """
+    workspace_server = WorkspaceServer(
+        workspace=Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename),
+        hostname=ctx.server_options['hostname'],
+        port=ctx.server_options['port'])
+    )
