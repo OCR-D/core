@@ -30,26 +30,6 @@ class TestWorkspaceBagger(TestCase):
     def tearDown(self):
         rmtree(self.tempdir)
 
-    def test_bad_inplace_and_dest(self):
-        with self.assertRaisesRegex(Exception, "Setting 'dest' and 'in_place' is a contradiction"):
-            self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=True, dest='/x/y/z')
-
-    def test_bad_skip_zip_and_dest(self):
-        with self.assertRaisesRegex(Exception, "Setting 'skip_zip' and not 'in_place' is a contradiction"):
-            self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=True, skip_zip=False)
-
-    def test_bag_inplace(self):
-        self.bagger.bag(
-            self.workspace,
-            'kant_aufklaerung_1784',
-            skip_zip=True,
-            in_place=True,
-            ocrd_base_version_checksum='123',
-            tag_files=[
-                README_FILE
-            ],
-        )
-
     def test_bag_zip_and_spill(self):
         self.workspace.mets.find_all_files(ID='INPUT_0017')[0].url = 'bad-scheme://foo'
         self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
@@ -57,22 +37,22 @@ class TestWorkspaceBagger(TestCase):
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), join(self.tempdir, 'out'))
 
     def test_bag_zip_and_spill_wo_dest(self):
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False, skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), self.tempdir)
 
     def test_bag_wo_dest(self):
         makedirs(BACKUPDIR)
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=True, skip_zip=True)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=True)
 
     def test_bag_wo_dest_zip(self):
         makedirs(BACKUPDIR)
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False, skip_zip=True)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=True)
 
     def test_bag_partial_http_nostrict(self):
         self.bagger.strict = False
         makedirs(BACKUPDIR)
         self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784')
 
     def test_bag_full(self):
         self.bagger.strict = True
@@ -96,13 +76,14 @@ class TestWorkspaceBagger(TestCase):
     def test_spill_derived_dest(self):
         bag_dest = join(self.bagdir, 'foo.ocrd.zip')
         spill_dest = join(self.bagdir, 'foo')
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', in_place=False, skip_zip=False, dest=bag_dest)
+        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=bag_dest)
         self.bagger.spill(bag_dest, self.bagdir)
         self.assertTrue(exists(spill_dest))
 
     def test_bag_with_changed_metsname(self):
         # arrange
         workspace_dir = join(self.bagdir, "changed-mets-test")
+        bag_dest = join(self.bagdir, 'bagged-workspace')
         copytree(join(assets.path_to('kant_aufklaerung_1784'), "data"), workspace_dir)
         new_metsname = "other-metsname.xml"
         old_metspath = join(workspace_dir, "mets.xml")
@@ -111,13 +92,13 @@ class TestWorkspaceBagger(TestCase):
         workspace = Workspace(self.resolver, directory=workspace_dir, mets_basename=new_metsname)
 
         # act
-        self.bagger.bag(workspace, "changed-mets-test", ocrd_mets=new_metsname, in_place=True, skip_zip=True)
+        self.bagger.bag(workspace, "changed-mets-test", dest=bag_dest, ocrd_mets=new_metsname, skip_zip=True)
 
         # assert
-        bag_metspath = join(workspace_dir, "data", new_metsname)
+        bag_metspath = join(bag_dest, "data", new_metsname)
         self.assertTrue(exists(bag_metspath), f"Mets not existing. Expected: {bag_metspath}")
 
-        bag_info_path = join(workspace_dir, "bag-info.txt")
+        bag_info_path = join(bag_dest, "bag-info.txt")
         tags = _load_tag_file(bag_info_path)
         self.assertTrue("Ocrd-Mets" in tags, "expect 'Ocrd-Mets'-key in bag-info.txt")
         self.assertEqual(tags["Ocrd-Mets"], new_metsname, "Ocrd-Mets key present but wrong value")
