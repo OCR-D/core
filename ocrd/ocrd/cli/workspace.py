@@ -16,9 +16,9 @@ import re
 import time
 
 import click
-import uvicorn
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
+from ocrd.mets_server import OcrdMetsServer
 from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
@@ -684,12 +684,16 @@ def workspace_backup_undo(ctx):
 # ----------------------------------------------------------------------
 
 @workspace_cli.group('server')
-@click.option('-h', '--hostname', help="Hostname for the server", default="localhost")
+@click.option('-h', '--host', help="host for the server", default="localhost")
 @click.option('-p', '--port', help="Port for the server", default=8899)
+@click.option('-s', '--socket', help="Path to a UNIX socket to be created instead of binding to port")
 @click.pass_context
-def workspace_serve_cli(ctx, hostname, port): # pylint: disable=unused-argument
-    ctx.obj.server_options['hostname'] = hostname
+def workspace_serve_cli(ctx, host, port, socket): # pylint: disable=unused-argument
+    if socket and (host or port):
+        raise ValueError('--socket is incompatible with --port/--host')
+    ctx.obj.server_options['host'] = host
     ctx.obj.server_options['port'] = port
+    ctx.obj.server_options['socket'] = socket
 
 @workspace_serve_cli.command('start')
 @pass_workspace
@@ -697,8 +701,9 @@ def workspace_serve_start(ctx): # pylint: disable=unused-argument
     """
     Start a METS server
     """
-    workspace_server = WorkspaceServer(
+    OcrdMetsServer(
         workspace=Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename),
-        hostname=ctx.server_options['hostname'],
-        port=ctx.server_options['port'])
-    )
+        host=ctx.server_options['host'],
+        port=ctx.server_options['port'],
+        socket=ctx.server_options['socket'],
+    ).startup()

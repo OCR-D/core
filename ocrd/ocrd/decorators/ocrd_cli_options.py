@@ -19,6 +19,7 @@ def ocrd_cli_options(f):
     params = [
         option('-m', '--mets', help="METS to process", default="mets.xml"),
         option('-w', '--working-dir', help="Working Directory"),
+        option('--mets-server-url', help="METS server to use for parallel incremental access"),
         # TODO OCR-D/core#274
         # option('-I', '--input-file-grp', help='File group(s) used as input. **required**'),
         # option('-O', '--output-file-grp', help='File group(s) used as output. **required**'),
