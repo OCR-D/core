@@ -26,14 +26,14 @@ from . import command_with_replaced_help
 
 class WorkspaceCtx():
 
-    def __init__(self, directory, mets_url, mets_basename, automatic_backup):
+    def __init__(self, directory, mets_url, mets_basename, mets_server_host, mets_server_port, mets_server_socket, automatic_backup):
         self.log = getLogger('ocrd.cli.workspace')
-        self.resolver = Resolver()
         if mets_basename:
             self.log.warning(DeprecationWarning('--mets-basename is deprecated. Use --mets/--directory instead.'))
-        self.directory, self.mets_url, self.mets_basename = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename)
+        self.resolver = Resolver()
+        self.directory, self.mets_url, self.mets_basename, self.mets_server_host, self.mets_server_port, self.mets_server_socket \
+                = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename, mets_server_host, mets_server_port, mets_server_socket)
         self.automatic_backup = automatic_backup
-        self.server_options = {}
 
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
@@ -46,14 +46,25 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location [default: METS_URL directory or .]"')
 @click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
 @click.option('-m', '--mets', default=None, help='The path/URL of the METS file [default: WORKSPACE_DIR/mets.xml]', metavar="METS_URL")
+@click.option('-h', '--host', 'mets_server_host', help="host for the server")
+@click.option('-p', '--port', 'mets_server_port',  help="Port for the server")
+@click.option('-s', '--socket','mets_server_socket',  help="Path to a UNIX socket to be created instead of binding to port")
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets, mets_basename, backup):
+def workspace_cli(ctx, directory, mets, mets_basename, mets_server_host, mets_server_port, mets_server_socket, backup):
     """
     Working with workspace
     """
     initLogging()
-    ctx.obj = WorkspaceCtx(directory, mets_url=mets, mets_basename=mets_basename, automatic_backup=backup)
+    ctx.obj = WorkspaceCtx(
+        directory,
+        mets_url=mets,
+        mets_basename=mets_basename,
+        mets_server_host=mets_server_host,
+        mets_server_port=mets_server_port,
+        mets_server_socket=mets_server_socket,
+        automatic_backup=backup
+    )
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
@@ -176,7 +187,15 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     Add a file or http(s) URL FNAME to METS in a workspace.
     If FNAME is not an http(s) URL and is not a workspace-local existing file, try to copy to workspace.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        automatic_backup=ctx.automatic_backup,
+        mets_server_host=ctx.mets_server_host,
+        mets_server_port=ctx.mets_server_port,
+        mets_server_socket=ctx.mets_server_socket,
+    )
 
     log = getLogger('ocrd.cli.workspace.add')
     if not mimetype:
@@ -209,7 +228,19 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 
     if not page_id:
         log.warning("You did not provide '--page-id/-g', so the file you added is not linked to a specific page.")
-    workspace.add_file(file_grp, file_id=file_id, mimetype=mimetype, page_id=page_id, force=force, ignore=ignore, local_filename=local_filename, url=fname)
+    kwargs = {
+        'file_id': file_id,
+        'mimetype': mimetype,
+        'page_id': page_id,
+        'force': force,
+        'ignore': ignore,
+        'local_filename': local_filename,
+        'url': fname
+    }
+    if ctx.mets_server_host or ctx.mets_server_socket:
+        with open(fname, 'rb') as fhandle:
+            kwargs['content'] = fhandle.read()
+    workspace.add_file(file_grp, **kwargs)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
@@ -402,7 +433,14 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     output_field = [snake_to_camel.get(x, x) for x in output_field]
     modified_mets = False
     ret = list()
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        mets_server_host=ctx.mets_server_host,
+        mets_server_port=ctx.mets_server_port,
+        mets_server_socket=ctx.mets_server_socket,
+    )
     for f in workspace.find_files(
             file_id=file_id,
             file_grp=file_grp,
@@ -684,16 +722,9 @@ def workspace_backup_undo(ctx):
 # ----------------------------------------------------------------------
 
 @workspace_cli.group('server')
-@click.option('-h', '--host', help="host for the server", default="localhost")
-@click.option('-p', '--port', help="Port for the server", default=8899)
-@click.option('-s', '--socket', help="Path to a UNIX socket to be created instead of binding to port")
 @click.pass_context
-def workspace_serve_cli(ctx, host, port, socket): # pylint: disable=unused-argument
-    if socket and (host or port):
-        raise ValueError('--socket is incompatible with --port/--host')
-    ctx.obj.server_options['host'] = host
-    ctx.obj.server_options['port'] = port
-    ctx.obj.server_options['socket'] = socket
+def workspace_serve_cli(ctx): # pylint: disable=unused-argument
+    pass
 
 @workspace_serve_cli.command('start')
 @pass_workspace
@@ -703,7 +734,7 @@ def workspace_serve_start(ctx): # pylint: disable=unused-argument
     """
     OcrdMetsServer(
         workspace=Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename),
-        host=ctx.server_options['host'],
-        port=ctx.server_options['port'],
-        socket=ctx.server_options['socket'],
+        host=ctx.mets_server_host,
+        port=ctx.mets_server_port,
+        socket=ctx.mets_server_socket,
     ).startup()

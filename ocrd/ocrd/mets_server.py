@@ -3,17 +3,17 @@
 """
 import re
 from os import environ, _exit
-import sys
+from io import BytesIO
 from typing import Any, Dict, Optional, Union, List, Tuple
 
 from fastapi import FastAPI, Request, File, Form, UploadFile
 from fastapi.responses import JSONResponse
-from requests import request
+from requests import request, Session as requests_session
+from requests_unixsocket import Session as requests_unixsocket_session
 from pydantic import BaseModel, Field, constr, ValidationError
 
 import uvicorn
 
-from ocrd import Resolver
 from ocrd_models import OcrdMets
 from ocrd_utils import initLogging, getLogger, deprecated_alias
 
@@ -44,6 +44,9 @@ class OcrdAgentModel(BaseModel):
 class OcrdFileListModel(BaseModel):
     files : List[OcrdFileModel] = Field()
 
+class OcrdFileGroupListModel(BaseModel):
+    file_groups : List[str] = Field()
+
 #
 # Client
 #
@@ -55,7 +58,7 @@ class ClientSideOcrdFile:
     this represents the response of the :py:class:`ocrd.mets_server.OcrdWorkspaceServer`.
     """
 
-    def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None):
+    def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None, fileGrp=None):
         """
         Args:
             el (): ignored
@@ -73,6 +76,7 @@ class ClientSideOcrdFile:
         self.url = url
         self.loctype = loctype
         self.pageId = pageId
+        self.fileGrp = fileGrp
 
 class ClientSideOcrdMets():
     """
@@ -83,25 +87,34 @@ class ClientSideOcrdMets():
     :py:class:`ocrd.mets_server.OcrdMetsServer`.
     """
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, socket):
         self.log = getLogger('ocrd.workspace_client')
-        self.url = f'http://{host}:{port}'
+        if socket:
+            self.url = f'http+unix://{socket.replace("/", "%2F")}'
+            self.session = requests_unixsocket_session()
+        else:
+            self.url = f'http://{host}:{port}'
+            self.session = requests_session()
 
     def find_files(self, **kwargs):
-        r = request('GET', self.url, params={**kwargs})
+        r = self.session.request('GET', self.url, params={**kwargs})
         for f in r.json()['files']:
-            yield ClientSideOcrdFile(None, ID=f.file_id, pageId=f.page_id, fileGrp=f.file_grp, url=f.url)
+            yield ClientSideOcrdFile(None, ID=f['file_id'], pageId=f['page_id'], fileGrp=f['file_grp'], url=f['url'], mimetype=f['mimetype'])
 
     def find_all_files(self, *args, **kwargs):
         return list(self.find_files(*args, **kwargs))
 
     def add_agent(self, *args, **kwargs):
-        r.request('POST', f'{self.url}/agent', data=OcrdAgentModel(**kwargs))
+        return self.session.request('POST', f'{self.url}/agent', data=OcrdAgentModel(**kwargs))
+
+    @property
+    def file_groups():
+        return self.session.request('GET', f'{self.url}/file_groups').json()['file_groups']
 
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
     def add_file(self, file_grp, content=None, file_id=None, url=None, mimetype=None, page_id=None, **kwargs):
-        r = request(
+        r = self.session.request(
             'POST',
             self.url,
             data=OcrdFileModel(
@@ -109,9 +122,13 @@ class ClientSideOcrdMets():
                 file_grp=file_grp,
                 page_id=page_id,
                 mimetype=mimetype,
-                url=url).json(),
-            files=('data', content)
+                url=url).dict(),
+            files={'data': content}
         )
+
+    def save(self):
+        self.session.request('PUT', self.url)
+
 
 #
 # Server
@@ -166,6 +183,10 @@ class OcrdMetsServer():
                 files=[OcrdFileModel(file_grp=of.fileGrp, file_id=of.ID, mimetype=of.mimetype, page_id=of.pageId, url=of.url) for of in found]
             )
 
+        @app.put('/')
+        def save():
+            return workspace.save_mets()
+
         @app.post('/', response_model=OcrdFileModel)
         async def add_file(
             data : bytes = File(),
@@ -188,6 +209,10 @@ class OcrdMetsServer():
             workspace.add_file(**kwargs)
             workspace.save_mets()
             return file_resource
+
+        @app.get('/file_groups', response_model=OcrdFileGroupListModel)
+        async def file_groups():
+            return {'file_groups': workspace.mets.file_groups}
 
         @app.post('/agent', response_model=OcrdAgentModel)
         async def add_agent(agent : OcrdAgentModel):

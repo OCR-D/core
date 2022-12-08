@@ -13,3 +13,4 @@ sparklines >= 0.4.2
 uvicorn
 fastapi
 python-multipart
+requests_unixsocket

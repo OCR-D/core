@@ -201,12 +201,21 @@ class Resolver():
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
 
-    def resolve_mets_arguments(self, directory, mets_url, mets_basename):
+    def resolve_mets_arguments(self, directory, mets_url, mets_basename, mets_server_host, mets_server_port, mets_server_socket):
         """
-        Resolve the ``--mets``, ``--mets-basename`` and `--directory`` argument
+        Resolve the ``--mets``, ``--mets-basename``, `--directory``, ``--mets-server-host``,
+        ``--mets-server-port``, and ``--mets-server-socket`` arguments
         into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
         """
         log = getLogger('ocrd.resolver.resolve_mets_arguments')
+
+        # Determine --mets-server-*
+        if (mets_server_host or mets_server_port or mets_server_socket):
+            if mets_server_socket and (mets_server_host or mets_server_port):
+                raise ValueError('--mets-server-socket incompatible with --mets-server-host/--mets-server--port')
+            if (mets_server_host and not mets_server_port) or (not mets_server_host and mets_server_port):
+                raise ValueError('--mets-server-host and --mets-server-port must both be set or unset')
+
         mets_is_remote = mets_url and (mets_url.startswith('http://') or mets_url.startswith('https://'))
 
         # XXX we might want to be more strict like this but it might break # legacy code
@@ -249,6 +258,6 @@ class Resolver():
                     if not is_file_in_directory(directory, mets_url):
                         raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
 
-        return str(Path(directory).resolve()), str(mets_url), str(mets_basename)
+        return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_host, mets_server_port, mets_server_socket
 
 

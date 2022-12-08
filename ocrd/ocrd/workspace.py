@@ -42,6 +42,7 @@ from ocrd_utils import (
 )
 
 from .workspace_backup import WorkspaceBackupManager
+from .mets_server import ClientSideOcrdMets
 
 __all__ = ['Workspace']
 
@@ -69,20 +70,24 @@ class Workspace():
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None, mets_server_host=None, mets_server_port=None, mets_server_socket=None):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
         self.overwrite_mode = False
+        self.is_remote = mets_server_host or mets_server_socket
         if mets is None:
-            mets = OcrdMets(filename=self.mets_target)
+            if self.is_remote:
+                mets = ClientSideOcrdMets(mets_server_host, mets_server_port, mets_server_socket)
+            else:
+                mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
         self.automatic_backup = automatic_backup
         self.baseurl = baseurl
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
 
     def __str__(self):
-        return 'Workspace[directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
+        return 'Workspace[remote=%s directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
             self.directory,
             self.baseurl,
             self.mets.file_groups,
@@ -371,7 +376,7 @@ class Workspace():
             content is not None)
         if 'page_id' not in kwargs:
             raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
-        if content is not None and not kwargs.get('local_filename'):
+        if not self.is_remote and content is not None and not kwargs.get('local_filename'):
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
             kwargs['force'] = True
@@ -390,7 +395,7 @@ class Workspace():
             if "file_id" in kwargs:
                 kwargs["ID"] = kwargs.pop("file_id")
 
-            ret = self.mets.add_file(file_grp, **kwargs)
+            ret = self.mets.add_file(file_grp, **kwargs, content=content)
 
             if content is not None:
                 with open(kwargs['local_filename'], 'wb') as f:
@@ -405,11 +410,14 @@ class Workspace():
         Write out the current state of the METS file to the filesystem.
         """
         log = getLogger('ocrd.workspace.save_mets')
-        log.debug("Saving mets '%s'", self.mets_target)
-        if self.automatic_backup:
-            WorkspaceBackupManager(self).add()
-        with atomic_write(self.mets_target) as f:
-            f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
+        if self.is_remote:
+            self.mets.save()
+        else:
+            log.debug("Saving mets '%s'", self.mets_target)
+            if self.automatic_backup:
+                WorkspaceBackupManager(self).add()
+            with atomic_write(self.mets_target) as f:
+                f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
         """
