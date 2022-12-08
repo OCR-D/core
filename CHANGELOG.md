@@ -5,9 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-Added
+Added:
 
   * `ocrd zip update` command to update checksums for an OCRD-ZIP after changing it, #363, #951
+
+Removed:
+
+  * `ocrd zip bag` does no longer support the long-broken `--in-place` option, #964, #363
 
 ## [2.43.0] - 2022-12-01
 
