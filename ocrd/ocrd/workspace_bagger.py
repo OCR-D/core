@@ -39,12 +39,7 @@ class WorkspaceBagger():
         self.resolver = resolver
         self.strict = strict
 
-    def _serialize_bag(self, workspace, bagdir, dest, in_place, skip_zip):
-        if in_place:
-            if not exists(BACKUPDIR):
-                makedirs(BACKUPDIR)
-            backupdir = mkdtemp(dir=BACKUPDIR)
-            move(workspace.directory, backupdir)
+    def _serialize_bag(self, workspace, bagdir, dest, skip_zip):
         if skip_zip:
             move(bagdir, dest)
         else:
@@ -141,7 +136,6 @@ class WorkspaceBagger():
             ocrd_base_version_checksum=None,
             processes=1,
             skip_zip=False,
-            in_place=False,
             tag_files=None
            ):
         """
@@ -157,14 +151,8 @@ class WorkspaceBagger():
             ord_base_version_checksum (string): Ocrd-Base-Version-Checksum in bag-info.txt
             processes (integer): Number of parallel processes checksumming
             skip_zip (boolean): Whether to leave directory unzipped
-            in_place (boolean): Whether to **replace** the workspace with its BagIt variant
             tag_files (list<string>): Path names of additional tag files to be bagged at the root of the bag
         """
-        if in_place and (dest is not None):
-            raise Exception("Setting 'dest' and 'in_place' is a contradiction")
-        if in_place and not skip_zip:
-            raise Exception("Setting 'skip_zip' and not 'in_place' is a contradiction")
-
         if tag_files is None:
             tag_files = []
 
@@ -172,15 +160,13 @@ class WorkspaceBagger():
         bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
 
         if dest is None:
-            if in_place:
-                dest = workspace.directory
-            elif not skip_zip:
+            if not skip_zip:
                 dest = '%s.ocrd.zip' % workspace.directory
             else:
                 dest = '%s.ocrd' % workspace.directory
 
         log = getLogger('ocrd.workspace_bagger')
-        log.info("Bagging %s to %s (temp dir %s)", workspace.directory, '(in-place)' if in_place else dest, bagdir)
+        log.info("Bagging %s to %s (temp dir %s)", workspace.directory, dest, bagdir)
 
         # create data dir
         makedirs(join(bagdir, 'data'))
@@ -203,7 +189,7 @@ class WorkspaceBagger():
         bag.save()
 
         # ZIP it
-        self._serialize_bag(workspace, bagdir, dest, in_place, skip_zip)
+        self._serialize_bag(workspace, bagdir, dest, skip_zip)
 
         log.info('Created bag at %s', dest)
         return dest
