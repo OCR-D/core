@@ -1,12 +1,14 @@
 from datetime import datetime
 from os import makedirs, chdir, walk
 from os.path import join, isdir, basename, exists, relpath
+from pathlib import Path
 from shutil import make_archive, rmtree, copyfile, move
-from tempfile import mkdtemp
+from tempfile import mkdtemp, TemporaryDirectory
 import re
 import tempfile
 import sys
-from bagit import Bag, make_manifests, _load_tag_file  # pylint: disable=no-name-in-module
+from bagit import Bag, make_manifests, _load_tag_file, _make_tag_file, _make_tagmanifest_file  # pylint: disable=no-name-in-module
+from distutils.dir_util import copy_tree
 
 from ocrd_utils import (
     pushd_popd,
@@ -270,3 +272,56 @@ class WorkspaceBagger():
             - https://ocr-d.github.io/bagit-profile.json
             - https://ocr-d.github.io/bagit-profile.yml
         """
+        pass
+
+    def recreate_checksums(self, src, dest=None, overwrite=False):
+        """
+        (Re)creates the files containing the checksums of a bag
+
+        This function uses bag.py to create new files: manifest-sha512.txt and
+        tagminifest-sha512.txt for the bag. Also 'Payload-Oxum' in bag-info.txt will be set to the
+        appropriate value.
+
+        Arguments:
+            src (string):    Path to Bag. May be an zipped or unziped bagit
+            dest (string):   Path to where the result should be stored. Not needed if overwrite is
+                             set
+            overwrite(bool): Replace bag with newly created bag
+        """
+        if overwrite and dest:
+            raise Exception("Setting 'dest' and 'overwrite' is a contradiction")
+        if not overwrite and not dest:
+            raise Exception("For checksum recreation 'dest' must be provided")
+        src_path = Path(src)
+        if not src_path.exists():
+            raise Exception("Path to bag not existing")
+        is_zipped = src_path.is_file()
+
+        with TemporaryDirectory() as tempdir:
+            if is_zipped:
+                unzip_file_to_dir(src, tempdir)
+                path_to_bag = Path(tempdir)
+                if not path_to_bag.joinpath("data").exists():
+                    raise FileNotFoundError("data directory of bag not found")
+            else:
+                path_to_bag = src_path if overwrite else Path(dest)
+                if not src_path.joinpath("data").exists():
+                    raise FileNotFoundError(f"data directory of bag not found at {src}")
+                if not overwrite:
+                    path_to_bag.mkdir(parents=True, exist_ok=True)
+                    copy_tree(src, dest)
+
+            with pushd_popd(path_to_bag):
+                n_bytes, n_files = make_manifests("data", 1, ["sha512"])
+
+                bag_infos = _load_tag_file("bag-info.txt")
+                bag_infos["Payload-Oxum"] = f"{n_bytes}.{n_files}"
+                _make_tag_file("bag-info.txt", bag_infos)
+                _make_tagmanifest_file("sha512", ".")
+
+            if is_zipped:
+                name = src_path.name
+                if name.endswith(".zip"):
+                    name = name[:-4]
+                zip_path = make_archive(name, "zip", path_to_bag)
+                move(zip_path, src if overwrite else dest)

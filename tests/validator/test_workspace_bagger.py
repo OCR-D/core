@@ -1,14 +1,15 @@
 from os import makedirs
 from os.path import join, abspath, exists
-from shutil import copytree, rmtree, move
+from shutil import copytree, rmtree, move, make_archive
 from tempfile import mkdtemp
-from bagit import _load_tag_file
+from bagit import _load_tag_file, Bag
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
 
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger, BACKUPDIR
 from ocrd.resolver import Resolver
+from ocrd_utils import unzip_file_to_dir
 
 README_FILE = abspath('README.md')
 
@@ -140,6 +141,64 @@ class TestWorkspaceBagger(TestCase):
         self.assertFalse(exists(join(spill_dest, "mets.xml")), "'mets.xml' should not be present")
         self.assertTrue(exists(join(spill_dest, new_metsname)),
                         "expected mets-file to be '{new_metsname}'")
+
+    def test_recreate_checksums_param_validation(self):
+        with self.assertRaisesRegex(Exception, "For checksum recreation 'dest' must be provided"):
+            self.bagger.recreate_checksums("src/path")
+        with self.assertRaisesRegex(Exception, "Setting 'dest' and 'overwrite' is a contradiction"):
+            self.bagger.recreate_checksums("src/path", "dest/path", overwrite=True)
+
+    def test_recreate_checksums_overwrite_unzipped(self):
+        # arrange
+        assert Bag(self.bagdir).is_valid(), "tests arrangements for recreate_checksums failed"
+        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
+        assert not Bag(self.bagdir).is_valid(), "tests arrangements for recreate_checksums failed"
+
+        # act
+        self.bagger.recreate_checksums(self.bagdir, overwrite=True)
+
+        # assert
+        assert Bag(self.bagdir).is_valid(), "recreate_checksums unzippd with overwrite failed"
+
+    def test_recreate_checksums_unzipped(self):
+        # arrange
+        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
+        new_bag = join(self.tempdir, "new_bag")
+
+        # act
+        self.bagger.recreate_checksums(self.bagdir, new_bag)
+
+        # assert
+        assert Bag(new_bag).is_valid(), "recreate_checksums unzipped failed"
+
+    def test_recreate_checksums_zipped_overwrite(self):
+        # arrange
+        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
+        zipped_bag = join(self.tempdir, "foo.ocrd.zip")
+        make_archive(zipped_bag.replace('.zip', ''), 'zip', self.bagdir)
+
+        # act
+        self.bagger.recreate_checksums(zipped_bag, overwrite=True)
+
+        # assert
+        bag_dest = join(self.tempdir, "new_bag")
+        unzip_file_to_dir(zipped_bag, bag_dest)
+        assert Bag(bag_dest).is_valid(), "recreate_checksums zipped with overwrite failed"
+
+    def test_recreate_checksums_zipped(self):
+        # arrange
+        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
+        zipped_bag = join(self.tempdir, "foo.ocrd.zip")
+        make_archive(zipped_bag.replace('.zip', ''), 'zip', self.bagdir)
+        zipped_bag_dest = join(self.tempdir, "foo-new.ocrd.zip")
+
+        # act
+        self.bagger.recreate_checksums(zipped_bag, zipped_bag_dest)
+
+        # assert
+        bag_dest = join(self.tempdir, "new_bag")
+        unzip_file_to_dir(zipped_bag_dest, bag_dest)
+        assert Bag(bag_dest).is_valid(), "recreate_checksums zipped failed"
 
 
 if __name__ == '__main__':
