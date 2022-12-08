@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.44.0] - 2022-12-08
+
 Added:
 
   * `ocrd zip update` command to update checksums for an OCRD-ZIP after changing it, #363, #951
@@ -1609,6 +1611,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.44.0]: ../../compare/v2.44.0..v2.43.0
 [2.43.0]: ../../compare/v2.43.0..v2.42.1
 [2.42.1]: ../../compare/v2.42.1..v2.42.0
 [2.42.0]: ../../compare/v2.42.0..v2.41.0
