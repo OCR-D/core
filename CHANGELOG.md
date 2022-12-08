@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added
+
+  * `ocrd zip update` command to update checksums for an OCRD-ZIP after changing it, #363, #951
+
 ## [2.43.0] - 2022-12-01
 
 Added:
