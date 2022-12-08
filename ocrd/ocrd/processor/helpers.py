@@ -42,6 +42,9 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
+        mets_server_host=None,
+        mets_server_port=None,
+        mets_server_socket=None,
 ): # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.

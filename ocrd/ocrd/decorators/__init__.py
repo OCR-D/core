@@ -68,8 +68,15 @@ def ocrd_cli_wrap_processor(
         # if not kwargs['output_file_grp']:
         #     raise ValueError('-O/--output-file-grp is required')
         resolver = Resolver()
-        working_dir, mets, _ = resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_host, mets_server_port, mets_server_socket)
-        workspace = resolver.workspace_from_url(mets, working_dir)
+        working_dir, mets, _, mets_server_host, mets_server_port, mets_server_socket \
+                = resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_host, mets_server_port, mets_server_socket)
+        workspace = resolver.workspace_from_url(
+            mets,
+            working_dir,
+            mets_server_host=mets_server_host,
+            mets_server_port=mets_server_port,
+            mets_server_socket=mets_server_socket
+        )
         page_id = kwargs.get('page_id')
         # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
         # if overwrite

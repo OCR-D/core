@@ -87,7 +87,8 @@ class Workspace():
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
 
     def __str__(self):
-        return 'Workspace[remote=%s directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
+        return 'Workspace[remote=%s, directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
+            not not self.is_remote,
             self.directory,
             self.baseurl,
             self.mets.file_groups,

@@ -108,7 +108,18 @@ class Resolver():
 
         return ret
 
-    def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, src_baseurl=None):
+    def workspace_from_url(
+        self,
+        mets_url,
+        dst_dir=None,
+        clobber_mets=False,
+        mets_basename=None,
+        download=False,
+        src_baseurl=None,
+        mets_server_host=None,
+        mets_server_port=None,
+        mets_server_socket=None,
+    ):
         """
         Create a workspace from a METS by URL (i.e. clone if :py:attr:`mets_url` is remote or :py:attr:`dst_dir` is given).
 
@@ -165,7 +176,11 @@ class Resolver():
 
         self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'skip')
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl)
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl,
+                mets_server_host=mets_server_host,
+                mets_server_port=mets_server_port,
+                mets_server_socket=mets_server_socket,
+                )
 
         if download:
             for f in workspace.mets.find_files():
