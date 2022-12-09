@@ -251,10 +251,3 @@ cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
 pypi: uninstall install
 	for mod in $(BUILD_ORDER);do (cd $$mod; $(PYTHON) setup.py sdist bdist_wheel);done
 	version=`$(FIND_VERSION)`; twine upload ocrd*/dist/ocrd*$$version*{tar.gz,whl}
-
-#
-# Testing METS server
-#
-
-mets-server-start:
-	uvicorn ocrd.mets_server:app --host 0.0.0.0 --reload
