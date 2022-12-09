@@ -3,14 +3,16 @@ from os.path import join
 from json import loads
 from os import environ, listdir, getcwd, path
 from fnmatch import filter as apply_glob
-from shutil import copytree
+from shutil import copytree, copy
 from datetime import datetime
 from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
 from subprocess import run, PIPE
+from zipfile import ZipFile
 
 import requests
 from yaml import safe_load, safe_dump
+import magic
 
 # https://github.com/OCR-D/core/issues/867
 # https://stackoverflow.com/questions/50900727/skip-converting-entities-while-loading-a-yaml-string-using-pyyaml
@@ -303,18 +305,27 @@ class OcrdResourceManager():
             else:
                 self._copy_impl(url, fpath, progress_cb)
         elif resource_type == 'archive':
+            archive_fname = 'download.tar.xx'
             with pushd_popd(tempdir=True) as tempdir:
                 if is_url:
-                    self._download_impl(url, 'download.tar.xx', progress_cb)
+                    self._download_impl(url, archive_fname, progress_cb)
                 else:
-                    self._copy_impl(url, 'download.tar.xx', progress_cb)
+                    self._copy_impl(url, archive_fname, progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    log.info("Extracting archive to %s/out" % tempdir)
-                    with open_tarfile('../download.tar.xx', 'r:*') as tar:
-                        tar.extractall()
+                    mimetype = magic.from_file(f'../{archive_fname}', mime=True)
+                    log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
+                    if mimetype == 'application/zip':
+                        with ZipFile(f'../{archive_fname}', 'r') as zipf:
+                            zipf.extractall()
+                    else:
+                        with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
+                            tar.extractall()
                     log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
-                    copytree(path_in_archive, str(fpath))
+                    if Path(path_in_archive).is_dir():
+                        copytree(path_in_archive, str(fpath))
+                    else:
+                        copy(path_in_archive, str(fpath))
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):
