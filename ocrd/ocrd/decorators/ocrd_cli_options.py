@@ -15,6 +15,7 @@ def ocrd_cli_options(f):
         def cli(mets_url):
             print(mets_url)
     """
+    # XXX Note that the `--help` output is statically generate_processor_help
     params = [
         option('-m', '--mets', help="METS to process", default="mets.xml"),
         option('-w', '--working-dir', help="Working Directory"),
@@ -25,12 +26,17 @@ def ocrd_cli_options(f):
         option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         option('-g', '--page-id', help="ID(s) of the pages to process"),
         option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
+        option('-C', '--show-resource', help='Dump the content of processor resource RESNAME', metavar='RESNAME'),
+        option('-L', '--list-resources', is_flag=True, default=False, help='List names of processor resources'),
         parameter_option,
         parameter_override_option,
         option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
+        option('-D', '--dump-module-dir', help="Print processor's 'moduledir' of resourcess", is_flag=True, default=False),
         loglevel_option,
         option('-V', '--version', help="Show version", is_flag=True, default=False),
         option('-h', '--help', help="This help message", is_flag=True, default=False),
+        option('--profile', help="Enable profiling", is_flag=True, default=False),
+        option('--profile-file', help="Write cProfile stats to this file. Implies --profile"),
     ]
     for param in params:
         param(f)

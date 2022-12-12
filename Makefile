@@ -27,14 +27,13 @@ help:
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
-	@echo "    assets-server  Start asset server at http://localhost:5001"
 	@echo "    test           Run all unit tests"
 	@echo "    docs           Build documentation"
 	@echo "    docs-clean     Clean docs"
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker GPU / CUDA image"
-	@echo "    bashlib        Build bash library"
+	@echo "    cuda-ubuntu    Install native CUDA toolkit in different versions"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
@@ -60,17 +59,19 @@ PIP_INSTALL = pip install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt-get install -y python3 python3-pip python3-venv
+	apt-get install -y python3 imagemagick libgeos-dev
 
 # Install test python deps via pip
 deps-test:
-	$(PIP) install -U "pip>=19.0.0"
+	$(PIP) install -U pip
 	$(PIP) install -r requirements_test.txt
 
 # (Re)install the tool
 install:
-	$(PIP) install -U "pip>=19.0.0" wheel
+	$(PIP) install -U pip wheel setuptools fastentrypoints
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+	@# workaround for shapely#1598
+	$(PIP) install --no-binary shapely --force-reinstall shapely
 
 # Install with pip install -e
 install-dev: uninstall
@@ -88,6 +89,8 @@ generate-page: repo/assets
 		-f \
 		--root-element='PcGts' \
 		-o $(GDS_PAGE) \
+		--silence \
+		--export "write etree" \
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
 		ocrd_validators/ocrd_validators/page.xsd
@@ -98,6 +101,8 @@ generate-page: repo/assets
 	sed -i 's/_nsprefix_ = None/_nsprefix_ = "pc"/' $(GDS_PAGE)
 	# hack to ensure child nodes also have pc: prefix...
 	sed -i 's/.*_nsprefix_ = child_.prefix$$//' $(GDS_PAGE)
+	# replace the need for six since we target python 3.6+
+	sed -i 's/from six.moves/from itertools/' $(GDS_PAGE)
 
 #
 # Repos
@@ -132,11 +137,7 @@ spec: repo/spec
 assets: repo/assets
 	rm -rf $(TESTDIR)/assets
 	mkdir -p $(TESTDIR)/assets
-	cp -r -t $(TESTDIR)/assets repo/assets/data/*
-
-# Start asset server at http://localhost:5001
-assets-server:
-	cd assets && make start
+	cp -r repo/assets/data/* $(TESTDIR)/assets
 
 
 #
@@ -148,7 +149,13 @@ assets-server:
 test: assets
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors --ignore=$(TESTDIR)/test_logging.py $(TESTDIR)
+	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10 --ignore=$(TESTDIR)/test_logging.py --ignore-glob="$(TESTDIR)/**/*bench*.py" $(TESTDIR)
+
+benchmark:
+	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
+
+benchmark-extreme:
+	$(PYTHON) -m pytest $(TESTDIR)/model/*bench*.py
 
 test-profile:
 	$(PYTHON) -m cProfile -o profile $$(which pytest)
@@ -167,7 +174,10 @@ coverage: assets
 .PHONY: docs
 # Build documentation
 docs:
-	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e -o docs/api/$$mod $$mod/$$mod 'ocrd_models/ocrd_models/ocrd_page_generateds.py';done
+	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e \
+		-o docs/api/$$mod $$mod/$$mod \
+		'ocrd_models/ocrd_models/ocrd_page_generateds.py' \
+		;done
 	cd docs ; $(MAKE) html
 
 docs-push: gh-pages docs
@@ -200,22 +210,42 @@ pyclean:
 # Docker
 #
 
+.PHONY: docker docker-cuda
+
 # Build docker image
 docker docker-cuda:
 	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build docker GPU / CUDA image
-docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.0-runtime-ubuntu18.04
+docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu18.04
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
+docker-cuda: DOCKER_ARGS += --build-arg FIXUP="make cuda-ubuntu cuda-ldconfig"
 
 #
-# bash library
+# CUDA
 #
-.PHONY: bashlib
 
-# Build bash library
-bashlib:
-	cd ocrd/bashlib; make lib
+.PHONY: cuda-ubuntu cuda-ldconfig
+
+# Install native CUDA toolkit in different versions
+cuda-ubuntu: cuda-ldconfig
+	apt-get -y install --no-install-recommends cuda-runtime-10-0 cuda-runtime-10-1 cuda-runtime-10-2 cuda-runtime-11-0 cuda-runtime-11-1 cuda-runtime-11-3 libcudnn7
+
+cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
+	ldconfig
+
+/etc/ld.so.conf.d/cuda.conf:
+	@echo > $@
+	@echo /usr/local/cuda-10.0/lib64 >> $@
+	@echo /usr/local/cuda-10.0/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-10.1/lib64 >> $@
+	@echo /usr/local/cuda-10.1/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-10.2/lib64 >> $@
+	@echo /usr/local/cuda-10.2/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-11.0/lib64 >> $@
+	@echo /usr/local/cuda-11.0/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-11.1/lib64 >> $@
+	@echo /usr/local/cuda-11.1/targets/x86_64-linux/lib >> $@
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install

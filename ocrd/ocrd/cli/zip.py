@@ -1,3 +1,10 @@
+"""
+OCR-D CLI: OCRD-ZIP (BagIt) management
+
+.. click:: ocrd.cli.zip:zip_cli
+    :prog: ocrd zip
+    :nested: full
+"""
 import sys
 
 import click
@@ -9,13 +16,12 @@ from ..resolver import Resolver
 from ..workspace import Workspace
 from ..workspace_bagger import WorkspaceBagger
 
-initLogging()
-
 @click.group("zip")
 def zip_cli():
     """
     Bag/Spill/Validate OCRD-ZIP bags
     """
+    initLogging()
 
 # ----------------------------------------------------------------------
 # ocrd zip bag
@@ -33,14 +39,12 @@ def zip_cli():
               help='Basename of the METS file.',
               show_default=True)
 @click.option('-i', '--identifier', '--id', help="Ocrd-Identifier", required=True)
-@click.option('-I', '--in-place', help="Replace workspace with bag (like bagit.py does)", required=True, is_flag=True)
-@click.option('-D', '--manifestation-depth', help="Ocrd-Manifestation-Depth", type=click.Choice(['full', 'partial']), default='partial')
 @click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
 @click.option('-t', '--tag-file', help="Add a non-payload file to bag", type=click.Path(file_okay=True, dir_okay=False, readable=True, resolve_path=True), multiple=True)
 @click.option('-Z', '--skip-zip', help="Create a directory but do not ZIP it", is_flag=True, default=False)
 @click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
-def bag(directory, mets_basename, dest, identifier, in_place, manifestation_depth, mets, base_version_checksum, tag_file, skip_zip, processes):
+def bag(directory, mets_basename, dest, identifier, mets, base_version_checksum, tag_file, skip_zip, processes):
     """
     Bag workspace as OCRD-ZIP at DEST
     """
@@ -51,13 +55,11 @@ def bag(directory, mets_basename, dest, identifier, in_place, manifestation_dept
         workspace,
         dest=dest,
         ocrd_identifier=identifier,
-        ocrd_manifestation_depth=manifestation_depth,
         ocrd_mets=mets,
         ocrd_base_version_checksum=base_version_checksum,
         processes=processes,
         tag_files=tag_file,
-        skip_zip=skip_zip,
-        in_place=in_place
+        skip_zip=skip_zip
     )
 
 # ----------------------------------------------------------------------
@@ -106,3 +108,22 @@ def validate(src, **kwargs):
     print(report)
     if not report.is_valid:
         sys.exit(1)
+
+# ----------------------------------------------------------------------
+# ocrd zip update
+# ----------------------------------------------------------------------
+
+@zip_cli.command('update')
+@click.argument('src', type=click.Path(dir_okay=True, readable=True, resolve_path=True), required=True)
+@click.argument('dest', type=click.Path(dir_okay=True, readable=True, writable=True, resolve_path=True), required=False)
+@click.option('-o', '--overwrite', help="overwrite bag in SRC", is_flag=True)
+def update(src, dest=None, overwrite=False):
+    """
+    Recreate files containing checksums (manifest-sha512.txt, tagmanifest-sha512.txt and
+    'Payload-Oxum' contained in bag-info.txt) of an OCRD-ZIP.
+
+    Open the bag (zip file or directory) ``src``, create or update its manifests/checksums and
+    output to (zip file or directory) ``dest``. It is also possible to output to ``src`` / overwrite
+    ``src`` in place when ``--overwrite``-flag is given.
+    """
+    WorkspaceBagger(Resolver()).recreate_checksums(src, dest=dest, overwrite=overwrite)

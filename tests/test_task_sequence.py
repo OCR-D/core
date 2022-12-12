@@ -10,11 +10,14 @@ from tests.data.wf_testcase import (
     PARAM_JSON,
 )
 
-from ocrd_utils import pushd_popd, MIMETYPE_PAGE
+from ocrd_utils import pushd_popd, MIMETYPE_PAGE, get_ocrd_tool_json
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import run_tasks, validate_tasks, ProcessorTask
 
 class TestOcrdWfStep(TestCase):
+
+    def tearDown(self):
+        get_ocrd_tool_json.cache_clear()
 
     def test_parse_no_in(self):
         task = ProcessorTask.parse('sample-processor')
@@ -138,7 +141,9 @@ class TestOcrdWfStep(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 ws = resolver.workspace_from_url('mets.xml')
-                files_before = len(ws.mets.find_files())
+                ws.add_file('GRP0', content='', local_filename='GRP0/foo', file_id='file0', mimetype=MIMETYPE_PAGE, page_id=None)
+                ws.save_mets()
+                files_before = len(ws.mets.find_all_files())
                 run_tasks('mets.xml', 'DEBUG', None, [
                     "dummy -I OCR-D-IMG -O GRP1",
                     "dummy -I GRP1 -O GRP2",
@@ -146,7 +151,7 @@ class TestOcrdWfStep(TestCase):
                 ws.reload_mets()
                 # step 1: 2 images in OCR-D-IMG -> 2 images 2 PAGEXML in GRP1
                 # step 2: 2 images and 2 PAGEXML in GRP1 -> process just the PAGEXML
-                self.assertEqual(len(ws.mets.find_files()), files_before + 6)
+                self.assertEqual(len(ws.mets.find_all_files()), files_before + 6)
 
 
 if __name__ == '__main__':

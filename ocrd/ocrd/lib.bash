@@ -1,10 +1,7 @@
-# BEGIN-INCLUDE ./src/bash_version_check.bash 
 ((BASH_VERSINFO<4 || BASH_VERSINFO==4 && BASH_VERSINFO[1]<4)) && \
     echo >&2 "bash $BASH_VERSION is too old. Please install bash 4.4 or newer." && \
     exit 1
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/logging.bash 
 ## ### `ocrd__raise`
 ## 
 ## Raise an error and exit.
@@ -55,8 +52,6 @@ ocrd__minversion () {
     ocrd__raise "ocrd/core is too old (${version[*]} < ${minversion[*]}). Please update OCR-D/core"
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/dumpjson.bash 
 ## ### `ocrd__dumpjson`
 ## 
 ## Output ocrd-tool.json.
@@ -72,8 +67,20 @@ ocrd__dumpjson () {
     ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" dump
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/usage.bash 
+## 
+## Output file resource content.
+##
+ocrd__show_resource () {
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" show-resource "$1"
+}
+
+## 
+## Output file resources names.
+##
+ocrd__list_resources () {
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" list-resources
+}
+
 ## ### `ocrd__usage`
 ## 
 ## Print usage
@@ -84,8 +91,6 @@ ocrd__usage () {
 
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/parse_argv.bash 
 ## ### `ocrd__parse_argv`
 ## 
 ## Expects an associative array ("hash"/"dict") `ocrd__argv` to be defined:
@@ -106,7 +111,15 @@ ocrd__parse_argv () {
         ocrd__raise "Must set \$params (declare -A params)"
     fi
 
+    if [[ $# = 0 ]];then
+        ocrd__usage
+        exit 1
+    fi
+
     ocrd__argv[overwrite]=false
+    ocrd__argv[profile]=false
+    ocrd__argv[profile_file]=
+    ocrd__argv[mets_file]="$PWD/mets.xml"
 
     local __parameters=()
     local __parameter_overrides=()
@@ -116,6 +129,9 @@ ocrd__parse_argv () {
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
+            -D|--dump-module-dir) echo $(dirname "$OCRD_TOOL_JSON"); exit ;;
+            -C|--show-resource) ocrd__show_resource "$2"; exit ;;
+            -L|--list-resources) ocrd__list_resources; exit ;;
             -p|--parameter) __parameters+=(-p "$2") ; shift ;;
             -P|--parameter-override) __parameter_overrides+=(-P "$2" "$3") ; shift ; shift ;;
             -g|--page-id) ocrd__argv[page_id]=$2 ; shift ;;
@@ -124,15 +140,16 @@ ocrd__parse_argv () {
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
             --overwrite) ocrd__argv[overwrite]=true ;;
+            --profile) ocrd__argv[profile]=true ;;
+            --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
         shift
     done
 
-    if [[ ! -r "${ocrd__argv[mets_file]:=$PWD/mets.xml}" ]];then
-        ocrd__usage
-        exit 1
+    if [[ ! -e "${ocrd__argv[mets_file]}" ]];then
+        ocrd__raise "METS file '${ocrd__argv[mets_file]}' not found"
     fi
 
     if [[ ! -d "${ocrd__argv[working_dir]:=$(dirname "${ocrd__argv[mets_file]}")}" ]];then
@@ -151,6 +168,36 @@ ocrd__parse_argv () {
         ocrd__raise "Provide --output-file-grp/-O explicitly!"
     fi
 
+    # enable profiling (to be extended/acted upon by caller)
+    if [[ ${ocrd__argv[profile]} = true ]];then
+        if [[ -n "${ocrd__argv[profile_file]}" ]];then
+            exec 3> "${ocrd__argv[profile_file]}"
+        else
+            exec 3>&2
+        fi
+        BASH_XTRACEFD=3
+        # just the builtin tracer (without timing):
+        #set -x
+        # our own (including timing):
+        DEPTH=+++++++++++
+        shopt -s extdebug
+        showtime() { date "+${DEPTH:0:$BASH_SUBSHELL+1} %H:%M:%S $BASH_COMMAND" >&3; }
+        declare +t showtime # no trace here
+        trap showtime DEBUG
+    fi
+
+    # check fileGrps
+    local _valopts=( --workspace "${ocrd__argv[working_dir]}" --mets-basename "$(basename ${ocrd__argv[mets_file]})" )
+    if [[ ${ocrd__argv[overwrite]} = true ]]; then
+        _valopts+=( --overwrite )
+    fi
+    if [[ -n "${ocrd__argv[page_id]:-}" ]]; then
+        _valopts+=( --page-id "${ocrd__argv[page_id]}" )
+    fi
+    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]} ${__parameters[*]@Q} ${__parameter_overrides[*]@Q}" )
+    ocrd validate tasks "${_valopts[@]}" || exit $?
+
+    # check parameters
     local params_parsed retval
     params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params "${__parameters[@]}" "${__parameter_overrides[@]}")" || {
         retval=$?
@@ -161,8 +208,6 @@ $params_parsed"
 
 }
 
-# END-INCLUDE 
-# BEGIN-INCLUDE ./src/wrap.bash 
 ocrd__wrap () {
 
     declare -gx OCRD_TOOL_JSON="$1"
@@ -192,6 +237,20 @@ ocrd__wrap () {
 
     ocrd__parse_argv "$@"
 
+    i=0
+    declare -ag ocrd__files
+    while read line; do
+        eval declare -Ag "ocrd__file$i=( $line )"
+        eval "ocrd__files[$i]=ocrd__file$i"
+        let ++i
+    done < <(ocrd bashlib input-files \
+                  -m "${ocrd__argv[mets_file]}" \
+                  -I "${ocrd__argv[input_file_grp]}" \
+                  -O "${ocrd__argv[output_file_grp]}" \
+                  ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-})
 }
 
-# END-INCLUDE 
+## usage: pageId=$(ocrd__input_file 3 pageId)
+ocrd__input_file() {
+    eval echo "\${${ocrd__files[$1]}[$2]}"
+}

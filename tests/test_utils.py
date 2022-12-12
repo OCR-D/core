@@ -4,8 +4,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from tests.base import TestCase, main, assets
-from tests.data.mock_file import MockOcrdFile
+from tests.base import TestCase, main, assets, create_ocrd_file
+from pytest import raises
 from ocrd_utils import (
     abspath,
 
@@ -20,9 +20,11 @@ from ocrd_utils import (
     get_local_filename,
     is_string,
     membername,
+    generate_range,
 
     nth_url_segment,
     remove_non_path_from_url,
+    safe_filename,
 
     parse_json_string_or_file,
     set_json_key_value_overrides,
@@ -43,7 +45,8 @@ from ocrd_utils import (
     MIME_TO_PIL, PIL_TO_MIME,
 )
 from ocrd_models.utils import xmllint_format
-from ocrd_models import OcrdFile, OcrdMets
+from ocrd_models import OcrdMets
+
 
 class TestUtils(TestCase):
 
@@ -146,16 +149,21 @@ class TestUtils(TestCase):
 
     def test_pushd_popd_newcwd(self):
         cwd = getcwd()
-        with pushd_popd('/tmp'):
-            self.assertEqual(getcwd(), '/tmp')
+        tmp_dir = Path(gettempdir()).resolve()
+        with pushd_popd(tmp_dir):
+            self.assertEqual(getcwd(), str(tmp_dir))
         self.assertEqual(getcwd(), cwd)
+        assert getcwd() == cwd
 
     def test_pushd_popd_tempdir(self):
         cwd = getcwd()
+        tmp_dir = str(Path(gettempdir()).resolve())
         with pushd_popd(tempdir=True) as newcwd:
-            self.assertEqual(getcwd(), newcwd)
-            self.assertTrue(newcwd.startswith(gettempdir()))
+            newcwd_str = str(newcwd)
+            self.assertEqual(getcwd(), newcwd_str)
+            self.assertTrue(newcwd_str.startswith(tmp_dir))
         self.assertEqual(getcwd(), cwd)
+        assert getcwd() == cwd
 
     def test_pushd_popd_bad_call(self):
         with self.assertRaisesRegex(Exception, 'pushd_popd can accept either newcwd or tempdir, not both'):
@@ -172,8 +180,7 @@ class TestUtils(TestCase):
     def test_local_filename(self):
         self.assertEqual(get_local_filename('/foo/bar'), '/foo/bar')
         self.assertEqual(get_local_filename('file:///foo/bar'), '/foo/bar')
-        with self.assertRaisesRegex(Exception, "Invalid.* URL"):
-            self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
+        self.assertEqual(get_local_filename('file:/foo/bar'), '/foo/bar')
         self.assertEqual(get_local_filename('/foo/bar', '/foo/'), 'bar')
         self.assertEqual(get_local_filename('/foo/bar', '/foo'), 'bar')
         self.assertEqual(get_local_filename('foo/bar', 'foo'), 'bar')
@@ -262,35 +269,61 @@ class TestUtils(TestCase):
         with self.assertRaisesRegex(AssertionError, r"Expected exactly 1 output file group .foo bar., but '.'FOO', 'BAR'.' has 2"):
             assert_file_grp_cardinality('FOO,BAR', 1, 'foo bar')
 
-    def test_mock_file(self):
-        f = MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX')
-        self.assertEqual(f.fileGrp, 'MAX')
-
     def test_make_file_id_simple(self):
-        self.assertEqual(make_file_id(MockOcrdFile(None, ID="MAX_0012", fileGrp='MAX'), 'FOO'), 'FOO_0012')
+        f = create_ocrd_file('MAX', ID="MAX_0012")
+        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0012')
 
     def test_make_file_id_mets(self):
         mets = OcrdMets.empty_mets()
         for i in range(1, 10):
-            mets.add_file('FOO', ID="FOO_%04d" % (i), mimetype="image/tiff")
-            mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff")
-        self.assertEqual(make_file_id(mets.find_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
-        f = mets.add_file('ABC', ID="BAR_7", mimetype="image/tiff")
-        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0010')
+            mets.add_file('FOO', ID="FOO_%04d" % (i), mimetype="image/tiff", pageId='FOO_%04d' % i)
+            mets.add_file('BAR', ID="BAR_%04d" % (i), mimetype="image/tiff", pageId='BAR_%04d' % i)
+        self.assertEqual(make_file_id(mets.find_all_files(ID='BAR_0007')[0], 'FOO'), 'FOO_0007')
+        f = mets.add_file('ABC', ID="BAR_42", mimetype="image/tiff")
         mets.remove_file(fileGrp='FOO')
-        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0001')
+        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_BAR_42')
         mets.add_file('FOO', ID="FOO_0001", mimetype="image/tiff")
-        # print('\n'.join(['%s' % of for of in mets.find_files()]))
-        self.assertEqual(make_file_id(f, 'FOO'), 'FOO_0002')
 
     def test_make_file_id_570(self):
-        """
-        https://github.com/OCR-D/core/pull/570
-        """
+        """https://github.com/OCR-D/core/pull/570"""
         mets = OcrdMets.empty_mets()
         f = mets.add_file('GRP', ID='FOO_0001', pageId='phys0001')
         mets.add_file('GRP', ID='GRP2_0001', pageId='phys0002')
-        self.assertEqual(make_file_id(f, 'GRP2'), 'GRP2_0002')
+        self.assertEqual(make_file_id(f, 'GRP2'), 'GRP2_phys0001')
+
+    def test_make_file_id_605(self):
+        """
+        https://github.com/OCR-D/core/pull/605
+        Also: Same fileGrp!
+        """
+        mets = OcrdMets.empty_mets()
+        f = mets.add_file('GRP1', ID='FOO_0001', pageId='phys0001')
+        f = mets.add_file('GRP2', ID='FOO_0002', pageId='phys0002')
+        # NB: same fileGrp
+        self.assertEqual(make_file_id(f, 'GRP2'), 'FOO_0002')
+        self.assertEqual(make_file_id(f, 'GRP3'), 'GRP3_phys0002')
+
+    def test_make_file_id_744(self):
+        """
+        https://github.com/OCR-D/core/pull/744
+        > Often file IDs have two numbers, one of which will clash. In that case only the numerical fallback works.
+        """
+        mets = OcrdMets.empty_mets()
+        f = mets.add_file('GRP2', ID='img1796-97_00000024_img', pageId='phys0024')
+        f = mets.add_file('GRP2', ID='img1796-97_00000025_img', pageId='phys0025')
+        self.assertEqual(make_file_id(f, 'GRP3'), 'GRP3_phys0025')
+
+    def test_generate_range(self):
+        assert generate_range('PHYS_0001', 'PHYS_0005') == ['PHYS_0001', 'PHYS_0002', 'PHYS_0003', 'PHYS_0004', 'PHYS_0005']
+        with self.assertRaisesRegex(ValueError, 'could not find numeric part'):
+            generate_range('NONUMBER', 'ALSO_NONUMBER')
+        with self.assertRaisesRegex(ValueError, 'evaluates to the same number'):
+            generate_range('PHYS_0001_123', 'PHYS_0010_123')
+
+    def test_safe_filename(self):
+        assert safe_filename('Hello world,!') == 'Hello_world_'
+        assert safe_filename(' Καλημέρα κόσμε,') == '_Καλημέρα_κόσμε_'
+        assert safe_filename(':コンニチハ:') == '_コンニチハ_'
 
 if __name__ == '__main__':
     main(__file__)

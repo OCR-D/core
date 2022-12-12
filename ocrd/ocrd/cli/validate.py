@@ -1,3 +1,10 @@
+"""
+OCR-D CLI: syntax validation
+
+.. click:: ocrd.cli.validate:validate_cli
+    :prog: ocrd validate
+    :nested: full
+"""
 import sys
 
 import click
@@ -7,10 +14,7 @@ import codecs
 from ocrd import Resolver, Workspace
 from ocrd.task_sequence import ProcessorTask, validate_tasks
 
-from ocrd_utils import (
-    parse_json_string_or_file,
-    initLogging
-)
+from ocrd_utils import initLogging, parse_json_string_or_file
 from ocrd_validators import (
     OcrdToolValidator,
     OcrdZipValidator,
@@ -18,8 +22,6 @@ from ocrd_validators import (
     ParameterValidator,
     WorkspaceValidator,
 )
-
-initLogging()
 
 def _inform_of_result(report):
     if not report.is_valid:
@@ -32,6 +34,7 @@ def validate_cli():
     """
     All the validation in one CLI
     """
+    initLogging()
 
 @validate_cli.command('tool-json')
 @click.argument('ocrd_tool', required=False, nargs=1)
@@ -97,14 +100,18 @@ def validate_page(page, **kwargs):
 #      _inform_of_result(WorkspaceValidator.validate(Resolver(), mets_url, **kwargs))
 
 @validate_cli.command('tasks')
-@click.option('--workspace', nargs=1, required=False, help='Workspace these tasks are to be run. If omitted, only validate syntax')
+@click.option('--workspace', nargs=1, required=False, help='Workspace directory these tasks are to be run. If omitted, only validate syntax')
+@click.option('-M', '--mets-basename', nargs=1, default='mets.xml', help='Basename of the METS file, used in conjunction with --workspace')
+@click.option('--overwrite', is_flag=True, default=False, help='When checking against a concrete workspace, simulate overwriting output or page range.')
+@click.option('-g', '--page-id', help="ID(s) of the pages to process")
 @click.argument('tasks', nargs=-1, required=True)
-def validate_process(tasks, workspace):
+def validate_process(tasks, workspace, mets_basename, overwrite, page_id):
     '''
     Validate a sequence of tasks passable to 'ocrd process'
     '''
     if workspace:
-        _inform_of_result(validate_tasks([ProcessorTask.parse(t) for t in tasks], Workspace(Resolver(), directory=workspace)))
+        _inform_of_result(validate_tasks([ProcessorTask.parse(t) for t in tasks],
+            Workspace(Resolver(), directory=workspace, mets_basename=mets_basename), page_id=page_id, overwrite=overwrite))
     else:
         for t in [ProcessorTask.parse(t) for t in tasks]:
             _inform_of_result(t.validate())

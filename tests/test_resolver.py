@@ -1,155 +1,303 @@
 # -*- coding: utf-8 -*-
 
-from os.path import join as pjoin
-from pathlib import Path
-from tempfile import TemporaryDirectory
+import os
+import shutil
 
-from tests.base import TestCase, assets, main, copy_of_directory
+from pathlib import (
+    Path
+)
+from unittest import (
+    mock
+)
+from PIL import (
+    Image
+)
+
+from ocrd_models.ocrd_page import OcrdPage
+
+import pytest
+
+from tests.base import (
+    assets,
+    main
+)
 
 from ocrd.resolver import Resolver
 from ocrd_utils import pushd_popd
 
+
+# set pylint once on module level
+# pylint: disable=protected-access
+
 METS_HEROLD = assets.url_of('SBB0000F29300010000/data/mets.xml')
 FOLDER_KANT = assets.path_to('kant_aufklaerung_1784')
+DATA_KANT = {'mets.xml': (os.path.join(FOLDER_KANT, 'data', 'mets.xml'), 'text/xml'),
+             'INPUT_0017.tif': (os.path.join(FOLDER_KANT, 'data', 'OCR-D-IMG', 'INPUT_0017.tif'), 'image/tiff'),
+             'INPUT_0020.tif': (os.path.join(FOLDER_KANT, 'data', 'OCR-D-IMG', 'INPUT_0020.tif'), 'image/tiff'),
+             'PAGE_0017_ALTO.xml': (os.path.join(FOLDER_KANT, 'data', 'OCR-D-GT-ALTO', 'PAGE_0017_ALTO.xml'), 'text/xml'),
+             'PAGE_0020_ALTO.xml': (os.path.join(FOLDER_KANT, 'data', 'OCR-D-GT-ALTO', 'PAGE_0020_ALTO.xml'), 'text/xml'),
+             'PAGE_0017_PAGE.xml': (os.path.join(FOLDER_KANT, 'data', 'OCR-D-GT-PAGE', 'PAGE_0017_PAGE.xml'), 'text/xml'),
+             'PAGE_0020_PAGE.xml': (os.path.join(FOLDER_KANT, 'data', 'OCR-D-GT-PAGE', 'PAGE_0020_PAGE.xml'), 'text/xml'),
+             }
 
-# pylint: disable=redundant-unittest-assert, broad-except, deprecated-method, too-many-public-methods
 
-class TestResolver(TestCase):
+def _get_kant_data(key):
+    if key in DATA_KANT.keys():
+        (path, mime) = DATA_KANT[key]
+        with open(path, mode='rb') as _file:
+            return (_file.read(), mime)
 
-    def setUp(self):
-        self.resolver = Resolver()
 
-    def test_workspace_from_url_bad(self):
-        with self.assertRaisesRegex(Exception, "Must pass 'mets_url'"):
-            self.resolver.workspace_from_url(None)
+def request_behavior(*args):
+    resp = mock.Mock()
+    resp.status_code = 200
+    resp.headers = {}
+    the_key = args[0].split('/')[-1]
+    if the_key in DATA_KANT:
+        (cnt, mime) = _get_kant_data(the_key)
+        resp.content = cnt
+        resp.headers = {'Content-Type': mime}
+    return resp
 
-    def test_workspace_from_url_tempdir(self):
-        self.resolver.workspace_from_url(
-            mets_basename='foo.xml',
-            mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml')
 
-    def test_workspace_from_url_download(self):
-        url_src = 'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml'
-        #url_src = 'http://digital.bibliothek.uni-halle.de/hd/oai/?verb=GetRecord&metadataPrefix=mets&mode=xml&identifier=9049'
-        with TemporaryDirectory() as dst_dir:
-            self.resolver.workspace_from_url(
-                url_src,
-                mets_basename='foo.xml',
-                dst_dir=dst_dir,
-                download=True)
+def test_workspace_from_url_bad():
+    with pytest.raises(Exception) as exc:
+        Resolver().workspace_from_url(None)
 
-    def test_workspace_from_url_no_clobber(self):
-        with TemporaryDirectory() as dst_dir:
-            src_mets = Path(assets.path_to('kant_aufklaerung_1784-binarized/data/mets.xml'))
-            dst_mets = Path(dst_dir, 'mets.xml')
-            dst_mets.write_text(src_mets.read_text())
-            self.resolver.workspace_from_url(
-                    'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml',
-                    clobber_mets=False,
-                    dst_dir=dst_dir)
+    # check exception
+    assert "Must pass 'mets_url'" in str(exc)
 
-    def test_workspace_from_url_404(self):
-        with self.assertRaisesRegex(Exception, "HTTP request failed"):
-            self.resolver.workspace_from_url(mets_url='https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xmlX')
 
-    def test_workspace_from_url_rel_dir(self):
-        with TemporaryDirectory() as dst_dir:
-            bogus_dst_dir = '../../../../../../../../../../../../../../../../%s'  % dst_dir[1:]
-            with pushd_popd(FOLDER_KANT):
-                ws1 = self.resolver.workspace_from_url('data/mets.xml', dst_dir=bogus_dst_dir)
-                self.assertEqual(ws1.mets_target, pjoin(dst_dir, 'mets.xml'))
-                self.assertEqual(ws1.directory, dst_dir)
+@mock.patch("requests.get")
+def test_workspace_from_url_kant(mock_request, tmp_path):
 
-    def test_workspace_from_url0(self):
-        workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        #  print(workspace.mets)
-        input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
-        #  print [str(f) for f in input_files]
-        image_file = input_files[0]
-        #  print(image_file)
-        f = workspace.download_file(image_file)
-        self.assertEqual('%s.tif' % f.ID, 'FILE_0001_IMAGE.tif')
-        self.assertEqual(f.local_filename, 'OCR-D-IMG/FILE_0001_IMAGE.tif')
-        #  print(f)
+    # arrange
+    url_src = 'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml'
+    mock_request.side_effect = request_behavior
+    dst_dir = tmp_path / 'workspace_kant'
+    dst_dir.mkdir()
 
-    # pylint: disable=protected-access
-    def test_resolve_image0(self):
-        workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        input_files = workspace.mets.find_files(fileGrp='OCR-D-IMG')
-        f = input_files[0]
-        print(f.url)
-        img_pil1 = workspace._resolve_image_as_pil(f.url)
-        print(f.url)
-        self.assertEqual(img_pil1.size, (2875, 3749))
-        img_pil2 = workspace._resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
-        print(f.url)
-        self.assertEqual(img_pil2.size, (1, 1))
-        img_pil2 = workspace._resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
+    # act
+    resolver = Resolver()
+    resolver.workspace_from_url(url_src, mets_basename='foo.xml', dst_dir=dst_dir)
 
-    # pylint: disable=protected-access
-    def test_resolve_image_grayscale(self):
-        img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png')
-        workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        img_pil1 = workspace.resolve_image_as_pil(img_url)
-        self.assertEqual(img_pil1.size, (1457, 2083))
-        img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
-        self.assertEqual(img_pil2.size, (1, 1))
+    # assert
+    local_path = dst_dir / 'foo.xml'
+    assert os.path.isfile(str(local_path))
+    # 1 time data was requested
+    assert mock_request.call_count == 1
 
-    # pylint: disable=protected-access
-    def test_resolve_image_bitonal(self):
-        img_url = assets.url_of('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017.png')
-        workspace = self.resolver.workspace_from_url(METS_HEROLD)
-        img_pil1 = workspace._resolve_image_as_pil(img_url)
-        self.assertEqual(img_pil1.size, (1457, 2083))
-        img_pil2 = workspace._resolve_image_as_pil(img_url, [[0, 0], [1, 1]])
-        self.assertEqual(img_pil2.size, (1, 1))
 
-    def test_workspace_from_nothing(self):
-        ws1 = self.resolver.workspace_from_nothing(None)
-        self.assertIsNotNone(ws1.mets)
+@mock.patch("requests.get")
+def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
 
-    def test_workspace_from_nothing_makedirs(self):
-        with TemporaryDirectory() as tempdir:
-            non_existant_dir = Path(tempdir, 'target')
-            ws1 = self.resolver.workspace_from_nothing(non_existant_dir)
-            self.assertEqual(ws1.directory, non_existant_dir)
+    # arrange
+    url_src = 'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml'
+    mock_request.side_effect = request_behavior
+    dst_dir = tmp_path / 'workspace_kant'
+    dst_dir.mkdir()
 
-    def test_workspace_from_nothing_noclobber(self):
-        with TemporaryDirectory() as tempdir:
-            ws2 = self.resolver.workspace_from_nothing(tempdir)
-            self.assertEqual(ws2.directory, tempdir)
-            with self.assertRaisesRegex(Exception, "METS 'mets.xml' already exists in '%s' and clobber_mets not set" % tempdir):
-                # must fail because tempdir was just created
-                self.resolver.workspace_from_nothing(tempdir)
+    # act
+    resolver = Resolver()
+    resolver.workspace_from_url(url_src, mets_basename='kant_aufklaerung_1784.xml', dst_dir=dst_dir, download=True)
 
-    def test_download_to_directory_badargs_url(self):
-        with self.assertRaisesRegex(Exception, "'url' must be a string"):
-            self.resolver.download_to_directory(None, None)
+    # assert files present under local tmp_path
+    local_path_mets = dst_dir / 'kant_aufklaerung_1784.xml'
+    assert os.path.isfile(str(local_path_mets))
+    local_path_img1 = dst_dir / 'OCR-D-IMG' / 'INPUT_0017.tif'
+    assert os.path.isfile(str(local_path_img1))
+    local_path_page1 = dst_dir / 'OCR-D-GT-PAGE' / 'PAGE_0017_PAGE.xml'
+    assert os.path.isfile(str(local_path_page1))
 
-    def test_download_to_directory_badargs_directory(self):
-        with self.assertRaisesRegex(Exception, "'directory' must be a string"):
-            self.resolver.download_to_directory(None, 'foo')
+    # 1 METS/MODS + 2 images + 4 OCR files = 7 requests
+    assert mock_request.call_count == 7
 
-    def test_download_to_directory_default(self):
-        with copy_of_directory(FOLDER_KANT) as src:
-            with TemporaryDirectory() as dst:
-                fn = self.resolver.download_to_directory(dst, pjoin(src, 'data/mets.xml'))
-                self.assertEqual(fn, 'mets.xml')
-                self.assertTrue(Path(dst, fn).exists())
 
-    def test_download_to_directory_basename(self):
-        with copy_of_directory(FOLDER_KANT) as src:
-            with TemporaryDirectory() as dst:
-                fn = self.resolver.download_to_directory(dst, pjoin(src, 'data/mets.xml'), basename='foo')
-                self.assertEqual(fn, 'foo')
-                self.assertTrue(Path(dst, fn).exists())
+@mock.patch("requests.get")
+def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp_path):
 
-    def test_download_to_directory_subdir(self):
-        with copy_of_directory(FOLDER_KANT) as src:
-            with TemporaryDirectory() as dst:
-                fn = self.resolver.download_to_directory(dst, pjoin(src, 'data/mets.xml'), subdir='baz')
-                self.assertEqual(fn, pjoin('baz', 'mets.xml'))
-                self.assertTrue(Path(dst, fn).exists())
+    # arrange
+    url_src = 'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml'
+    mock_request.side_effect = request_behavior
+    dst_dir = tmp_path / 'workspace_kant'
+    dst_dir.mkdir()
+    src_mets = Path(assets.path_to('kant_aufklaerung_1784-binarized/data/mets.xml'))
+    dst_mets = Path(dst_dir, 'mets.xml')
+    shutil.copyfile(src_mets, dst_mets)
+
+    # act
+    Resolver().workspace_from_url(url_src, clobber_mets=False, dst_dir=dst_dir)
+
+    # assert
+    # no real request was made, since mets already present
+    assert mock_request.call_count == 0
+
+
+@mock.patch("requests.get")
+def test_workspace_from_url_404(mock_request):
+    """Expected behavior when try create workspace from invalid online target
+    """
+
+    # arrange
+    url_404 = 'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xmlX'
+    mock_request.side_effect = Exception('HTTP request failed')
+
+    with pytest.raises(Exception) as exc:
+        Resolver().workspace_from_url(mets_url=url_404)
+
+    # assert
+    assert "HTTP request failed" in str(exc)
+    assert mock_request.call_count == 1
+
+
+def test_workspace_from_url_with_rel_dir(tmp_path):
+    bogus_dst_dir = '../../../../../../../../../../../../../../../../%s' % str(tmp_path)[1:]
+
+    # act
+    with pushd_popd(FOLDER_KANT):
+        ws1 = Resolver().workspace_from_url('data/mets.xml', dst_dir=bogus_dst_dir)
+
+    # assert
+    assert os.path.join(tmp_path, 'mets.xml') == ws1.mets_target
+    assert str(tmp_path) == ws1.directory
+
+
+def test_workspace_from_url0():
+
+    # act
+    workspace = Resolver().workspace_from_url(METS_HEROLD)
+    input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
+    image_file = input_files[0]
+    f = workspace.download_file(image_file)
+
+    # assert
+    assert '%s.tif' % f.ID == 'FILE_0001_IMAGE.tif'
+    assert f.local_filename == 'OCR-D-IMG/FILE_0001_IMAGE.tif'
+
+
+def test_resolve_image0():
+    workspace = Resolver().workspace_from_url(METS_HEROLD)
+    input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
+    f = input_files[0]
+    img_pil1 = workspace._resolve_image_as_pil(f.url)
+    assert img_pil1.size == (2875, 3749)
+    img_pil2 = workspace._resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
+    assert img_pil2.size == (1, 1)
+
+
+@pytest.mark.parametrize(
+    "image_url,size_pil",
+    [('OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png', (1, 1)),
+     ('OCR-D-IMG-1BIT/OCR-D-IMG-1BIT_0017.png', (1, 1)),
+     ])
+def test_resolve_image_as_pil(image_url, size_pil):
+    url_path = assets.url_of('kant_aufklaerung_1784-binarized/data/mets.xml')
+    workspace = Resolver().workspace_from_url(url_path)
+    img_pil = workspace._resolve_image_as_pil(image_url, [[0, 0], [1, 1]])
+    assert img_pil.size == size_pil
+
+
+def test_resolve_image_as_pil_deprecated():
+    url_path = os.path.join(assets.url_of('kant_aufklaerung_1784-binarized'), 'data/mets.xml')
+    workspace = Resolver().workspace_from_url(url_path)
+    with pytest.warns(DeprecationWarning) as record:
+        workspace.resolve_image_as_pil('OCR-D-IMG-NRM/OCR-D-IMG-NRM_0017.png')
+
+    # assert
+    assert len(record) == 1
+    assert 'Call to deprecated method resolve_image_as_pil.' in str(record[0].message)
+
+
+def test_workspace_from_nothing():
+    ws1 = Resolver().workspace_from_nothing(None)
+    assert ws1.mets
+
+
+def test_workspace_from_nothing_makedirs(tmp_path):
+    non_existant_dir = tmp_path / 'target'
+    ws1 = Resolver().workspace_from_nothing(non_existant_dir)
+    assert ws1.directory == non_existant_dir
+
+
+def test_workspace_from_nothing_noclobber(tmp_path):
+    """Attempt to re-create workspace shall fail because already created
+    """
+
+    ws2 = Resolver().workspace_from_nothing(tmp_path)
+    assert ws2.directory == tmp_path
+
+    with pytest.raises(Exception) as exc:
+        Resolver().workspace_from_nothing(tmp_path)
+
+    # assert
+    the_msg = "METS 'mets.xml' already exists in '%s' and clobber_mets not set" % tmp_path
+    assert the_msg in str(exc)
+
+
+@pytest.mark.parametrize("url,basename,exc_msg",
+                         [(None, None, "'url' must be a string"),
+                          (None, 'foo', "'directory' must be a string")]
+                         )
+def test_download_to_directory_with_badargs(url, basename, exc_msg):
+
+    with pytest.raises(Exception) as exc:
+        Resolver().download_to_directory(url, basename)
+
+    # assert exception message contained
+    assert exc_msg in str(exc)
+
+
+@pytest.fixture(name='fixture_copy_kant')
+def _fixture_copy_kant(tmp_path):
+    temporary_phil = tmp_path / 'kant_aufklaerung_1784'
+    shutil.copytree(FOLDER_KANT, temporary_phil)
+    yield temporary_phil
+
+
+def test_download_to_directory_default(fixture_copy_kant):
+    tmp_root = fixture_copy_kant.parent
+    phil_data = fixture_copy_kant / 'data' / 'mets.xml'
+    fn = Resolver().download_to_directory(str(tmp_root), str(phil_data))
+    assert Path(tmp_root, fn).exists()
+    assert fn == 'mets.xml'
+
+
+def test_download_to_directory_basename(fixture_copy_kant):
+    tmp_root = fixture_copy_kant.parent
+    phil_data = fixture_copy_kant / 'data' / 'mets.xml'
+    fn = Resolver().download_to_directory(str(tmp_root), str(phil_data), basename='foo')
+    assert Path(tmp_root, fn).exists()
+    assert fn == 'foo'
+
+
+def test_download_to_directory_subdir(fixture_copy_kant):
+    tmp_root = fixture_copy_kant.parent
+    phil_data = fixture_copy_kant / 'data' / 'mets.xml'
+    fn = Resolver().download_to_directory(str(tmp_root), str(phil_data), subdir='baz')
+    assert Path(tmp_root, fn).exists()
+    assert fn == 'baz/mets.xml'
+
+
+def test_resolve_mets_arguments():
+    """
+    https://github.com/OCR-D/core/issues/693
+    https://github.com/OCR-D/core/issues/517
+    """
+    resolver = Resolver()
+    assert resolver.resolve_mets_arguments(None, None, None) == (str(Path.cwd()), str(Path.cwd() / 'mets.xml'), 'mets.xml')
+    assert resolver.resolve_mets_arguments('/', None, 'mets.xml') == ('/', '/mets.xml', 'mets.xml')
+    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
+    assert resolver.resolve_mets_arguments(None, '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
+    assert resolver.resolve_mets_arguments('/foo', 'foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
+    assert resolver.resolve_mets_arguments('/foo', 'http://bar/foo.xml', None) == ('/foo', 'http://bar/foo.xml', 'foo.xml')
+    with pytest.raises(ValueError, match="Use either --mets or --mets-basename, not both"):
+        resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml')
+    with pytest.raises(ValueError, match="inconsistent with --directory"):
+        resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None)
+    with pytest.warns(DeprecationWarning):
+        resolver.resolve_mets_arguments('/foo', None, 'not_mets.xml')
+    with pytest.raises(ValueError, match=r"--mets is an http\(s\) URL but no --directory was given"):
+        resolver.resolve_mets_arguments(None, 'http://bar/foo.xml', None)
 
 if __name__ == '__main__':
     main(__file__)

@@ -1,5 +1,6 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
+ARG FIXUP=echo
 MAINTAINER OCR-D
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
@@ -16,18 +17,22 @@ COPY ocrd_validators/ ./ocrd_validators
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
-RUN apt-get update && apt-get -y install --no-install-recommends \
+RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
+RUN apt-get update && apt-get -y install \
     ca-certificates \
     software-properties-common \
     python3-dev \
     python3-pip \
     make \
     wget \
+    time \
     curl \
     sudo \
     git \
+    && make deps-ubuntu \
     && pip3 install --upgrade pip setuptools \
     && make install \
+    && $FIXUP \
     && rm -rf /build-ocrd
 
 WORKDIR /data

@@ -1,15 +1,20 @@
 version: 2
 
+orbs:
+    python: circleci/python@2.0.3
+
 jobs:
 
-  test-python35:
-    docker:
-      - image: python:3.5.3
+  test-macos:
+    macos:
+      xcode: "12.5.1"
+    # resource_class: macos.x86.medium.gen2
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
-      - run: make test
+      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos
+      - run: make deps-test install PIP=pip3
+      - run: make test benchmark PYTHON=python3
 
   test-python36:
     docker:
@@ -17,8 +22,9 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
-      - run: make test
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
 
   test-python37:
     docker:
@@ -26,8 +32,9 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
-      - run: make test
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
 
   test-python38:
     docker:
@@ -35,8 +42,19 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: make deps-test install
-      - run: make test
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
+
+  test-python39:
+    docker:
+      - image: python:3.9
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
 
   deploy:
     docker:
@@ -62,7 +80,8 @@ workflows:
               only: master
   test-pull-request:
     jobs:
-      - test-python35
       - test-python36
       - test-python37
       - test-python38
+      - test-python39
+      - test-macos

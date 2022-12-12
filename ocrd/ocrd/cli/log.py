@@ -1,18 +1,22 @@
 """
-Logging CLI
+OCR-D CLI: Logging
+
+.. click:: ocrd.cli.log:log_cli
+    :prog: ocrd log
+    :nested: full
 """
 import click
 from ocrd_utils import initLogging, getLogger, getLevelName
-
-initLogging()
+import logging
 
 class LogCtx():
 
     def __init__(self, name):
-        self.logger = getLogger(name)
+        self.name = name
 
     def log(self, lvl, *args, **kwargs):
-        self.logger.log(getLevelName(lvl), *args, **kwargs)
+        logger = getLogger(self.name)
+        logger.log(getLevelName(lvl), *args, **kwargs)
 
 pass_log = click.make_pass_decorator(LogCtx)
 
@@ -23,6 +27,7 @@ def log_cli(ctx, name, *args, **kwargs):
     """
     Logging
     """
+    initLogging()
     ctx.obj = LogCtx(name)
 
 def _bind_log_command(lvl):
@@ -31,10 +36,13 @@ def _bind_log_command(lvl):
     def _log_wrapper(ctx, msgs):
         if not msgs:
             ctx.log(lvl.upper(), '')
+        elif len(msgs) == 1 and msgs[0] == '-':
+            for stdin_line in click.get_text_stream('stdin'):
+                ctx.log(lvl.upper(), stdin_line.rstrip('\n'))
         else:
             msg = list(msgs) if '%s' in msgs[0] else ' '.join([x.replace('%', '%%') for x in msgs])
             ctx.log(lvl.upper(), msg)
     return _log_wrapper
 
-for lvl in ['trace', 'debug', 'info', 'warning', 'error', 'critical']:
-    log_cli.command(lvl, help="Log a %s message" % lvl.upper())(_bind_log_command(lvl))
+for _lvl in ['trace', 'debug', 'info', 'warning', 'error', 'critical']:
+    log_cli.command(_lvl, help="Log a %s message" % _lvl.upper())(_bind_log_command(_lvl))

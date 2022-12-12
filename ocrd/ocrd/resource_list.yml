@@ -1,0 +1,117 @@
+# List available resources by processor for "ocrd resmgr"
+ocrd-calamari-recognize:
+  # XXX disabled since older ocrd_calamari versions don't support resource resolving
+  #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
+  #  type: archive
+  #  name: qurator-gt4histocr-0.3
+  #  description: Calamari model trained with GT4HistOCR
+  #  size: 116439072
+  #  path_in_archive: '.'
+  #  version_range: '< 1.0.0'
+  - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-12-11T11_10+0100/model.tar.xz
+    type: archive
+    name: qurator-gt4histocr-1.0
+    description: Calamari model trained with GT4HistOCR
+    size: 90275264
+    path_in_archive: '.'
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_fraktur19-1.tar.gz
+    type: archive
+    name: zpd-fraktur19
+    description: Model trained on 19th century german fraktur
+    path_in_archive: 'c1_fraktur19-1'
+    size: 86009886
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_latin-script-hist-3.tar.gz
+    type: archive
+    name: zpd-latin-script-hist-3
+    path_in_archive: 'c1_latin-script-hist-3'
+    description: Model trained on historical latin-script texts
+    size: 88416863
+    version_range: '>= 1.0.0'
+ocrd-cis-ocropy-recognize:
+  - url: https://github.com/zuphilip/ocropy-models/raw/master/en-default.pyrnn.gz
+    name: en-default.pyrnn.gz
+    description: Default ocropy model
+    size: 83826134
+  - url: https://github.com/zuphilip/ocropy-models/raw/master/fraktur.pyrnn.gz
+    name: fraktur.pyrnn.gz
+    description: Default ocropy fraktur model
+    size: 43882365
+  - url: https://github.com/jze/ocropus-model_fraktur/raw/master/fraktur.pyrnn.gz
+    name: fraktur-jze.pyrnn.gz
+    description: ocropy fraktur model by github.com/jze
+    size: 2961298
+  - url: https://github.com/chreul/OCR_Testdata_EarlyPrintedBooks/raw/master/LatinHist-98000.pyrnn.gz
+    name: LatinHist.pyrnn.gz
+    description: ocropy historical latin model by github.com/chreul
+    size: 16989864
+ocrd-typegroups-classifier:
+  - url: https://github.com/seuretm/ocrd_typegroups_classifier/raw/master/ocrd_typegroups_classifier/models/densenet121.tgc
+    name: densenet121.tgc
+    description: Network to predict font families with. Bundled with standard installation.
+    size: 28509377
+ocrd-sbb-binarize:
+  - url: https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz
+    description: updated default models provided by github.com/qurator-spk
+    name: default-2021-03-09
+    type: archive
+    path_in_archive: models
+    size: 133363179
+  - url: https://qurator-data.de/sbb_binarization/models.tar.gz
+    description: default models provided by github.com/qurator-spk
+    name: default
+    type: archive
+    path_in_archive: models
+    size: 1654623597
+ocrd-sbb-textline-detector:
+  - url: https://qurator-data.de/sbb_textline_detector/models.tar.gz
+    description: default models provided by github.com/qurator-spk
+    name: default
+    type: archive
+    size: 1194551551
+ocrd-anybaseocr-dewarp:
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/dewarping/latest_net_G.pth
+    name: latest_net_G.pth
+    description: dewarping model for anybaseocr
+    size: 805292230
+ocrd-anybaseocr-block-segmentation:
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/segmentation/block_segmentation_weights.h5
+    name: block_segmentation_weights.h5
+    description: block segmentation model for anybaseocr
+    size: 256139800
+ocrd-anybaseocr-layout-analysis:
+  - url: https://ocr-d.kba.cloud/structure_analysis.tar.gz
+    name: structure_analysis
+    description: structure analysis model for anybaseocr
+    type: archive
+    path_in_archive: 'structure_analysis'
+    size: 29002514
+  - url: https://ocr-d-repo.scc.kit.edu/models/dfki/layoutAnalysis/mapping_densenet.pickle
+    name: mapping_densenet.pickle
+    description: mapping model for anybaseocr
+    size: 374
+ocrd-anybaseocr-tiseg:
+  - url: https://ocr-d.kba.cloud/seg_model.tar.gz
+    name: seg_model
+    description: text image segmentation model for anybaseocr
+    type: archive
+    path_in_archive: 'seg_model'
+    size: 61388872
+ocrd-kraken-segment:
+  - url: https://github.com/mittagessen/kraken/raw/master/kraken/blla.mlmodel
+    description: Pretrained baseline segmentation model
+    name: blla.mlmodel
+    size: 5046835
+ocrd-kraken-recognize:
+  - url: https://zenodo.org/record/2577813/files/en_best.mlmodel?download=1
+    name: en_best.mlmodel
+    description: This model has been trained on a large corpus of modern printed English text\naugmented with ~10000 lines of historical pages
+    size: 2930723
+ocrd-eynollah-segment:
+  - url: https://qurator-data.de/eynollah/2021-04-25/models_eynollah.tar.gz
+    name: default
+    description: models for eynollah
+    size: 3241866640
+    type: archive
+    path_in_archive: 'models_eynollah'
