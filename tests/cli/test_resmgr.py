@@ -75,3 +75,18 @@ def test_directory_copy(mgr_with_tmp_path):
         assert not r.exception
         assert Path(mgr_path / 'ocrd-resources' / proc).exists()
         assert directory_size(mgr_path / 'ocrd-resources' / proc /  res_name) == 30
+
+        r = runner.invoke(
+            resmgr_cli,
+            ['download', '--allow-uninstalled', '--any-url', tmp_path, proc, res_name],
+            env=env,
+            catch_exceptions=False
+        )
+        assert 'already exists but --overwrite is not set' in r.output
+        r = runner.invoke(
+            resmgr_cli,
+            ['download', '--overwrite', '--allow-uninstalled', '--any-url', tmp_path, proc, res_name],
+            env=env,
+            catch_exceptions=False
+        )
+        assert 'already exists but --overwrite is not set' not in r.output
