@@ -25,11 +25,6 @@ from ocrd_utils import getLogger, directory_size, get_moduledir
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
-def copytree(src, dst, *args, overwrite=False, **kwargs):
-    if overwrite:
-        rmtree(dst)
-    return copytree_(src, dst, *args, **kwargs)
-
 class OcrdResourceManager():
 
     """
@@ -242,13 +237,6 @@ class OcrdResourceManager():
     def _download_impl(self, url, filename, progress_cb=None, size=None, overwrite=False):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
-        if Path(filename).exists():
-            if not overwrite:
-                raise FileExistsError("%s %s already exists but overwrite is not set" % ('Directory' if Path(filename).is_dir() else 'File', filename))
-                if Path(filename).is_dir():
-                    rmtree(filename)
-                else:
-                    unlink(filename)
         with open(filename, 'wb') as f:
             with requests.get(url, stream=True) as r:
                 for data in r.iter_content(chunk_size=4096):
@@ -260,11 +248,6 @@ class OcrdResourceManager():
         log = getLogger('ocrd.resource_manager._copy_impl')
         log.info("Copying %s to %s", src_filename, filename)
         if Path(src_filename).is_dir():
-            if Path(filename).exists():
-                if not overwrite:
-                    raise FileExistsError("Directory %s already exists but overwrite is not set" % filename)
-                log.info("Removing existing target directory %s", filename)
-                rmtree(filename)
             log.info(f"Copying recursively from {src_filename} to {filename}")
             for child in Path(src_filename).rglob('*'):
                 child_dst = Path(filename) / child.relative_to(src_filename)
@@ -279,11 +262,6 @@ class OcrdResourceManager():
                         else:
                             break
         else:
-            if Path(filename).exists():
-                if not overwrite:
-                    raise FileExistsError("File %s already exists but overwrite is not set" % filename)
-                log.info("Removing existing target file %s", filename)
-                unlink(filename)
             with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
                 while True:
                     chunk = f_in.read(4096)
@@ -317,9 +295,15 @@ class OcrdResourceManager():
             name = Path(unquote(url_parsed.path)).name
         fpath = Path(destdir, name)
         is_url = url.startswith('https://') or url.startswith('http://')
-        if fpath.exists() and not overwrite:
-            log.info("%s to be %s to %s which already exists and overwrite is False" % (url, 'downloaded' if is_url else 'copied', fpath))
-            return fpath
+        if fpath.exists():
+            if not overwrite:
+                raise FileExistsError("%s %s already exists but --overwrite is not set" % ('Directory' if fpath.is_dir() else 'File', fpath))
+            if fpath.is_dir():
+                log.info("Removing existing target directory {fpath}")
+                rmtree(str(fpath))
+            else:
+                log.info("Removing existing target file {fpath}")
+                unlink(str(fpath))
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type in ('file', 'directory'):
             if is_url:
