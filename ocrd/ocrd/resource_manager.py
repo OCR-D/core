@@ -1,11 +1,10 @@
 from pathlib import Path
 from os.path import join
 from os import environ, listdir, getcwd, path, unlink
-from shutil import copytree as copytree_, rmtree
+from shutil import copytree, rmtree
 from json import loads
 from os import environ, listdir, getcwd, path
 from fnmatch import filter as apply_glob
-from shutil import copytree
 from datetime import datetime
 from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
@@ -234,7 +233,7 @@ class OcrdResourceManager():
             return Path(name).stem
         raise ValueError("No such usage '%s'" % usage)
 
-    def _download_impl(self, url, filename, progress_cb=None, size=None, overwrite=False):
+    def _download_impl(self, url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
         with open(filename, 'wb') as f:
@@ -244,7 +243,7 @@ class OcrdResourceManager():
                         progress_cb(len(data))
                     f.write(data)
 
-    def _copy_impl(self, src_filename, filename, progress_cb=None, overwrite=False):
+    def _copy_impl(self, src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
         log.info("Copying %s to %s", src_filename, filename)
         if Path(src_filename).is_dir():
@@ -307,22 +306,22 @@ class OcrdResourceManager():
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type in ('file', 'directory'):
             if is_url:
-                self._download_impl(url, fpath, progress_cb, overwrite=overwrite)
+                self._download_impl(url, fpath, progress_cb)
             else:
-                self._copy_impl(url, fpath, progress_cb, overwrite=overwrite)
+                self._copy_impl(url, fpath, progress_cb)
         elif resource_type == 'archive':
             with pushd_popd(tempdir=True) as tempdir:
                 if is_url:
-                    self._download_impl(url, 'download.tar.xx', progress_cb, overwrite=overwrite)
+                    self._download_impl(url, 'download.tar.xx', progress_cb)
                 else:
-                    self._copy_impl(url, 'download.tar.xx', progress_cb, overwrite=overwrite)
+                    self._copy_impl(url, 'download.tar.xx', progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     log.info("Extracting archive to %s/out" % tempdir)
                     with open_tarfile('../download.tar.xx', 'r:*') as tar:
                         tar.extractall()
                     log.info("Copying '%s' from tarball to %s" % (path_in_archive, fpath))
-                    copytree(path_in_archive, str(fpath), overwrite=overwrite)
+                    copytree(path_in_archive, str(fpath))
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):
