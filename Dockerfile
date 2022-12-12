@@ -19,11 +19,12 @@ COPY README.md .
 COPY LICENSE .
 RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
 RUN apt-get update && apt-get -y install software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update && apt-get -y install \
         ca-certificates \
-        python3.7-dev \
-        python3.7-venv \
+        python3-dev \
+        python3-pip \
+        python3-venv \
+        gcc \
         make \
         wget \
         time \
@@ -31,9 +32,9 @@ RUN apt-get update && apt-get -y install software-properties-common \
         sudo \
         git \
     && make deps-ubuntu \
-    && python3.7 -m ensurepip --default-pip \
     && pip install --upgrade pip setuptools \
     && make install \
+    && apt-get remove -y gcc \
     && $FIXUP \
     && rm -rf /build-ocrd
 
