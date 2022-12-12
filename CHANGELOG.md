@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd resmgr download --overwrite` now works properly for both directories and files, #690, #797
+
 ## [2.44.0] - 2022-12-08
 
 Added:
