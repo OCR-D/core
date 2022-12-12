@@ -1,10 +1,11 @@
 """
 Constants for ocrd_utils.
 """
-from pkg_resources import get_distribution
 from re import compile as regex_compile
 from os import environ
 from os.path import join, expanduser
+
+from ocrd_utils.package_resources import get_distribution
 
 __all__ = [
     'EXT_TO_MIME',
@@ -42,6 +43,7 @@ EXT_TO_MIME = {
     '.pnm': 'image/x-portable-anymap',
     '.pbm': 'image/x-portable-bitmap',
     '.txt': 'text/plain',
+    '.xsl': 'text/xsl',
 }
 
 MIME_TO_EXT = {
@@ -56,10 +58,15 @@ MIME_TO_EXT = {
     'application/pdf': '.pdf',
     'application/postscript': '.ps',
     'application/oxps': '.xps',
+    'application/x-hdf': '.h5',
+    'application/x-hdf;subtype=bag': '.h5',
+    'application/vnd.pytorch': '.pth',
     'image/x-portable-pixmap': '.ppm',
     'image/x-portable-anymap': '.pnm',
     'image/x-portable-bitmap': '.pbm',
     'text/plain': '.txt',
+    'text/xsl': '.xsl',
+    'text/xml': '.xml',
 }
 
 #
@@ -105,4 +112,4 @@ else:
 XDG_DATA_HOME = environ['XDG_DATA_HOME'] if 'XDG_DATA_HOME' in environ else join(HOME, '.local', 'share')
 XDG_CONFIG_HOME = environ['XDG_CONFIG_HOME'] if 'XDG_CONFIG_HOME' in environ else join(HOME, '.config')
 
-RESOURCE_LOCATIONS = ['data', 'cwd', 'system']
+RESOURCE_LOCATIONS = ['data', 'cwd', 'system', 'module']

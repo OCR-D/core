@@ -3,11 +3,13 @@ import json
 from tempfile import TemporaryDirectory
 from os.path import join
 from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, IncompleteProcessor, DUMMY_TOOL
+from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor, DUMMY_TOOL
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
+
+import pytest
 
 class TestProcessor(TestCase):
 
@@ -32,17 +34,18 @@ class TestProcessor(TestCase):
     def test_no_input_file_grp(self):
         processor = run_processor(DummyProcessor,
                                   resolver=self.resolver,
-                                  mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+                                  workspace=self.workspace)
         with self.assertRaisesRegex(Exception, 'Processor is missing input fileGrp'):
             _ = processor.input_files
 
     def test_with_mets_url_input_files(self):
+        assert len(list(self.workspace.mets.find_files(fileGrp='OCR-D-SEG-PAGE'))) == 2
         processor = run_processor(DummyProcessor,
                                   input_file_grp='OCR-D-SEG-PAGE',
                                   resolver=self.resolver,
-                                  mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        self.assertEqual(len(processor.input_files), 2)
-        self.assertTrue(all([f.mimetype == MIMETYPE_PAGE for f in processor.input_files]))
+                                  workspace=self.workspace)
+        assert len(processor.input_files) == 2
+        assert [f.mimetype for f in processor.input_files] == [MIMETYPE_PAGE, MIMETYPE_PAGE]
 
     def test_parameter(self):
         with TemporaryDirectory() as tempdir:
@@ -55,7 +58,7 @@ class TestProcessor(TestCase):
                     parameter=json.load(f),
                     input_file_grp="OCR-D-IMG",
                     resolver=self.resolver,
-                    mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml')
+                    workspace=self.workspace
                 )
             self.assertEqual(len(processor.input_files), 3)
 
@@ -79,6 +82,41 @@ class TestProcessor(TestCase):
         run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace)
         self.assertEqual(len(self.workspace.mets.agents), no_agents_before + 1, 'one more agent')
         #  print(self.workspace.mets.agents[no_agents_before])
+
+    def test_run_input(self):
+        run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace, input_file_grp="OCR-D-IMG")
+        assert len(self.workspace.mets.agents) > 0
+        assert len(self.workspace.mets.agents[-1].notes) > 0
+        assert ({'{https://ocr-d.de}option': 'input-file-grp'}, 'OCR-D-IMG') in self.workspace.mets.agents[-1].notes
+
+    def test_run_output0(self):
+        with pushd_popd(tempdir=True) as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0002')
+            run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=ws,
+                          input_file_grp="GRP1",
+                          output_file_grp="OCR-D-OUT")
+            assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
+
+    def test_run_output_overwrite(self):
+        with pushd_popd(tempdir=True) as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0002')
+            ws.overwrite_mode = True
+            ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, ID='OCR-D-OUT_phys_0001', pageId='phys_0001')
+            ws.overwrite_mode = False
+            with pytest.raises(Exception) as exc:
+                run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=ws,
+                              input_file_grp="GRP1",
+                              output_file_grp="OCR-D-OUT")
+                assert str(exc.value) == "File with ID='OCR-D-OUT_phys_0001' already exists"
+            ws.overwrite_mode = True
+            run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=ws,
+                          input_file_grp="GRP1",
+                          output_file_grp="OCR-D-OUT")
+            assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
@@ -105,10 +143,10 @@ class TestProcessor(TestCase):
         class ZipTestProcessor(Processor): pass
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP2', mimetype='application/alto+xml', ID='foobar2', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', pageId='phys_0002')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar4', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
+            ws.add_file('GRP2', mimetype='application/alto+xml', file_id='foobar2', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar4', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -125,12 +163,12 @@ class TestProcessor(TestCase):
         class ZipTestProcessor(Processor): pass
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype='image/png', ID='foobar1img1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype='image/png', ID='foobar1img2', pageId='phys_0001')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar3', pageId='phys_0002')
-            ws.add_file('GRP2', mimetype='image/tiff', ID='foobar4', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype='image/png', file_id='foobar1img1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype='image/png', file_id='foobar1img2', page_id='phys_0001')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
+            ws.add_file('GRP2', mimetype='image/tiff', file_id='foobar4', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -141,7 +179,7 @@ class TestProcessor(TestCase):
                     print("PAGE-filtered")
                     tuples = [(one.ID, two) for one, two in proc.zip_input_files(mimetype=MIMETYPE_PAGE)]
                     assert ('foobar3', None) in tuples
-            ws.add_file('GRP2', mimetype='image/tiff', ID='foobar4dup', pageId='phys_0002')
+            ws.add_file('GRP2', mimetype='image/tiff', file_id='foobar4dup', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -152,7 +190,7 @@ class TestProcessor(TestCase):
                     assert ('foobar3', None) in tuples
                     with self.assertRaisesRegex(Exception, "No PAGE-XML for page .* in fileGrp .* but multiple matches."):
                         tuples = proc.zip_input_files(on_error='abort')
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2dup', pageId='phys_0001')
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2dup', page_id='phys_0001')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
@@ -164,8 +202,8 @@ class TestProcessor(TestCase):
         self.capture_out_err()
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId=None)
-            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id=None)
+            ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0001')
             for page_id in [None, 'phys_0001,phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)

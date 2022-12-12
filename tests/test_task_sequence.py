@@ -10,11 +10,14 @@ from tests.data.wf_testcase import (
     PARAM_JSON,
 )
 
-from ocrd_utils import pushd_popd, MIMETYPE_PAGE
+from ocrd_utils import pushd_popd, MIMETYPE_PAGE, get_ocrd_tool_json
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import run_tasks, validate_tasks, ProcessorTask
 
 class TestOcrdWfStep(TestCase):
+
+    def tearDown(self):
+        get_ocrd_tool_json.cache_clear()
 
     def test_parse_no_in(self):
         task = ProcessorTask.parse('sample-processor')
@@ -138,7 +141,7 @@ class TestOcrdWfStep(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 ws = resolver.workspace_from_url('mets.xml')
-                ws.add_file('GRP0', content='', local_filename='GRP0/foo', ID='file0', mimetype=MIMETYPE_PAGE, pageId=None)
+                ws.add_file('GRP0', content='', local_filename='GRP0/foo', file_id='file0', mimetype=MIMETYPE_PAGE, page_id=None)
                 ws.save_mets()
                 files_before = len(ws.mets.find_all_files())
                 run_tasks('mets.xml', 'DEBUG', None, [

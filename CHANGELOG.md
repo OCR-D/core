@@ -5,9 +5,192 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.44.0] - 2022-12-08
+
+Added:
+
+  * `ocrd zip update` command to update checksums for an OCRD-ZIP after changing it, #363, #951
+
+Removed:
+
+  * `ocrd zip bag` does no longer support the long-broken `--in-place` option, #964, #363
+
+## [2.43.0] - 2022-12-01
+
+Added:
+
+  * `OcrdMets.refresh_caches` to update caches after changes to XML outside of `OcrdMets`, #957, #960
+
+## [2.42.1] - 2022-11-30
+
+Fixed:
+
+  * Regressions from PR #875, #957, #958
+  * Missing import in `ocrd workspace merge`, #956
+
+## [2.42.0] - 2022-11-23
+
+Fixed:
+
+  * Symlinks in workspaces are properly resolved now, #802, #954
+
+Added:
+
+  * Optional caching of access to METS, configured via [environment variable `OCRD_METS_CACHING`](https://github.com/OCR-D/core/#configuration), #875
+  * CPU and memory profiling , configured via [environment variable `OCRD_PROFILE` and `OCRD_PROFILE_FILE`](https://github.com/OCR-D/core/#configuration), #678
+
+Changed:
+
+  * `ocrd workspace find`: supports comma-separated regexes, ranges and literal values for `--page-id`, #955
+  * `ocrd workspace find`: ranges are generated with last number in string, #955
+
+
+## [2.41.0] - 2022-11-09
+
+Fixed:
+
+  * `ocrd workspace list-installed` should not create spurious entries for `moduledir` files, #940
+  * `OcrdResourceManager.download` does not need to query `size` via HTTP `Content-Length` in most cases, #924, #939
+  * `make install`: Reinstall shapely to work around shapely/shapely#1598, #947
+
+Changed:
+
+  * `ocrd workspace bulk-add`: Generate file_id consistent with conventions from filename if no `--file-id` given, #943
+
+## [2.40.0] - 2022-10-25
+
+Fixed:
+
+  * Downloading to `moduledir` should not create subdirectory, #934
+  * Reduce logging noise in Ocrd{ResourceManager,Mets,Workspace}, #933, #916
+  * Allow downloading resources explicitly to `module` location, #932
+
+Changed:
+
+  * bashlib processors support `--profile{-file}` and `--dump-module-dir`, #929
+
+## [2.39.0] - 2022-10-23
+
+Fixed:
+
+  * `ocrd resmgr download '*'` working again, #904, #908, #909
+  * Resource manager respects `moduledir` correctly, #904
+  * `moduledir` now be able to handle namespace packages properly, #917
+  * processing with `--overwrite` does not create duplicates any more, #861
+  * bashlib: `ocrd validate tasks` call now supports non-standard METS name, #925
+
+Added:
+
+  * Processors have a `--dump-module-dir` to print their implementation-specific module directory to STDOUT, #904
+  * `ocrd workspace merge`: support `--force` to overwrite mets:file with clashing IDs, #926
+
+Changed:
+
+  * `ocrd_utils.make_file_id`: only fall back to output fileGrp + (page)ID instead of page counter, #861
+  * `OcrdWorkspace.add_file`: when ID already exists, remove (with overwrite) or fail instead of reusing
+  * Workspace.merge: delegate `force` to each `add_file`
+
+## [2.38.0] - 2022-08-14
+
+Fixed:
+
+  * `ocrd zip`: Properly respect `Ocrd-Mets`, #899
+  * `ocrd workspace merge`: missing arguments, #896
+  * `ocrd resmgr download`: Support dynamic discovery, #901
+
+Added:
+
+  * Processors support profiling with `--profile` and `--profile-file`, #878, bertsky/core#4
+
+Removed:
+
+  * `ocrd zip`: remove support for obsolete `Ocrd-Manifestation-Depth`, #902, OCR-D/spec#182
+
+## [2.37.0] - 2022-08-03
+
+Added:
+
+  * `ocrd resmgr`: Resources of processors can be described in the `ocrd-tool.json`, #800
+
+## [2.36.0] - 2022-07-18
+
+Fixed:
+
+  * `ocrd_utils.generate_range`: `maxsplits` should be 1, not 2, #880
+  * Typos in CHANGELOG, README and code comments, #890
+
+Changed:
+
+  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
+  * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
+  * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
+  * Replace `resource_filename` et al from pkg_resources with faster alternatives, #881, #882
+
+## [2.35.0] - 2022-06-02
+
+Changed:
+
+  * OCRD-ZIP: Drop `Ocrd-Manifestation-Depth` and disallow `fetch.txt`, OCR-D/spec#182
+  * Parameters can now be described with most JSON-Schema constructs, OCR-D/spec#206, #848
+
+## [2.34.0] - 2022-05-20
+
+Added:
+
+  * `ocrd log` now accepts `-` argument to read messages from STDIN, #852, #870
+
+Changed:
+
+  * `ocrd_utils.safe_filename`: replace with `_` instead of `.` and retain pre-existing `_`, #858, #859
+  * `OcrdMets.find_files`: allow pageId regex, precompile all regexes, #855, #856
+
+Fixed:
+
+  * `ocrd resmgr list-available`: handle processors not in resource list gracefully, #854, #865
+  * `ocrd resmgr`: do not try to parse strings as dates, #867, #869
+  * `ocrd workspace bulk-add`: use 1-based counter, #864
+
+## [2.33.0] - 2022-05-03
+
+Fixed:
+
+  * `ocrd workspace remove-group`: Pass on `--recursive` to `remove_file_group`, #831, #832
+  * `ocrd workspace bulk-add`: handle unset file_id properly, #812, #846
+  * `io.BufferedReader` filename attribute should be `name` not `filename`, #838, #839
+
+Changed:
+
+  * `OcrdWorkspace.image_from_*`: support passing explicit AlternativeImage filename, #845
+
+Removed:
+
+  * `make asset-server` feature no longer used, #843
+  * `python3-pip` dependency is redundant, #813
+
+## [2.32.0] - 2022-03-30
+
+Fixed:
+
+  * `ocrd zip bag`: `-I` is *not* required, #828, #829
+
+Changed:
+
+  * `OcrdExif`: fallback to PIL if ImageMagick's `identify` is not available, #796, #676
+  * `OcrdWorkspace.image_from_*`: Avoid false warning when recropping, #820, #687
+
+## [2.31.0] - 2022-03-20
+
 Changed:
 
   * `make cuda-ubuntu` installs all CUDA versions, OCR-D/core#704, OCR-D/ocrd_all#270
+  * `ocrd resmgr`: updated models for ocrd-anybaseocr-{tiseg,layout-analysis}, #819, OCR-D/ocrd_anybaseocr#89
+
+Fixed:
+
+  * Error message erroneously referenced `mets:file/@ID` instead `mets:fileGrp/@USE`, #823
+  * Consistently use kwargs/args in `OcrdWorkspace.save_image_file`, #822
+  * Missing arg for log message in WorkspaceValidator, #811
 
 ## [2.30.0] - 2022-02-01
 
@@ -268,7 +451,7 @@ Changed:
 
 Fixed:
 
-  * As a workaround for tensorflow compatiblity, require `numpy < 1.19.0`, #620
+  * As a workaround for tensorflow compatibility, require `numpy < 1.19.0`, #620
 
 ## [2.17.1] - 2020-10-05
 
@@ -499,7 +682,7 @@ Changed:
   * `Workspace.remove_file`: Optional `page_same_gropup` parameter to remove
     only those images linked in PAGE that are in the same group as the PAGE-XML
   * `Workspace.remove_file_gropup`: The same `page_recursive` and `page_same_gropup` parameters as `Workspace.remove_file`
-  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will no raise an error if an exisitng
+  * `WorkspaceValidator.check_file_grp` now accepts a `page_id` parameter and will not raise an error if an existing
     output file group is targeted but for pages that aren't in that group, #471
   * `ocrd_cli_wrap_processor`: Take `page_id` into account when doing `WorkspaceValidator.check_file_grp`
   * `run_cli` accepts an `overwrite` parameter to pass on to processor calls, #471
@@ -1428,6 +1611,21 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.44.0]: ../../compare/v2.44.0..v2.43.0
+[2.43.0]: ../../compare/v2.43.0..v2.42.1
+[2.42.1]: ../../compare/v2.42.1..v2.42.0
+[2.42.0]: ../../compare/v2.42.0..v2.41.0
+[2.41.0]: ../../compare/v2.41.0..v2.40.0
+[2.40.0]: ../../compare/v2.40.0..v2.39.0
+[2.39.0]: ../../compare/v2.39.0..v2.38.0
+[2.38.0]: ../../compare/v2.38.0..v2.37.0
+[2.37.0]: ../../compare/v2.37.0..v2.36.0
+[2.36.0]: ../../compare/v2.36.0..v2.35.0
+[2.35.0]: ../../compare/v2.35.0..v2.34.0
+[2.34.0]: ../../compare/v2.34.0..v2.33.0
+[2.33.0]: ../../compare/v2.33.0..v2.32.0
+[2.32.0]: ../../compare/v2.32.0..v2.31.0
+[2.31.0]: ../../compare/v2.31.0..v2.30.0
 [2.30.0]: ../../compare/v2.30.0..v2.29.0
 [2.29.0]: ../../compare/v2.29.0..v2.28.0
 [2.28.0]: ../../compare/v2.28.0..v2.27.0

@@ -16,11 +16,12 @@ class OcrdXmlDocument():
     Base class for XML documents loaded from either content or filename.
     """
 
-    def __init__(self, filename=None, content=None):
+    def __init__(self, filename=None, content=None, cache_flag=False):
         """
         Args:
             filename (string):
             content (string):
+            cache_flag (bool):
         """
         #  print(self, filename, content)
         if filename is None and content is None:
@@ -33,6 +34,9 @@ class OcrdXmlDocument():
             if not exists(filename):
                 raise Exception('File does not exist: %s' % filename)
             self._tree.parse(filename)
+
+        # Cache enabled - True/False
+        self._cache_flag = cache_flag
 
     def to_xml(self, xmllint=False):
         """
