@@ -1,13 +1,11 @@
 from pathlib import Path
 from os.path import join
-from json import loads
-from os import environ, listdir, getcwd, path
+from os import environ, listdir, getcwd, path, unlink
+from shutil import copytree, rmtree, copy
 from fnmatch import filter as apply_glob
-from shutil import copytree, copy
 from datetime import datetime
 from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
-from subprocess import run, PIPE
 from zipfile import ZipFile
 
 import requests
@@ -234,7 +232,7 @@ class OcrdResourceManager():
             return Path(name).stem
         raise ValueError("No such usage '%s'" % usage)
 
-    def _download_impl(self, url, filename, progress_cb=None):
+    def _download_impl(self, url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
         with open(filename, 'wb') as f:
@@ -295,9 +293,15 @@ class OcrdResourceManager():
             name = Path(unquote(url_parsed.path)).name
         fpath = Path(destdir, name)
         is_url = url.startswith('https://') or url.startswith('http://')
-        if fpath.exists() and not overwrite:
-            log.info("%s to be %s to %s which already exists and overwrite is False" % (url, 'downloaded' if is_url else 'copied', fpath))
-            return fpath
+        if fpath.exists():
+            if not overwrite:
+                raise FileExistsError("%s %s already exists but --overwrite is not set" % ('Directory' if fpath.is_dir() else 'File', fpath))
+            if fpath.is_dir():
+                log.info("Removing existing target directory {fpath}")
+                rmtree(str(fpath))
+            else:
+                log.info("Removing existing target file {fpath}")
+                unlink(str(fpath))
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type in ('file', 'directory'):
             if is_url:

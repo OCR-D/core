@@ -151,23 +151,26 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 if not basedir:
                     basedir = resmgr.location_to_resource_dir('data')
 
-            with click.progressbar(length=resdict['size']) as bar:
-                fpath = resmgr.download(
-                    this_executable,
-                    resdict['url'],
-                    name=resdict['name'],
-                    resource_type=resdict.get('type', resource_type),
-                    path_in_archive=resdict.get('path_in_archive', path_in_archive),
-                    overwrite=overwrite,
-                    no_subdir=location in ['cwd', 'module'],
-                    basedir=basedir,
-                    progress_cb=lambda delta: bar.update(delta)
-                )
-            if registered == 'unregistered':
-                log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, name, any_url, resmgr.user_list)
-                resmgr.add_to_user_database(this_executable, fpath, url=any_url)
-            resmgr.save_user_list()
-            log.info("Installed resource %s under %s", resdict['url'], fpath)
+            try:
+                with click.progressbar(length=resdict['size']) as bar:
+                    fpath = resmgr.download(
+                        this_executable,
+                        resdict['url'],
+                        name=resdict['name'],
+                        resource_type=resdict.get('type', resource_type),
+                        path_in_archive=resdict.get('path_in_archive', path_in_archive),
+                        overwrite=overwrite,
+                        no_subdir=location in ['cwd', 'module'],
+                        basedir=basedir,
+                        progress_cb=lambda delta: bar.update(delta)
+                    )
+                if registered == 'unregistered':
+                    log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", this_executable, name, any_url, resmgr.user_list)
+                    resmgr.add_to_user_database(this_executable, fpath, url=any_url)
+                resmgr.save_user_list()
+                log.info("Installed resource %s under %s", resdict['url'], fpath)
+            except FileExistsError as exc:
+                log.info(str(exc))
             log.info("Use in parameters as '%s'", resmgr.parameter_usage(resdict['name'], usage=resdict.get('parameter_usage', 'as-is')))
 
 @resmgr_cli.command('migrate')
