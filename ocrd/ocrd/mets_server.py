@@ -108,7 +108,7 @@ class ClientSideOcrdMets():
         return self.session.request('POST', f'{self.url}/agent', data=OcrdAgentModel(**kwargs))
 
     @property
-    def file_groups():
+    def file_groups(self):
         return self.session.request('GET', f'{self.url}/file_groups').json()['file_groups']
 
     @deprecated_alias(pageId="page_id")
