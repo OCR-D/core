@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `ocrd resmgr download --overwrite` now works properly for both directories and files, #690, #797
+  * `ocrd resmgr`: `archive` resources can now also be ZIP files and reference files and folders in them, #967
 
 ## [2.44.0] - 2022-12-08
 
