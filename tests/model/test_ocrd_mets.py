@@ -3,14 +3,21 @@
 from datetime import datetime
 
 from os.path import join
+from os import environ
+from contextlib import contextmanager
 import shutil
+from logging import StreamHandler
 
 from tests.base import (
     main,
+    capture_log,
     assets,
 )
 
 from ocrd_utils import (
+    initLogging,
+    disableLogging,
+    getLogger,
     VERSION,
     MIMETYPE_PAGE
 )
@@ -20,12 +27,23 @@ from ocrd_models import (
 
 import pytest
 
+CACHING_ENABLED = [False, True]
 
-@pytest.fixture(name='sbb_sample_01')
-def _fixture():
+
+@pytest.fixture(name='sbb_sample_01', params=CACHING_ENABLED)
+def _fixture(request):
     mets = OcrdMets(filename=assets.url_of(
-        'SBB0000F29300010000/data/mets.xml'))
+        'SBB0000F29300010000/data/mets.xml'), cache_flag=request.param)
     yield mets
+
+
+@pytest.fixture(name='sbb_directory_ocrd_mets', params=CACHING_ENABLED)
+def _fixture_sbb(tmp_path, request):
+    src_path = assets.path_to('SBB0000F29300010000/data')
+    dst_path = tmp_path / 'SBB_directory'
+    shutil.copytree(src_path, dst_path)
+    mets_path = str(join(dst_path, 'mets.xml'))
+    yield OcrdMets(filename=mets_path, cache_flag=request.param)
 
 
 def test_unique_identifier():
@@ -46,15 +64,10 @@ def test_unique_identifier_from_nothing():
 
 
 def test_str():
-    mets = OcrdMets(content='<mets/>')
-    assert str(mets) == 'OcrdMets[fileGrps=[],files=[]]'
-
-
-@pytest.mark.xfail(reason='old test, was actually out-commented')
-def test_override_constructor_args():
-    id2file = {'foo': {}}
-    mets = OcrdMets(id2file, content='<mets/>')
-    assert mets._file_by_id == id2file
+    mets = OcrdMets(content='<mets/>', cache_flag=False)
+    assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
+    mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
+    assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
 
 
 def test_file_groups(sbb_sample_01):
@@ -74,38 +87,25 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
     assert len(sbb_sample_01.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
-
-
-def test_find_all_files_no_regex_for_pageid(sbb_sample_01):
-    with pytest.raises(Exception) as exc_obj:
-        sbb_sample_01.find_all_files(pageId='//foo')
-
-    assert "not support regex search for pageId" in str(exc_obj.value)
-
+    assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
+    assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
+    assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
 
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',
-               local_only=True)) == 3, '3 local files for page "PHYS_0001"'
+               local_only=True)) == 14, '14 local files for page "PHYS_0001"'
 
 
 def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
-
+    assert isinstance(sbb_sample_01.physical_pages, list)
+    assert isinstance(sbb_sample_01.physical_pages[0], str)
 
 def test_physical_pages_from_empty_mets():
     mets = OcrdMets(content="<mets></mets>")
     assert len(mets.physical_pages) == 0, 'no physical page'
     mets.add_file('OUTPUT', ID="foo123", pageId="foobar")
     assert len(mets.physical_pages) == 1, '1 physical page'
-
-
-@pytest.fixture(name='sbb_directory_ocrd_mets')
-def _fixture_sbb(tmp_path):
-    src_path = assets.path_to('SBB0000F29300010000/data')
-    dst_path = tmp_path / 'SBB_directory'
-    shutil.copytree(src_path, dst_path)
-    mets_path = str(join(dst_path, 'mets.xml'))
-    yield OcrdMets(filename=mets_path)
 
 
 def test_physical_pages_for_fileids(sbb_directory_ocrd_mets):
@@ -122,11 +122,15 @@ def test_add_group():
     assert len(mets.file_groups) == 1, '1 file groups'
 
 
-def test_add_file():
+def test_add_file0():
     mets = OcrdMets.empty_mets()
     assert len(mets.file_groups) == 0, '0 file groups'
     assert len(list(mets.find_all_files(fileGrp='OUTPUT'))) == 0, '0 files in "OUTPUT"'
     f = mets.add_file('OUTPUT', ID="foo123", mimetype="bla/quux", pageId="foobar")
+    # TODO unless pageId/mimetype/fileGrp match raises exception this won't work
+    # with pytest.raises(Exception) as exc:
+    #     f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
+    # assert str(exc.value) == "Exception: File with pageId='foobar' already exists in fileGrp 'OUTPUTx'"
     f2 = mets.add_file('OUTPUT', ID="foo1232", mimetype="bla/quux", pageId="foobar")
     assert f.pageId == 'foobar', 'pageId set'
     assert len(mets.file_groups) == 1, '1 file groups'
@@ -143,15 +147,37 @@ def test_add_file():
 def test_add_file_id_already_exists(sbb_sample_01):
     f = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop")
     assert f.ID == 'best-id-ever', "ID kept"
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(FileExistsError) as exc:
         sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep")
 
-    assert "File with ID='best-id-ever' already exists" in str(exc)
+    # Still fails because differing mimetypes
+    with pytest.raises(FileExistsError) as exc:
+        f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
 
-    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", force=True)
-    assert f._el == f2._el
+    # Works but is unwise, there are now two files with clashing ID in METS
+    f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="boop/beep", ignore=True)
+    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1 if sbb_sample_01._cache_flag else 2
 
-@pytest.mark.xfail(reason='2x same ID is valid if ignore == True')
+    if sbb_sample_01._cache_flag:
+        # Does not work with caching 
+        with pytest.raises(FileExistsError) as val_err:
+             sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
+    else:
+        # Works because fileGrp, mimetype and pageId(== None) match and force is set
+        f2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
+
+    # Previous step removed duplicate mets:file
+    assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1
+
+def test_add_file_nopageid_overwrite(sbb_sample_01: OcrdMets):
+    """
+    Test that when adding files without pageId
+    """
+    with capture_log('ocrd_models.ocrd_mets.add_file') as cap:
+        file1 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="application/tei+xml")
+        with pytest.raises(FileExistsError):
+            file2 = sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="application/tei+xml", ignore=False, force=False)
+
 def test_add_file_ignore(sbb_sample_01: OcrdMets):
     """Behavior if ignore-Flag set to true:
     delegate responsibility to overwrite existing files to user"""
@@ -163,7 +189,7 @@ def test_add_file_ignore(sbb_sample_01: OcrdMets):
 
     # how many files inserted
     the_files = list(sbb_sample_01.find_files(ID='best-id-ever'))
-    assert len(the_files) == 1
+    assert len(the_files) == 1 if sbb_sample_01._cache_flag else 2
 
 
 def test_add_file_id_invalid(sbb_sample_01):
@@ -239,6 +265,7 @@ def test_remove_page(sbb_directory_ocrd_mets):
 
 def test_remove_physical_page_fptr(sbb_directory_ocrd_mets):
     assert sbb_directory_ocrd_mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), ['PHYS_0002']
+    sbb_directory_ocrd_mets.remove_physical_page_fptr('FILE_0002_IMAGE')
     sbb_directory_ocrd_mets.remove_physical_page_fptr('FILE_0002_IMAGE')
     assert sbb_directory_ocrd_mets.get_physical_pages(for_fileIds=['FILE_0002_IMAGE']), [None]
 
@@ -321,7 +348,6 @@ def test_merge(sbb_sample_01):
     sbb_sample_01.merge(other_mets, fileGrp_mapping={'OCR-D-IMG': 'FOO'})
     assert len(sbb_sample_01.file_groups) == 18
 
-
 def test_invalid_filegrp():
     """addresses https://github.com/OCR-D/core/issues/746"""
 
@@ -331,6 +357,25 @@ def test_invalid_filegrp():
 
     assert "Invalid syntax for mets:fileGrp/@USE" in str(val_err.value)
 
+@contextmanager
+def temp_env_var(k, v):
+    v_before = environ.get(k, None)
+    environ[k] = v
+    yield
+    if v_before is not None:
+        environ[k] = v_before
+    else:
+        del environ[k]
+
+def test_envvar():
+    assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+    assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
+    with temp_env_var('OCRD_METS_CACHING', 'true'):
+        assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+        assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
+    with temp_env_var('OCRD_METS_CACHING', 'false'):
+        assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+        assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
 
 if __name__ == '__main__':
     main(__file__)

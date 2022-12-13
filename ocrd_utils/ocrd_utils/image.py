@@ -194,7 +194,7 @@ def polygon_mask(image, coordinates):
     """
     mask = Image.new('L', image.size, 0)
     coordinates = list(map(tuple, coordinates))
-    ImageDraw.Draw(mask).polygon(coordinates, outline=255, fill=255)
+    ImageDraw.Draw(mask).polygon(coordinates, outline=0, fill=255)
     return mask
 
 def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
@@ -262,7 +262,7 @@ def rotate_image(image, angle, fill='background', transparency=False):
         # expose areas as transparent):
         image = image.copy()
         image.putalpha(255)
-    if fill == 'background':
+    if fill is None or fill in ['background', 'none']:
         background = ImageStat.Stat(image)
         if len(background.bands) > 1:
             background = background.median
@@ -486,7 +486,8 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     of relative coordinates into the image, fill everything
     outside the polygon hull to a color according to ``fill``:
 
-    - if ``background`` (the default),
+    - if ``none`` then do not touch the colour channels at all,
+    - else if ``background`` (the default),
       then use the median color of the image;
     - otherwise use the given color, e.g. ``'white'`` or (255,255,255).
 
@@ -499,17 +500,20 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     
     Return a new PIL.Image.
     """
-    mask = polygon_mask(image, polygon)
-    if fill == 'background':
-        background = ImageStat.Stat(image, mask=mask)
-        if len(background.bands) > 1:
-            background = tuple(background.median)
-        else:
-            background = background.median[0]
+    if fill == 'none' or fill is None:
+        new_image = image.copy()
     else:
-        background = fill
-    new_image = Image.new(image.mode, image.size, background)
-    new_image.paste(image, mask=mask)
+        mask = polygon_mask(image, polygon)
+        if fill == 'background':
+            background = ImageStat.Stat(image, mask=mask)
+            if len(background.bands) > 1:
+                background = tuple(background.median)
+            else:
+                background = background.median[0]
+        else:
+            background = fill
+        new_image = Image.new(image.mode, image.size, background)
+        new_image.paste(image, mask=mask)
     # ensure no information is lost by a adding transparency channel
     # initialized to fully transparent outside the polygon mask
     # (so consumers do not have to rely on background estimation,

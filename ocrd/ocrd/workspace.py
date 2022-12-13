@@ -33,6 +33,8 @@ from ocrd_utils import (
     polygon_from_points,
     xywh_from_bbox,
     pushd_popd,
+    is_local_filename,
+    deprecated_alias,
     MIME_TO_EXT,
     MIME_TO_PIL,
     MIMETYPE_PAGE,
@@ -60,7 +62,7 @@ class Workspace():
     Args:
 
         directory (string) : Filesystem folder to work in
-        mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace. 
+        mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace.
             Loaded from `'mets.xml'` if `None`.
         mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
         overwrite_mode (boolean) : Whether to force add operations on this workspace globally
@@ -93,7 +95,11 @@ class Workspace():
         """
         self.mets = OcrdMets(filename=self.mets_target)
 
-    def merge(self, other_workspace, copy_files=True, **kwargs):
+    @deprecated_alias(pageId="page_id")
+    @deprecated_alias(ID="file_id")
+    @deprecated_alias(fileGrp="file_grp")
+    @deprecated_alias(fileGrp_mapping="filegrp_mapping")
+    def merge(self, other_workspace, copy_files=True, overwrite=False, **kwargs):
         """
         Merge ``other_workspace`` into this one
 
@@ -103,17 +109,32 @@ class Workspace():
             copy_files (boolean): Whether to copy files from `other_workspace` to this one
         """
         def after_add_cb(f):
+            """callback to run on merged OcrdFile instances in the destination"""
             if not copy_files:
+                fpath_src = Path(other_workspace.directory).resolve()
+                fpath_dst = Path(self.directory).resolve()
+                dstprefix = fpath_src.relative_to(fpath_dst) # raises ValueError if not a subpath
+                if is_local_filename(f.url):
+                    f.url = str(Path(dstprefix, f.url))
                 return
             fpath_src = Path(other_workspace.directory, f.url)
             fpath_dest = Path(self.directory, f.url)
             if fpath_src.exists():
-                if fpath_dest.exists():
+                if fpath_dest.exists() and not overwrite:
                     raise Exception("Copying %s to %s would overwrite the latter" % (fpath_src, fpath_dest))
                 if not fpath_dest.parent.is_dir():
                     makedirs(str(fpath_dest.parent))
                 with open(str(fpath_src), 'rb') as fstream_in, open(str(fpath_dest), 'wb') as fstream_out:
                     copyfileobj(fstream_in, fstream_out)
+        if 'page_id' in kwargs:
+            kwargs['pageId'] = kwargs.pop('page_id')
+        if 'file_id' in kwargs:
+            kwargs['ID'] = kwargs.pop('file_id')
+        if 'file_grp' in kwargs:
+            kwargs['fileGrp'] = kwargs.pop('file_grp')
+        if 'filegrp_mapping' in kwargs:
+            kwargs['fileGrp_mapping'] = kwargs.pop('filegrp_mapping')
+
         self.mets.merge(other_workspace.mets, after_add_cb=after_add_cb, **kwargs)
 
 
@@ -143,7 +164,7 @@ class Workspace():
         with pushd_popd(self.directory):
             try:
                 # If the f.url is already a file path, and is within self.directory, do nothing
-                url_path = Path(f.url).resolve()
+                url_path = Path(f.url).absolute()
                 if not (url_path.exists() and url_path.relative_to(str(Path(self.directory).resolve()))):
                     raise Exception("Not already downloaded, moving on")
             except Exception as e:
@@ -161,12 +182,12 @@ class Workspace():
             f.local_filename = f.url
             return f
 
-    def remove_file(self, ID, force=False, keep_file=False, page_recursive=False, page_same_group=False):
+    def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """
         Remove a METS `file` from the workspace.
 
         Arguments:
-            ID (string|:py:class:`ocrd_models.ocrd_file.OcrdFile`): `@ID` of the METS `file`
+            file_id (string|:py:class:`ocrd_models.ocrd_file.OcrdFile`): `@ID` of the METS `file`
                 to delete or the file itself
         Keyword Args:
             force (boolean): Continue removing even if file not found in METS
@@ -177,19 +198,19 @@ class Workspace():
                 Has no effect unless ``page_recursive`` is `True`.
         """
         log = getLogger('ocrd.workspace.remove_file')
-        log.debug('Deleting mets:file %s', ID)
+        log.debug('Deleting mets:file %s', file_id)
         if not force and self.overwrite_mode:
             force = True
-        if isinstance(ID, OcrdFile):
-            ID = ID.ID
+        if isinstance(file_id, OcrdFile):
+            file_id = file_id.ID
         try:
             try:
-                ocrd_file = next(self.mets.find_files(ID=ID))
+                ocrd_file = next(self.mets.find_files(ID=file_id))
             except StopIteration:
-                if ID.startswith(REGEX_PREFIX):
+                if file_id.startswith(REGEX_PREFIX):
                     # allow empty results if filter criteria involve a regex
                     return None
-                raise FileNotFoundError("File %s not found in METS" % ID)
+                raise FileNotFoundError("File %s not found in METS" % file_id)
             if page_recursive and ocrd_file.mimetype == MIMETYPE_PAGE:
                 with pushd_popd(self.directory):
                     ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
@@ -202,14 +223,15 @@ class Workspace():
             if not keep_file:
                 with pushd_popd(self.directory):
                     if not ocrd_file.local_filename:
-                        log.warning("File not locally available %s", ocrd_file)
-                        if not force:
+                        if force:
+                            log.debug("File not locally available but --force is set: %s", ocrd_file)
+                        else:
                             raise Exception("File not locally available %s" % ocrd_file)
                     else:
                         log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
                         unlink(ocrd_file.local_filename)
             # Remove from METS only after the recursion of AlternativeImages
-            self.mets.remove_file(ID)
+            self.mets.remove_file(file_id)
             return ocrd_file
         except FileNotFoundError as e:
             if not force:
@@ -225,9 +247,9 @@ class Workspace():
             recursive (boolean): Whether to recursively delete all files in the group
             force (boolean): Continue removing even if group or containing files not found in METS
             keep_files (boolean): When deleting recursively whether to keep files on disk
-            page_recursive (boolean): Whether to remove all images referenced in the file 
+            page_recursive (boolean): Whether to remove all images referenced in the file
                 if the file is a PAGE-XML document.
-            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML. 
+            page_same_group (boolean): Remove only images in the same file group as the PAGE-XML.
                 Has no effect unless ``page_recursive`` is `True`.
         """
         if not force and self.overwrite_mode:
@@ -245,7 +267,7 @@ class Workspace():
                     if f_dir:
                         file_dirs.append(f_dir)
 
-        self.mets.remove_file_group(USE, force=force)
+        self.mets.remove_file_group(USE, force=force, recursive=recursive)
 
         # PLEASE NOTE: this only removes directories in the workspace if they are empty
         # and named after the fileGrp which is a convention in OCR-D.
@@ -326,10 +348,12 @@ class Workspace():
             if Path(old).is_dir() and not listdir(old):
                 Path(old).rmdir()
 
+    @deprecated_alias(pageId="page_id")
+    @deprecated_alias(ID="file_id")
     def add_file(self, file_grp, content=None, **kwargs):
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
-        
+
         Arguments:
             file_grp (string): `@USE` of the METS `fileGrp` to add to
         Keyword Args:
@@ -337,7 +361,7 @@ class Workspace():
                 in the filesystem
             **kwargs: See :py:func:`ocrd_models.ocrd_mets.OcrdMets.add_file`
         Returns:
-            a new :py:class:`ocrd_models.ocrd_file.OcrdFile` 
+            a new :py:class:`ocrd_models.ocrd_file.OcrdFile`
         """
         log = getLogger('ocrd.workspace.add_file')
         log.debug(
@@ -345,15 +369,15 @@ class Workspace():
             file_grp,
             kwargs.get('local_filename'),
             content is not None)
-        if 'pageId' not in kwargs:
-            raise ValueError("workspace.add_file must be passed a 'pageId' kwarg, even if it is None.")
-        if content is not None and 'local_filename' not in kwargs:
+        if 'page_id' not in kwargs:
+            raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
+        if content is not None and not kwargs.get('local_filename'):
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
             kwargs['force'] = True
 
         with pushd_popd(self.directory):
-            if 'local_filename' in kwargs:
+            if kwargs.get('local_filename'):
                 # If the local filename has folder components, create those folders
                 local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
                 if local_filename_dir != kwargs['local_filename'] and not Path(local_filename_dir).is_dir():
@@ -362,6 +386,10 @@ class Workspace():
                     kwargs['url'] = kwargs['local_filename']
 
             #  print(kwargs)
+            kwargs["pageId"] = kwargs.pop("page_id")
+            if "file_id" in kwargs:
+                kwargs["ID"] = kwargs.pop("file_id")
+
             ret = self.mets.add_file(file_grp, **kwargs)
 
             if content is not None:
@@ -377,7 +405,7 @@ class Workspace():
         Write out the current state of the METS file to the filesystem.
         """
         log = getLogger('ocrd.workspace.save_mets')
-        log.info("Saving mets '%s'", self.mets_target)
+        log.debug("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
             WorkspaceBackupManager(self).add()
         with atomic_write(self.mets_target) as f:
@@ -402,7 +430,7 @@ class Workspace():
             ocrd_exif = exif_from_filename(image_filename)
         except StopIteration:
             with download_temporary_file(image_url) as f:
-                ocrd_exif = exif_from_filename(f.filename)
+                ocrd_exif = exif_from_filename(f.name)
         return ocrd_exif
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
@@ -432,7 +460,7 @@ class Workspace():
                 pil_image = Image.open(self.download_file(f).local_filename)
             except StopIteration:
                 with download_temporary_file(image_url) as f:
-                    pil_image = Image.open(f.filename)
+                    pil_image = Image.open(f.name)
             pil_image.load() # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
@@ -489,26 +517,30 @@ class Workspace():
 
     def image_from_page(self, page, page_id,
                         fill='background', transparency=False,
-                        feature_selector='', feature_filter=''):
+                        feature_selector='', feature_filter='', filename=''):
         """Extract an image for a PAGE-XML page from the workspace.
 
         Args:
             page (:py:class:`ocrd_models.ocrd_page.PageType`): a PAGE `PageType` object
             page_id (string): its `@ID` in the METS physical `structMap`
         Keyword Args:
-            fill (string): a `PIL` color specifier
+            fill (string): a `PIL` color specifier, or `background` or `none`
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of `@comments` classes
             feature_filter (string): a comma-separated list of `@comments` classes
+            filename (string): which file path to use
 
         Extract a `PIL.Image` from ``page``, either from its `AlternativeImage`
         (if it exists), or from its `@imageFilename` (otherwise). Also crop it,
         if a `Border` exists, and rotate it, if any `@orientation` angle is
         annotated.
 
+        If ``filename`` is given, then among `@imageFilename` and the available
+        `AlternativeImage/@filename` images, pick that one, or raise an error.
+
         If ``feature_selector`` and/or ``feature_filter`` is given, then
-        select/filter among the `@imageFilename` image and the available
-        AlternativeImages the richest one which contains all of the selected,
+        among the `@imageFilename` image and the available AlternativeImages,
+        select/filter the richest one which contains all of the selected,
         but none of the filtered features (i.e. `@comments` classes), or
         raise an error.
 
@@ -527,8 +559,11 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to ``fill``:
 
+        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
+        - else if `"none"`, then avoid masking polygons where possible
+          (i.e. when cropping) or revert to the default (i.e. when rotating)
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
 
         Moreover, if ``transparency`` is true, and unless the image already
@@ -548,7 +583,7 @@ class Workspace():
                - `"angle"`: the rotation/reflection angle applied to the image so far,
                - `"features"`: the `AlternativeImage` `@comments` for the image, i.e.
                  names of all applied operations that lead up to this result,
-             * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with 
+             * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with
                the original image.
 
         (The first two can be used to annotate a new `AlternativeImage`,
@@ -601,6 +636,8 @@ class Workspace():
             # but also ensure that we get the richest feature set, i.e. most
             # of those features that we cannot reproduce automatically below
             for alternative_image in alternative_images:
+                if filename and filename != alternative_image.filename:
+                    continue
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for page '%s' does not have any feature attributes",
@@ -688,6 +725,10 @@ class Workspace():
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
+        if filename and not getattr(page_image, 'filename', '').endswith(filename):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filename="%s" in page "%s"' % (
+                                filename, page_id))
         if not all(feature in page_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
@@ -703,7 +744,7 @@ class Workspace():
 
     def image_from_segment(self, segment, parent_image, parent_coords,
                            fill='background', transparency=False,
-                           feature_selector='', feature_filter=''):
+                           feature_selector='', feature_filter='', filename=''):
         """Extract an image for a PAGE-XML hierarchy segment from its parent's image.
 
         Args:
@@ -722,19 +763,22 @@ class Workspace():
                - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all operations that lead up to this result, and
         Keyword Args:
-            fill (string): a `PIL` color specifier
+            fill (string): a `PIL` color specifier, or `background` or `none`
             transparency (boolean): whether to add an alpha channel for masking
             feature_selector (string): a comma-separated list of ``@comments`` classes
-            feature_filter (string): a comma-separated list of ``@comments`` classes            
-        
+            feature_filter (string): a comma-separated list of ``@comments`` classes
+
         Extract a `PIL.Image` from `segment`, either from ``AlternativeImage``
         (if it exists), or producing a new image via cropping from `parent_image`
         (otherwise). Pass in `parent_image` and `parent_coords` from the result
         of the next higher-level of this function or from :py:meth:`image_from_page`.
 
-        If `feature_selector` and/or `feature_filter` is given, then
-        select/filter among the cropped `parent_image` and the available
-        AlternativeImages the richest one which contains all of the selected,
+        If ``filename`` is given, then among the available `AlternativeImage/@filename`
+        images, pick that one, or raise an error.
+
+        If ``feature_selector`` and/or ``feature_filter`` is given, then
+        among the cropped `parent_image` and the available AlternativeImages,
+        select/filter the richest one which contains all of the selected,
         but none of the filtered features (i.e. ``@comments`` classes), or
         raise an error.
 
@@ -745,8 +789,11 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to `fill`:
 
+        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
+        - else if `"none"`, then avoid masking polygons where possible
+          (i.e. when cropping) or revert to the default (i.e. when rotating)
         - otherwise, use the given color, e.g. `"white"` or `(255,255,255)`.
 
         Moreover, if `transparency` is true, and unless the image already
@@ -859,6 +906,8 @@ class Workspace():
             # but also ensure that we get the richest feature set, i.e. most
             # of those features that we cannot reproduce automatically below
             for alternative_image in alternative_images:
+                if filename and filename != alternative_image.filename:
+                    continue
                 features = alternative_image.get_comments()
                 if not features:
                     log.warning("AlternativeImage %d for segment '%s' does not have any feature attributes",
@@ -930,6 +979,10 @@ class Workspace():
                     fill=fill, transparency=transparency)
 
         # verify constraints again:
+        if filename and not getattr(segment_image, 'filename', '').endswith(filename):
+            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
+                            'filename="%s" in segment "%s"' % (
+                                filename, segment.id))
         if not all(feature in segment_coords['features']
                    for feature in feature_selector.split(',') if feature):
             raise Exception('Found no AlternativeImage that satisfies all requirements' +
@@ -960,7 +1013,7 @@ class Workspace():
             page_id (string): `@ID` in the METS physical `structMap` to use
             mimetype (string): MIME type of the image format to serialize as
             force (boolean): whether to replace any existing `file` with that `@ID`
-        
+
         Serialize the image into the filesystem, and add a `file` for it in the METS.
         Use a filename extension based on ``mimetype``.
 
@@ -974,9 +1027,9 @@ class Workspace():
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])
         file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
-            ID=file_id,
-            file_grp=file_grp,
-            pageId=page_id,
+            file_grp,
+            file_id=file_id,
+            page_id=page_id,
             local_filename=file_path,
             mimetype=mimetype,
             content=image_bytes.getvalue(),
@@ -984,6 +1037,28 @@ class Workspace():
         log.info('created file ID: %s, file_grp: %s, path: %s',
                  file_id, file_grp, out.local_filename)
         return file_path
+
+    def find_files(self, *args, **kwargs):
+        """
+        Search ``mets:file`` entries in wrapped METS document and yield results.
+
+        Delegator to :py:func:`ocrd_models.ocrd_mets.OcrdMets.find_files`
+
+        Keyword Args:
+            **kwargs: See :py:func:`ocrd_models.ocrd_mets.OcrdMets.find_files`
+        Returns:
+            Generator which yields :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
+        """
+        log = getLogger('ocrd.workspace.find_files')
+        log.debug('find files in mets. kwargs=%s' % kwargs)
+        if "page_id" in kwargs:
+            kwargs["pageId"] = kwargs.pop("page_id")
+        if "file_id" in kwargs:
+            kwargs["ID"] = kwargs.pop("file_id")
+        if "file_grp" in kwargs:
+            kwargs["fileGrp"] = kwargs.pop("file_grp")
+        with pushd_popd(self.directory):
+            return self.mets.find_files(*args, **kwargs)
 
 def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwargs):
     segment_coords = parent_coords.copy()
@@ -998,7 +1073,9 @@ def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwarg
     # crop, if (still) necessary:
     if (not isinstance(segment, BorderType) or # always crop below page level
         not op in parent_coords['features']):
-        if isinstance(segment, BorderType):
+        if op == 'recropped':
+            log.info("Recropping %s", name)
+        elif isinstance(segment, BorderType):
             log.info("Cropping %s", name)
             segment_coords['features'] += ',' + op
         # create a mask from the segment polygon:
@@ -1064,9 +1141,13 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
           (not isinstance(segment, BorderType) or # always crop below page level
            'cropped' in segment_coords['features'])):
         # only shift coordinates as if re-cropping
-        _, segment_coords, segment_xywh = _crop(
-            log, name, segment, segment_image, segment_coords,
-            op='recropped', **kwargs)
+        segment_polygon = coordinates_of_segment(segment, segment_image, segment_coords)
+        segment_bbox = bbox_from_polygon(segment_polygon)
+        segment_xywh = xywh_from_bbox(*segment_bbox)
+        segment_coords['transform'] = shift_coordinates(
+            segment_coords['transform'],
+            np.array([-segment_bbox[0],
+                      -segment_bbox[1]]))
     return segment_image, segment_coords, segment_xywh
 
 def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwargs):

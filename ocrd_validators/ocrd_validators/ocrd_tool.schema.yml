@@ -41,13 +41,13 @@ properties:
             type: array
             items:
               type: string
-              pattern: '^OCR-D-[A-Z0-9-]+$'
+              # pattern: '^OCR-D-[A-Z0-9-]+$'
           output_file_grp:
             description: Output fileGrp@USE this tool produces by default
             type: array
             items:
               type: string
-              pattern: '^OCR-D-[A-Z0-9-]+$'
+              # pattern: '^OCR-D-[A-Z0-9-]+$'
           parameters:
             description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
             type: object
@@ -73,6 +73,30 @@ properties:
                     description: Subtype, such as `float` for type `number` or `uri` for type `string`.
                   description:
                     description: Concise description of syntax and semantics of this parameter
+                  items:
+                    type: object
+                    description: describe the items of an array further
+                  minimum:
+                    type: number
+                    description: Minimum value for number parameters, including the minimum
+                  maximum:
+                    type: number
+                    description: Maximum value for number parameters, including the maximum
+                  exclusiveMinimum:
+                    type: number
+                    description: Minimum value for number parameters, excluding the minimum
+                  exclusiveMaximum:
+                    type: number
+                    description: Maximum value for number parameters, excluding the maximum
+                  multipleOf:
+                    type: number
+                    description: For number values, those values must be multiple of this number
+                  properties:
+                    type: object
+                    description: Describe the properties of an object value
+                  additionalProperties:
+                    type: boolean
+                    description: Whether an object value may contain properties not explicitly defined
                   required:
                     type: boolean
                     description: Whether this parameter is required
@@ -83,7 +107,15 @@ properties:
                     description: List the allowed values if a fixed list.
                   content-type:
                     type: string
-                    description: "If parameter is reference to file: Media type of the file"
+                    default: 'application/octet-stream'
+                    description: >
+                      The media type of resources this processor expects for
+                      this parameter. Most processors use files for resources
+                      (e.g.  `*.traineddata` for `ocrd-tesserocr-recognize`)
+                      while others use directories of files (e.g. `default` for
+                      `ocrd-eynollah-segment`).  If a parameter requires
+                      directories, it must set `content-type` to
+                      `text/directory`.
                   cacheable:
                     type: boolean
                     description: "If parameter is reference to file: Whether the file should be cached, e.g. because it is large and won't change."
@@ -126,3 +158,52 @@ properties:
                 - layout/segmentation/word
                 - layout/segmentation/classification
                 - layout/analysis
+          resource_locations:
+            type: array
+            description: The locations in the filesystem this processor supports for resource lookup
+            default: ['data', 'cwd', 'system', 'module']
+            items:
+              type: string
+              enum: ['data', 'cwd', 'system', 'module']
+          resources:
+            type: array
+            description: Resources for this processor
+            items:
+              type: object
+              additionalProperties: false
+              required:
+                - url
+                - description
+                - name
+                - size
+              properties:
+                url:
+                  type: string
+                  description: URLs of all components of this resource
+                description:
+                  type: string
+                  description: A description of the resource
+                name:
+                  type: string
+                  description: Name to store the resource as
+                type:
+                  type: string
+                  enum: ['file', 'directory', 'archive']
+                  default: file
+                  description: Type of the URL
+                parameter_usage:
+                  type: string
+                  description: Defines how the parameter is to be used
+                  enum: ['as-is', 'without-extension']
+                  default: 'as-is'
+                path_in_archive:
+                  type: string
+                  description: if type is archive, the resource is at this location in the archive
+                  default: '.'
+                version_range:
+                  type: string
+                  description: Range of supported versions, syntax like in PEP 440
+                  default: '>= 0.0.1'
+                size:
+                  type: number
+                  description: Size of the resource in bytes

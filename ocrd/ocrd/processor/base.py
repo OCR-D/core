@@ -9,6 +9,7 @@ __all__ = [
     'run_processor'
 ]
 
+from pkg_resources import resource_filename
 from os.path import exists
 from shutil import copyfileobj
 import json
@@ -22,6 +23,7 @@ import io
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
+    MIME_TO_EXT,
     getLogger,
     initLogging,
     list_resource_candidates,
@@ -61,13 +63,14 @@ class Processor():
             show_help=False,
             show_version=False,
             dump_json=False,
+            dump_module_dir=False,
             version=None
     ):
         """
         Instantiate, but do not process. Unless ``list_resources`` or
         ``show_resource`` or ``show_help`` or ``show_version`` or
-        ``dump_json`` is true, setup for processing (parsing and
-        validating parameters, entering the workspace directory).
+        ``dump_json`` or ``dump_module_dir`` is true, setup for processing
+        (parsing and validating parameters, entering the workspace directory).
 
         Args:
              workspace (:py:class:`~ocrd.Workspace`): The workspace to process. \
@@ -93,41 +96,36 @@ class Processor():
                  this processor's version and OCR-D version. Exit afterwards.
              dump_json (boolean): If true, then instead of processing, print :py:attr:`ocrd_tool` \
                  on stdout.
+             dump_module_dir (boolean): If true, then instead of processing, print :py:attr:`moduledir` \
+                 on stdout.
         """
+        self.ocrd_tool = ocrd_tool
         if parameter is None:
             parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return
+        if dump_module_dir:
+            print(self.moduledir)
+            return
         if list_resources:
-            has_dirs, has_files = get_processor_resource_types(None, ocrd_tool)
-            for res in list_all_resources(ocrd_tool['executable']):
-                if Path(res).is_dir() and not has_dirs:
-                    continue
-                if not Path(res).is_dir() and not has_files:
-                    continue
+            for res in self.list_all_resources():
                 print(res)
             return
         if show_resource:
-            has_dirs, has_files = get_processor_resource_types(None, ocrd_tool)
-            res_fname = list_resource_candidates(ocrd_tool['executable'], show_resource)
-            if not res_fname:
-                initLogging()
-                logger = getLogger('ocrd.%s.__init__' % ocrd_tool['executable'])
-                logger.error("Failed to resolve %s for processor %s" % (show_resource, ocrd_tool['executable']))
+            initLogging()
+            res_fname = self.resolve_resource(show_resource)
+            fpath = Path(res_fname)
+            if fpath.is_dir():
+                with pushd_popd(fpath):
+                    fileobj = io.BytesIO()
+                    with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
+                        tarball.add('.')
+                    fileobj.seek(0)
+                    copyfileobj(fileobj, sys.stdout.buffer)
             else:
-                fpath = Path(res_fname[0])
-                if fpath.is_dir():
-                    with pushd_popd(fpath):
-                        fileobj = io.BytesIO()
-                        with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
-                            tarball.add('.')
-                        fileobj.seek(0)
-                        copyfileobj(fileobj, sys.stdout.buffer)
-                else:
-                    sys.stdout.buffer.write(fpath.read_bytes())
+                sys.stdout.buffer.write(fpath.read_bytes())
             return
-        self.ocrd_tool = ocrd_tool
         if show_help:
             self.show_help()
             return
@@ -213,19 +211,59 @@ class Processor():
         if exists(val):
             log.debug("Resolved to absolute path %s" % val)
             return val
-        ret = [cand for cand in list_resource_candidates(executable, val, cwd=self.old_pwd) if exists(cand)]
+        if hasattr(self, 'old_pwd'):
+            cwd = self.old_pwd
+        else:
+            cwd = getcwd()
+        ret = [cand for cand in list_resource_candidates(executable, val,
+                                                         cwd=cwd, moduled=self.moduledir)
+               if exists(cand)]
         if ret:
             log.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
-        log.error("Could not find resource '%s' for executable '%s'. Try 'ocrd resmgr download %s %s' to download this resource.",
-                val, executable, executable, val)
+        log.error("Could not find resource '%s' for executable '%s'. "
+                  "Try 'ocrd resmgr download %s %s' to download this resource.",
+                  val, executable, executable, val)
         sys.exit(1)
 
     def list_all_resources(self):
         """
-        List all resources found in the filesystem
+        List all resources found in the filesystem and matching content-type by filename suffix
         """
-        return list_all_resources(self.ocrd_tool['executable'])
+        mimetypes = get_processor_resource_types(None, self.ocrd_tool)
+        for res in list_all_resources(self.ocrd_tool['executable'], moduled=self.moduledir):
+            res = Path(res)
+            if not '*/*' in mimetypes:
+                if res.is_dir() and not 'text/directory' in mimetypes:
+                    continue
+                # if we do not know all MIME types, then keep the file, otherwise require suffix match
+                if res.is_file() and not any(res.suffix == MIME_TO_EXT.get(mime, res.suffix)
+                                             for mime in mimetypes):
+                    continue
+            yield res
+
+    @property
+    def module(self):
+        """
+        The top-level module this processor belongs to.
+        """
+        # find shortest prefix path that is not just a namespace package
+        fqname = ''
+        for name in self.__module__.split('.'):
+            if fqname:
+                fqname += '.'
+            fqname += name
+            if sys.modules[fqname].__file__:
+                return fqname
+        # fall-back
+        return self.__module__
+
+    @property
+    def moduledir(self):
+        """
+        The filesystem path of the module directory.
+        """
+        return resource_filename(self.module, '')
 
     @property
     def input_files(self):
