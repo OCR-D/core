@@ -37,20 +37,22 @@ class DummyProcessor(Processor):
             pcgts = page_from_file(self.workspace.download_file(input_file))
             pcgts.set_pcGtsId(file_id)
             self.add_metadata(pcgts)
-            LOG.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
             if input_file.mimetype == MIMETYPE_PAGE:
+                LOG.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
                 # Source file is PAGE-XML: Write out in-memory PcGtsType
-                if copy_files:
-                    self.workspace.add_file(
-                        file_id=file_id,
-                        file_grp=self.output_file_grp,
-                        page_id=input_file.pageId,
-                        mimetype=input_file.mimetype,
-                        local_filename=local_filename,
-                        content=to_xml(pcgts).encode('utf-8'))
+                self.workspace.add_file(
+                    file_id=file_id,
+                    file_grp=self.output_file_grp,
+                    page_id=input_file.pageId,
+                    mimetype=input_file.mimetype,
+                    local_filename=local_filename,
+                    content=to_xml(pcgts).encode('utf-8'))
             else:
-                # Source file is not PAGE-XML: Copy byte-by-byte
-                if copy_files:
+                # Source file is not PAGE-XML: Copy byte-by-byte unless copy_files is False
+                if not copy_files:
+                    LOG.info("Not copying %s because it is not a PAGE-XML file and copy_files was false" % input_file.local_filename)
+                else:
+                    LOG.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
                     with open(input_file.local_filename, 'rb') as f:
                         content = f.read()
                         self.workspace.add_file(
@@ -64,10 +66,9 @@ class DummyProcessor(Processor):
                     # write out the PAGE-XML representation for this image
                     page_file_id = file_id + '_PAGE'
                     pcgts.set_pcGtsId(page_file_id)
-                    pcgts.get_Page().set_imageFilename(local_filename)
+                    pcgts.get_Page().set_imageFilename(local_filename if copy_files else input_file.local_filename)
                     page_filename = join(self.output_file_grp, file_id + '.xml')
-                    LOG.info("Add PAGE-XML %s generated for %s at %s",
-                             page_file_id, file_id, page_filename)
+                    LOG.info("Add PAGE-XML %s generated for %s at %s", page_file_id, file_id, page_filename)
                     self.workspace.add_file(
                         file_id=page_file_id,
                         file_grp=self.output_file_grp,
