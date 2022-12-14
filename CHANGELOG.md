@@ -5,6 +5,24 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.45.0] - 2022-12-13
+
+Fixed:
+
+  * `ocrd resmgr download --overwrite` now works properly for both directories and files, #690, #797
+  * `ocrd resmgr`: `archive` resources can now also be ZIP files and reference files and folders in them, #967
+  * `ocrd-dummy`: can now be used to create PAGE-XML for images without copying, #803, #814
+
+## [2.44.0] - 2022-12-08
+
+Added:
+
+  * `ocrd zip update` command to update checksums for an OCRD-ZIP after changing it, #363, #951
+
+Removed:
+
+  * `ocrd zip bag` does no longer support the long-broken `--in-place` option, #964, #363
+
 ## [2.43.0] - 2022-12-01
 
 Added:
@@ -1601,6 +1619,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.45.0]: ../../compare/v2.45.0..v2.44.0
+[2.44.0]: ../../compare/v2.44.0..v2.43.0
 [2.43.0]: ../../compare/v2.43.0..v2.42.1
 [2.42.1]: ../../compare/v2.42.1..v2.42.0
 [2.42.0]: ../../compare/v2.42.0..v2.41.0
