@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, constr, ValidationError
 
 import uvicorn
 
-from ocrd_models import OcrdMets
+from ocrd_models import OcrdMets, OcrdFile
 from ocrd_utils import initLogging, getLogger, deprecated_alias
 
 #
@@ -33,6 +33,10 @@ class OcrdFileModel(BaseModel):
     page_id : Union[str, None] = Field()
     url : str = Field()
 
+    @staticmethod
+    def create(file_grp : str, file_id : str, page_id : Union[str, None], url : str):
+        return OcrdFileModel(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url)
+
 class OcrdAgentModel(BaseModel):
     name : str = Field()
     _type : str = Field()
@@ -41,11 +45,27 @@ class OcrdAgentModel(BaseModel):
     othertype : str = Field()
     notes : List[Tuple[Dict[str, str], Optional[str]]] = Field()
 
+    @staticmethod
+    def create(name : str, _type : str, role : str, otherrole : str, othertype : str, notes : List[Tuple[Dict[str, str], Optional[str]]]):
+        return OcrdAgentModel(name=name, _type=_type, role=role, otherrole=otherrole, othertype=othertype, notes=notes)
+
+
 class OcrdFileListModel(BaseModel):
     files : List[OcrdFileModel] = Field()
 
+    @staticmethod
+    def create(files : List[OcrdFile]):
+        return OcrdFileListModel(
+            files=[OcrdFileModel(file_grp=f.fileGrp, file_id=f.ID, mimetype=f.mimetype, page_id=f.pageId, url=f.url) for f in files]
+        )
+
+
 class OcrdFileGroupListModel(BaseModel):
     file_groups : List[str] = Field()
+
+    @staticmethod
+    def create(file_groups : List[str]):
+        return OcrdFileGroupListModel(file_groups=file_groups)
 
 #
 # Client
@@ -105,7 +125,7 @@ class ClientSideOcrdMets():
         return list(self.find_files(*args, **kwargs))
 
     def add_agent(self, *args, **kwargs):
-        return self.session.request('POST', f'{self.url}/agent', data=OcrdAgentModel(**kwargs))
+        return self.session.request('POST', f'{self.url}/agent', data=OcrdAgentModel.create(**kwargs))
 
     @property
     def file_groups(self):
@@ -117,7 +137,7 @@ class ClientSideOcrdMets():
         r = self.session.request(
             'POST',
             self.url,
-            data=OcrdFileModel(
+            data=OcrdFileModel.create(
                 file_id=file_id,
                 file_grp=file_grp,
                 page_id=page_id,
@@ -179,9 +199,7 @@ class OcrdMetsServer():
             Find files in the mets
             """
             found = workspace.mets.find_all_files(fileGrp=file_grp, ID=file_id, pageId=page_id, mimetype=mimetype)
-            return OcrdFileListModel(
-                files=[OcrdFileModel(file_grp=of.fileGrp, file_id=of.ID, mimetype=of.mimetype, page_id=of.pageId, url=of.url) for of in found]
-            )
+            return OcrdFileListModel.create(found)
 
         @app.put('/')
         def save():
@@ -200,7 +218,7 @@ class OcrdMetsServer():
             Add a file
             """
             # Validate
-            file_resource = OcrdFileModel(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url)
+            file_resource = OcrdFileModel.create(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url)
             # Add to workspace
             kwargs = file_resource.dict()
             kwargs['page_id'] = page_id
