@@ -228,7 +228,7 @@ class Resolver():
         if (mets_server_host or mets_server_port or mets_server_socket):
             if mets_server_socket and (mets_server_host or mets_server_port):
                 raise ValueError('--mets-server-socket incompatible with --mets-server-host/--mets-server--port')
-            if (mets_server_host and not mets_server_port) or (not mets_server_host and mets_server_port):
+            if bool(mets_server_host) != bool(mets_server_port):
                 raise ValueError('--mets-server-host and --mets-server-port must both be set or unset')
 
         mets_is_remote = mets_url and (mets_url.startswith('http://') or mets_url.startswith('https://'))
