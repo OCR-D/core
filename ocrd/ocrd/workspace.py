@@ -75,7 +75,7 @@ class Workspace():
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
         self.overwrite_mode = False
-        self.is_remote = mets_server_host or mets_server_socket
+        self.is_remote = bool(mets_server_host or mets_server_socket)
         if mets is None:
             if self.is_remote:
                 mets = ClientSideOcrdMets(mets_server_host, mets_server_port, mets_server_socket)
