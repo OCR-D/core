@@ -207,7 +207,6 @@ class OcrdMetsServer():
             kwargs['content'] = data
             kwargs['local_filename'] = kwargs.pop('url')
             workspace.add_file(**kwargs)
-            workspace.save_mets()
             return file_resource
 
         @app.get('/file_groups', response_model=OcrdFileGroupListModel)
@@ -218,7 +217,6 @@ class OcrdMetsServer():
         async def add_agent(agent : OcrdAgentModel):
             kwargs = agent.dict()
             workspace.mets.add_agent(**kwargs)
-            workspace.save_mets()
             return agent
 
         @app.delete('/')
