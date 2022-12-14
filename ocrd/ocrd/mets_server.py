@@ -108,7 +108,7 @@ class ClientSideOcrdMets():
     """
 
     def __init__(self, host, port, socket):
-        self.log = getLogger('ocrd.workspace_client')
+        self.log = getLogger('ocrd.mets_client.%s' % ('uds' if socket else 'tcp'))
         if socket:
             self.url = f'http+unix://{socket.replace("/", "%2F")}'
             self.session = requests_unixsocket_session()
