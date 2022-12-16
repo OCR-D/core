@@ -4,6 +4,9 @@ from .deployment import (
     Deployer,
     Config
 )
+from ocrd_utils import (
+    getLogger
+)
 
 
 class ProcessingBroker(FastAPI):
@@ -19,6 +22,7 @@ class ProcessingBroker(FastAPI):
         self.config = Config(config_path)
         self.deployer = Deployer(self.config)
         self.deployer.deploy()
+        self.log = getLogger("ocrd.processingbroker")
 
         self.router.add_api_route(
             path='/stop',
@@ -37,7 +41,11 @@ class ProcessingBroker(FastAPI):
         # TODO: change where to run the processing server: default params, read from config or read
         #       from cmd? Or do not run at all as fastapi?
         # TODO: activate next line again (commented just for testing)
-        uvicorn.run(self, host='localhost', port=5050)
+        port = 5050
+        host = 'localhost'
+        self.log.debug(f"starting uvicorn. Host: {host}. Port: {port}")
+        uvicorn.run(self, host=host, port=port)
+
 
     async def on_shutdown(self):
         # TODO: shutdown docker containers

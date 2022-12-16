@@ -13,49 +13,76 @@ from dataclasses import dataclass
 from ocrd_utils import (
     getLogger
 )
+from typing import List
 
 
 class Deployer:
     """
     Class to wrap the deployment-functionality of the OCR-D Processing-Servers
+
+    Deployer is the one acting. Config is for represantation of the config-file only. DeployHost is
+    for managing information, not for actually doing things.
     """
 
     def __init__(self, config):
         self.log = getLogger("ocrd.processingbroker")
         self.log.info("Deployer-init()")
         self.config = config
-        self._started_processing_servers = {}
+        self.hosts = Host.from_config(config)
         self._message_queue_id = None
 
-    def _create_docker_client_for_host(self, host_config):
+    def deploy(self):
         """
-        Create a client for the specified host to do the docker deployment. Only if host contains
-        processors to be deployed with docker
-
-        Returns:
-            Ready to use docker.DockerClient if host contains processing servers to be
-            docker-deploed, None otherwise
+        Deploy the message queue and all processors defined in the config-file
         """
-        if not any(x.type == Ptype.docker for x in host_config.processors):
-            return None
-        username = host_config.username
-        hostname = host_config.address
-        return self._create_docker_client(username, hostname)
+        self._deploy_queue()
+        for host in self.hosts:
+            for p in host.processors_native:
+                self._deploy_native_processor(p, host)
+            self._close_clients(host)
 
-    def _create_docker_client(self, username, hostname):
-        docker_client = docker.DockerClient(base_url=f"ssh://{username}@{hostname}")
-        return docker_client
+    def kill(self):
+        self._kill_queue()
+        for host in self.hosts:
+            if not hasattr(host, "ssh_client") or not host.ssh_client:
+                host.ssh_client = self._create_ssh_client(host.address, host.username,
+                                                          host.password, host.keypath)
+            for p in host.processors_native:
+                for pid in p.pids:
+                    host.ssh_client.exec_command(f"kill {pid}")
+                p.pids = []
+
+    def _deploy_native_processor(self, processor, host):
+        """
+        - client erstellen fals er nicht existiert (lazy)
+        - start_native_processor aufrufen
+        """
+        assert not processor.pids, "processors already deployed. Pids are present. Host: " \
+            "{host.__dict__}. Processor: {processor.__dict__}"
+        if not hasattr(host, "ssh_client") or not host.ssh_client:
+            host.ssh_client = self._create_ssh_client(host.address, host.username, host.password,
+                                                      host.keypath)
+        for _ in range(processor.count):
+            pid = self._start_native_processor(host.ssh_client, processor.name, None, None)
+            processor.add_started_pid(pid)
+
+    def _start_native_processor(self, client, name, _queue_address, _database_address):
+        self.log.debug(f"start native processor: {name}")
+        channel = client.invoke_shell()
+        stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
+        # TODO: add real command here to start processing server here
+        cmd = "sleep 23s"
+        stdin.write(f"{cmd} & \n echo xyz$!xyz \n exit \n")
+        output = stdout.read().decode("utf-8")
+        stdout.close()
+        stdin.close()
+        return re.search(r"xyz([0-9]+)xyz", output).group(1)
 
     def _create_ssh_client(self, host, user, password, keypath):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-        if password:
-            client.connect(hostname=host, username=user, password=password)
-        elif keypath:
-            client.connect(hostname=host, username=user, key_filename=keypath)
-        else:
-            # TODO: think about using ~/.ssh/config or leave it like it is and remove this comment
-            raise Exception("Deploy message queue: password or path_to_privkey must be provided")
+        assert password or keypath, "password or keypath missing. Should have already been ensured"
+        client.connect(hostname=host, username=user, password=password, key_filename=keypath)
         return client
 
     def _close_clients(self, *args):
@@ -80,6 +107,7 @@ class Deployer:
 
     def _kill_queue(self):
         if not self._message_queue_id:
+            self.log.debug("kill_queue: no queue running")
             return
 
         client = self._create_ssh_client(
@@ -92,60 +120,52 @@ class Deployer:
         client.close()
         self.log.debug("killed queue")
 
-    def deploy(self):
-        """
-        Deploy the message queue and all processors defined in the config-file
-        """
-        if self._started_processing_servers or self._message_queue_id:
-            raise Exception("The services have already been deployed")
-        self._deploy_queue()
-        for host in self.config.hosts:
-            ssh_client = self._create_ssh_client(host.address, host.username, host.password,
-                                                 host.path_to_privkey)
-            for processor in [x for x in host.processors if x.type is Ptype.native]:
-                count = processor.number_of_instance
-                for _ in range(count):
-                    res = self._start_native_processor(ssh_client, processor)
-                    self._add_started_processing_server(host, res)
-            self._close_clients(ssh_client)
 
-    def kill(self):
-        for host in self._started_processing_servers:
-            services = self._started_processing_servers[host]
-            ssh_client = self._create_ssh_client(
-                services[0].address, services[0].username, services[0].password,
-                services[0].path_to_privkey)
-            for service in services:
-                if service.type is Ptype.native:
-                    self._kill_native_processor(ssh_client, service)
-        self._kill_queue()
-        self._started_processing_servers = {}
+class Host:
+    """
+    Class to wrap functionality and information to deploy processors to one Host.
 
-    def _add_started_processing_server(self, host, ps_infos):
-        """
-        add infos for a started processing server to the "reminder"
-        """
-        storage = self._started_processing_servers.setdefault(host.name, [])
-        storage.append(RunningService(host.address, host.username, host.password,
-                                      host.path_to_privkey, *ps_infos))
+    Class Config is for reading/storing the config only. Objects from DeployHost are build from the
+    config and provide functionality to deploy the containers alongside the config-information
 
-    def _start_native_processor(self, client, processor):
-        self.log.debug(f"start native processor: {processor.__dict__}")
-        assert processor.type == Ptype.native, "expected processor type to be 'native'"
-        channel = client.invoke_shell()
-        stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        # TODO: add real command to start processing server here
-        cmd = "sleep 23s"
-        stdin.write(f"{cmd} & \n echo xyz$!xyz \n exit \n")
-        output = stdout.read().decode("utf-8")
-        stdout.close()
-        stdin.close()
-        pid = re.search(r"xyz([0-9]+)xyz", output).group(1)
-        return Ptype.native, pid
+    This class should not do much but hold config information and runtime information. I hope to
+    make the code better understandable this way. Deployer should still be the class who does things
+    and this class here should be mostly passive
+    """
+    def __init__(self, config):
+        self.name = config.name
+        self.address = config.address
+        self.username = config.username
+        self.password = config.password
+        self.keypath = config.path_to_privkey
+        self.processors_native = []
+        self.processors_docker = []
+        for x in config.processors:
+            if x.type == Ptype.native:
+                self.processors_native.append(
+                    self.Processor(x.name, x.number_of_instance, Ptype.native)
+                )
+            else:
+                self.processors_docker.append(
+                    self.Processor(x.name, x.number_of_instance, Ptype.docker)
+                )
 
-    def _kill_native_processor(self, client, running_service):
-        assert running_service.type == Ptype.native, "expected processor type to be 'native'"
-        client.exec_command(f"kill {running_service.identifier}")
+    @classmethod
+    def from_config(cls, config):
+        res = []
+        for x in config.hosts:
+            res.append(cls(x))
+        return res
+
+    class Processor:
+        def __init__(self, name, count, type):
+            self.name = name
+            self.count = count
+            self.type = type
+            self.pids = []
+
+        def add_started_pid(self, pid):
+            self.pids.append(pid)
 
 
 class Config:
@@ -153,7 +173,7 @@ class Config:
     Class to hold the configuration for the ProcessingBroker
 
     The purpose of this class and its inner classes is to load the config and make its values
-    accessible
+    accessible. This class and its attributes map 1:1 to the yaml-Config file
     """
     def __init__(self, config_path):
         with open(config_path) as fin:
@@ -163,7 +183,7 @@ class Config:
         for d in config.get("hosts", []):
             assert len(d.items()) == 1
             for k, v in d.items():
-                self.hosts.append(Config.Host(k, **v))
+                self.hosts.append(Config.ConfigHost(k, **v))
 
     class MessageQueue:
         def __init__(self, address, port, ssh):
@@ -174,7 +194,7 @@ class Config:
                 self.password = str(ssh["password"]) if "password" in ssh else None
                 self.path_to_privkey = ssh.get("path_to_privkey", None)
 
-    class Host:
+    class ConfigHost:
         def __init__(self, name, address, username, password=None, path_to_privkey=None,
                      deploy_processors=[]):
             self.name = name
@@ -182,9 +202,9 @@ class Config:
             self.username = username
             self.password = str(password) if password is not None else None
             self.path_to_privkey = path_to_privkey
-            self.processors = [self.__class__.Processor(**x) for x in deploy_processors]
+            self.processors = [self.__class__.ConfigProcessor(**x) for x in deploy_processors]
 
-        class Processor:
+        class ConfigProcessor:
             def __init__(self, name, type, number_of_instance=1):
                 self.name = name
                 self.number_of_instance = number_of_instance
@@ -201,17 +221,3 @@ class Ptype(Enum):
     @staticmethod
     def from_str(label: str):
         return Ptype[label.lower()]
-
-
-@dataclass(eq=True, frozen=True)
-class RunningService:
-    """
-    (Data-)Class to store all necessary information about a started processing server. Information
-    is used to stop it later
-    """
-    address: str
-    username: str
-    password: str
-    path_to_privkey: str
-    type: Ptype
-    identifier: str
