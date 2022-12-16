@@ -82,7 +82,14 @@ class Deployer:
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
         assert password or keypath, "password or keypath missing. Should have already been ensured"
+        self.log.debug(f"creating ssh-client with username: '{user}', keypath: '{keypath}'. "
+                       f"host: {host}")
+        assert bool(password) is not bool(keypath), "expecting either password or keypath " \
+            "provided, not both"
         client.connect(hostname=host, username=user, password=password, key_filename=keypath)
+        # TODO: connecting could easily fail here: wrong password or wrong path to keyfile. Maybe it
+        #       is better to use except and try to give custom error message
+
         return client
 
     def _close_clients(self, *args):
@@ -133,21 +140,20 @@ class Host:
     and this class here should be mostly passive
     """
     def __init__(self, config):
-        self.name = config.name
         self.address = config.address
         self.username = config.username
         self.password = config.password
         self.keypath = config.path_to_privkey
         self.processors_native = []
         self.processors_docker = []
-        for x in config.processors:
-            if x.type == Ptype.native:
+        for x in config.deploy_processors:
+            if x.deploy_type == DeployType.native:
                 self.processors_native.append(
-                    self.Processor(x.name, x.number_of_instance, Ptype.native)
+                    self.Processor(x.name, x.number_of_instance, DeployType.native)
                 )
             else:
                 self.processors_docker.append(
-                    self.Processor(x.name, x.number_of_instance, Ptype.docker)
+                    self.Processor(x.name, x.number_of_instance, DeployType.docker)
                 )
 
     @classmethod
@@ -158,10 +164,10 @@ class Host:
         return res
 
     class Processor:
-        def __init__(self, name, count, type):
+        def __init__(self, name, count, deploy_type):
             self.name = name
             self.count = count
-            self.type = type
+            self.deploy_type = deploy_type
             self.pids = []
 
         def add_started_pid(self, pid):
@@ -179,45 +185,60 @@ class Config:
         with open(config_path) as fin:
             config = yaml.safe_load(fin)
         self.message_queue = Config.MessageQueue(**config["message_queue"])
+        self.mongo_db = Config.MongoDb(**config["mongo_db"])
         self.hosts = []
         for d in config.get("hosts", []):
-            assert len(d.items()) == 1
-            for k, v in d.items():
-                self.hosts.append(Config.ConfigHost(k, **v))
+            self.hosts.append(Config.ConfigHost(**d))
 
     class MessageQueue:
-        def __init__(self, address, port, ssh):
+        def __init__(self, address, port, credentials, ssh):
             self.address = address
             self.port = port
+            if credentials:
+                self.username = credentials["username"]
+                self.password = credentials["password"]
+            if ssh:
+                self.username = ssh["username"]
+                self.password = str(ssh["password"]) if "password" in ssh else None
+                self.path_to_privkey = ssh.get("path_to_privkey", None)
+
+    class MongoDb:
+        def __init__(self, address, port, credentials, ssh):
+            self.address = address
+            self.port = port
+            if credentials:
+                self.username = credentials["username"]
+                self.password = credentials["password"]
             if ssh:
                 self.username = ssh["username"]
                 self.password = str(ssh["password"]) if "password" in ssh else None
                 self.path_to_privkey = ssh.get("path_to_privkey", None)
 
     class ConfigHost:
-        def __init__(self, name, address, username, password=None, path_to_privkey=None,
+        def __init__(self, address, username, password=None, path_to_privkey=None,
                      deploy_processors=[]):
-            self.name = name
             self.address = address
             self.username = username
             self.password = str(password) if password is not None else None
             self.path_to_privkey = path_to_privkey
-            self.processors = [self.__class__.ConfigProcessor(**x) for x in deploy_processors]
+            self.deploy_processors = [
+                self.__class__.ConfigDeployProcessor(**x) for x in deploy_processors
+            ]
 
-        class ConfigProcessor:
-            def __init__(self, name, type, number_of_instance=1):
+        class ConfigDeployProcessor:
+            def __init__(self, name, deploy_type, number_of_instance=1):
                 self.name = name
                 self.number_of_instance = number_of_instance
-                self.type = Ptype.from_str(type)
+                self.deploy_type = DeployType.from_str(deploy_type)
 
 
-class Ptype(Enum):
+class DeployType(Enum):
     """
-    Type of the processing server. It can be started native or with docker
+    Deploy-Type of the processing server. It can be started native or with docker
     """
     docker = 1
     native = 2
 
     @staticmethod
     def from_str(label: str):
-        return Ptype[label.lower()]
+        return DeployType[label.lower()]
