@@ -398,7 +398,7 @@ class Workspace():
 
             ret = self.mets.add_file(file_grp, **kwargs, content=content)
 
-            if content is not None:
+            if not self.is_remote and content is not None:
                 with open(kwargs['local_filename'], 'wb') as f:
                     if isinstance(content, str):
                         content = bytes(content, 'utf-8')
