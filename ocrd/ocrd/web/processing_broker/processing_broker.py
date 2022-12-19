@@ -19,7 +19,7 @@ class ProcessingBroker(FastAPI):
         super().__init__(on_shutdown=[self.on_shutdown])
         # TODO: validate: shema can be used to validate the content of the yaml file. decide if to
         # validate here or in Config-Constructor
-        self.config = Config(config_path)
+        self.config = Config.from_configfile(config_path)
         self.deployer = Deployer(self.config)
         self.deployer.deploy()
         self.log = getLogger("ocrd.processingbroker")

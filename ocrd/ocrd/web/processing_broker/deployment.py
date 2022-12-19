@@ -57,6 +57,7 @@ class Deployer:
         - client erstellen fals er nicht existiert (lazy)
         - start_native_processor aufrufen
         """
+        self.log.debug("deploy native processor: '{processor}' on '{host.address}'")
         assert not processor.pids, "processors already deployed. Pids are present. Host: " \
             "{host.__dict__}. Processor: {processor.__dict__}"
         if not hasattr(host, "ssh_client") or not host.ssh_client:
@@ -99,14 +100,15 @@ class Deployer:
 
     def _deploy_queue(self):
         # TODO: use docker-sdk here later
+        mq_conf = self.config.message_queue
         client = self._create_ssh_client(
-            self.config.message_queue.address, self.config.message_queue.username,
-            self.config.message_queue.password, self.config.message_queue.path_to_privkey
+            mq_conf.address, mq_conf.ssh.username,
+            mq_conf.ssh.password if hasattr(mq_conf.ssh, "password") else None,
+            mq_conf.ssh.path_to_privkey if hasattr(mq_conf.ssh, "path_to_privkey") else None,
         )
-        port = self.config.message_queue.port
 
         # TODO: use rm here or not? Should queues be reused?
-        _, stdout, _ = client.exec_command(f"docker run --rm -d -p {port}:5672 rabbitmq")
+        _, stdout, _ = client.exec_command(f"docker run --rm -d -p {mq_conf.port}:5672 rabbitmq")
         container_id = stdout.read().decode('utf-8').strip()
         self._message_queue_id = container_id
         client.close()
@@ -116,11 +118,18 @@ class Deployer:
         if not self._message_queue_id:
             self.log.debug("kill_queue: no queue running")
             return
+        else:
+            self.log.debug(f"trying to kill queue with id: {self._message_queue_id} now")
 
+        # TODO: use docker sdk here later
+        # TODO: code occures twice. dry
+        mq_conf = self.config.message_queue
         client = self._create_ssh_client(
-            self.config.message_queue.address, self.config.message_queue.username,
-            self.config.message_queue.password, self.config.message_queue.path_to_privkey
+            mq_conf.address, mq_conf.ssh.username,
+            mq_conf.ssh.password if hasattr(mq_conf.ssh, "password") else None,
+            mq_conf.ssh.path_to_privkey if hasattr(mq_conf.ssh, "path_to_privkey") else None,
         )
+
         # stopping container might take up to 10 Seconds
         client.exec_command(f"docker stop {self._message_queue_id}")
         self._message_queue_id = None
@@ -142,19 +151,22 @@ class Host:
     def __init__(self, config):
         self.address = config.address
         self.username = config.username
-        self.password = config.password
-        self.keypath = config.path_to_privkey
+        self.password = config.password if hasattr(config, "password") else None
+        self.keypath = config.path_to_privkey if hasattr(config, "path_to_privkey") else None
+        assert self.password or self.keypath, "Host in configfile with neither password nor keyfile"
         self.processors_native = []
         self.processors_docker = []
         for x in config.deploy_processors:
-            if x.deploy_type == DeployType.native:
+            if x.deploy_type == 'native':
                 self.processors_native.append(
                     self.Processor(x.name, x.number_of_instance, DeployType.native)
                 )
-            else:
+            elif x.deploy_type == 'docker':
                 self.processors_docker.append(
                     self.Processor(x.name, x.number_of_instance, DeployType.docker)
                 )
+            else:
+                assert False, f"unknown deploy_type: '{x.deploy_type}'"
 
     @classmethod
     def from_config(cls, config):
@@ -174,62 +186,24 @@ class Host:
             self.pids.append(pid)
 
 
-class Config:
-    """
-    Class to hold the configuration for the ProcessingBroker
+class Config():
+    def __init__(self, d):
+        """
+        Class-represantation of the configuration-file for the ProcessingBroker
+        """
+        for k, v in d.items():
+            if isinstance(v, dict):
+                setattr(self, k, Config(v))
+            elif isinstance(v, list) and len(v) and isinstance(v[0], dict):
+                setattr(self, k, [Config(x) if isinstance(x, dict) else x for x in v])
+            else:
+                setattr(self, k, v)
 
-    The purpose of this class and its inner classes is to load the config and make its values
-    accessible. This class and its attributes map 1:1 to the yaml-Config file
-    """
-    def __init__(self, config_path):
-        with open(config_path) as fin:
-            config = yaml.safe_load(fin)
-        self.message_queue = Config.MessageQueue(**config["message_queue"])
-        self.mongo_db = Config.MongoDb(**config["mongo_db"])
-        self.hosts = []
-        for d in config.get("hosts", []):
-            self.hosts.append(Config.ConfigHost(**d))
-
-    class MessageQueue:
-        def __init__(self, address, port, credentials, ssh):
-            self.address = address
-            self.port = port
-            if credentials:
-                self.username = credentials["username"]
-                self.password = credentials["password"]
-            if ssh:
-                self.username = ssh["username"]
-                self.password = str(ssh["password"]) if "password" in ssh else None
-                self.path_to_privkey = ssh.get("path_to_privkey", None)
-
-    class MongoDb:
-        def __init__(self, address, port, credentials, ssh):
-            self.address = address
-            self.port = port
-            if credentials:
-                self.username = credentials["username"]
-                self.password = credentials["password"]
-            if ssh:
-                self.username = ssh["username"]
-                self.password = str(ssh["password"]) if "password" in ssh else None
-                self.path_to_privkey = ssh.get("path_to_privkey", None)
-
-    class ConfigHost:
-        def __init__(self, address, username, password=None, path_to_privkey=None,
-                     deploy_processors=[]):
-            self.address = address
-            self.username = username
-            self.password = str(password) if password is not None else None
-            self.path_to_privkey = path_to_privkey
-            self.deploy_processors = [
-                self.__class__.ConfigDeployProcessor(**x) for x in deploy_processors
-            ]
-
-        class ConfigDeployProcessor:
-            def __init__(self, name, deploy_type, number_of_instance=1):
-                self.name = name
-                self.number_of_instance = number_of_instance
-                self.deploy_type = DeployType.from_str(deploy_type)
+    @classmethod
+    def from_configfile(cls, path):
+        with open(path) as fin:
+            x = yaml.safe_load(fin)
+        return cls(x)
 
 
 class DeployType(Enum):
