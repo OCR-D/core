@@ -68,7 +68,11 @@ class ProcessingBroker(FastAPI):
         - ensure queue is empty or processor is not currently running
         - connect to hosts and kill pids
         """
-        await self.stop_processing_servers()
+        try:
+            await self.stop_processing_servers()
+        except:
+            self.log.debug("error stopping processing servers: ", exc_info=True)
+            raise
 
     async def stop_processing_servers(self):
         self.deployer.kill()
