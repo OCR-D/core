@@ -56,7 +56,7 @@ class OcrdFileListModel(BaseModel):
     @staticmethod
     def create(files : List[OcrdFile]):
         return OcrdFileListModel(
-            files=[OcrdFileModel(file_grp=f.fileGrp, file_id=f.ID, mimetype=f.mimetype, page_id=f.pageId, url=f.url) for f in files]
+            files=[OcrdFileModel.create(file_grp=f.fileGrp, file_id=f.ID, mimetype=f.mimetype, page_id=f.pageId, url=f.url) for f in files]
         )
 
 
