@@ -8,6 +8,7 @@ OCR-D CLI: start the processing broker
 import click
 from ocrd_utils import initLogging
 from ocrd.web.processing_broker import ProcessingBroker
+import sys
 
 
 @click.command('processing-broker')
@@ -17,6 +18,9 @@ def processing_broker_cli(path_to_config, stop=False):
     Start and manage processing servers with the processing broker
     """
     initLogging()
-    # Start the broker
+    res = ProcessingBroker.validate_config(path_to_config)
+    if res:
+        print(f"config is invalid: {res}")
+        sys.exit(1)
     app = ProcessingBroker(path_to_config)
     app.start()

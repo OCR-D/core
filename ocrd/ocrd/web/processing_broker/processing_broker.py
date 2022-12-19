@@ -7,6 +7,9 @@ from .deployment import (
 from ocrd_utils import (
     getLogger
 )
+import yaml
+from jsonschema import validate, ValidationError
+from ocrd_utils.package_resources import resource_string
 
 
 class ProcessingBroker(FastAPI):
@@ -46,6 +49,17 @@ class ProcessingBroker(FastAPI):
         self.log.debug(f"starting uvicorn. Host: {host}. Port: {port}")
         uvicorn.run(self, host=host, port=port)
 
+    @staticmethod
+    def validate_config(config_path):
+        with open(config_path) as fin:
+            obj = yaml.safe_load(fin)
+        # TODO: move schema to another place?!
+        schema = yaml.safe_load(resource_string(__name__, 'config.schema.yml'))
+        try:
+            validate(obj, schema)
+        except ValidationError as e:
+            return f"{e.message}. At {e.json_path}"
+        return None
 
     async def on_shutdown(self):
         # TODO: shutdown docker containers
