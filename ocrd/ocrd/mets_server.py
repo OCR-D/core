@@ -34,7 +34,7 @@ class OcrdFileModel(BaseModel):
     url : str = Field()
 
     @staticmethod
-    def create(file_grp : str, file_id : str, page_id : Union[str, None], url : str):
+    def create(file_grp : str, file_id : str, page_id : Union[str, None], url : str, mimetype : str):
         return OcrdFileModel(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url)
 
 class OcrdAgentModel(BaseModel):
