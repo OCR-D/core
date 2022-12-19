@@ -117,7 +117,7 @@ class ClientSideOcrdMets():
             self.session = requests_session()
 
     def find_files(self, **kwargs):
-        r = self.session.request('GET', self.url, params={**kwargs})
+        r = self.session.request('GET', f'{self.url}/file', params={**kwargs})
         for f in r.json()['files']:
             yield ClientSideOcrdFile(None, ID=f['file_id'], pageId=f['page_id'], fileGrp=f['file_grp'], url=f['url'], mimetype=f['mimetype'])
 
@@ -136,7 +136,7 @@ class ClientSideOcrdMets():
     def add_file(self, file_grp, content=None, file_id=None, url=None, mimetype=None, page_id=None, **kwargs):
         r = self.session.request(
             'POST',
-            self.url,
+            f'{self.url}/file',
             data=OcrdFileModel.create(
                 file_id=file_id,
                 file_grp=file_grp,
@@ -177,18 +177,18 @@ class OcrdMetsServer():
         )
 
         @app.exception_handler(ValidationError)
-        async def exception_handler_invalid400(request: Request, exc: ValidationError):
+        async def exception_handler_validation_error(request: Request, exc: ValidationError):
             return JSONResponse(status_code=400, content=exc.errors())
 
         @app.exception_handler(FileExistsError)
-        async def exception_handler_invalid400(request: Request, exc: FileExistsError):
+        async def exception_handler_file_exists(request: Request, exc: FileExistsError):
             return JSONResponse(status_code=400, content=str(exc))
 
         @app.exception_handler(re.error)
-        async def exception_handler_invalid400(request: Request, exc: re.error):
+        async def exception_handler_invalid_regex(request: Request, exc: re.error):
             return JSONResponse(status_code=400, content=f'invalid regex: {exc}')
 
-        @app.get("/", response_model=OcrdFileListModel)
+        @app.get("/file", response_model=OcrdFileListModel)
         async def find_files(
             file_grp : Union[str, None] = None,
             file_id : Union[str, None] = None,
@@ -205,7 +205,7 @@ class OcrdMetsServer():
         def save():
             return workspace.save_mets()
 
-        @app.post('/', response_model=OcrdFileModel)
+        @app.post('/file', response_model=OcrdFileModel)
         async def add_file(
             data : bytes = File(),
             file_grp : str = Form(),
