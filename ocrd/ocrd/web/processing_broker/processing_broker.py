@@ -1,12 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
-from .deployment import (
-    Deployer,
-    Config
-)
-from ocrd_utils import (
-    getLogger
-)
+from .deployment import Deployer
+from ocrd_utils import getLogger
 import yaml
 from jsonschema import validate, ValidationError
 from ocrd_utils.package_resources import resource_string
@@ -20,9 +15,8 @@ class ProcessingBroker(FastAPI):
     def __init__(self, config_path):
         # TODO: set other args: title, description, version, openapi_tags
         super().__init__(on_shutdown=[self.on_shutdown])
-        # TODO: validate: shema can be used to validate the content of the yaml file. decide if to
-        # validate here or in Config-Constructor
-        self.config = Config.from_configfile(config_path)
+        with open(config_path) as fin:
+            self.config = yaml.safe_load(fin)
         self.deployer = Deployer(self.config)
         self.deployer.deploy()
         self.log = getLogger("ocrd.processingbroker")

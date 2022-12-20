@@ -1,4 +1,3 @@
-import yaml
 import docker
 from docker.transport import SSHHTTPAdapter
 import paramiko
@@ -10,25 +9,27 @@ from ocrd_utils import (
 import urllib.parse
 
 
+# TODO: remove debug log statements before beta, their purpose is development only
 class Deployer:
-    """
-    Class to wrap the deployment-functionality of the OCR-D Processing-Servers
+    """ Class to wrap the deployment-functionality of the OCR-D Processing-Servers
 
     Deployer is the one acting. Config is for represantation of the config-file only. DeployHost is
     for managing information, not for actually doing things.
     """
 
     def __init__(self, config):
+        """
+        Args:
+            config (Config): values from config file wrapped into class `Config`
+        """
         self.log = getLogger("ocrd.processingbroker")
         self.log.debug("Deployer-init()")
-        self.config = config
-        self.hosts = Host.from_config(config)
-        self._message_queue_id = None
-        self._mongodb_id = None
+        self.mongo = MongoData(config["mongo_db"])
+        self.queue = QueueData(config["message_queue"])
+        self.hosts = HostData.from_config(config)
 
     def deploy(self):
-        """
-        Deploy the message queue and all processors defined in the config-file
+        """ Deploy the message queue and all processors defined in the config-file
         """
         self._deploy_queue()
         self._deploy_mongodb()
@@ -43,15 +44,10 @@ class Deployer:
         self._kill_queue()
         self._kill_mongodb()
         for host in self.hosts:
-            # TODO: provide function in host that does that so it is shorter and better to read
-            if not hasattr(host, "ssh_client") or not host.ssh_client:
-                host.ssh_client = self._create_ssh_client(host.address, host.username,
-                                                          host.password, host.keypath)
-
-            # TODO: provide function in host that does that so it is shorter and better to read
-            if not hasattr(host, "docker_client") or not host.docker_client:
-                host.docker_client = self._create_docker_client(host.address, host.username,
-                                                                host.password, host.keypath)
+            if host.ssh_client:
+                host.ssh_client = self._create_ssh_client(host)
+            if host.docker_client:
+                host.docker_client = self._create_docker_client(host)
             for p in host.processors_native:
                 for pid in p.pids:
                     host.ssh_client.exec_command(f"kill {pid}")
@@ -59,7 +55,8 @@ class Deployer:
             for p in host.processors_docker:
                 for pid in p.pids:
                     self.log.debug(f"trying to kill docker container: {pid}")
-                    # TODO: think about timeout. think about using threads to kill parallelize waiting time
+                    # TODO: think about timeout.
+                    #       think about using threads to kill parallelized to reduce waiting time
                     host.docker_client.containers.get(pid).stop()
                 p.pids = []
 
@@ -68,16 +65,11 @@ class Deployer:
         assert not processor.pids, "processors already deployed. Pids are present. Host: " \
             "{host.__dict__}. Processor: {processor.__dict__}"
         if deploy_type == DeployType.native:
-            # TODO: provide function in host that does that so it is shorter and better to read
-            if not hasattr(host, "ssh_client") or not host.ssh_client:
-                # TODO: add function to host to get params as dict, then `**host.login_dict()`
-                host.ssh_client = self._create_ssh_client(host.address, host.username,
-                                                          host.password, host.keypath)
+            if not host.ssh_client:
+                host.ssh_client = self._create_ssh_client(host)
         else:
-            # TODO: provide function in host that does that so it is shorter and better to read
-            if not hasattr(host, "docker_client") or not host.docker_client:
-                host.docker_client = self._create_docker_client(host.address, host.username,
-                                                                host.password, host.keypath)
+            if not host.docker_client:
+                host.docker_client = self._create_docker_client(host)
         for _ in range(processor.count):
             if deploy_type == DeployType.native:
                 pid = self._start_native_processor(host.ssh_client, processor.name, None, None)
@@ -104,24 +96,26 @@ class Deployer:
         assert res and res.id, "run docker container failed"
         return res.id
 
-    def _create_ssh_client(self, address, user, password, keypath):
+    def _create_ssh_client(self, obj):
+        address, username, password, keypath = obj.address, obj.username, obj.password, obj.keypath
+        assert address and username, "address and username are mandatory"
+        assert bool(password) is not bool(keypath), "expecting either password or keypath, not both"
+
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-        assert password or keypath, "password or keypath missing. Should have already been ensured"
-        self.log.debug(f"creating ssh-client with username: '{user}', keypath: '{keypath}'. "
+        self.log.debug(f"creating ssh-client with username: '{username}', keypath: '{keypath}'. "
                        f"host: {address}")
-        assert bool(password) is not bool(keypath), "expecting either password or keypath " \
-            "provided, not both"
-        client.connect(hostname=address, username=user, password=password, key_filename=keypath)
-        # TODO: connecting could easily fail here: wrong password or wrong path to keyfile. Maybe it
-        #       is better to use except and try to give custom error message
-
+        # TODO: connecting could easily fail here: wrong password, wrong path to keyfile etc. Maybe
+        #       would be better to use except and try to give custom error message when failing
+        client.connect(hostname=address, username=username, password=password, key_filename=keypath)
         return client
 
-    def _create_docker_client(self, address, user, password=None, keypath=None):
+    def _create_docker_client(self, obj):
+        address, username, password, keypath = obj.address, obj.username, obj.password, obj.keypath
+        assert address and username, "address and username are mandatory"
         assert bool(password) is not bool(keypath), "expecting either password or keypath " \
             "provided, not both"
-        return CustomDockerClient(user, address, password=password, keypath=keypath)
+        return CustomDockerClient(username, address, password=password, keypath=keypath)
 
     def _close_clients(self, *args):
         for client in args:
@@ -129,122 +123,92 @@ class Deployer:
                 client.close()
 
     def _deploy_queue(self):
-        mq_conf = self.config.message_queue
-        client = self._create_docker_client(
-            mq_conf.address, mq_conf.ssh.username,
-            mq_conf.ssh.password if hasattr(mq_conf.ssh, "password") else None,
-            mq_conf.ssh.path_to_privkey if hasattr(mq_conf.ssh, "path_to_privkey") else None,
-        )
+        client = self._create_docker_client(self.queue)
         # TODO: use rm here or not? Should queues be reused?
         res = client.containers.run(
-            "rabbitmq", detach=True, remove=True, ports={5672: int(mq_conf.port)}
+            "rabbitmq", detach=True, remove=True, ports={5672: self.queue.port}
         )
         assert res and res.id, "starting message queue failed"
-        self._message_queue_id = res.id
+        self.queue.pid = res.id
         client.close()
         self.log.debug("deployed queue")
 
     def _deploy_mongodb(self):
-        if not hasattr(self.config, "mongo_db"):
+        if not self.mongo or not self.mongo.address:
             self.log.debug("canceled mongo-deploy: no mongo_db in config")
             return
-        conf = self.config.mongo_db
-        # TODO: shorten this call
-        client = self._create_docker_client(
-            conf.address, conf.ssh.username,
-            conf.ssh.password if hasattr(conf.ssh, "password") else None,
-            conf.ssh.path_to_privkey if hasattr(conf.ssh, "path_to_privkey") else None,
-        )
+        client = self._create_docker_client(self.mongo)
         # TODO: use rm here or not? Should the mongdb be reused?
         # TODO: what about the data-dir? Must data be preserved?
         res = client.containers.run(
-            "mongo", detach=True, remove=True, ports={27017: int(conf.port)}
+            "mongo", detach=True, remove=True, ports={27017: self.mongo.port}
         )
         assert res and res.id, "starting mongodb failed"
-        self._mongodb_id = res.id
+        self.mongo.pid = res.id
         client.close()
         self.log.debug("deployed mongodb")
 
-    # TODO: create function to stop a container by id. Than use that to stop mongodb and queue
     def _kill_queue(self):
-        if not self._message_queue_id:
+        if not self.queue.pid:
             self.log.debug("kill_queue: queue not running")
             return
         else:
-            self.log.debug(f"trying to kill queue with id: {self._message_queue_id} now")
+            self.log.debug(f"trying to kill queue with id: {self.queue.pid} now")
 
-        mq_conf = self.config.message_queue
-        client = self._create_docker_client(
-            mq_conf.address, mq_conf.ssh.username,
-            mq_conf.ssh.password if hasattr(mq_conf.ssh, "password") else None,
-            mq_conf.ssh.path_to_privkey if hasattr(mq_conf.ssh, "path_to_privkey") else None,
-        )
-
-        # stopping container might take up to 10 Seconds
-        client.containers.get(self._message_queue_id).stop()
-        self._message_queue_id = None
+        client = self._create_docker_client(self.queue)
+        client.containers.get(self.queue.pid).stop()
+        self.queue.pid = None
         client.close()
         self.log.debug("stopped queue")
 
-    # TODO: see todo _kill_queue
     def _kill_mongodb(self):
-        if not self._mongodb_id:
+        if not self.mongo or not self.mongo.pid:
             self.log.debug("kill_mongdb: mongodb not running")
             return
         else:
-            self.log.debug(f"trying to kill mongdb with id: {self._mongodb_id} now")
+            self.log.debug(f"trying to kill mongdb with id: {self.mongo.pid} now")
 
-        # TODO: use docker sdk here later
-        # TODO: code occures twice. dry
-        conf = self.config.mongo_db
-        client = self._create_docker_client(
-            conf.address, conf.ssh.username,
-            conf.ssh.password if hasattr(conf.ssh, "password") else None,
-            conf.ssh.path_to_privkey if hasattr(conf.ssh, "path_to_privkey") else None,
-        )
-
-        # stopping container might take up to 10 Seconds
-        client.containers.get(self._mongodb_id).stop()
-        self._mongodb_id = None
+        client = self._create_docker_client(self.mongo)
+        client.containers.get(self.mongo.pid).stop()
+        self.mongo.pid = None
         client.close()
         self.log.debug("stopped mongodb")
 
 
-class Host:
-    """
-    Class to wrap functionality and information to deploy processors to one Host.
+class HostData:
+    """Class to wrap information for all processing-server-hosts.
 
-    Class Config is for reading/storing the config only. Objects from DeployHost are build from the
-    config and provide functionality to deploy the containers alongside the config-information
-
-    This class should not do much but hold config information and runtime information. I hope to
-    make the code better understandable this way. Deployer should still be the class who does things
-    and this class here should be mostly passive
+    Config information and runtime information is stored here. This class
+    should not do much but hold config information and runtime information. I
+    hope to make the code better understandable this way. Deployer should still
+    be the class who does things and this class here should be mostly passive
     """
     def __init__(self, config):
-        self.address = config.address
-        self.username = config.username
-        self.password = config.password if hasattr(config, "password") else None
-        self.keypath = config.path_to_privkey if hasattr(config, "path_to_privkey") else None
+        self.address = config["address"]
+        self.username = config["username"]
+        self.password = config.get("password", None)
+        self.keypath = config.get("path_to_privkey", None)
         assert self.password or self.keypath, "Host in configfile with neither password nor keyfile"
         self.processors_native = []
         self.processors_docker = []
-        for x in config.deploy_processors:
-            if x.deploy_type == 'native':
+        for x in config["deploy_processors"]:
+            if x["deploy_type"] == 'native':
                 self.processors_native.append(
-                    self.Processor(x.name, x.number_of_instance, DeployType.native)
+                    self.Processor(x["name"], x["number_of_instance"], DeployType.native)
                 )
-            elif x.deploy_type == 'docker':
+            elif x["deploy_type"] == 'docker':
                 self.processors_docker.append(
-                    self.Processor(x.name, x.number_of_instance, DeployType.docker)
+                    self.Processor(x["name"], x["number_of_instance"], DeployType.docker)
                 )
             else:
                 assert False, f"unknown deploy_type: '{x.deploy_type}'"
+        self.ssh_client = None
+        self.docker_client = None
 
     @classmethod
     def from_config(cls, config):
         res = []
-        for x in config.hosts:
+        for x in config["hosts"]:
             res.append(cls(x))
         return res
 
@@ -259,29 +223,35 @@ class Host:
             self.pids.append(pid)
 
 
-class Config():
-    def __init__(self, d):
-        """
-        Class-represantation of the configuration-file for the ProcessingBroker
-        """
-        for k, v in d.items():
-            if isinstance(v, dict):
-                setattr(self, k, Config(v))
-            elif isinstance(v, list) and len(v) and isinstance(v[0], dict):
-                setattr(self, k, [Config(x) if isinstance(x, dict) else x for x in v])
-            else:
-                setattr(self, k, v)
+class MongoData():
+    """ Class to hold information for Mongodb-Docker container
+    """
 
-    @classmethod
-    def from_configfile(cls, path):
-        with open(path) as fin:
-            x = yaml.safe_load(fin)
-        return cls(x)
+    def __init__(self, config):
+        self.address = config["address"]
+        self.port = int(config["port"])
+        self.username = config["ssh"]["username"]
+        self.keypath = config["ssh"].get("path_to_privkey", None)
+        self.password = config["ssh"].get("password", None)
+        self.credentials = (config["credentials"]["username"], config["credentials"]["password"])
+        self.pid = None
+
+
+class QueueData():
+    """ Class to hold information for RabbitMQ-Docker container
+    """
+    def __init__(self, config):
+        self.address = config["address"]
+        self.port = int(config["port"])
+        self.username = config["ssh"]["username"]
+        self.keypath = config["ssh"].get("path_to_privkey", None)
+        self.password = config["ssh"].get("password", None)
+        self.credentials = (config["credentials"]["username"], config["credentials"]["password"])
+        self.pid = None
 
 
 class DeployType(Enum):
-    """
-    Deploy-Type of the processing server. It can be started native or with docker
+    """ Deploy-Type of the processing server.
     """
     docker = 1
     native = 2
@@ -292,10 +262,11 @@ class DeployType(Enum):
 
 
 class CustomDockerClient(docker.DockerClient):
-    """
-    Wrapper for docker.DockerClient to use an own SshHttpAdapter. This makes it possible to use
-    provided password/keyfile for connecting with python-docker-sdk, which otherwise only allows to
-    use ~/.ssh/config for login
+    """Wrapper for docker.DockerClient to use an own SshHttpAdapter.
+
+    This makes it possible to use provided password/keyfile for connecting with
+    python-docker-sdk, which otherwise only allows to use ~/.ssh/config for
+    login
 
     XXX: inspired by https://github.com/docker/docker-py/issues/2416 . Should be replaced when
     docker-sdk provides its own way to make it possible to use custom SSH Credentials. Possible
