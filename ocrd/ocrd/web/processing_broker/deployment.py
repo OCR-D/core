@@ -20,16 +20,18 @@ class Deployer:
 
     def __init__(self, config):
         self.log = getLogger("ocrd.processingbroker")
-        self.log.info("Deployer-init()")
+        self.log.debug("Deployer-init()")
         self.config = config
         self.hosts = Host.from_config(config)
         self._message_queue_id = None
+        self._mongodb_id = None
 
     def deploy(self):
         """
         Deploy the message queue and all processors defined in the config-file
         """
         self._deploy_queue()
+        self._deploy_mongodb()
         for host in self.hosts:
             for p in host.processors_native:
                 self._deploy_processor(p, host, DeployType.native)
@@ -39,6 +41,7 @@ class Deployer:
 
     def kill(self):
         self._kill_queue()
+        self._kill_mongodb()
         for host in self.hosts:
             # TODO: provide function in host that does that so it is shorter and better to read
             if not hasattr(host, "ssh_client") or not host.ssh_client:
@@ -126,42 +129,85 @@ class Deployer:
                 client.close()
 
     def _deploy_queue(self):
-        # TODO: use docker-sdk here later
         mq_conf = self.config.message_queue
-        client = self._create_ssh_client(
+        client = self._create_docker_client(
             mq_conf.address, mq_conf.ssh.username,
             mq_conf.ssh.password if hasattr(mq_conf.ssh, "password") else None,
             mq_conf.ssh.path_to_privkey if hasattr(mq_conf.ssh, "path_to_privkey") else None,
         )
-
         # TODO: use rm here or not? Should queues be reused?
-        _, stdout, _ = client.exec_command(f"docker run --rm -d -p {mq_conf.port}:5672 rabbitmq")
-        container_id = stdout.read().decode('utf-8').strip()
-        self._message_queue_id = container_id
+        res = client.containers.run(
+            "rabbitmq", detach=True, remove=True, ports={5672: int(mq_conf.port)}
+        )
+        assert res and res.id, "starting message queue failed"
+        self._message_queue_id = res.id
         client.close()
         self.log.debug("deployed queue")
 
+    def _deploy_mongodb(self):
+        if not hasattr(self.config, "mongo_db"):
+            self.log.debug("canceled mongo-deploy: no mongo_db in config")
+            return
+        conf = self.config.mongo_db
+        # TODO: shorten this call
+        client = self._create_docker_client(
+            conf.address, conf.ssh.username,
+            conf.ssh.password if hasattr(conf.ssh, "password") else None,
+            conf.ssh.path_to_privkey if hasattr(conf.ssh, "path_to_privkey") else None,
+        )
+        # TODO: use rm here or not? Should the mongdb be reused?
+        # TODO: what about the data-dir? Must data be preserved?
+        res = client.containers.run(
+            "mongo", detach=True, remove=True, ports={27017: int(conf.port)}
+        )
+        assert res and res.id, "starting mongodb failed"
+        self._mongodb_id = res.id
+        client.close()
+        self.log.debug("deployed mongodb")
+
+    # TODO: create function to stop a container by id. Than use that to stop mongodb and queue
     def _kill_queue(self):
         if not self._message_queue_id:
-            self.log.debug("kill_queue: no queue running")
+            self.log.debug("kill_queue: queue not running")
             return
         else:
             self.log.debug(f"trying to kill queue with id: {self._message_queue_id} now")
 
-        # TODO: use docker sdk here later
-        # TODO: code occures twice. dry
         mq_conf = self.config.message_queue
-        client = self._create_ssh_client(
+        client = self._create_docker_client(
             mq_conf.address, mq_conf.ssh.username,
             mq_conf.ssh.password if hasattr(mq_conf.ssh, "password") else None,
             mq_conf.ssh.path_to_privkey if hasattr(mq_conf.ssh, "path_to_privkey") else None,
         )
 
         # stopping container might take up to 10 Seconds
-        client.exec_command(f"docker stop {self._message_queue_id}")
+        client.containers.get(self._message_queue_id).stop()
         self._message_queue_id = None
         client.close()
-        self.log.debug("killed queue")
+        self.log.debug("stopped queue")
+
+    # TODO: see todo _kill_queue
+    def _kill_mongodb(self):
+        if not self._mongodb_id:
+            self.log.debug("kill_mongdb: mongodb not running")
+            return
+        else:
+            self.log.debug(f"trying to kill mongdb with id: {self._mongodb_id} now")
+
+        # TODO: use docker sdk here later
+        # TODO: code occures twice. dry
+        conf = self.config.mongo_db
+        client = self._create_docker_client(
+            conf.address, conf.ssh.username,
+            conf.ssh.password if hasattr(conf.ssh, "password") else None,
+            conf.ssh.path_to_privkey if hasattr(conf.ssh, "path_to_privkey") else None,
+        )
+
+        # stopping container might take up to 10 Seconds
+        client.containers.get(self._mongodb_id).stop()
+        self._mongodb_id = None
+        client.close()
+        self.log.debug("stopped mongodb")
 
 
 class Host:
