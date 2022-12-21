@@ -167,23 +167,22 @@ class Workspace():
         log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
             try:
-                # If the f.url is already a file path, and is within self.directory, do nothing
-                url_path = Path(f.url).absolute()
-                if not (url_path.exists() and url_path.relative_to(str(Path(self.directory).resolve()))):
-                    raise Exception("Not already downloaded, moving on")
-            except Exception as e:
+                # If the f.local_filename is already a file path, and is within self.directory, do nothing
+                file_path = Path(f.local_filename).absolute()
+                if not (file_path.exists() and file_path.relative_to(str(Path(self.directory).resolve()))):
+                    raise FileNotFoundError("Not already downloaded, moving on")
+            except FileNotFoundError as e:
                 basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
                 try:
-                    f.url = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
+                    f.local_filename = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
                 except FileNotFoundError as e:
                     if not self.baseurl:
                         raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
                     if _recursion_count >= 1:
                         raise FileNotFoundError("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
                     log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
-                    f.url = '%s/%s' % (self.baseurl, f.url)
-                    f.url = self.download_file(f, _recursion_count + 1).local_filename
-            f.local_filename = f.url
+                    f.local_filename = '%s/%s' % (self.baseurl, f.url)
+                    f.local_filename = self.download_file(f, _recursion_count + 1).local_filename
             return f
 
     def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
@@ -307,16 +306,16 @@ class Workspace():
             url_replacements = {}
             log.info("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_url = old_url = mets_file.url
+                new_url = old_url = mets_file.local_filename
                 # Directory part
                 new_url = sub(r'^%s/' % old, r'%s/' % new, new_url)
                 # File part
                 new_url = sub(r'/%s' % old, r'/%s' % new, new_url)
-                url_replacements[mets_file.url] = new_url
+                url_replacements[mets_file.local_filename] = new_url
                 # move file from ``old`` to ``new``
-                move(mets_file.url, new_url)
+                move(mets_file.local_filename, new_url)
                 # change the url of ``mets:file``
-                mets_file.url = new_url
+                mets_file.local_filename = new_url
                 # change the file ID and update structMap
                 # change the file ID and update structMap
                 new_id = sub(r'^%s' % old, r'%s' % new, mets_file.ID)

@@ -105,10 +105,7 @@ def test_workspace_add_file_overwrite(plain_workspace):
 def test_workspace_add_file_basename_no_content(plain_workspace):
     plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', page_id=None)
     f = next(plain_workspace.mets.find_files())
-
-    # assert
-    assert f.url == None
-
+    assert f.url == ''
 
 def test_workspace_add_file_binary_content(plain_workspace):
     fpath = join(plain_workspace.directory, 'subdir', 'ID1.tif')
@@ -164,15 +161,10 @@ def _url_to_file(the_path):
 
 
 def test_download_very_self_file(plain_workspace):
-
-    # arrange with some dummy stuff
     the_file = _url_to_file(abspath(__file__))
-
-    # act
     fn = plain_workspace.download_file(the_file)
-
-    # assert
     assert fn, join('DEPRECATED', basename(__file__))
+    assert fn == the_file.local_filename
 
 
 def test_download_url_without_baseurl_raises_exception(tmp_path):

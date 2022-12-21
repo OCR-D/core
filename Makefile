@@ -196,7 +196,7 @@ assets: repo/assets
 .PHONY: test
 # Run all unit tests
 test: assets
-	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10\
+	$(PYTHON) -m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore=$(TESTDIR)/test_logging.py \
 		--ignore=$(TESTDIR)/test_logging_conf.py \
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \

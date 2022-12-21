@@ -13,11 +13,7 @@ class OcrdFile():
     Represents a single ``mets:file/mets:FLocat`` (METS file entry).
     """
 
-    #  @staticmethod
-    #  def create(mimetype, ID, url, local_filename):
-    #      el_fileGrp.SubElement('file')
-
-    def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None):
+    def __init__(self, el, mimetype=None, pageId=None, local_filename=None, mets=None, url=None, ID=None):
         """
         Args:
             el (LxmlElement): etree Element of the ``mets:file`` this represents. Create new if not provided
@@ -25,9 +21,9 @@ class OcrdFile():
             mets (OcrdMets): Containing :py:class:`ocrd_models.ocrd_mets.OcrdMets`.
             mimetype (string): ``@MIMETYPE`` of this ``mets:file``
             pageId (string): ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
-            loctype (string): ``@LOCTYPE`` of this ``mets:file``
             local_filename (string): Local filename
-            url (string): ``@xlink:href`` of this ``mets:file``
+            url (string): original ``@xlink:href`` of this ``mets:file``
+            local_filename (string): ``@xlink:href`` pointing to the locally cached version of the file in the workspace
             ID (string): ``@ID`` of this ``mets:file``
         """
         if el is None:
@@ -37,15 +33,10 @@ class OcrdFile():
         self.ID = ID
         self.mimetype = mimetype
         self.local_filename = local_filename
-        self.loctype = loctype
         self.pageId = pageId
 
         if url:
             self.url = url
-
-        if not(local_filename):
-            if self.url and is_local_filename(self.url):
-                self.local_filename = get_local_filename(self.url)
 
     def __str__(self):
         """
@@ -139,46 +130,11 @@ class OcrdFile():
         self.mets.set_physical_page_for_file(pageId, self)
 
     @property
-    def loctype(self):
+    def loctypes(self):
         """
-        Get the ``@LOCTYPE`` of the ``mets:file``.
+        Get the ``@LOCTYPE``s of the ``mets:file``.
         """
-        el_FLocat = self._el.find('mets:FLocat', NS)
-        return '' if el_FLocat is None else el_FLocat.get('LOCTYPE')
-
-    @loctype.setter
-    def loctype(self, loctype):
-        """
-        Set the ``@LOCTYPE`` of the ``mets:file`` to :py:attr:`loctype`.
-        """
-        if loctype is None:
-            return
-        loctype = loctype.upper()
-        el_FLocat = self._el.find('mets:FLocat', NS)
-        if el_FLocat is None:
-            el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
-        el_FLocat.set('LOCTYPE', loctype)
-        if loctype == 'OTHER':
-            self.otherloctype = 'FILE'
-        else:
-            self.otherloctype = None
-
-    @property
-    def otherloctype(self):
-        el_FLocat = self._el.find('mets:FLocat', NS)
-        return '' if el_FLocat is None else el_FLocat.get('OTHERLOCTYPE')
-
-    @otherloctype.setter
-    def otherloctype(self, otherloctype):
-        el_FLocat = self._el.find('mets:FLocat', NS)
-        if el_FLocat is None:
-            el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
-        if not otherloctype:
-            if 'OTHERLOCTYPE' in el_FLocat.attrib:
-                del el_FLocat.attrib['OTHERLOCTYPE']
-        else:
-            el_FLocat.set('LOCTYPE', 'OTHER')
-            el_FLocat.set('OTHERLOCTYPE', otherloctype)
+        return [x.get('LOCTYPE') for x in  self._el.findall('mets:FLocat', NS)]
 
     @property
     def mimetype(self):
@@ -211,7 +167,7 @@ class OcrdFile():
         """
         Get the ``@xlink:href`` of this ``mets:file``.
         """
-        el_FLocat = self._el.find(TAG_METS_FLOCAT)
+        el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"]', NS)
         if el_FLocat is not None:
             return el_FLocat.get("{%s}href" % NS["xlink"])
         return ''
@@ -221,9 +177,38 @@ class OcrdFile():
         """
         Set the ``@xlink:href`` of this ``mets:file`` to :py:attr:`url`.
         """
+        el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"]', NS)
         if url is None:
+            if el_FLocat:
+                self._el.remove(el_FLocat)
             return
-        el_FLocat = self._el.find('mets:FLocat', NS)
         if el_FLocat is None:
             el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
         el_FLocat.set("{%s}href" % NS["xlink"], url)
+        el_FLocat.set("LOCTYPE", "URL")
+
+    @property
+    def local_filename(self):
+        """
+        Get the ``@xlink:href`` of this ``mets:file``.
+        """
+        el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', NS)
+        if el_FLocat is not None:
+            return el_FLocat.get("{%s}href" % NS["xlink"])
+        return ''
+
+    @local_filename.setter
+    def local_filename(self, fname):
+        """
+        Set the ``@xlink:href`` of this ``mets:file`` to :py:attr:`local_filename`.
+        """
+        el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"][@OTHERLOCTYPE="FILE"]', NS)
+        if fname is None:
+            if el_FLocat:
+                self._el.remove(el_FLocat)
+            return
+        if el_FLocat is None:
+            el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
+        el_FLocat.set("{%s}href" % NS["xlink"], fname)
+        el_FLocat.set("LOCTYPE", "OTHER")
+        el_FLocat.set("OTHERLOCTYPE", "FILE")
