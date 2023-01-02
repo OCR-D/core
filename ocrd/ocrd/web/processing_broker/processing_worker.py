@@ -6,7 +6,14 @@
 # According to the current requirements, each ProcessingWorker
 # is a single OCR-D Processor instance.
 class ProcessingWorker:
-    def __init__(self):
+    def __init__(self, processor_arguments, queue_address, database_address):
+        # Required arguments to run the OCR-D Processor
+        self.processor_arguments = processor_arguments
+        # RabbitMQ Address - This contains at least the
+        # host name, port, and the virtual host
+        self.rmq_address = queue_address
+        self.mongodb_address = database_address
+
         # RMQConsumer object must be created here, reference: RabbitMQ Library (WebAPI Implementation)
         # Based on the API calls the ProcessingWorker will receive messages from the running instance
         # of the RabbitMQ Server (deployed by the Processing Broker) through the RMQConsumer object.
@@ -28,7 +35,8 @@ class ProcessingWorker:
             username="default-consumer",
             password="default-consumer"
         )
-        # The callback method is called every time a message is consumed
+        
+        #Note: The queue name here is the processor.name by definition
         rmq_consumer.configure_consuming(queue_name="queue_name", callback_method=funcPtr)
         
         """

@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-from .deployment import Deployer
+from .deployer import Deployer
 from ocrd_utils import getLogger
 import yaml
 from jsonschema import validate, ValidationError
