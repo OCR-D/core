@@ -24,19 +24,23 @@ class Deployer:
         """
         self.log = getLogger("ocrd.processingbroker")
         self.log.debug("Deployer-init()")
-        self.mongo = MongoData(config["mongo_db"])
-        self.queue = QueueData(config["message_queue"])
+        self.mongo_data = MongoData(config["mongo_db"])
+        self.mq_data = QueueData(config["message_queue"])
         self.hosts = HostData.from_config(config)
 
     def deploy(self):
         """ Deploy the message queue and all processors defined in the config-file
         """
+        # Ideally, this should return the address of the RabbitMQ Server
         self._deploy_queue()
+        # Ideally, this should return the address of the MongoDB
         self._deploy_mongodb()
         for host in self.hosts:
             for p in host.processors_native:
+                # Ideally, pass the rabbitmq server and mongodb addresses here
                 self._deploy_processor(p, host, DeployType.native)
             for p in host.processors_docker:
+                # Ideally, pass the rabbitmq server and mongodb addresses here
                 self._deploy_processor(p, host, DeployType.docker)
             self._close_clients(host)
 
@@ -60,7 +64,7 @@ class Deployer:
                     host.docker_client.containers.get(pid).stop()
                 p.pids = []
 
-    def _deploy_processor(self, processor, host, deploy_type):
+    def _deploy_processor(self, processor, host, deploy_type, rabbitmq_server=None, mongodb=None):
         self.log.debug(f"deploy '{deploy_type}' processor: '{processor}' on '{host.address}'")
         assert not processor.pids, "processors already deployed. Pids are present. Host: " \
                                    "{host.__dict__}. Processor: {processor.__dict__}"
@@ -72,9 +76,17 @@ class Deployer:
                 host.docker_client = self._create_docker_client(host)
         for _ in range(processor.count):
             if deploy_type == DeployType.native:
-                pid = self._start_native_processor(host.ssh_client, processor.name, None, None)
+                pid = self._start_native_processor(
+                    client=host.ssh_client,
+                    name=processor.name,
+                    _queue_address=rabbitmq_server,
+                    _database_address=mongodb)
             else:
-                pid = self._start_docker_processor(host.docker_client, processor.name, None, None)
+                pid = self._start_docker_processor(
+                    client=host.docker_client,
+                    name=processor.name,
+                    _queue_address=rabbitmq_server,
+                    _database_address=mongodb)
             processor.add_started_pid(pid)
 
     def _start_native_processor(self, client, name, _queue_address, _database_address):
@@ -87,6 +99,9 @@ class Deployer:
         output = stdout.read().decode("utf-8")
         stdout.close()
         stdin.close()
+        # What does this return and is supposed to return?
+        # Putting some comments when using patterns is always appreciated
+        # Since the docker version returns PID, this should also return PID for consistency
         return re.search(r"xyz([0-9]+)xyz", output).group(1)
 
     def _start_docker_processor(self, client, name, _queue_address, _database_address):
@@ -123,14 +138,14 @@ class Deployer:
                 client.close()
 
     def _deploy_queue(self, image="rabbitmq", detach=True, remove=True, ports=None):
-        client = self._create_docker_client(self.queue)
+        client = self._create_docker_client(self.mq_data)
         if ports is None:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
             # 15672, 15671: HTTP API clients, management UI and rabbitmqadmin, without and with TLS
             # 25672: used for internode and CLI tools communication and is allocated from
             # a dynamic range (limited to a single port by default, computed as AMQP port + 20000)
             ports = {
-                5672: self.queue.port,
+                5672: self.mq_data.port,
                 15672: 15672,
                 25672: 25672
             }
@@ -142,18 +157,18 @@ class Deployer:
             ports=ports
         )
         assert res and res.id, "starting message queue failed"
-        self.queue.pid = res.id
+        self.mq_data.pid = res.id
         client.close()
         self.log.debug("deployed queue")
 
     def _deploy_mongodb(self, image="mongo", detach=True, remove=True, ports=None):
-        if not self.mongo or not self.mongo.address:
+        if not self.mongo_data or not self.mongo_data.address:
             self.log.debug("canceled mongo-deploy: no mongo_db in config")
             return
-        client = self._create_docker_client(self.mongo)
+        client = self._create_docker_client(self.mongo_data)
         if ports is None:
             ports = {
-                27017: self.mongo.port
+                27017: self.mongo_data.port
             }
         # TODO: use rm here or not? Should the mongodb be reused?
         # TODO: what about the data-dir? Must data be preserved?
@@ -164,33 +179,33 @@ class Deployer:
             ports=ports
         )
         assert res and res.id, "starting mongodb failed"
-        self.mongo.pid = res.id
+        self.mongo_data.pid = res.id
         client.close()
         self.log.debug("deployed mongodb")
 
     def _kill_queue(self):
-        if not self.queue.pid:
+        if not self.mq_data.pid:
             self.log.debug("kill_queue: queue not running")
             return
         else:
-            self.log.debug(f"trying to kill queue with id: {self.queue.pid} now")
+            self.log.debug(f"trying to kill queue with id: {self.mq_data.pid} now")
 
-        client = self._create_docker_client(self.queue)
-        client.containers.get(self.queue.pid).stop()
-        self.queue.pid = None
+        client = self._create_docker_client(self.mq_data)
+        client.containers.get(self.mq_data.pid).stop()
+        self.mq_data.pid = None
         client.close()
         self.log.debug("stopped queue")
 
     def _kill_mongodb(self):
-        if not self.mongo or not self.mongo.pid:
+        if not self.mongo_data or not self.mongo_data.pid:
             self.log.debug("kill_mongdb: mongodb not running")
             return
         else:
-            self.log.debug(f"trying to kill mongdb with id: {self.mongo.pid} now")
+            self.log.debug(f"trying to kill mongdb with id: {self.mongo_data.pid} now")
 
-        client = self._create_docker_client(self.mongo)
-        client.containers.get(self.mongo.pid).stop()
-        self.mongo.pid = None
+        client = self._create_docker_client(self.mongo_data)
+        client.containers.get(self.mongo_data.pid).stop()
+        self.mongo_data.pid = None
         client.close()
         self.log.debug("stopped mongodb")
 
