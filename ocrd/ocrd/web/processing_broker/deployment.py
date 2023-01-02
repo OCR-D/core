@@ -13,7 +13,7 @@ import urllib.parse
 class Deployer:
     """ Class to wrap the deployment-functionality of the OCR-D Processing-Servers
 
-    Deployer is the one acting. Config is for represantation of the config-file only. DeployHost is
+    Deployer is the one acting. Config is for representation of the config-file only. DeployHost is
     for managing information, not for actually doing things.
     """
 
@@ -63,7 +63,7 @@ class Deployer:
     def _deploy_processor(self, processor, host, deploy_type):
         self.log.debug(f"deploy '{deploy_type}' processor: '{processor}' on '{host.address}'")
         assert not processor.pids, "processors already deployed. Pids are present. Host: " \
-            "{host.__dict__}. Processor: {processor.__dict__}"
+                                   "{host.__dict__}. Processor: {processor.__dict__}"
         if deploy_type == DeployType.native:
             if not host.ssh_client:
                 host.ssh_client = self._create_ssh_client(host)
@@ -114,7 +114,7 @@ class Deployer:
         address, username, password, keypath = obj.address, obj.username, obj.password, obj.keypath
         assert address and username, "address and username are mandatory"
         assert bool(password) is not bool(keypath), "expecting either password or keypath " \
-            "provided, not both"
+                                                    "provided, not both"
         return CustomDockerClient(username, address, password=password, keypath=keypath)
 
     def _close_clients(self, *args):
@@ -122,26 +122,46 @@ class Deployer:
             if hasattr(client, "close") and callable(client.close):
                 client.close()
 
-    def _deploy_queue(self):
+    def _deploy_queue(self, image="rabbitmq", detach=True, remove=True, ports=None):
         client = self._create_docker_client(self.queue)
+        if ports is None:
+            # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
+            # 15672, 15671: HTTP API clients, management UI and rabbitmqadmin, without and with TLS
+            # 25672: used for internode and CLI tools communication and is allocated from
+            # a dynamic range (limited to a single port by default, computed as AMQP port + 20000)
+            ports = {
+                5672: self.queue.port,
+                15672: 15672,
+                25672: 25672
+            }
         # TODO: use rm here or not? Should queues be reused?
         res = client.containers.run(
-            "rabbitmq", detach=True, remove=True, ports={5672: self.queue.port}
+            image=image,
+            detach=detach,
+            remove=remove,
+            ports=ports
         )
         assert res and res.id, "starting message queue failed"
         self.queue.pid = res.id
         client.close()
         self.log.debug("deployed queue")
 
-    def _deploy_mongodb(self):
+    def _deploy_mongodb(self, image="mongo", detach=True, remove=True, ports=None):
         if not self.mongo or not self.mongo.address:
             self.log.debug("canceled mongo-deploy: no mongo_db in config")
             return
         client = self._create_docker_client(self.mongo)
-        # TODO: use rm here or not? Should the mongdb be reused?
+        if ports is None:
+            ports = {
+                27017: self.mongo.port
+            }
+        # TODO: use rm here or not? Should the mongodb be reused?
         # TODO: what about the data-dir? Must data be preserved?
         res = client.containers.run(
-            "mongo", detach=True, remove=True, ports={27017: self.mongo.port}
+            image=image,
+            detach=detach,
+            remove=remove,
+            ports=ports
         )
         assert res and res.id, "starting mongodb failed"
         self.mongo.pid = res.id
@@ -183,6 +203,7 @@ class HostData:
     hope to make the code better understandable this way. Deployer should still
     be the class who does things and this class here should be mostly passive
     """
+
     def __init__(self, config):
         self.address = config["address"]
         self.username = config["username"]
@@ -223,7 +244,7 @@ class HostData:
             self.pids.append(pid)
 
 
-class MongoData():
+class MongoData:
     """ Class to hold information for Mongodb-Docker container
     """
 
@@ -237,9 +258,10 @@ class MongoData():
         self.pid = None
 
 
-class QueueData():
+class QueueData:
     """ Class to hold information for RabbitMQ-Docker container
     """
+
     def __init__(self, config):
         self.address = config["address"]
         self.port = int(config["port"])
@@ -273,6 +295,7 @@ class CustomDockerClient(docker.DockerClient):
     Problems: APIClient must be given the API-version because it cannot connect prior to read it. I
     could imagine this could cause Problems
     """
+
     def __init__(self, user, host, **kwargs):
         assert user and host, "user and host must be set"
         assert "password" in kwargs or "keypath" in kwargs, "one of password and keyfile is needed"
