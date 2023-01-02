@@ -32,16 +32,16 @@ class Deployer:
         """ Deploy the message queue and all processors defined in the config-file
         """
         # Ideally, this should return the address of the RabbitMQ Server
-        self._deploy_queue()
+        rabbitmq_address = self._deploy_queue()
         # Ideally, this should return the address of the MongoDB
-        self._deploy_mongodb()
+        mongodb_address = self._deploy_mongodb()
         for host in self.hosts:
             for p in host.processors_native:
                 # Ideally, pass the rabbitmq server and mongodb addresses here
-                self._deploy_processor(p, host, DeployType.native)
+                self._deploy_processor(p, host, DeployType.native, rabbitmq_address, mongodb_address)
             for p in host.processors_docker:
                 # Ideally, pass the rabbitmq server and mongodb addresses here
-                self._deploy_processor(p, host, DeployType.docker)
+                self._deploy_processor(p, host, DeployType.docker, rabbitmq_address, mongodb_address)
             self._close_clients(host)
 
     def kill(self):
@@ -68,6 +68,10 @@ class Deployer:
         self.log.debug(f"deploy '{deploy_type}' processor: '{processor}' on '{host.address}'")
         assert not processor.pids, "processors already deployed. Pids are present. Host: " \
                                    "{host.__dict__}. Processor: {processor.__dict__}"
+
+        # Create the specific RabbitMQ queue here based on the OCR-D processor name (processor.name)
+        # self.rmq_publisher.create_queue(queue_name=processor.name)
+
         if deploy_type == DeployType.native:
             if not host.ssh_client:
                 host.ssh_client = self._create_ssh_client(host)
@@ -76,12 +80,18 @@ class Deployer:
                 host.docker_client = self._create_docker_client(host)
         for _ in range(processor.count):
             if deploy_type == DeployType.native:
+                # This method should be rather part of the ProcessingWorker
+                # The Processing Worker can just invoke a static method of ProcessingWorker
+                # that creates an instance of the ProcessingWorker (Native instance)
                 pid = self._start_native_processor(
                     client=host.ssh_client,
                     name=processor.name,
                     _queue_address=rabbitmq_server,
                     _database_address=mongodb)
             else:
+                # This method should be rather part of the ProcessingWorker
+                # The Processing Worker can just invoke a static method of ProcessingWorker
+                # that creates an instance of the ProcessingWorker (Docker instance)
                 pid = self._start_docker_processor(
                     client=host.docker_client,
                     name=processor.name,
@@ -89,6 +99,7 @@ class Deployer:
                     _database_address=mongodb)
             processor.add_started_pid(pid)
 
+    # Should be part of the ProcessingWorker class
     def _start_native_processor(self, client, name, _queue_address, _database_address):
         self.log.debug(f"start native processor: {name}")
         channel = client.invoke_shell()
@@ -104,6 +115,7 @@ class Deployer:
         # Since the docker version returns PID, this should also return PID for consistency
         return re.search(r"xyz([0-9]+)xyz", output).group(1)
 
+    # Should be part of the ProcessingWorker class
     def _start_docker_processor(self, client, name, _queue_address, _database_address):
         self.log.debug(f"start docker processor: {name}")
         # TODO: add real command here to start processing server here
@@ -138,6 +150,11 @@ class Deployer:
                 client.close()
 
     def _deploy_queue(self, image="rabbitmq", detach=True, remove=True, ports=None):
+        # This method deploys the RabbitMQ Server.
+        # Handling of creation of queues, submitting messages to queues,
+        # and receiving messages from queues is part of the RabbitMQ Library
+        # Which is part of the OCR-D WebAPI implementation.
+
         client = self._create_docker_client(self.mq_data)
         if ports is None:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
@@ -161,6 +178,11 @@ class Deployer:
         client.close()
         self.log.debug("deployed queue")
 
+        # Not implemented yet
+        # Note: The queue address is not just the IP address
+        queue_address = "RabbitMQ Server address"
+        return queue_address
+
     def _deploy_mongodb(self, image="mongo", detach=True, remove=True, ports=None):
         if not self.mongo_data or not self.mongo_data.address:
             self.log.debug("canceled mongo-deploy: no mongo_db in config")
@@ -182,6 +204,11 @@ class Deployer:
         self.mongo_data.pid = res.id
         client.close()
         self.log.debug("deployed mongodb")
+
+        # Not implemented yet
+        # Note: The mongodb address is not just the IP address
+        mongodb_address = "MongoDB Address"
+        return mongodb_address
 
     def _kill_queue(self):
         if not self.mq_data.pid:
