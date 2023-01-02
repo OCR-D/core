@@ -18,7 +18,8 @@ class ProcessingBroker(FastAPI):
         with open(config_path) as fin:
             self.config = yaml.safe_load(fin)
         self.deployer = Deployer(self.config)
-        self.deployer.deploy()
+        # Deploy everything specified in the configuration
+        self.deployer.deploy_all()
         self.log = getLogger("ocrd.processingbroker")
 
         # RMQPublisher object must be created here, reference: RabbitMQ Library (WebAPI Implementation)
@@ -28,7 +29,7 @@ class ProcessingBroker(FastAPI):
 
         self.router.add_api_route(
             path='/stop',
-            endpoint=self.stop_processing_servers,
+            endpoint=self.stop_deployed_agents,
             methods=['POST'],
             # tags=['TODO: add a tag'],
             # summary='TODO: summary for apidesc',
@@ -77,13 +78,13 @@ class ProcessingBroker(FastAPI):
         - connect to hosts and kill pids
         """
         try:
-            await self.stop_processing_servers()
+            await self.stop_deployed_agents()
         except:
             self.log.debug("error stopping processing servers: ", exc_info=True)
             raise
 
-    async def stop_processing_servers(self):
-        self.deployer.kill()
+    async def stop_deployed_agents(self):
+        self.deployer.kill_all()
 
     @staticmethod
     def configure_publisher(config_file):

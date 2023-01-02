@@ -1,4 +1,3 @@
-import re
 from enum import Enum
 from ocrd_utils import (
     getLogger
@@ -8,6 +7,7 @@ from .deployment_utils import (
     create_docker_client,
     create_ssh_client
 )
+from .processing_worker import ProcessingWorker
 
 # Abstraction of the Deployment functionality
 # The Deployer agent is in the middle between
@@ -40,43 +40,31 @@ class Deployer:
         self.mq_data = QueueData(config["message_queue"])
         self.hosts = HostData.from_config(config)
 
-    def deploy(self):
+    def deploy_all(self):
         """ Deploy the message queue and all processors defined in the config-file
         """
         # Ideally, this should return the address of the RabbitMQ Server
         rabbitmq_address = self._deploy_queue()
         # Ideally, this should return the address of the MongoDB
         mongodb_address = self._deploy_mongodb()
-        for host in self.hosts:
-            for p in host.processors_native:
-                # Ideally, pass the rabbitmq server and mongodb addresses here
-                self._deploy_processor(p, host, DeployType.native, rabbitmq_address, mongodb_address)
-            for p in host.processors_docker:
-                # Ideally, pass the rabbitmq server and mongodb addresses here
-                self._deploy_processor(p, host, DeployType.docker, rabbitmq_address, mongodb_address)
-            close_clients(host)
+        self._deploy_processing_workers(self.hosts, rabbitmq_address, mongodb_address)
 
-    def kill(self):
+    def kill_all(self):
         self._kill_queue()
         self._kill_mongodb()
-        for host in self.hosts:
-            if host.ssh_client:
-                host.ssh_client = create_ssh_client(host)
-            if host.docker_client:
-                host.docker_client = create_docker_client(host)
-            for p in host.processors_native:
-                for pid in p.pids:
-                    host.ssh_client.exec_command(f"kill {pid}")
-                p.pids = []
-            for p in host.processors_docker:
-                for pid in p.pids:
-                    self.log.debug(f"trying to kill docker container: {pid}")
-                    # TODO: think about timeout.
-                    #       think about using threads to kill parallelized to reduce waiting time
-                    host.docker_client.containers.get(pid).stop()
-                p.pids = []
+        self._kill_processing_workers()
 
-    def _deploy_processor(self, processor, host, deploy_type, rabbitmq_server=None, mongodb=None):
+    def _deploy_processing_workers(self, hosts, rabbitmq_address, mongodb_address):
+        for host in hosts:
+            for p in host.processors_native:
+                # Ideally, pass the rabbitmq server and mongodb addresses here
+                self._deploy_processing_worker(p, host, DeployType.native, rabbitmq_address, mongodb_address)
+            for p in host.processors_docker:
+                # Ideally, pass the rabbitmq server and mongodb addresses here
+                self._deploy_processing_worker(p, host, DeployType.docker, rabbitmq_address, mongodb_address)
+            close_clients(host)
+
+    def _deploy_processing_worker(self, processor, host, deploy_type, rabbitmq_server=None, mongodb=None):
         self.log.debug(f"deploy '{deploy_type}' processor: '{processor}' on '{host.address}'")
         assert not processor.pids, "processors already deployed. Pids are present. Host: " \
                                    "{host.__dict__}. Processor: {processor.__dict__}"
@@ -95,7 +83,7 @@ class Deployer:
                 # This method should be rather part of the ProcessingWorker
                 # The Processing Worker can just invoke a static method of ProcessingWorker
                 # that creates an instance of the ProcessingWorker (Native instance)
-                pid = self._start_native_processor(
+                pid = ProcessingWorker.start_native_processor(
                     client=host.ssh_client,
                     name=processor.name,
                     _queue_address=rabbitmq_server,
@@ -104,36 +92,12 @@ class Deployer:
                 # This method should be rather part of the ProcessingWorker
                 # The Processing Worker can just invoke a static method of ProcessingWorker
                 # that creates an instance of the ProcessingWorker (Docker instance)
-                pid = self._start_docker_processor(
+                pid = ProcessingWorker.start_docker_processor(
                     client=host.docker_client,
                     name=processor.name,
                     _queue_address=rabbitmq_server,
                     _database_address=mongodb)
             processor.add_started_pid(pid)
-
-    # Should be part of the ProcessingWorker class
-    def _start_native_processor(self, client, name, _queue_address, _database_address):
-        self.log.debug(f"start native processor: {name}")
-        channel = client.invoke_shell()
-        stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        # TODO: add real command here to start processing server here
-        cmd = "sleep 23s"
-        stdin.write(f"{cmd} & \n echo xyz$!xyz \n exit \n")
-        output = stdout.read().decode("utf-8")
-        stdout.close()
-        stdin.close()
-        # What does this return and is supposed to return?
-        # Putting some comments when using patterns is always appreciated
-        # Since the docker version returns PID, this should also return PID for consistency
-        return re.search(r"xyz([0-9]+)xyz", output).group(1)
-
-    # Should be part of the ProcessingWorker class
-    def _start_docker_processor(self, client, name, _queue_address, _database_address):
-        self.log.debug(f"start docker processor: {name}")
-        # TODO: add real command here to start processing server here
-        res = client.containers.run("debian", "sleep 31", detach=True, remove=True)
-        assert res and res.id, "run docker container failed"
-        return res.id
 
     def _deploy_queue(self, image="rabbitmq", detach=True, remove=True, ports=None):
         # This method deploys the RabbitMQ Server.
@@ -221,6 +185,30 @@ class Deployer:
         self.mongo_data.pid = None
         client.close()
         self.log.debug("stopped mongodb")
+
+    def _kill_processing_workers(self):
+        for host in self.hosts:
+            if host.ssh_client:
+                host.ssh_client = create_ssh_client(host)
+            if host.docker_client:
+                host.docker_client = create_docker_client(host)
+            for p in host.processors_native:
+                for pid in p.pids:
+                    host.ssh_client.exec_command(f"kill {pid}")
+                p.pids = []
+            for p in host.processors_docker:
+                for pid in p.pids:
+                    self.log.debug(f"trying to kill docker container: {pid}")
+                    # TODO: think about timeout.
+                    #       think about using threads to kill parallelized to reduce waiting time
+                    host.docker_client.containers.get(pid).stop()
+                p.pids = []
+
+    # May be good to have more flexibility here
+    # TODO: Support that functionality as well.
+    #  Then _kill_processing_workers should just call this method in a loop
+    def _kill_processing_worker(self):
+        pass
 
 
 # TODO: These should be separated from the Deployer logic
