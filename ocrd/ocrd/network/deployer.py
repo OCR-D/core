@@ -2,12 +2,12 @@ from enum import Enum
 from ocrd_utils import (
     getLogger
 )
-from .deployment_utils import (
+from ocrd.network.deployment_utils import (
     close_clients,
     create_docker_client,
     create_ssh_client
 )
-from .processing_worker import ProcessingWorker
+from ocrd.network.processing_worker import ProcessingWorker
 
 # Abstraction of the Deployment functionality
 # The Deployer agent is in the middle between
