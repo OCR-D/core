@@ -1,10 +1,48 @@
 import docker
 from docker.transport import SSHHTTPAdapter
+from frozendict import frozendict
+from functools import lru_cache, wraps
 import paramiko
 import urllib.parse
 from ocrd_utils import (
     getLogger
 )
+
+
+# Method adopted from Triet's implementation
+# https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
+def freeze_args(func):
+    """
+    Transform mutable dictionary into immutable. Useful to be compatible with cache
+    Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
+    """
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
+        kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+        return func(*args, **kwargs)
+    return wrapped
+
+
+# Method adopted from Triet's implementation
+# https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
+@freeze_args
+@lru_cache(maxsize=32)
+def get_processor(parameter: dict, processor_class=None):
+    """
+    Call this function to get back an instance of a processor. The results are cached based on the parameters.
+    Args:
+        parameter (dict): a dictionary of parameters.
+        processor_class: the concrete `:py:class:~ocrd.Processor` class.
+    Returns:
+        When the concrete class of the processor is unknown, `None` is returned. Otherwise, an instance of the
+        `:py:class:~ocrd.Processor` is returned.
+    """
+    if processor_class:
+        dict_params = dict(parameter) if parameter else None
+        return processor_class(workspace=None, parameter=dict_params)
+    return None
 
 
 def create_ssh_client(obj):

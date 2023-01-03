@@ -15,4 +15,4 @@ uvicorn
 fastapi
 docker
 paramiko
-
+frozendict~=2.3.4
