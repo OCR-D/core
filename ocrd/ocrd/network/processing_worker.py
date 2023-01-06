@@ -14,7 +14,7 @@ from ocrd_utils import (
 
 class ProcessingWorker:
     def __init__(self, processor_arguments, queue_address, database_address):
-        self.log = getLogger("ocrd.processing_worker")
+        self.log = getLogger(__name__)
 
         # Required arguments to run the OCR-D Processor
         self.processor_arguments = processor_arguments  # processor.name is
@@ -36,7 +36,7 @@ class ProcessingWorker:
         rmq_consumer = "RMQConsumer Object"
         """
         Here is a template implementation to be adopted later
-        
+
         rmq_consumer = RMQConsumer(host="localhost", port=5672, vhost="/")
         # The credentials are configured inside definitions.json
         # when building the RabbitMQ docker image
@@ -44,10 +44,10 @@ class ProcessingWorker:
             username="default-consumer",
             password="default-consumer"
         )
-        
+
         #Note: The queue name here is the processor.name by definition
         rmq_consumer.configure_consuming(queue_name="queue_name", callback_method=funcPtr)
-        
+
         """
         return rmq_consumer
 
@@ -64,7 +64,7 @@ class ProcessingWorker:
 
     @staticmethod
     def start_native_processor(client, name, _queue_address, _database_address):
-        log = getLogger("ocrd.processing_worker.start_native")
+        log = getLogger(__name__)
         log.debug(f"start native processor: {name}")
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
@@ -81,7 +81,7 @@ class ProcessingWorker:
 
     @staticmethod
     def start_docker_processor(client, name, _queue_address, _database_address):
-        log = getLogger("ocrd.processing_worker.start_docker")
+        log = getLogger(__name__)
         log.debug(f"start docker processor: {name}")
         # TODO: add real command here to start processing server here
         res = client.containers.run("debian", "sleep 31", detach=True, remove=True)

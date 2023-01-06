@@ -20,7 +20,7 @@ class ProcessingBroker(FastAPI):
         self.deployer = Deployer(self.config)
         # Deploy everything specified in the configuration
         self.deployer.deploy_all()
-        self.log = getLogger("ocrd.processingbroker")
+        self.log = getLogger(__name__)
 
         # RMQPublisher object must be created here, reference: RabbitMQ Library (WebAPI Implementation)
         # Based on the API calls the ProcessingBroker will send messages to the running instance
@@ -39,7 +39,7 @@ class ProcessingBroker(FastAPI):
         """
         Publish messages based on the API calls
         Here is a call example to be adopted later
-        
+
         # The message type is bytes
         # Call this method to publish a message
         self.rmq_publisher.publish_to_queue(queue_name="queue_name", message="message")
@@ -91,7 +91,7 @@ class ProcessingBroker(FastAPI):
         rmq_publisher = "RMQPublisher Object"
         """
         Here is a template implementation to be adopted later
-        
+
         rmq_publisher = RMQPublisher(host="localhost", port=5672, vhost="/")
         # The credentials are configured inside definitions.json
         # when building the RabbitMQ docker image

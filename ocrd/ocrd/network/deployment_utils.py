@@ -52,7 +52,7 @@ def create_ssh_client(obj):
 
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-    log = getLogger("ocrd.create_ssh_client")
+    log = getLogger(__name__)
     log.debug(f"creating ssh-client with username: '{username}', keypath: '{keypath}'. "
               f"host: {address}")
     # TODO: connecting could easily fail here: wrong password, wrong path to keyfile etc. Maybe

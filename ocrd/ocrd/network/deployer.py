@@ -34,7 +34,7 @@ class Deployer:
         Args:
             config (Config): values from config file wrapped into class `Config`
         """
-        self.log = getLogger("ocrd.processingbroker")
+        self.log = getLogger(__name__)
         self.log.debug("Deployer-init()")
         self.mongo_data = MongoData(config["mongo_db"])
         self.mq_data = QueueData(config["message_queue"])
