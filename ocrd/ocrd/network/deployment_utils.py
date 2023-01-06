@@ -47,14 +47,14 @@ def get_processor(parameter: dict, processor_class=None):
 
 def create_ssh_client(obj):
     address, username, password, keypath = obj.address, obj.username, obj.password, obj.keypath
-    assert address and username, "address and username are mandatory"
-    assert bool(password) is not bool(keypath), "expecting either password or keypath, not both"
+    assert address and username, 'address and username are mandatory'
+    assert bool(password) is not bool(keypath), 'expecting either password or keypath, not both'
 
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
     log = getLogger(__name__)
-    log.debug(f"creating ssh-client with username: '{username}', keypath: '{keypath}'. "
-              f"host: {address}")
+    log.debug(f'creating ssh-client with username: "{username}", keypath: "{keypath}". '
+              f'host: {address}')
     # TODO: connecting could easily fail here: wrong password, wrong path to keyfile etc. Maybe
     #       would be better to use except and try to give custom error message when failing
     client.connect(hostname=address, username=username, password=password, key_filename=keypath)
@@ -63,15 +63,15 @@ def create_ssh_client(obj):
 
 def create_docker_client(obj):
     address, username, password, keypath = obj.address, obj.username, obj.password, obj.keypath
-    assert address and username, "address and username are mandatory"
-    assert bool(password) is not bool(keypath), "expecting either password or keypath " \
-                                                "provided, not both"
+    assert address and username, 'address and username are mandatory'
+    assert bool(password) is not bool(keypath), 'expecting either password or keypath ' \
+                                                'provided, not both'
     return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
 def close_clients(*args):
     for client in args:
-        if hasattr(client, "close") and callable(client.close):
+        if hasattr(client, 'close') and callable(client.close):
             client.close()
 
 
@@ -89,10 +89,10 @@ class CustomDockerClient(docker.DockerClient):
     """
 
     def __init__(self, user, host, **kwargs):
-        assert user and host, "user and host must be set"
-        assert "password" in kwargs or "keypath" in kwargs, "one of password and keyfile is needed"
-        self.api = docker.APIClient(f"ssh://{host}", use_ssh_client=True, version='1.41')
-        ssh_adapter = self.CustomSshHttpAdapter(f"ssh://{user}@{host}:22", **kwargs)
+        assert user and host, 'user and host must be set'
+        assert 'password' in kwargs or 'keypath' in kwargs, 'one of password and keyfile is needed'
+        self.api = docker.APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
+        ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
         self.api.mount('http+docker://ssh', ssh_adapter)
 
     class CustomSshHttpAdapter(SSHHTTPAdapter):
@@ -100,7 +100,7 @@ class CustomDockerClient(docker.DockerClient):
             self.password = password
             self.keypath = keypath
             if not self.password and not self.keypath:
-                raise Exception("either 'password' or 'keypath' must be provided")
+                raise Exception('either "password" or "keypath" must be provided')
             super().__init__(base_url)
 
         def _create_paramiko_client(self, base_url):
@@ -111,12 +111,12 @@ class CustomDockerClient(docker.DockerClient):
             self.ssh_client = paramiko.SSHClient()
             base_url = urllib.parse.urlparse(base_url)
             self.ssh_params = {
-                "hostname": base_url.hostname,
-                "port": base_url.port,
-                "username": base_url.username,
+                'hostname': base_url.hostname,
+                'port': base_url.port,
+                'username': base_url.username,
             }
             if self.password:
-                self.ssh_params["password"] = self.password
+                self.ssh_params['password'] = self.password
             elif self.keypath:
-                self.ssh_params["key_filename"] = self.keypath
+                self.ssh_params['key_filename'] = self.keypath
             self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy)

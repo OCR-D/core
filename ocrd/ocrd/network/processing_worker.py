@@ -33,20 +33,20 @@ class ProcessingWorker:
 
     @staticmethod
     def configure_consumer(config_file, callback_method):
-        rmq_consumer = "RMQConsumer Object"
+        rmq_consumer = 'RMQConsumer Object'
         """
         Here is a template implementation to be adopted later
 
-        rmq_consumer = RMQConsumer(host="localhost", port=5672, vhost="/")
+        rmq_consumer = RMQConsumer(host='localhost', port=5672, vhost='/')
         # The credentials are configured inside definitions.json
         # when building the RabbitMQ docker image
         rmq_consumer.authenticate_and_connect(
-            username="default-consumer",
-            password="default-consumer"
+            username='default-consumer',
+            password='default-consumer'
         )
 
         #Note: The queue name here is the processor.name by definition
-        rmq_consumer.configure_consuming(queue_name="queue_name", callback_method=funcPtr)
+        rmq_consumer.configure_consuming(queue_name='queue_name', callback_method=funcPtr)
 
         """
         return rmq_consumer
@@ -65,25 +65,25 @@ class ProcessingWorker:
     @staticmethod
     def start_native_processor(client, name, _queue_address, _database_address):
         log = getLogger(__name__)
-        log.debug(f"start native processor: {name}")
+        log.debug(f'start native processor: {name}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         # TODO: add real command here to start processing server here
-        cmd = "sleep 23s"
-        stdin.write(f"{cmd} & \n echo xyz$!xyz \n exit \n")
-        output = stdout.read().decode("utf-8")
+        cmd = 'sleep 23s'
+        stdin.write(f'{cmd} & \n echo xyz$!xyz \n exit \n')
+        output = stdout.read().decode('utf-8')
         stdout.close()
         stdin.close()
         # What does this return and is supposed to return?
         # Putting some comments when using patterns is always appreciated
         # Since the docker version returns PID, this should also return PID for consistency
-        return re.search(r"xyz([0-9]+)xyz", output).group(1)
+        return re.search(r'xyz([0-9]+)xyz', output).group(1)
 
     @staticmethod
     def start_docker_processor(client, name, _queue_address, _database_address):
         log = getLogger(__name__)
-        log.debug(f"start docker processor: {name}")
+        log.debug(f'start docker processor: {name}')
         # TODO: add real command here to start processing server here
-        res = client.containers.run("debian", "sleep 31", detach=True, remove=True)
-        assert res and res.id, "run docker container failed"
+        res = client.containers.run('debian', 'sleep 31', detach=True, remove=True)
+        assert res and res.id, 'run docker container failed'
         return res.id

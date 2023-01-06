@@ -42,20 +42,20 @@ class ProcessingBroker(FastAPI):
 
         # The message type is bytes
         # Call this method to publish a message
-        self.rmq_publisher.publish_to_queue(queue_name="queue_name", message="message")
+        self.rmq_publisher.publish_to_queue(queue_name='queue_name', message='message')
         """
 
     def start(self):
         """
         start processing broker with uvicorn
         """
-        assert self.config, "config was not parsed correctly"
+        assert self.config, 'config was not parsed correctly'
         # TODO: change where to run the processing server: default params, read from config or read
         #       from cmd? Or do not run at all as fastapi?
         # TODO: activate next line again (commented just for testing)
         port = 5050
         host = 'localhost'
-        self.log.debug(f"starting uvicorn. Host: {host}. Port: {port}")
+        self.log.debug(f'starting uvicorn. Host: {host}. Port: {port}')
         uvicorn.run(self, host=host, port=port)
 
     @staticmethod
@@ -67,7 +67,7 @@ class ProcessingBroker(FastAPI):
         try:
             validate(obj, schema)
         except ValidationError as e:
-            return f"{e.message}. At {e.json_path}"
+            return f'{e.message}. At {e.json_path}'
         return None
 
     async def on_shutdown(self):
@@ -80,7 +80,7 @@ class ProcessingBroker(FastAPI):
         try:
             await self.stop_deployed_agents()
         except:
-            self.log.debug("error stopping processing servers: ", exc_info=True)
+            self.log.debug('error stopping processing servers: ', exc_info=True)
             raise
 
     async def stop_deployed_agents(self):
@@ -88,16 +88,16 @@ class ProcessingBroker(FastAPI):
 
     @staticmethod
     def configure_publisher(config_file):
-        rmq_publisher = "RMQPublisher Object"
+        rmq_publisher = 'RMQPublisher Object'
         """
         Here is a template implementation to be adopted later
 
-        rmq_publisher = RMQPublisher(host="localhost", port=5672, vhost="/")
+        rmq_publisher = RMQPublisher(host='localhost', port=5672, vhost='/')
         # The credentials are configured inside definitions.json
         # when building the RabbitMQ docker image
         rmq_publisher.authenticate_and_connect(
-            username="default-publisher",
-            password="default-publisher"
+            username='default-publisher',
+            password='default-publisher'
         )
         rmq_publisher.enable_delivery_confirmations()
         """

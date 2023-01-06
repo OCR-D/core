@@ -35,9 +35,9 @@ class Deployer:
             config (Config): values from config file wrapped into class `Config`
         """
         self.log = getLogger(__name__)
-        self.log.debug("Deployer-init()")
-        self.mongo_data = MongoData(config["mongo_db"])
-        self.mq_data = QueueData(config["message_queue"])
+        self.log.debug('Deployer-init()')
+        self.mongo_data = MongoData(config['mongo_db'])
+        self.mq_data = QueueData(config['message_queue'])
         self.hosts = HostData.from_config(config)
 
     def deploy_all(self):
@@ -65,9 +65,9 @@ class Deployer:
             close_clients(host)
 
     def _deploy_processing_worker(self, processor, host, deploy_type, rabbitmq_server=None, mongodb=None):
-        self.log.debug(f"deploy '{deploy_type}' processor: '{processor}' on '{host.address}'")
-        assert not processor.pids, "processors already deployed. Pids are present. Host: " \
-                                   "{host.__dict__}. Processor: {processor.__dict__}"
+        self.log.debug(f'deploy "{deploy_type}" processor: "{processor}" on "{host.address}"')
+        assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
+                                   '{host.__dict__}. Processor: {processor.__dict__}'
 
         # Create the specific RabbitMQ queue here based on the OCR-D processor name (processor.name)
         # self.rmq_publisher.create_queue(queue_name=processor.name)
@@ -99,7 +99,7 @@ class Deployer:
                     _database_address=mongodb)
             processor.add_started_pid(pid)
 
-    def _deploy_queue(self, image="rabbitmq", detach=True, remove=True, ports=None):
+    def _deploy_queue(self, image='rabbitmq', detach=True, remove=True, ports=None):
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
         # and receiving messages from queues is part of the RabbitMQ Library
@@ -123,19 +123,19 @@ class Deployer:
             remove=remove,
             ports=ports
         )
-        assert res and res.id, "starting message queue failed"
+        assert res and res.id, 'starting message queue failed'
         self.mq_data.pid = res.id
         client.close()
-        self.log.debug("deployed queue")
+        self.log.debug('deployed queue')
 
         # Not implemented yet
         # Note: The queue address is not just the IP address
-        queue_address = "RabbitMQ Server address"
+        queue_address = 'RabbitMQ Server address'
         return queue_address
 
-    def _deploy_mongodb(self, image="mongo", detach=True, remove=True, ports=None):
+    def _deploy_mongodb(self, image='mongo', detach=True, remove=True, ports=None):
         if not self.mongo_data or not self.mongo_data.address:
-            self.log.debug("canceled mongo-deploy: no mongo_db in config")
+            self.log.debug('canceled mongo-deploy: no mongo_db in config')
             return
         client = create_docker_client(self.mongo_data)
         if ports is None:
@@ -150,41 +150,41 @@ class Deployer:
             remove=remove,
             ports=ports
         )
-        assert res and res.id, "starting mongodb failed"
+        assert res and res.id, 'starting mongodb failed'
         self.mongo_data.pid = res.id
         client.close()
-        self.log.debug("deployed mongodb")
+        self.log.debug('deployed mongodb')
 
         # Not implemented yet
         # Note: The mongodb address is not just the IP address
-        mongodb_address = "MongoDB Address"
+        mongodb_address = 'MongoDB Address'
         return mongodb_address
 
     def _kill_queue(self):
         if not self.mq_data.pid:
-            self.log.debug("kill_queue: queue not running")
+            self.log.debug('kill_queue: queue not running')
             return
         else:
-            self.log.debug(f"trying to kill queue with id: {self.mq_data.pid} now")
+            self.log.debug(f'trying to kill queue with id: {self.mq_data.pid} now')
 
         client = create_docker_client(self.mq_data)
         client.containers.get(self.mq_data.pid).stop()
         self.mq_data.pid = None
         client.close()
-        self.log.debug("stopped queue")
+        self.log.debug('stopped queue')
 
     def _kill_mongodb(self):
         if not self.mongo_data or not self.mongo_data.pid:
-            self.log.debug("kill_mongdb: mongodb not running")
+            self.log.debug('kill_mongdb: mongodb not running')
             return
         else:
-            self.log.debug(f"trying to kill mongdb with id: {self.mongo_data.pid} now")
+            self.log.debug(f'trying to kill mongdb with id: {self.mongo_data.pid} now')
 
         client = create_docker_client(self.mongo_data)
         client.containers.get(self.mongo_data.pid).stop()
         self.mongo_data.pid = None
         client.close()
-        self.log.debug("stopped mongodb")
+        self.log.debug('stopped mongodb')
 
     def _kill_processing_workers(self):
         for host in self.hosts:
@@ -194,11 +194,11 @@ class Deployer:
                 host.docker_client = create_docker_client(host)
             for p in host.processors_native:
                 for pid in p.pids:
-                    host.ssh_client.exec_command(f"kill {pid}")
+                    host.ssh_client.exec_command(f'kill {pid}')
                 p.pids = []
             for p in host.processors_docker:
                 for pid in p.pids:
-                    self.log.debug(f"trying to kill docker container: {pid}")
+                    self.log.debug(f'trying to kill docker container: {pid}')
                     # TODO: think about timeout.
                     #       think about using threads to kill parallelized to reduce waiting time
                     host.docker_client.containers.get(pid).stop()
@@ -223,31 +223,31 @@ class HostData:
     """
 
     def __init__(self, config):
-        self.address = config["address"]
-        self.username = config["username"]
-        self.password = config.get("password", None)
-        self.keypath = config.get("path_to_privkey", None)
-        assert self.password or self.keypath, "Host in configfile with neither password nor keyfile"
+        self.address = config['address']
+        self.username = config['username']
+        self.password = config.get('password', None)
+        self.keypath = config.get('path_to_privkey', None)
+        assert self.password or self.keypath, 'Host in configfile with neither password nor keyfile'
         self.processors_native = []
         self.processors_docker = []
-        for x in config["deploy_processors"]:
-            if x["deploy_type"] == 'native':
+        for x in config['deploy_processors']:
+            if x['deploy_type'] == 'native':
                 self.processors_native.append(
-                    self.Processor(x["name"], x["number_of_instance"], DeployType.native)
+                    self.Processor(x['name'], x['number_of_instance'], DeployType.native)
                 )
-            elif x["deploy_type"] == 'docker':
+            elif x['deploy_type'] == 'docker':
                 self.processors_docker.append(
-                    self.Processor(x["name"], x["number_of_instance"], DeployType.docker)
+                    self.Processor(x['name'], x['number_of_instance'], DeployType.docker)
                 )
             else:
-                assert False, f"unknown deploy_type: '{x.deploy_type}'"
+                assert False, f'unknown deploy_type: "{x.deploy_type}"'
         self.ssh_client = None
         self.docker_client = None
 
     @classmethod
     def from_config(cls, config):
         res = []
-        for x in config["hosts"]:
+        for x in config['hosts']:
             res.append(cls(x))
         return res
 
@@ -267,12 +267,12 @@ class MongoData:
     """
 
     def __init__(self, config):
-        self.address = config["address"]
-        self.port = int(config["port"])
-        self.username = config["ssh"]["username"]
-        self.keypath = config["ssh"].get("path_to_privkey", None)
-        self.password = config["ssh"].get("password", None)
-        self.credentials = (config["credentials"]["username"], config["credentials"]["password"])
+        self.address = config['address']
+        self.port = int(config['port'])
+        self.username = config['ssh']['username']
+        self.keypath = config['ssh'].get('path_to_privkey', None)
+        self.password = config['ssh'].get('password', None)
+        self.credentials = (config['credentials']['username'], config['credentials']['password'])
         self.pid = None
 
 
@@ -281,12 +281,12 @@ class QueueData:
     """
 
     def __init__(self, config):
-        self.address = config["address"]
-        self.port = int(config["port"])
-        self.username = config["ssh"]["username"]
-        self.keypath = config["ssh"].get("path_to_privkey", None)
-        self.password = config["ssh"].get("password", None)
-        self.credentials = (config["credentials"]["username"], config["credentials"]["password"])
+        self.address = config['address']
+        self.port = int(config['port'])
+        self.username = config['ssh']['username']
+        self.keypath = config['ssh'].get('path_to_privkey', None)
+        self.password = config['ssh'].get('password', None)
+        self.credentials = (config['credentials']['username'], config['credentials']['password'])
         self.pid = None
 
 
