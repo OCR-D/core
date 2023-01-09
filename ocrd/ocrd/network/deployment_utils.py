@@ -47,8 +47,8 @@ def get_processor(parameter: dict, processor_class: type) -> Union[type, None]:
     return None
 
 
-def create_ssh_client(obj: Any) -> paramiko.SSHClient:
-    address, username, password, keypath = obj.address, obj.username, obj.password, obj.keypath
+def create_ssh_client(address: str, username: str, password: Union[str, None],
+                      keypath: Union[str, None]) -> paramiko.SSHClient:
     assert address and username, 'address and username are mandatory'
     assert bool(password) is not bool(keypath), 'expecting either password or keypath, not both'
 
@@ -63,8 +63,8 @@ def create_ssh_client(obj: Any) -> paramiko.SSHClient:
     return client
 
 
-def create_docker_client(obj: Any) -> CustomDockerClient:
-    address, username, password, keypath = obj.address, obj.username, obj.password, obj.keypath
+def create_docker_client(address: str, username: str, password: Union[str, None],
+                         keypath: Union[str, None]) -> CustomDockerClient:
     assert address and username, 'address and username are mandatory'
     assert bool(password) is not bool(keypath), 'expecting either password or keypath ' \
                                                 'provided, not both'

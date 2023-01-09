@@ -79,10 +79,12 @@ class Deployer:
 
         if deploy_type == DeployType.native:
             if not host.ssh_client:
-                host.ssh_client = create_ssh_client(host)
+                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
+                                                    host.keypath)
         else:
             if not host.docker_client:
-                host.docker_client = create_docker_client(host)
+                host.docker_client = create_docker_client(host.address, host.username,
+                                                          host.password, host.keypath)
         for _ in range(processor.count):
             if deploy_type == DeployType.native:
                 assert host.ssh_client  # to satisfy mypy
@@ -113,7 +115,8 @@ class Deployer:
         # and receiving messages from queues is part of the RabbitMQ Library
         # Which is part of the OCR-D WebAPI implementation.
 
-        client = create_docker_client(self.mq_data)
+        client = create_docker_client(self.mq_data.address, self.mq_data.username,
+                                      self.mq_data.password, self.mq_data.keypath)
         if not ports:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
             # 15672, 15671: HTTP API clients, management UI and rabbitmqadmin, without and with TLS
@@ -146,7 +149,8 @@ class Deployer:
         if not self.mongo_data or not self.mongo_data.address:
             self.log.debug('canceled mongo-deploy: no mongo_db in config')
             return ""
-        client = create_docker_client(self.mongo_data)
+        client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
+                                      self.mongo_data.password, self.mongo_data.keypath)
         if not ports:
             ports = {
                 27017: self.mongo_data.port
@@ -176,7 +180,8 @@ class Deployer:
         else:
             self.log.debug(f'trying to kill queue with id: {self.mq_data.pid} now')
 
-        client = create_docker_client(self.mq_data)
+        client = create_docker_client(self.mq_data.address, self.mq_data.username,
+                                      self.mq_data.password, self.mq_data.keypath)
         client.containers.get(self.mq_data.pid).stop()
         self.mq_data.pid = None
         client.close()
@@ -189,7 +194,8 @@ class Deployer:
         else:
             self.log.debug(f'trying to kill mongdb with id: {self.mongo_data.pid} now')
 
-        client = create_docker_client(self.mongo_data)
+        client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
+                                      self.mongo_data.password, self.mongo_data.keypath)
         client.containers.get(self.mongo_data.pid).stop()
         self.mongo_data.pid = None
         client.close()
@@ -198,9 +204,11 @@ class Deployer:
     def _kill_processing_workers(self) -> None:
         for host in self.hosts:
             if host.ssh_client:
-                host.ssh_client = create_ssh_client(host)
+                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
+                                                    host.keypath)
             if host.docker_client:
-                host.docker_client = create_docker_client(host)
+                host.ssh_client = create_docker_client(host.address, host.username, host.password,
+                                                    host.keypath)
             for p in host.processors_native:
                 for pid in p.pids:
                     host.ssh_client.exec_command(f'kill {pid}')
