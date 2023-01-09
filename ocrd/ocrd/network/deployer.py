@@ -4,7 +4,6 @@ from ocrd_utils import (
     getLogger
 )
 from ocrd.network.deployment_utils import (
-    close_clients,
     create_docker_client,
     create_ssh_client
 )
@@ -66,7 +65,10 @@ class Deployer:
             for p in host.processors_docker:
                 # Ideally, pass the rabbitmq server and mongodb addresses here
                 self._deploy_processing_worker(p, host, DeployType.docker, rabbitmq_address, mongodb_address)
-            close_clients(host)
+            if host.ssh_client:
+                host.ssh_client.close()
+            if host.docker_client:
+                host.docker_client.close()
 
     def _deploy_processing_worker(self, processor, host: HostData, deploy_type: DeployType,
                                   rabbitmq_server: str = '', mongodb: str = '') -> None:

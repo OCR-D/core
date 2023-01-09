@@ -71,12 +71,6 @@ def create_docker_client(address: str, username: str, password: Union[str, None]
     return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
-def close_clients(*args) -> None:
-    for client in args:
-        if hasattr(client, 'close') and callable(client.close):
-            client.close()
-
-
 class CustomDockerClient(docker.DockerClient):
     """Wrapper for docker.DockerClient to use an own SshHttpAdapter.
 
