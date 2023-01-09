@@ -5,8 +5,10 @@ from ocrd_utils import (
 )
 from ocrd.network.deployment_utils import (
     create_docker_client,
-    create_ssh_client
+    create_ssh_client,
+    DeployType,
 )
+from ocrd.network.deployment_config import *
 from ocrd.network.processing_worker import ProcessingWorker
 from typing import List, Dict, Union
 
@@ -38,9 +40,9 @@ class Deployer:
         """
         self.log = getLogger(__name__)
         self.log.debug('Deployer-init()')
-        self.mongo_data = MongoData(config['mongo_db'])
-        self.mq_data = QueueData(config['message_queue'])
-        self.hosts = HostData.from_config(config)
+        self.mongo_data = MongoConfig(config['mongo_db'])
+        self.mq_data = QueueConfig(config['message_queue'])
+        self.hosts = HostConfig.from_config(config)
 
     def deploy_all(self) -> None:
         """ Deploy the message queue and all processors defined in the config-file
@@ -56,7 +58,7 @@ class Deployer:
         self._kill_mongodb()
         self._kill_processing_workers()
 
-    def _deploy_processing_workers(self, hosts: List[HostData], rabbitmq_address: str,
+    def _deploy_processing_workers(self, hosts: List[HostConfig], rabbitmq_address: str,
                                    mongodb_address: str) -> None:
         for host in hosts:
             for p in host.processors_native:
@@ -70,7 +72,7 @@ class Deployer:
             if host.docker_client:
                 host.docker_client.close()
 
-    def _deploy_processing_worker(self, processor, host: HostData, deploy_type: DeployType,
+    def _deploy_processing_worker(self, processor, host: HostConfig, deploy_type: DeployType,
                                   rabbitmq_server: str = '', mongodb: str = '') -> None:
         self.log.debug(f'deploy "{deploy_type}" processor: "{processor}" on "{host.address}"')
         assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
@@ -210,7 +212,7 @@ class Deployer:
                                                     host.keypath)
             if host.docker_client:
                 host.ssh_client = create_docker_client(host.address, host.username, host.password,
-                                                    host.keypath)
+                                                       host.keypath)
             for p in host.processors_native:
                 for pid in p.pids:
                     host.ssh_client.exec_command(f'kill {pid}')
@@ -228,93 +230,3 @@ class Deployer:
     #  Then _kill_processing_workers should just call this method in a loop
     def _kill_processing_worker(self) -> None:
         pass
-
-
-# TODO: These should be separated from the Deployer logic
-# TODO: Moreover, some of these classes must be just @dataclasses
-class HostData:
-    """Class to wrap information for all processing-server-hosts.
-
-    Config information and runtime information is stored here. This class
-    should not do much but hold config information and runtime information. I
-    hope to make the code better understandable this way. Deployer should still
-    be the class who does things and this class here should be mostly passive
-    """
-
-    def __init__(self, config: dict) -> None:
-        self.address = config['address']
-        self.username = config['username']
-        self.password = config.get('password', None)
-        self.keypath = config.get('path_to_privkey', None)
-        assert self.password or self.keypath, 'Host in configfile with neither password nor keyfile'
-        self.processors_native = []
-        self.processors_docker = []
-        for x in config['deploy_processors']:
-            if x['deploy_type'] == 'native':
-                self.processors_native.append(
-                    self.Processor(x['name'], x['number_of_instance'], DeployType.native)
-                )
-            elif x['deploy_type'] == 'docker':
-                self.processors_docker.append(
-                    self.Processor(x['name'], x['number_of_instance'], DeployType.docker)
-                )
-            else:
-                assert False, f'unknown deploy_type: "{x.deploy_type}"'
-        self.ssh_client = None
-        self.docker_client = None
-
-    @classmethod
-    def from_config(cls, config: Dict) -> List:
-        res = []
-        for x in config['hosts']:
-            res.append(cls(x))
-        return res
-
-    class Processor:
-        def __init__(self, name: str, count: int, deploy_type: DeployType) -> None:
-            self.name = name
-            self.count = count
-            self.deploy_type = deploy_type
-            self.pids: List = []
-
-        def add_started_pid(self, pid) -> None:
-            self.pids.append(pid)
-
-
-class MongoData:
-    """ Class to hold information for Mongodb-Docker container
-    """
-
-    def __init__(self, config: Dict) -> None:
-        self.address = config['address']
-        self.port = int(config['port'])
-        self.username = config['ssh']['username']
-        self.keypath = config['ssh'].get('path_to_privkey', None)
-        self.password = config['ssh'].get('password', None)
-        self.credentials = (config['credentials']['username'], config['credentials']['password'])
-        self.pid = None
-
-
-class QueueData:
-    """ Class to hold information for RabbitMQ-Docker container
-    """
-
-    def __init__(self, config: Dict) -> None:
-        self.address = config['address']
-        self.port = int(config['port'])
-        self.username = config['ssh']['username']
-        self.keypath = config['ssh'].get('path_to_privkey', None)
-        self.password = config['ssh'].get('password', None)
-        self.credentials = (config['credentials']['username'], config['credentials']['password'])
-        self.pid = None
-
-
-class DeployType(Enum):
-    """ Deploy-Type of the processing server.
-    """
-    docker = 1
-    native = 2
-
-    @staticmethod
-    def from_str(label: str) -> DeployType:
-        return DeployType[label.lower()]

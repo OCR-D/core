@@ -9,6 +9,7 @@ from ocrd_utils import (
     getLogger
 )
 from typing import Callable, Union, Any
+from enum import Enum
 
 
 # Method adopted from Triet's implementation
@@ -117,3 +118,14 @@ class CustomDockerClient(docker.DockerClient):
             elif self.keypath:
                 self.ssh_params['key_filename'] = self.keypath
             self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+
+
+class DeployType(Enum):
+    """ Deploy-Type of the processing server.
+    """
+    docker = 1
+    native = 2
+
+    @staticmethod
+    def from_str(label: str) -> DeployType:
+        return DeployType[label.lower()]
