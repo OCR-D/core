@@ -13,7 +13,8 @@ import sys
 
 @click.command('processing-broker')
 @click.argument('path_to_config', required=True, type=click.STRING)
-def processing_broker_cli(path_to_config, stop=False):
+@click.option('-a', '--address', help='Host name/IP, port to bind the Processing-Broker to')
+def processing_broker_cli(path_to_config, address: str):
     """
     Start and manage processing servers (workers) with the processing broker
     """
@@ -22,5 +23,10 @@ def processing_broker_cli(path_to_config, stop=False):
     if res:
         print(f"config is invalid: {res}")
         sys.exit(1)
-    app = ProcessingBroker(path_to_config)
+    try:
+        host, port = address.split(":")
+        port_int = int(port)
+    except ValueError:
+        raise click.UsageError('The --adddress option must have the format IP:PORT')
+    app = ProcessingBroker(path_to_config, host, port_int)
     app.start()

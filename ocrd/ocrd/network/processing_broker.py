@@ -13,9 +13,11 @@ class ProcessingBroker(FastAPI):
     TODO: doc for ProcessingBroker and its methods
     """
 
-    def __init__(self, config_path: str) -> None:
+    def __init__(self, config_path: str, host: str, port: int) -> None:
         # TODO: set other args: title, description, version, openapi_tags
         super().__init__(on_shutdown=[self.on_shutdown])
+        self.hostname = host
+        self.port = port
         with open(config_path) as fin:
             self.config = yaml.safe_load(fin)
         self.deployer = Deployer(self.config)
@@ -51,13 +53,8 @@ class ProcessingBroker(FastAPI):
         start processing broker with uvicorn
         """
         assert self.config, 'config was not parsed correctly'
-        # TODO: change where to run the processing server: default params, read from config or read
-        #       from cmd? Or do not run at all as fastapi?
-        # TODO: activate next line again (commented just for testing)
-        port = 5050
-        host = 'localhost'
-        self.log.debug(f'starting uvicorn. Host: {host}. Port: {port}')
-        uvicorn.run(self, host=host, port=port)
+        self.log.debug(f'starting uvicorn. Host: {self.host}. Port: {self.port}')
+        uvicorn.run(self, host=self.hostname, port=self.port)
 
     @staticmethod
     def validate_config(config_path: str) -> Union[str, None]:
