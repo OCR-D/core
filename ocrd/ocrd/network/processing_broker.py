@@ -5,6 +5,7 @@ from ocrd_utils import getLogger
 import yaml
 from jsonschema import validate, ValidationError
 from ocrd_utils.package_resources import resource_string
+from typing import Union
 
 
 class ProcessingBroker(FastAPI):
@@ -12,7 +13,7 @@ class ProcessingBroker(FastAPI):
     TODO: doc for ProcessingBroker and its methods
     """
 
-    def __init__(self, config_path):
+    def __init__(self, config_path: str) -> None:
         # TODO: set other args: title, description, version, openapi_tags
         super().__init__(on_shutdown=[self.on_shutdown])
         with open(config_path) as fin:
@@ -45,7 +46,7 @@ class ProcessingBroker(FastAPI):
         self.rmq_publisher.publish_to_queue(queue_name='queue_name', message='message')
         """
 
-    def start(self):
+    def start(self) -> None:
         """
         start processing broker with uvicorn
         """
@@ -59,7 +60,7 @@ class ProcessingBroker(FastAPI):
         uvicorn.run(self, host=host, port=port)
 
     @staticmethod
-    def validate_config(config_path):
+    def validate_config(config_path: str) -> Union[str, None]:
         with open(config_path) as fin:
             obj = yaml.safe_load(fin)
         # TODO: move schema to another place?!
@@ -70,7 +71,7 @@ class ProcessingBroker(FastAPI):
             return f'{e.message}. At {e.json_path}'
         return None
 
-    async def on_shutdown(self):
+    async def on_shutdown(self) -> None:
         # TODO: shutdown docker containers
         """
         - hosts and pids should be stored somewhere
@@ -83,11 +84,12 @@ class ProcessingBroker(FastAPI):
             self.log.debug('error stopping processing servers: ', exc_info=True)
             raise
 
-    async def stop_deployed_agents(self):
+    async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
+    # TODO: add correct typehint if RMQPublisher is available here in core
     @staticmethod
-    def configure_publisher(config_file):
+    def configure_publisher(config_file: str) -> 'RMQPublisher':
         rmq_publisher = 'RMQPublisher Object'
         """
         Here is a template implementation to be adopted later

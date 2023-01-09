@@ -10,10 +10,14 @@ import re
 from ocrd_utils import (
     getLogger
 )
+from typing import Callable
+from ocrd.network.deployment_utils import CustomDockerClient
+from paramiko import SSHClient
 
 
 class ProcessingWorker:
-    def __init__(self, processor_arguments, queue_address, database_address):
+    def __init__(self, processor_arguments: dict, queue_address: str,
+                 database_address: str) -> None:
         self.log = getLogger(__name__)
 
         # Required arguments to run the OCR-D Processor
@@ -27,12 +31,13 @@ class ProcessingWorker:
         # Based on the API calls the ProcessingWorker will receive messages from the running instance
         # of the RabbitMQ Server (deployed by the Processing Broker) through the RMQConsumer object.
         self.rmq_consumer = self.configure_consumer(
-            config_file=None,
+            config_file="",
             callback_method=self.on_consumed_message
         )
 
+    # TODO: change typehint for return if class is finally part of core(ocrd_network)
     @staticmethod
-    def configure_consumer(config_file, callback_method):
+    def configure_consumer(config_file: str, callback_method: Callable) -> 'RMQConsumer':
         rmq_consumer = 'RMQConsumer Object'
         """
         Here is a template implementation to be adopted later
@@ -52,18 +57,19 @@ class ProcessingWorker:
         return rmq_consumer
 
     # Define what happens every time a message is consumed from the queue
-    def on_consumed_message(self):
+    def on_consumed_message(self) -> None:
         pass
 
     # A separate thread must be created here to listen
     # to the queue since this is a blocking action
-    def start_consuming(self):
+    def start_consuming(self) -> None:
         # Blocks here and listens for messages coming from the specified queue
         # self.rmq_consumer.start_consuming()
         pass
 
     @staticmethod
-    def start_native_processor(client, name, _queue_address, _database_address):
+    def start_native_processor(client: SSHClient, name: str, _queue_address: str,
+                               _database_address: str) -> str:
         log = getLogger(__name__)
         log.debug(f'start native processor: {name}')
         channel = client.invoke_shell()
@@ -77,10 +83,13 @@ class ProcessingWorker:
         # What does this return and is supposed to return?
         # Putting some comments when using patterns is always appreciated
         # Since the docker version returns PID, this should also return PID for consistency
+        # TODO: mypy error: ignore or fix. Problem: re.search returns Optional (can be None, causes
+        #       error if try to call)
         return re.search(r'xyz([0-9]+)xyz', output).group(1)
 
     @staticmethod
-    def start_docker_processor(client, name, _queue_address, _database_address):
+    def start_docker_processor(client: CustomDockerClient, name: str, _queue_address: str,
+                               _database_address: str) -> str:
         log = getLogger(__name__)
         log.debug(f'start docker processor: {name}')
         # TODO: add real command here to start processing server here

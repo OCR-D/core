@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 from ocrd_utils import (
     getLogger
@@ -8,6 +9,8 @@ from ocrd.network.deployment_utils import (
     create_ssh_client
 )
 from ocrd.network.processing_worker import ProcessingWorker
+from typing import List, Dict, Union
+
 
 # Abstraction of the Deployment functionality
 # The Deployer agent is in the middle between
@@ -29,7 +32,7 @@ class Deployer:
     for managing information, not for actually doing things.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Dict) -> None:
         """
         Args:
             config (Config): values from config file wrapped into class `Config`
@@ -40,7 +43,7 @@ class Deployer:
         self.mq_data = QueueData(config['message_queue'])
         self.hosts = HostData.from_config(config)
 
-    def deploy_all(self):
+    def deploy_all(self) -> None:
         """ Deploy the message queue and all processors defined in the config-file
         """
         # Ideally, this should return the address of the RabbitMQ Server
@@ -49,12 +52,13 @@ class Deployer:
         mongodb_address = self._deploy_mongodb()
         self._deploy_processing_workers(self.hosts, rabbitmq_address, mongodb_address)
 
-    def kill_all(self):
+    def kill_all(self) -> None:
         self._kill_queue()
         self._kill_mongodb()
         self._kill_processing_workers()
 
-    def _deploy_processing_workers(self, hosts, rabbitmq_address, mongodb_address):
+    def _deploy_processing_workers(self, hosts: List[HostData], rabbitmq_address: str,
+                                   mongodb_address: str) -> None:
         for host in hosts:
             for p in host.processors_native:
                 # Ideally, pass the rabbitmq server and mongodb addresses here
@@ -64,7 +68,8 @@ class Deployer:
                 self._deploy_processing_worker(p, host, DeployType.docker, rabbitmq_address, mongodb_address)
             close_clients(host)
 
-    def _deploy_processing_worker(self, processor, host, deploy_type, rabbitmq_server=None, mongodb=None):
+    def _deploy_processing_worker(self, processor, host: HostData, deploy_type: DeployType,
+                                  rabbitmq_server: str = '', mongodb: str = '') -> None:
         self.log.debug(f'deploy "{deploy_type}" processor: "{processor}" on "{host.address}"')
         assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
                                    '{host.__dict__}. Processor: {processor.__dict__}'
@@ -80,6 +85,7 @@ class Deployer:
                 host.docker_client = create_docker_client(host)
         for _ in range(processor.count):
             if deploy_type == DeployType.native:
+                assert host.ssh_client  # to satisfy mypy
                 # This method should be rather part of the ProcessingWorker
                 # The Processing Worker can just invoke a static method of ProcessingWorker
                 # that creates an instance of the ProcessingWorker (Native instance)
@@ -89,6 +95,7 @@ class Deployer:
                     _queue_address=rabbitmq_server,
                     _database_address=mongodb)
             else:
+                assert host.docker_client  # to satisfy mypy
                 # This method should be rather part of the ProcessingWorker
                 # The Processing Worker can just invoke a static method of ProcessingWorker
                 # that creates an instance of the ProcessingWorker (Docker instance)
@@ -99,14 +106,15 @@ class Deployer:
                     _database_address=mongodb)
             processor.add_started_pid(pid)
 
-    def _deploy_queue(self, image='rabbitmq', detach=True, remove=True, ports=None):
+    def _deploy_queue(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
+                      ports: Union[Dict, None] = None) -> str:
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
         # and receiving messages from queues is part of the RabbitMQ Library
         # Which is part of the OCR-D WebAPI implementation.
 
         client = create_docker_client(self.mq_data)
-        if ports is None:
+        if not ports:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
             # 15672, 15671: HTTP API clients, management UI and rabbitmqadmin, without and with TLS
             # 25672: used for internode and CLI tools communication and is allocated from
@@ -133,12 +141,13 @@ class Deployer:
         queue_address = 'RabbitMQ Server address'
         return queue_address
 
-    def _deploy_mongodb(self, image='mongo', detach=True, remove=True, ports=None):
+    def _deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
+                        ports: Union[Dict, None] = None) -> str:
         if not self.mongo_data or not self.mongo_data.address:
             self.log.debug('canceled mongo-deploy: no mongo_db in config')
-            return
+            return ""
         client = create_docker_client(self.mongo_data)
-        if ports is None:
+        if not ports:
             ports = {
                 27017: self.mongo_data.port
             }
@@ -160,7 +169,7 @@ class Deployer:
         mongodb_address = 'MongoDB Address'
         return mongodb_address
 
-    def _kill_queue(self):
+    def _kill_queue(self) -> None:
         if not self.mq_data.pid:
             self.log.debug('kill_queue: queue not running')
             return
@@ -173,7 +182,7 @@ class Deployer:
         client.close()
         self.log.debug('stopped queue')
 
-    def _kill_mongodb(self):
+    def _kill_mongodb(self) -> None:
         if not self.mongo_data or not self.mongo_data.pid:
             self.log.debug('kill_mongdb: mongodb not running')
             return
@@ -186,7 +195,7 @@ class Deployer:
         client.close()
         self.log.debug('stopped mongodb')
 
-    def _kill_processing_workers(self):
+    def _kill_processing_workers(self) -> None:
         for host in self.hosts:
             if host.ssh_client:
                 host.ssh_client = create_ssh_client(host)
@@ -207,7 +216,7 @@ class Deployer:
     # May be good to have more flexibility here
     # TODO: Support that functionality as well.
     #  Then _kill_processing_workers should just call this method in a loop
-    def _kill_processing_worker(self):
+    def _kill_processing_worker(self) -> None:
         pass
 
 
@@ -222,7 +231,7 @@ class HostData:
     be the class who does things and this class here should be mostly passive
     """
 
-    def __init__(self, config):
+    def __init__(self, config: dict) -> None:
         self.address = config['address']
         self.username = config['username']
         self.password = config.get('password', None)
@@ -245,20 +254,20 @@ class HostData:
         self.docker_client = None
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict) -> List:
         res = []
         for x in config['hosts']:
             res.append(cls(x))
         return res
 
     class Processor:
-        def __init__(self, name, count, deploy_type):
+        def __init__(self, name: str, count: int, deploy_type: DeployType) -> None:
             self.name = name
             self.count = count
             self.deploy_type = deploy_type
-            self.pids = []
+            self.pids: List = []
 
-        def add_started_pid(self, pid):
+        def add_started_pid(self, pid) -> None:
             self.pids.append(pid)
 
 
@@ -266,7 +275,7 @@ class MongoData:
     """ Class to hold information for Mongodb-Docker container
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Dict) -> None:
         self.address = config['address']
         self.port = int(config['port'])
         self.username = config['ssh']['username']
@@ -280,7 +289,7 @@ class QueueData:
     """ Class to hold information for RabbitMQ-Docker container
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Dict) -> None:
         self.address = config['address']
         self.port = int(config['port'])
         self.username = config['ssh']['username']
@@ -297,5 +306,5 @@ class DeployType(Enum):
     native = 2
 
     @staticmethod
-    def from_str(label: str):
+    def from_str(label: str) -> DeployType:
         return DeployType[label.lower()]
