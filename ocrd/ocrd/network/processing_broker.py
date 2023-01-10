@@ -38,15 +38,13 @@ class ProcessingBroker(FastAPI):
             # summary='TODO: summary for apidesc',
             # TODO: add response model? add a response body at all?
         )
-
-        """
-        Publish messages based on the API calls
-        Here is a call example to be adopted later
-
-        # The message type is bytes
-        # Call this method to publish a message
-        self.rmq_publisher.publish_to_queue(queue_name='queue_name', message='message')
-        """
+        # TODO:
+        # Publish messages based on the API calls
+        # Here is a call example to be adopted later
+        #
+        # # The message type is bytes
+        # # Call this method to publish a message
+        # self.rmq_publisher.publish_to_queue(queue_name='queue_name', message='message')
 
     def start(self) -> None:
         """
@@ -74,6 +72,10 @@ class ProcessingBroker(FastAPI):
         - ensure queue is empty or processor is not currently running
         - connect to hosts and kill pids
         """
+        # TODO: remove the try/except before beta. This is only needed for development. All
+        # exceptions this function (on_shutdown) throws are ignored / not printed, when it is used
+        # as shutdown-hook as it is now. So this try/except and logging is neccessary to make them
+        # visible when testing
         try:
             await self.stop_deployed_agents()
         except:
@@ -87,16 +89,15 @@ class ProcessingBroker(FastAPI):
     @staticmethod
     def configure_publisher(config_file: str) -> 'RMQPublisher':
         rmq_publisher = 'RMQPublisher Object'
-        """
-        Here is a template implementation to be adopted later
-
-        rmq_publisher = RMQPublisher(host='localhost', port=5672, vhost='/')
-        # The credentials are configured inside definitions.json
-        # when building the RabbitMQ docker image
-        rmq_publisher.authenticate_and_connect(
-            username='default-publisher',
-            password='default-publisher'
-        )
-        rmq_publisher.enable_delivery_confirmations()
-        """
+        # TODO:
+        # Here is a template implementation to be adopted later
+        #
+        # rmq_publisher = RMQPublisher(host='localhost', port=5672, vhost='/')
+        # # The credentials are configured inside definitions.json
+        # # when building the RabbitMQ docker image
+        # rmq_publisher.authenticate_and_connect(
+        #     username='default-publisher',
+        #     password='default-publisher'
+        # )
+        # rmq_publisher.enable_delivery_confirmations()
         return rmq_publisher
