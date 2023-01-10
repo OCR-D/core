@@ -26,26 +26,20 @@ class HostConfig:
         self.password = config.get('password', None)
         self.keypath = config.get('path_to_privkey', None)
         assert self.password or self.keypath, 'Host in configfile with neither password nor keyfile'
-        self.processors_native = []
-        self.processors_docker = []
-        for x in config['deploy_processors']:
-            if x['deploy_type'] == DeployType.native.name:
-                self.processors_native.append(
-                    ProcessorConfig(x['name'], x['number_of_instance'], DeployType.native)
-                )
-            else:
-                assert x['deploy_type'] == DeployType.docker.name
-                self.processors_docker.append(
-                    ProcessorConfig(x['name'], x['number_of_instance'], DeployType.docker)
-                )
+        self.processors = []
+        for processor in config['deploy_processors']:
+            deploy_type = DeployType.from_str(processor['deploy_type'])
+            self.processors.append(
+                ProcessorConfig(processor['name'], processor['number_of_instance'], deploy_type)
+            )
         self.ssh_client = None
         self.docker_client = None
 
     @staticmethod
     def from_config(config: Dict) -> List:
         res = []
-        for x in config['hosts']:
-            res.append(HostConfig(x))
+        for host in config['hosts']:
+            res.append(HostConfig(host))
         return res
 
 

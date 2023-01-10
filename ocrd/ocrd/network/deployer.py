@@ -61,27 +61,24 @@ class Deployer:
     def _deploy_processing_workers(self, hosts: List[HostConfig], rabbitmq_address: str,
                                    mongodb_address: str) -> None:
         for host in hosts:
-            for p in host.processors_native:
-                # Ideally, pass the rabbitmq server and mongodb addresses here
-                self._deploy_processing_worker(p, host, DeployType.native, rabbitmq_address, mongodb_address)
-            for p in host.processors_docker:
-                # Ideally, pass the rabbitmq server and mongodb addresses here
-                self._deploy_processing_worker(p, host, DeployType.docker, rabbitmq_address, mongodb_address)
+            for processor in host.processors:
+                self._deploy_processing_worker(processor, host, rabbitmq_address, mongodb_address)
             if host.ssh_client:
                 host.ssh_client.close()
             if host.docker_client:
                 host.docker_client.close()
 
-    def _deploy_processing_worker(self, processor, host: HostConfig, deploy_type: DeployType,
+    def _deploy_processing_worker(self, processor: ProcessorConfig, host: HostConfig,
                                   rabbitmq_server: str = '', mongodb: str = '') -> None:
-        self.log.debug(f'deploy "{deploy_type}" processor: "{processor}" on "{host.address}"')
+        self.log.debug(f'deploy "{processor.deploy_type}" processor: "{processor}" on'
+                       f'"{host.address}"')
         assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
                                    '{host.__dict__}. Processor: {processor.__dict__}'
 
         # Create the specific RabbitMQ queue here based on the OCR-D processor name (processor.name)
         # self.rmq_publisher.create_queue(queue_name=processor.name)
 
-        if deploy_type == DeployType.native:
+        if processor.deploy_type == DeployType.native:
             if not host.ssh_client:
                 host.ssh_client = create_ssh_client(host.address, host.username, host.password,
                                                     host.keypath)
@@ -90,7 +87,7 @@ class Deployer:
                 host.docker_client = create_docker_client(host.address, host.username,
                                                           host.password, host.keypath)
         for _ in range(processor.count):
-            if deploy_type == DeployType.native:
+            if processor.deploy_type == DeployType.native:
                 assert host.ssh_client  # to satisfy mypy
                 # This method should be rather part of the ProcessingWorker
                 # The Processing Worker can just invoke a static method of ProcessingWorker
@@ -213,17 +210,17 @@ class Deployer:
             if host.docker_client:
                 host.ssh_client = create_docker_client(host.address, host.username, host.password,
                                                        host.keypath)
-            for p in host.processors_native:
-                for pid in p.pids:
-                    host.ssh_client.exec_command(f'kill {pid}')
-                p.pids = []
-            for p in host.processors_docker:
-                for pid in p.pids:
-                    self.log.debug(f'trying to kill docker container: {pid}')
-                    # TODO: think about timeout.
-                    #       think about using threads to kill parallelized to reduce waiting time
-                    host.docker_client.containers.get(pid).stop()
-                p.pids = []
+            for processor in host.processors:
+                if processor.deploy_type.is_native():
+                    for pid in processor.pids:
+                        host.ssh_client.exec_command(f'kill {pid}')
+                else:
+                    for pid in processor.pids:
+                        self.log.debug(f'trying to kill docker container: {pid}')
+                        # TODO: think about timeout.
+                        #       think about using threads to kill parallelized to reduce waiting time
+                        host.docker_client.containers.get(pid).stop()
+                processor.pids = []
 
     # May be good to have more flexibility here
     # TODO: Support that functionality as well.

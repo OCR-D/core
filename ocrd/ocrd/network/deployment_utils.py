@@ -129,3 +129,9 @@ class DeployType(Enum):
     @staticmethod
     def from_str(label: str) -> DeployType:
         return DeployType[label.lower()]
+
+    def is_native(self) -> bool:
+        return self == DeployType.native
+
+    def is_docker(self) -> bool:
+        return self == DeployType.docker
