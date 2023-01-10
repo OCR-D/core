@@ -67,6 +67,9 @@ class ProcessingWorker:
         # self.rmq_consumer.start_consuming()
         pass
 
+    # TODO: queue_address and _database_address are prefixed with underscore because they are not
+    # needed yet (otherwise flak8 complains). But they will be needed once the real
+    # processing_worker is called here. Then they should be renamed
     @staticmethod
     def start_native_processor(client: SSHClient, name: str, _queue_address: str,
                                _database_address: str) -> str:
@@ -76,6 +79,11 @@ class ProcessingWorker:
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         # TODO: add real command here to start processing server here
         cmd = 'sleep 23s'
+        # the only way to make it work to start a process in the background and return early is
+        # this construction. The pid of the last started background process is printed with
+        # `echo $!` but it is printed inbetween other output. Because of that I added `xyz` before
+        # and after the code to easily be able to filter out the pid via regex when returning from
+        # the function
         stdin.write(f'{cmd} & \n echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
@@ -87,6 +95,9 @@ class ProcessingWorker:
         #       error if try to call)
         return re.search(r'xyz([0-9]+)xyz', output).group(1)
 
+    # TODO: queue_address and _database_address are prefixed with underscore because they are not
+    # needed yet (otherwise flak8 complains). But they will be needed once the real
+    # processing_worker is called here. Then they should be renamed
     @staticmethod
     def start_docker_processor(client: CustomDockerClient, name: str, _queue_address: str,
                                _database_address: str) -> str:
