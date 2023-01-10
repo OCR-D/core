@@ -8,7 +8,6 @@ OCR-D CLI: start the processing broker
 import click
 from ocrd_utils import initLogging
 from ocrd.network import ProcessingBroker
-import sys
 
 
 @click.command('processing-broker')
@@ -19,10 +18,6 @@ def processing_broker_cli(path_to_config, address: str):
     Start and manage processing servers (workers) with the processing broker
     """
     initLogging()
-    res = ProcessingBroker.validate_config(path_to_config)
-    if res:
-        print(f"config is invalid: {res}")
-        sys.exit(1)
     try:
         host, port = address.split(":")
         port_int = int(port)

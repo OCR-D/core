@@ -4,11 +4,21 @@ from ocrd.network.deployment_utils import DeployType
 from typing import List, Dict
 
 __all__ = [
+    'ProcessingBrokerConfig',
     'HostConfig',
     'ProcessorConfig',
     'MongoConfig',
     'QueueConfig',
 ]
+
+
+class ProcessingBrokerConfig:
+    def __init__(self, config: dict):
+        self.mongo_config = MongoConfig(config['mongo_db'])
+        self.queue_config = QueueConfig(config['message_queue'])
+        self.hosts_config = []
+        for host in config['hosts']:
+            self.hosts_config.append(HostConfig(host))
 
 
 class HostConfig:
@@ -33,13 +43,6 @@ class HostConfig:
             )
         self.ssh_client = None
         self.docker_client = None
-
-    @staticmethod
-    def from_config(config: Dict) -> List:
-        res = []
-        for host in config['hosts']:
-            res.append(HostConfig(host))
-        return res
 
 
 class ProcessorConfig:

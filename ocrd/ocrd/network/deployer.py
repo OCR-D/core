@@ -33,16 +33,16 @@ class Deployer:
     for managing information, not for actually doing things.
     """
 
-    def __init__(self, config: Dict) -> None:
+    def __init__(self, config: ProcessingBrokerConfig) -> None:
         """
         Args:
             config (Config): values from config file wrapped into class `Config`
         """
         self.log = getLogger(__name__)
         self.log.debug('Deployer-init()')
-        self.mongo_data = MongoConfig(config['mongo_db'])
-        self.mq_data = QueueConfig(config['message_queue'])
-        self.hosts = HostConfig.from_config(config)
+        self.mongo_data = config.mongo_config
+        self.mq_data = config.queue_config
+        self.hosts = config.hosts_config
 
     def deploy_all(self) -> None:
         """ Deploy the message queue and all processors defined in the config-file
