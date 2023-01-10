@@ -52,7 +52,6 @@ class ProcessingBroker(FastAPI):
         """
         start processing broker with uvicorn
         """
-        assert self.config, 'config was not parsed correctly'
         self.log.debug(f'starting uvicorn. Host: {self.host}. Port: {self.port}')
         uvicorn.run(self, host=self.hostname, port=self.port)
 

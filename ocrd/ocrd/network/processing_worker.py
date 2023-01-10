@@ -94,5 +94,5 @@ class ProcessingWorker:
         log.debug(f'start docker processor: {name}')
         # TODO: add real command here to start processing server here
         res = client.containers.run('debian', 'sleep 31', detach=True, remove=True)
-        assert res and res.id, 'run docker container failed'
+        assert res and res.id, 'run processor in docker-container failed'
         return res.id

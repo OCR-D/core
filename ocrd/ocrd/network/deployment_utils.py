@@ -50,9 +50,6 @@ def get_processor(parameter: dict, processor_class: type) -> Union[type, None]:
 
 def create_ssh_client(address: str, username: str, password: Union[str, None],
                       keypath: Union[str, None]) -> paramiko.SSHClient:
-    assert address and username, 'address and username are mandatory'
-    assert bool(password) is not bool(keypath), 'expecting either password or keypath, not both'
-
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
     log = getLogger(__name__)
@@ -66,9 +63,6 @@ def create_ssh_client(address: str, username: str, password: Union[str, None],
 
 def create_docker_client(address: str, username: str, password: Union[str, None],
                          keypath: Union[str, None]) -> CustomDockerClient:
-    assert address and username, 'address and username are mandatory'
-    assert bool(password) is not bool(keypath), 'expecting either password or keypath ' \
-                                                'provided, not both'
     return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
@@ -86,8 +80,10 @@ class CustomDockerClient(docker.DockerClient):
     """
 
     def __init__(self, user: str, host: str, **kwargs) -> None:
-        assert user and host, 'user and host must be set'
-        assert 'password' in kwargs or 'keypath' in kwargs, 'one of password and keyfile is needed'
+        if not user or not host:
+            raise ValueError("Missing argument: user and host must both be provided")
+        if not 'password' in kwargs and not 'keypath' in kwargs:
+            raise ValueError("Missing argument: one of password and keyfile is needed")
         self.api = docker.APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
         ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
         self.api.mount('http+docker://ssh', ssh_adapter)

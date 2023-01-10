@@ -25,7 +25,6 @@ class HostConfig:
         self.username = config['username']
         self.password = config.get('password', None)
         self.keypath = config.get('path_to_privkey', None)
-        assert self.password or self.keypath, 'Host in configfile with neither password nor keyfile'
         self.processors = []
         for processor in config['deploy_processors']:
             deploy_type = DeployType.from_str(processor['deploy_type'])
