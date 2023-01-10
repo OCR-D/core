@@ -29,16 +29,15 @@ class HostConfig:
         self.processors_native = []
         self.processors_docker = []
         for x in config['deploy_processors']:
-            if x['deploy_type'] == 'native':
+            if x['deploy_type'] == DeployType.native.name:
                 self.processors_native.append(
                     ProcessorConfig(x['name'], x['number_of_instance'], DeployType.native)
                 )
-            elif x['deploy_type'] == 'docker':
+            else:
+                assert x['deploy_type'] == DeployType.docker.name
                 self.processors_docker.append(
                     ProcessorConfig(x['name'], x['number_of_instance'], DeployType.docker)
                 )
-            else:
-                assert False, f'unknown deploy_type: "{x.deploy_type}"'
         self.ssh_client = None
         self.docker_client = None
 
