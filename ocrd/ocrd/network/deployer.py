@@ -203,25 +203,29 @@ class Deployer:
         self.log.debug('stopped mongodb')
 
     def _kill_processing_workers(self) -> None:
+        # Kill processing worker hosts
         for host in self.hosts:
             if host.ssh_client:
                 host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
             if host.docker_client:
                 host.docker_client = create_docker_client(host.address, host.username, host.password, host.keypath)
-            for processor in host.processors:
-                if processor.deploy_type.is_native():
-                    for pid in processor.pids:
-                        host.ssh_client.exec_command(f'kill {pid}')
-                else:
-                    for pid in processor.pids:
-                        self.log.debug(f'trying to kill docker container: {pid}')
-                        # TODO: think about timeout.
-                        #       think about using threads to kill parallelized to reduce waiting time
-                        host.docker_client.containers.get(pid).stop()
-                processor.pids = []
+            # Kill deployed OCR-D processor instances on this Processing worker host
+            self._kill_processing_worker(host)
 
-    # May be good to have more flexibility here
-    # TODO: Support that functionality as well.
-    #  Then _kill_processing_workers should just call this method in a loop
-    def _kill_processing_worker(self) -> None:
-        pass
+    def _kill_processing_worker(self, host: HostConfig) -> None:
+        for processor in host.processors:
+            if processor.deploy_type.is_native():
+                for pid in processor.pids:
+                    host.ssh_client.exec_command(f'kill {pid}')
+            elif processor.deploy_type.is_docker():
+                for pid in processor.pids:
+                    self.log.debug(f'trying to kill docker container: {pid}')
+                    # TODO: think about timeout.
+                    #       think about using threads to kill parallelized to reduce waiting time
+                    host.docker_client.containers.get(pid).stop()
+            else:
+                # Error case, should never enter here
+                # Handle error cases here (if needed)
+                self.log.error(f"Deploy type of {processor.name} is neither of the allowed types")
+                pass
+            processor.pids = []
