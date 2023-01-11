@@ -110,7 +110,7 @@ class Deployer:
             processor.add_started_pid(pid)
 
     def _deploy_rabbitmq(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
-                      ports_mapping: Union[Dict, None] = None) -> str:
+                         ports_mapping: Union[Dict, None] = None) -> str:
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
         # and receiving messages from queues is part of the RabbitMQ Library
@@ -205,11 +205,9 @@ class Deployer:
     def _kill_processing_workers(self) -> None:
         for host in self.hosts:
             if host.ssh_client:
-                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
-                                                    host.keypath)
+                host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
             if host.docker_client:
-                host.ssh_client = create_docker_client(host.address, host.username, host.password,
-                                                       host.keypath)
+                host.docker_client = create_docker_client(host.address, host.username, host.password, host.keypath)
             for processor in host.processors:
                 if processor.deploy_type.is_native():
                     for pid in processor.pids:
