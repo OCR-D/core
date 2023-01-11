@@ -48,13 +48,13 @@ class Deployer:
         """ Deploy the message queue and all processors defined in the config-file
         """
         # Ideally, this should return the address of the RabbitMQ Server
-        rabbitmq_address = self._deploy_queue()
+        rabbitmq_address = self._deploy_rabbitmq()
         # Ideally, this should return the address of the MongoDB
         mongodb_address = self._deploy_mongodb()
         self._deploy_processing_workers(self.hosts, rabbitmq_address, mongodb_address)
 
     def kill_all(self) -> None:
-        self._kill_queue()
+        self._kill_rabbitmq()
         self._kill_mongodb()
         self._kill_processing_workers()
 
@@ -109,7 +109,7 @@ class Deployer:
                     _database_address=mongodb)
             processor.add_started_pid(pid)
 
-    def _deploy_queue(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
+    def _deploy_rabbitmq(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
                       ports_mapping: Union[Dict, None] = None) -> str:
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
@@ -135,25 +135,25 @@ class Deployer:
             remove=remove,
             ports=ports_mapping
         )
-        assert res and res.id, 'starting message queue failed'
+        assert res and res.id, 'starting rabbitmq failed'
         self.mq_data.pid = res.id
         client.close()
-        self.log.debug('deployed queue')
+        self.log.debug('deployed rabbitmq')
 
-        # Not implemented yet
-        # Note: The queue address is not just the IP address
+        # TODO: Not implemented yet
+        #  Note: The queue address is not just the IP address
         queue_address = 'RabbitMQ Server address'
         return queue_address
 
     def _deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
-                        ports: Union[Dict, None] = None) -> str:
+                        ports_mapping: Union[Dict, None] = None) -> str:
         if not self.mongo_data or not self.mongo_data.address:
             self.log.debug('canceled mongo-deploy: no mongo_db in config')
             return ""
         client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
                                       self.mongo_data.password, self.mongo_data.keypath)
-        if not ports:
-            ports = {
+        if not ports_mapping:
+            ports_mapping = {
                 27017: self.mongo_data.port
             }
         # TODO: use rm here or not? Should the mongodb be reused?
@@ -162,31 +162,31 @@ class Deployer:
             image=image,
             detach=detach,
             remove=remove,
-            ports=ports
+            ports=ports_mapping
         )
         assert res and res.id, 'starting mongodb failed'
         self.mongo_data.pid = res.id
         client.close()
         self.log.debug('deployed mongodb')
 
-        # Not implemented yet
-        # Note: The mongodb address is not just the IP address
+        # TODO: Not implemented yet
+        #  Note: The mongodb address is not just the IP address
         mongodb_address = 'MongoDB Address'
         return mongodb_address
 
-    def _kill_queue(self) -> None:
+    def _kill_rabbitmq(self) -> None:
         if not self.mq_data.pid:
-            self.log.debug('kill_queue: queue not running')
+            self.log.debug('kill_rabbitmq: rabbitmq server is not running')
             return
         else:
-            self.log.debug(f'trying to kill queue with id: {self.mq_data.pid} now')
+            self.log.debug(f'trying to kill rabbitmq with id: {self.mq_data.pid} now')
 
         client = create_docker_client(self.mq_data.address, self.mq_data.username,
                                       self.mq_data.password, self.mq_data.keypath)
         client.containers.get(self.mq_data.pid).stop()
         self.mq_data.pid = None
         client.close()
-        self.log.debug('stopped queue')
+        self.log.debug('stopped rabbitmq')
 
     def _kill_mongodb(self) -> None:
         if not self.mongo_data or not self.mongo_data.pid:
