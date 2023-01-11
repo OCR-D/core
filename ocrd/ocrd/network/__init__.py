@@ -1,6 +1,5 @@
 # This network package is supposed to contain all the packages and modules to realize the network architecture:
 # https://user-images.githubusercontent.com/7795705/203554094-62ce135a-b367-49ba-9960-ffe1b7d39b2c.jpg
-# The architecture is also available as an image: ocrd_network_arch.jpg
 
 # For reference, currently:
 # 1. The WebAPI is available here:

@@ -110,7 +110,7 @@ class Deployer:
             processor.add_started_pid(pid)
 
     def _deploy_queue(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
-                      ports: Union[Dict, None] = None) -> str:
+                      ports_mapping: Union[Dict, None] = None) -> str:
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
         # and receiving messages from queues is part of the RabbitMQ Library
@@ -118,12 +118,12 @@ class Deployer:
 
         client = create_docker_client(self.mq_data.address, self.mq_data.username,
                                       self.mq_data.password, self.mq_data.keypath)
-        if not ports:
+        if not ports_mapping:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
             # 15672, 15671: HTTP API clients, management UI and rabbitmqadmin, without and with TLS
             # 25672: used for internode and CLI tools communication and is allocated from
             # a dynamic range (limited to a single port by default, computed as AMQP port + 20000)
-            ports = {
+            ports_mapping = {
                 5672: self.mq_data.port,
                 15672: 15672,
                 25672: 25672
@@ -133,7 +133,7 @@ class Deployer:
             image=image,
             detach=detach,
             remove=remove,
-            ports=ports
+            ports=ports_mapping
         )
         assert res and res.id, 'starting message queue failed'
         self.mq_data.pid = res.id
