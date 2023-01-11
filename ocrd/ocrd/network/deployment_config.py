@@ -22,7 +22,7 @@ class ProcessingBrokerConfig:
 
 
 class HostConfig:
-    """Class to wrap information for all processing-server-hosts.
+    """Class to wrap information for all processing-worker-hosts.
 
     Config information and runtime information is stored here. This class
     should not do much but hold config information and runtime information. I
@@ -46,7 +46,8 @@ class HostConfig:
 
 
 class ProcessorConfig:
-    """ Class wrapping information from config file for a Processing-Server/Worker
+    """
+    Class wrapping information from config file for an OCR-D processor
     """
     def __init__(self, name: str, count: int, deploy_type: DeployType) -> None:
         self.name = name

@@ -70,6 +70,7 @@ class Deployer:
 
     def _deploy_processing_worker(self, processor: ProcessorConfig, host: HostConfig,
                                   rabbitmq_server: str = '', mongodb: str = '') -> None:
+
         self.log.debug(f'deploy "{processor.deploy_type}" processor: "{processor}" on'
                        f'"{host.address}"')
         assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
@@ -80,34 +81,36 @@ class Deployer:
 
         if processor.deploy_type == DeployType.native:
             if not host.ssh_client:
-                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
-                                                    host.keypath)
-        else:
+                host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
+        elif processor.deploy_type == DeployType.docker:
             if not host.docker_client:
-                host.docker_client = create_docker_client(host.address, host.username,
-                                                          host.password, host.keypath)
+                host.docker_client = create_docker_client(host.address, host.username, host.password, host.keypath)
+        else:
+            # Error case, should never enter here. Handle error cases here (if needed)
+            self.log.error(f"Deploy type of {processor.name} is neither of the allowed types")
+            pass
+
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
                 assert host.ssh_client  # to satisfy mypy
-                # This method should be rather part of the ProcessingWorker
-                # The Processing Worker can just invoke a static method of ProcessingWorker
-                # that creates an instance of the ProcessingWorker (Native instance)
                 pid = ProcessingWorker.start_native_processor(
                     client=host.ssh_client,
                     name=processor.name,
                     _queue_address=rabbitmq_server,
                     _database_address=mongodb)
-            else:
+                processor.add_started_pid(pid)
+            elif processor.deploy_type == DeployType.docker:
                 assert host.docker_client  # to satisfy mypy
-                # This method should be rather part of the ProcessingWorker
-                # The Processing Worker can just invoke a static method of ProcessingWorker
-                # that creates an instance of the ProcessingWorker (Docker instance)
                 pid = ProcessingWorker.start_docker_processor(
                     client=host.docker_client,
                     name=processor.name,
                     _queue_address=rabbitmq_server,
                     _database_address=mongodb)
-            processor.add_started_pid(pid)
+                processor.add_started_pid(pid)
+            else:
+                # Error case, should never enter here. Handle error cases here (if needed)
+                self.log.error(f"Deploy type of {processor.name} is neither of the allowed types")
+                pass
 
     def _deploy_rabbitmq(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
                          ports_mapping: Union[Dict, None] = None) -> str:
@@ -224,8 +227,7 @@ class Deployer:
                     #       think about using threads to kill parallelized to reduce waiting time
                     host.docker_client.containers.get(pid).stop()
             else:
-                # Error case, should never enter here
-                # Handle error cases here (if needed)
+                # Error case, should never enter here. Handle error cases here (if needed)
                 self.log.error(f"Deploy type of {processor.name} is neither of the allowed types")
                 pass
             processor.pids = []

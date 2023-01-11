@@ -16,10 +16,11 @@ from paramiko import SSHClient
 
 
 class ProcessingWorker:
-    def __init__(self, processor_arguments: dict, queue_address: str,
-                 database_address: str) -> None:
-        self.log = getLogger(__name__)
+    def __init__(self, processor_name: str, processor_arguments: dict,
+                 queue_address: str, database_address: str) -> None:
 
+        self.log = getLogger(__name__)
+        self.processor_name = processor_name
         # Required arguments to run the OCR-D Processor
         self.processor_arguments = processor_arguments  # processor.name is
         # RabbitMQ Address - This contains at least the
