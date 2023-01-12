@@ -1,13 +1,16 @@
 import uvicorn
 from fastapi import FastAPI
-from ocrd.network.deployer import Deployer
-from ocrd_utils import getLogger
 import yaml
 from jsonschema import validate, ValidationError
 from ocrd_utils.package_resources import resource_string
 from typing import Union
+
+from ocrd_utils import getLogger
 from ocrd_validators import ProcessingBrokerValidator
+
+from ocrd.network.deployer import Deployer
 from ocrd.network.deployment_config import ProcessingBrokerConfig
+from ocrd.network.rabbitmq_utils import RMQPublisher
 
 
 class ProcessingBroker(FastAPI):
@@ -26,10 +29,18 @@ class ProcessingBroker(FastAPI):
         self.deployer.deploy_all()
         self.log = getLogger(__name__)
 
-        # RMQPublisher object must be created here, reference: RabbitMQ Library (WebAPI Implementation)
-        # Based on the API calls the ProcessingBroker will send messages to the running instance
-        # of the RabbitMQ Server (deployed by the Deployer object) through the RMQPublisher object.
-        self.rmq_publisher = self.configure_publisher(self.config)
+        # RabbitMQ related fields, hard coded initially
+        self.rmq_host = "localhost"
+        self.rmq_port = 5672
+        self.rmq_vhost = "/"
+
+        # These could also be made configurable,
+        # not relevant for the current state
+        self.rmq_username = "default-publisher"
+        self.rmq_password = "default-publisher"
+
+        self.rmq_publisher = self.connect_publisher()
+        self.rmq_publisher.enable_delivery_confirmations()  # Enable acks
 
         self.router.add_api_route(
             path='/stop',
@@ -39,13 +50,11 @@ class ProcessingBroker(FastAPI):
             # summary='TODO: summary for apidesc',
             # TODO: add response model? add a response body at all?
         )
-        # TODO:
-        # Publish messages based on the API calls
-        # Here is a call example to be adopted later
-        #
-        # # The message type is bytes
-        # # Call this method to publish a message
-        # self.rmq_publisher.publish_to_queue(queue_name='queue_name', message='message')
+
+        # TODO: Call this after the rest of the API is implemented
+        # Example of publishing a message inside a specific queue
+        # The message type is bytes
+        # self.rmq_publisher.publish_to_queue(queue_name="queue_name", message="message")
 
     def start(self) -> None:
         """
@@ -83,19 +92,7 @@ class ProcessingBroker(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
-    # TODO: add correct typehint if RMQPublisher is available here in core
-    @staticmethod
-    def configure_publisher(config_file: ProcessingBrokerConfig) -> 'RMQPublisher':
-        rmq_publisher = 'RMQPublisher Object'
-        # TODO:
-        # Here is a template implementation to be adopted later
-        #
-        # rmq_publisher = RMQPublisher(host='localhost', port=5672, vhost='/')
-        # # The credentials are configured inside definitions.json
-        # # when building the RabbitMQ docker image
-        # rmq_publisher.authenticate_and_connect(
-        #     username='default-publisher',
-        #     password='default-publisher'
-        # )
-        # rmq_publisher.enable_delivery_confirmations()
+    def connect_publisher(self) -> RMQPublisher:
+        rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
+        rmq_publisher.authenticate_and_connect(username=self.rmq_username, password=self.rmq_password)
         return rmq_publisher
