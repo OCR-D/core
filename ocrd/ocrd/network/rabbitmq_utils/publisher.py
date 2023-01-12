@@ -13,7 +13,7 @@ from pika import (
     PlainCredentials
 )
 
-from ocrd_webapi.rabbitmq.constants import (
+from ocrd.network.rabbitmq_utils.constants import (
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_ROUTER,
     LOG_FORMAT,
@@ -22,7 +22,7 @@ from ocrd_webapi.rabbitmq.constants import (
     RABBIT_MQ_PORT as PORT,
     RABBIT_MQ_VHOST as VHOST
 )
-from ocrd_webapi.rabbitmq.connector import RMQConnector
+from ocrd.network.rabbitmq_utils.connector import RMQConnector
 
 
 class RMQPublisher(RMQConnector):

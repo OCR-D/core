@@ -12,7 +12,7 @@ from pika import (
     PlainCredentials
 )
 
-from ocrd_webapi.rabbitmq.constants import (
+from ocrd.network.rabbitmq_utils.constants import (
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_EXCHANGER_TYPE,
     DEFAULT_QUEUE,

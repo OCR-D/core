@@ -11,8 +11,10 @@ Deprecated == 1.2.0
 memory-profiler >= 0.58.0
 sparklines >= 0.4.2
 python-magic
-uvicorn
-fastapi
+uvicorn>=0.17.6
+fastapi>=0.78.0
 docker
 paramiko
 frozendict~=2.3.4
+pika>=1.2.0
+tomli>=2.0.0
