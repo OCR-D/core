@@ -46,6 +46,8 @@ class Deployer:
     def deploy_all(self) -> None:
         """ Deploy the message queue and all processors defined in the config-file
         """
+        # The order of deploying may be important to recover from previous state
+
         # Ideally, this should return the address of the RabbitMQ Server
         rabbitmq_address = self._deploy_rabbitmq()
         # Ideally, this should return the address of the MongoDB
@@ -53,9 +55,20 @@ class Deployer:
         self._deploy_processing_workers(self.hosts, rabbitmq_address, mongodb_address)
 
     def kill_all(self) -> None:
-        self._kill_rabbitmq()
-        self._kill_mongodb()
+        # The order of killing is important to optimize graceful shutdown in the future
+        # If RabbitMQ server is killed before killing Processing Workers, that may have
+        # bad outcome and leave Processing Workers in an unpredictable state
+
+        # First kill the active Processing Workers
+        # They may still want to update something in the db before closing
+        # They may still want to nack the currently processed messages back to the RabbitMQ Server
         self._kill_processing_workers()
+
+        # Second kill the MongoDB
+        self._kill_mongodb()
+
+        # Third kill the RabbitMQ Server
+        self._kill_rabbitmq()
 
     def _deploy_processing_workers(self, hosts: List[HostConfig], rabbitmq_address: str,
                                    mongodb_address: str) -> None:
