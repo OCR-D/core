@@ -1,0 +1,10 @@
+FROM rabbitmq:3.8.27-management-alpine
+
+ADD ./rabbitmq.conf /etc/rabbitmq/
+
+RUN chown rabbitmq:rabbitmq /etc/rabbitmq/rabbitmq.conf
+
+ADD --chown=rabbitmq ./definitions.json /etc/rabbitmq/
+ENV RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS="-rabbitmq_management load_definitions \"/etc/rabbitmq/definitions.json\""
+
+EXPOSE 5672 15672

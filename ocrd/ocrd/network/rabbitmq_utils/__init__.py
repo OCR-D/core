@@ -1,2 +1,13 @@
-# This rabbitmq_utils package is supposed to contain the code that is currently available under:
-# https://github.com/OCR-D/ocrd-webapi-implementation/tree/main/ocrd_webapi/rabbitmq
+__all__ = [
+  "RMQConsumer",
+  "RMQConnector",
+  "RMQPublisher",
+]
+
+from .consumer import RMQConsumer
+from .connector import RMQConnector
+from .publisher import RMQPublisher
+from .ocrd_messages import (
+  OcrdProcessingMessage,
+  OcrdResultMessage
+)
