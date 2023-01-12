@@ -2,18 +2,18 @@ from __future__ import annotations
 from enum import Enum
 from typing import Union
 
-import docker
+from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
-import paramiko
+from paramiko import AutoAddPolicy, SSHClient
 import urllib.parse
 
 from ocrd_utils import getLogger
 
 
 def create_ssh_client(address: str, username: str, password: Union[str, None],
-                      keypath: Union[str, None]) -> paramiko.SSHClient:
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+                      keypath: Union[str, None]) -> SSHClient:
+    client = SSHClient()
+    client.set_missing_host_key_policy(AutoAddPolicy)
     log = getLogger(__name__)
     log.debug(f'creating ssh-client with username: "{username}", keypath: "{keypath}". '
               f'host: {address}')
@@ -28,7 +28,7 @@ def create_docker_client(address: str, username: str, password: Union[str, None]
     return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
-class CustomDockerClient(docker.DockerClient):
+class CustomDockerClient(DockerClient):
     """Wrapper for docker.DockerClient to use an own SshHttpAdapter.
 
     This makes it possible to use provided password/keyfile for connecting with
@@ -42,11 +42,13 @@ class CustomDockerClient(docker.DockerClient):
     """
 
     def __init__(self, user: str, host: str, **kwargs) -> None:
+        # TODO: Call to the super class __init__ is missing here,
+        #  may this potentially become an issue?
         if not user or not host:
             raise ValueError("Missing argument: user and host must both be provided")
         if not 'password' in kwargs and not 'keypath' in kwargs:
             raise ValueError("Missing argument: one of password and keyfile is needed")
-        self.api = docker.APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
+        self.api = APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
         ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
         self.api.mount('http+docker://ssh', ssh_adapter)
 
@@ -64,7 +66,7 @@ class CustomDockerClient(docker.DockerClient):
             this method is called in the superclass constructor. Overwriting allows to set
             password/keypath for internal paramiko-client
             """
-            self.ssh_client = paramiko.SSHClient()
+            self.ssh_client = SSHClient()
             parsed_base_url = urllib.parse.urlparse(base_url)
             self.ssh_params = {
                 'hostname': parsed_base_url.hostname,
@@ -75,7 +77,7 @@ class CustomDockerClient(docker.DockerClient):
                 self.ssh_params['password'] = self.password
             elif self.keypath:
                 self.ssh_params['key_filename'] = self.keypath
-            self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+            self.ssh_client.set_missing_host_key_policy(AutoAddPolicy)
 
 
 class DeployType(Enum):

@@ -6,15 +6,15 @@
 # According to the current requirements, each ProcessingWorker
 # is a single OCR-D Processor instance.
 
-import re
-from typing import Callable, Union
 from frozendict import frozendict
 from functools import lru_cache, wraps
 from paramiko import SSHClient
+from re import search as re_search
+from typing import Callable, Union
 
 from ocrd_utils import getLogger
-from ocrd.network.deployment_utils import CustomDockerClient
 
+from ocrd.network.deployment_utils import CustomDockerClient
 from ocrd.network.rabbitmq_utils import RMQConsumer
 
 
@@ -127,7 +127,7 @@ class ProcessingWorker:
         # Since the docker version returns PID, this should also return PID for consistency
         # TODO: mypy error: ignore or fix. Problem: re.search returns Optional (can be None, causes
         #       error if try to call)
-        return re.search(r'xyz([0-9]+)xyz', output).group(1)
+        return re_search(r'xyz([0-9]+)xyz', output).group(1)
 
     # TODO: queue_address and _database_address are prefixed with underscore because they are not
     # needed yet (otherwise flak8 complains). But they will be needed once the real

@@ -1,16 +1,15 @@
 from __future__ import annotations
-from enum import Enum
-from ocrd_utils import (
-    getLogger
-)
+from typing import List, Dict, Union
+
+from ocrd_utils import getLogger
+
+from ocrd.network.deployment_config import *
 from ocrd.network.deployment_utils import (
     create_docker_client,
     create_ssh_client,
     DeployType,
 )
-from ocrd.network.deployment_config import *
 from ocrd.network.processing_worker import ProcessingWorker
-from typing import List, Dict, Union
 
 
 # Abstraction of the Deployment functionality

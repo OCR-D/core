@@ -1,7 +1,8 @@
 # TODO: this probably breaks python 3.6. Think about whether we really want to use this
 from __future__ import annotations
-from ocrd.network.deployment_utils import DeployType
 from typing import List, Dict
+
+from ocrd.network.deployment_utils import DeployType
 
 __all__ = [
     'ProcessingBrokerConfig',

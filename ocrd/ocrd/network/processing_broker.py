@@ -1,9 +1,6 @@
-import uvicorn
 from fastapi import FastAPI
-import yaml
-from jsonschema import validate, ValidationError
-from ocrd_utils.package_resources import resource_string
-from typing import Union
+import uvicorn
+from yaml import safe_load
 
 from ocrd_utils import getLogger
 from ocrd_validators import ProcessingBrokerValidator
@@ -66,7 +63,7 @@ class ProcessingBroker(FastAPI):
     @staticmethod
     def parse_config(config_path: str) -> ProcessingBrokerConfig:
         with open(config_path) as fin:
-            obj = yaml.safe_load(fin)
+            obj = safe_load(fin)
         report = ProcessingBrokerValidator.validate(obj)
         if not report.is_valid:
             raise Exception(f"Processing-Broker configuration file is invalid:\n{report.errors}")
