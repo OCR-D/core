@@ -15,10 +15,10 @@ __all__ = [
     "LOG_LEVEL"
 ]
 
-DEFAULT_EXCHANGER_NAME: str = "ocrd-webapi-default"
+DEFAULT_EXCHANGER_NAME: str = "ocrd-network-default"
 DEFAULT_EXCHANGER_TYPE: str = "direct"
-DEFAULT_QUEUE: str = "ocrd-webapi-default"
-DEFAULT_ROUTER: str = "ocrd-webapi-default"
+DEFAULT_QUEUE: str = "ocrd-network-default"
+DEFAULT_ROUTER: str = "ocrd-network-default"
 
 # "rabbit-mq-host" when Dockerized
 RABBIT_MQ_HOST: str = "localhost"
