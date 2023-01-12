@@ -18,13 +18,16 @@ class ProcessingBroker(FastAPI):
     def __init__(self, config_path: str, host: str, port: int) -> None:
         # TODO: set other args: title, description, version, openapi_tags
         super().__init__(on_shutdown=[self.on_shutdown])
+        self.log = getLogger(__name__)
+
         self.hostname = host
         self.port = port
         self.config = ProcessingBroker.parse_config(config_path)
-        self.deployer = Deployer(self.config)
-        # Deploy everything specified in the configuration
-        self.deployer.deploy_all()
-        self.log = getLogger(__name__)
+        self.deployer = Deployer(
+            queue_config=self.config.queue_config,
+            mongo_config=self.config.mongo_config,
+            hosts_config=self.config.hosts_config
+        )
 
         # RabbitMQ related fields, hard coded initially
         self.rmq_host = "localhost"
@@ -57,6 +60,8 @@ class ProcessingBroker(FastAPI):
         """
         start processing broker with uvicorn
         """
+        # Deploy everything specified in the configuration
+        self.deployer.deploy_all()
         self.log.debug(f'starting uvicorn. Host: {self.host}. Port: {self.port}')
         uvicorn.run(self, host=self.hostname, port=self.port)
 

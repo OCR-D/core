@@ -11,12 +11,11 @@ from ocrd.network.deployment_utils import (
 )
 from ocrd.network.processing_worker import ProcessingWorker
 
-
 # Abstraction of the Deployment functionality
-# The Deployer agent is in the middle between
-# the ProcessingBroker agent and the ProcessingWorker agents
-# ProcessingBroker provides the configuration file to the Deployer agent
-# The Deployer agent creates the ProcessingWorker agents.
+# The ProcessingServer (currently still called Broker) provides the configuration parameters to the Deployer agent.
+# The Deployer agent deploys the RabbitMQ Server, MongoDB and the Processing Hosts.
+# Each Processing Host may have several Processing Workers.
+# Each Processing Worker is an instance of an OCR-D processor.
 
 # TODO:
 # Ideally, the interaction among the agents should happen through
@@ -32,16 +31,18 @@ class Deployer:
     for managing information, not for actually doing things.
     """
 
-    def __init__(self, config: ProcessingBrokerConfig) -> None:
+    def __init__(self, queue_config: QueueConfig, mongo_config: MongoConfig, hosts_config: List[HostConfig]) -> None:
         """
         Args:
-            config (Config): values from config file wrapped into class `Config`
+            queue_config: RabbitMQ related configuration
+            mongo_config: MongoDB related configuration
+            hosts_config: Processing Hosts related configurations
         """
         self.log = getLogger(__name__)
         self.log.debug('Deployer-init()')
-        self.mongo_data = config.mongo_config
-        self.mq_data = config.queue_config
-        self.hosts = config.hosts_config
+        self.mongo_data = mongo_config
+        self.mq_data = queue_config
+        self.hosts = hosts_config
 
     def deploy_all(self) -> None:
         """ Deploy the message queue and all processors defined in the config-file
