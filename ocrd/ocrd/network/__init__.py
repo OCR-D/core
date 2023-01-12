@@ -18,3 +18,4 @@
 # It could also be a separate package on its own under `core` with the name `ocrd_network`.
 # TODO: Correctly identify all current and potential future dependencies.
 from .processing_broker import ProcessingBroker
+from .processing_worker import ProcessingWorker

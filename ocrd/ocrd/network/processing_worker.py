@@ -7,66 +7,99 @@
 # is a single OCR-D Processor instance.
 
 import re
-from ocrd_utils import (
-    getLogger
-)
-from typing import Callable
-from ocrd.network.deployment_utils import CustomDockerClient
+from typing import Callable, Union
+from frozendict import frozendict
+from functools import lru_cache, wraps
 from paramiko import SSHClient
+
+from ocrd_utils import getLogger
+from ocrd.network.deployment_utils import CustomDockerClient
+
+from ocrd.network.rabbitmq_utils import RMQConsumer
 
 
 class ProcessingWorker:
     def __init__(self, processor_name: str, processor_arguments: dict,
-                 queue_address: str, database_address: str) -> None:
+                 rmq_host: str, rmq_port: int, rmq_vhost: str, db_url: str) -> None:
 
         self.log = getLogger(__name__)
+        # ocr-d processor instance to be started
         self.processor_name = processor_name
-        # Required arguments to run the OCR-D Processor
-        self.processor_arguments = processor_arguments  # processor.name is
-        # RabbitMQ Address - This contains at least the
-        # host name, port, and the virtual host
-        self.rmq_address = queue_address
-        self.mongodb_address = database_address
+        # other potential parameters to be used
+        self.processor_arguments = processor_arguments
 
-        # RMQConsumer object must be created here, reference: RabbitMQ Library (WebAPI Implementation)
-        # Based on the API calls the ProcessingWorker will receive messages from the running instance
-        # of the RabbitMQ Server (deployed by the Processing Broker) through the RMQConsumer object.
-        self.rmq_consumer = self.configure_consumer(
-            config_file="",
-            callback_method=self.on_consumed_message
-        )
+        self.db_url = db_url
 
-    # TODO: change typehint for return if class is finally part of core(ocrd_network)
-    @staticmethod
-    def configure_consumer(config_file: str, callback_method: Callable) -> 'RMQConsumer':
-        rmq_consumer = 'RMQConsumer Object'
+        self.rmq_host = rmq_host
+        self.rmq_port = rmq_port
+        self.rmq_vhost = rmq_vhost
+
+        # These could also be made configurable,
+        # not relevant for the current state
+        self.rmq_username = "default-consumer"
+        self.rmq_password = "default-consumer"
+
+        self.rmq_consumer = self.connect_consumer()
+
+    # Method adopted from Triet's implementation
+    # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
+    def freeze_args(func: Callable) -> Callable:
         """
-        Here is a template implementation to be adopted later
-
-        rmq_consumer = RMQConsumer(host='localhost', port=5672, vhost='/')
-        # The credentials are configured inside definitions.json
-        # when building the RabbitMQ docker image
-        rmq_consumer.authenticate_and_connect(
-            username='default-consumer',
-            password='default-consumer'
-        )
-
-        #Note: The queue name here is the processor.name by definition
-        rmq_consumer.configure_consuming(queue_name='queue_name', callback_method=funcPtr)
-
+        Transform mutable dictionary into immutable. Useful to be compatible with cache
+        Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
         """
+
+        @wraps(func)
+        def wrapped(*args, **kwargs) -> Callable:
+            args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
+            kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+            return func(*args, **kwargs)
+
+        return wrapped
+
+    # Method adopted from Triet's implementation
+    # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
+    @freeze_args
+    @lru_cache(maxsize=32)
+    def get_processor(parameter: dict, processor_class: type) -> Union[type, None]:
+        """
+        Call this function to get back an instance of a processor. The results are cached based on the parameters.
+        Args:
+            parameter (dict): a dictionary of parameters.
+            processor_class: the concrete `:py:class:~ocrd.Processor` class.
+        Returns:
+            When the concrete class of the processor is unknown, `None` is returned. Otherwise, an instance of the
+            `:py:class:~ocrd.Processor` is returned.
+        """
+        if processor_class:
+            dict_params = dict(parameter) if parameter else None
+            return processor_class(workspace=None, parameter=dict_params)
+        return None
+
+    def connect_consumer(self) -> RMQConsumer:
+        rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
+        rmq_consumer.authenticate_and_connect(username=self.rmq_username, password=self.rmq_password)
         return rmq_consumer
 
     # Define what happens every time a message is consumed from the queue
     def on_consumed_message(self) -> None:
+        # TODO: Get the OCR-D processor instance back from the memory cache
+        # self.get_processor(...)
         pass
 
-    # A separate thread must be created here to listen
-    # to the queue since this is a blocking action
     def start_consuming(self) -> None:
-        # Blocks here and listens for messages coming from the specified queue
-        # self.rmq_consumer.start_consuming()
-        pass
+        if self.rmq_consumer:
+            self.rmq_consumer.configure_consuming(
+                queue_name=self.processor_name,
+                callback_method=self.on_consumed_message
+            )
+            # TODO: A separate thread must be created here to listen
+            #  to the queue since this is a blocking action
+            self.rmq_consumer.start_consuming()
+        else:
+            raise Exception("The RMQ Consumer is not connected/configured properly")
+
+
 
     # TODO: queue_address and _database_address are prefixed with underscore because they are not
     # needed yet (otherwise flak8 complains). But they will be needed once the real
