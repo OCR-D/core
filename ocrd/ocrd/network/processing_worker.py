@@ -39,7 +39,7 @@ class ProcessingWorker:
         self.rmq_username = "default-consumer"
         self.rmq_password = "default-consumer"
 
-        self.rmq_consumer = self.connect_consumer()
+        # self.rmq_consumer = self.connect_consumer()
 
     # Method adopted from Triet's implementation
     # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260

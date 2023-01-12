@@ -53,4 +53,4 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
     #  TODO: Load the OCR-D processor in the memory cache
 
     # Start consuming with the configuration settings above
-    processing_worker.start_consuming()
+    # processing_worker.start_consuming()

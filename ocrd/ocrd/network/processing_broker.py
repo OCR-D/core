@@ -36,8 +36,8 @@ class ProcessingBroker(FastAPI):
         self.rmq_username = "default-publisher"
         self.rmq_password = "default-publisher"
 
-        self.rmq_publisher = self.connect_publisher()
-        self.rmq_publisher.enable_delivery_confirmations()  # Enable acks
+        # self.rmq_publisher = self.connect_publisher()
+        # self.rmq_publisher.enable_delivery_confirmations()  # Enable acks
 
         self.router.add_api_route(
             path='/stop',
