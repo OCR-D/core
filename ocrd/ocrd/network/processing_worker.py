@@ -10,7 +10,6 @@ from frozendict import frozendict
 from functools import lru_cache, wraps
 from paramiko import SSHClient
 from re import search as re_search
-from typing import Callable, Union
 
 from ocrd_utils import getLogger
 
@@ -41,41 +40,6 @@ class ProcessingWorker:
 
         # self.rmq_consumer = self.connect_consumer()
 
-    # Method adopted from Triet's implementation
-    # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
-    def freeze_args(func):
-        """
-        Transform mutable dictionary into immutable. Useful to be compatible with cache
-        Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
-        """
-
-        @wraps(func)
-        def wrapped(*args, **kwargs) -> Callable:
-            args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
-            kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
-            return func(*args, **kwargs)
-
-        return wrapped
-
-    # Method adopted from Triet's implementation
-    # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
-    @freeze_args
-    @lru_cache(maxsize=32)
-    def get_processor(parameter: dict, processor_class=None):
-        """
-        Call this function to get back an instance of a processor. The results are cached based on the parameters.
-        Args:
-            parameter (dict): a dictionary of parameters.
-            processor_class: the concrete `:py:class:~ocrd.Processor` class.
-        Returns:
-            When the concrete class of the processor is unknown, `None` is returned. Otherwise, an instance of the
-            `:py:class:~ocrd.Processor` is returned.
-        """
-        if processor_class:
-            dict_params = dict(parameter) if parameter else None
-            return processor_class(workspace=None, parameter=dict_params)
-        return None
-
     def connect_consumer(self) -> RMQConsumer:
         rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         rmq_consumer.authenticate_and_connect(username=self.rmq_username, password=self.rmq_password)
@@ -84,7 +48,7 @@ class ProcessingWorker:
     # Define what happens every time a message is consumed from the queue
     def on_consumed_message(self) -> None:
         # TODO: Start the OCR-D processor or get from the cache
-        # self.get_processor(...)
+        # get_processor(...)
         pass
 
     def start_consuming(self) -> None:
@@ -98,8 +62,6 @@ class ProcessingWorker:
             self.rmq_consumer.start_consuming()
         else:
             raise Exception("The RMQ Consumer is not connected/configured properly")
-
-
 
     # TODO: queue_address and _database_address are prefixed with underscore because they are not
     # needed yet (otherwise flak8 complains). But they will be needed once the real
@@ -141,3 +103,39 @@ class ProcessingWorker:
         res = client.containers.run('debian', 'sleep 31', detach=True, remove=True)
         assert res and res.id, 'run processor in docker-container failed'
         return res.id
+
+
+# Method adopted from Triet's implementation
+# https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
+def freeze_args(func):
+    """
+    Transform mutable dictionary into immutable. Useful to be compatible with cache
+    Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
+    """
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
+        kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+        return func(*args, **kwargs)
+    return wrapped
+
+
+# Method adopted from Triet's implementation
+# https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
+@freeze_args
+@lru_cache(maxsize=32)
+def get_processor(parameter: dict, processor_class=None):
+    """
+    Call this function to get back an instance of a processor. The results are cached based on the parameters.
+    Args:
+        parameter (dict): a dictionary of parameters.
+        processor_class: the concrete `:py:class:~ocrd.Processor` class.
+    Returns:
+        When the concrete class of the processor is unknown, `None` is returned. Otherwise, an instance of the
+        `:py:class:~ocrd.Processor` is returned.
+    """
+    if processor_class:
+        dict_params = dict(parameter) if parameter else None
+        return processor_class(workspace=None, parameter=dict_params)
+    return None
