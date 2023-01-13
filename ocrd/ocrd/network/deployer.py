@@ -109,17 +109,17 @@ class Deployer:
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
                 assert host.ssh_client  # to satisfy mypy
-                pid = ProcessingWorker.start_native_processor(
+                pid = self.start_native_processor(
                     client=host.ssh_client,
-                    name=processor.name,
+                    processor_name=processor.name,
                     _queue_address=rabbitmq_server,
                     _database_address=mongodb)
                 processor.add_started_pid(pid)
             elif processor.deploy_type == DeployType.docker:
                 assert host.docker_client  # to satisfy mypy
-                pid = ProcessingWorker.start_docker_processor(
+                pid = self.start_docker_processor(
                     client=host.docker_client,
-                    name=processor.name,
+                    processor_name=processor.name,
                     _queue_address=rabbitmq_server,
                     _database_address=mongodb)
                 processor.add_started_pid(pid)
