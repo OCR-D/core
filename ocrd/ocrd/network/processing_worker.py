@@ -10,22 +10,27 @@ from frozendict import frozendict
 from functools import lru_cache, wraps
 
 from ocrd_utils import getLogger
-
 from ocrd.network.rabbitmq_utils import RMQConsumer
 
 
 class ProcessingWorker:
-    def __init__(self, processor_name: str, processor_arguments: dict,
+    def __init__(self, processor_name: str, processor_arguments: dict, processor_class, ocrd_tool: dict,
                  rmq_host: str, rmq_port: int, rmq_vhost: str, db_url: str) -> None:
-
         self.log = getLogger(__name__)
         # ocr-d processor instance to be started
         self.processor_name = processor_name
         # other potential parameters to be used
         self.processor_arguments = processor_arguments
+        # ocr-d processor object to be instantiated
+        self.processor_class = processor_class
+
+        # Instantiation of the self.processor_class
+        # Instantiated inside `on_consumed_message`
+        self.processor_instance = None
+
+        self.ocrd_tool = ocrd_tool
 
         self.db_url = db_url
-
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
@@ -44,9 +49,16 @@ class ProcessingWorker:
 
     # Define what happens every time a message is consumed from the queue
     def on_consumed_message(self) -> None:
-        # TODO: Start the OCR-D processor or get from the cache
-        # get_processor(...)
-        pass
+        # 1. Load the OCR-D processor in the memory cache on first message consumed
+        # 2. Load the OCR-D processor from the memory cache on every other message consumed
+        self.processor_instance = get_processor(self.processor_arguments, self.processor_class)
+        if self.processor_instance:
+            self.log.debug(f"Loading processor instance of `{self.processor_name}` succeeded.")
+        else:
+            self.log.debug(f"Loading processor instance of `{self.processor_name}` failed.")
+
+        # TODO: Do the processing of the current message
+        #  self.processor_instance.X(...)
 
     def start_consuming(self) -> None:
         if self.rmq_consumer:

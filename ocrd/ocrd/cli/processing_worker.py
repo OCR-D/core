@@ -6,7 +6,11 @@ OCR-D CLI: start the processing worker
     :nested: full
 """
 import click
-from ocrd_utils import initLogging
+from subprocess import run, PIPE
+from ocrd_utils import (
+    initLogging,
+    parse_json_string_with_comments
+)
 from ocrd.network import ProcessingWorker
 
 
@@ -24,9 +28,6 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
     """
     initLogging()
     try:
-        # TODO: Check here if the provided `processor_name` exists
-        processor_name = "ocrd-dummy"
-
         # TODO: Parse the actual RabbitMQ Server address - `queue`
         rmq_host = "localhost"
         rmq_port = 5672
@@ -41,9 +42,16 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
     except ValueError:
         raise click.UsageError('Wrong/Bad arguments format provided. Check the help sections')
 
+    ocrd_tool = parse_json_string_with_comments(
+        run([processor_name, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True).stdout
+    )
+
     processing_worker = ProcessingWorker(
         processor_name=processor_name,
         processor_arguments={},
+        # TODO: Send the proper processor_class. How?
+        processor_class="",
+        ocrd_tool=ocrd_tool,
         rmq_host=rmq_host,
         rmq_port=rmq_port,
         rmq_vhost=rmq_vhost,
