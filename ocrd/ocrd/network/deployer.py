@@ -253,10 +253,10 @@ class Deployer:
     # needed yet (otherwise flak8 complains). But they will be needed once the real
     # processing_worker is called here. Then they should be renamed
     @staticmethod
-    def start_native_processor(client: SSHClient, name: str, _queue_address: str,
+    def start_native_processor(client: SSHClient, processor_name: str, _queue_address: str,
                                _database_address: str) -> str:
         log = getLogger(__name__)
-        log.debug(f'start native processor: {name}')
+        log.debug(f'start native processor: {processor_name}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         # TODO: add real command here to start processing server here
@@ -281,10 +281,10 @@ class Deployer:
     # needed yet (otherwise flak8 complains). But they will be needed once the real
     # processing_worker is called here. Then they should be renamed
     @staticmethod
-    def start_docker_processor(client: CustomDockerClient, name: str, _queue_address: str,
+    def start_docker_processor(client: CustomDockerClient, processor_name: str, _queue_address: str,
                                _database_address: str) -> str:
         log = getLogger(__name__)
-        log.debug(f'start docker processor: {name}')
+        log.debug(f'start docker processor: {processor_name}')
         # TODO: add real command here to start processing server here
         res = client.containers.run('debian', 'sleep 31', detach=True, remove=True)
         assert res and res.id, 'run processor in docker-container failed'
