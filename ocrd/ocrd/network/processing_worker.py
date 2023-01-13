@@ -43,7 +43,7 @@ class ProcessingWorker:
 
     # Method adopted from Triet's implementation
     # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
-    def freeze_args(func: Callable) -> Callable:
+    def freeze_args(func):
         """
         Transform mutable dictionary into immutable. Useful to be compatible with cache
         Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
@@ -61,7 +61,7 @@ class ProcessingWorker:
     # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
     @freeze_args
     @lru_cache(maxsize=32)
-    def get_processor(parameter: dict, processor_class: type) -> Union[type, None]:
+    def get_processor(parameter: dict, processor_class=None):
         """
         Call this function to get back an instance of a processor. The results are cached based on the parameters.
         Args:
@@ -83,7 +83,7 @@ class ProcessingWorker:
 
     # Define what happens every time a message is consumed from the queue
     def on_consumed_message(self) -> None:
-        # TODO: Get the OCR-D processor instance back from the memory cache
+        # TODO: Start the OCR-D processor or get from the cache
         # self.get_processor(...)
         pass
 
