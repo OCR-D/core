@@ -112,7 +112,7 @@ class OcrdResourceManager():
                     for resdict in ocrd_tool.get('resources', ()):
                         if exec_path.name not in database:
                             database[exec_path.name] = []
-                        database[exec_path.name].append(resdict)
+                        database[exec_path.name].insert(0, resdict)
             database = self._dedup_database(database)
         found = False
         ret = []
