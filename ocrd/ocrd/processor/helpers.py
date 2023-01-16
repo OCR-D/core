@@ -3,8 +3,7 @@ Helper methods for running and documenting processors
 """
 from os import environ
 from time import perf_counter, process_time
-from functools import lru_cache, wraps
-from frozendict import frozendict
+from functools import lru_cache
 import json
 import inspect
 from subprocess import run, PIPE
@@ -12,7 +11,8 @@ from memory_profiler import memory_usage
 from sparklines import sparklines
 
 from click import wrap_text
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, freeze_args
+
 
 __all__ = [
     'generate_processor_help',
@@ -270,20 +270,6 @@ Default Wiring:
     ocrd_tool.get('input_file_grp', 'NONE'),
     ocrd_tool.get('output_file_grp', 'NONE')
 )
-
-
-# Taken from https://github.com/OCR-D/core/pull/884
-def freeze_args(func):
-    """
-    Transform mutable dictionary into immutable. Useful to be compatible with cache.
-    Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
-    """
-    @wraps(func)
-    def wrapped(*args, **kwargs):
-        args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
-        kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
-        return func(*args, **kwargs)
-    return wrapped
 
 
 # Taken from https://github.com/OCR-D/core/pull/884

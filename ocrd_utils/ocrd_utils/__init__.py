@@ -151,8 +151,10 @@ from .image import (
     xywh_from_polygon)
 
 from .introspect import (
+    freeze_args,
     set_json_key_value_overrides,
-    membername)
+    membername
+)
 
 from .logging import (
     disableLogging,
