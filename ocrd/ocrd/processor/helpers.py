@@ -3,6 +3,8 @@ Helper methods for running and documenting processors
 """
 from os import environ
 from time import perf_counter, process_time
+from functools import lru_cache, wraps
+from frozendict import frozendict
 import json
 import inspect
 from subprocess import run, PIPE
@@ -42,6 +44,7 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
+        cached_processor=False
 ): # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
@@ -73,14 +76,17 @@ def run_processor(
     )
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
-    processor = processorClass(
-        workspace,
-        ocrd_tool=ocrd_tool,
+
+    processor = get_processor(
+        processor_class=processorClass,
+        parameter=parameter,
+        workspace=workspace,
         page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
-        parameter=parameter
+        cached_processor=cached_processor
     )
+
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
@@ -263,3 +269,71 @@ Default Wiring:
     ocrd_tool.get('input_file_grp', 'NONE'),
     ocrd_tool.get('output_file_grp', 'NONE')
 )
+
+
+# Taken from https://github.com/OCR-D/core/pull/884
+def freeze_args(func):
+    """
+    Transform mutable dictionary into immutable. Useful to be compatible with cache.
+    Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
+    """
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
+        kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
+        return func(*args, **kwargs)
+    return wrapped
+
+
+# Taken from https://github.com/OCR-D/core/pull/884
+# TODO: Decide how much maxsize is optimal as a default
+@freeze_args
+@lru_cache(maxsize=32)
+def get_cached_processor(parameter: dict, processor_class=None):
+    """
+    Call this function to get back an instance of a processor.
+    The results are cached based on the parameters.
+    Args:
+        parameter (dict): a dictionary of parameters.
+        processor_class: the concrete `:py:class:~ocrd.Processor` class.
+    Returns:
+        When the concrete class of the processor is unknown, `None` is returned.
+        Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
+    """
+    if processor_class:
+        dict_params = dict(parameter) if parameter else None
+        return processor_class(workspace=None, parameter=dict_params)
+    return None
+
+
+def get_processor(
+        processor_class,
+        parameter: dict,
+        workspace=None,
+        ocrd_tool=None,
+        page_id=None,
+        input_file_grp=None,
+        output_file_grp=None,
+        cached_processor: bool = False,
+):
+    if processor_class:
+        if cached_processor:
+            cached_processor = get_cached_processor(
+                parameter=parameter,
+                processor_class=processor_class
+            )
+            cached_processor.workspace = workspace
+            cached_processor.page_id = page_id
+            cached_processor.input_file_grp = input_file_grp
+            cached_processor.output_file_grp = output_file_grp
+            return cached_processor
+        else:
+            return processor_class(
+                workspace,
+                ocrd_tool=ocrd_tool,
+                page_id=page_id,
+                input_file_grp=input_file_grp,
+                output_file_grp=output_file_grp,
+                parameter=parameter
+            )
+    raise ValueError("Processor class is not known")
