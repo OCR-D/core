@@ -81,6 +81,7 @@ def run_processor(
         processor_class=processorClass,
         parameter=parameter,
         workspace=workspace,
+        ocrd_tool=ocrd_tool,
         page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
