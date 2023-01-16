@@ -7,11 +7,15 @@ from functools import lru_cache
 import json
 import inspect
 from subprocess import run, PIPE
+from typing import List, Type
+
 from memory_profiler import memory_usage
 from sparklines import sparklines
 
 from click import wrap_text
-from ocrd_utils import getLogger, freeze_args
+from ocrd import Workspace
+from ocrd.processor import Processor
+from ocrd_utils import freeze_args, getLogger
 
 
 __all__ = [
@@ -19,6 +23,7 @@ __all__ = [
     'run_cli',
     'run_processor'
 ]
+
 
 def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
     if workspace is None:
@@ -78,6 +83,7 @@ def run_processor(
     log.debug("Running processor %s", processorClass)
 
     processor = get_processor(
+        # TODO: Warning: processorClass of type Object gets auto casted to Type[Processor]
         processor_class=processorClass,
         parameter=parameter,
         workspace=workspace,
@@ -276,7 +282,7 @@ Default Wiring:
 # TODO: Decide how much maxsize is optimal as a default
 @freeze_args
 @lru_cache(maxsize=32)
-def get_cached_processor(parameter: dict, processor_class=None):
+def get_cached_processor(parameter: dict, processor_class: Type[Processor]):
     """
     Call this function to get back an instance of a processor.
     The results are cached based on the parameters.
@@ -294,13 +300,13 @@ def get_cached_processor(parameter: dict, processor_class=None):
 
 
 def get_processor(
-        processor_class,
+        processor_class: Type[Processor],
         parameter: dict,
-        workspace=None,
-        ocrd_tool=None,
-        page_id=None,
-        input_file_grp=None,
-        output_file_grp=None,
+        workspace: Workspace = None,
+        ocrd_tool: dict = None,
+        page_id: str = None,
+        input_file_grp: List[str] = None,
+        output_file_grp: List[str] = None,
         cached_processor: bool = False,
 ):
     if processor_class:
@@ -314,13 +320,12 @@ def get_processor(
             cached_processor.input_file_grp = input_file_grp
             cached_processor.output_file_grp = output_file_grp
             return cached_processor
-        else:
-            return processor_class(
-                workspace,
-                ocrd_tool=ocrd_tool,
-                page_id=page_id,
-                input_file_grp=input_file_grp,
-                output_file_grp=output_file_grp,
-                parameter=parameter
-            )
+        return processor_class(
+            workspace=workspace,
+            ocrd_tool=ocrd_tool,
+            page_id=page_id,
+            input_file_grp=input_file_grp,
+            output_file_grp=output_file_grp,
+            parameter=parameter
+        )
     raise ValueError("Processor class is not known")
