@@ -13,7 +13,7 @@ from memory_profiler import memory_usage
 from sparklines import sparklines
 
 from click import wrap_text
-from ocrd import Workspace
+from ocrd.workspace import Workspace
 from ocrd.processor import Processor
 from ocrd_utils import freeze_args, getLogger
 
