@@ -5,6 +5,8 @@ __all__ = [
   "RMQConsumer",
   "RMQConnector",
   "RMQPublisher",
+  "OcrdProcessingMessage",
+  "OcrdResultMessage"
 ]
 
 from .consumer import RMQConsumer

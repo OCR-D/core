@@ -14,7 +14,7 @@ from typing import List
 from ocrd_utils import getLogger
 from ocrd.processor.helpers import run_cli, run_processor
 from ocrd.network.rabbitmq_utils import RMQConsumer
-from ocrd.network.ocrd_messages import OcrdProcessingMessage, OcrdResultMessage
+from ocrd.network.rabbitmq_utils import OcrdProcessingMessage, OcrdResultMessage
 
 
 class ProcessingWorker:
