@@ -14,7 +14,6 @@ from sparklines import sparklines
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd.processor.base import Processor
 from ocrd_utils import freeze_args, getLogger
 
 
@@ -282,7 +281,7 @@ Default Wiring:
 # TODO: Decide how much maxsize is optimal as a default
 @freeze_args
 @lru_cache(maxsize=32)
-def get_cached_processor(parameter: dict, processor_class: Type[Processor]):
+def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.
     The results are cached based on the parameters.
@@ -300,7 +299,7 @@ def get_cached_processor(parameter: dict, processor_class: Type[Processor]):
 
 
 def get_processor(
-        processor_class: Type[Processor],
+        processor_class,
         parameter: dict,
         workspace: Workspace = None,
         ocrd_tool: dict = None,
