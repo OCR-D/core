@@ -11,72 +11,137 @@ from functools import lru_cache, wraps
 import json
 from typing import List
 
+from ocrd import Resolver
 from ocrd_utils import getLogger
 from ocrd.processor.helpers import run_cli, run_processor
-from ocrd.network.rabbitmq_utils import RMQConsumer
-from ocrd.network.rabbitmq_utils import OcrdProcessingMessage, OcrdResultMessage
+from ocrd.network.helpers import (
+    verify_and_build_database_url,
+    verify_and_parse_rabbitmq_addr
+)
+from ocrd.network.rabbitmq_utils import (
+    OcrdProcessingMessage,
+    OcrdResultMessage,
+    RMQConsumer
+)
 
 
 class ProcessingWorker:
-    def __init__(self, processor_name: str, processor_arguments: dict, ocrd_tool: dict,
-                 rmq_host: str, rmq_port: int, rmq_vhost: str, db_url: str) -> None:
+    def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
         self.log = getLogger(__name__)
-        # ocr-d processor instance to be started
-        self.processor_name = processor_name
 
-        # other potential parameters to be used
-        self.processor_arguments = processor_arguments
-
-        # Instantiation of the self.processor_class
-        # Instantiated inside `on_consumed_message`
-        self.processor_instance = None
+        try:
+            self.db_url = verify_and_build_database_url(mongodb_addr, database_prefix="mongodb://")
+            self.log.debug(f"MongoDB URL: {self.db_url}")
+            self.rmq_host, self.rmq_port, self.rmq_vhost = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
+            self.log.debug(f"RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}/{self.rmq_vhost}")
+        except ValueError as e:
+            raise ValueError(e)
 
         self.ocrd_tool = ocrd_tool
 
-        self.db_url = db_url
-        self.rmq_host = rmq_host
-        self.rmq_port = rmq_port
-        self.rmq_vhost = rmq_vhost
+        # The str name of the OCR-D processor instance to be started
+        self.processor_name = processor_name
 
-        # These could also be made configurable,
-        # not relevant for the current state
-        self.rmq_username = "default-consumer"
-        self.rmq_password = "default-consumer"
+        # The processor class to be used to instantiate the processor
+        # Think of this as a func pointer to the constructor of the respective OCR-D processor
+        self.processor_class = processor_class
 
-        # self.rmq_consumer = self.connect_consumer()
+        # Gets assigned when `connect_consumer` is called on the working object
+        self.rmq_consumer = None
 
-    def connect_consumer(self) -> RMQConsumer:
-        rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
-        rmq_consumer.authenticate_and_connect(username=self.rmq_username, password=self.rmq_password)
-        return rmq_consumer
+    def connect_consumer(self, username="default-consumer", password="default-consumer"):
+        self.log.debug(f"Connecting to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+        self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
+        self.rmq_consumer.authenticate_and_connect(username=username, password=password)
+        self.log.debug(f"Successfully connected.")
 
     # Define what happens every time a message is consumed from the queue
     def on_consumed_message(self) -> None:
-        # 1. Load the OCR-D processor in the memory cache on first message consumed
-        # 2. Load the OCR-D processor from the memory cache on every other message consumed
-        self.processor_instance = get_processor(self.processor_arguments, self.processor_class)
-        if self.processor_instance:
-            self.log.debug(f"Loading processor instance of `{self.processor_name}` succeeded.")
-        else:
-            self.log.debug(f"Loading processor instance of `{self.processor_name}` failed.")
-
-        # TODO: Do the processing of the current message
-        #  self.processor_instance.X(...)
+        # TODO: Receive the actual consumed message and pass it as a parameter to `process_message`
+        self.process_message()
 
     def start_consuming(self) -> None:
         if self.rmq_consumer:
+            self.log.debug(f"Configuring consuming from queue: {self.processor_name}")
             self.rmq_consumer.configure_consuming(
                 queue_name=self.processor_name,
                 callback_method=self.on_consumed_message
             )
-            # TODO: A separate thread must be created here to listen
-            #  to the queue since this is a blocking action
+            self.log.debug(f"Starting consuming from queue: {self.processor_name}")
+            # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
         else:
             raise Exception("The RMQ Consumer is not connected/configured properly")
 
-    def process_message(self, ocrd_message: OcrdProcessingMessage):
-        pass
+    def process_message(self, ocrd_message: OcrdProcessingMessage = None):
+        # TODO: Extract the required data fields from the received OcrdProcessingMessage
+
+        # This can be path if invoking `run_processor`
+        # but must be ocrd.Workspace if invoking `run_cli`.
+        workspace_path = "/home/mm/Desktop/ws_example/mets.xml"
+
+        page_id = "PHYS_0001"
+        input_file_grps = ["DEFAULT"]
+        output_file_grps = ["OCR-D-BIN"]
+        parameter = {}
+
+        # Build the workspace from the workspace_path
+        workspace = Resolver().workspace_from_url(workspace_path)
+
+        # TODO: Currently, no caching is performed.
+        if self.processor_class:
+            self.log.debug(f"Invoking the pythonic processor: {self.processor_name}")
+            self.log.debug(f"Invoking the processor_class: {self.processor_class}")
+            self.run_processor_from_worker(
+                processor_class=self.processor_class,
+                workspace=workspace,
+                page_id=page_id,
+                input_file_grps=input_file_grps,
+                output_file_grps=output_file_grps,
+                parameter=parameter
+            )
+        else:
+            self.log.debug(f"Invoking the cli: {self.processor_name}")
+            self.run_cli_from_worker(
+                executable=self.processor_name,
+                workspace=workspace,
+                page_id=page_id,
+                input_file_grps=input_file_grps,
+                output_file_grps=output_file_grps,
+                parameter=parameter
+            )
+
+    def run_processor_from_worker(
+            self,
+            processor_class,
+            workspace,
+            page_id: str,
+            input_file_grps: List[str],
+            output_file_grps: List[str],
+            parameter: dict,
+    ):
+        input_file_grps_str = ','.join(input_file_grps)
+        output_file_grps_str = ','.join(output_file_grps)
+
+        success = True
+        try:
+            # TODO: Use the cached_processor flag here once #972 is merged to core
+            run_processor(
+                processorClass=processor_class,
+                workspace=workspace,
+                page_id=page_id,
+                parameter=parameter,
+                input_file_grp=input_file_grps_str,
+                output_file_grp=output_file_grps_str
+            )
+        except Exception as e:
+            success = False
+            self.log.exception(e)
+
+        if not success:
+            self.log.error(f'{processor_class} failed with an exception.')
+        else:
+            self.log.debug(f'{processor_class} exited with success.')
 
     def run_cli_from_worker(
             self,
@@ -104,37 +169,6 @@ class ProcessingWorker:
             self.log.error(f'{executable} exited with non-zero return value {return_code}.')
         else:
             self.log.debug(f'{executable} exited with success.')
-
-    def run_processor_from_worker(
-            self,
-            processor_class,
-            workspace,
-            page_id: str,
-            parameter: dict,
-            input_file_grps: List[str],
-            output_file_grps: List[str]
-    ):
-        input_file_grps_str = ','.join(input_file_grps)
-        output_file_grps_str = ','.join(output_file_grps)
-
-        success = True
-        try:
-            run_processor(
-                processorClass=processor_class,
-                workspace=workspace,
-                page_id=page_id,
-                parameter=parameter,
-                input_file_grp=input_file_grps_str,
-                output_file_grp=output_file_grps_str
-            )
-        except Exception as e:
-            success = False
-            self.log.exception(e)
-
-        if not success:
-            self.log.error(f'{processor_class} failed with an exception.')
-        else:
-            self.log.debug(f'{processor_class} exited with success.')
 
 
 # Method adopted from Triet's implementation

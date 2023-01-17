@@ -92,7 +92,7 @@ class Deployer:
         assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
                                    '{host.__dict__}. Processor: {processor.__dict__}'
 
-        # Create the specific RabbitMQ queue here based on the OCR-D processor name (processor.name)
+        # TODO: Create the specific RabbitMQ queue here based on the OCR-D processor name (processor.name)
         # self.rmq_publisher.create_queue(queue_name=processor.name)
 
         if processor.deploy_type == DeployType.native:
