@@ -1,4 +1,4 @@
-from click import option
+from click import option, STRING
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
 
@@ -26,6 +26,10 @@ def ocrd_cli_options(f):
         option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         option('-g', '--page-id', help="ID(s) of the pages to process"),
         option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
+        option('--queue', help="The RabbitMQ server address in format: {host}:{port}/{vhost}",
+               is_flag=True, default="localhost:5672/", type=STRING),
+        option('--database', help="The MongoDB address in format: {host}:{port}. `mongodb://` prefix is auto appended.",
+               is_flag=True, default="localhost:27018", type=STRING),
         option('-C', '--show-resource', help='Dump the content of processor resource RESNAME', metavar='RESNAME'),
         option('-L', '--list-resources', is_flag=True, default=False, help='List names of processor resources'),
         parameter_option,

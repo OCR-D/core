@@ -1,6 +1,8 @@
 from os.path import isfile
 from os import environ
 import sys
+from contextlib import redirect_stdout
+from io import StringIO
 
 import click
 
@@ -10,8 +12,10 @@ from ocrd_utils import (
     set_json_key_value_overrides,
 )
 
-from ocrd_utils import getLogger, initLogging
+from ocrd_utils import getLogger, initLogging, parse_json_string_with_comments
 from ocrd_validators import WorkspaceValidator
+
+from ocrd.network import ProcessingWorker
 
 from ..resolver import Resolver
 from ..processor.base import run_processor
@@ -35,6 +39,8 @@ def ocrd_cli_wrap_processor(
     overwrite=False,
     show_resource=None,
     list_resources=False,
+    queue=None,
+    database=None,
     **kwargs
 ):
     if not sys.argv[1:]:
@@ -51,6 +57,35 @@ def ocrd_cli_wrap_processor(
             list_resources=list_resources
         )
         sys.exit()
+    # If either of these two is provided but not both
+    if bool(queue) != bool(database):
+        raise Exception("Both queue and database addresses must be provided - not just either of them.")
+    # If both of these are provided - start the processing worker instead of the processor - processorClass
+    if queue and database:
+        initLogging()
+
+        # Get the ocrd_tool dictionary
+        f_out = StringIO()
+        with redirect_stdout(f_out):
+            processorClass(workspace=None, dump_json=True)
+        # TODO: Verify this. There is `ocrd_tool` parameter passed as an argument.
+        #  The following line overwrites the passed parameter.
+        ocrd_tool = parse_json_string_with_comments(f_out.getvalue())
+
+        try:
+            processing_worker = ProcessingWorker(
+                rabbitmq_addr=queue,
+                mongodb_addr=database,
+                processor_name=ocrd_tool['executable'],
+                ocrd_tool=ocrd_tool,
+                processor_class=processorClass,
+            )
+            # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
+            processing_worker.connect_consumer()
+            # Start consuming from the queue with name `processor_name`
+            processing_worker.start_consuming()
+        except Exception as e:
+            raise Exception(f"Processing worker has failed with error: {e}")
     else:
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
