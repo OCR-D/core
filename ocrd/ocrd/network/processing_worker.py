@@ -33,7 +33,7 @@ class ProcessingWorker:
             self.db_url = verify_and_build_database_url(mongodb_addr, database_prefix="mongodb://")
             self.log.debug(f"MongoDB URL: {self.db_url}")
             self.rmq_host, self.rmq_port, self.rmq_vhost = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
-            self.log.debug(f"RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}/{self.rmq_vhost}")
+            self.log.debug(f"RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
         except ValueError as e:
             raise ValueError(e)
 
