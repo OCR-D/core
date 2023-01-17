@@ -56,9 +56,15 @@ class ProcessingWorker:
         self.log.debug(f"Successfully connected.")
 
     # Define what happens every time a message is consumed from the queue
-    def on_consumed_message(self) -> None:
-        # TODO: Receive the actual consumed message and pass it as a parameter to `process_message`
-        self.process_message()
+    def on_consumed_message(self, channel, method, properties, body) -> None:
+        self.log.debug(f"Received from ch: {channel}, method: {method}, properties: {properties}, body: {body}")
+
+        # TODO:
+        # 1. Parse here the received message body to OcrdProcessingMessage
+        # processing_message = OcrdProcessingMessage(...)
+        # 2. Send the ocrd_message as a parameter to self.process_message
+        # self.process_message(ocrd_message=processing_message)
+        pass
 
     def start_consuming(self) -> None:
         if self.rmq_consumer:
@@ -73,7 +79,7 @@ class ProcessingWorker:
         else:
             raise Exception("The RMQ Consumer is not connected/configured properly")
 
-    def process_message(self, ocrd_message: OcrdProcessingMessage = None):
+    def process_message(self, processing_message: OcrdProcessingMessage = None):
         # TODO: Extract the required data fields from the received OcrdProcessingMessage
 
         # This can be path if invoking `run_processor`
