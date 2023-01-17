@@ -14,7 +14,6 @@ from sparklines import sparklines
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd.processor import Processor
 from ocrd_utils import freeze_args, getLogger
 
 
@@ -300,7 +299,7 @@ def get_cached_processor(parameter: dict, processor_class: Type[Processor]):
 
 
 def get_processor(
-        processor_class: Type[Processor],
+        processor_class,
         parameter: dict,
         workspace: Workspace = None,
         ocrd_tool: dict = None,
