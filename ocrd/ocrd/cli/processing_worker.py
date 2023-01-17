@@ -48,9 +48,6 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
 
     processing_worker = ProcessingWorker(
         processor_name=processor_name,
-        processor_arguments={},
-        # TODO: Send the proper processor_class. How?
-        processor_class="",
         ocrd_tool=ocrd_tool,
         rmq_host=rmq_host,
         rmq_port=rmq_port,

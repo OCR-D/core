@@ -8,21 +8,24 @@
 
 from frozendict import frozendict
 from functools import lru_cache, wraps
+import json
+from typing import List
 
 from ocrd_utils import getLogger
+from ocrd.processor.helpers import run_cli, run_processor
 from ocrd.network.rabbitmq_utils import RMQConsumer
+from ocrd.network.ocrd_messages import OcrdProcessingMessage, OcrdResultMessage
 
 
 class ProcessingWorker:
-    def __init__(self, processor_name: str, processor_arguments: dict, processor_class, ocrd_tool: dict,
+    def __init__(self, processor_name: str, processor_arguments: dict, ocrd_tool: dict,
                  rmq_host: str, rmq_port: int, rmq_vhost: str, db_url: str) -> None:
         self.log = getLogger(__name__)
         # ocr-d processor instance to be started
         self.processor_name = processor_name
+
         # other potential parameters to be used
         self.processor_arguments = processor_arguments
-        # ocr-d processor object to be instantiated
-        self.processor_class = processor_class
 
         # Instantiation of the self.processor_class
         # Instantiated inside `on_consumed_message`
@@ -71,6 +74,67 @@ class ProcessingWorker:
             self.rmq_consumer.start_consuming()
         else:
             raise Exception("The RMQ Consumer is not connected/configured properly")
+
+    def process_message(self, ocrd_message: OcrdProcessingMessage):
+        pass
+
+    def run_cli_from_worker(
+            self,
+            executable: str,
+            workspace,
+            page_id: str,
+            input_file_grps: List[str],
+            output_file_grps: List[str],
+            parameter: dict
+    ):
+        input_file_grps_str = ','.join(input_file_grps)
+        output_file_grps_str = ','.join(output_file_grps)
+
+        return_code = run_cli(
+            executable=executable,
+            workspace=workspace,
+            page_id=page_id,
+            input_file_grp=input_file_grps_str,
+            output_file_grp=output_file_grps_str,
+            parameter=json.dumps(parameter),
+            mets_url=workspace.mets_target
+        )
+
+        if return_code != 0:
+            self.log.error(f'{executable} exited with non-zero return value {return_code}.')
+        else:
+            self.log.debug(f'{executable} exited with success.')
+
+    def run_processor_from_worker(
+            self,
+            processor_class,
+            workspace,
+            page_id: str,
+            parameter: dict,
+            input_file_grps: List[str],
+            output_file_grps: List[str]
+    ):
+        input_file_grps_str = ','.join(input_file_grps)
+        output_file_grps_str = ','.join(output_file_grps)
+
+        success = True
+        try:
+            run_processor(
+                processorClass=processor_class,
+                workspace=workspace,
+                page_id=page_id,
+                parameter=parameter,
+                input_file_grp=input_file_grps_str,
+                output_file_grp=output_file_grps_str
+            )
+        except Exception as e:
+            success = False
+            self.log.exception(e)
+
+        if not success:
+            self.log.error(f'{processor_class} failed with an exception.')
+        else:
+            self.log.debug(f'{processor_class} exited with success.')
 
 
 # Method adopted from Triet's implementation
