@@ -23,5 +23,6 @@ def processing_broker_cli(path_to_config, address: str):
         port_int = int(port)
     except ValueError:
         raise click.UsageError('The --adddress option must have the format IP:PORT')
-    app = ProcessingBroker(path_to_config, host, port_int)
-    app.start()
+    processing_broker = ProcessingBroker(path_to_config, host, port_int)
+    # Start the Processing Broker aka the Processing Server (the new name)
+    processing_broker.start()
