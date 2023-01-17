@@ -286,6 +286,6 @@ class Deployer:
         log = getLogger(__name__)
         log.debug(f'start docker processor: {processor_name}')
         # TODO: add real command here to start processing server here
-        res = client.containers.run('debian', 'sleep 31', detach=True, remove=True)
+        res = client.containers.run('debian', 'sleep 500', detach=True, remove=True)
         assert res and res.id, 'run processor in docker-container failed'
         return res.id
