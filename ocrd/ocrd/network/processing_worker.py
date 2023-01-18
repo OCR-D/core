@@ -31,9 +31,9 @@ class ProcessingWorker:
 
         try:
             self.db_url = verify_and_build_database_url(mongodb_addr, database_prefix="mongodb://")
-            self.log.debug(f"MongoDB URL: {self.db_url}")
+            self.log.debug(f"Verified MongoDB URL: {self.db_url}")
             self.rmq_host, self.rmq_port, self.rmq_vhost = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
-            self.log.debug(f"RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+            self.log.debug(f"Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
         except ValueError as e:
             raise ValueError(e)
 
@@ -50,10 +50,12 @@ class ProcessingWorker:
         self.rmq_consumer = None
 
     def connect_consumer(self, username="default-consumer", password="default-consumer"):
-        self.log.debug(f"Connecting to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+        self.log.debug(f"Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
         self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
+        # TODO: Remove this information before the release
+        self.log.debug(f"RMQConsumer authenticates with username: {username}, password: {password}")
         self.rmq_consumer.authenticate_and_connect(username=username, password=password)
-        self.log.debug(f"Successfully connected.")
+        self.log.debug(f"Successfully connected RMQConsumer.")
 
     # Define what happens every time a message is consumed from the queue
     def on_consumed_message(self, channel, method, properties, body) -> None:
@@ -77,7 +79,7 @@ class ProcessingWorker:
             # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
         else:
-            raise Exception("The RMQ Consumer is not connected/configured properly")
+            raise Exception("The RMQConsumer is not connected/configured properly")
 
     def process_message(self, processing_message: OcrdProcessingMessage = None):
         # TODO: Extract the required data fields from the received OcrdProcessingMessage

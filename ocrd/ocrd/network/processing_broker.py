@@ -90,15 +90,11 @@ class ProcessingBroker(FastAPI):
         # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
         self.connect_publisher()
 
-        # Create the message queues based on the occurrence of `processor.name` in the config file
-        for host in self.hosts_config:
-            for processor in host.processors:
-                # The existence/validity of the processor.name is not tested.
-                # Even if an ocr-d processor does not exist, the queue is created
-                self.log.debug(f"Creating a message queue with id: {processor.name}")
-                self.rmq_publisher.create_queue(queue_name=processor.name)
+        self.log.debug(f"Starting to create message queues on RabbitMQ instance url: {rabbitmq_url}")
+        self.create_message_queues()
 
         # Deploy processing hosts where processing workers are running on
+        # Note: A deployed processing worker starts listening to a message queue with id processor.name
         self.deployer.deploy_hosts(self.hosts_config, rabbitmq_url, mongodb_url)
 
         self.log.debug(f'Starting uvicorn: {self.host}:{self.port}')
@@ -126,6 +122,8 @@ class ProcessingBroker(FastAPI):
         # visible when testing
         try:
             await self.stop_deployed_agents()
+        # TODO: This except block is trapping the user if nothing is following after the keyword.
+        #  Is that the expected behaviour here?
         except:
             self.log.debug('error stopping processing servers: ', exc_info=True)
             raise
@@ -134,12 +132,24 @@ class ProcessingBroker(FastAPI):
         self.deployer.kill_all()
 
     def connect_publisher(self, username="default-publisher", password="default-publisher", enable_acks=True):
-        self.log.debug(f"Connecting to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+        self.log.debug(f"Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
+        # TODO: Remove this information before the release
+        self.log.debug(f"RMQPublisher authenticates with username: {username}, password: {password}")
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
-        self.log.debug(f"Successfully connected.")
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
             self.log.debug(f"Delivery confirmations are enabled")
         else:
             self.log.debug(f"Delivery confirmations are disabled")
+        self.log.debug(f"Successfully connected RMQPublisher.")
+
+    def create_message_queues(self):
+        # Create the message queues based on the occurrence of `processor.name` in the config file
+        for host in self.hosts_config:
+            for processor in host.processors:
+                # The existence/validity of the processor.name is not tested.
+                # Even if an ocr-d processor does not exist, the queue is created
+                self.log.debug(f"Creating a message queue with id: {processor.name}")
+                # TODO: We may want to track here if there are already queues with the same name
+                self.rmq_publisher.create_queue(queue_name=processor.name)

@@ -42,10 +42,19 @@ class Deployer:
             hosts_config: Processing Hosts related configurations
         """
         self.log = getLogger(__name__)
-        self.log.debug('Deployer-init()')
+        self.log.debug('The Deployer of the ProcessingServer was invoked')
         self.mongo_data = mongo_config
         self.mq_data = queue_config
         self.hosts = hosts_config
+
+        # TODO: We should have a data structure here to manage the connections and PIDs:
+        #  - RabbitMQ - (host address, pid on that host)
+        #  - MongoDB - (host address, pid on that host)
+        #  - Processing Hosts - (host address)
+        #    - Processing Workers - (pid on that host address)
+        #  The PIDs are stored for future usage - i.e. for killing them forcefully/gracefully.
+        #  Currently, the connections (ssh_client, docker_client) and
+        #  the PIDs are stored inside the config data classes
 
     # Avoid using this method
     # TODO: Should be removed
@@ -58,7 +67,6 @@ class Deployer:
         self.deploy_hosts(self.hosts, rabbitmq_url, mongodb_url)
 
     def kill_all(self) -> None:
-        self.log.debug("Killing all deployed agents")
         # The order of killing is important to optimize graceful shutdown in the future
         # If RabbitMQ server is killed before killing Processing Workers, that may have
         # bad outcome and leave Processing Workers in an unpredictable state
@@ -67,7 +75,6 @@ class Deployer:
         # They may still want to update something in the db before closing
         # They may still want to nack the currently processed messages back to the RabbitMQ Server
         self.kill_hosts()
-        self.log.debug("Killed deployed agents")
 
         # Second kill the MongoDB
         self.kill_mongodb()
@@ -76,16 +83,20 @@ class Deployer:
         self.kill_rabbitmq()
 
     def deploy_hosts(self, hosts: List[HostConfig], rabbitmq_url: str, mongodb_url: str) -> None:
-        self.log.debug("Deploying hosts")
+        self.log.debug("Starting to deploy hosts")
         for host in hosts:
+            self.log.debug(f"Deploying processing workers on host: {host.address}")
             for processor in host.processors:
                 self._deploy_processing_worker(processor, host, rabbitmq_url, mongodb_url)
+            # TODO: These connections, just like the PIDs, should not be kept in the config data classes
+            #  The connections are correctly closed on host level, but created on processing worker level?
             if host.ssh_client:
                 host.ssh_client.close()
             if host.docker_client:
                 host.docker_client.close()
-        self.log.debug("Hosts deployed")
 
+    # TODO: Creating connections if missing should probably occur when deploying hosts not when
+    #  deploying processing workers. The deploy_type checks and opening connections creates duplicate code.
     def _deploy_processing_worker(self, processor: ProcessorConfig, host: HostConfig,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
 
@@ -94,6 +105,7 @@ class Deployer:
         assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
                                    '{host.__dict__}. Processor: {processor.__dict__}'
 
+        # TODO: The check for available ssh or docker connections should probably happen inside `deploy_hosts`
         if processor.deploy_type == DeployType.native:
             if not host.ssh_client:
                 host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
@@ -102,7 +114,7 @@ class Deployer:
                 host.docker_client = create_docker_client(host.address, host.username, host.password, host.keypath)
         else:
             # Error case, should never enter here. Handle error cases here (if needed)
-            self.log.error(f"Deploy type of {processor.name} is neither of the allowed types")
+            self.log.error(f"Failed to deploy: {processor.name}. The deploy type is unknown.")
             pass
 
         for _ in range(processor.count):
@@ -123,16 +135,24 @@ class Deployer:
                     _database_url=mongodb_url)
                 processor.add_started_pid(pid)
             else:
+                # TODO: Weirdly there is a duplication of code inside this method
                 # Error case, should never enter here. Handle error cases here (if needed)
-                self.log.error(f"Deploy type of {processor.name} is neither of the allowed types")
+                self.log.error(f"Failed to deploy: {processor.name}. The deploy type is unknown.")
                 pass
 
     def deploy_rabbitmq(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
                          ports_mapping: Union[Dict, None] = None) -> str:
+        # Note for a peer
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
         # and receiving messages from queues is part of the RabbitMQ Library
         # Which is part of the OCR-D WebAPI implementation.
+        self.log.debug(f"Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]")
+
+        if not self.mongo_data or not self.mongo_data.address:
+            self.log.error(f"Deploying RabbitMQ has failed - missing configuration.")
+            # TODO: Raise an error instead of silently ignoring it
+            return ""
 
         client = create_docker_client(self.mq_data.address, self.mq_data.username,
                                       self.mq_data.password, self.mq_data.keypath)
@@ -146,6 +166,7 @@ class Deployer:
                 15672: 15672,
                 25672: 25672
             }
+        self.log.debug(f"Ports mapping: {ports_mapping}")
         # TODO: use rm here or not? Should queues be reused?
         res = client.containers.run(
             image=image,
@@ -153,10 +174,10 @@ class Deployer:
             remove=remove,
             ports=ports_mapping
         )
-        assert res and res.id, 'starting rabbitmq failed'
+        assert res and res.id, \
+            f'Failed to start RabbitMQ docker container on host: {self.mq_data.address}'
         self.mq_data.pid = res.id
         client.close()
-        self.log.debug('deployed rabbitmq')
 
         # Build the RabbitMQ Server URL to return
         rmq_host = self.mq_data.address
@@ -164,19 +185,25 @@ class Deployer:
         rmq_vhost = "/"  # the default virtual host
 
         rabbitmq_url = f"{rmq_host}:{rmq_port}{rmq_vhost}"
+        self.log.debug(f"The RabbitMQ server was deployed on url: {rabbitmq_url}")
         return rabbitmq_url
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
                         ports_mapping: Union[Dict, None] = None) -> str:
+        self.log.debug(f"Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]")
+
         if not self.mongo_data or not self.mongo_data.address:
-            self.log.debug('canceled mongo-deploy: no mongo_db in config')
+            self.log.error(f"Deploying MongoDB has failed - missing configuration.")
+            # TODO: Raise an error instead of silently ignoring it
             return ""
+
         client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
                                       self.mongo_data.password, self.mongo_data.keypath)
         if not ports_mapping:
             ports_mapping = {
                 27017: self.mongo_data.port
             }
+        self.log.debug(f"Ports mapping: {ports_mapping}")
         # TODO: use rm here or not? Should the mongodb be reused?
         # TODO: what about the data-dir? Must data be preserved?
         res = client.containers.run(
@@ -185,49 +212,54 @@ class Deployer:
             remove=remove,
             ports=ports_mapping
         )
-        assert res and res.id, 'starting mongodb failed'
+        assert res and res.id, \
+            f'Failed to start MongoDB docker container on host: {self.mongo_data.address}'
         self.mongo_data.pid = res.id
         client.close()
-        self.log.debug('deployed mongodb')
 
         # Build the MongoDB URL to return
         mongodb_prefix = "mongodb://"
         mongodb_host = self.mongo_data.address
         mongodb_port = self.mongo_data.port
         mongodb_url = f"{mongodb_prefix}{mongodb_host}:{mongodb_port}"
+        self.log.debug(f"The MongoDB was deployed on url: {mongodb_url}")
         return mongodb_url
 
     def kill_rabbitmq(self) -> None:
-        if not self.mq_data.pid:
-            self.log.debug('kill_rabbitmq: rabbitmq server is not running')
+        # TODO: The PID must not be stored in the configuration `mq_data`.
+        if not self.mq_data or not self.mq_data.pid:
+            self.log.warning(f"No running RabbitMQ instance found")
+            # TODO: Ignoring this silently is problematic in the future
             return
-        else:
-            self.log.debug(f'trying to kill rabbitmq with id: {self.mq_data.pid} now')
+        self.log.debug(f"Trying to stop the deployed RabbitMQ with PID: {self.mq_data.pid}")
 
         client = create_docker_client(self.mq_data.address, self.mq_data.username,
                                       self.mq_data.password, self.mq_data.keypath)
         client.containers.get(self.mq_data.pid).stop()
         self.mq_data.pid = None
         client.close()
-        self.log.debug('stopped rabbitmq')
+        self.log.debug('The RabbitMQ is stopped')
 
     def kill_mongodb(self) -> None:
+        # TODO: The PID must not be stored in the configuration `mongo_data`.
         if not self.mongo_data or not self.mongo_data.pid:
-            self.log.debug('kill_mongdb: mongodb not running')
+            self.log.warning(f"No running MongoDB instance found")
+            # TODO: Ignoring this silently is problematic in the future
             return
-        else:
-            self.log.debug(f'trying to kill mongdb with id: {self.mongo_data.pid} now')
+        self.log.debug(f"Trying to stop the deployed MongoDB with PID: {self.mongo_data.pid}")
 
         client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
                                       self.mongo_data.password, self.mongo_data.keypath)
         client.containers.get(self.mongo_data.pid).stop()
         self.mongo_data.pid = None
         client.close()
-        self.log.debug('stopped mongodb')
+        self.log.debug('The MongoDB is stopped')
 
     def kill_hosts(self) -> None:
+        self.log.debug("Starting to kill/stop hosts")
         # Kill processing hosts
         for host in self.hosts:
+            self.log.debug(f"Killing/Stopping processing workers on host: {host.address}")
             if host.ssh_client:
                 host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
             if host.docker_client:
@@ -239,28 +271,27 @@ class Deployer:
         for processor in host.processors:
             if processor.deploy_type.is_native():
                 for pid in processor.pids:
+                    self.log.debug(f'Trying to kill/stop native processor: {processor.name}, with PID: {pid}')
+                    # TODO: For graceful shutdown we may want to send additional parameters to kill
                     host.ssh_client.exec_command(f'kill {pid}')
             elif processor.deploy_type.is_docker():
                 for pid in processor.pids:
-                    self.log.debug(f'trying to kill docker container: {pid}')
+                    self.log.debug(f'Trying to kill/stop docker container processor: {processor.name}, with PID: {pid}')
                     # TODO: think about timeout.
                     #       think about using threads to kill parallelized to reduce waiting time
                     host.docker_client.containers.get(pid).stop()
             else:
                 # Error case, should never enter here. Handle error cases here (if needed)
-                self.log.error(f"Deploy type of {processor.name} is neither of the allowed types")
+                self.log.error(f"Failed to kill: {processor.name}. The deploy type is unknown.")
                 pass
             processor.pids = []
 
-
-    # TODO: queue_address and _database_address are prefixed with underscore because they are not
-    # needed yet (otherwise flak8 complains). But they will be needed once the real
-    # processing_worker is called here. Then they should be renamed
+    # TODO: This method may not fit anymore. Should be further investigated.
     @staticmethod
     def start_native_processor(client: SSHClient, processor_name: str, _queue_url: str,
                                _database_url: str) -> str:
         log = getLogger(__name__)
-        log.debug(f'start native processor: {processor_name}')
+        log.debug(f'Starting native processor: {processor_name}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         # TODO: add real command here to start processing server here
@@ -281,15 +312,13 @@ class Deployer:
         #       error if try to call)
         return re_search(r'xyz([0-9]+)xyz', output).group(1)
 
-    # TODO: queue_address and _database_address are prefixed with underscore because they are not
-    # needed yet (otherwise flak8 complains). But they will be needed once the real
-    # processing_worker is called here. Then they should be renamed
+    # TODO: This method may not fit anymore. Should be further investigated.
     @staticmethod
     def start_docker_processor(client: CustomDockerClient, processor_name: str, _queue_url: str,
                                _database_url: str) -> str:
         log = getLogger(__name__)
-        log.debug(f'start docker processor: {processor_name}')
+        log.debug(f'Starting docker container processor: {processor_name}')
         # TODO: add real command here to start processing server here
-        res = client.containers.run('debian', 'sleep 500', detach=True, remove=True)
+        res = client.containers.run('debian', 'sleep 500s', detach=True, remove=True)
         assert res and res.id, 'run processor in docker-container failed'
         return res.id
