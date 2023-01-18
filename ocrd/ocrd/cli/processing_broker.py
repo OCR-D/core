@@ -8,6 +8,7 @@ OCR-D CLI: start the processing broker
 import click
 from ocrd_utils import initLogging
 from ocrd.network import ProcessingBroker
+import logging
 
 
 @click.command('processing-broker')
@@ -18,6 +19,10 @@ def processing_broker_cli(path_to_config, address: str):
     Start and manage processing servers (workers) with the processing broker
     """
     initLogging()
+    # TODO: Remove before the release
+    logging.getLogger('paramiko.transport').setLevel(logging.INFO)
+    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
+
     try:
         host, port = address.split(":")
         port_int = int(port)

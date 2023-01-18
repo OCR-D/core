@@ -63,6 +63,9 @@ def ocrd_cli_wrap_processor(
     # If both of these are provided - start the processing worker instead of the processor - processorClass
     if queue and database:
         initLogging()
+        # TODO: Remove before the release
+        import logging
+        logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
         # Get the ocrd_tool dictionary
         f_out = StringIO()

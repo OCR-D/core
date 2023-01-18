@@ -6,6 +6,7 @@ OCR-D CLI: start the processing worker
     :nested: full
 """
 import click
+import logging
 from subprocess import run, PIPE
 from ocrd_utils import (
     initLogging,
@@ -28,6 +29,8 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
     Start a processing worker (a specific ocr-d processor)
     """
     initLogging()
+    # TODO: Remove before the release
+    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
     # Get the ocrd_tool dictionary
     # ocrd_tool = parse_json_string_with_comments(
