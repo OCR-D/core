@@ -19,13 +19,19 @@ def verify_and_build_database_url(mongodb_address: str, database_prefix: str = "
 
 def verify_and_parse_rabbitmq_addr(rabbitmq_address: str) -> Tuple[str, int, str]:
     elements = split(pattern=r':|/', string=rabbitmq_address)
-    if len(elements) != 3:
-        raise ValueError("The RabbitMQ address is in wrong format")
-    rmq_host = elements[0]
-    rmq_port = int(elements[1])
-    # Handle the case with default virtual host
-    rmq_vhost = elements[2] if elements[2] else '/'
-    return rmq_host, rmq_port, rmq_vhost
+    if len(elements) == 3:
+        rmq_host = elements[0]
+        rmq_port = int(elements[1])
+        rmq_vhost = f"/{elements[2]}"
+        return rmq_host, rmq_port, rmq_vhost
+
+    if len(elements) == 2:
+        rmq_host = elements[0]
+        rmq_port = int(elements[1])
+        rmq_vhost = "/"  # The default global vhost
+        return rmq_host, rmq_port, rmq_vhost
+
+    raise ValueError("The RabbitMQ address is in wrong format. Expected format: {host}:{port}/{vhost}")
 
 
 def construct_dummy_processing_message() -> OcrdProcessingMessage:
