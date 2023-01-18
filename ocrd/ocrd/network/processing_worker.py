@@ -49,6 +49,10 @@ class ProcessingWorker:
         # Gets assigned when `connect_consumer` is called on the working object
         self.rmq_consumer = None
 
+        # TODO: In case the processing worker should publish OcrdResultMessage type message to
+        #  the message queue with name {processor_name}-result, the RMQPublisher should be instantiated
+        #  self.rmq_publisher = None
+
     def connect_consumer(self, username="default-consumer", password="default-consumer"):
         self.log.debug(f"Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
         self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
@@ -57,16 +61,43 @@ class ProcessingWorker:
         self.rmq_consumer.authenticate_and_connect(username=username, password=password)
         self.log.debug(f"Successfully connected RMQConsumer.")
 
-    # Define what happens every time a message is consumed from the queue
-    def on_consumed_message(self, channel, method, properties, body) -> None:
-        self.log.debug(f"Received from ch: {channel}, method: {method}, properties: {properties}, body: {body}")
+    # Define what happens every time a message is consumed
+    # from the queue with name self.processor_name
+    def on_consumed_message(self, channel, delivery, properties, body) -> None:
+        self.log.debug(f"Received from: \nchannel: {channel},\ndelivery: {delivery}, \nproperties: {properties}, \nbody: {body}")
+        consumer_tag = delivery.consumer_tag
+        delivery_tag: int = delivery.delivery_tag
+        is_redelivered: bool = delivery.redelivered
+        message_headers: dict = properties.headers
 
-        # TODO:
-        # 1. Parse here the received message body to OcrdProcessingMessage
-        # processing_message = OcrdProcessingMessage(...)
-        # 2. Send the ocrd_message as a parameter to self.process_message
-        # self.process_message(ocrd_message=processing_message)
-        pass
+        self.log.debug(f"Consumer tag: {consumer_tag}")
+        self.log.debug(f"Message delivery tag: {delivery_tag}")
+        self.log.debug(f"Is redelivered message: {is_redelivered}")
+        self.log.debug(f"Message headers: {message_headers}")
+
+        try:
+            self.log.debug(f"Trying to decode processing message with tag: {delivery_tag}")
+            processing_message: OcrdProcessingMessage = OcrdProcessingMessage.decode(body, encoding="utf-8")
+        except Exception as e:
+            self.log.error(f"Failed to decode processing message body: {body}")
+            self.log.error(f"Nacking processing message with tag: {delivery_tag}")
+            channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
+            raise Exception(f"Failed to decode processing message with tag: {delivery_tag}, reason: {e}")
+
+        try:
+            # TODO: Note to peer: ideally we should avoid doing database related actions
+            #  in this method, and handle database related interactions inside `self.process_message()`
+            self.log.debug(f"Starting to process the received message: {processing_message}")
+            self.process_message(processing_message=processing_message)
+        except Exception as e:
+            self.log.error(f"Failed to process processing message with tag: {delivery_tag}")
+            self.log.error(f"Nacking processing message with tag: {delivery_tag}")
+            channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
+            raise Exception(f"Failed to process processing message with tag: {delivery_tag}, reason: {e}")
+
+        self.log.debug(f"Successfully processed message ")
+        self.log.debug(f"Acking message with tag: {delivery_tag}")
+        channel.basic_ack(delivery_tag=delivery_tag, multiple=False)
 
     def start_consuming(self) -> None:
         if self.rmq_consumer:
@@ -81,20 +112,32 @@ class ProcessingWorker:
         else:
             raise Exception("The RMQConsumer is not connected/configured properly")
 
-    def process_message(self, processing_message: OcrdProcessingMessage = None):
-        # TODO: Extract the required data fields from the received OcrdProcessingMessage
+    # TODO: Better error handling required to catch exceptions
+    def process_message(self, processing_message: OcrdProcessingMessage):
+        # Verify that the processor name in the processing message
+        # matches the processor name of the current processing worker
+        if self.processor_name != processing_message.processor_name:
+            raise ValueError(f"Processor name is not matching. "
+                             f"Expected: {self.processor_name}, Got: {processing_message.processor_name}")
 
         # This can be path if invoking `run_processor`
         # but must be ocrd.Workspace if invoking `run_cli`.
-        workspace_path = "/home/mm/Desktop/ws_example/mets.xml"
-
-        page_id = "PHYS_0001"
-        input_file_grps = ["DEFAULT"]
-        output_file_grps = ["OCR-D-BIN"]
-        parameter = {}
+        workspace_path = processing_message.path_to_mets
 
         # Build the workspace from the workspace_path
         workspace = Resolver().workspace_from_url(workspace_path)
+
+        page_id = processing_message.page_id
+        input_file_grps = processing_message.input_file_grps
+        output_file_grps = processing_message.output_file_grps
+        parameter = processing_message.parameters
+
+        # TODO: Use job_id - will be relevant for the MongoDB to assign job status
+        #  Note to peer: We should encapsulate database related actions to keep this method simple
+        job_id = processing_message.job_id
+
+        if processing_message.result_queue:
+            self.log.warning(f"Publishing results to a message queue from the Processing Worker is not supported yet")
 
         # TODO: Currently, no caching is performed.
         if self.processor_class:
