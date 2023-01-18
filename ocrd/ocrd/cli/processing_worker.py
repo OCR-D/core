@@ -9,6 +9,7 @@ import click
 from subprocess import run, PIPE
 from ocrd_utils import (
     initLogging,
+    get_ocrd_tool_json,
     parse_json_string_with_comments
 )
 from ocrd.network.processing_worker import ProcessingWorker
@@ -29,9 +30,13 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
     initLogging()
 
     # Get the ocrd_tool dictionary
-    ocrd_tool = parse_json_string_with_comments(
-        run([processor_name, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True).stdout
-    )
+    # ocrd_tool = parse_json_string_with_comments(
+    #     run([processor_name, '--dump-json'], stdout=PIPE, check=True, universal_newlines=True).stdout
+    # )
+
+    ocrd_tool = get_ocrd_tool_json(processor_name)
+    if not ocrd_tool:
+        raise Exception(f"The ocrd_tool is empty or missing")
 
     try:
         processing_worker = ProcessingWorker(
