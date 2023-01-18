@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd resmgr`: insert new entries first, so dedup works as expected, #971
+
 ## [2.45.0] - 2022-12-13
 
 Fixed:
