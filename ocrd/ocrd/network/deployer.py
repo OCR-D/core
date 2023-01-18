@@ -123,16 +123,18 @@ class Deployer:
                 pid = self.start_native_processor(
                     client=host.ssh_client,
                     processor_name=processor.name,
-                    _queue_url=rabbitmq_url,
-                    _database_url=mongodb_url)
+                    queue_url=rabbitmq_url,
+                    database_url=mongodb_url
+                )
                 processor.add_started_pid(pid)
             elif processor.deploy_type == DeployType.docker:
                 assert host.docker_client  # to satisfy mypy
                 pid = self.start_docker_processor(
                     client=host.docker_client,
                     processor_name=processor.name,
-                    _queue_url=rabbitmq_url,
-                    _database_url=mongodb_url)
+                    queue_url=rabbitmq_url,
+                    database_url=mongodb_url
+                )
                 processor.add_started_pid(pid)
             else:
                 # TODO: Weirdly there is a duplication of code inside this method
@@ -286,12 +288,21 @@ class Deployer:
                 pass
             processor.pids = []
 
-    # TODO: This method may not fit anymore. Should be further investigated.
-    @staticmethod
-    def start_native_processor(client: SSHClient, processor_name: str, _queue_url: str,
-                               _database_url: str) -> str:
-        log = getLogger(__name__)
-        log.debug(f'Starting native processor: {processor_name}')
+    # Note: Invoking a pythonic processor is slightly different from the description in the spec.
+    # In order to achieve the exact spec call all ocr-d processors should be refactored...
+    # TODO: To deploy a processing worker (i.e. an ocr-d processor):
+    #  1. Invoke pythonic processor:
+    #  `<processor-name> --queue=<queue-url> --database=<database-url>
+    #  Omit the `processing-worker` argument.
+    #  2. Invoke non-pythonic processor:
+    #  `ocrd processing-worker <processor-name> --queue=<queue-url> --database=<database-url>`
+    #  E.g., olena-binarize
+
+    def start_native_processor(self, client: SSHClient,
+                               processor_name: str, queue_url: str, database_url: str) -> str:
+        self.log.debug(f'Starting native processor: {processor_name}')
+        # TODO: queue_url and database_url are ready to be used
+        self.log.debug(f"The processor connects to queue: {queue_url} and mongodb: {database_url}")
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         # TODO: add real command here to start processing server here
@@ -312,13 +323,12 @@ class Deployer:
         #       error if try to call)
         return re_search(r'xyz([0-9]+)xyz', output).group(1)
 
-    # TODO: This method may not fit anymore. Should be further investigated.
-    @staticmethod
-    def start_docker_processor(client: CustomDockerClient, processor_name: str, _queue_url: str,
-                               _database_url: str) -> str:
-        log = getLogger(__name__)
-        log.debug(f'Starting docker container processor: {processor_name}')
+    def start_docker_processor(self, client: CustomDockerClient,
+                               processor_name: str, queue_url: str, database_url: str) -> str:
+        self.log.debug(f'Starting docker container processor: {processor_name}')
+        # TODO: queue_url and database_url are ready to be used
+        self.log.debug(f"The processor connects to queue: {queue_url} and mongodb: {database_url}")
         # TODO: add real command here to start processing server here
         res = client.containers.run('debian', 'sleep 500s', detach=True, remove=True)
-        assert res and res.id, 'run processor in docker-container failed'
+        assert res and res.id, f'Running processor: {processor_name} in docker-container failed'
         return res.id
