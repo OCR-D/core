@@ -15,7 +15,7 @@ from ocrd import Resolver
 from ocrd_utils import getLogger
 from ocrd.processor.helpers import run_cli, run_processor
 from ocrd.network.helpers import (
-    verify_and_build_database_url,
+    verify_database_url,
     verify_and_parse_rabbitmq_addr
 )
 from ocrd.network.rabbitmq_utils import (
@@ -30,7 +30,7 @@ class ProcessingWorker:
         self.log = getLogger(__name__)
 
         try:
-            self.db_url = verify_and_build_database_url(mongodb_addr, database_prefix="mongodb://")
+            self.db_url = verify_database_url(mongodb_addr)
             self.log.debug(f"Verified MongoDB URL: {self.db_url}")
             self.rmq_host, self.rmq_port, self.rmq_vhost = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
             self.log.debug(f"Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")

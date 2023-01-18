@@ -7,8 +7,15 @@ from ocrd.network.rabbitmq_utils import (
 )
 
 
-def verify_and_build_database_url(mongodb_address: str, database_prefix: str = "mongodb://") -> str:
-    elements = mongodb_address.split(':', 1)
+def verify_database_url(mongodb_address: str) -> str:
+    database_prefix = "mongodb://"
+    if not mongodb_address.startswith(database_prefix):
+        error_msg = f"The database address must start with a prefix: {database_prefix}"
+        raise ValueError(error_msg)
+
+    address_without_prefix = mongodb_address[len(database_prefix):]
+    print(f"Address without prefix: {address_without_prefix}")
+    elements = address_without_prefix.split(':', 1)
     if len(elements) != 2:
         raise ValueError("The database address is in wrong format")
     db_host = elements[0]

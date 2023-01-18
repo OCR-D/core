@@ -22,7 +22,7 @@ from ocrd.network.processing_worker import ProcessingWorker
               default="localhost:5672/",
               help='The host, port, and virtual host of the RabbitMQ Server')
 @click.option('-d', '--database',
-              default="localhost:27018",
+              default="mongodb://localhost:27018",
               help='The host and port of the MongoDB')
 def processing_worker_cli(processor_name: str, queue: str, database: str):
     """
