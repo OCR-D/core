@@ -70,7 +70,7 @@ class OcrdProcessingMessage:
             output_file_grps=data.output_file_grps,
             page_id=data.page_id,
             parameters=data.parameters,
-            result_queue_name=data.result_queue_name
+            result_queue_name=data.result_queue
         )
 
 

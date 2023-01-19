@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 import uvicorn
 from time import sleep
 from yaml import safe_load
@@ -9,7 +9,8 @@ from ocrd_validators import ProcessingBrokerValidator
 
 from ocrd.network.deployer import Deployer
 from ocrd.network.deployment_config import ProcessingBrokerConfig
-from ocrd.network.rabbitmq_utils import RMQPublisher
+from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
+from ocrd.network.helpers import construct_dummy_processing_message
 
 
 class ProcessingBroker(FastAPI):
@@ -57,10 +58,12 @@ class ProcessingBroker(FastAPI):
             # TODO: add response model? add a response body at all?
         )
 
-        # TODO: Call this after the rest of the API is implemented
-        # Example of publishing a message inside a specific queue
-        # The message type is bytes
-        # self.rmq_publisher.publish_to_queue(queue_name="queue_name", message="message")
+        self.router.add_api_route(
+            path='/test-dummy',
+            endpoint=self.publish_default_processing_message,
+            methods=['POST'],
+            status_code=status.HTTP_202_ACCEPTED
+        )
 
     def start(self) -> None:
         """
@@ -97,7 +100,7 @@ class ProcessingBroker(FastAPI):
         # Note: A deployed processing worker starts listening to a message queue with id processor.name
         self.deployer.deploy_hosts(self.hosts_config, rabbitmq_url, mongodb_url)
 
-        self.log.debug(f'Starting uvicorn: {self.host}:{self.port}')
+        self.log.debug(f'Starting uvicorn: {self.hostname}:{self.port}')
         uvicorn.run(self, host=self.hostname, port=self.port)
 
     @staticmethod
@@ -153,3 +156,14 @@ class ProcessingBroker(FastAPI):
                 self.log.debug(f"Creating a message queue with id: {processor.name}")
                 # TODO: We may want to track here if there are already queues with the same name
                 self.rmq_publisher.create_queue(queue_name=processor.name)
+
+    def publish_default_processing_message(self):
+        processing_message = construct_dummy_processing_message()
+        queue_name = processing_message.processor_name
+        encoded_processing_message = OcrdProcessingMessage.encode(processing_message)
+        if self.rmq_publisher:
+            self.log.debug("Publishing the default processing message")
+            self.rmq_publisher.publish_to_queue(queue_name=queue_name, message=encoded_processing_message)
+        else:
+            self.log.error("RMQPublisher is not connected")
+            raise Exception("RMQPublisher is not connected")
