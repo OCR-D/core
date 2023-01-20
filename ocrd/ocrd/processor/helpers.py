@@ -93,9 +93,9 @@ def run_processor(
         mem_usage = memory_usage(proc=processor.process,
                                 # only run process once
                                 max_iterations=1,
-                                interval=.1, timeout=None, timestamps=True, 
+                                interval=.1, timeout=None, timestamps=True,
                                 # include sub-processes
-                                multiprocess=True, include_children=True, 
+                                multiprocess=True, include_children=True,
                                 # get proportional set size instead of RSS
                                 backend=backend)
         mem_usage_values = [mem for mem, _ in mem_usage]
@@ -184,7 +184,7 @@ def run_cli(
 
 def generate_processor_help(ocrd_tool, processor_instance=None):
     """Generate a string describing the full CLI of this processor including params.
-    
+
     Args:
          ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
          processor_instance (object, optional): the processor implementation
@@ -233,6 +233,8 @@ Options:
   -g, --page-id ID                Physical page ID(s) to process
   --overwrite                     Remove existing output pages/images
                                   (with --page-id, remove only those)
+  --queue                         The RabbitMQ server address in format: {host}:{port}/{vhost}"
+  --database                      The MongoDB address in format: mongodb://{host}:{port}"
   --profile                       Enable profiling
   --profile-file                  Write cProfile stats to this file. Implies --profile
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
