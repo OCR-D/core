@@ -13,7 +13,7 @@ import logging
 
 @click.command('processing-broker')
 @click.argument('path_to_config', required=True, type=click.STRING)
-@click.option('-a', '--address', help='Host name/IP, port to bind the Processing-Broker to')
+@click.option('-a', '--address', help='Host (name/IP) and port to bind the Processing-Broker to. Example: localhost:8080', required=True)
 def processing_broker_cli(path_to_config, address: str):
     """
     Start and manage processing servers (workers) with the processing broker
