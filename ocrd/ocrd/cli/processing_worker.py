@@ -54,4 +54,4 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
         # Start consuming from the queue with name `processor_name`
         processing_worker.start_consuming()
     except Exception as e:
-        raise Exception(f"Processing worker has failed with error: {e}")
+        raise Exception("Processing worker has failed with error") from e

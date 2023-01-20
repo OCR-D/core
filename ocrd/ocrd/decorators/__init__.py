@@ -88,7 +88,7 @@ def ocrd_cli_wrap_processor(
             # Start consuming from the queue with name `processor_name`
             processing_worker.start_consuming()
         except Exception as e:
-            raise Exception(f"Processing worker has failed with error: {e}")
+            raise Exception("Processing worker has failed with error") from e
     else:
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
