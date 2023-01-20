@@ -71,10 +71,10 @@ class ProcessingBroker(FastAPI):
         """
         """
         Note for a peer:
-        Deploying everything together at once is a bad approach. First the RabbitMQ Server and the MongoDB 
-        should be deployed. Then the RMQPublisher of the Processing Broker (aka Processing Server) should 
+        Deploying everything together at once is a bad approach. First the RabbitMQ Server and the MongoDB
+        should be deployed. Then the RMQPublisher of the Processing Broker (aka Processing Server) should
         connect to the running RabbitMQ server. After that point the Processing Workers should be deployed.
-        The RMQPublisher should be connected before deploying Processing Workers because the message queues to 
+        The RMQPublisher should be connected before deploying Processing Workers because the message queues to
         which the Processing Workers listen to are created based on the deployed processor.
         """
         # Deploy everything specified in the configuration
@@ -91,7 +91,8 @@ class ProcessingBroker(FastAPI):
         sleep(3)  # TODO: Sleeping here is bad and better check should be performed
 
         # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
-        self.connect_publisher()
+        self.connect_publisher(username=self.queue_config.credentials[0],
+                               password=self.queue_config.credentials[1])
 
         self.log.debug(f"Starting to create message queues on RabbitMQ instance url: {rabbitmq_url}")
         self.create_message_queues()

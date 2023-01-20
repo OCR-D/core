@@ -56,16 +56,6 @@ class Deployer:
         #  Currently, the connections (ssh_client, docker_client) and
         #  the PIDs are stored inside the config data classes
 
-    # Avoid using this method
-    # TODO: Should be removed
-    def deploy_all(self) -> None:
-        """ Deploy the message queue and all processors defined in the config-file
-        """
-        # The order of deploying may be important to recover from previous state
-        rabbitmq_url = self.deploy_rabbitmq()
-        mongodb_url = self.deploy_mongodb()
-        self.deploy_hosts(self.hosts, rabbitmq_url, mongodb_url)
-
     def kill_all(self) -> None:
         # The order of killing is important to optimize graceful shutdown in the future
         # If RabbitMQ server is killed before killing Processing Workers, that may have
@@ -142,8 +132,8 @@ class Deployer:
                 self.log.error(f"Failed to deploy: {processor.name}. The deploy type is unknown.")
                 pass
 
-    def deploy_rabbitmq(self, image: str = 'rabbitmq', detach: bool = True, remove: bool = True,
-                         ports_mapping: Union[Dict, None] = None) -> str:
+    def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
+                        remove: bool = True, ports_mapping: Union[Dict, None] = None) -> str:
         # Note for a peer
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
@@ -169,12 +159,15 @@ class Deployer:
                 25672: 25672
             }
         self.log.debug(f"Ports mapping: {ports_mapping}")
-        # TODO: use rm here or not? Should queues be reused?
         res = client.containers.run(
             image=image,
             detach=detach,
             remove=remove,
-            ports=ports_mapping
+            ports=ports_mapping,
+            environment=[
+                f'RABBITMQ_DEFAULT_USER={self.mq_data.credentials[0]}',
+                f'RABBITMQ_DEFAULT_PASS={self.mq_data.credentials[1]}'
+            ]
         )
         assert res and res.id, \
             f'Failed to start RabbitMQ docker container on host: {self.mq_data.address}'
