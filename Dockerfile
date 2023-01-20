@@ -23,7 +23,6 @@ RUN apt-get update && apt-get -y install software-properties-common \
         ca-certificates \
         python3-dev \
         python3-pip \
-        python3-venv \
         gcc \
         make \
         wget \
@@ -35,6 +34,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && pip install --upgrade pip setuptools \
     && make install \
     && apt-get remove -y gcc \
+    && apt-get autoremove -y \
     && $FIXUP \
     && rm -rf /build-ocrd
 
