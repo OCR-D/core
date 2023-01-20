@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.45.1] - 2023-01-20
+
 Fixed:
 
   * `ocrd resmgr`: insert new entries first, so dedup works as expected, #971
@@ -1623,6 +1625,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.45.1]: ../../compare/v2.45.1..v2.45.0
 [2.45.0]: ../../compare/v2.45.0..v2.44.0
 [2.44.0]: ../../compare/v2.44.0..v2.43.0
 [2.43.0]: ../../compare/v2.43.0..v2.42.1
