@@ -48,7 +48,7 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
-        cached_processor=False
+        cached_processor=False  # TODO don't set this yet!
 ): # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
@@ -64,6 +64,9 @@ def run_processor(
     - :py:attr:`input_file_grp`
     - :py:attr:`output_file_grp`
     - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
+
+    Warning: Avoid setting the `cached_processor` flag to True. It may have unexpected side effects.
+    This flag is used for an experimental feature we would like to adopt in future.
 
     Run the processor on the workspace (creating output files in the filesystem).
 
@@ -82,7 +85,6 @@ def run_processor(
     log.debug("Running processor %s", processorClass)
 
     processor = get_processor(
-        # TODO: Warning: processorClass of type Object gets auto casted to Type[Processor]
         processor_class=processorClass,
         parameter=parameter,
         workspace=workspace,
@@ -279,8 +281,9 @@ Default Wiring:
 
 # Taken from https://github.com/OCR-D/core/pull/884
 # TODO: Decide how much maxsize is optimal as a default
+# TODO: The max size should be configurable with, e.g., with an environment variable?
 @freeze_args
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=32)  
 def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.
