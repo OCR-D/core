@@ -86,13 +86,8 @@ class ProcessingBroker(FastAPI):
         # Deploy the MongoDB, get the URL of the deployed agent
         mongodb_url = self.deployer.deploy_mongodb()
 
-        # Give enough time for the RabbitMQ server to get deployed and get fully configured
-        # Needed to prevent connection of the publisher before the RabbitMQ is deployed
-        sleep(3)  # TODO: Sleeping here is bad and better check should be performed
-
         # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
-        self.connect_publisher(username=self.queue_config.credentials[0],
-                               password=self.queue_config.credentials[1])
+        self.connect_publisher()
 
         self.log.debug(f"Starting to create message queues on RabbitMQ instance url: {rabbitmq_url}")
         self.create_message_queues()

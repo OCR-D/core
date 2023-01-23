@@ -13,6 +13,7 @@ from ocrd.network.deployment_utils import (
     DeployType,
 )
 from ocrd.network.processing_worker import ProcessingWorker
+import time
 
 # Abstraction of the Deployment functionality
 # The ProcessingServer (currently still called Broker) provides the configuration parameters to the Deployer agent.
@@ -172,6 +173,7 @@ class Deployer:
         assert res and res.id, \
             f'Failed to start RabbitMQ docker container on host: {self.mq_data.address}'
         self.mq_data.pid = res.id
+        self.init_rabbitmq(client, res.id)
         client.close()
 
         # Build the RabbitMQ Server URL to return
@@ -182,6 +184,19 @@ class Deployer:
         rabbitmq_url = f"{rmq_host}:{rmq_port}{rmq_vhost}"
         self.log.debug(f"The RabbitMQ server was deployed on url: {rabbitmq_url}")
         return rabbitmq_url
+
+    def init_rabbitmq(self, client: CustomDockerClient, rabbitmq_id: str):
+        """ Add users, wait for startup
+        """
+        # TODO: rabbitmq was started, but needs some time to be ready to use. sleep is working for
+        #       now but the init-process should rather be made in a loop and be redone on error
+        #       until the container is responsive or a timeout is expired (and raise in this case)
+        time.sleep(3)
+        container = client.containers.get(rabbitmq_id)
+        container.exec_run("rabbitmqctl add_user default-publisher default-publisher")
+        container.exec_run("rabbitmqctl add_user default-consumer default-consumer")
+
+
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
                         ports_mapping: Union[Dict, None] = None) -> str:
