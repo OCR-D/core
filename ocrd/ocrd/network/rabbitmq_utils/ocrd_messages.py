@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pickle import dumps, loads
 from typing import Any, Dict, List
+import yaml
 
 
 # TODO: Maybe there is a more compact way to achieve the serialization/deserialization?
@@ -71,6 +72,31 @@ class OcrdProcessingMessage:
             page_id=data.page_id,
             parameters=data.parameters,
             result_queue_name=data.result_queue
+        )
+
+    @staticmethod
+    def encode_yml(ocrd_processing_message: OcrdProcessingMessage) -> bytes:
+        """convert OcrdProcessingMessage to yml
+        """
+        return yaml.dump(ocrd_processing_message.__dict__, indent=2).encode('utf-8')
+
+    @staticmethod
+    def decode_yml(ocrd_processing_message: bytes) -> OcrdProcessingMessage:
+        """Parse OcrdProcessingMessage from yml
+        """
+        msg = ocrd_processing_message.decode('utf-8')
+        data = yaml.load(msg, Loader=yaml.Loader)
+        return OcrdProcessingMessage(
+            job_id=data.get("job_id", None),
+            processor_name=data.get("processor_name", None),
+            created_time=data.get("created_time", None),
+            path_to_mets=data.get("path_to_mets", None),
+            workspace_id=data.get("workspace_id", None),
+            input_file_grps=data.get("input_file_grps", None),
+            output_file_grps=data.get("output_file_grps", None),
+            page_id=data.get("page_id", None),
+            parameters=data.get("parameters", None),
+            result_queue_name=data.get("result_queue", None),
         )
 
 

@@ -156,7 +156,8 @@ class ProcessingBroker(FastAPI):
     def publish_default_processing_message(self):
         processing_message = construct_dummy_processing_message()
         queue_name = processing_message.processor_name
-        encoded_processing_message = OcrdProcessingMessage.encode(processing_message)
+        # TODO: switch back to pickle?!
+        encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
             self.log.debug("Publishing the default processing message")
             self.rmq_publisher.publish_to_queue(queue_name=queue_name, message=encoded_processing_message)

@@ -77,7 +77,8 @@ class ProcessingWorker:
 
         try:
             self.log.debug(f"Trying to decode processing message with tag: {delivery_tag}")
-            processing_message: OcrdProcessingMessage = OcrdProcessingMessage.decode(body, encoding="utf-8")
+            # TODO: switch back to pickle?!
+            processing_message: OcrdProcessingMessage = OcrdProcessingMessage.decode_yml(body)
         except Exception as e:
             self.log.error(f"Failed to decode processing message body: {body}")
             self.log.error(f"Nacking processing message with tag: {delivery_tag}")
