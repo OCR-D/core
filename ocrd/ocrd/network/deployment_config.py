@@ -36,6 +36,7 @@ class HostConfig:
         self.username = config['username']
         self.password = config.get('password', None)
         self.keypath = config.get('path_to_privkey', None)
+        self.binpath = config.get('path_to_bin_dir', None)
         self.processors = []
         for processor in config['deploy_processors']:
             deploy_type = DeployType.from_str(processor['deploy_type'])

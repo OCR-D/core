@@ -74,6 +74,9 @@ properties:
         path_to_privkey:
           description: Path to private key file
           type: string
+        path_to_bin_dir:
+          description: Path to where processor executables can be found on the target machine
+          type: string
         deploy_processors:
           description: List of processors which will be deployed
           type: array

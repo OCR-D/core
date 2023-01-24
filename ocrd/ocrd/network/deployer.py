@@ -14,6 +14,7 @@ from ocrd.network.deployment_utils import (
 )
 from ocrd.network.processing_worker import ProcessingWorker
 import time
+from pathlib import Path
 
 # Abstraction of the Deployment functionality
 # The ProcessingServer (currently still called Broker) provides the configuration parameters to the Deployer agent.
@@ -115,7 +116,8 @@ class Deployer:
                     client=host.ssh_client,
                     processor_name=processor.name,
                     queue_url=rabbitmq_url,
-                    database_url=mongodb_url
+                    database_url=mongodb_url,
+                    bin_dir=host.binpath,
                 )
                 processor.add_started_pid(pid)
             elif processor.deploy_type == DeployType.docker:
@@ -305,30 +307,42 @@ class Deployer:
     #  `ocrd processing-worker <processor-name> --queue=<queue-url> --database=<database-url>`
     #  E.g., olena-binarize
 
-    def start_native_processor(self, client: SSHClient,
-                               processor_name: str, queue_url: str, database_url: str) -> str:
+    def start_native_processor(self, client: SSHClient, processor_name: str, queue_url: str,
+                               database_url: str, bin_dir: str = None) -> str:
+        """ start a processor natively on a host via ssh
+
+        Args:
+            client:             paramiko SSHClient to execute commands on a host
+            processor_name:     name of processor to run
+            queue_url:          url to rabbitmq
+            database_url:       url to database
+            bin_dir (optional): path to where processor executables can be found
+
+        Returns:
+            str: pid of running process
+        """
+        # TODO: some processors are bashlib. They have to be started differently. Open Question:
+        #       how to find out if a processor is bashlib
         self.log.debug(f'Starting native processor: {processor_name}')
-        # TODO: queue_url and database_url are ready to be used
-        self.log.debug(f"The processor connects to queue: {queue_url} and mongodb: {database_url}")
+        self.log.debug(f'The processor connects to queue: {queue_url} and mongodb: {database_url}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        # TODO: add real command here to start processing server here
-        cmd = 'sleep 23s'
-        # the only way to make it work to start a process in the background and return early is
-        # this construction. The pid of the last started background process is printed with
-        # `echo $!` but it is printed inbetween other output. Because of that I added `xyz` before
-        # and after the code to easily be able to filter out the pid via regex when returning from
-        # the function
+        if bin_dir:
+            path = Path(bin_dir) / processor_name
+        else:
+            path = processor_name
+        cmd = f"{path} --database {database_url} --queue {queue_url}"
+        # the only way (I could find) to make it work to start a process in the background and
+        # return early is this construction. The pid of the last started background process is
+	# printed with `echo $!` but it is printed inbetween other output. Because of that I added
+	# `xyz` before and after the code to easily be able to filter out the pid via regex when
+	# returning from the function
         stdin.write(f'{cmd} & \n echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
+        self.log.debug(f"Output for processor {processor_name}: {output}")
         stdout.close()
         stdin.close()
-        # What does this return and is supposed to return?
-        # Putting some comments when using patterns is always appreciated
-        # Since the docker version returns PID, this should also return PID for consistency
-        # TODO: mypy error: ignore or fix. Problem: re.search returns Optional (can be None, causes
-        #       error if try to call)
-        return re_search(r'xyz([0-9]+)xyz', output).group(1)
+        return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
 
     def start_docker_processor(self, client: CustomDockerClient,
                                processor_name: str, queue_url: str, database_url: str) -> str:
