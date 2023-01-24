@@ -193,10 +193,9 @@ class Deployer:
         #       until the container is responsive or a timeout is expired (and raise in this case)
         time.sleep(3)
         container = client.containers.get(rabbitmq_id)
-        container.exec_run("rabbitmqctl add_user default-publisher default-publisher")
-        container.exec_run("rabbitmqctl add_user default-consumer default-consumer")
-
-
+        container.exec_run('rabbitmqctl add_user default default')
+        container.exec_run('rabbitmqctl set_user_tags default administrator')
+        container.exec_run('rabbitmqctl set_permissions -p / default ".*" ".*" ".*"')
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
                         ports_mapping: Union[Dict, None] = None) -> str:

@@ -130,7 +130,7 @@ class ProcessingBroker(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
-    def connect_publisher(self, username="default-publisher", password="default-publisher", enable_acks=True):
+    def connect_publisher(self, username="default", password="default", enable_acks=True):
         self.log.debug(f"Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
