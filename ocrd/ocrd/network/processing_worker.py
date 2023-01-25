@@ -11,6 +11,9 @@ from functools import lru_cache, wraps
 import json
 from typing import List
 
+import pika.spec
+import pika.adapters.blocking_connection
+
 from ocrd import Resolver
 from ocrd_utils import getLogger
 from ocrd.processor.helpers import run_cli, run_processor
@@ -63,8 +66,12 @@ class ProcessingWorker:
 
     # Define what happens every time a message is consumed
     # from the queue with name self.processor_name
-    def on_consumed_message(self, channel, delivery, properties, body) -> None:
-        self.log.debug(f"Received from: \nchannel: {channel},\ndelivery: {delivery}, \nproperties: {properties}, \nbody: {body}")
+    def on_consumed_message(
+            self,
+            channel: pika.adapters.blocking_connection.BlockingChannel,
+            delivery: pika.spec.Basic.Deliver,
+            properties: pika.spec.BasicProperties,
+            body: bytes) -> None:
         consumer_tag = delivery.consumer_tag
         delivery_tag: int = delivery.delivery_tag
         is_redelivered: bool = delivery.redelivered
