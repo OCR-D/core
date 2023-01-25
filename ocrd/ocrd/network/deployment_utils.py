@@ -45,9 +45,9 @@ class CustomDockerClient(DockerClient):
         # TODO: Call to the super class __init__ is missing here,
         #  may this potentially become an issue?
         if not user or not host:
-            raise ValueError("Missing argument: user and host must both be provided")
+            raise ValueError('Missing argument: user and host must both be provided')
         if not 'password' in kwargs and not 'keypath' in kwargs:
-            raise ValueError("Missing argument: one of password and keyfile is needed")
+            raise ValueError('Missing argument: one of password and keyfile is needed')
         self.api = APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
         ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
         self.api.mount('http+docker://ssh', ssh_adapter)

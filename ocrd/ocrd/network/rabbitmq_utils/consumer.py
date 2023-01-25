@@ -62,7 +62,7 @@ class RMQConsumer(RMQConnector):
         try:
             self.start_consuming()
         except KeyboardInterrupt:
-            self._logger.info("Keyboard interruption detected. Closing down peacefully.")
+            self._logger.info('Keyboard interruption detected. Closing down peacefully.')
             exit(0)
         # TODO: Clean leftovers here and inform the RabbitMQ
         #  server about the disconnection of the consumer
@@ -139,12 +139,12 @@ class RMQConsumer(RMQConnector):
 def main():
     # Connect to localhost:5672 by
     # using the virtual host "/" (%2F)
-    consumer = RMQConsumer(host="localhost", port=5672, vhost="/")
+    consumer = RMQConsumer(host='localhost', port=5672, vhost='/')
     # Configured with definitions.json when building the RabbitMQ image
     # Check Dockerfile-RabbitMQ
     consumer.authenticate_and_connect(
-        username="default-consumer",
-        password="default-consumer"
+        username='default-consumer',
+        password='default-consumer'
     )
     consumer.setup_defaults()
     consumer.example_run()

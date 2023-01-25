@@ -27,16 +27,16 @@ class OcrdProcessingMessage:
             result_queue_name: str = None,
     ):
         if not job_id:
-            raise ValueError(f"job_id must be set")
+            raise ValueError('job_id must be set')
         if not processor_name:
-            raise ValueError(f"processor_name must be set")
+            raise ValueError('processor_name must be set')
         if not created_time:
             # We should not raise a ValueError but just calculate it
             created_time = int(datetime.utcnow().timestamp())
         if not input_file_grps or len(input_file_grps) == 0:
-            raise ValueError(f"input_file_grps must be set and contain at least 1 element")
+            raise ValueError('input_file_grps must be set and contain at least 1 element')
         if not (workspace_id or path_to_mets):
-            raise ValueError(f"Either `workspace_id` or `path_to_mets` must be set")
+            raise ValueError('Either `workspace_id` or `path_to_mets` must be set')
 
         self.job_id = job_id  # uuid
         self.processor_name = processor_name  # "ocrd-.*"
@@ -61,7 +61,7 @@ class OcrdProcessingMessage:
         return dumps(ocrd_processing_message)
 
     @staticmethod
-    def decode(ocrd_processing_message: bytes, encoding="utf-8") -> OcrdProcessingMessage:
+    def decode(ocrd_processing_message: bytes, encoding='utf-8') -> OcrdProcessingMessage:
         data = loads(ocrd_processing_message, encoding=encoding)
         return OcrdProcessingMessage(
             job_id=data.job_id,
@@ -89,16 +89,16 @@ class OcrdProcessingMessage:
         msg = ocrd_processing_message.decode('utf-8')
         data = yaml.load(msg, Loader=yaml.Loader)
         return OcrdProcessingMessage(
-            job_id=data.get("job_id", None),
-            processor_name=data.get("processor_name", None),
-            created_time=data.get("created_time", None),
-            path_to_mets=data.get("path_to_mets", None),
-            workspace_id=data.get("workspace_id", None),
-            input_file_grps=data.get("input_file_grps", None),
-            output_file_grps=data.get("output_file_grps", None),
-            page_id=data.get("page_id", None),
-            parameters=data.get("parameters", None),
-            result_queue_name=data.get("result_queue", None),
+            job_id=data.get('job_id', None),
+            processor_name=data.get('processor_name', None),
+            created_time=data.get('created_time', None),
+            path_to_mets=data.get('path_to_mets', None),
+            workspace_id=data.get('workspace_id', None),
+            input_file_grps=data.get('input_file_grps', None),
+            output_file_grps=data.get('output_file_grps', None),
+            page_id=data.get('page_id', None),
+            parameters=data.get('parameters', None),
+            result_queue_name=data.get('result_queue', None),
         )
 
     @staticmethod
@@ -131,7 +131,7 @@ class OcrdResultMessage:
         return dumps(ocrd_result_message)
 
     @staticmethod
-    def decode(ocrd_result_message: bytes, encoding="utf-8") -> OcrdResultMessage:
+    def decode(ocrd_result_message: bytes, encoding='utf-8') -> OcrdResultMessage:
         data = loads(ocrd_result_message, encoding=encoding)
         return OcrdResultMessage(
             job_id=data.job_id,

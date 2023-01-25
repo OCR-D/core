@@ -34,9 +34,9 @@ class ProcessingWorker:
 
         try:
             self.db_url = verify_database_url(mongodb_addr)
-            self.log.debug(f"Verified MongoDB URL: {self.db_url}")
+            self.log.debug(f'Verified MongoDB URL: {self.db_url}')
             self.rmq_host, self.rmq_port, self.rmq_vhost = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
-            self.log.debug(f"Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+            self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         except ValueError as e:
             raise ValueError(e)
 
@@ -56,13 +56,13 @@ class ProcessingWorker:
         #  the message queue with name {processor_name}-result, the RMQPublisher should be instantiated
         #  self.rmq_publisher = None
 
-    def connect_consumer(self, username="default", password="default"):
-        self.log.debug(f"Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+    def connect_consumer(self, username='default', password='default'):
+        self.log.debug(f'Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
-        self.log.debug(f"RMQConsumer authenticates with username: {username}, password: {password}")
+        self.log.debug(f'RMQConsumer authenticates with username: {username}, password: {password}')
         self.rmq_consumer.authenticate_and_connect(username=username, password=password)
-        self.log.debug(f"Successfully connected RMQConsumer.")
+        self.log.debug(f'Successfully connected RMQConsumer.')
 
     # Define what happens every time a message is consumed
     # from the queue with name self.processor_name
@@ -77,56 +77,56 @@ class ProcessingWorker:
         is_redelivered: bool = delivery.redelivered
         message_headers: dict = properties.headers
 
-        self.log.debug(f"Consumer tag: {consumer_tag}")
-        self.log.debug(f"Message delivery tag: {delivery_tag}")
-        self.log.debug(f"Is redelivered message: {is_redelivered}")
-        self.log.debug(f"Message headers: {message_headers}")
+        self.log.debug(f'Consumer tag: {consumer_tag}')
+        self.log.debug(f'Message delivery tag: {delivery_tag}')
+        self.log.debug(f'Is redelivered message: {is_redelivered}')
+        self.log.debug(f'Message headers: {message_headers}')
 
         try:
-            self.log.debug(f"Trying to decode processing message with tag: {delivery_tag}")
+            self.log.debug(f'Trying to decode processing message with tag: {delivery_tag}')
             # TODO: switch back to pickle?!
             processing_message: OcrdProcessingMessage = OcrdProcessingMessage.decode_yml(body)
         except Exception as e:
-            self.log.error(f"Failed to decode processing message body: {body}")
-            self.log.error(f"Nacking processing message with tag: {delivery_tag}")
+            self.log.error(f'Failed to decode processing message body: {body}')
+            self.log.error(f'Nacking processing message with tag: {delivery_tag}')
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
-            raise Exception(f"Failed to decode processing message with tag: {delivery_tag}, reason: {e}")
+            raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
 
         try:
             # TODO: Note to peer: ideally we should avoid doing database related actions
             #  in this method, and handle database related interactions inside `self.process_message()`
-            self.log.debug(f"Starting to process the received message: {processing_message}")
+            self.log.debug(f'Starting to process the received message: {processing_message}')
             self.process_message(processing_message=processing_message)
         except Exception as e:
-            self.log.error(f"Failed to process processing message with tag: {delivery_tag}")
-            self.log.error(f"Nacking processing message with tag: {delivery_tag}")
+            self.log.error(f'Failed to process processing message with tag: {delivery_tag}')
+            self.log.error(f'Nacking processing message with tag: {delivery_tag}')
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
-            raise Exception(f"Failed to process processing message with tag: {delivery_tag}, reason: {e}")
+            raise Exception(f'Failed to process processing message with tag: {delivery_tag}, reason: {e}')
 
-        self.log.debug(f"Successfully processed message ")
-        self.log.debug(f"Acking message with tag: {delivery_tag}")
+        self.log.debug(f'Successfully processed message ')
+        self.log.debug(f'Acking message with tag: {delivery_tag}')
         channel.basic_ack(delivery_tag=delivery_tag, multiple=False)
 
     def start_consuming(self) -> None:
         if self.rmq_consumer:
-            self.log.debug(f"Configuring consuming from queue: {self.processor_name}")
+            self.log.debug(f'Configuring consuming from queue: {self.processor_name}')
             self.rmq_consumer.configure_consuming(
                 queue_name=self.processor_name,
                 callback_method=self.on_consumed_message
             )
-            self.log.debug(f"Starting consuming from queue: {self.processor_name}")
+            self.log.debug(f'Starting consuming from queue: {self.processor_name}')
             # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
         else:
-            raise Exception("The RMQConsumer is not connected/configured properly")
+            raise Exception('The RMQConsumer is not connected/configured properly')
 
     # TODO: Better error handling required to catch exceptions
     def process_message(self, processing_message: OcrdProcessingMessage):
         # Verify that the processor name in the processing message
         # matches the processor name of the current processing worker
         if self.processor_name != processing_message.processor_name:
-            raise ValueError(f"Processor name is not matching. "
-                             f"Expected: {self.processor_name}, Got: {processing_message.processor_name}")
+            raise ValueError(f'Processor name is not matching. '
+                             f'Expected: {self.processor_name}, Got: {processing_message.processor_name}')
 
         # This can be path if invoking `run_processor`
         # but must be ocrd.Workspace if invoking `run_cli`.
@@ -145,12 +145,12 @@ class ProcessingWorker:
         job_id = processing_message.job_id
 
         if processing_message.result_queue:
-            self.log.warning(f"Publishing results to a message queue from the Processing Worker is not supported yet")
+            self.log.warning(f'Publishing results to a message queue from the Processing Worker is not supported yet')
 
         # TODO: Currently, no caching is performed.
         if self.processor_class:
-            self.log.debug(f"Invoking the pythonic processor: {self.processor_name}")
-            self.log.debug(f"Invoking the processor_class: {self.processor_class}")
+            self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
+            self.log.debug(f'Invoking the processor_class: {self.processor_class}')
             self.run_processor_from_worker(
                 processor_class=self.processor_class,
                 workspace=workspace,
@@ -160,7 +160,7 @@ class ProcessingWorker:
                 parameter=parameter
             )
         else:
-            self.log.debug(f"Invoking the cli: {self.processor_name}")
+            self.log.debug(f'Invoking the cli: {self.processor_name}')
             self.run_cli_from_worker(
                 executable=self.processor_name,
                 workspace=workspace,

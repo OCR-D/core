@@ -75,9 +75,9 @@ class Deployer:
         self.kill_rabbitmq()
 
     def deploy_hosts(self, hosts: List[HostConfig], rabbitmq_url: str, mongodb_url: str) -> None:
-        self.log.debug("Starting to deploy hosts")
+        self.log.debug('Starting to deploy hosts')
         for host in hosts:
-            self.log.debug(f"Deploying processing workers on host: {host.address}")
+            self.log.debug(f'Deploying processing workers on host: {host.address}')
             for processor in host.processors:
                 self._deploy_processing_worker(processor, host, rabbitmq_url, mongodb_url)
             # TODO: These connections, just like the PIDs, should not be kept in the config data classes
@@ -92,8 +92,8 @@ class Deployer:
     def _deploy_processing_worker(self, processor: ProcessorConfig, host: HostConfig,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
 
-        self.log.debug(f'deploy "{processor.deploy_type}" processor: "{processor}" on'
-                       f'"{host.address}"')
+        self.log.debug(f'deploy \'{processor.deploy_type}\' processor: \'{processor}\' on'
+                       f'\'{host.address}\'')
         assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
                                    '{host.__dict__}. Processor: {processor.__dict__}'
 
@@ -106,7 +106,7 @@ class Deployer:
                 host.docker_client = create_docker_client(host.address, host.username, host.password, host.keypath)
         else:
             # Error case, should never enter here. Handle error cases here (if needed)
-            self.log.error(f"Failed to deploy: {processor.name}. The deploy type is unknown.")
+            self.log.error(f'Failed to deploy: {processor.name}. The deploy type is unknown.')
             pass
 
         for _ in range(processor.count):
@@ -132,7 +132,7 @@ class Deployer:
             else:
                 # TODO: Weirdly there is a duplication of code inside this method
                 # Error case, should never enter here. Handle error cases here (if needed)
-                self.log.error(f"Failed to deploy: {processor.name}. The deploy type is unknown.")
+                self.log.error(f'Failed to deploy: {processor.name}. The deploy type is unknown.')
                 pass
 
     def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
@@ -142,12 +142,12 @@ class Deployer:
         # Handling of creation of queues, submitting messages to queues,
         # and receiving messages from queues is part of the RabbitMQ Library
         # Which is part of the OCR-D WebAPI implementation.
-        self.log.debug(f"Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]")
+        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
 
         if not self.mongo_data or not self.mongo_data.address:
-            self.log.error(f"Deploying RabbitMQ has failed - missing configuration.")
+            self.log.error(f'Deploying RabbitMQ has failed - missing configuration.')
             # TODO: Raise an error instead of silently ignoring it
-            return ""
+            return ''
 
         client = create_docker_client(self.mq_data.address, self.mq_data.username,
                                       self.mq_data.password, self.mq_data.keypath)
@@ -161,7 +161,7 @@ class Deployer:
                 15672: 15672,
                 25672: 25672
             }
-        self.log.debug(f"Ports mapping: {ports_mapping}")
+        self.log.debug(f'Ports mapping: {ports_mapping}')
         res = client.containers.run(
             image=image,
             detach=detach,
@@ -181,10 +181,10 @@ class Deployer:
         # Build the RabbitMQ Server URL to return
         rmq_host = self.mq_data.address
         rmq_port = self.mq_data.port
-        rmq_vhost = "/"  # the default virtual host
+        rmq_vhost = '/'  # the default virtual host
 
-        rabbitmq_url = f"{rmq_host}:{rmq_port}{rmq_vhost}"
-        self.log.debug(f"The RabbitMQ server was deployed on url: {rabbitmq_url}")
+        rabbitmq_url = f'{rmq_host}:{rmq_port}{rmq_vhost}'
+        self.log.debug(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
         return rabbitmq_url
 
     def init_rabbitmq(self, client: CustomDockerClient, rabbitmq_id: str):
@@ -201,12 +201,12 @@ class Deployer:
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
                         ports_mapping: Union[Dict, None] = None) -> str:
-        self.log.debug(f"Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]")
+        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
 
         if not self.mongo_data or not self.mongo_data.address:
-            self.log.error(f"Deploying MongoDB has failed - missing configuration.")
+            self.log.error(f'Deploying MongoDB has failed - missing configuration.')
             # TODO: Raise an error instead of silently ignoring it
-            return ""
+            return ''
 
         client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
                                       self.mongo_data.password, self.mongo_data.keypath)
@@ -214,7 +214,7 @@ class Deployer:
             ports_mapping = {
                 27017: self.mongo_data.port
             }
-        self.log.debug(f"Ports mapping: {ports_mapping}")
+        self.log.debug(f'Ports mapping: {ports_mapping}')
         # TODO: use rm here or not? Should the mongodb be reused?
         # TODO: what about the data-dir? Must data be preserved?
         res = client.containers.run(
@@ -229,20 +229,20 @@ class Deployer:
         client.close()
 
         # Build the MongoDB URL to return
-        mongodb_prefix = "mongodb://"
+        mongodb_prefix = 'mongodb://'
         mongodb_host = self.mongo_data.address
         mongodb_port = self.mongo_data.port
-        mongodb_url = f"{mongodb_prefix}{mongodb_host}:{mongodb_port}"
-        self.log.debug(f"The MongoDB was deployed on url: {mongodb_url}")
+        mongodb_url = f'{mongodb_prefix}{mongodb_host}:{mongodb_port}'
+        self.log.debug(f'The MongoDB was deployed on url: {mongodb_url}')
         return mongodb_url
 
     def kill_rabbitmq(self) -> None:
         # TODO: The PID must not be stored in the configuration `mq_data`.
         if not self.mq_data or not self.mq_data.pid:
-            self.log.warning(f"No running RabbitMQ instance found")
+            self.log.warning(f'No running RabbitMQ instance found')
             # TODO: Ignoring this silently is problematic in the future
             return
-        self.log.debug(f"Trying to stop the deployed RabbitMQ with PID: {self.mq_data.pid}")
+        self.log.debug(f'Trying to stop the deployed RabbitMQ with PID: {self.mq_data.pid}')
 
         client = create_docker_client(self.mq_data.address, self.mq_data.username,
                                       self.mq_data.password, self.mq_data.keypath)
@@ -254,10 +254,10 @@ class Deployer:
     def kill_mongodb(self) -> None:
         # TODO: The PID must not be stored in the configuration `mongo_data`.
         if not self.mongo_data or not self.mongo_data.pid:
-            self.log.warning(f"No running MongoDB instance found")
+            self.log.warning(f'No running MongoDB instance found')
             # TODO: Ignoring this silently is problematic in the future
             return
-        self.log.debug(f"Trying to stop the deployed MongoDB with PID: {self.mongo_data.pid}")
+        self.log.debug(f'Trying to stop the deployed MongoDB with PID: {self.mongo_data.pid}')
 
         client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
                                       self.mongo_data.password, self.mongo_data.keypath)
@@ -267,10 +267,10 @@ class Deployer:
         self.log.debug('The MongoDB is stopped')
 
     def kill_hosts(self) -> None:
-        self.log.debug("Starting to kill/stop hosts")
+        self.log.debug('Starting to kill/stop hosts')
         # Kill processing hosts
         for host in self.hosts:
-            self.log.debug(f"Killing/Stopping processing workers on host: {host.address}")
+            self.log.debug(f'Killing/Stopping processing workers on host: {host.address}')
             if host.ssh_client:
                 host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
             if host.docker_client:
@@ -293,7 +293,7 @@ class Deployer:
                     host.docker_client.containers.get(pid).stop()
             else:
                 # Error case, should never enter here. Handle error cases here (if needed)
-                self.log.error(f"Failed to kill: {processor.name}. The deploy type is unknown.")
+                self.log.error(f'Failed to kill: {processor.name}. The deploy type is unknown.')
                 pass
             processor.pids = []
 
@@ -331,7 +331,7 @@ class Deployer:
             path = Path(bin_dir) / processor_name
         else:
             path = processor_name
-        cmd = f"{path} --database {database_url} --queue {queue_url}"
+        cmd = f'{path} --database {database_url} --queue {queue_url}'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
 	# printed with `echo $!` but it is printed inbetween other output. Because of that I added
@@ -339,7 +339,7 @@ class Deployer:
 	# returning from the function
         stdin.write(f'{cmd} & \n echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
-        self.log.debug(f"Output for processor {processor_name}: {output}")
+        self.log.debug(f'Output for processor {processor_name}: {output}')
         stdout.close()
         stdin.close()
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
@@ -348,7 +348,7 @@ class Deployer:
                                processor_name: str, queue_url: str, database_url: str) -> str:
         self.log.debug(f'Starting docker container processor: {processor_name}')
         # TODO: queue_url and database_url are ready to be used
-        self.log.debug(f"The processor connects to queue: {queue_url} and mongodb: {database_url}")
+        self.log.debug(f'The processor connects to queue: {queue_url} and mongodb: {database_url}')
         # TODO: add real command here to start processing server here
         res = client.containers.run('debian', 'sleep 500s', detach=True, remove=True)
         assert res and res.id, f'Running processor: {processor_name} in docker-container failed'

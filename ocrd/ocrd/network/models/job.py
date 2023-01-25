@@ -31,13 +31,13 @@ class JobInput(BaseModel):
 
     class Config:
         schema_extra = {
-            "example": {
-                "path": "/path/to/mets.xml",
-                "description": "The description of this execution",
-                "input_file_grps": ["INPUT_FILE_GROUP"],
-                "output_file_grps": ["OUTPUT_FILE_GROUP"],
-                "page_id": "PAGE_ID",
-                "parameters": {}
+            'example': {
+                'path': '/path/to/mets.xml',
+                'description': 'The description of this execution',
+                'input_file_grps': ['INPUT_FILE_GROUP'],
+                'output_file_grps': ['OUTPUT_FILE_GROUP'],
+                'page_id': 'PAGE_ID',
+                'parameters': {}
             }
         }
 

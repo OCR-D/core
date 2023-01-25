@@ -2,11 +2,11 @@
 # https://github.com/OCR-D/ocrd-webapi-implementation/tree/main/ocrd_webapi/rabbitmq
 
 __all__ = [
-  "RMQConsumer",
-  "RMQConnector",
-  "RMQPublisher",
-  "OcrdProcessingMessage",
-  "OcrdResultMessage"
+  'RMQConsumer',
+  'RMQConnector',
+  'RMQPublisher',
+  'OcrdProcessingMessage',
+  'OcrdResultMessage'
 ]
 
 from .consumer import RMQConsumer

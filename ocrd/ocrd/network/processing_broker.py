@@ -43,9 +43,9 @@ class ProcessingBroker(FastAPI):
         #  above instead of using the hard coded ones below
 
         # RabbitMQ related fields, hard coded initially
-        self.rmq_host = "localhost"
+        self.rmq_host = 'localhost'
         self.rmq_port = 5672
-        self.rmq_vhost = "/"
+        self.rmq_vhost = '/'
 
         # Gets assigned when `connect_publisher` is called on the working object
         # Note for peer: Check under self.start()
@@ -100,7 +100,7 @@ class ProcessingBroker(FastAPI):
         # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
         self.connect_publisher()
 
-        self.log.debug(f"Starting to create message queues on RabbitMQ instance url: {rabbitmq_url}")
+        self.log.debug(f'Starting to create message queues on RabbitMQ instance url: {rabbitmq_url}')
         self.create_message_queues()
 
         # Deploy processing hosts where processing workers are running on
@@ -116,7 +116,7 @@ class ProcessingBroker(FastAPI):
             obj = safe_load(fin)
         report = ProcessingBrokerValidator.validate(obj)
         if not report.is_valid:
-            raise Exception(f"Processing-Broker configuration file is invalid:\n{report.errors}")
+            raise Exception(f'Processing-Broker configuration file is invalid:\n{report.errors}')
         return ProcessingBrokerConfig(obj)
 
     async def on_shutdown(self) -> None:
@@ -141,18 +141,18 @@ class ProcessingBroker(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
-    def connect_publisher(self, username="default", password="default", enable_acks=True):
-        self.log.debug(f"Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+    def connect_publisher(self, username='default', password='default', enable_acks=True):
+        self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
-        self.log.debug(f"RMQPublisher authenticates with username: {username}, password: {password}")
+        self.log.debug(f'RMQPublisher authenticates with username: {username}, password: {password}')
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
-            self.log.debug(f"Delivery confirmations are enabled")
+            self.log.debug(f'Delivery confirmations are enabled')
         else:
-            self.log.debug(f"Delivery confirmations are disabled")
-        self.log.debug(f"Successfully connected RMQPublisher.")
+            self.log.debug(f'Delivery confirmations are disabled')
+        self.log.debug(f'Successfully connected RMQPublisher.')
 
     def create_message_queues(self):
         # Create the message queues based on the occurrence of `processor.name` in the config file
@@ -160,7 +160,7 @@ class ProcessingBroker(FastAPI):
             for processor in host.processors:
                 # The existence/validity of the processor.name is not tested.
                 # Even if an ocr-d processor does not exist, the queue is created
-                self.log.debug(f"Creating a message queue with id: {processor.name}")
+                self.log.debug(f'Creating a message queue with id: {processor.name}')
                 # TODO: We may want to track here if there are already queues with the same name
                 self.rmq_publisher.create_queue(queue_name=processor.name)
 
@@ -170,11 +170,11 @@ class ProcessingBroker(FastAPI):
         # TODO: switch back to pickle?!
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
-            self.log.debug("Publishing the default processing message")
+            self.log.debug('Publishing the default processing message')
             self.rmq_publisher.publish_to_queue(queue_name=queue_name, message=encoded_processing_message)
         else:
-            self.log.error("RMQPublisher is not connected")
-            raise Exception("RMQPublisher is not connected")
+            self.log.error('RMQPublisher is not connected')
+            raise Exception('RMQPublisher is not connected')
 
     # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
     def run_processor(self, processor_name: str, p_args: ProcessorArgs) -> ProcessorJob:

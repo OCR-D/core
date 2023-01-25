@@ -62,12 +62,12 @@ class RMQPublisher(RMQConnector):
         while True:
             try:
                 messages = 1
-                message = f"#{messages}"
+                message = f'#{messages}'
                 self.publish_to_queue(queue_name=DEFAULT_ROUTER, message=message)
                 messages += 1
                 sleep(2)
             except KeyboardInterrupt:
-                self._logger.info("Keyboard interruption detected. Closing down peacefully.")
+                self._logger.info('Keyboard interruption detected. Closing down peacefully.')
                 exit(0)
             # TODO: Clean leftovers here and inform the RabbitMQ
             #  server about the disconnection of the publisher
@@ -86,7 +86,7 @@ class RMQPublisher(RMQConnector):
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if exchange_type is None:
-            exchange_type = "direct"
+            exchange_type = 'direct'
 
         RMQConnector.exchange_declare(
             channel=self._channel,
@@ -177,12 +177,12 @@ class RMQPublisher(RMQConnector):
 def main():
     # Connect to localhost:5672 by
     # using the virtual host "/" (%2F)
-    publisher = RMQPublisher(host="localhost", port=5672, vhost="/")
+    publisher = RMQPublisher(host='localhost', port=5672, vhost='/')
     # Configured with definitions.json when building the RabbitMQ image
     # Check Dockerfile-RabbitMQ
     publisher.authenticate_and_connect(
-        username="default-publisher",
-        password="default-publisher"
+        username='default-publisher',
+        password='default-publisher'
     )
     publisher.setup_defaults()
     publisher.enable_delivery_confirmations()
