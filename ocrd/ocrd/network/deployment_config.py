@@ -14,7 +14,7 @@ __all__ = [
 
 
 class ProcessingBrokerConfig:
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         self.mongo_config = MongoConfig(config['mongo_db'])
         self.queue_config = QueueConfig(config['message_queue'])
         self.hosts_config = []

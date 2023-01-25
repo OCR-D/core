@@ -141,7 +141,8 @@ class ProcessingBroker(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
-    def connect_publisher(self, username='default', password='default', enable_acks=True):
+    def connect_publisher(self, username: str = 'default', password: str = 'default',
+                          enable_acks: bool =True) -> None:
         self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
@@ -149,12 +150,12 @@ class ProcessingBroker(FastAPI):
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
-            self.log.debug(f'Delivery confirmations are enabled')
+            self.log.debug('Delivery confirmations are enabled')
         else:
-            self.log.debug(f'Delivery confirmations are disabled')
-        self.log.debug(f'Successfully connected RMQPublisher.')
+            self.log.debug('Delivery confirmations are disabled')
+        self.log.debug('Successfully connected RMQPublisher.')
 
-    def create_message_queues(self):
+    def create_message_queues(self) -> None:
         # Create the message queues based on the occurrence of `processor.name` in the config file
         for host in self.hosts_config:
             for processor in host.processors:
@@ -164,7 +165,7 @@ class ProcessingBroker(FastAPI):
                 # TODO: We may want to track here if there are already queues with the same name
                 self.rmq_publisher.create_queue(queue_name=processor.name)
 
-    def publish_default_processing_message(self):
+    def publish_default_processing_message(self) -> None:
         processing_message = construct_dummy_processing_message()
         queue_name = processing_message.processor_name
         # TODO: switch back to pickle?!

@@ -11,10 +11,15 @@ from typing import Any, Union
 from pika import (
     PlainCredentials
 )
+from pika.spec import (
+    BasicProperties,
+    Basic,
+)
+from pika.adapters.blocking_connection import BlockingChannel
+
 
 from ocrd.network.rabbitmq_utils.constants import (
     DEFAULT_QUEUE,
-    LOG_FORMAT,
     LOG_LEVEL,
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
@@ -24,8 +29,9 @@ from ocrd.network.rabbitmq_utils.connector import RMQConnector
 
 
 class RMQConsumer(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger_name: str = None):
-        if logger_name is None:
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST,
+                 logger_name: str = '') -> None:
+        if not logger_name:
             logger_name = __name__
         logger = logging.getLogger(logger_name)
         logging.getLogger(logger_name).setLevel(LOG_LEVEL)
@@ -40,7 +46,7 @@ class RMQConsumer(RMQConnector):
 
         self.reconnect_delay = 0
 
-    def authenticate_and_connect(self, username: str, password: str):
+    def authenticate_and_connect(self, username: str, password: str) -> None:
         credentials = PlainCredentials(
             username=username,
             password=password,
@@ -54,10 +60,10 @@ class RMQConsumer(RMQConnector):
         )
         self._channel = RMQConnector.open_blocking_channel(self._connection)
 
-    def setup_defaults(self):
+    def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
 
-    def example_run(self):
+    def example_run(self) -> None:
         self.configure_consuming()
         try:
             self.start_consuming()
@@ -87,13 +93,13 @@ class RMQConsumer(RMQConnector):
 
     def configure_consuming(
             self,
-            queue_name: str = None,
+            queue_name: str = '',
             callback_method: Any = None
-    ):
+    ) -> None:
         self._logger.debug('Issuing consumer related RPC commands')
         self._logger.debug('Adding consumer cancellation callback')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
-        if queue_name is None:
+        if not queue_name:
             queue_name = DEFAULT_QUEUE
         if callback_method is None:
             callback_method = self.__on_message_received
@@ -104,26 +110,27 @@ class RMQConsumer(RMQConnector):
         self.was_consuming = True
         self.consuming = True
 
-    def start_consuming(self):
+    def start_consuming(self) -> None:
         if self._channel and self._channel.is_open:
             self._channel.start_consuming()
 
-    def get_waiting_message_count(self):
+    def get_waiting_message_count(self) -> Union[int, None]:
         if self._channel and self._channel.is_open:
             return self._channel.get_waiting_message_count()
+        return None
 
-    def __on_consumer_cancelled(self, frame: Any):
+    def __on_consumer_cancelled(self, frame: Any) -> None:
         self._logger.warning(f'The consumer was cancelled remotely in frame: {frame}')
         if self._channel:
             self._channel.close()
 
     def __on_message_received(
             self,
-            channel,
-            basic_deliver,
-            properties,
-            body
-    ):
+            channel: BlockingChannel,
+            basic_deliver: Basic.Deliver,
+            properties: BasicProperties,
+            body: bytes
+    ) -> None:
         tag = basic_deliver.delivery_tag
         app_id = properties.app_id
         message = body.decode()
@@ -131,12 +138,12 @@ class RMQConsumer(RMQConnector):
         self._logger.debug(f'Received message on channel: {channel}')
         self.__ack_message(tag)
 
-    def __ack_message(self, delivery_tag):
+    def __ack_message(self, delivery_tag: int) -> None:
         self._logger.debug(f'Acknowledging message {delivery_tag}')
         self._channel.basic_ack(delivery_tag)
 
 
-def main():
+def main() -> None:
     # Connect to localhost:5672 by
     # using the virtual host "/" (%2F)
     consumer = RMQConsumer(host='localhost', port=5672, vhost='/')

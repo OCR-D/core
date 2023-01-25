@@ -26,7 +26,8 @@ from ocrd.network.rabbitmq_utils.connector import RMQConnector
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger_name: str = None):
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST,
+                 logger_name: str = None) -> None:
         if logger_name is None:
             logger_name = __name__
         logger = logging.getLogger(logger_name)
@@ -41,7 +42,7 @@ class RMQPublisher(RMQConnector):
         self.nacked_counter = 0
         self.running = True
 
-    def authenticate_and_connect(self, username: str, password: str):
+    def authenticate_and_connect(self, username: str, password: str) -> None:
         credentials = PlainCredentials(
             username=username,
             password=password,
@@ -55,10 +56,10 @@ class RMQPublisher(RMQConnector):
         )
         self._channel = RMQConnector.open_blocking_channel(self._connection)
 
-    def setup_defaults(self):
+    def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
 
-    def example_run(self):
+    def example_run(self) -> None:
         while True:
             try:
                 messages = 1
@@ -82,7 +83,7 @@ class RMQPublisher(RMQConnector):
             queue_name: str,
             exchange_name: Optional[str] = None,
             exchange_type: Optional[str] = None
-    ):
+    ) -> None:
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if exchange_type is None:
@@ -108,9 +109,10 @@ class RMQPublisher(RMQConnector):
     def publish_to_queue(
             self,
             queue_name: str,
-            message: Any,
+            message: bytes,
             exchange_name: Optional[str] = None,
-            properties: Optional[Any] = None):
+            properties: Optional[BasicProperties] = None
+    ) -> None:
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if properties is None:
@@ -137,20 +139,20 @@ class RMQPublisher(RMQConnector):
         self.deliveries[self.message_counter] = True
         self._logger.info(f'Published message #{self.message_counter}')
 
-    def enable_delivery_confirmations(self):
+    def enable_delivery_confirmations(self) -> None:
         self._logger.debug('Enabling delivery confirmations (Confirm.Select RPC)')
         RMQConnector.confirm_delivery(channel=self._channel)
 
     # TODO: Find a way to use this callback method,
     #  seems not possible with Blocking Connections
-    def __on_delivery_confirmation(self, frame):
+    def __on_delivery_confirmation(self, frame) -> None:
         confirmation_type = frame.method.NAME.split('.')[1].lower()
         delivery_tag: int = frame.method.delivery_tag
         ack_multiple = frame.method.multiple
 
         self._logger.debug(f'Received: {confirmation_type} '
-                          f'for tag: {delivery_tag} '
-                          f'(multiple: {ack_multiple})')
+                           f'for tag: {delivery_tag} '
+                           f'(multiple: {ack_multiple})')
 
         if confirmation_type == 'ack':
             self.acked_counter += 1
@@ -174,7 +176,7 @@ class RMQPublisher(RMQConnector):
             len(self.deliveries), self.acked_counter, self.nacked_counter)
 
 
-def main():
+def main() -> None:
     # Connect to localhost:5672 by
     # using the virtual host "/" (%2F)
     publisher = RMQPublisher(host='localhost', port=5672, vhost='/')

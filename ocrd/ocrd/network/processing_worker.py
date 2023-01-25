@@ -9,7 +9,7 @@
 from frozendict import frozendict
 from functools import lru_cache, wraps
 import json
-from typing import List
+from typing import List, Callable, Type, Union
 
 import pika.spec
 import pika.adapters.blocking_connection
@@ -17,6 +17,7 @@ import pika.adapters.blocking_connection
 from ocrd import Resolver
 from ocrd_utils import getLogger
 from ocrd.processor.helpers import run_cli, run_processor
+from ocrd.processor.base import Processor
 from ocrd.network.helpers import (
     verify_database_url,
     verify_and_parse_rabbitmq_addr
@@ -56,7 +57,7 @@ class ProcessingWorker:
         #  the message queue with name {processor_name}-result, the RMQPublisher should be instantiated
         #  self.rmq_publisher = None
 
-    def connect_consumer(self, username='default', password='default'):
+    def connect_consumer(self, username: str = 'default', password: str = 'default') -> None:
         self.log.debug(f'Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
@@ -121,12 +122,12 @@ class ProcessingWorker:
             raise Exception('The RMQConsumer is not connected/configured properly')
 
     # TODO: Better error handling required to catch exceptions
-    def process_message(self, processing_message: OcrdProcessingMessage):
+    def process_message(self, processing_message: OcrdProcessingMessage) -> None:
         # Verify that the processor name in the processing message
         # matches the processor name of the current processing worker
         if self.processor_name != processing_message.processor_name:
-            raise ValueError(f'Processor name is not matching. '
-                             f'Expected: {self.processor_name}, Got: {processing_message.processor_name}')
+            raise ValueError(f'Processor name is not matching. Expected: {self.processor_name},'
+                             f'Got: {processing_message.processor_name}')
 
         # This can be path if invoking `run_processor`
         # but must be ocrd.Workspace if invoking `run_cli`.
@@ -232,14 +233,14 @@ class ProcessingWorker:
 
 # Method adopted from Triet's implementation
 # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
-def freeze_args(func):
+def freeze_args(func: Callable) -> Callable:
     """
     Transform mutable dictionary into immutable. Useful to be compatible with cache
     Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
     """
 
     @wraps(func)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args, **kwargs) -> Callable:
         args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
         kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
         return func(*args, **kwargs)
@@ -250,7 +251,7 @@ def freeze_args(func):
 # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
 @freeze_args
 @lru_cache(maxsize=32)
-def get_processor(parameter: dict, processor_class=None):
+def get_processor(parameter: dict, processor_class=None) -> Union[Type[Processor], None]:
     """
     Call this function to get back an instance of a processor. The results are cached based on the parameters.
     Args:

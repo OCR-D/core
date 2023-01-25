@@ -25,7 +25,7 @@ class OcrdProcessingMessage:
             page_id: str = None,
             parameters: Dict[str, Any] = None,
             result_queue_name: str = None,
-    ):
+    ) -> None:
         if not job_id:
             raise ValueError('job_id must be set')
         if not processor_name:
@@ -119,7 +119,7 @@ class OcrdProcessingMessage:
 
 
 class OcrdResultMessage:
-    def __init__(self, job_id: str, status: str, workspace_id: str, path_to_mets: str):
+    def __init__(self, job_id: str, status: str, workspace_id: str, path_to_mets: str) -> None:
         self.job_id = job_id
         self.status = status
         # Either of these two below
@@ -131,7 +131,7 @@ class OcrdResultMessage:
         return dumps(ocrd_result_message)
 
     @staticmethod
-    def decode(ocrd_result_message: bytes, encoding='utf-8') -> OcrdResultMessage:
+    def decode(ocrd_result_message: bytes, encoding: str = 'utf-8') -> OcrdResultMessage:
         data = loads(ocrd_result_message, encoding=encoding)
         return OcrdResultMessage(
             job_id=data.job_id,

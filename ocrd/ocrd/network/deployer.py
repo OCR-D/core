@@ -187,7 +187,7 @@ class Deployer:
         self.log.debug(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
         return rabbitmq_url
 
-    def init_rabbitmq(self, client: CustomDockerClient, rabbitmq_id: str):
+    def init_rabbitmq(self, client: CustomDockerClient, rabbitmq_id: str) -> None:
         """ Add users, wait for startup
         """
         # TODO: rabbitmq was started, but needs some time to be ready to use. sleep is working for
