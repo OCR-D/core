@@ -10,7 +10,9 @@ from ocrd_validators import ProcessingBrokerValidator
 from ocrd.network.deployer import Deployer
 from ocrd.network.deployment_config import ProcessingBrokerConfig
 from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
-from ocrd.network.helpers import construct_dummy_processing_message
+from ocrd.network.helpers import construct_dummy_processing_message, get_workspaces_dir
+from ocrd.network.models.processor import ProcessorArgs, ProcessorJob
+from pathlib import Path
 
 
 class ProcessingBroker(FastAPI):
@@ -63,6 +65,15 @@ class ProcessingBroker(FastAPI):
             endpoint=self.publish_default_processing_message,
             methods=['POST'],
             status_code=status.HTTP_202_ACCEPTED
+        )
+
+        self.router.add_api_route(
+            path='/processor/{processor_name}',
+            endpoint=self.run_processor,
+            methods=['POST'],
+            tags=['processing'],
+            status_code=status.HTTP_200_OK,
+            operation_id='runProcessor',
         )
 
     def start(self) -> None:
@@ -164,3 +175,21 @@ class ProcessingBroker(FastAPI):
         else:
             self.log.error("RMQPublisher is not connected")
             raise Exception("RMQPublisher is not connected")
+
+    # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
+    def run_processor(self, processor_name: str, p_args: ProcessorArgs) -> ProcessorJob:
+        # TODO: save job in mongodb and get a job-id this way. Look into how this was done in pr-884
+        job_id = 'dummy-id-1'
+        # TODO: how do we want that stuff with the workspaces to work?
+        workspaces_path = get_workspaces_dir()
+        processing_message = OcrdProcessingMessage.from_params(
+            processor_name, job_id, workspaces_path, p_args
+        )
+        encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
+        if self.rmq_publisher:
+            self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
+        else:
+            raise Exception('RMQPublisher is not connected')
+
+        return ProcessorJob(job_id=job_id, workspace_id=p_args.workspace_id,
+                            processor_name=processor_name)

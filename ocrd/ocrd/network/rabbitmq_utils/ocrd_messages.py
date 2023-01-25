@@ -2,8 +2,10 @@
 from __future__ import annotations
 from datetime import datetime
 from pickle import dumps, loads
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import yaml
+from ocrd.network.models.processor import ProcessorArgs
+from pathlib import Path
 
 
 # TODO: Maybe there is a more compact way to achieve the serialization/deserialization?
@@ -44,11 +46,11 @@ class OcrdProcessingMessage:
         self.input_file_grps = input_file_grps
         self.output_file_grps = output_file_grps
         # e.g., "PHYS_0005..PHYS_0010" will process only pages between 5-10
-        self.page_id = page_id
+        self.page_id = page_id if page_id else None
         # e.g., "ocrd-cis-ocropy-binarize-result"
         self.result_queue = result_queue_name
         # processor parameters
-        self.parameters = parameters
+        self.parameters = parameters if parameters else None
         self.created_time = created_time
 
     # TODO: Implement the validator checks, e.g.,
@@ -97,6 +99,22 @@ class OcrdProcessingMessage:
             page_id=data.get("page_id", None),
             parameters=data.get("parameters", None),
             result_queue_name=data.get("result_queue", None),
+        )
+
+    @staticmethod
+    def from_params(processor_name: str, job_id: str, workspaces_dir: str, p_args: ProcessorArgs
+                    ) -> OcrdProcessingMessage:
+        input_file_grps = [x.strip() for x in filter(None, p_args.input_file_grps.split(','))]
+        output_file_grps = [x.strip() for x in filter(None, p_args.output_file_grps.split(','))]
+        return OcrdProcessingMessage(
+            job_id=job_id,
+            processor_name=processor_name,
+            path_to_mets=str(Path(workspaces_dir) / p_args.workspace_id / 'mets.xml'),
+            workspace_id=p_args.workspace_id,
+            input_file_grps=input_file_grps,
+            output_file_grps=output_file_grps,
+            page_id=p_args.page_id,
+            parameters=p_args.parameters,
         )
 
 

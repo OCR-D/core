@@ -1,5 +1,8 @@
 from typing import Tuple
 from re import split
+from pathlib import Path
+from os import environ
+from os.path import join, exists
 
 from ocrd.network.rabbitmq_utils import (
     OcrdProcessingMessage,
@@ -39,6 +42,23 @@ def verify_and_parse_rabbitmq_addr(rabbitmq_address: str) -> Tuple[str, int, str
         return rmq_host, rmq_port, rmq_vhost
 
     raise ValueError("The RabbitMQ address is in wrong format. Expected format: {host}:{port}/{vhost}")
+
+
+def get_workspaces_dir() -> str:
+    """get the path to the workspaces folder
+
+    The processing-workers must have access to the workspaces. First idea is that they are provided
+    via nfs and allways available under $XDG_DATA_HOME/ocrd-workspaces. This function provides the
+    absolute path to the folder and raises a ValueError if it is not available
+    """
+    if 'XDG_DATA_HOME' in environ:
+        xdg_data_home = environ['XDG_DATA_HOME']
+    else:
+        xdg_data_home = join(environ['HOME'], '.local', 'share')
+    res = join(xdg_data_home, 'ocrd-workspaces')
+    if not exists(res):
+        raise ValueError('Ocrd-Workspaces directory not found. Expected \'{res}\'')
+    return res
 
 
 def construct_dummy_processing_message() -> OcrdProcessingMessage:
