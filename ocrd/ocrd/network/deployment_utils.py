@@ -5,7 +5,6 @@ from typing import Union
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
-import urllib.parse
 
 from ocrd_utils import getLogger
 
@@ -38,15 +37,24 @@ class CustomDockerClient(DockerClient):
     XXX: inspired by https://github.com/docker/docker-py/issues/2416 . Should be replaced when
     docker-sdk provides its own way to make it possible to use custom SSH Credentials. Possible
     Problems: APIClient must be given the API-version because it cannot connect prior to read it. I
-    could imagine this could cause Problems
+    could imagine this could cause Problems. This is not a rushed implementation and was the only
+    workaround I could find that allows password/keyfile to be used (by default only keyfile from
+    ~/.ssh/config can be used to authentificate via ssh)
+
+    XXX 2: Reasons to extend DockerClient: The code-changes regarding the connection should be in
+    one place so I decided to create `CustomSshHttpAdapter` as an inner class. The super
+    constructor *must not* be called to make this workaround work. Otherwise the APIClient
+    constructor would be invoced without `version` and that would cause a connection-attempt before
+    this workaround can be applied.
     """
 
     def __init__(self, user: str, host: str, **kwargs) -> None:
-        # TODO: Call to the super class __init__ is missing here,
-        #  may this potentially become an issue?
+        # the super-constructor is not called on purpose: it solely instantiates the APIClient. The
+        # missing `version` in that call would raise an error. APIClient is provided here as a
+        # replacement for what the super-constructor does
         if not user or not host:
             raise ValueError('Missing argument: user and host must both be provided')
-        if not 'password' in kwargs and not 'keypath' in kwargs:
+        if 'password' not in kwargs and 'keypath' not in kwargs:
             raise ValueError('Missing argument: one of password and keyfile is needed')
         self.api = APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
         ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
@@ -64,15 +72,9 @@ class CustomDockerClient(DockerClient):
         def _create_paramiko_client(self, base_url: str) -> None:
             """
             this method is called in the superclass constructor. Overwriting allows to set
-            password/keypath for internal paramiko-client
+            password/keypath for the internal paramiko-client
             """
-            self.ssh_client = SSHClient()
-            parsed_base_url = urllib.parse.urlparse(base_url)
-            self.ssh_params = {
-                'hostname': parsed_base_url.hostname,
-                'port': parsed_base_url.port,
-                'username': parsed_base_url.username,
-            }
+            super()._create_paramiko_client(base_url)
             if self.password:
                 self.ssh_params['password'] = self.password
             elif self.keypath:
