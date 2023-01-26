@@ -14,7 +14,7 @@ from ocrd.network.helpers import construct_dummy_processing_message, get_workspa
 from ocrd.network.models.processor import ProcessorArgs, ProcessorJob
 from pathlib import Path
 
-
+# TODO: rename to ProcessingServer (module-file too)
 class ProcessingBroker(FastAPI):
     """
     TODO: doc for ProcessingBroker and its methods

@@ -11,6 +11,7 @@ from ocrd.network import ProcessingBroker
 import logging
 
 
+# TODO: rename to processing-server
 @click.command('processing-broker')
 @click.argument('path_to_config', required=True, type=click.STRING)
 @click.option('-a', '--address', help='Host (name/IP) and port to bind the Processing-Broker to. Example: localhost:8080', required=True)
