@@ -22,7 +22,6 @@ class StateEnum(str, Enum):
 
 
 class JobInput(BaseModel):
-    processor_name: str
     path: str
     description: Optional[str] = None
     input_file_grps: List[str]
@@ -33,7 +32,6 @@ class JobInput(BaseModel):
     class Config:
         schema_extra = {
             'example': {
-                'processor_name': 'ocrd-dummy',
                 'path': '/path/to/mets.xml',
                 'description': 'The description of this execution',
                 'input_file_grps': ['INPUT_FILE_GROUP'],

@@ -1,8 +1,7 @@
 from fastapi import FastAPI, status, HTTPException
 import uvicorn
-from time import sleep
 from yaml import safe_load
-from typing import List
+from typing import Dict
 
 from ocrd_utils import (
     getLogger,
@@ -13,11 +12,11 @@ from ocrd_validators import ProcessingBrokerValidator
 from ocrd.network.deployer import Deployer
 from ocrd.network.deployment_config import ProcessingBrokerConfig
 from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
-from ocrd.network.helpers import construct_dummy_processing_message, get_workspaces_dir
+from ocrd.network.helpers import construct_dummy_processing_message
 from ocrd.network.models.job import Job, JobInput, StateEnum
-from pathlib import Path
 from ocrd_validators import ParameterValidator
 from ocrd.network.database import initiate_database
+from beanie import PydanticObjectId
 
 
 # TODO: rename to ProcessingServer (module-file too)
@@ -57,6 +56,7 @@ class ProcessingBroker(FastAPI):
         # Note for peer: Check under self.start()
         self.rmq_publisher = None
 
+        # Create routes
         self.router.add_api_route(
             path='/stop',
             endpoint=self.stop_deployed_agents,
@@ -74,7 +74,7 @@ class ProcessingBroker(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/process',
+            path='/process/{processor_name}',
             endpoint=self.run_processor,
             methods=['POST'],
             tags=['processing'],
@@ -83,6 +83,27 @@ class ProcessingBroker(FastAPI):
             response_model=Job,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/process/{processor_name}/{job_id}',
+            endpoint=self.get_job,
+            methods=['GET'],
+            tags=['Processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get information about a job based on its ID',
+            response_model=Job,
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/process/{processor_name}',
+            endpoint=self.get_processor_info,
+            methods=['GET'],
+            tags=['Processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get information about this processor.',
         )
 
     def start(self) -> None:
@@ -184,19 +205,20 @@ class ProcessingBroker(FastAPI):
             raise Exception('RMQPublisher is not connected')
 
     # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
-    async def run_processor(self, data: JobInput) -> Job:
+    async def run_processor(self, processor_name: str, data: JobInput) -> Job:
         # TODO: save job in mongodb and get a job-id this way. Look into how this was done in pr-884
-        job = Job(**data.dict(exclude_unset=True, exclude_none=True), state=StateEnum.queued)
+        job = Job(**data.dict(exclude_unset=True, exclude_none=True), processor_name=processor_name,
+                  state=StateEnum.queued)
         await job.insert()
 
         if data.parameters:
             # this validation with ocrd-tool also ensures that the processor is available
-            ocrd_tool = get_ocrd_tool_json(job.processor_name)
+            ocrd_tool = get_ocrd_tool_json(processor_name)
             if not ocrd_tool:
                 #       is available but it's ocr-d-tool is not?
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=(f'Processor \'{job.processor_name}\' not available. It\'s ocrd_tool is '
+                    detail=(f'Processor \'{processor_name}\' not available. It\'s ocrd_tool is '
                             'empty or missing')
                 )
             validator = ParameterValidator(ocrd_tool)
@@ -209,7 +231,20 @@ class ProcessingBroker(FastAPI):
         processing_message = OcrdProcessingMessage.from_job(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
-            self.rmq_publisher.publish_to_queue(job.processor_name, encoded_processing_message)
+            self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
         else:
             raise Exception('RMQPublisher is not connected')
         return job
+
+    async def get_processor_info(self, processor_name) -> Dict:
+        return get_ocrd_tool_json(processor_name)
+
+    async def get_job(self, processor_name: str, job_id: PydanticObjectId) -> Job:
+        # TODO: the state has to be set after processing is finished somewhere/somehow/sometime
+        job = await Job.get(job_id)
+        if job:
+            return job
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Job not found.'
+        )
