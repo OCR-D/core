@@ -155,14 +155,11 @@ class ProcessingBroker(FastAPI):
         self.log.debug('das mit der Datenbank ist durch')
 
     async def on_shutdown(self) -> None:
-        # TODO: shutdown docker containers
         """
         - hosts and pids should be stored somewhere
         - ensure queue is empty or processor is not currently running
         - connect to hosts and kill pids
         """
-        # Errors are logged if the logger is configured in a specific way. Seems to conflict with
-        # somehow ocrd-logging-configuration
         await self.stop_deployed_agents()
 
     async def stop_deployed_agents(self) -> None:
@@ -183,7 +180,8 @@ class ProcessingBroker(FastAPI):
         self.log.debug('Successfully connected RMQPublisher.')
 
     def create_message_queues(self) -> None:
-        # Create the message queues based on the occurrence of `processor.name` in the config file
+        """Create the message queues based on the occurrence of `processor.name` in the config file
+        """
         for host in self.hosts_config:
             for processor in host.processors:
                 # The existence/validity of the processor.name is not tested.
@@ -199,14 +197,14 @@ class ProcessingBroker(FastAPI):
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
             self.log.debug('Publishing the default processing message')
-            self.rmq_publisher.publish_to_queue(queue_name=queue_name, message=encoded_processing_message)
+            self.rmq_publisher.publish_to_queue(queue_name=queue_name,
+                                                message=encoded_processing_message)
         else:
             self.log.error('RMQPublisher is not connected')
             raise Exception('RMQPublisher is not connected')
 
     # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
     async def run_processor(self, processor_name: str, data: JobInput) -> Job:
-        # TODO: save job in mongodb and get a job-id this way. Look into how this was done in pr-884
         job = Job(**data.dict(exclude_unset=True, exclude_none=True), processor_name=processor_name,
                   state=StateEnum.queued)
         await job.insert()
@@ -215,7 +213,6 @@ class ProcessingBroker(FastAPI):
             # this validation with ocrd-tool also ensures that the processor is available
             ocrd_tool = get_ocrd_tool_json(processor_name)
             if not ocrd_tool:
-                #       is available but it's ocr-d-tool is not?
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=(f'Processor \'{processor_name}\' not available. It\'s ocrd_tool is '
@@ -240,7 +237,8 @@ class ProcessingBroker(FastAPI):
         return get_ocrd_tool_json(processor_name)
 
     async def get_job(self, processor_name: str, job_id: PydanticObjectId) -> Job:
-        # TODO: the state has to be set after processing is finished somewhere/somehow/sometime
+        # TODO: the state has to be set after processing is finished somewhere in the
+        #       processing-worker or the result_queue must be processd somewhere
         job = await Job.get(job_id)
         if job:
             return job

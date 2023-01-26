@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from paramiko import SSHClient
 from re import search as re_search
 
@@ -12,12 +12,12 @@ from ocrd.network.deployment_utils import (
     CustomDockerClient,
     DeployType,
 )
-from ocrd.network.processing_worker import ProcessingWorker
 import time
 from pathlib import Path
 
 # Abstraction of the Deployment functionality
-# The ProcessingServer (currently still called Broker) provides the configuration parameters to the Deployer agent.
+# The ProcessingServer (currently still called Broker) provides the configuration parameters to the
+# Deployer agent.
 # The Deployer agent deploys the RabbitMQ Server, MongoDB and the Processing Hosts.
 # Each Processing Host may have several Processing Workers.
 # Each Processing Worker is an instance of an OCR-D processor.
@@ -100,14 +100,13 @@ class Deployer:
         # TODO: The check for available ssh or docker connections should probably happen inside `deploy_hosts`
         if processor.deploy_type == DeployType.native:
             if not host.ssh_client:
-                host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
-        elif processor.deploy_type == DeployType.docker:
-            if not host.docker_client:
-                host.docker_client = create_docker_client(host.address, host.username, host.password, host.keypath)
+                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
+                                                    host.keypath)
         else:
-            # Error case, should never enter here. Handle error cases here (if needed)
-            self.log.error(f'Failed to deploy: {processor.name}. The deploy type is unknown.')
-            pass
+            assert processor.deploy_type == DeployType.docker
+            if not host.docker_client:
+                host.docker_client = create_docker_client(host.address, host.username,
+                                                          host.password, host.keypath)
 
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
@@ -120,7 +119,8 @@ class Deployer:
                     bin_dir=host.binpath,
                 )
                 processor.add_started_pid(pid)
-            elif processor.deploy_type == DeployType.docker:
+            else:
+                assert processor.deploy_type == DeployType.docker
                 assert host.docker_client  # to satisfy mypy
                 pid = self.start_docker_processor(
                     client=host.docker_client,
@@ -129,11 +129,6 @@ class Deployer:
                     database_url=mongodb_url
                 )
                 processor.add_started_pid(pid)
-            else:
-                # TODO: Weirdly there is a duplication of code inside this method
-                # Error case, should never enter here. Handle error cases here (if needed)
-                self.log.error(f'Failed to deploy: {processor.name}. The deploy type is unknown.')
-                pass
 
     def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
                         remove: bool = True, ports_mapping: Union[Dict, None] = None) -> str:
@@ -144,10 +139,8 @@ class Deployer:
         # Which is part of the OCR-D WebAPI implementation.
         self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
 
-        if not self.mongo_data or not self.mongo_data.address:
-            self.log.error(f'Deploying RabbitMQ has failed - missing configuration.')
-            # TODO: Raise an error instead of silently ignoring it
-            return ''
+        if not self.mq_data or not self.mq_data.address:
+            raise ValueError('Deploying RabbitMQ has failed - missing configuration.')
 
         client = create_docker_client(self.mq_data.address, self.mq_data.username,
                                       self.mq_data.password, self.mq_data.keypath)
@@ -204,9 +197,7 @@ class Deployer:
         self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
 
         if not self.mongo_data or not self.mongo_data.address:
-            self.log.error(f'Deploying MongoDB has failed - missing configuration.')
-            # TODO: Raise an error instead of silently ignoring it
-            return ''
+            raise ValueError('Deploying MongoDB has failed - missing configuration.')
 
         client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
                                       self.mongo_data.password, self.mongo_data.keypath)
@@ -215,16 +206,16 @@ class Deployer:
                 27017: self.mongo_data.port
             }
         self.log.debug(f'Ports mapping: {ports_mapping}')
-        # TODO: use rm here or not? Should the mongodb be reused?
-        # TODO: what about the data-dir? Must data be preserved?
+        # TODO: what about the data-dir? Must data be preserved between runs?
         res = client.containers.run(
             image=image,
             detach=detach,
             remove=remove,
             ports=ports_mapping
         )
-        assert res and res.id, \
-            f'Failed to start MongoDB docker container on host: {self.mongo_data.address}'
+        if not res or not res.id:
+            raise RuntimeError('Failed to start MongoDB docker container on host: '
+                               f'{self.mongo_data.address}')
         self.mongo_data.pid = res.id
         client.close()
 
@@ -237,10 +228,10 @@ class Deployer:
         return mongodb_url
 
     def kill_rabbitmq(self) -> None:
-        # TODO: The PID must not be stored in the configuration `mq_data`.
+        # TODO: The PID must not be stored in the configuration `mq_data`. Why not?
         if not self.mq_data or not self.mq_data.pid:
             self.log.warning(f'No running RabbitMQ instance found')
-            # TODO: Ignoring this silently is problematic in the future
+            # TODO: Ignoring this silently is problematic in the future. Why?
             return
         self.log.debug(f'Trying to stop the deployed RabbitMQ with PID: {self.mq_data.pid}')
 
@@ -252,10 +243,10 @@ class Deployer:
         self.log.debug('The RabbitMQ is stopped')
 
     def kill_mongodb(self) -> None:
-        # TODO: The PID must not be stored in the configuration `mongo_data`.
+        # TODO: The PID must not be stored in the configuration `mongo_data`. Why not?
         if not self.mongo_data or not self.mongo_data.pid:
             self.log.warning(f'No running MongoDB instance found')
-            # TODO: Ignoring this silently is problematic in the future
+            # TODO: Ignoring this silently is problematic in the future. Why?
             return
         self.log.debug(f'Trying to stop the deployed MongoDB with PID: {self.mongo_data.pid}')
 
@@ -272,9 +263,11 @@ class Deployer:
         for host in self.hosts:
             self.log.debug(f'Killing/Stopping processing workers on host: {host.address}')
             if host.ssh_client:
-                host.ssh_client = create_ssh_client(host.address, host.username, host.password, host.keypath)
+                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
+                                                    host.keypath)
             if host.docker_client:
-                host.docker_client = create_docker_client(host.address, host.username, host.password, host.keypath)
+                host.docker_client = create_docker_client(host.address, host.username,
+                                                          host.password, host.keypath)
             # Kill deployed OCR-D processor instances on this Processing worker host
             self.kill_processing_worker(host)
 
@@ -285,16 +278,13 @@ class Deployer:
                     self.log.debug(f'Trying to kill/stop native processor: {processor.name}, with PID: {pid}')
                     # TODO: For graceful shutdown we may want to send additional parameters to kill
                     host.ssh_client.exec_command(f'kill {pid}')
-            elif processor.deploy_type.is_docker():
+            else:
+                assert processor.deploy_type.is_docker()
                 for pid in processor.pids:
                     self.log.debug(f'Trying to kill/stop docker container processor: {processor.name}, with PID: {pid}')
                     # TODO: think about timeout.
                     #       think about using threads to kill parallelized to reduce waiting time
                     host.docker_client.containers.get(pid).stop()
-            else:
-                # Error case, should never enter here. Handle error cases here (if needed)
-                self.log.error(f'Failed to kill: {processor.name}. The deploy type is unknown.')
-                pass
             processor.pids = []
 
     # Note: Invoking a pythonic processor is slightly different from the description in the spec.
@@ -308,7 +298,7 @@ class Deployer:
     #  E.g., olena-binarize
 
     def start_native_processor(self, client: SSHClient, processor_name: str, queue_url: str,
-                               database_url: str, bin_dir: str = None) -> str:
+                               database_url: str, bin_dir: Optional[str] = None) -> str:
         """ start a processor natively on a host via ssh
 
         Args:
@@ -334,9 +324,9 @@ class Deployer:
         cmd = f'{path} --database {database_url} --queue {queue_url}'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
-	# printed with `echo $!` but it is printed inbetween other output. Because of that I added
-	# `xyz` before and after the code to easily be able to filter out the pid via regex when
-	# returning from the function
+        # printed with `echo $!` but it is printed inbetween other output. Because of that I added
+        # `xyz` before and after the code to easily be able to filter out the pid via regex when
+        # returning from the function
         stdin.write(f'{cmd} & \n echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         self.log.debug(f'Output for processor {processor_name}: {output}')
