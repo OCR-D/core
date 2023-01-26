@@ -1,18 +1,24 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, HTTPException
 import uvicorn
 from time import sleep
 from yaml import safe_load
 from typing import List
 
-from ocrd_utils import getLogger
+from ocrd_utils import (
+    getLogger,
+    get_ocrd_tool_json,
+)
 from ocrd_validators import ProcessingBrokerValidator
 
 from ocrd.network.deployer import Deployer
 from ocrd.network.deployment_config import ProcessingBrokerConfig
 from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from ocrd.network.helpers import construct_dummy_processing_message, get_workspaces_dir
-from ocrd.network.models.processor import ProcessorArgs, ProcessorJob
+from ocrd.network.models.job import Job, JobInput, StateEnum
 from pathlib import Path
+from ocrd_validators import ParameterValidator
+from ocrd.network.database import initiate_database
+
 
 # TODO: rename to ProcessingServer (module-file too)
 class ProcessingBroker(FastAPI):
@@ -22,7 +28,7 @@ class ProcessingBroker(FastAPI):
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
         # TODO: set other args: title, description, version, openapi_tags
-        super().__init__(on_shutdown=[self.on_shutdown])
+        super().__init__(on_startup=[self.on_startup], on_shutdown=[self.on_shutdown])
         self.log = getLogger(__name__)
 
         self.hostname = host
@@ -68,12 +74,15 @@ class ProcessingBroker(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/{processor_name}',
+            path='/process',
             endpoint=self.run_processor,
             methods=['POST'],
             tags=['processing'],
             status_code=status.HTTP_200_OK,
-            operation_id='runProcessor',
+            summary='Submit a job to this processor',
+            response_model=Job,
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True
         )
 
     def start(self) -> None:
@@ -95,7 +104,7 @@ class ProcessingBroker(FastAPI):
         rabbitmq_url = self.deployer.deploy_rabbitmq()
 
         # Deploy the MongoDB, get the URL of the deployed agent
-        mongodb_url = self.deployer.deploy_mongodb()
+        self.mongodb_url = self.deployer.deploy_mongodb()
 
         # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
         self.connect_publisher()
@@ -105,7 +114,7 @@ class ProcessingBroker(FastAPI):
 
         # Deploy processing hosts where processing workers are running on
         # Note: A deployed processing worker starts listening to a message queue with id processor.name
-        self.deployer.deploy_hosts(self.hosts_config, rabbitmq_url, mongodb_url)
+        self.deployer.deploy_hosts(self.hosts_config, rabbitmq_url, self.mongodb_url)
 
         self.log.debug(f'Starting uvicorn: {self.hostname}:{self.port}')
         uvicorn.run(self, host=self.hostname, port=self.port)
@@ -119,6 +128,11 @@ class ProcessingBroker(FastAPI):
             raise Exception(f'Processing-Broker configuration file is invalid:\n{report.errors}')
         return ProcessingBrokerConfig(obj)
 
+    async def on_startup(self):
+        self.log.debug('jetzt kommt das mit der Datenbank')
+        await initiate_database(db_url=self.mongodb_url)
+        self.log.debug('das mit der Datenbank ist durch')
+
     async def on_shutdown(self) -> None:
         # TODO: shutdown docker containers
         """
@@ -126,17 +140,9 @@ class ProcessingBroker(FastAPI):
         - ensure queue is empty or processor is not currently running
         - connect to hosts and kill pids
         """
-        # TODO: remove the try/except before beta. This is only needed for development. All
-        # exceptions this function (on_shutdown) throws are ignored / not printed, when it is used
-        # as shutdown-hook as it is now. So this try/except and logging is neccessary to make them
-        # visible when testing
-        try:
-            await self.stop_deployed_agents()
-        # TODO: This except block is trapping the user if nothing is following after the keyword.
-        #  Is that the expected behaviour here?
-        except:
-            self.log.debug('error stopping processing servers: ', exc_info=True)
-            raise
+        # Errors are logged if the logger is configured in a specific way. Seems to conflict with
+        # somehow ocrd-logging-configuration
+        await self.stop_deployed_agents()
 
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
@@ -178,19 +184,32 @@ class ProcessingBroker(FastAPI):
             raise Exception('RMQPublisher is not connected')
 
     # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
-    def run_processor(self, processor_name: str, p_args: ProcessorArgs) -> ProcessorJob:
+    async def run_processor(self, data: JobInput) -> Job:
         # TODO: save job in mongodb and get a job-id this way. Look into how this was done in pr-884
-        job_id = 'dummy-id-1'
-        # TODO: how do we want that stuff with the workspaces to work?
-        workspaces_path = get_workspaces_dir()
-        processing_message = OcrdProcessingMessage.from_params(
-            processor_name, job_id, workspaces_path, p_args
-        )
+        job = Job(**data.dict(exclude_unset=True, exclude_none=True), state=StateEnum.queued)
+        await job.insert()
+
+        if data.parameters:
+            # this validation with ocrd-tool also ensures that the processor is available
+            ocrd_tool = get_ocrd_tool_json(job.processor_name)
+            if not ocrd_tool:
+                #       is available but it's ocr-d-tool is not?
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=(f'Processor \'{job.processor_name}\' not available. It\'s ocrd_tool is '
+                            'empty or missing')
+                )
+            validator = ParameterValidator(ocrd_tool)
+            report = validator.validate(data.parameters)
+            if not report.is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=report.errors,
+                )
+        processing_message = OcrdProcessingMessage.from_job(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
-            self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
+            self.rmq_publisher.publish_to_queue(job.processor_name, encoded_processing_message)
         else:
             raise Exception('RMQPublisher is not connected')
-
-        return ProcessorJob(job_id=job_id, workspace_id=p_args.workspace_id,
-                            processor_name=processor_name)
+        return job

@@ -22,16 +22,18 @@ class StateEnum(str, Enum):
 
 
 class JobInput(BaseModel):
+    processor_name: str
     path: str
     description: Optional[str] = None
     input_file_grps: List[str]
     output_file_grps: Optional[List[str]]
     page_id: Optional[str] = None
-    parameters: dict = None  # Always set to an empty dict when it's None, otherwise it won't pass the ocrd validation
+    parameters: dict = {}  # Always set to an empty dict when it's None, otherwise it won't pass the ocrd validation
 
     class Config:
         schema_extra = {
             'example': {
+                'processor_name': 'ocrd-dummy',
                 'path': '/path/to/mets.xml',
                 'description': 'The description of this execution',
                 'input_file_grps': ['INPUT_FILE_GROUP'],
@@ -43,6 +45,7 @@ class JobInput(BaseModel):
 
 
 class Job(Document):
+    processor_name: str
     path: str
     description: Optional[str]
     state: StateEnum

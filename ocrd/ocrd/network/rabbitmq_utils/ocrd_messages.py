@@ -4,7 +4,7 @@ from datetime import datetime
 from pickle import dumps, loads
 from typing import Any, Dict, List, Optional
 import yaml
-from ocrd.network.models.processor import ProcessorArgs
+from ocrd.network.models.job import Job
 from pathlib import Path
 
 
@@ -21,7 +21,7 @@ class OcrdProcessingMessage:
             path_to_mets: str = None,
             workspace_id: str = None,
             input_file_grps: List[str] = None,
-            output_file_grps: List[str] = None,
+            output_file_grps: Optional[List[str]] = None,
             page_id: str = None,
             parameters: Dict[str, Any] = None,
             result_queue_name: str = None,
@@ -102,19 +102,15 @@ class OcrdProcessingMessage:
         )
 
     @staticmethod
-    def from_params(processor_name: str, job_id: str, workspaces_dir: str, p_args: ProcessorArgs
-                    ) -> OcrdProcessingMessage:
-        input_file_grps = [x.strip() for x in filter(None, p_args.input_file_grps.split(','))]
-        output_file_grps = [x.strip() for x in filter(None, p_args.output_file_grps.split(','))]
+    def from_job(job: Job) -> OcrdProcessingMessage:
         return OcrdProcessingMessage(
-            job_id=job_id,
-            processor_name=processor_name,
-            path_to_mets=str(Path(workspaces_dir) / p_args.workspace_id / 'mets.xml'),
-            workspace_id=p_args.workspace_id,
-            input_file_grps=input_file_grps,
-            output_file_grps=output_file_grps,
-            page_id=p_args.page_id,
-            parameters=p_args.parameters,
+            job_id=job.id,
+            processor_name=job.processor_name,
+            path_to_mets=job.path,
+            input_file_grps=job.input_file_grps,
+            output_file_grps=job.output_file_grps,
+            page_id=job.page_id,
+            parameters=job.parameters,
         )
 
 
