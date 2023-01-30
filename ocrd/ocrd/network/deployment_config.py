@@ -5,7 +5,7 @@ from typing import List, Dict
 from ocrd.network.deployment_utils import DeployType
 
 __all__ = [
-    'ProcessingBrokerConfig',
+    'ProcessingServerConfig',
     'HostConfig',
     'WorkerConfig',
     'MongoConfig',
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-class ProcessingBrokerConfig:
+class ProcessingServerConfig:
     def __init__(self, config: dict) -> None:
         self.mongo_config = MongoConfig(config['database'])
         self.queue_config = QueueConfig(config['process_queue'])

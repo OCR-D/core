@@ -7,10 +7,10 @@ from ocrd_utils import (
     getLogger,
     get_ocrd_tool_json,
 )
-from ocrd_validators import ProcessingBrokerValidator
+from ocrd_validators import ProcessingServerValidator
 
 from ocrd.network.deployer import Deployer
-from ocrd.network.deployment_config import ProcessingBrokerConfig
+from ocrd.network.deployment_config import ProcessingServerConfig
 from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from ocrd.network.helpers import construct_dummy_processing_message
 from ocrd.network.models.job import Job, JobInput, StateEnum
@@ -21,9 +21,9 @@ from time import sleep
 
 
 # TODO: rename to ProcessingServer (module-file too)
-class ProcessingBroker(FastAPI):
+class ProcessingServer(FastAPI):
     """
-    TODO: doc for ProcessingBroker and its methods
+    TODO: doc for ProcessingServer and its methods
     """
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
@@ -35,7 +35,7 @@ class ProcessingBroker(FastAPI):
         self.port = port
         # TODO: Ideally the parse_config should return a Tuple with the 3 configs assigned below
         #  to prevent passing the entire parsed config around to methods.
-        parsed_config = ProcessingBroker.parse_config(config_path)
+        parsed_config = ProcessingServer.parse_config(config_path)
         self.queue_config = parsed_config.queue_config
         self.mongo_config = parsed_config.mongo_config
         self.hosts_config = parsed_config.hosts_config
@@ -109,12 +109,12 @@ class ProcessingBroker(FastAPI):
 
     def start(self) -> None:
         """
-        deploy things and start the processing broker (aka server) with uvicorn
+        deploy things and start the processing server with uvicorn
         """
         """
         Note for a peer:
         Deploying everything together at once is a bad approach. First the RabbitMQ Server and the MongoDB
-        should be deployed. Then the RMQPublisher of the Processing Broker (aka Processing Server) should
+        should be deployed. Then the RMQPublisher of the Processing Server (aka Processing Server) should
         connect to the running RabbitMQ server. After that point the Processing Workers should be deployed.
         The RMQPublisher should be connected before deploying Processing Workers because the message queues to
         which the Processing Workers listen to are created based on the deployed processor.
@@ -146,13 +146,13 @@ class ProcessingBroker(FastAPI):
         uvicorn.run(self, host=self.hostname, port=self.port)
 
     @staticmethod
-    def parse_config(config_path: str) -> ProcessingBrokerConfig:
+    def parse_config(config_path: str) -> ProcessingServerConfig:
         with open(config_path) as fin:
             obj = safe_load(fin)
-        report = ProcessingBrokerValidator.validate(obj)
+        report = ProcessingServerValidator.validate(obj)
         if not report.is_valid:
-            raise Exception(f'Processing-Broker configuration file is invalid:\n{report.errors}')
-        return ProcessingBrokerConfig(obj)
+            raise Exception(f'Processing-Server configuration file is invalid:\n{report.errors}')
+        return ProcessingServerConfig(obj)
 
     async def on_startup(self):
         self.log.debug('jetzt kommt das mit der Datenbank')

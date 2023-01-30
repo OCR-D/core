@@ -6,7 +6,7 @@
 # https://github.com/OCR-D/ocrd-webapi-implementation
 # 2. The RabbitMQ Library (i.e., utils) is available here:
 # https://github.com/OCR-D/ocrd-webapi-implementation/tree/main/ocrd_webapi/rabbitmq
-# 3. Some potentially more useful code to be adopted for the Processing Broker/Worker is available here:
+# 3. Some potentially more useful code to be adopted for the Processing Server/Worker is available here:
 # https://github.com/OCR-D/core/pull/884
 # 4. The Mets Server discussion/implementation is available here:
 # https://github.com/OCR-D/core/pull/966
@@ -17,5 +17,5 @@
 # This package, currently, is under the `core/ocrd` package.
 # It could also be a separate package on its own under `core` with the name `ocrd_network`.
 # TODO: Correctly identify all current and potential future dependencies.
-from .processing_broker import ProcessingBroker
+from .processing_server import ProcessingServer
 from .processing_worker import ProcessingWorker

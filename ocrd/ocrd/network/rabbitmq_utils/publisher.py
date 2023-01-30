@@ -118,7 +118,7 @@ class RMQPublisher(RMQConnector):
         if properties is None:
             headers = {'OCR-D WebApi Header': 'OCR-D WebApi Value'}
             properties = BasicProperties(
-                app_id='webapi-processing-broker',
+                app_id='webapi-processing-server',
                 content_type='application/json',
                 headers=headers
             )

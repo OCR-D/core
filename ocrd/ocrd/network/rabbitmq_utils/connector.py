@@ -192,7 +192,7 @@ class RMQConnector:
                 # Only check to see if the queue exists and
                 # raise ChannelClosed exception if it does not
                 passive=passive,
-                # Survive reboots of the broker
+                # Survive reboots of the server
                 durable=durable,
                 # Only allow access by the current connection
                 exclusive=exclusive,

@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 
 # Abstraction of the Deployment functionality
-# The ProcessingServer (currently still called Broker) provides the configuration parameters to the
+# The ProcessingServer (currently still called Server) provides the configuration parameters to the
 # Deployer agent.
 # The Deployer agent deploys the RabbitMQ Server, MongoDB and the Processing Hosts.
 # Each Processing Host may have several Processing Workers.
