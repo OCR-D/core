@@ -155,6 +155,8 @@ class Deployer:
                 25672: 25672
             }
         self.log.debug(f'Ports mapping: {ports_mapping}')
+        local_defs_path = Path(__file__).parent.resolve() / 'rabbitmq_utils' / 'definitions.json'
+        container_defs_path = "/etc/rabbitmq/definitions.json"
         res = client.containers.run(
             image=image,
             detach=detach,
@@ -162,13 +164,15 @@ class Deployer:
             ports=ports_mapping,
             environment=[
                 f'RABBITMQ_DEFAULT_USER={self.mq_data.credentials[0]}',
-                f'RABBITMQ_DEFAULT_PASS={self.mq_data.credentials[1]}'
-            ]
+                f'RABBITMQ_DEFAULT_PASS={self.mq_data.credentials[1]}',
+                ('RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS='
+                 f'-rabbitmq_management load_definitions "{container_defs_path}"'),
+            ],
+            volumes={local_defs_path: {'bind': container_defs_path, 'mode': 'ro'}}
         )
         assert res and res.id, \
             f'Failed to start RabbitMQ docker container on host: {self.mq_data.address}'
         self.mq_data.pid = res.id
-        self.init_rabbitmq(client, res.id)
         client.close()
 
         # Build the RabbitMQ Server URL to return
@@ -179,18 +183,6 @@ class Deployer:
         rabbitmq_url = f'{rmq_host}:{rmq_port}{rmq_vhost}'
         self.log.debug(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
         return rabbitmq_url
-
-    def init_rabbitmq(self, client: CustomDockerClient, rabbitmq_id: str) -> None:
-        """ Add users, wait for startup
-        """
-        # TODO: rabbitmq was started, but needs some time to be ready to use. sleep is working for
-        #       now but the init-process should rather be made in a loop and be redone on error
-        #       until the container is responsive or a timeout is expired (and raise in this case)
-        time.sleep(3)
-        container = client.containers.get(rabbitmq_id)
-        container.exec_run('rabbitmqctl add_user default default')
-        container.exec_run('rabbitmqctl set_user_tags default administrator')
-        container.exec_run('rabbitmqctl set_permissions -p / default ".*" ".*" ".*"')
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
                         ports_mapping: Union[Dict, None] = None) -> str:

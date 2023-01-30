@@ -57,7 +57,8 @@ class ProcessingWorker:
         #  the message queue with name {processor_name}-result, the RMQPublisher should be instantiated
         #  self.rmq_publisher = None
 
-    def connect_consumer(self, username: str = 'default', password: str = 'default') -> None:
+    def connect_consumer(self, username: str = 'default-consumer',
+                         password: str = 'default-consumer') -> None:
         self.log.debug(f'Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release

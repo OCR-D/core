@@ -17,6 +17,7 @@ from ocrd.network.models.job import Job, JobInput, StateEnum
 from ocrd_validators import ParameterValidator
 from ocrd.network.database import initiate_database
 from beanie import PydanticObjectId
+from time import sleep
 
 
 # TODO: rename to ProcessingServer (module-file too)
@@ -127,6 +128,10 @@ class ProcessingBroker(FastAPI):
         # Deploy the MongoDB, get the URL of the deployed agent
         self.mongodb_url = self.deployer.deploy_mongodb()
 
+        # Give enough time for the RabbitMQ server to get deployed and get fully configured
+        # Needed to prevent connection of the publisher before the RabbitMQ is deployed
+        sleep(3)  # TODO: Sleeping here is bad and better check should be performed
+
         # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
         self.connect_publisher()
 
@@ -165,8 +170,8 @@ class ProcessingBroker(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
-    def connect_publisher(self, username: str = 'default', password: str = 'default',
-                          enable_acks: bool =True) -> None:
+    def connect_publisher(self, username: str = 'default-publisher',
+                          password: str = 'default-publisher', enable_acks: bool =True) -> None:
         self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
