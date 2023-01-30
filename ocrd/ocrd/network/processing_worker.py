@@ -9,7 +9,7 @@
 from frozendict import frozendict
 from functools import lru_cache, wraps
 import json
-from typing import List, Callable, Type, Union
+from typing import List, Callable, Type, Union, Any
 
 import pika.spec
 import pika.adapters.blocking_connection
@@ -22,11 +22,13 @@ from ocrd.network.helpers import (
     verify_database_url,
     verify_and_parse_rabbitmq_addr
 )
+from ocrd.network.models.job import StateEnum
 from ocrd.network.rabbitmq_utils import (
     OcrdProcessingMessage,
     OcrdResultMessage,
     RMQConsumer
 )
+import pymongo
 
 
 class ProcessingWorker:
@@ -153,7 +155,7 @@ class ProcessingWorker:
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             self.log.debug(f'Invoking the processor_class: {self.processor_class}')
-            self.run_processor_from_worker(
+            success = self.run_processor_from_worker(
                 processor_class=self.processor_class,
                 workspace=workspace,
                 page_id=page_id,
@@ -163,7 +165,7 @@ class ProcessingWorker:
             )
         else:
             self.log.debug(f'Invoking the cli: {self.processor_name}')
-            self.run_cli_from_worker(
+            success = self.run_cli_from_worker(
                 executable=self.processor_name,
                 workspace=workspace,
                 page_id=page_id,
@@ -171,6 +173,7 @@ class ProcessingWorker:
                 output_file_grps=output_file_grps,
                 parameter=parameter
             )
+        self.set_job_state(job_id, success)
 
     def run_processor_from_worker(
             self,
@@ -180,7 +183,7 @@ class ProcessingWorker:
             input_file_grps: List[str],
             output_file_grps: List[str],
             parameter: dict,
-    ):
+    ) -> bool:
         input_file_grps_str = ','.join(input_file_grps)
         output_file_grps_str = ','.join(output_file_grps)
 
@@ -203,6 +206,7 @@ class ProcessingWorker:
             self.log.error(f'{processor_class} failed with an exception.')
         else:
             self.log.debug(f'{processor_class} exited with success.')
+        return success
 
     def run_cli_from_worker(
             self,
@@ -212,7 +216,7 @@ class ProcessingWorker:
             input_file_grps: List[str],
             output_file_grps: List[str],
             parameter: dict
-    ):
+    ) -> bool:
         input_file_grps_str = ','.join(input_file_grps)
         output_file_grps_str = ','.join(output_file_grps)
 
@@ -230,6 +234,17 @@ class ProcessingWorker:
             self.log.error(f'{executable} exited with non-zero return value {return_code}.')
         else:
             self.log.debug(f'{executable} exited with success.')
+        return return_code == 0
+
+    def set_job_state(self, job_id: Any, success: bool):
+        """Set the job status in mongodb to either success or failed
+        """
+        # TODO: the way to interact with mongodb needs to be thought about. This is to make it work
+        #       for now for better testing. Beanie seems not suitable as the worker is not async
+        state = StateEnum.success if success else StateEnum.failed
+        with pymongo.MongoClient(self.db_url) as client:
+            db = client['ocrd']
+            db.Job.update_one({'_id': job_id}, {'$set': {'state': state}}, upsert=False)
 
 
 # Method adopted from Triet's implementation
