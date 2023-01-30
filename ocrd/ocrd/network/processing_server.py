@@ -1,7 +1,7 @@
 from fastapi import FastAPI, status, HTTPException
 import uvicorn
 from yaml import safe_load
-from typing import Dict
+from typing import Dict, Set
 
 from ocrd_utils import (
     getLogger,
@@ -18,6 +18,7 @@ from ocrd_validators import ParameterValidator
 from ocrd.network.database import initiate_database
 from beanie import PydanticObjectId
 from time import sleep
+import json
 
 
 # TODO: rename to ProcessingServer (module-file too)
@@ -75,7 +76,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/process/{processor_name}',
+            path='/processor/{processor_name}',
             endpoint=self.run_processor,
             methods=['POST'],
             tags=['processing'],
@@ -87,10 +88,10 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/process/{processor_name}/{job_id}',
+            path='/processor/{processor_name}/{job_id}',
             endpoint=self.get_job,
             methods=['GET'],
-            tags=['Processing'],
+            tags=['processing'],
             status_code=status.HTTP_200_OK,
             summary='Get information about a job based on its ID',
             response_model=Job,
@@ -99,12 +100,21 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/process/{processor_name}',
+            path='/processor/{processor_name}',
             endpoint=self.get_processor_info,
             methods=['GET'],
-            tags=['Processing'],
+            tags=['processing', 'discovery'],
             status_code=status.HTTP_200_OK,
-            summary='Get information about this processor.',
+            summary='Get information about this processor',
+        )
+
+        self.router.add_api_route(
+            path='/processor',
+            endpoint=self.list_processors,
+            methods=['GET'],
+            tags=['processing', 'discovery'],
+            status_code=status.HTTP_200_OK,
+            summary='Get a list of all available processors',
         )
 
     def start(self) -> None:
@@ -251,3 +261,10 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Job not found.'
         )
+
+    async def list_processors(self) -> str:
+        res = set([])
+        for host in self.hosts_config:
+            for processor in host.processors:
+                res.add(processor.name)
+        return json.dumps(list(res))
