@@ -7,7 +7,7 @@ from ocrd.network.deployment_utils import DeployType
 __all__ = [
     'ProcessingBrokerConfig',
     'HostConfig',
-    'ProcessorConfig',
+    'WorkerConfig',
     'MongoConfig',
     'QueueConfig',
 ]
@@ -15,8 +15,8 @@ __all__ = [
 
 class ProcessingBrokerConfig:
     def __init__(self, config: dict) -> None:
-        self.mongo_config = MongoConfig(config['mongo_db'])
-        self.queue_config = QueueConfig(config['message_queue'])
+        self.mongo_config = MongoConfig(config['database'])
+        self.queue_config = QueueConfig(config['process_queue'])
         self.hosts_config = []
         for host in config['hosts']:
             self.hosts_config.append(HostConfig(host))
@@ -36,18 +36,19 @@ class HostConfig:
         self.username = config['username']
         self.password = config.get('password', None)
         self.keypath = config.get('path_to_privkey', None)
+        # TODO: this is only for testing. Remove here and from config.schema.yml after test/development-phase
         self.binpath = config.get('path_to_bin_dir', None)
         self.processors = []
-        for processor in config['deploy_processors']:
-            deploy_type = DeployType.from_str(processor['deploy_type'])
+        for worker in config['workers']:
+            deploy_type = DeployType.from_str(worker['deploy_type'])
             self.processors.append(
-                ProcessorConfig(processor['name'], processor['number_of_instance'], deploy_type)
+                WorkerConfig(worker['name'], worker['number_of_instance'], deploy_type)
             )
         self.ssh_client = None
         self.docker_client = None
 
 
-class ProcessorConfig:
+class WorkerConfig:
     """
     Class wrapping information from config file for an OCR-D processor
     """

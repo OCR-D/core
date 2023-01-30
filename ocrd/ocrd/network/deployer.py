@@ -89,7 +89,7 @@ class Deployer:
 
     # TODO: Creating connections if missing should probably occur when deploying hosts not when
     #  deploying processing workers. The deploy_type checks and opening connections creates duplicate code.
-    def _deploy_processing_worker(self, processor: ProcessorConfig, host: HostConfig,
+    def _deploy_processing_worker(self, processor: WorkerConfig, host: HostConfig,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
 
         self.log.debug(f'deploy \'{processor.deploy_type}\' processor: \'{processor}\' on'
