@@ -58,6 +58,8 @@ class ProcessingServer(FastAPI):
         # Note for peer: Check under self.start()
         self.rmq_publisher = None
 
+        self._processor_list = None
+
         # Create routes
         self.router.add_api_route(
             path='/stop',
@@ -216,14 +218,26 @@ class ProcessingServer(FastAPI):
             self.log.error('RMQPublisher is not connected')
             raise Exception('RMQPublisher is not connected')
 
+    @property
+    def processor_list(self):
+        if self._processor_list:
+            return self._processor_list
+        res = set([])
+        for host in self.hosts_config:
+            for processor in host.processors:
+                res.add(processor.name)
+        self._processor_list = list(res)
+        return self._processor_list
+
     # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
     async def run_processor(self, processor_name: str, data: JobInput) -> Job:
-        job = Job(**data.dict(exclude_unset=True, exclude_none=True), processor_name=processor_name,
-                  state=StateEnum.queued)
-        await job.insert()
-
+        self.log.debug('processing_server.run_processor() called')
+        if processor_name not in self.processor_list:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Processor not available'
+            )
         if data.parameters:
-            # this validation with ocrd-tool also ensures that the processor is available
             ocrd_tool = get_ocrd_tool_json(processor_name)
             if not ocrd_tool:
                 raise HTTPException(
@@ -234,10 +248,11 @@ class ProcessingServer(FastAPI):
             validator = ParameterValidator(ocrd_tool)
             report = validator.validate(data.parameters)
             if not report.is_valid:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=report.errors,
-                )
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
+
+        job = Job(**data.dict(exclude_unset=True, exclude_none=True), processor_name=processor_name,
+                  state=StateEnum.queued)
+        await job.insert()
         processing_message = OcrdProcessingMessage.from_job(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
@@ -247,11 +262,16 @@ class ProcessingServer(FastAPI):
         return job
 
     async def get_processor_info(self, processor_name) -> Dict:
+        self.log.debug('processing_server.get_processor_info() called')
+        if processor_name not in self.processor_list:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Processor not available'
+            )
         return get_ocrd_tool_json(processor_name)
 
     async def get_job(self, processor_name: str, job_id: PydanticObjectId) -> Job:
-        # TODO: the state has to be set after processing is finished somewhere in the
-        #       processing-worker or the result_queue must be processd somewhere
+        self.log.debug('processing_server.get_job() called')
         job = await Job.get(job_id)
         if job:
             return job
@@ -261,8 +281,5 @@ class ProcessingServer(FastAPI):
         )
 
     async def list_processors(self) -> str:
-        res = set([])
-        for host in self.hosts_config:
-            for processor in host.processors:
-                res.add(processor.name)
-        return json.dumps(list(res))
+        self.log.debug('processing_server.list_processors() called')
+        return json.dumps(self.processor_list)
