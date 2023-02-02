@@ -200,15 +200,18 @@ class ProcessingWorker:
             # create_queue method is idempotent - nothing happens if
             # a queue with the specified name already exists
             self.rmq_publisher.create_queue(queue_name=processing_message.result_queue)
+
+            result_message = OcrdResultMessage(
+                job_id=job_id,
+                status=job_status,
+                # Either path_to_mets or workspace_id must be set (mutually exclusive)
+                path_to_mets=processing_message.path_to_mets,
+                workspace_id=None
+            )
+            encoded_result_message = OcrdResultMessage.encode_yml(result_message)
             self.rmq_publisher.publish_to_queue(
                 queue_name=processing_message.result_queue,
-                message=OcrdResultMessage(
-                    job_id=job_id,
-                    status=job_status,
-                    # Either path_to_mets or workspace_id must be set (mutually exclusive)
-                    path_to_mets=processing_message.path_to_mets,
-                    workspace_id=None
-                )
+                message=encoded_result_message
             )
 
     def run_processor_from_worker(
