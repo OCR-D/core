@@ -165,9 +165,7 @@ class ProcessingServer(FastAPI):
         return ProcessingServerConfig(obj)
 
     async def on_startup(self):
-        self.log.debug('jetzt kommt das mit der Datenbank')
         await initiate_database(db_url=self.mongodb_url)
-        self.log.debug('das mit der Datenbank ist durch')
 
     async def on_shutdown(self) -> None:
         """
