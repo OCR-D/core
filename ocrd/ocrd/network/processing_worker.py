@@ -26,7 +26,8 @@ from ocrd.network.models.job import StateEnum
 from ocrd.network.rabbitmq_utils import (
     OcrdProcessingMessage,
     OcrdResultMessage,
-    RMQConsumer
+    RMQConsumer,
+    RMQPublisher
 )
 import pymongo
 
@@ -52,12 +53,14 @@ class ProcessingWorker:
         # Think of this as a func pointer to the constructor of the respective OCR-D processor
         self.processor_class = processor_class
 
-        # Gets assigned when `connect_consumer` is called on the working object
+        # Gets assigned when `connect_consumer` is called on the worker object
+        # Used to consume OcrdProcessingMessage from the queue with name {processor_name}
         self.rmq_consumer = None
 
-        # TODO: In case the processing worker should publish OcrdResultMessage type message to
-        #  the message queue with name {processor_name}-result, the RMQPublisher should be instantiated
-        #  self.rmq_publisher = None
+        # Gets assigned when the `connect_publisher` is called on the worker object
+        # The publisher is connected when the `result_queue` field of the OcrdProcessingMessage is set for first time
+        # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
+        self.rmq_publisher = None
 
     def connect_consumer(self, username: str = 'default-consumer',
                          password: str = 'default-consumer') -> None:
@@ -67,6 +70,20 @@ class ProcessingWorker:
         self.log.debug(f'RMQConsumer authenticates with username: {username}, password: {password}')
         self.rmq_consumer.authenticate_and_connect(username=username, password=password)
         self.log.debug(f'Successfully connected RMQConsumer.')
+
+    def connect_publisher(self, username: str = 'default-publisher',
+                          password: str = 'default-publisher', enable_acks: bool = True) -> None:
+        self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
+        self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
+        # TODO: Remove this information before the release
+        self.log.debug(f'RMQPublisher authenticates with username: {username}, password: {password}')
+        self.rmq_publisher.authenticate_and_connect(username=username, password=password)
+        if enable_acks:
+            self.rmq_publisher.enable_delivery_confirmations()
+            self.log.debug('Delivery confirmations are enabled')
+        else:
+            self.log.debug('Delivery confirmations are disabled')
+        self.log.debug('Successfully connected RMQPublisher.')
 
     # Define what happens every time a message is consumed
     # from the queue with name self.processor_name
@@ -155,7 +172,7 @@ class ProcessingWorker:
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             self.log.debug(f'Invoking the processor_class: {self.processor_class}')
-            success = self.run_processor_from_worker(
+            job_status = self.run_processor_from_worker(
                 processor_class=self.processor_class,
                 workspace=workspace,
                 page_id=page_id,
@@ -165,7 +182,7 @@ class ProcessingWorker:
             )
         else:
             self.log.debug(f'Invoking the cli: {self.processor_name}')
-            success = self.run_cli_from_worker(
+            job_status = self.run_cli_from_worker(
                 executable=self.processor_name,
                 workspace=workspace,
                 page_id=page_id,
@@ -173,7 +190,26 @@ class ProcessingWorker:
                 output_file_grps=output_file_grps,
                 parameter=parameter
             )
-        self.set_job_state(job_id, success)
+        self.set_job_state(job_id, job_status)
+
+        # If the result_queue field is set, send the job status to a result queue
+        if processing_message.result_queue:
+            if self.rmq_publisher is None:
+                self.connect_publisher()
+
+            # create_queue method is idempotent - nothing happens if
+            # a queue with the specified name already exists
+            self.rmq_publisher.create_queue(queue_name=processing_message.result_queue)
+            self.rmq_publisher.publish_to_queue(
+                queue_name=processing_message.result_queue,
+                message=OcrdResultMessage(
+                    job_id=job_id,
+                    status=job_status,
+                    # Either path_to_mets or workspace_id must be set (mutually exclusive)
+                    path_to_mets=processing_message.path_to_mets,
+                    workspace_id=None
+                )
+            )
 
     def run_processor_from_worker(
             self,

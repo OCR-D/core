@@ -135,3 +135,22 @@ class OcrdResultMessage:
             workspace_id=data.workspace_id,
             path_to_mets=data.path_to_mets
         )
+
+    @staticmethod
+    def encode_yml(ocrd_result_message: OcrdResultMessage) -> bytes:
+        """convert OcrdResultMessage to yml
+        """
+        return yaml.dump(ocrd_result_message.__dict__, indent=2).encode('utf-8')
+
+    @staticmethod
+    def decode_yml(ocrd_result_message: bytes) -> OcrdResultMessage:
+        """Parse OcrdResultMessage from yml
+        """
+        msg = ocrd_result_message.decode('utf-8')
+        data = yaml.load(msg, Loader=yaml.Loader)
+        return OcrdResultMessage(
+            job_id=data.get('job_id', None),
+            status=data.get('status', None),
+            path_to_mets=data.get('path_to_mets', None),
+            workspace_id=data.get('workspace_id', None),
+        )
