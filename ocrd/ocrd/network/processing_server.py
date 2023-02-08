@@ -1,4 +1,6 @@
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, status, Request, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import uvicorn
 from yaml import safe_load
 from typing import Dict, Set
@@ -118,6 +120,13 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary='Get a list of all available processors',
         )
+
+        @self.exception_handler(RequestValidationError)
+        async def validation_exception_handler(request: Request, exc: RequestValidationError):
+            exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+            self.log.error(f"{request}: {exc_str}")
+            content = {'status_code': 10422, 'message': exc_str, 'data': None}
+            return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def start(self) -> None:
         """
