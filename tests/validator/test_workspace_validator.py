@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 from os.path import join
 from shutil import copytree
+import pytest
 
 from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
