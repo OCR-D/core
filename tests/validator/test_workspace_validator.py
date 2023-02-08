@@ -116,6 +116,7 @@ class TestWorkspaceValidator(TestCase):
             self.assertIn("Invalid USE name 'X' in fileGrp", report.notices[0])
             self.assertIn('No files', report.errors[0])
 
+    @pytest.mark.skip(reason="missing pageId means document-global now")
     def test_validate_files_nopageid(self):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
