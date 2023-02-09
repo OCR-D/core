@@ -165,14 +165,11 @@ class ProcessingWorker:
         #  Note to peer: We should encapsulate database related actions to keep this method simple
         job_id = processing_message.job_id
 
-        if processing_message.result_queue:
-            self.log.warning(f'Publishing results to a message queue from the Processing Worker is not supported yet')
-
         # TODO: Currently, no caching is performed.
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             self.log.debug(f'Invoking the processor_class: {self.processor_class}')
-            job_status = self.run_processor_from_worker(
+            return_status = self.run_processor_from_worker(
                 processor_class=self.processor_class,
                 workspace=workspace,
                 page_id=page_id,
@@ -182,7 +179,7 @@ class ProcessingWorker:
             )
         else:
             self.log.debug(f'Invoking the cli: {self.processor_name}')
-            job_status = self.run_cli_from_worker(
+            return_status = self.run_cli_from_worker(
                 executable=self.processor_name,
                 workspace=workspace,
                 page_id=page_id,
@@ -190,7 +187,8 @@ class ProcessingWorker:
                 output_file_grps=output_file_grps,
                 parameter=parameter
             )
-        self.set_job_state(job_id, job_status)
+        job_status = StateEnum.success if return_status else StateEnum.failed
+        self.set_job_state(job_id, return_status)
 
         # If the result_queue field is set, send the job status to a result queue
         if processing_message.result_queue:
@@ -200,10 +198,9 @@ class ProcessingWorker:
             # create_queue method is idempotent - nothing happens if
             # a queue with the specified name already exists
             self.rmq_publisher.create_queue(queue_name=processing_message.result_queue)
-
             result_message = OcrdResultMessage(
-                job_id=job_id,
-                status=job_status,
+                job_id=str(job_id),
+                status=job_status.value,
                 # Either path_to_mets or workspace_id must be set (mutually exclusive)
                 path_to_mets=processing_message.path_to_mets,
                 workspace_id=None

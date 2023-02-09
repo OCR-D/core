@@ -48,7 +48,7 @@ class OcrdProcessingMessage:
         # e.g., "PHYS_0005..PHYS_0010" will process only pages between 5-10
         self.page_id = page_id if page_id else None
         # e.g., "ocrd-cis-ocropy-binarize-result"
-        self.result_queue = result_queue_name
+        self.result_queue = result_queue_name if result_queue_name else (self.processor_name + "-result")
         # processor parameters
         self.parameters = parameters if parameters else None
         self.created_time = created_time
