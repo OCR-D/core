@@ -246,6 +246,12 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='Processor not available'
             )
+        if bool(data.path) == bool(data.workspace_id):
+            print(f"DATA: {data.__dict__}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Either \'path\' or \'workspace_id\' must be set'
+            )
         if data.parameters:
             ocrd_tool = get_ocrd_tool_json(processor_name)
             if not ocrd_tool:
