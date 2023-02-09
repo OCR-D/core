@@ -22,7 +22,8 @@ class StateEnum(str, Enum):
 
 
 class JobInput(BaseModel):
-    path: str
+    path: Optional[str] = None
+    workspace_id: Optional[str] = None
     description: Optional[str] = None
     input_file_grps: List[str]
     output_file_grps: Optional[List[str]]
