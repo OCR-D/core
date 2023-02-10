@@ -36,7 +36,7 @@ class Deployer:
     for managing information, not for actually doing things.
     """
 
-    def __init__(self, queue_config: QueueConfig, mongo_config: MongoConfig, hosts_config: List[HostConfig]) -> None:
+    def __init__(self, config: ProcessingServerConfig) -> None:
         """
         Args:
             queue_config: RabbitMQ related configuration
@@ -45,9 +45,9 @@ class Deployer:
         """
         self.log = getLogger(__name__)
         self.log.debug('The Deployer of the ProcessingServer was invoked')
-        self.mongo_data = mongo_config
-        self.mq_data = queue_config
-        self.hosts = hosts_config
+        self.mongo_data = config.mongo_config
+        self.mq_data = config.queue_config
+        self.hosts = config.hosts_config
 
         # TODO: We should have a data structure here to manage the connections and PIDs:
         #  - RabbitMQ - (host address, pid on that host)

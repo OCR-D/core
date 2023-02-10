@@ -27,8 +27,8 @@ import json
 class ProcessingServer(FastAPI):
     """FastAPI app to make ocr-d processor calls
 
-    The Processing-Server receives calls conforming to the ocr-d webapi regarding the processoing part.
-    It can run ocrd-processors and provides enpoints to discover processors and watch the job
+    The Processing-Server receives calls conforming to the ocr-d webapi regarding the processoing
+    part. It can run ocrd-processors and provides enpoints to discover processors and watch the job
     status.
     The Processing-Server does not execute the processors itself but starts up a queue and a
     database to delegate the calls to processing workers. They are started by the Processing-Server
@@ -45,15 +45,8 @@ class ProcessingServer(FastAPI):
         self.port = port
         # TODO: Ideally the parse_config should return a Tuple with the 3 configs assigned below
         #  to prevent passing the entire parsed config around to methods.
-        parsed_config = ProcessingServer.parse_config(config_path)
-        self.queue_config = parsed_config.queue_config
-        self.mongo_config = parsed_config.mongo_config
-        self.hosts_config = parsed_config.hosts_config
-        self.deployer = Deployer(
-            queue_config=self.queue_config,
-            mongo_config=self.mongo_config,
-            hosts_config=self.hosts_config
-        )
+        self.config = ProcessingServer.parse_config(config_path)
+        self.deployer = Deployer(self.config)
 
         # TODO: Parse the RabbitMQ related data from the `queue_config`
         #  above instead of using the hard coded ones below
@@ -150,12 +143,13 @@ class ProcessingServer(FastAPI):
         # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
         self.connect_publisher()
 
-        self.log.debug(f'Starting to create message queues on RabbitMQ instance url: {rabbitmq_url}')
+        self.log.debug(f'Creating message queues on RabbitMQ instance url: {rabbitmq_url}')
         self.create_message_queues()
 
         # Deploy processing hosts where processing workers are running on
-        # Note: A deployed processing worker starts listening to a message queue with id processor.name
-        self.deployer.deploy_hosts(self.hosts_config, rabbitmq_url, self.mongodb_url)
+        # Note: A deployed processing worker starts listening to a message queue with id
+        #       processor.name
+        self.deployer.deploy_hosts(self.config.hosts_config, rabbitmq_url, self.mongodb_url)
 
         self.log.debug(f'Starting uvicorn: {self.hostname}:{self.port}')
         uvicorn.run(self, host=self.hostname, port=self.port)
@@ -185,10 +179,12 @@ class ProcessingServer(FastAPI):
 
     def connect_publisher(self, username: str = 'default-publisher',
                           password: str = 'default-publisher', enable_acks: bool =True) -> None:
-        self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
-        self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
+        self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:'
+                       f'{self.rmq_port}{self.rmq_vhost}')
+        self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port,
+                                          vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
-        self.log.debug(f'RMQPublisher authenticates with username: {username}, password: {password}')
+        self.log.debug(f'RMQPublisher authenticate with username: {username}, password: {password}')
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
@@ -200,7 +196,7 @@ class ProcessingServer(FastAPI):
     def create_message_queues(self) -> None:
         """Create the message queues based on the occurrence of `processor.name` in the config file
         """
-        for host in self.hosts_config:
+        for host in self.config.hosts_config:
             for processor in host.processors:
                 # The existence/validity of the processor.name is not tested.
                 # Even if an ocr-d processor does not exist, the queue is created
@@ -226,7 +222,7 @@ class ProcessingServer(FastAPI):
         if self._processor_list:
             return self._processor_list
         res = set([])
-        for host in self.hosts_config:
+        for host in self.config.hosts_config:
             for processor in host.processors:
                 res.add(processor.name)
         self._processor_list = list(res)
