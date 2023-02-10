@@ -16,6 +16,7 @@ from ocrd.network.deployment_config import ProcessingServerConfig
 from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from ocrd.network.helpers import construct_dummy_processing_message
 from ocrd.network.models.job import Job, JobInput, StateEnum
+from ocrd.network.models.workspace import Workspace
 from ocrd_validators import ParameterValidator
 from ocrd.network.database import initiate_database
 from beanie import PydanticObjectId
@@ -246,12 +247,8 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='Processor not available'
             )
-        if bool(data.path) == bool(data.workspace_id):
-            print(f"DATA: {data.__dict__}")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Either \'path\' or \'workspace_id\' must be set'
-            )
+
+	# validate additional parameters
         if data.parameters:
             ocrd_tool = get_ocrd_tool_json(processor_name)
             if not ocrd_tool:
@@ -264,6 +261,21 @@ class ProcessingServer(FastAPI):
             report = validator.validate(data.parameters)
             if not report.is_valid:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
+
+	# determine path to mets if workspace_id is provided
+        if bool(data.path) == bool(data.workspace_id):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail='Either \'path\' or \'workspace_id\' must be set'
+            )
+        elif data.workspace_id:
+            workspace = await Workspace.get(data.workspace_id)
+            if not workspace:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f'Workspace for id \'{data.workspace_id}\' not existing'
+                )
+            data.path = workspace.workspace_mets_path
 
         job = Job(**data.dict(exclude_unset=True, exclude_none=True), processor_name=processor_name,
                   state=StateEnum.queued)
