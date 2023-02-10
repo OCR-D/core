@@ -11,6 +11,7 @@ from ocrd.network.deployment_utils import (
     create_ssh_client,
     CustomDockerClient,
     DeployType,
+    HostData,
 )
 import time
 from pathlib import Path
@@ -39,14 +40,12 @@ class Deployer:
     def __init__(self, config: ProcessingServerConfig) -> None:
         """
         Args:
-            queue_config: RabbitMQ related configuration
-            mongo_config: MongoDB related configuration
-            hosts_config: Processing Hosts related configurations
+            config: Parsed processing-server-configuration
         """
         self.log = getLogger(__name__)
         self.log.debug('The Deployer of the ProcessingServer was invoked')
         self.config = config
-        self.hosts = config.hosts_config
+        self.hosts = HostData.from_config(config.hosts)
         self.mongo_pid = None
         self.mq_pid = None
 
@@ -75,39 +74,39 @@ class Deployer:
         # Third kill the RabbitMQ Server
         self.kill_rabbitmq()
 
-    def deploy_hosts(self, hosts: List[HostConfig], rabbitmq_url: str, mongodb_url: str) -> None:
+    def deploy_hosts(self, rabbitmq_url: str, mongodb_url: str) -> None:
         self.log.debug('Starting to deploy hosts')
-        for host in hosts:
-            self.log.debug(f'Deploying processing workers on host: {host.address}')
-            for processor in host.processors:
+        for host in self.hosts:
+            self.log.debug(f'Deploying processing workers on host: {host.config.address}')
+            for processor in host.config.processors:
                 self._deploy_processing_worker(processor, host, rabbitmq_url, mongodb_url)
-            # TODO: These connections, just like the PIDs, should not be kept in the config data classes
-            #  The connections are correctly closed on host level, but created on processing worker level?
+            # TODO: The connections are correctly closed on host level, but created on processing
+            #       worker level?
             if host.ssh_client:
                 host.ssh_client.close()
             if host.docker_client:
                 host.docker_client.close()
 
     # TODO: Creating connections if missing should probably occur when deploying hosts not when
-    #  deploying processing workers. The deploy_type checks and opening connections creates duplicate code.
-    def _deploy_processing_worker(self, processor: WorkerConfig, host: HostConfig,
+    #       deploying processing workers. The deploy_type checks and opening connections creates
+    #       duplicate code.
+    def _deploy_processing_worker(self, processor: WorkerConfig, host: HostData,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
 
         self.log.debug(f'deploy \'{processor.deploy_type}\' processor: \'{processor}\' on'
-                       f'\'{host.address}\'')
-        assert not processor.pids, 'processors already deployed. Pids are present. Host: ' \
-                                   '{host.__dict__}. Processor: {processor.__dict__}'
+                       f'\'{host.config.address}\'')
 
-        # TODO: The check for available ssh or docker connections should probably happen inside `deploy_hosts`
+        # TODO: The check for available ssh or docker connections should probably happen inside
+        #       `deploy_hosts`
         if processor.deploy_type == DeployType.native:
             if not host.ssh_client:
-                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
-                                                    host.keypath)
+                host.ssh_client = create_ssh_client(host.config.address, host.config.username,
+                                                    host.config.password, host.config.keypath)
         else:
             assert processor.deploy_type == DeployType.docker
             if not host.docker_client:
-                host.docker_client = create_docker_client(host.address, host.username,
-                                                          host.password, host.keypath)
+                host.docker_client = create_docker_client(host.config.address, host.config.username,
+                                                          host.config.password, host.config.keypath)
 
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
@@ -117,9 +116,9 @@ class Deployer:
                     processor_name=processor.name,
                     queue_url=rabbitmq_url,
                     database_url=mongodb_url,
-                    bin_dir=host.binpath,
+                    bin_dir=host.config.binpath,
                 )
-                processor.add_started_pid(pid)
+                host.pids_native.append(pid)
             else:
                 assert processor.deploy_type == DeployType.docker
                 assert host.docker_client  # to satisfy mypy
@@ -129,7 +128,7 @@ class Deployer:
                     queue_url=rabbitmq_url,
                     database_url=mongodb_url
                 )
-                processor.add_started_pid(pid)
+                host.pids_docker.append(pid)
 
     def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
                         remove: bool = True, ports_mapping: Union[Dict, None] = None) -> str:
@@ -140,7 +139,8 @@ class Deployer:
         # Handling of creation of queues, submitting messages to queues,
         # and receiving messages from queues is part of the RabbitMQ Library
         # Which is part of the OCR-D WebAPI implementation.
-        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
+        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}],'
+                       f'remove[{remove}]')
 
         if not self.config or not self.config.queue.address:
             raise ValueError('Deploying RabbitMQ has failed - missing configuration.')
@@ -188,10 +188,11 @@ class Deployer:
         return rabbitmq_url
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
-                        ports_mapping: Union[Dict, None] = None) -> str:
+                       ports_mapping: Union[Dict, None] = None) -> str:
         """ Start mongodb in docker
         """
-        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
+        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}],'
+                       f'remove[{remove}]')
 
         if not self.config or not self.config.mongo.address:
             raise ValueError('Deploying MongoDB has failed - missing configuration.')
@@ -227,7 +228,7 @@ class Deployer:
     def kill_rabbitmq(self) -> None:
         # TODO: The PID must not be stored in the configuration `mq_data`. Why not?
         if not self.mq_pid:
-            self.log.warning(f'No running RabbitMQ instance found')
+            self.log.warning('No running RabbitMQ instance found')
             # TODO: Ignoring this silently is problematic in the future. Why?
             return
         self.log.debug(f'Trying to stop the deployed RabbitMQ with PID: {self.mq_pid}')
@@ -242,7 +243,7 @@ class Deployer:
     def kill_mongodb(self) -> None:
         # TODO: The PID must not be stored in the configuration `mongo_data`. Why not?
         if not self.mongo_pid:
-            self.log.warning(f'No running MongoDB instance found')
+            self.log.warning('No running MongoDB instance found')
             # TODO: Ignoring this silently is problematic in the future. Why?
             return
         self.log.debug(f'Trying to stop the deployed MongoDB with PID: {self.mongo_pid}')
@@ -258,31 +259,29 @@ class Deployer:
         self.log.debug('Starting to kill/stop hosts')
         # Kill processing hosts
         for host in self.hosts:
-            self.log.debug(f'Killing/Stopping processing workers on host: {host.address}')
+            self.log.debug(f'Killing/Stopping processing workers on host: {host.config.address}')
             if host.ssh_client:
-                host.ssh_client = create_ssh_client(host.address, host.username, host.password,
-                                                    host.keypath)
+                host.ssh_client = create_ssh_client(host.config.address, host.config.username,
+                                                    host.config.password, host.config.keypath)
             if host.docker_client:
-                host.docker_client = create_docker_client(host.address, host.username,
-                                                          host.password, host.keypath)
+                host.docker_client = create_docker_client(host.config.address, host.config.username,
+                                                          host.config.password, host.config.keypath)
             # Kill deployed OCR-D processor instances on this Processing worker host
             self.kill_processing_worker(host)
 
-    def kill_processing_worker(self, host: HostConfig) -> None:
-        for processor in host.processors:
-            if processor.deploy_type.is_native():
-                for pid in processor.pids:
-                    self.log.debug(f'Trying to kill/stop native processor: {processor.name}, with PID: {pid}')
-                    # TODO: For graceful shutdown we may want to send additional parameters to kill
-                    host.ssh_client.exec_command(f'kill {pid}')
-            else:
-                assert processor.deploy_type.is_docker()
-                for pid in processor.pids:
-                    self.log.debug(f'Trying to kill/stop docker container processor: {processor.name}, with PID: {pid}')
-                    # TODO: think about timeout.
-                    #       think about using threads to kill parallelized to reduce waiting time
-                    host.docker_client.containers.get(pid).stop()
-            processor.pids = []
+    def kill_processing_worker(self, host: HostData) -> None:
+        for pid in host.pids_native:
+            self.log.debug(f'Trying to kill/stop native processor: with PID: \'{pid}\'')
+            # TODO: For graceful shutdown we may want to send additional parameters to kill
+            host.ssh_client.exec_command(f'kill {pid}')
+        host.pids_native = []
+
+        for pid in host.pids_docker:
+            self.log.debug(f'Trying to kill/stop docker container with PID: {pid}')
+            # TODO: think about timeout.
+            #       think about using threads to kill parallelized to reduce waiting time
+            host.docker_client.containers.get(pid).stop()
+        host.pids_docker = []
 
     # Note: Invoking a pythonic processor is slightly different from the description in the spec.
     # In order to achieve the exact spec call all ocr-d processors should be refactored...

@@ -149,7 +149,7 @@ class ProcessingServer(FastAPI):
         # Deploy processing hosts where processing workers are running on
         # Note: A deployed processing worker starts listening to a message queue with id
         #       processor.name
-        self.deployer.deploy_hosts(self.config.hosts_config, rabbitmq_url, self.mongodb_url)
+        self.deployer.deploy_hosts(rabbitmq_url, self.mongodb_url)
 
         self.log.debug(f'Starting uvicorn: {self.hostname}:{self.port}')
         uvicorn.run(self, host=self.hostname, port=self.port)
@@ -196,7 +196,7 @@ class ProcessingServer(FastAPI):
     def create_message_queues(self) -> None:
         """Create the message queues based on the occurrence of `processor.name` in the config file
         """
-        for host in self.config.hosts_config:
+        for host in self.config.hosts:
             for processor in host.processors:
                 # The existence/validity of the processor.name is not tested.
                 # Even if an ocr-d processor does not exist, the queue is created
@@ -222,7 +222,7 @@ class ProcessingServer(FastAPI):
         if self._processor_list:
             return self._processor_list
         res = set([])
-        for host in self.config.hosts_config:
+        for host in self.config.hosts:
             for processor in host.processors:
                 res.add(processor.name)
         self._processor_list = list(res)

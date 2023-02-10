@@ -17,9 +17,9 @@ class ProcessingServerConfig:
     def __init__(self, config: dict) -> None:
         self.mongo = MongoConfig(config['database'])
         self.queue = QueueConfig(config['process_queue'])
-        self.hosts_config = []
+        self.hosts = []
         for host in config['hosts']:
-            self.hosts_config.append(HostConfig(host))
+            self.hosts.append(HostConfig(host))
 
 
 class HostConfig:
@@ -44,8 +44,6 @@ class HostConfig:
             self.processors.append(
                 WorkerConfig(worker['name'], worker['number_of_instance'], deploy_type)
             )
-        self.ssh_client = None
-        self.docker_client = None
 
 
 class WorkerConfig:
@@ -56,10 +54,6 @@ class WorkerConfig:
         self.name = name
         self.count = count
         self.deploy_type = deploy_type
-        self.pids: List = []
-
-    def add_started_pid(self, pid) -> None:
-        self.pids.append(pid)
 
 
 class MongoConfig:
