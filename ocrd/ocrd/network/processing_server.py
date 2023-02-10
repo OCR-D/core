@@ -24,15 +24,21 @@ from time import sleep
 import json
 
 
-# TODO: rename to ProcessingServer (module-file too)
 class ProcessingServer(FastAPI):
-    """
-    TODO: doc for ProcessingServer and its methods
+    """FastAPI app to make ocr-d processor calls
+
+    The Processing-Server receives calls conforming to the ocr-d webapi regarding the processoing part.
+    It can run ocrd-processors and provides enpoints to discover processors and watch the job
+    status.
+    The Processing-Server does not execute the processors itself but starts up a queue and a
+    database to delegate the calls to processing workers. They are started by the Processing-Server
+    and the communication goes through the queue.
     """
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
-        # TODO: set other args: title, description, version, openapi_tags
-        super().__init__(on_startup=[self.on_startup], on_shutdown=[self.on_shutdown])
+        super().__init__(on_startup=[self.on_startup], on_shutdown=[self.on_shutdown],
+                         title="OCR-D Processing Server",
+                         description="OCR-D processing and processors")
         self.log = getLogger(__name__)
 
         self.hostname = host
@@ -68,16 +74,17 @@ class ProcessingServer(FastAPI):
             path='/stop',
             endpoint=self.stop_deployed_agents,
             methods=['POST'],
-            # tags=['TODO: add a tag'],
-            # summary='TODO: summary for api desc',
-            # TODO: add response model? add a response body at all?
+            tags=['tools'],
+            summary='Stop database, queue and processing-workers',
         )
 
+        # TODO: do we still need this? Remove it?!
         self.router.add_api_route(
             path='/test-dummy',
             endpoint=self.publish_default_processing_message,
             methods=['POST'],
-            status_code=status.HTTP_202_ACCEPTED
+            status_code=status.HTTP_202_ACCEPTED,
+            summary='Was this just for testing or do we need this'
         )
 
         self.router.add_api_route(
@@ -130,24 +137,10 @@ class ProcessingServer(FastAPI):
             return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def start(self) -> None:
+        """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
-        deploy things and start the processing server with uvicorn
-        """
-        """
-        Note for a peer:
-        Deploying everything together at once is a bad approach. First the RabbitMQ Server and the MongoDB
-        should be deployed. Then the RMQPublisher of the Processing Server (aka Processing Server) should
-        connect to the running RabbitMQ server. After that point the Processing Workers should be deployed.
-        The RMQPublisher should be connected before deploying Processing Workers because the message queues to
-        which the Processing Workers listen to are created based on the deployed processor.
-        """
-        # Deploy everything specified in the configuration
-        # self.deployer.deploy_all()
-
-        # Deploy the RabbitMQ Server, get the URL of the deployed agent
         rabbitmq_url = self.deployer.deploy_rabbitmq()
 
-        # Deploy the MongoDB, get the URL of the deployed agent
         self.mongodb_url = self.deployer.deploy_mongodb()
 
         # Give enough time for the RabbitMQ server to get deployed and get fully configured
@@ -218,7 +211,7 @@ class ProcessingServer(FastAPI):
     def publish_default_processing_message(self) -> None:
         processing_message = construct_dummy_processing_message()
         queue_name = processing_message.processor_name
-        # TODO: switch back to pickle?!
+        # TODO: switch back to pickle?! imo we should go with pickle or json and remove one of them
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
             self.log.debug('Publishing the default processing message')
@@ -241,14 +234,15 @@ class ProcessingServer(FastAPI):
 
     # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
     async def run_processor(self, processor_name: str, data: JobInput) -> Job:
-        self.log.debug('processing_server.run_processor() called')
+        """ Queue a processor job
+        """
         if processor_name not in self.processor_list:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='Processor not available'
             )
 
-	# validate additional parameters
+        # validate additional parameters
         if data.parameters:
             ocrd_tool = get_ocrd_tool_json(processor_name)
             if not ocrd_tool:
@@ -262,7 +256,7 @@ class ProcessingServer(FastAPI):
             if not report.is_valid:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
 
-	# determine path to mets if workspace_id is provided
+        # determine path to mets if workspace_id is provided
         if bool(data.path) == bool(data.workspace_id):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -289,7 +283,8 @@ class ProcessingServer(FastAPI):
         return job
 
     async def get_processor_info(self, processor_name) -> Dict:
-        self.log.debug('processing_server.get_processor_info() called')
+        """ Return a processor's ocrd-tool.json
+        """
         if processor_name not in self.processor_list:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -298,7 +293,8 @@ class ProcessingServer(FastAPI):
         return get_ocrd_tool_json(processor_name)
 
     async def get_job(self, processor_name: str, job_id: PydanticObjectId) -> Job:
-        self.log.debug('processing_server.get_job() called')
+        """ Return job-information from the database
+        """
         job = await Job.get(job_id)
         if job:
             return job
@@ -308,5 +304,6 @@ class ProcessingServer(FastAPI):
         )
 
     async def list_processors(self) -> str:
-        self.log.debug('processing_server.list_processors() called')
+        """ Return a list of all available processors
+        """
         return json.dumps(self.processor_list)

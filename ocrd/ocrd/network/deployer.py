@@ -132,6 +132,8 @@ class Deployer:
 
     def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
                         remove: bool = True, ports_mapping: Union[Dict, None] = None) -> str:
+        """Start docker-container with rabbitmq
+        """
         # Note for a peer
         # This method deploys the RabbitMQ Server.
         # Handling of creation of queues, submitting messages to queues,
@@ -186,6 +188,8 @@ class Deployer:
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
                         ports_mapping: Union[Dict, None] = None) -> str:
+        """ Start mongodb in docker
+        """
         self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
 
         if not self.mongo_data or not self.mongo_data.address:
