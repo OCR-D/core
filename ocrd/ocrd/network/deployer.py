@@ -45,9 +45,10 @@ class Deployer:
         """
         self.log = getLogger(__name__)
         self.log.debug('The Deployer of the ProcessingServer was invoked')
-        self.mongo_data = config.mongo_config
-        self.mq_data = config.queue_config
+        self.config = config
         self.hosts = config.hosts_config
+        self.mongo_pid = None
+        self.mq_pid = None
 
         # TODO: We should have a data structure here to manage the connections and PIDs:
         #  - RabbitMQ - (host address, pid on that host)
@@ -141,18 +142,18 @@ class Deployer:
         # Which is part of the OCR-D WebAPI implementation.
         self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
 
-        if not self.mq_data or not self.mq_data.address:
+        if not self.config or not self.config.queue.address:
             raise ValueError('Deploying RabbitMQ has failed - missing configuration.')
 
-        client = create_docker_client(self.mq_data.address, self.mq_data.username,
-                                      self.mq_data.password, self.mq_data.keypath)
+        client = create_docker_client(self.config.queue.address, self.config.queue.username,
+                                      self.config.queue.password, self.config.queue.keypath)
         if not ports_mapping:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
             # 15672, 15671: HTTP API clients, management UI and rabbitmqadmin, without and with TLS
             # 25672: used for internode and CLI tools communication and is allocated from
             # a dynamic range (limited to a single port by default, computed as AMQP port + 20000)
             ports_mapping = {
-                5672: self.mq_data.port,
+                5672: self.config.queue.port,
                 15672: 15672,
                 25672: 25672
             }
@@ -165,21 +166,21 @@ class Deployer:
             remove=remove,
             ports=ports_mapping,
             environment=[
-                f'RABBITMQ_DEFAULT_USER={self.mq_data.credentials[0]}',
-                f'RABBITMQ_DEFAULT_PASS={self.mq_data.credentials[1]}',
+                f'RABBITMQ_DEFAULT_USER={self.config.queue.credentials[0]}',
+                f'RABBITMQ_DEFAULT_PASS={self.config.queue.credentials[1]}',
                 ('RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS='
                  f'-rabbitmq_management load_definitions "{container_defs_path}"'),
             ],
             volumes={local_defs_path: {'bind': container_defs_path, 'mode': 'ro'}}
         )
         assert res and res.id, \
-            f'Failed to start RabbitMQ docker container on host: {self.mq_data.address}'
-        self.mq_data.pid = res.id
+            f'Failed to start RabbitMQ docker container on host: {self.config.mongo.address}'
+        self.mq_pid = res.id
         client.close()
 
         # Build the RabbitMQ Server URL to return
-        rmq_host = self.mq_data.address
-        rmq_port = self.mq_data.port
+        rmq_host = self.config.queue.address
+        rmq_port = self.config.queue.port
         rmq_vhost = '/'  # the default virtual host
 
         rabbitmq_url = f'{rmq_host}:{rmq_port}{rmq_vhost}'
@@ -192,14 +193,14 @@ class Deployer:
         """
         self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}], remove[{remove}]')
 
-        if not self.mongo_data or not self.mongo_data.address:
+        if not self.config or not self.config.mongo.address:
             raise ValueError('Deploying MongoDB has failed - missing configuration.')
 
-        client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
-                                      self.mongo_data.password, self.mongo_data.keypath)
+        client = create_docker_client(self.config.mongo.address, self.config.mongo.username,
+                                      self.config.mongo.password, self.config.mongo.keypath)
         if not ports_mapping:
             ports_mapping = {
-                27017: self.mongo_data.port
+                27017: self.config.mongo.port
             }
         self.log.debug(f'Ports mapping: {ports_mapping}')
         # TODO: what about the data-dir? Must data be preserved between runs?
@@ -211,45 +212,45 @@ class Deployer:
         )
         if not res or not res.id:
             raise RuntimeError('Failed to start MongoDB docker container on host: '
-                               f'{self.mongo_data.address}')
-        self.mongo_data.pid = res.id
+                               f'{self.config.mongo.address}')
+        self.mongo_pid = res.id
         client.close()
 
         # Build the MongoDB URL to return
         mongodb_prefix = 'mongodb://'
-        mongodb_host = self.mongo_data.address
-        mongodb_port = self.mongo_data.port
+        mongodb_host = self.config.mongo.address
+        mongodb_port = self.config.mongo.port
         mongodb_url = f'{mongodb_prefix}{mongodb_host}:{mongodb_port}'
         self.log.debug(f'The MongoDB was deployed on url: {mongodb_url}')
         return mongodb_url
 
     def kill_rabbitmq(self) -> None:
         # TODO: The PID must not be stored in the configuration `mq_data`. Why not?
-        if not self.mq_data or not self.mq_data.pid:
+        if not self.mq_pid:
             self.log.warning(f'No running RabbitMQ instance found')
             # TODO: Ignoring this silently is problematic in the future. Why?
             return
-        self.log.debug(f'Trying to stop the deployed RabbitMQ with PID: {self.mq_data.pid}')
+        self.log.debug(f'Trying to stop the deployed RabbitMQ with PID: {self.mq_pid}')
 
-        client = create_docker_client(self.mq_data.address, self.mq_data.username,
-                                      self.mq_data.password, self.mq_data.keypath)
-        client.containers.get(self.mq_data.pid).stop()
-        self.mq_data.pid = None
+        client = create_docker_client(self.config.queue.address, self.config.queue.username,
+                                      self.config.queue.password, self.config.queue.keypath)
+        client.containers.get(self.mq_pid).stop()
+        self.mq_pid = None
         client.close()
         self.log.debug('The RabbitMQ is stopped')
 
     def kill_mongodb(self) -> None:
         # TODO: The PID must not be stored in the configuration `mongo_data`. Why not?
-        if not self.mongo_data or not self.mongo_data.pid:
+        if not self.mongo_pid:
             self.log.warning(f'No running MongoDB instance found')
             # TODO: Ignoring this silently is problematic in the future. Why?
             return
-        self.log.debug(f'Trying to stop the deployed MongoDB with PID: {self.mongo_data.pid}')
+        self.log.debug(f'Trying to stop the deployed MongoDB with PID: {self.mongo_pid}')
 
-        client = create_docker_client(self.mongo_data.address, self.mongo_data.username,
-                                      self.mongo_data.password, self.mongo_data.keypath)
-        client.containers.get(self.mongo_data.pid).stop()
-        self.mongo_data.pid = None
+        client = create_docker_client(self.config.mongo.address, self.config.mongo.username,
+                                      self.config.mongo.password, self.config.mongo.keypath)
+        client.containers.get(self.mongo_pid).stop()
+        self.mongo_pid = None
         client.close()
         self.log.debug('The MongoDB is stopped')
 

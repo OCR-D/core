@@ -15,8 +15,8 @@ __all__ = [
 
 class ProcessingServerConfig:
     def __init__(self, config: dict) -> None:
-        self.mongo_config = MongoConfig(config['database'])
-        self.queue_config = QueueConfig(config['process_queue'])
+        self.mongo = MongoConfig(config['database'])
+        self.queue = QueueConfig(config['process_queue'])
         self.hosts_config = []
         for host in config['hosts']:
             self.hosts_config.append(HostConfig(host))
@@ -73,7 +73,6 @@ class MongoConfig:
         self.keypath = config['ssh'].get('path_to_privkey', None)
         self.password = config['ssh'].get('password', None)
         self.credentials = (config['credentials']['username'], config['credentials']['password'])
-        self.pid = None
 
 
 class QueueConfig:
@@ -87,4 +86,3 @@ class QueueConfig:
         self.keypath = config['ssh'].get('path_to_privkey', None)
         self.password = config['ssh'].get('password', None)
         self.credentials = (config['credentials']['username'], config['credentials']['password'])
-        self.pid = None
