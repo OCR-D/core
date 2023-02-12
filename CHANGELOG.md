@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `bashlib`: Handle empty list of input files, #978
+
 ## [2.45.1] - 2023-01-20
 
 Fixed:
