@@ -9,6 +9,10 @@ Fixed:
 
   * `bashlib`: Handle empty list of input files, #978
 
+Changed:
+
+  * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
+
 ## [2.45.1] - 2023-01-20
 
 Fixed:
