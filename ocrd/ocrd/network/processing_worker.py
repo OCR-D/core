@@ -1,10 +1,12 @@
-# Abstraction for the Processing Server unit in this arch:
-# https://user-images.githubusercontent.com/7795705/203554094-62ce135a-b367-49ba-9960-ffe1b7d39b2c.jpg
+"""
+Abstraction for the Processing Server unit in this arch:
+https://user-images.githubusercontent.com/7795705/203554094-62ce135a-b367-49ba-9960-ffe1b7d39b2c.jpg
 
-# Calls to native OCR-D processor should happen through
-# the Processing Worker wrapper to hide low level details.
-# According to the current requirements, each ProcessingWorker
-# is a single OCR-D Processor instance.
+Calls to native OCR-D processor should happen through
+the Processing Worker wrapper to hide low level details.
+According to the current requirements, each ProcessingWorker
+is a single OCR-D Processor instance.
+"""
 
 from frozendict import frozendict
 from functools import lru_cache, wraps
@@ -66,7 +68,6 @@ class ProcessingWorker:
                          password: str = 'default-consumer') -> None:
         self.log.debug(f'Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
-        # TODO: Remove this information before the release
         self.log.debug(f'RMQConsumer authenticates with username: {username}, password: {password}')
         self.rmq_consumer.authenticate_and_connect(username=username, password=password)
         self.log.debug(f'Successfully connected RMQConsumer.')
@@ -75,7 +76,6 @@ class ProcessingWorker:
                           password: str = 'default-publisher', enable_acks: bool = True) -> None:
         self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
-        # TODO: Remove this information before the release
         self.log.debug(f'RMQPublisher authenticates with username: {username}, password: {password}')
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
@@ -105,7 +105,6 @@ class ProcessingWorker:
 
         try:
             self.log.debug(f'Trying to decode processing message with tag: {delivery_tag}')
-            # TODO: switch back to pickle?!
             processing_message: OcrdProcessingMessage = OcrdProcessingMessage.decode_yml(body)
         except Exception as e:
             self.log.error(f'Failed to decode processing message body: {body}')
@@ -114,8 +113,6 @@ class ProcessingWorker:
             raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
 
         try:
-            # TODO: Note to peer: ideally we should avoid doing database related actions
-            #  in this method, and handle database related interactions inside `self.process_message()`
             self.log.debug(f'Starting to process the received message: {processing_message}')
             self.process_message(processing_message=processing_message)
         except Exception as e:
@@ -160,12 +157,9 @@ class ProcessingWorker:
         input_file_grps = processing_message.input_file_grps
         output_file_grps = processing_message.output_file_grps
         parameter = processing_message.parameters
-
-        # TODO: Use job_id - will be relevant for the MongoDB to assign job status
-        #  Note to peer: We should encapsulate database related actions to keep this method simple
         job_id = processing_message.job_id
 
-        # TODO: Currently, no caching is performed.
+        # TODO: Currently, no caching is performed - adopt this: https://github.com/OCR-D/core/pull/972
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             self.log.debug(f'Invoking the processor_class: {self.processor_class}')
@@ -225,7 +219,7 @@ class ProcessingWorker:
 
         success = True
         try:
-            # TODO: Use the cached_processor flag here once #972 is merged to core
+            # TODO: Currently, no caching is performed - adopt this: https://github.com/OCR-D/core/pull/972
             run_processor(
                 processorClass=processor_class,
                 workspace=workspace,
@@ -283,6 +277,8 @@ class ProcessingWorker:
             db.Job.update_one({'_id': job_id}, {'$set': {'state': state}}, upsert=False)
 
 
+# TODO: Currently, no caching is performed - adopt this: https://github.com/OCR-D/core/pull/972
+#  These two methods should be placed in their correct modules
 # Method adopted from Triet's implementation
 # https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
 def freeze_args(func: Callable) -> Callable:

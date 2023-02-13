@@ -1,13 +1,7 @@
 from typing import Tuple
 from re import split
-from pathlib import Path
 from os import environ
 from os.path import join, exists
-
-from ocrd.network.rabbitmq_utils import (
-    OcrdProcessingMessage,
-    OcrdResultMessage
-)
 
 
 def verify_database_url(mongodb_address: str) -> str:
@@ -48,7 +42,7 @@ def get_workspaces_dir() -> str:
     """get the path to the workspaces folder
 
     The processing-workers must have access to the workspaces. First idea is that they are provided
-    via nfs and allways available under $XDG_DATA_HOME/ocrd-workspaces. This function provides the
+    via nfs and always available under $XDG_DATA_HOME/ocrd-workspaces. This function provides the
     absolute path to the folder and raises a ValueError if it is not available
     """
     if 'XDG_DATA_HOME' in environ:
@@ -59,27 +53,3 @@ def get_workspaces_dir() -> str:
     if not exists(res):
         raise ValueError('Ocrd-Workspaces directory not found. Expected \'{res}\'')
     return res
-
-
-def construct_dummy_processing_message() -> OcrdProcessingMessage:
-    return OcrdProcessingMessage(
-        job_id='dummy-job-id',
-        processor_name='ocrd-dummy',
-        created_time=None,  # Auto generated if None
-        path_to_mets='/home/mm/Desktop/ws_example/mets.xml',
-        workspace_id=None,  # Not required, workspace is not uploaded through the Workspace Server
-        input_file_grps=['DEFAULT'],
-        output_file_grps=['DUMMY-OUTPUT'],
-        page_id='PHYS0001..PHYS0003',  # Process only the first 3 pages
-        parameters={},
-        result_queue_name=None  # Not implemented yet, do not set
-    )
-
-
-def construct_dummy_result_message() -> OcrdResultMessage:
-    return OcrdResultMessage(
-        job_id='dummy-job_id',
-        status='RUNNING',
-        workspace_id='dummy-workspace_id',
-        path_to_mets='/home/mm/Desktop/ws_example/mets.xml'
-    )

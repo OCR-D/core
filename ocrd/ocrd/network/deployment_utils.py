@@ -58,12 +58,12 @@ class CustomDockerClient(DockerClient):
     Problems: APIClient must be given the API-version because it cannot connect prior to read it. I
     could imagine this could cause Problems. This is not a rushed implementation and was the only
     workaround I could find that allows password/keyfile to be used (by default only keyfile from
-    ~/.ssh/config can be used to authentificate via ssh)
+    ~/.ssh/config can be used to authenticate via ssh)
 
     XXX 2: Reasons to extend DockerClient: The code-changes regarding the connection should be in
-    one place so I decided to create `CustomSshHttpAdapter` as an inner class. The super
-    constructor *must not* be called to make this workaround work. Otherwise the APIClient
-    constructor would be invoced without `version` and that would cause a connection-attempt before
+    one place, so I decided to create `CustomSshHttpAdapter` as an inner class. The super
+    constructor *must not* be called to make this workaround work. Otherwise, the APIClient
+    constructor would be invoked without `version` and that would cause a connection-attempt before
     this workaround can be applied.
     """
 

@@ -1,5 +1,14 @@
+"""
+Abstraction of the Deployment functionality
+The ProcessingServer (currently still called Server) provides the configuration parameters to the
+Deployer agent.
+The Deployer agent deploys the RabbitMQ Server, MongoDB and the Processing Hosts.
+Each Processing Host may have several Processing Workers.
+Each Processing Worker is an instance of an OCR-D processor.
+"""
+
 from __future__ import annotations
-from typing import List, Dict, Union, Optional
+from typing import Dict, Union, Optional
 from paramiko import SSHClient
 from re import search as re_search
 
@@ -13,20 +22,7 @@ from ocrd.network.deployment_utils import (
     DeployType,
     HostData,
 )
-import time
 from pathlib import Path
-
-# Abstraction of the Deployment functionality
-# The ProcessingServer (currently still called Server) provides the configuration parameters to the
-# Deployer agent.
-# The Deployer agent deploys the RabbitMQ Server, MongoDB and the Processing Hosts.
-# Each Processing Host may have several Processing Workers.
-# Each Processing Worker is an instance of an OCR-D processor.
-
-# TODO:
-# Ideally, the interaction among the agents should happen through
-# the defined API calls of the objects to stay loyal to the OOP paradigm
-# This would also increase the readability and maintainability of the source code.
 
 
 # TODO: remove debug log statements before beta, their purpose is development only

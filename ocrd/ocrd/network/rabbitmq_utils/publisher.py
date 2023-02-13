@@ -5,8 +5,7 @@ RabbitMQ documentation.
 """
 
 import logging
-from time import sleep
-from typing import Any, Optional
+from typing import Optional
 
 from pika import (
     BasicProperties,
@@ -58,25 +57,6 @@ class RMQPublisher(RMQConnector):
 
     def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
-
-    def example_run(self) -> None:
-        while True:
-            try:
-                messages = 1
-                message = f'#{messages}'
-                self.publish_to_queue(queue_name=DEFAULT_ROUTER, message=message)
-                messages += 1
-                sleep(2)
-            except KeyboardInterrupt:
-                self._logger.info('Keyboard interruption detected. Closing down peacefully.')
-                exit(0)
-            # TODO: Clean leftovers here and inform the RabbitMQ
-            #  server about the disconnection of the publisher
-            # TODO: Implement the reconnect mechanism
-            except Exception:
-                reconnect_delay = 10
-                self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
-                sleep(reconnect_delay)
 
     def create_queue(
             self,
@@ -142,56 +122,3 @@ class RMQPublisher(RMQConnector):
     def enable_delivery_confirmations(self) -> None:
         self._logger.debug('Enabling delivery confirmations (Confirm.Select RPC)')
         RMQConnector.confirm_delivery(channel=self._channel)
-
-    # TODO: Find a way to use this callback method,
-    #  seems not possible with Blocking Connections
-    def __on_delivery_confirmation(self, frame) -> None:
-        confirmation_type = frame.method.NAME.split('.')[1].lower()
-        delivery_tag: int = frame.method.delivery_tag
-        ack_multiple = frame.method.multiple
-
-        self._logger.debug(f'Received: {confirmation_type} '
-                           f'for tag: {delivery_tag} '
-                           f'(multiple: {ack_multiple})')
-
-        if confirmation_type == 'ack':
-            self.acked_counter += 1
-        elif confirmation_type == 'nack':
-            self.nacked_counter += 1
-
-        del self.deliveries[delivery_tag]
-
-        if ack_multiple:
-            for tmp_tag in list(self.deliveries.keys()):
-                if tmp_tag <= delivery_tag:
-                    self.acked_counter += 1
-                    del self.deliveries[tmp_tag]
-
-        # TODO: Check here for stale entries inside the _deliveries
-        #  and attempt to re-delivery with max amount of tries (not defined yet)
-
-        self._logger.debug(
-            'Published %i messages, %i have yet to be confirmed, '
-            '%i were acked and %i were nacked', self.message_counter,
-            len(self.deliveries), self.acked_counter, self.nacked_counter)
-
-
-def main() -> None:
-    # Connect to localhost:5672 by
-    # using the virtual host "/" (%2F)
-    publisher = RMQPublisher(host='localhost', port=5672, vhost='/')
-    # Configured with definitions.json when building the RabbitMQ image
-    # Check Dockerfile-RabbitMQ
-    publisher.authenticate_and_connect(
-        username='default-publisher',
-        password='default-publisher'
-    )
-    publisher.setup_defaults()
-    publisher.enable_delivery_confirmations()
-    publisher.example_run()
-
-
-if __name__ == '__main__':
-    # RabbitMQ Server must be running before starting the example
-    # I.e., make start-rabbitmq
-    main()

@@ -1,11 +1,9 @@
 # Check here for more details: Message structure #139
 from __future__ import annotations
 from datetime import datetime
-from pickle import dumps, loads
 from typing import Any, Dict, List, Optional
 import yaml
 from ocrd.network.models.job import Job
-from pathlib import Path
 
 
 # TODO: Maybe there is a more compact way to achieve the serialization/deserialization?
@@ -53,29 +51,6 @@ class OcrdProcessingMessage:
         self.parameters = parameters if parameters else None
         self.created_time = created_time
 
-    # TODO: Implement the validator checks, e.g.,
-    #  if the processor name matches the expected regex
-
-    @staticmethod
-    def encode(ocrd_processing_message: OcrdProcessingMessage) -> bytes:
-        return dumps(ocrd_processing_message)
-
-    @staticmethod
-    def decode(ocrd_processing_message: bytes, encoding='utf-8') -> OcrdProcessingMessage:
-        data = loads(ocrd_processing_message, encoding=encoding)
-        return OcrdProcessingMessage(
-            job_id=data.job_id,
-            processor_name=data.processor_name,
-            created_time=data.created_time,
-            path_to_mets=data.path_to_mets,
-            workspace_id=data.workspace_id,
-            input_file_grps=data.input_file_grps,
-            output_file_grps=data.output_file_grps,
-            page_id=data.page_id,
-            parameters=data.parameters,
-            result_queue_name=data.result_queue
-        )
-
     @staticmethod
     def encode_yml(ocrd_processing_message: OcrdProcessingMessage) -> bytes:
         """convert OcrdProcessingMessage to yml
@@ -121,20 +96,6 @@ class OcrdResultMessage:
         # Either of these two below
         self.workspace_id = workspace_id
         self.path_to_mets = path_to_mets
-
-    @staticmethod
-    def encode(ocrd_result_message: OcrdResultMessage) -> bytes:
-        return dumps(ocrd_result_message)
-
-    @staticmethod
-    def decode(ocrd_result_message: bytes, encoding: str = 'utf-8') -> OcrdResultMessage:
-        data = loads(ocrd_result_message, encoding=encoding)
-        return OcrdResultMessage(
-            job_id=data.job_id,
-            status=data.status,
-            workspace_id=data.workspace_id,
-            path_to_mets=data.path_to_mets
-        )
 
     @staticmethod
     def encode_yml(ocrd_result_message: OcrdResultMessage) -> bytes:

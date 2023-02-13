@@ -64,6 +64,7 @@ def ocrd_cli_wrap_processor(
     if queue and database:
         initLogging()
         # TODO: Remove before the release
+        # We are importing the logging here because it's not the ocrd logging but python one
         import logging
         logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 

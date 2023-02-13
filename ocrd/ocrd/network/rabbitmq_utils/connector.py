@@ -260,10 +260,3 @@ class RMQConnector:
                 body=message_body,
                 properties=properties
             )
-
-    """
-    @staticmethod
-    def basic_consume(channel: BlockingChannel) -> None:
-        # TODO: provide a general consume method here as well
-        pass
-    """

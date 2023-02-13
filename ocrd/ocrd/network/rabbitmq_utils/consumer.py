@@ -5,18 +5,9 @@ RabbitMQ documentation.
 """
 
 import logging
-from time import sleep
 from typing import Any, Union
 
-from pika import (
-    PlainCredentials
-)
-from pika.spec import (
-    BasicProperties,
-    Basic,
-)
-from pika.adapters.blocking_connection import BlockingChannel
-
+from pika import PlainCredentials
 
 from ocrd.network.rabbitmq_utils.constants import (
     DEFAULT_QUEUE,
@@ -63,21 +54,6 @@ class RMQConsumer(RMQConnector):
     def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
 
-    def example_run(self) -> None:
-        self.configure_consuming()
-        try:
-            self.start_consuming()
-        except KeyboardInterrupt:
-            self._logger.info('Keyboard interruption detected. Closing down peacefully.')
-            exit(0)
-        # TODO: Clean leftovers here and inform the RabbitMQ
-        #  server about the disconnection of the consumer
-        # TODO: Implement the reconnect mechanism
-        except Exception:
-            reconnect_delay = 10
-            self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
-            sleep(reconnect_delay)
-
     def get_one_message(
             self,
             queue_name: str,
@@ -93,16 +69,12 @@ class RMQConsumer(RMQConnector):
 
     def configure_consuming(
             self,
-            queue_name: str = '',
-            callback_method: Any = None
+            queue_name: str,
+            callback_method: Any
     ) -> None:
         self._logger.debug('Issuing consumer related RPC commands')
         self._logger.debug('Adding consumer cancellation callback')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
-        if not queue_name:
-            queue_name = DEFAULT_QUEUE
-        if callback_method is None:
-            callback_method = self.__on_message_received
         self.consumer_tag = self._channel.basic_consume(
             queue_name,
             callback_method
@@ -124,40 +96,6 @@ class RMQConsumer(RMQConnector):
         if self._channel:
             self._channel.close()
 
-    def __on_message_received(
-            self,
-            channel: BlockingChannel,
-            basic_deliver: Basic.Deliver,
-            properties: BasicProperties,
-            body: bytes
-    ) -> None:
-        tag = basic_deliver.delivery_tag
-        app_id = properties.app_id
-        message = body.decode()
-        self._logger.debug(f'Received message #{tag} from {app_id}: {message}')
-        self._logger.debug(f'Received message on channel: {channel}')
-        self.__ack_message(tag)
-
-    def __ack_message(self, delivery_tag: int) -> None:
+    def ack_message(self, delivery_tag: int) -> None:
         self._logger.debug(f'Acknowledging message {delivery_tag}')
         self._channel.basic_ack(delivery_tag)
-
-
-def main() -> None:
-    # Connect to localhost:5672 by
-    # using the virtual host "/" (%2F)
-    consumer = RMQConsumer(host='localhost', port=5672, vhost='/')
-    # Configured with definitions.json when building the RabbitMQ image
-    # Check Dockerfile-RabbitMQ
-    consumer.authenticate_and_connect(
-        username='default-consumer',
-        password='default-consumer'
-    )
-    consumer.setup_defaults()
-    consumer.example_run()
-
-
-if __name__ == '__main__':
-    # RabbitMQ Server must be running before starting the example
-    # I.e., make start-rabbitmq
-    main()

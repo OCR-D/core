@@ -1,6 +1,6 @@
 # TODO: this probably breaks python 3.6. Think about whether we really want to use this
 from __future__ import annotations
-from typing import List, Dict
+from typing import Dict
 
 from ocrd.network.deployment_utils import DeployType
 

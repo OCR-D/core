@@ -17,7 +17,7 @@ from pydantic import BaseModel
 class StateEnum(str, Enum):
     queued = 'QUEUED'
     running = 'RUNNING'
-    success = 'SUCCESS'  # TODO: SUCCEEDED for consistency
+    success = 'SUCCESS'
     failed = 'FAILED'
 
 

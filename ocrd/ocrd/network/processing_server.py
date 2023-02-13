@@ -3,7 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 import uvicorn
 from yaml import safe_load
-from typing import Dict, Set
+from typing import Dict
 
 from ocrd_utils import (
     getLogger,
@@ -14,7 +14,6 @@ from ocrd_validators import ProcessingServerValidator
 from ocrd.network.deployer import Deployer
 from ocrd.network.deployment_config import ProcessingServerConfig
 from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
-from ocrd.network.helpers import construct_dummy_processing_message
 from ocrd.network.models.job import Job, JobInput, StateEnum
 from ocrd.network.models.workspace import Workspace
 from ocrd_validators import ParameterValidator
@@ -27,8 +26,8 @@ import json
 class ProcessingServer(FastAPI):
     """FastAPI app to make ocr-d processor calls
 
-    The Processing-Server receives calls conforming to the ocr-d webapi regarding the processoing
-    part. It can run ocrd-processors and provides enpoints to discover processors and watch the job
+    The Processing-Server receives calls conforming to the ocr-d webapi regarding the processing
+    part. It can run ocrd-processors and provides endpoints to discover processors and watch the job
     status.
     The Processing-Server does not execute the processors itself but starts up a queue and a
     database to delegate the calls to processing workers. They are started by the Processing-Server
@@ -40,13 +39,11 @@ class ProcessingServer(FastAPI):
                          title="OCR-D Processing Server",
                          description="OCR-D processing and processors")
         self.log = getLogger(__name__)
-
         self.hostname = host
         self.port = port
-        # TODO: Ideally the parse_config should return a Tuple with the 3 configs assigned below
-        #  to prevent passing the entire parsed config around to methods.
         self.config = ProcessingServer.parse_config(config_path)
         self.deployer = Deployer(self.config)
+        self.mongodb_url = None
 
         # TODO: Parse the RabbitMQ related data from the `queue_config`
         #  above instead of using the hard coded ones below
@@ -57,9 +54,9 @@ class ProcessingServer(FastAPI):
         self.rmq_vhost = '/'
 
         # Gets assigned when `connect_publisher` is called on the working object
-        # Note for peer: Check under self.start()
         self.rmq_publisher = None
 
+        # This list holds all processors mentioned in the config file
         self._processor_list = None
 
         # Create routes
@@ -69,15 +66,6 @@ class ProcessingServer(FastAPI):
             methods=['POST'],
             tags=['tools'],
             summary='Stop database, queue and processing-workers',
-        )
-
-        # TODO: do we still need this? Remove it?!
-        self.router.add_api_route(
-            path='/test-dummy',
-            endpoint=self.publish_default_processing_message,
-            methods=['POST'],
-            status_code=status.HTTP_202_ACCEPTED,
-            summary='Was this just for testing or do we need this'
         )
 
         self.router.add_api_route(
@@ -183,7 +171,6 @@ class ProcessingServer(FastAPI):
                        f'{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port,
                                           vhost=self.rmq_vhost)
-        # TODO: Remove this information before the release
         self.log.debug(f'RMQPublisher authenticate with username: {username}, password: {password}')
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
@@ -201,21 +188,7 @@ class ProcessingServer(FastAPI):
                 # The existence/validity of the processor.name is not tested.
                 # Even if an ocr-d processor does not exist, the queue is created
                 self.log.debug(f'Creating a message queue with id: {processor.name}')
-                # TODO: We may want to track here if there are already queues with the same name
                 self.rmq_publisher.create_queue(queue_name=processor.name)
-
-    def publish_default_processing_message(self) -> None:
-        processing_message = construct_dummy_processing_message()
-        queue_name = processing_message.processor_name
-        # TODO: switch back to pickle?! imo we should go with pickle or json and remove one of them
-        encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
-        if self.rmq_publisher:
-            self.log.debug('Publishing the default processing message')
-            self.rmq_publisher.publish_to_queue(queue_name=queue_name,
-                                                message=encoded_processing_message)
-        else:
-            self.log.error('RMQPublisher is not connected')
-            raise Exception('RMQPublisher is not connected')
 
     @property
     def processor_list(self):
@@ -288,7 +261,7 @@ class ProcessingServer(FastAPI):
             )
         return get_ocrd_tool_json(processor_name)
 
-    async def get_job(self, processor_name: str, job_id: PydanticObjectId) -> Job:
+    async def get_job(self, _processor_name: str, job_id: PydanticObjectId) -> Job:
         """ Return job-information from the database
         """
         job = await Job.get(job_id)

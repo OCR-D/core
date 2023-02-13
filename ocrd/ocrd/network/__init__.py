@@ -16,6 +16,5 @@
 
 # This package, currently, is under the `core/ocrd` package.
 # It could also be a separate package on its own under `core` with the name `ocrd_network`.
-# TODO: Correctly identify all current and potential future dependencies.
 from .processing_server import ProcessingServer
 from .processing_worker import ProcessingWorker

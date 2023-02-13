@@ -7,11 +7,9 @@ OCR-D CLI: start the processing worker
 """
 import click
 import logging
-from subprocess import run, PIPE
 from ocrd_utils import (
     initLogging,
-    get_ocrd_tool_json,
-    parse_json_string_with_comments
+    get_ocrd_tool_json
 )
 from ocrd.network.processing_worker import ProcessingWorker
 
