@@ -125,10 +125,6 @@ class ProcessingServer(FastAPI):
 
             self.mongodb_url = self.deployer.deploy_mongodb()
 
-            # Give enough time for the RabbitMQ server to get deployed and get fully configured
-            # Needed to prevent connection of the publisher before the RabbitMQ is deployed
-            sleep(3)  # TODO: Sleeping here is bad and better check should be performed
-
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.connect_publisher()
 

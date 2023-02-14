@@ -23,6 +23,8 @@ from ocrd.network.deployment_utils import (
     HostData,
 )
 from pathlib import Path
+from ocrd.network.rabbitmq_utils import RMQPublisher
+from time import sleep
 
 
 class Deployer:
@@ -158,9 +160,27 @@ class Deployer:
         rmq_port = self.config.queue.port
         rmq_vhost = '/'  # the default virtual host
 
+        self.wait_for_rabbitmq_availability(rmq_host, rmq_port, rmq_vhost,
+                                            self.config.queue.credentials[0],
+                                            self.config.queue.credentials[1])
+
         rabbitmq_url = f'{rmq_host}:{rmq_port}{rmq_vhost}'
         self.log.debug(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
         return rabbitmq_url
+
+    def wait_for_rabbitmq_availability(self, host: str, port: str, vhost: str, username: str,
+                                       password: str) -> None:
+        max_waiting_steps = 15
+        while max_waiting_steps > 0:
+            try:
+                dummy_publisher = RMQPublisher(host=host, port=port, vhost=vhost)
+                dummy_publisher.authenticate_and_connect(username=username, password=password)
+            except Exception:
+                max_waiting_steps -= 1
+                sleep(2)
+            else:
+                return
+        raise RuntimeError('Error waiting for queue startup: timeout exceeded')
 
     def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
                        ports_mapping: Union[Dict, None] = None) -> str:
