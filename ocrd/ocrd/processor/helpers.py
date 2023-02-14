@@ -280,10 +280,8 @@ Default Wiring:
 
 
 # Taken from https://github.com/OCR-D/core/pull/884
-# TODO: Decide how much maxsize is optimal as a default
-# TODO: The max size should be configurable with, e.g., with an environment variable?
 @freeze_args
-@lru_cache(maxsize=32)  
+@lru_cache(maxsize=environ.get('OCRD_MAX_PROCESSOR_CACHE', 128))  
 def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.
