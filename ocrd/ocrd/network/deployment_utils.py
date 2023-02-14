@@ -14,12 +14,11 @@ def create_ssh_client(address: str, username: str, password: Union[str, None],
                       keypath: Union[str, None]) -> SSHClient:
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy)
-    log = getLogger(__name__)
-    log.debug(f'creating ssh-client with username: "{username}", keypath: "{keypath}". '
-              f'host: {address}')
-    # TODO: connecting could easily fail here: wrong password, wrong path to keyfile etc. Maybe
-    #       would be better to use except and try to give custom error message when failing
-    client.connect(hostname=address, username=username, password=password, key_filename=keypath)
+    try:
+        client.connect(hostname=address, username=username, password=password, key_filename=keypath)
+    except Exception:
+        getLogger(__name__).error(f'Error creating SSHClient for host: \'{address}\'')
+        raise
     return client
 
 

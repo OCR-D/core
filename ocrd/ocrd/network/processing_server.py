@@ -120,26 +120,30 @@ class ProcessingServer(FastAPI):
     def start(self) -> None:
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
-        rabbitmq_url = self.deployer.deploy_rabbitmq()
+        try:
+            rabbitmq_url = self.deployer.deploy_rabbitmq()
 
-        self.mongodb_url = self.deployer.deploy_mongodb()
+            self.mongodb_url = self.deployer.deploy_mongodb()
 
-        # Give enough time for the RabbitMQ server to get deployed and get fully configured
-        # Needed to prevent connection of the publisher before the RabbitMQ is deployed
-        sleep(3)  # TODO: Sleeping here is bad and better check should be performed
+            # Give enough time for the RabbitMQ server to get deployed and get fully configured
+            # Needed to prevent connection of the publisher before the RabbitMQ is deployed
+            sleep(3)  # TODO: Sleeping here is bad and better check should be performed
 
-        # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
-        self.connect_publisher()
+            # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
+            self.connect_publisher()
 
-        self.log.debug(f'Creating message queues on RabbitMQ instance url: {rabbitmq_url}')
-        self.create_message_queues()
+            self.log.debug(f'Creating message queues on RabbitMQ instance url: {rabbitmq_url}')
+            self.create_message_queues()
 
-        # Deploy processing hosts where processing workers are running on
-        # Note: A deployed processing worker starts listening to a message queue with id
-        #       processor.name
-        self.deployer.deploy_hosts(rabbitmq_url, self.mongodb_url)
-
-        self.log.debug(f'Starting uvicorn: {self.hostname}:{self.port}')
+            # Deploy processing hosts where processing workers are running on
+            # Note: A deployed processing worker starts listening to a message queue with id
+            #       processor.name
+            self.deployer.deploy_hosts(rabbitmq_url, self.mongodb_url)
+        except Exception:
+            self.log.error('Error during startup of processing server. Trying to kill parts of '
+                           'incompletely deployed service')
+            self.deployer.kill_all()
+            raise
         uvicorn.run(self, host=self.hostname, port=self.port)
 
     @staticmethod
