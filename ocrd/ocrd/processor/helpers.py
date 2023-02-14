@@ -65,7 +65,7 @@ def run_processor(
     - :py:attr:`output_file_grp`
     - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
 
-    Warning: Avoid setting the `cached_processor` flag to True. It may have unexpected side effects.
+    Warning: Avoid setting the `instance_caching` flag to True. It may have unexpected side effects.
     This flag is used for an experimental feature we would like to adopt in future.
 
     Run the processor on the workspace (creating output files in the filesystem).
