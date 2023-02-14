@@ -48,7 +48,7 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
-        cached_processor=False  # TODO don't set this yet!
+        instance_caching=False  # TODO don't set this yet!
 ): # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
@@ -92,7 +92,7 @@ def run_processor(
         page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
-        cached_processor=cached_processor
+        instance_caching=instance_caching
     )
 
     ocrd_tool = processor.ocrd_tool
@@ -309,10 +309,10 @@ def get_processor(
         page_id: str = None,
         input_file_grp: List[str] = None,
         output_file_grp: List[str] = None,
-        cached_processor: bool = False,
+        instance_caching: bool = False,
 ):
     if processor_class:
-        if cached_processor:
+        if instance_caching:
             cached_processor = get_cached_processor(
                 parameter=parameter,
                 processor_class=processor_class
