@@ -25,7 +25,6 @@ from ocrd.network.deployment_utils import (
 from pathlib import Path
 
 
-# TODO: remove debug log statements before beta, their purpose is development only
 class Deployer:
     """ Class to wrap the deployment-functionality of the OCR-D Processing-Servers
 
@@ -39,45 +38,27 @@ class Deployer:
             config: Parsed processing-server-configuration
         """
         self.log = getLogger(__name__)
-        self.log.debug('The Deployer of the ProcessingServer was invoked')
         self.config = config
         self.hosts = HostData.from_config(config.hosts)
         self.mongo_pid = None
         self.mq_pid = None
 
-        # TODO: We should have a data structure here to manage the connections and PIDs:
-        #  - RabbitMQ - (host address, pid on that host)
-        #  - MongoDB - (host address, pid on that host)
-        #  - Processing Hosts - (host address)
-        #    - Processing Workers - (pid on that host address)
-        #  The PIDs are stored for future usage - i.e. for killing them forcefully/gracefully.
-        #  Currently, the connections (ssh_client, docker_client) and
-        #  the PIDs are stored inside the config data classes
-
     def kill_all(self) -> None:
-        # The order of killing is important to optimize graceful shutdown in the future
-        # If RabbitMQ server is killed before killing Processing Workers, that may have
-        # bad outcome and leave Processing Workers in an unpredictable state
+        """ kill all started services: workers, database, queue
 
-        # First kill the active Processing Workers on Processing Hosts
-        # They may still want to update something in the db before closing
-        # They may still want to nack the currently processed messages back to the RabbitMQ Server
+        The order of killing is important to optimize graceful shutdown in the future. If RabbitMQ
+        server is killed before killing Processing Workers, that may have bad outcome and leave
+        Processing Workers in an unpredictable state
+        """
         self.kill_hosts()
-
-        # Second kill the MongoDB
         self.kill_mongodb()
-
-        # Third kill the RabbitMQ Server
         self.kill_rabbitmq()
 
     def deploy_hosts(self, rabbitmq_url: str, mongodb_url: str) -> None:
-        self.log.debug('Starting to deploy hosts')
         for host in self.hosts:
             self.log.debug(f'Deploying processing workers on host: {host.config.address}')
             for processor in host.config.processors:
                 self._deploy_processing_worker(processor, host, rabbitmq_url, mongodb_url)
-            # TODO: The connections are correctly closed on host level, but created on processing
-            #       worker level?
             if host.ssh_client:
                 host.ssh_client.close()
             if host.docker_client:
@@ -129,12 +110,11 @@ class Deployer:
     def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
                         remove: bool = True, ports_mapping: Union[Dict, None] = None) -> str:
         """Start docker-container with rabbitmq
+
+        This method deploys the RabbitMQ Server. Handling of creation of queues, submitting messages
+        to queues, and receiving messages from queues is part of the RabbitMQ Library which is part
+        of the OCR-D WebAPI implementation.
         """
-        # Note for a peer
-        # This method deploys the RabbitMQ Server.
-        # Handling of creation of queues, submitting messages to queues,
-        # and receiving messages from queues is part of the RabbitMQ Library
-        # Which is part of the OCR-D WebAPI implementation.
         self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}],'
                        f'remove[{remove}]')
 
@@ -153,7 +133,6 @@ class Deployer:
                 15672: 15672,
                 25672: 25672
             }
-        self.log.debug(f'Ports mapping: {ports_mapping}')
         local_defs_path = Path(__file__).parent.resolve() / 'rabbitmq_utils' / 'definitions.json'
         container_defs_path = "/etc/rabbitmq/definitions.json"
         res = client.containers.run(
@@ -199,8 +178,6 @@ class Deployer:
             ports_mapping = {
                 27017: self.config.mongo.port
             }
-        self.log.debug(f'Ports mapping: {ports_mapping}')
-        # TODO: what about the data-dir? Must data be preserved between runs?
         res = client.containers.run(
             image=image,
             detach=detach,
@@ -222,13 +199,9 @@ class Deployer:
         return mongodb_url
 
     def kill_rabbitmq(self) -> None:
-        # TODO: The PID must not be stored in the configuration `mq_data`. Why not?
         if not self.mq_pid:
             self.log.warning('No running RabbitMQ instance found')
-            # TODO: Ignoring this silently is problematic in the future. Why?
             return
-        self.log.debug(f'Trying to stop the deployed RabbitMQ with PID: {self.mq_pid}')
-
         client = create_docker_client(self.config.queue.address, self.config.queue.username,
                                       self.config.queue.password, self.config.queue.keypath)
         client.containers.get(self.mq_pid).stop()
@@ -237,13 +210,9 @@ class Deployer:
         self.log.debug('The RabbitMQ is stopped')
 
     def kill_mongodb(self) -> None:
-        # TODO: The PID must not be stored in the configuration `mongo_data`. Why not?
         if not self.mongo_pid:
             self.log.warning('No running MongoDB instance found')
-            # TODO: Ignoring this silently is problematic in the future. Why?
             return
-        self.log.debug(f'Trying to stop the deployed MongoDB with PID: {self.mongo_pid}')
-
         client = create_docker_client(self.config.mongo.address, self.config.mongo.username,
                                       self.config.mongo.password, self.config.mongo.keypath)
         client.containers.get(self.mongo_pid).stop()
@@ -268,7 +237,6 @@ class Deployer:
     def kill_processing_worker(self, host: HostData) -> None:
         for pid in host.pids_native:
             self.log.debug(f'Trying to kill/stop native processor: with PID: \'{pid}\'')
-            # TODO: For graceful shutdown we may want to send additional parameters to kill
             host.ssh_client.exec_command(f'kill {pid}')
         host.pids_native = []
 
@@ -278,16 +246,6 @@ class Deployer:
             #       think about using threads to kill parallelized to reduce waiting time
             host.docker_client.containers.get(pid).stop()
         host.pids_docker = []
-
-    # Note: Invoking a pythonic processor is slightly different from the description in the spec.
-    # In order to achieve the exact spec call all ocr-d processors should be refactored...
-    # TODO: To deploy a processing worker (i.e. an ocr-d processor):
-    #  1. Invoke pythonic processor:
-    #  `<processor-name> --queue=<queue-url> --database=<database-url>
-    #  Omit the `processing-worker` argument.
-    #  2. Invoke non-pythonic processor:
-    #  `ocrd processing-worker <processor-name> --queue=<queue-url> --database=<database-url>`
-    #  E.g., olena-binarize
 
     def start_native_processor(self, client: SSHClient, processor_name: str, queue_url: str,
                                database_url: str, bin_dir: Optional[str] = None) -> str:
@@ -303,10 +261,8 @@ class Deployer:
         Returns:
             str: pid of running process
         """
-        # TODO: some processors are bashlib. They have to be started differently. Open Question:
-        #       how to find out if a processor is bashlib
+        # TODO: some processors are bashlib. They have to be started differently
         self.log.debug(f'Starting native processor: {processor_name}')
-        self.log.debug(f'The processor connects to queue: {queue_url} and mongodb: {database_url}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         if bin_dir:
@@ -321,7 +277,6 @@ class Deployer:
         # returning from the function
         stdin.write(f'{cmd} & \n echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
-        self.log.debug(f'Output for processor {processor_name}: {output}')
         stdout.close()
         stdin.close()
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
@@ -329,9 +284,7 @@ class Deployer:
     def start_docker_processor(self, client: CustomDockerClient,
                                processor_name: str, queue_url: str, database_url: str) -> str:
         self.log.debug(f'Starting docker container processor: {processor_name}')
-        # TODO: queue_url and database_url are ready to be used
-        self.log.debug(f'The processor connects to queue: {queue_url} and mongodb: {database_url}')
-        # TODO: add real command here to start processing server here
+        # TODO: add real command here to start processing server in docker here
         res = client.containers.run('debian', 'sleep 500s', detach=True, remove=True)
         assert res and res.id, f'Running processor: {processor_name} in docker-container failed'
         return res.id

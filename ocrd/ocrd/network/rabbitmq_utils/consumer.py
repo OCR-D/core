@@ -72,8 +72,7 @@ class RMQConsumer(RMQConnector):
             queue_name: str,
             callback_method: Any
     ) -> None:
-        self._logger.debug('Issuing consumer related RPC commands')
-        self._logger.debug('Adding consumer cancellation callback')
+        self._logger.debug(f'Configuring consuming with queue: {queue_name}')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
         self.consumer_tag = self._channel.basic_consume(
             queue_name,

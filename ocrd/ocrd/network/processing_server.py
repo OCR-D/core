@@ -170,18 +170,15 @@ class ProcessingServer(FastAPI):
         self.deployer.kill_all()
 
     def connect_publisher(self, username: str = 'default-publisher',
-                          password: str = 'default-publisher', enable_acks: bool =True) -> None:
+                          password: str = 'default-publisher', enable_acks: bool = True) -> None:
         self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:'
                        f'{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port,
                                           vhost=self.rmq_vhost)
-        self.log.debug(f'RMQPublisher authenticate with username: {username}, password: {password}')
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
             self.log.debug('Delivery confirmations are enabled')
-        else:
-            self.log.debug('Delivery confirmations are disabled')
         self.log.debug('Successfully connected RMQPublisher.')
 
     def create_message_queues(self) -> None:
