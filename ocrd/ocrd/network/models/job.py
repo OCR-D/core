@@ -1,11 +1,3 @@
-# These are the models directly taken from the Triet's implementation:
-# REST API wrapper for the processor #884
-
-# TODO: In the OCR-D WebAPI implementation we did a clear separation between
-#  the business response models and the low level database models. In order to achieve
-#  better modularity, we should use the same approach in the network package as well.
-
-
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional

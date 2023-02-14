@@ -269,8 +269,8 @@ class ProcessingWorker:
     def set_job_state(self, job_id: Any, success: bool):
         """Set the job status in mongodb to either success or failed
         """
-        # TODO: the way to interact with mongodb needs to be thought about. This is to make it work
-        #       for now for better testing. Beanie seems not suitable as the worker is not async
+        # TODO: the way to interact with mongodb needs to be thought about. Beanie seems not
+        #       suitable as the worker is not async, thus useng pymongo here
         state = StateEnum.success if success else StateEnum.failed
         with pymongo.MongoClient(self.db_url) as client:
             db = client['ocrd']

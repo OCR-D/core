@@ -44,13 +44,8 @@ class ProcessingServer(FastAPI):
         self.config = ProcessingServer.parse_config(config_path)
         self.deployer = Deployer(self.config)
         self.mongodb_url = None
-
-        # TODO: Parse the RabbitMQ related data from the `queue_config`
-        #  above instead of using the hard coded ones below
-
-        # RabbitMQ related fields, hard coded initially
-        self.rmq_host = 'localhost'
-        self.rmq_port = 5672
+        self.rmq_host = self.config.queue.address
+        self.rmq_port = self.config.queue.port
         self.rmq_vhost = '/'
 
         # Gets assigned when `connect_publisher` is called on the working object
@@ -198,7 +193,6 @@ class ProcessingServer(FastAPI):
         self._processor_list = list(res)
         return self._processor_list
 
-    # TODO: how do we want to do the whole model-stuff? Webapi (openapi.yml) uses ProcessorJob
     async def run_processor(self, processor_name: str, data: JobInput) -> JobOutput:
         """ Queue a processor job
         """

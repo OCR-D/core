@@ -6,10 +6,6 @@ import yaml
 from ocrd.network.models.job import Job
 
 
-# TODO: Maybe there is a more compact way to achieve the serialization/deserialization?
-#  Using ProtocolBuffers should decrease the size of the messages in bytes.
-#  It should be considered once we have a basic running prototype.
-
 class OcrdProcessingMessage:
     def __init__(
             self,
