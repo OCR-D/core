@@ -56,6 +56,16 @@ jobs:
       - run: make deps-ubuntu deps-test install
       - run: make test benchmark
 
+  test-python311:
+    docker:
+      - image: python:3.11.2
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
+
   deploy:
     docker:
       - image: circleci/buildpack-deps:stretch
@@ -84,4 +94,5 @@ workflows:
       - test-python38
       - test-python39
       - test-python310
+      - test-python311
       - test-macos
