@@ -13,6 +13,10 @@ Changed:
 
   * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
 
+Added:
+
+  * `helpers`: `get_cached_processor` to get instances of a processor in preparation for #974, #972
+
 ## [2.45.1] - 2023-01-20
 
 Fixed:
