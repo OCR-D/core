@@ -3,20 +3,26 @@ Helper methods for running and documenting processors
 """
 from os import environ
 from time import perf_counter, process_time
+from functools import lru_cache
 import json
 import inspect
 from subprocess import run, PIPE
+from typing import List, Type
+
 from memory_profiler import memory_usage
 from sparklines import sparklines
 
 from click import wrap_text
-from ocrd_utils import getLogger
+from ocrd.workspace import Workspace
+from ocrd_utils import freeze_args, getLogger
+
 
 __all__ = [
     'generate_processor_help',
     'run_cli',
     'run_processor'
 ]
+
 
 def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
     if workspace is None:
@@ -42,6 +48,7 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
+        instance_caching=False  # TODO don't set this yet!
 ): # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
@@ -58,6 +65,9 @@ def run_processor(
     - :py:attr:`output_file_grp`
     - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
 
+    Warning: Avoid setting the `instance_caching` flag to True. It may have unexpected side effects.
+    This flag is used for an experimental feature we would like to adopt in future.
+
     Run the processor on the workspace (creating output files in the filesystem).
 
     Finally, write back the workspace (updating the METS in the filesystem).
@@ -73,14 +83,18 @@ def run_processor(
     )
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
-    processor = processorClass(
-        workspace,
+
+    processor = get_processor(
+        processor_class=processorClass,
+        parameter=parameter,
+        workspace=workspace,
         ocrd_tool=ocrd_tool,
         page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
-        parameter=parameter
+        instance_caching=instance_caching
     )
+
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
@@ -263,3 +277,55 @@ Default Wiring:
     ocrd_tool.get('input_file_grp', 'NONE'),
     ocrd_tool.get('output_file_grp', 'NONE')
 )
+
+
+# Taken from https://github.com/OCR-D/core/pull/884
+@freeze_args
+@lru_cache(maxsize=environ.get('OCRD_MAX_PROCESSOR_CACHE', 128))  
+def get_cached_processor(parameter: dict, processor_class):
+    """
+    Call this function to get back an instance of a processor.
+    The results are cached based on the parameters.
+    Args:
+        parameter (dict): a dictionary of parameters.
+        processor_class: the concrete `:py:class:~ocrd.Processor` class.
+    Returns:
+        When the concrete class of the processor is unknown, `None` is returned.
+        Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
+    """
+    if processor_class:
+        dict_params = dict(parameter) if parameter else None
+        return processor_class(workspace=None, parameter=dict_params)
+    return None
+
+
+def get_processor(
+        processor_class,
+        parameter: dict,
+        workspace: Workspace = None,
+        ocrd_tool: dict = None,
+        page_id: str = None,
+        input_file_grp: List[str] = None,
+        output_file_grp: List[str] = None,
+        instance_caching: bool = False,
+):
+    if processor_class:
+        if instance_caching:
+            cached_processor = get_cached_processor(
+                parameter=parameter,
+                processor_class=processor_class
+            )
+            cached_processor.workspace = workspace
+            cached_processor.page_id = page_id
+            cached_processor.input_file_grp = input_file_grp
+            cached_processor.output_file_grp = output_file_grp
+            return cached_processor
+        return processor_class(
+            workspace=workspace,
+            ocrd_tool=ocrd_tool,
+            page_id=page_id,
+            input_file_grp=input_file_grp,
+            output_file_grp=output_file_grp,
+            parameter=parameter
+        )
+    raise ValueError("Processor class is not known")
