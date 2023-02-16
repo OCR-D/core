@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.46.0] - 2023-02-16
+
 Changed:
 
   * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
