@@ -9,6 +9,7 @@ Fixed:
 
   * `bashlib`: Handle empty list of input files, #978
   * `OcrdMets.find_files`: don't override the `@LOCTYPE` of file candidates, #980
+  * `ocrd resmgr`: replace libmagic with simple lookup by suffix, #982, #984
 
 Changed:
 
