@@ -44,6 +44,8 @@ EXT_TO_MIME = {
     '.pbm': 'image/x-portable-bitmap',
     '.tar.gz': 'application/gzip',
     '.tar.xz': 'application/x-xz',
+    '.tgz': 'application/gzip',
+    '.txz': 'application/x-xz',
     '.txt': 'text/plain',
     '.xsl': 'text/xsl',
     '.zip': 'application/zip',
