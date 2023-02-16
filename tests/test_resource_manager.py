@@ -1,5 +1,5 @@
 import os
-import pathlib
+from pathlib import Path
 import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
@@ -26,7 +26,7 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
 
     # assert
     default_config_dir = os.path.join(os.environ['HOME'], '.config', 'ocrd')
-    f = pathlib.Path(default_config_dir) / CONST_RESOURCE_YML
+    f = Path(default_config_dir) / CONST_RESOURCE_YML
     assert f.exists()
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
@@ -140,6 +140,22 @@ def test_date_as_string(tmp_path):
         """)
     mgr.load_resource_list(test_list)
     mgr.list_available(executable='ocrd-eynollah-segment')
+
+def test_download_archive(tmp_path):
+    mgr = OcrdResourceManager(xdg_data_home=tmp_path)
+    for archive_type in ('.zip', '.tar.gz', '.tar.xz'):
+        mgr.download(
+            'ocrd-foo',
+            str(Path(__file__).parent / f'data/filename{archive_type}'),
+            mgr.location_to_resource_dir('data'),
+            resource_type='archive',
+            name='filename.ext',
+            path_in_archive='filename.ext',
+            overwrite=True,
+        )
+        filecontent_path =  Path(tmp_path / 'ocrd-resources/ocrd-foo/filename.ext')
+        assert filecontent_path.read_text() == '1\n'
+
 
 if __name__ == "__main__":
     main(__file__)

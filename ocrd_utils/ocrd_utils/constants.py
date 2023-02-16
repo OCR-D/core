@@ -42,8 +42,13 @@ EXT_TO_MIME = {
     '.ppm': 'image/x-portable-pixmap',
     '.pnm': 'image/x-portable-anymap',
     '.pbm': 'image/x-portable-bitmap',
+    '.tar.gz': 'application/gzip',
+    '.tar.xz': 'application/x-xz',
+    '.tgz': 'application/gzip',
+    '.txz': 'application/x-xz',
     '.txt': 'text/plain',
     '.xsl': 'text/xsl',
+    '.zip': 'application/zip',
 }
 
 MIME_TO_EXT = {
@@ -67,6 +72,9 @@ MIME_TO_EXT = {
     'text/plain': '.txt',
     'text/xsl': '.xsl',
     'text/xml': '.xml',
+    'application/zip': '.zip',
+    'application/x-xz': '.tar.xz',
+    'application/gzip': '.tar.gz',
 }
 
 #
