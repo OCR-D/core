@@ -337,7 +337,7 @@ class OcrdMets(OcrdXmlDocument):
 
             # Note: why we instantiate a class only to find out that the local_only is set afterwards
             # Checking local_only and url before instantiation should be better?
-            f = OcrdFile(cand, mets=self)
+            f = OcrdFile(cand, mets=self, loctype=cand.get('LOCTYPE'))
 
             # If only local resources should be returned and f is not a file path: skip the file
             if local_only and not is_local_filename(f.url):
