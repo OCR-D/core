@@ -5,6 +5,24 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `bashlib`: Handle empty list of input files, #978
+
+Changed:
+
+  * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
+
+Added:
+
+  * `helpers`: `get_cached_processor` to get instances of a processor in preparation for #974, #972
+
+## [2.45.1] - 2023-01-20
+
+Fixed:
+
+  * `ocrd resmgr`: insert new entries first, so dedup works as expected, #971
+
 ## [2.45.0] - 2022-12-13
 
 Fixed:
@@ -1619,6 +1637,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.45.1]: ../../compare/v2.45.1..v2.45.0
 [2.45.0]: ../../compare/v2.45.0..v2.44.0
 [2.44.0]: ../../compare/v2.44.0..v2.43.0
 [2.43.0]: ../../compare/v2.43.0..v2.42.1
