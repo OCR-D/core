@@ -9,6 +9,8 @@ is a single OCR-D Processor instance.
 """
 
 import json
+import logging
+from os import getpid
 from typing import Any, List
 
 import pika.spec
@@ -34,6 +36,12 @@ from ocrd.network.rabbitmq_utils import (
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
         self.log = getLogger(__name__)
+        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
+        file_handler = logging.FileHandler(f'/tmp/worker_{processor_name}_{getpid()}.log', mode='a')
+        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        file_handler.setFormatter(logging.Formatter(logging_format))
+        file_handler.setLevel(logging.DEBUG)
+        self.log.addHandler(file_handler)
 
         try:
             self.db_url = verify_database_url(mongodb_addr)
@@ -222,7 +230,7 @@ class ProcessingWorker:
                 parameter=parameter,
                 input_file_grp=input_file_grps_str,
                 output_file_grp=output_file_grps_str,
-                # TODO: instance caching turned on breaks processors
+                # TODO: Instance caching turned on breaks processors
                 instance_caching=False
             )
         except Exception as e:
