@@ -12,6 +12,7 @@ Fixed:
 Changed:
 
   * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
+  * `WorkspaceBackupManager`: add snapshot on init if enabled, #981
 
 Added:
 
