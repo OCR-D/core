@@ -253,7 +253,7 @@ class Processor():
             if fqname:
                 fqname += '.'
             fqname += name
-            if sys.modules[fqname].__file__:
+            if getattr(sys.modules[fqname], '__file__', None):
                 return fqname
         # fall-back
         return self.__module__
