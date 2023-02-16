@@ -77,7 +77,11 @@ class Workspace():
         if mets is None:
             mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
-        self.automatic_backup = automatic_backup
+        if automatic_backup:
+            self.automatic_backup = WorkspaceBackupManager(self)
+            self.automatic_backup.add()
+        else:
+            self.automatic_backup = None
         self.baseurl = baseurl
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
 
@@ -407,7 +411,7 @@ class Workspace():
         log = getLogger('ocrd.workspace.save_mets')
         log.debug("Saving mets '%s'", self.mets_target)
         if self.automatic_backup:
-            WorkspaceBackupManager(self).add()
+            self.automatic_backup.add()
         with atomic_write(self.mets_target) as f:
             f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
