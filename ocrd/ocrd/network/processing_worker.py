@@ -8,18 +8,16 @@ According to the current requirements, each ProcessingWorker
 is a single OCR-D Processor instance.
 """
 
-from frozendict import frozendict
-from functools import lru_cache, wraps
 import json
-from typing import List, Callable, Type, Union, Any
+from typing import Any, List
 
 import pika.spec
 import pika.adapters.blocking_connection
+import pymongo
 
-from ocrd import Resolver
 from ocrd_utils import getLogger
+from ocrd import Resolver
 from ocrd.processor.helpers import run_cli, run_processor
-from ocrd.processor.base import Processor
 from ocrd.network.helpers import (
     verify_database_url,
     verify_and_parse_rabbitmq_addr
@@ -31,7 +29,6 @@ from ocrd.network.rabbitmq_utils import (
     RMQConsumer,
     RMQPublisher
 )
-import pymongo
 
 
 class ProcessingWorker:
@@ -159,7 +156,6 @@ class ProcessingWorker:
         parameter = processing_message.parameters
         job_id = processing_message.job_id
 
-        # TODO: Currently, no caching is performed - adopt this: https://github.com/OCR-D/core/pull/972
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             self.log.debug(f'Invoking the processor_class: {self.processor_class}')
@@ -219,14 +215,15 @@ class ProcessingWorker:
 
         success = True
         try:
-            # TODO: Currently, no caching is performed - adopt this: https://github.com/OCR-D/core/pull/972
             run_processor(
                 processorClass=processor_class,
                 workspace=workspace,
                 page_id=page_id,
                 parameter=parameter,
                 input_file_grp=input_file_grps_str,
-                output_file_grp=output_file_grps_str
+                output_file_grp=output_file_grps_str,
+                # TODO: instance caching turned on breaks processors
+                instance_caching=False
             )
         except Exception as e:
             success = False
@@ -275,41 +272,3 @@ class ProcessingWorker:
         with pymongo.MongoClient(self.db_url) as client:
             db = client['ocrd']
             db.Job.update_one({'_id': job_id}, {'$set': {'state': state}}, upsert=False)
-
-
-# TODO: Currently, no caching is performed - adopt this: https://github.com/OCR-D/core/pull/972
-#  These two methods should be placed in their correct modules
-# Method adopted from Triet's implementation
-# https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
-def freeze_args(func: Callable) -> Callable:
-    """
-    Transform mutable dictionary into immutable. Useful to be compatible with cache
-    Code taken from `this post <https://stackoverflow.com/a/53394430/1814420>`_
-    """
-
-    @wraps(func)
-    def wrapped(*args, **kwargs) -> Callable:
-        args = tuple([frozendict(arg) if isinstance(arg, dict) else arg for arg in args])
-        kwargs = {k: frozendict(v) if isinstance(v, dict) else v for k, v in kwargs.items()}
-        return func(*args, **kwargs)
-    return wrapped
-
-
-# Method adopted from Triet's implementation
-# https://github.com/OCR-D/core/pull/884/files#diff-8b69cb85b5ffcfb93a053791dec62a2f909a0669ae33d8a2412f246c3b01f1a3R260
-@freeze_args
-@lru_cache(maxsize=32)
-def get_processor(parameter: dict, processor_class=None) -> Union[Type[Processor], None]:
-    """
-    Call this function to get back an instance of a processor. The results are cached based on the parameters.
-    Args:
-        parameter (dict): a dictionary of parameters.
-        processor_class: the concrete `:py:class:~ocrd.Processor` class.
-    Returns:
-        When the concrete class of the processor is unknown, `None` is returned. Otherwise, an instance of the
-        `:py:class:~ocrd.Processor` is returned.
-    """
-    if processor_class:
-        dict_params = dict(parameter) if parameter else None
-        return processor_class(workspace=None, parameter=dict_params)
-    return None
