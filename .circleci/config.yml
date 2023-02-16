@@ -16,19 +16,9 @@ jobs:
       - run: make deps-test install PIP=pip3
       - run: make test benchmark PYTHON=python3
 
-  test-python36:
-    docker:
-      - image: python:3.6.12
-    working_directory: ~/ocrd-core
-    steps:
-      - checkout
-      - run: apt-get -y update
-      - run: make deps-ubuntu deps-test install
-      - run: make test benchmark
-
   test-python37:
     docker:
-      - image: python:3.7.9
+      - image: python:3.7.16
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -38,7 +28,7 @@ jobs:
 
   test-python38:
     docker:
-      - image: python:3.8.5
+      - image: python:3.8.16
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -48,7 +38,27 @@ jobs:
 
   test-python39:
     docker:
-      - image: python:3.9
+      - image: python:3.9.16
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
+
+  test-python310:
+    docker:
+      - image: python:3.10.10
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: apt-get -y update
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
+
+  test-python311:
+    docker:
+      - image: python:3.11.2
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -80,8 +90,9 @@ workflows:
               only: master
   test-pull-request:
     jobs:
-      - test-python36
       - test-python37
       - test-python38
       - test-python39
+      - test-python310
+      - test-python311
       - test-macos

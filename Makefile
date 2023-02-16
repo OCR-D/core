@@ -49,7 +49,7 @@ help:
 DOCKER_TAG = ocrd/core
 
 # Docker base image. Default: '$(DOCKER_BASE_IMAGE)'.
-DOCKER_BASE_IMAGE = ubuntu:18.04
+DOCKER_BASE_IMAGE = ubuntu:20.04
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
 DOCKER_ARGS = 
