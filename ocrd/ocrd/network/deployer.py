@@ -108,6 +108,7 @@ class Deployer:
                     database_url=mongodb_url
                 )
                 host.pids_docker.append(pid)
+            sleep(0.1)
 
     def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
                         remove: bool = True, ports_mapping: Union[Dict, None] = None) -> str:
