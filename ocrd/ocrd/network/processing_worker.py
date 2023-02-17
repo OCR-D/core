@@ -12,6 +12,8 @@ import json
 import logging
 from os import getpid
 from typing import Any, List
+from tensorflow.keras.utils import disable_interactive_logging
+
 
 import pika.spec
 import pika.adapters.blocking_connection
@@ -163,6 +165,11 @@ class ProcessingWorker:
         output_file_grps = processing_message.output_file_grps
         parameter = processing_message.parameters
         job_id = processing_message.job_id
+
+        # TODO: Find a proper solution for this dirty fix
+        #  Enabled interactive logging throws exception
+        if self.processor_name == 'ocrd-calamari-recognize':
+            disable_interactive_logging()
 
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
