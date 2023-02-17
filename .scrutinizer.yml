@@ -2,6 +2,7 @@ checks:
   python: true
 
 build:
+  image: default-bionic
   nodes:
     analysis:
       dependencies:
