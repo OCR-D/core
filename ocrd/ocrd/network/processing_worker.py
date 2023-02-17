@@ -12,12 +12,11 @@ import json
 import logging
 from os import getpid
 from typing import Any, List
-from tensorflow.keras.utils import disable_interactive_logging
-
 
 import pika.spec
 import pika.adapters.blocking_connection
 import pymongo
+from tensorflow.keras.utils import disable_interactive_logging
 
 from ocrd_utils import getLogger
 from ocrd import Resolver
@@ -167,8 +166,9 @@ class ProcessingWorker:
         job_id = processing_message.job_id
 
         # TODO: Find a proper solution for this dirty fix
-        #  Enabled interactive logging throws exception
         if self.processor_name == 'ocrd-calamari-recognize':
+            # Enabled interactive logging throws an exception
+            # due to a call of sys.stdout.flush()
             disable_interactive_logging()
 
         if self.processor_class:
@@ -237,8 +237,7 @@ class ProcessingWorker:
                 parameter=parameter,
                 input_file_grp=input_file_grps_str,
                 output_file_grp=output_file_grps_str,
-                # TODO: Instance caching turned on breaks processors
-                instance_caching=False
+                instance_caching=True
             )
         except Exception as e:
             success = False

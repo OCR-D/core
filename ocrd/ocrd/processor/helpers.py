@@ -14,7 +14,7 @@ from sparklines import sparklines
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger
+from ocrd_utils import freeze_args, getLogger, pushd_popd
 
 
 __all__ = [
@@ -118,7 +118,8 @@ def run_processor(
         mem_output += ' max: %.2f MiB min: %.2f MiB' % (max(mem_usage_values), min(mem_usage_values))
         logProfile.info(mem_output)
     else:
-        processor.process()
+        with pushd_popd(workspace.directory):
+            processor.process()
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
     logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
