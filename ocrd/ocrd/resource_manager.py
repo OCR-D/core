@@ -10,7 +10,6 @@ from zipfile import ZipFile
 
 import requests
 from yaml import safe_load, safe_dump
-import magic
 
 # https://github.com/OCR-D/core/issues/867
 # https://stackoverflow.com/questions/50900727/skip-converting-entities-while-loading-a-yaml-string-using-pyyaml
@@ -19,7 +18,7 @@ yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp
     yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger, directory_size, get_moduledir
+from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -317,14 +316,17 @@ class OcrdResourceManager():
                     self._copy_impl(url, archive_fname, progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    mimetype = magic.from_file(f'../{archive_fname}', mime=True)
+                    suffixes = ''.join(Path(nth_url_segment(url)).suffixes)
+                    mimetype = EXT_TO_MIME.get(suffixes, 'application/octet-stream')
                     log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
                     if mimetype == 'application/zip':
                         with ZipFile(f'../{archive_fname}', 'r') as zipf:
                             zipf.extractall()
-                    else:
+                    elif mimetype in ('application/gzip', 'application/x-xz'):
                         with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
                             tar.extractall()
+                    else:
+                        raise RuntimeError("Unable to handle extraction of %s archive %s" % (mimetype, url))
                     log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
                     if Path(path_in_archive).is_dir():
                         copytree(path_in_archive, str(fpath))

@@ -6,6 +6,7 @@ build:
     analysis:
       dependencies:
         override:
+          - make deps-ubuntu
           - make install
       tests:
         override:

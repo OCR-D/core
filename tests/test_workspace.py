@@ -30,6 +30,7 @@ from ocrd_utils import polygon_mask, xywh_from_polygon, bbox_from_polygon, point
 from ocrd_modelfactory import page_from_file
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
+from ocrd.workspace_backup import WorkspaceBackupManager
 
 
 TMP_FOLDER = '/tmp/test-core-workspace'
@@ -147,7 +148,7 @@ def test_workspace_str(plain_workspace):
 def test_workspace_backup(plain_workspace):
 
     # act
-    plain_workspace.automatic_backup = True
+    plain_workspace.automatic_backup = WorkspaceBackupManager(plain_workspace)
     plain_workspace.save_mets()
     plain_workspace.reload_mets()
 

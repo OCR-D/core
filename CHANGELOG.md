@@ -7,11 +7,22 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
 
-  * `bashlib`: Handle empty list of input files, #978
+  * `ocrd resmgr`: handle namespaces packages gracefully for Python `<=` 3.6, #917, #985
+
+## [2.46.0] - 2023-02-16
 
 Changed:
 
   * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
+  * `WorkspaceBackupManager`: add snapshot on init if enabled, #981
+  * :fire: end-of-life for python 3.6, test from 3.7 to 3.11, #956
+  * :fire: update base image to Ubuntu 20.04, #956
+
+Fixed:
+
+  * `bashlib`: Handle empty list of input files, #978
+  * `OcrdMets.find_files`: don't override the `@LOCTYPE` of file candidates, #980
+  * `ocrd resmgr`: replace libmagic with simple lookup by suffix, #982, #984
 
 Added:
 
