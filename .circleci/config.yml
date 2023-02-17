@@ -16,6 +16,17 @@ jobs:
       - run: make deps-test install PIP=pip3
       - run: make test benchmark PYTHON=python3
 
+  test-python36:
+    docker:
+      - image: python:3.6.15
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: apt-get -y update
+      - run: pip install -U pip
+      - run: make deps-ubuntu deps-test install
+      - run: make test benchmark
+
   test-python37:
     docker:
       - image: python:3.7.16
@@ -90,6 +101,7 @@ workflows:
               only: master
   test-pull-request:
     jobs:
+      - test-python36
       - test-python37
       - test-python38
       - test-python39
