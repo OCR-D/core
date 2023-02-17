@@ -55,7 +55,7 @@ DOCKER_BASE_IMAGE = ubuntu:20.04
 DOCKER_ARGS = 
 
 # pip install command. Default: $(PIP_INSTALL)
-PIP_INSTALL = pip install
+PIP_INSTALL = $(PIP) install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
@@ -75,11 +75,11 @@ install:
 
 # Install with pip install -e
 install-dev: uninstall
-	$(MAKE) install PIP_INSTALL="pip install -e"
+	$(MAKE) install PIP_INSTALL="$(PIP) install -e"
 
 # Uninstall the tool
 uninstall:
-	for mod in $(BUILD_ORDER);do pip uninstall -y $$mod;done
+	for mod in $(BUILD_ORDER);do $(PIP) uninstall -y $$mod;done
 
 # Regenerate python code from PAGE XSD
 generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
