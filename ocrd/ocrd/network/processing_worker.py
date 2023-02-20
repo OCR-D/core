@@ -10,15 +10,16 @@ is a single OCR-D Processor instance.
 
 import json
 import logging
-from os import getpid
+from os import environ, getpid
 from typing import Any, List
 
 import pika.spec
 import pika.adapters.blocking_connection
 import pymongo
+# This env variable must be set before importing from Keras
+environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras.utils import disable_interactive_logging
 
-from ocrd_utils import getLogger
 from ocrd import Resolver
 from ocrd.processor.helpers import run_cli, run_processor
 from ocrd.network.helpers import (
@@ -36,7 +37,7 @@ from ocrd.network.rabbitmq_utils import (
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
-        self.log = getLogger(__name__)
+        self.log = logging.getLogger(__name__)
         # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
         file_handler = logging.FileHandler(f'/tmp/worker_{processor_name}_{getpid()}.log', mode='a')
         logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
