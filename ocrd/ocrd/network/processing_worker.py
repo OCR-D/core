@@ -16,9 +16,6 @@ from typing import Any, List
 import pika.spec
 import pika.adapters.blocking_connection
 import pymongo
-# This env variable must be set before importing from Keras
-environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-from tensorflow.keras.utils import disable_interactive_logging
 
 from ocrd import Resolver
 from ocrd.processor.helpers import run_cli, run_processor
@@ -168,6 +165,10 @@ class ProcessingWorker:
 
         # TODO: Find a proper solution for this dirty fix
         if self.processor_name == 'ocrd-calamari-recognize':
+            # This env variable must be set before importing from Keras
+            environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+            from tensorflow.keras.utils import disable_interactive_logging
+
             # Enabled interactive logging throws an exception
             # due to a call of sys.stdout.flush()
             disable_interactive_logging()
