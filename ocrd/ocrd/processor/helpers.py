@@ -1,7 +1,7 @@
 """
 Helper methods for running and documenting processors
 """
-from os import environ
+from os import chdir, environ, getcwd
 from time import perf_counter, process_time
 from functools import lru_cache
 import json
@@ -95,6 +95,9 @@ def run_processor(
         instance_caching=instance_caching
     )
 
+    old_cwd = getcwd()
+    chdir(processor.workspace.directory)
+
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
     otherrole = ocrd_tool['steps'][0]
@@ -104,22 +107,34 @@ def run_processor(
     t0_cpu = process_time()
     if any(x in environ.get('OCRD_PROFILE', '') for x in ['RSS', 'PSS']):
         backend = 'psutil_pss' if 'PSS' in environ['OCRD_PROFILE'] else 'psutil'
-        mem_usage = memory_usage(proc=processor.process,
-                                # only run process once
-                                max_iterations=1,
-                                interval=.1, timeout=None, timestamps=True,
-                                # include sub-processes
-                                multiprocess=True, include_children=True,
-                                # get proportional set size instead of RSS
-                                backend=backend)
+        try:
+            mem_usage = memory_usage(proc=processor.process,
+                                    # only run process once
+                                    max_iterations=1,
+                                    interval=.1, timeout=None, timestamps=True,
+                                    # include sub-processes
+                                    multiprocess=True, include_children=True,
+                                    # get proportional set size instead of RSS
+                                    backend=backend)
+        except Exception as err:
+            log.exception("Failure in processor '%s'" % ocrd_tool['executable'])
+            return err
+        finally:
+            chdir(old_cwd)
         mem_usage_values = [mem for mem, _ in mem_usage]
         mem_output = 'memory consumption: '
         mem_output += ''.join(sparklines(mem_usage_values))
         mem_output += ' max: %.2f MiB min: %.2f MiB' % (max(mem_usage_values), min(mem_usage_values))
         logProfile.info(mem_output)
     else:
-        with pushd_popd(workspace.directory):
+        try:
             processor.process()
+        except Exception as err:
+            log.exception("Failure in processor '%s'" % ocrd_tool['executable'])
+            return err
+        finally:
+            chdir(old_cwd)
+    
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
     logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
