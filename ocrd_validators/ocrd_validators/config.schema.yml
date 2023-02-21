@@ -74,9 +74,6 @@ properties:
         path_to_privkey:
           description: Path to private key file
           type: string
-        path_to_bin_dir:
-          description: TODO - remove again after testing/development phase
-          type: string
         workers:
           description: List of workers which will be deployed
           type: array

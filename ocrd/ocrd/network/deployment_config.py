@@ -34,8 +34,6 @@ class HostConfig:
         self.username = config['username']
         self.password = config.get('password', None)
         self.keypath = config.get('path_to_privkey', None)
-        # TODO: this is only for testing. Remove here and from config.schema.yml after test/development-phase
-        self.binpath = config.get('path_to_bin_dir', None)
         self.processors = []
         for worker in config['workers']:
             deploy_type = DeployType.from_str(worker['deploy_type'])

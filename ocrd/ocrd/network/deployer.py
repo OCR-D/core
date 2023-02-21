@@ -95,7 +95,6 @@ class Deployer:
                     processor_name=processor.name,
                     queue_url=rabbitmq_url,
                     database_url=mongodb_url,
-                    bin_dir=host.config.binpath,
                 )
                 host.pids_native.append(pid)
             else:
@@ -267,7 +266,7 @@ class Deployer:
         host.pids_docker = []
 
     def start_native_processor(self, client: SSHClient, processor_name: str, queue_url: str,
-                               database_url: str, bin_dir: Optional[str] = None) -> str:
+                               database_url: str) -> str:
         """ start a processor natively on a host via ssh
 
         Args:
@@ -275,7 +274,6 @@ class Deployer:
             processor_name:     name of processor to run
             queue_url:          url to rabbitmq
             database_url:       url to database
-            bin_dir (optional): path to where processor executables can be found
 
         Returns:
             str: pid of running process
@@ -284,11 +282,7 @@ class Deployer:
         self.log.info(f'Starting native processor: {processor_name}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        if bin_dir:
-            path = Path(bin_dir) / processor_name
-        else:
-            path = processor_name
-        cmd = f'{path} --database {database_url} --queue {queue_url}'
+        cmd = f'{processor_name} --database {database_url} --queue {queue_url}'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
