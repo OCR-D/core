@@ -59,33 +59,37 @@ class Deployer:
     def deploy_hosts(self, rabbitmq_url: str, mongodb_url: str) -> None:
         for host in self.hosts:
             self.log.debug(f'Deploying processing workers on host: {host.config.address}')
+
+            if (any(p.deploy_type == DeployType.native for p in host.config.processors)
+                    and not host.ssh_client):
+                host.ssh_client = create_ssh_client(
+                    host.config.address,
+                    host.config.username,
+                    host.config.password,
+                    host.config.keypath
+                )
+            if (any(p.deploy_type == DeployType.docker for p in host.config.processors)
+                    and not host.docker_client):
+                host.ssh_client = create_ssh_client(
+                    host.config.address,
+                    host.config.username,
+                    host.config.password,
+                    host.config.keypath
+                )
+
             for processor in host.config.processors:
                 self._deploy_processing_worker(processor, host, rabbitmq_url, mongodb_url)
+
             if host.ssh_client:
                 host.ssh_client.close()
             if host.docker_client:
                 host.docker_client.close()
 
-    # TODO: Creating connections if missing should probably occur when deploying hosts not when
-    #       deploying processing workers. The deploy_type checks and opening connections creates
-    #       duplicate code.
     def _deploy_processing_worker(self, processor: WorkerConfig, host: HostData,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
 
         self.log.debug(f'deploy \'{processor.deploy_type}\' processor: \'{processor}\' on'
                        f'\'{host.config.address}\'')
-
-        # TODO: The check for available ssh or docker connections should probably happen inside
-        #       `deploy_hosts`
-        if processor.deploy_type == DeployType.native:
-            if not host.ssh_client:
-                host.ssh_client = create_ssh_client(host.config.address, host.config.username,
-                                                    host.config.password, host.config.keypath)
-        else:
-            assert processor.deploy_type == DeployType.docker
-            if not host.docker_client:
-                host.docker_client = create_docker_client(host.config.address, host.config.username,
-                                                          host.config.password, host.config.keypath)
 
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
