@@ -5,9 +5,13 @@ from typing import Union, List
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
-from ocrd.network.deployment_config import *
 
 from ocrd_utils import getLogger
+from ocrd.network.deployment_config import *
+
+__all__ = [
+    'DeployType'
+]
 
 
 def create_ssh_client(address: str, username: str, password: Union[str, None],
@@ -30,7 +34,7 @@ def create_docker_client(address: str, username: str, password: Union[str, None]
 class HostData:
     """class to store runtime information for a host
     """
-    def __init__(self, config: deployment_config.HostConfig) -> None:
+    def __init__(self, config: HostConfig) -> None:
         self.config = config
         self.ssh_client: Union[SSHClient, None] = None
         self.docker_client: Union[CustomDockerClient, None] = None
@@ -38,7 +42,7 @@ class HostData:
         self.pids_docker: List[str] = []
 
     @staticmethod
-    def from_config(config: List[deployment_config.HostConfig]) -> List[HostData]:
+    def from_config(config: List[HostConfig]) -> List[HostData]:
         res = []
         for host_config in config:
             res.append(HostData(host_config))

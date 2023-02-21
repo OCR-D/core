@@ -1,7 +1,7 @@
-from typing import Tuple
-from re import split
 from os import environ
 from os.path import join, exists
+from re import split
+from typing import Tuple
 
 
 def verify_database_url(mongodb_address: str) -> str:

@@ -19,7 +19,10 @@ import pymongo
 
 from ocrd import Resolver
 from ocrd_utils import getLogger
-from ocrd.processor.helpers import run_cli, run_processor
+from ocrd.processor.helpers import (
+    run_cli,
+    run_processor
+)
 from ocrd.network.helpers import (
     verify_database_url,
     verify_and_parse_rabbitmq_addr
@@ -71,24 +74,39 @@ class ProcessingWorker:
 
     def connect_consumer(self, username: str = 'default-consumer',
                          password: str = 'default-consumer') -> None:
-        self.log.debug(f'Connecting RMQConsumer to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
-        self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
-        self.log.debug(f'RMQConsumer authenticates with username: {username}, password: {password}')
-        self.rmq_consumer.authenticate_and_connect(username=username, password=password)
-        self.log.debug(f'Successfully connected RMQConsumer.')
+        self.log.info(f'Connecting RMQConsumer to RabbitMQ server: '
+                      f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
+        self.rmq_consumer = RMQConsumer(
+            host=self.rmq_host,
+            port=self.rmq_port,
+            vhost=self.rmq_vhost
+        )
+        self.log.debug(f'RMQConsumer authenticates with username: '
+                       f'{username}, password: {password}')
+        self.rmq_consumer.authenticate_and_connect(
+            username=username,
+            password=password
+        )
+        self.log.info(f'Successfully connected RMQConsumer.')
 
     def connect_publisher(self, username: str = 'default-publisher',
                           password: str = 'default-publisher', enable_acks: bool = True) -> None:
-        self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
-        self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
-        self.log.debug(f'RMQPublisher authenticates with username: {username}, password: {password}')
+        self.log.info(f'Connecting RMQPublisher to RabbitMQ server: '
+                      f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
+        self.rmq_publisher = RMQPublisher(
+            host=self.rmq_host,
+            port=self.rmq_port,
+            vhost=self.rmq_vhost
+        )
+        self.log.debug(f'RMQPublisher authenticates with username: '
+                       f'{username}, password: {password}')
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
-            self.log.debug('Delivery confirmations are enabled')
+            self.log.info('Delivery confirmations are enabled')
         else:
-            self.log.debug('Delivery confirmations are disabled')
-        self.log.debug('Successfully connected RMQPublisher.')
+            self.log.info('Delivery confirmations are disabled')
+        self.log.info('Successfully connected RMQPublisher.')
 
     # Define what happens every time a message is consumed
     # from the queue with name self.processor_name
@@ -103,9 +121,9 @@ class ProcessingWorker:
         is_redelivered: bool = delivery.redelivered
         message_headers: dict = properties.headers
 
-        self.log.debug(f'Consumer tag: {consumer_tag}')
-        self.log.debug(f'Message delivery tag: {delivery_tag}')
-        self.log.debug(f'Is redelivered message: {is_redelivered}')
+        self.log.debug(f'Consumer tag: {consumer_tag}, '
+                       f'message delivery tag: {delivery_tag}, '
+                       f'redelivered: {is_redelivered}')
         self.log.debug(f'Message headers: {message_headers}')
 
         try:
@@ -118,7 +136,7 @@ class ProcessingWorker:
             raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
 
         try:
-            self.log.debug(f'Starting to process the received message: {processing_message}')
+            self.log.info(f'Starting to process the received message: {processing_message}')
             self.process_message(processing_message=processing_message)
         except Exception as e:
             self.log.error(f'Failed to process processing message with tag: {delivery_tag}')
@@ -126,18 +144,18 @@ class ProcessingWorker:
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
             raise Exception(f'Failed to process processing message with tag: {delivery_tag}, reason: {e}')
 
-        self.log.debug(f'Successfully processed message ')
+        self.log.info(f'Successfully processed message ')
         self.log.debug(f'Acking message with tag: {delivery_tag}')
         channel.basic_ack(delivery_tag=delivery_tag, multiple=False)
 
     def start_consuming(self) -> None:
         if self.rmq_consumer:
-            self.log.debug(f'Configuring consuming from queue: {self.processor_name}')
+            self.log.info(f'Configuring consuming from queue: {self.processor_name}')
             self.rmq_consumer.configure_consuming(
                 queue_name=self.processor_name,
                 callback_method=self.on_consumed_message
             )
-            self.log.debug(f'Starting consuming from queue: {self.processor_name}')
+            self.log.info(f'Starting consuming from queue: {self.processor_name}')
             # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
         else:
@@ -176,7 +194,6 @@ class ProcessingWorker:
 
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
-            self.log.debug(f'Invoking the processor_class: {self.processor_class}')
             return_status = self.run_processor_from_worker(
                 processor_class=self.processor_class,
                 workspace=workspace,
@@ -206,6 +223,7 @@ class ProcessingWorker:
             # create_queue method is idempotent - nothing happens if
             # a queue with the specified name already exists
             self.rmq_publisher.create_queue(queue_name=processing_message.result_queue)
+            self.log.info(f'Publishing result message to queue: {processing_message.result_queue}')
             result_message = OcrdResultMessage(
                 job_id=str(job_id),
                 status=job_status.value,
@@ -213,6 +231,7 @@ class ProcessingWorker:
                 path_to_mets=processing_message.path_to_mets,
                 workspace_id=None
             )
+            self.log.debug(f'Result message: {result_message}')
             encoded_result_message = OcrdResultMessage.encode_yml(result_message)
             self.rmq_publisher.publish_to_queue(
                 queue_name=processing_message.result_queue,
@@ -284,7 +303,7 @@ class ProcessingWorker:
         """Set the job status in mongodb to either success or failed
         """
         # TODO: the way to interact with mongodb needs to be thought about. Beanie seems not
-        #       suitable as the worker is not async, thus useng pymongo here
+        #       suitable as the worker is not async, thus using pymongo here
         state = StateEnum.success if success else StateEnum.failed
         with pymongo.MongoClient(self.db_url) as client:
             db = client['ocrd']

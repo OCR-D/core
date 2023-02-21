@@ -10,10 +10,12 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from typing import Dict, Union, Optional
 from paramiko import SSHClient
+from pathlib import Path
 from re import search as re_search
+from time import sleep
+
 
 from ocrd_utils import getLogger
-
 from ocrd.network.deployment_config import *
 from ocrd.network.deployment_utils import (
     create_docker_client,
@@ -22,9 +24,7 @@ from ocrd.network.deployment_utils import (
     DeployType,
     HostData,
 )
-from pathlib import Path
 from ocrd.network.rabbitmq_utils import RMQPublisher
-from time import sleep
 
 
 class Deployer:
@@ -118,8 +118,8 @@ class Deployer:
         to queues, and receiving messages from queues is part of the RabbitMQ Library which is part
         of the OCR-D WebAPI implementation.
         """
-        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}],'
-                       f'remove[{remove}]')
+        self.log.debug(f'Trying to deploy image[{image}], '
+                       f'with modes: detach[{detach}], remove[{remove}]')
 
         if not self.config or not self.config.queue.address:
             raise ValueError('Deploying RabbitMQ has failed - missing configuration.')
@@ -166,7 +166,7 @@ class Deployer:
                                             self.config.queue.credentials[1])
 
         rabbitmq_url = f'{rmq_host}:{rmq_port}{rmq_vhost}'
-        self.log.debug(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
+        self.log.info(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
         return rabbitmq_url
 
     def wait_for_rabbitmq_availability(self, host: str, port: str, vhost: str, username: str,
@@ -187,8 +187,8 @@ class Deployer:
                        ports_mapping: Union[Dict, None] = None) -> str:
         """ Start mongodb in docker
         """
-        self.log.debug(f'Trying to deploy image[{image}], with modes: detach[{detach}],'
-                       f'remove[{remove}]')
+        self.log.debug(f'Trying to deploy image[{image}], '
+                       f'with modes: detach[{detach}], remove[{remove}]')
 
         if not self.config or not self.config.mongo.address:
             raise ValueError('Deploying MongoDB has failed - missing configuration.')
@@ -216,7 +216,7 @@ class Deployer:
         mongodb_host = self.config.mongo.address
         mongodb_port = self.config.mongo.port
         mongodb_url = f'{mongodb_prefix}{mongodb_host}:{mongodb_port}'
-        self.log.debug(f'The MongoDB was deployed on url: {mongodb_url}')
+        self.log.info(f'The MongoDB was deployed on url: {mongodb_url}')
         return mongodb_url
 
     def kill_rabbitmq(self) -> None:
@@ -228,7 +228,7 @@ class Deployer:
         client.containers.get(self.mq_pid).stop()
         self.mq_pid = None
         client.close()
-        self.log.debug('The RabbitMQ is stopped')
+        self.log.info('The RabbitMQ is stopped')
 
     def kill_mongodb(self) -> None:
         if not self.mongo_pid:
@@ -239,7 +239,7 @@ class Deployer:
         client.containers.get(self.mongo_pid).stop()
         self.mongo_pid = None
         client.close()
-        self.log.debug('The MongoDB is stopped')
+        self.log.info('The MongoDB is stopped')
 
     def kill_hosts(self) -> None:
         self.log.debug('Starting to kill/stop hosts')
@@ -263,8 +263,6 @@ class Deployer:
 
         for pid in host.pids_docker:
             self.log.debug(f'Trying to kill/stop docker container with PID: {pid}')
-            # TODO: think about timeout.
-            #       think about using threads to kill parallelized to reduce waiting time
             host.docker_client.containers.get(pid).stop()
         host.pids_docker = []
 
@@ -283,7 +281,7 @@ class Deployer:
             str: pid of running process
         """
         # TODO: some processors are bashlib. They have to be started differently
-        self.log.debug(f'Starting native processor: {processor_name}')
+        self.log.info(f'Starting native processor: {processor_name}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         if bin_dir:
@@ -302,9 +300,9 @@ class Deployer:
         stdin.close()
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
 
-    def start_docker_processor(self, client: CustomDockerClient,
-                               processor_name: str, queue_url: str, database_url: str) -> str:
-        self.log.debug(f'Starting docker container processor: {processor_name}')
+    def start_docker_processor(self, client: CustomDockerClient, processor_name: str,
+                               queue_url: str, database_url: str) -> str:
+        self.log.info(f'Starting docker container processor: {processor_name}')
         # TODO: add real command here to start processing server in docker here
         res = client.containers.run('debian', 'sleep 500s', detach=True, remove=True)
         assert res and res.id, f'Running processor: {processor_name} in docker-container failed'

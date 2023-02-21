@@ -1,26 +1,35 @@
+import json
+from typing import Dict
+import uvicorn
+from yaml import safe_load
+
+from beanie import PydanticObjectId
 from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-import uvicorn
-from yaml import safe_load
-from typing import Dict
 
 from ocrd_utils import (
     getLogger,
     get_ocrd_tool_json,
 )
-from ocrd_validators import ProcessingServerValidator
-
+from ocrd_validators import (
+    ParameterValidator,
+    ProcessingServerValidator
+)
+from ocrd.network.database import initiate_database
 from ocrd.network.deployer import Deployer
 from ocrd.network.deployment_config import ProcessingServerConfig
-from ocrd.network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
-from ocrd.network.models.job import Job, JobInput, JobOutput, StateEnum
+from ocrd.network.rabbitmq_utils import (
+    RMQPublisher,
+    OcrdProcessingMessage
+)
+from ocrd.network.models.job import (
+    Job,
+    JobInput,
+    JobOutput,
+    StateEnum
+)
 from ocrd.network.models.workspace import Workspace
-from ocrd_validators import ParameterValidator
-from ocrd.network.database import initiate_database
-from beanie import PydanticObjectId
-from time import sleep
-import json
 
 
 class ProcessingServer(FastAPI):
@@ -65,7 +74,7 @@ class ProcessingServer(FastAPI):
 
         self.router.add_api_route(
             path='/processor/{processor_name}',
-            endpoint=self.run_processor,
+            endpoint=self.push_processor_job,
             methods=['POST'],
             tags=['processing'],
             status_code=status.HTTP_200_OK,
@@ -131,8 +140,8 @@ class ProcessingServer(FastAPI):
             #       processor.name
             self.deployer.deploy_hosts(rabbitmq_url, self.mongodb_url)
         except Exception:
-            self.log.error('Error during startup of processing server. Trying to kill parts of '
-                           'incompletely deployed service')
+            self.log.error('Error during startup of processing server. '
+                           'Trying to kill parts of incompletely deployed service')
             self.deployer.kill_all()
             raise
         uvicorn.run(self, host=self.hostname, port=self.port)
@@ -162,15 +171,21 @@ class ProcessingServer(FastAPI):
 
     def connect_publisher(self, username: str = 'default-publisher',
                           password: str = 'default-publisher', enable_acks: bool = True) -> None:
-        self.log.debug(f'Connecting RMQPublisher to RabbitMQ server: {self.rmq_host}:'
-                       f'{self.rmq_port}{self.rmq_vhost}')
-        self.rmq_publisher = RMQPublisher(host=self.rmq_host, port=self.rmq_port,
-                                          vhost=self.rmq_vhost)
-        self.rmq_publisher.authenticate_and_connect(username=username, password=password)
+        self.log.info(f'Connecting RMQPublisher to RabbitMQ server: '
+                      f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
+        self.rmq_publisher = RMQPublisher(
+            host=self.rmq_host,
+            port=self.rmq_port,
+            vhost=self.rmq_vhost
+        )
+        self.rmq_publisher.authenticate_and_connect(
+            username=username,
+            password=password
+        )
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
-            self.log.debug('Delivery confirmations are enabled')
-        self.log.debug('Successfully connected RMQPublisher.')
+            self.log.info('Delivery confirmations are enabled')
+        self.log.info('Successfully connected RMQPublisher.')
 
     def create_message_queues(self) -> None:
         """Create the message queues based on the occurrence of `processor.name` in the config file
@@ -179,7 +194,7 @@ class ProcessingServer(FastAPI):
             for processor in host.processors:
                 # The existence/validity of the processor.name is not tested.
                 # Even if an ocr-d processor does not exist, the queue is created
-                self.log.debug(f'Creating a message queue with id: {processor.name}')
+                self.log.info(f'Creating a message queue with id: {processor.name}')
                 self.rmq_publisher.create_queue(queue_name=processor.name)
 
     @property
@@ -193,7 +208,7 @@ class ProcessingServer(FastAPI):
         self._processor_list = list(res)
         return self._processor_list
 
-    async def run_processor(self, processor_name: str, data: JobInput) -> JobOutput:
+    async def push_processor_job(self, processor_name: str, data: JobInput) -> JobOutput:
         """ Queue a processor job
         """
         if processor_name not in self.processor_list:
