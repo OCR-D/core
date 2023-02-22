@@ -70,7 +70,7 @@ class Deployer:
                 )
             if (any(p.deploy_type == DeployType.docker for p in host.config.processors)
                     and not host.docker_client):
-                host.ssh_client = create_ssh_client(
+                host.docker_client = create_docker_client(
                     host.config.address,
                     host.config.username,
                     host.config.password,
