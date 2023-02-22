@@ -139,7 +139,12 @@ class Deployer:
                 15672: 15672,
                 25672: 25672
             }
-        local_defs_path = Path(__file__).parent.resolve() / 'rabbitmq_utils' / 'definitions.json'
+        defs_path = self.copy_definitions_to_host(
+            self.config.queue.address,
+            self.config.queue.username,
+            self.config.queue.password,
+            self.config.queue.keypath
+        )
         container_defs_path = "/etc/rabbitmq/definitions.json"
         res = client.containers.run(
             image=image,
@@ -152,7 +157,7 @@ class Deployer:
                 ('RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS='
                  f'-rabbitmq_management load_definitions "{container_defs_path}"'),
             ],
-            volumes={local_defs_path: {'bind': container_defs_path, 'mode': 'ro'}}
+            volumes={defs_path: {'bind': container_defs_path, 'mode': 'ro'}}
         )
         assert res and res.id, \
             f'Failed to start RabbitMQ docker container on host: {self.config.mongo.address}'
@@ -171,6 +176,24 @@ class Deployer:
         rabbitmq_url = f'{rmq_host}:{rmq_port}{rmq_vhost}'
         self.log.info(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
         return rabbitmq_url
+
+    def copy_definitions_to_host(self, address: str, username: str, password: str,
+                                 keypath: str) -> str:
+        """ Copy definitions.json to rabbitmq-host
+
+        The rabbitmq is deployed in a container on another host. On this host the definitions.json
+        must be available to bind-mount it (make it available) to the container.
+        TODO: to me this looks strange. Maybe there is another possibility to get the definitions
+        into the rabbitmq container, but for now this is the easiest solution to the problem.
+        """
+        ssh_client = create_ssh_client(address, username, password, keypath)
+        sftp = ssh_client.open_sftp()
+        localpath = Path(__file__).parent.resolve() / 'rabbitmq_utils' / 'definitions.json'
+        remotepath = "/tmp/ocr-d-processing-server-definitions.json"
+        sftp.put(str(localpath), remotepath)
+        sftp.close()
+        ssh_client.close()
+        return remotepath
 
     def wait_for_rabbitmq_availability(self, host: str, port: str, vhost: str, username: str,
                                        password: str) -> None:
