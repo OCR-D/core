@@ -173,9 +173,9 @@ class Deployer:
                                             self.config.queue.credentials[0],
                                             self.config.queue.credentials[1])
 
-        rabbitmq_url = f'{rmq_host}:{rmq_port}{rmq_vhost}'
-        self.log.info(f'The RabbitMQ server was deployed on url: {rabbitmq_url}')
-        return rabbitmq_url
+        rabbitmq_hostinfo = f'{rmq_host}:{rmq_port}{rmq_vhost}'
+        self.log.info(f'The RabbitMQ server was deployed on host: {rabbitmq_hostinfo}')
+        return rabbitmq_hostinfo
 
     def copy_definitions_to_host(self, address: str, username: str, password: str,
                                  keypath: str) -> str:

@@ -11,7 +11,6 @@ from ocrd.network import ProcessingServer
 import logging
 
 
-# TODO: rename to processing-server
 @click.command('processing-server')
 @click.argument('path_to_config', required=True, type=click.STRING)
 @click.option('-a', '--address', help='Host (name/IP) and port to bind the Processing-Server to. Example: localhost:8080', required=True)
@@ -28,6 +27,6 @@ def processing_server_cli(path_to_config, address: str):
         host, port = address.split(":")
         port_int = int(port)
     except ValueError:
-        raise click.UsageError('The --adddress option must have the format IP:PORT')
+        raise click.UsageError('The --address option must have the format IP:PORT')
     processing_server = ProcessingServer(path_to_config, host, port_int)
     processing_server.start()

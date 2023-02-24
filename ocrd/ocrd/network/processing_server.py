@@ -56,6 +56,8 @@ class ProcessingServer(FastAPI):
         self.rmq_host = self.config.queue.address
         self.rmq_port = self.config.queue.port
         self.rmq_vhost = '/'
+        self.rmq_username = self.config.queue.credentials[0]
+        self.rmq_password = self.config.queue.credentials[1]
 
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
@@ -125,7 +127,9 @@ class ProcessingServer(FastAPI):
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
         try:
-            rabbitmq_url = self.deployer.deploy_rabbitmq()
+            rabbitmq_hostinfo = self.deployer.deploy_rabbitmq()
+            # Assign the credentials to the rabbitmq url parameter
+            rabbitmq_url = f'{self.rmq_username}:{self.rmq_password}@{rabbitmq_hostinfo}'
 
             self.mongodb_url = self.deployer.deploy_mongodb()
 
@@ -169,8 +173,7 @@ class ProcessingServer(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
-    def connect_publisher(self, username: str = 'default-publisher',
-                          password: str = 'default-publisher', enable_acks: bool = True) -> None:
+    def connect_publisher(self, enable_acks: bool = True) -> None:
         self.log.info(f'Connecting RMQPublisher to RabbitMQ server: '
                       f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(
@@ -178,9 +181,11 @@ class ProcessingServer(FastAPI):
             port=self.rmq_port,
             vhost=self.rmq_vhost
         )
+        self.log.debug(f'RMQPublisher authenticates with username: '
+                       f'{self.rmq_username}, password: {self.rmq_password}')
         self.rmq_publisher.authenticate_and_connect(
-            username=username,
-            password=password
+            username=self.rmq_username,
+            password=self.rmq_password
         )
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()

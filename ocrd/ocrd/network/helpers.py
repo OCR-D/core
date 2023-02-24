@@ -1,7 +1,6 @@
 from os import environ
 from os.path import join, exists
 from re import split
-from typing import Tuple
 
 
 def verify_database_url(mongodb_address: str) -> str:
@@ -21,21 +20,30 @@ def verify_database_url(mongodb_address: str) -> str:
     return mongodb_url
 
 
-def verify_and_parse_rabbitmq_addr(rabbitmq_address: str) -> Tuple[str, int, str]:
-    elements = split(pattern=r':|/', string=rabbitmq_address)
-    if len(elements) == 3:
-        rmq_host = elements[0]
-        rmq_port = int(elements[1])
-        rmq_vhost = f'/{elements[2]}'
-        return rmq_host, rmq_port, rmq_vhost
+def verify_and_parse_rabbitmq_addr(rabbitmq_address: str) -> dict:
+    parsed_data = {}
+    elements = rabbitmq_address.split('@')
+    if len(elements) != 2:
+        raise ValueError('The RabbitMQ address is in wrong format. Expected format: username:password@host:port/vhost')
 
-    if len(elements) == 2:
-        rmq_host = elements[0]
-        rmq_port = int(elements[1])
-        rmq_vhost = '/'  # The default global vhost
-        return rmq_host, rmq_port, rmq_vhost
+    credentials = elements[0].split(':')
+    if len(credentials) != 2:
+        raise ValueError(
+            'The RabbitMQ credentials are in wrong format. Expected format: username:password@host:port/vhost')
 
-    raise ValueError('The RabbitMQ address is in wrong format. Expected format: {host}:{port}/{vhost}')
+    parsed_data['username'] = credentials[0]
+    parsed_data['password'] = credentials[1]
+
+    host_info = split(pattern=r':|/', string=elements[1])
+    if len(host_info) != 3 and len(host_info) != 2:
+        raise ValueError(
+            'The RabbitMQ host info is in wrong format. Expected format: username:password@host:port/vhost')
+
+    parsed_data['host'] = host_info[0]
+    parsed_data['port'] = int(host_info[1])
+    # The default global vhost is /
+    parsed_data['vhost'] = '/' if len(host_info) == 2 else f'/{host_info[2]}'
+    return parsed_data
 
 
 def get_workspaces_dir() -> str:

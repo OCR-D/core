@@ -17,8 +17,9 @@ from ocrd.network.processing_worker import ProcessingWorker
 @click.command('processing-worker')
 @click.argument('processor_name', required=True, type=click.STRING)
 @click.option('-q', '--queue',
-              default="localhost:5672/",
-              help='The host, port, and virtual host of the RabbitMQ Server')
+              default="admin:admin@localhost:5672/",
+              help='The username, password, host, port, and virtual host of the RabbitMQ Server. '
+                   'Format: username:password@host:port/vhost')
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
               help='The host and port of the MongoDB')

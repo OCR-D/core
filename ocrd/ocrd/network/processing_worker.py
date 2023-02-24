@@ -49,7 +49,13 @@ class ProcessingWorker:
         try:
             self.db_url = verify_database_url(mongodb_addr)
             self.log.debug(f'Verified MongoDB URL: {self.db_url}')
-            self.rmq_host, self.rmq_port, self.rmq_vhost = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
+            rmq_data = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
+            self.rmq_username = rmq_data["username"]
+            self.rmq_password = rmq_data["password"]
+            self.rmq_host = rmq_data["host"]
+            self.rmq_port = rmq_data["port"]
+            self.rmq_vhost = rmq_data["vhost"]
+            self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
             self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         except ValueError as e:
             raise ValueError(e)
@@ -72,8 +78,7 @@ class ProcessingWorker:
         # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
         self.rmq_publisher = None
 
-    def connect_consumer(self, username: str = 'default-consumer',
-                         password: str = 'default-consumer') -> None:
+    def connect_consumer(self) -> None:
         self.log.info(f'Connecting RMQConsumer to RabbitMQ server: '
                       f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_consumer = RMQConsumer(
@@ -82,15 +87,14 @@ class ProcessingWorker:
             vhost=self.rmq_vhost
         )
         self.log.debug(f'RMQConsumer authenticates with username: '
-                       f'{username}, password: {password}')
+                       f'{self.rmq_username}, password: {self.rmq_password}')
         self.rmq_consumer.authenticate_and_connect(
-            username=username,
-            password=password
+            username=self.rmq_username,
+            password=self.rmq_password
         )
         self.log.info(f'Successfully connected RMQConsumer.')
 
-    def connect_publisher(self, username: str = 'default-publisher',
-                          password: str = 'default-publisher', enable_acks: bool = True) -> None:
+    def connect_publisher(self, enable_acks: bool = True) -> None:
         self.log.info(f'Connecting RMQPublisher to RabbitMQ server: '
                       f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(
@@ -99,13 +103,14 @@ class ProcessingWorker:
             vhost=self.rmq_vhost
         )
         self.log.debug(f'RMQPublisher authenticates with username: '
-                       f'{username}, password: {password}')
-        self.rmq_publisher.authenticate_and_connect(username=username, password=password)
+                       f'{self.rmq_username}, password: {self.rmq_password}')
+        self.rmq_publisher.authenticate_and_connect(
+            username=self.rmq_username,
+            password=self.rmq_password
+        )
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()
             self.log.info('Delivery confirmations are enabled')
-        else:
-            self.log.info('Delivery confirmations are disabled')
         self.log.info('Successfully connected RMQPublisher.')
 
     # Define what happens every time a message is consumed
