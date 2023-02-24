@@ -24,3 +24,6 @@ class Workspace(Document):
     ocrd_mets: Optional[str]
     bag_info_adds: Optional[dict]
     deleted: bool = False
+
+    class Settings:
+        name = "workspace"
