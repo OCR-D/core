@@ -16,15 +16,15 @@ from time import sleep
 
 
 from ocrd_utils import getLogger
-from ocrd.network.deployment_config import *
-from ocrd.network.deployment_utils import (
+from ocrd_network.deployment_config import *
+from ocrd_network.deployment_utils import (
     create_docker_client,
     create_ssh_client,
     CustomDockerClient,
     DeployType,
     HostData,
 )
-from ocrd.network.rabbitmq_utils import RMQPublisher
+from ocrd_network.rabbitmq_utils import RMQPublisher
 
 
 class Deployer:

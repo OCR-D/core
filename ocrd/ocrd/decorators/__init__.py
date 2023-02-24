@@ -15,7 +15,7 @@ from ocrd_utils import (
 from ocrd_utils import getLogger, initLogging, parse_json_string_with_comments
 from ocrd_validators import WorkspaceValidator
 
-from ocrd.network import ProcessingWorker
+from ocrd_network import ProcessingWorker
 
 from ..resolver import Resolver
 from ..processor.base import run_processor

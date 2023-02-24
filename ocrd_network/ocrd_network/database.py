@@ -1,8 +1,8 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from ocrd.network.models.job import Job
-from ocrd.network.models.workspace import Workspace
+from ocrd_network.models.job import Job
+from ocrd_network.models.workspace import Workspace
 
 
 async def initiate_database(db_url: str):

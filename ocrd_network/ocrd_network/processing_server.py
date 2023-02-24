@@ -16,20 +16,20 @@ from ocrd_validators import (
     ParameterValidator,
     ProcessingServerValidator
 )
-from ocrd.network.database import initiate_database
-from ocrd.network.deployer import Deployer
-from ocrd.network.deployment_config import ProcessingServerConfig
-from ocrd.network.rabbitmq_utils import (
+from ocrd_network.database import initiate_database
+from ocrd_network.deployer import Deployer
+from ocrd_network.deployment_config import ProcessingServerConfig
+from ocrd_network.rabbitmq_utils import (
     RMQPublisher,
     OcrdProcessingMessage
 )
-from ocrd.network.models.job import (
+from ocrd_network.models.job import (
     Job,
     JobInput,
     JobOutput,
     StateEnum
 )
-from ocrd.network.models.workspace import Workspace
+from ocrd_network.models.workspace import Workspace
 
 
 class ProcessingServer(FastAPI):

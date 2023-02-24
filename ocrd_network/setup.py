@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
-import fastentrypoints
 from setuptools import setup, find_packages
+
 from ocrd_utils import VERSION
 
 install_requires = open('requirements.txt').read().split('\n')
 install_requires.append('ocrd_utils == %s' % VERSION)
-install_requires.append('ocrd_models == %s' % VERSION)
-install_requires.append('ocrd_modelfactory == %s' % VERSION)
 install_requires.append('ocrd_validators == %s' % VERSION)
-install_requires.append('ocrd_network == %s' % VERSION)
 
 setup(
-    name='ocrd',
+    name='ocrd_network',
     version=VERSION,
-    description='OCR-D framework',
+    description='OCR-D framework - web API',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author='Konstantin Baierer',
@@ -23,10 +20,8 @@ setup(
     packages=find_packages(exclude=('tests', 'docs')),
     include_package_data=True,
     install_requires=install_requires,
-    entry_points={
-        'console_scripts': [
-            'ocrd=ocrd.cli:cli',
-            'ocrd-dummy=ocrd.processor.builtin.dummy_processor:cli',
-        ]
+    package_data={
+        '': ['*.yml', '*.xsd']
     },
+    keywords=['OCR', 'OCR-D']
 )

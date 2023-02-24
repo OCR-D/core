@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import yaml
-from ocrd.network.models.job import Job
+from ocrd_network.models.job import Job
 
 
 class OcrdProcessingMessage:

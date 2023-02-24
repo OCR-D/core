@@ -7,7 +7,7 @@ OCR-D CLI: start the processing server
 """
 import click
 from ocrd_utils import initLogging
-from ocrd.network import ProcessingServer
+from ocrd_network import ProcessingServer
 import logging
 
 

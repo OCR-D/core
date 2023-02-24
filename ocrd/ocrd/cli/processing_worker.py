@@ -11,7 +11,7 @@ from ocrd_utils import (
     initLogging,
     get_ocrd_tool_json
 )
-from ocrd.network.processing_worker import ProcessingWorker
+from ocrd_network.processing_worker import ProcessingWorker
 
 
 @click.command('processing-worker')

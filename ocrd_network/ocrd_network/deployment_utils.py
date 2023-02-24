@@ -7,7 +7,7 @@ from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
 
 from ocrd_utils import getLogger
-from ocrd.network.deployment_config import *
+from ocrd_network.deployment_config import *
 
 __all__ = [
     'DeployType'

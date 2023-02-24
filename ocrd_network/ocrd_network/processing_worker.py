@@ -23,12 +23,12 @@ from ocrd.processor.helpers import (
     run_cli,
     run_processor
 )
-from ocrd.network.helpers import (
+from ocrd_network.helpers import (
     verify_database_url,
     verify_and_parse_rabbitmq_addr
 )
-from ocrd.network.models.job import StateEnum
-from ocrd.network.rabbitmq_utils import (
+from ocrd_network.models.job import StateEnum
+from ocrd_network.rabbitmq_utils import (
     OcrdProcessingMessage,
     OcrdResultMessage,
     RMQConsumer,
