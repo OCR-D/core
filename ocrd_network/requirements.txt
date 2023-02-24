@@ -4,3 +4,4 @@ docker
 paramiko
 pika>=1.2.0
 beanie~=1.7
+tensorflow
