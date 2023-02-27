@@ -16,7 +16,12 @@ import logging
 @click.option('-a', '--address', help='Host (name/IP) and port to bind the Processing-Server to. Example: localhost:8080', required=True)
 def processing_server_cli(path_to_config, address: str):
     """
-    Start and manage processing servers (workers) with the processing server
+    Start and manage processing workers with the processing server
+
+    PATH_TO_CONFIG is a yaml file to configure the server and the workers. See
+    https://github.com/OCR-D/spec/pull/222/files#diff-a71bf71cbc7d9ce94fded977f7544aba4df9e7bdb8fc0cf1014e14eb67a9b273
+    for further information (TODO: update path when spec is available/merged)
+
     """
     initLogging()
     # TODO: Remove before the release
