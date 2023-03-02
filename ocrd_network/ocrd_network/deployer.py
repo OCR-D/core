@@ -28,10 +28,11 @@ from ocrd_network.rabbitmq_utils import RMQPublisher
 
 
 class Deployer:
-    """ Class to wrap the deployment-functionality of the OCR-D Processing-Servers
+    """Wraps the deployment functionality of the Processing Server
 
-    Deployer is the one acting. Config is for representation of the config-file only. DeployHost is
-    for managing information, not for actually doing things.
+    Deployer is the one acting. 
+    :py:attr:`config` is for representation of the config file only.
+    :py:attr:`hosts` is for managing processor information, not for actually processing.
     """
 
     def __init__(self, config: ProcessingServerConfig) -> None:
