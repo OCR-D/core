@@ -38,7 +38,7 @@ class Deployer:
     def __init__(self, config: ProcessingServerConfig) -> None:
         """
         Args:
-            config: Parsed processing-server-configuration
+            config (:py:class:`ProcessingServerConfig`): parsed configuration of the Processing Server
         """
         self.log = getLogger(__name__)
         self.config = config
