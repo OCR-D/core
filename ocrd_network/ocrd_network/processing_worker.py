@@ -197,6 +197,7 @@ class ProcessingWorker:
             # due to a call of sys.stdout.flush()
             disable_interactive_logging()
 
+        self.set_job_state(job_id, StateEnum.running)
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             return_status = self.run_processor_from_worker(
@@ -217,8 +218,8 @@ class ProcessingWorker:
                 output_file_grps=output_file_grps,
                 parameter=parameter
             )
-        job_status = StateEnum.success if return_status else StateEnum.failed
-        self.set_job_state(job_id, return_status)
+        job_state = StateEnum.success if return_status else StateEnum.failed
+        self.set_job_state(job_id, job_state)
 
         # If the result_queue field is set, send the job status to a result queue
         if processing_message.result_queue:
@@ -231,7 +232,7 @@ class ProcessingWorker:
             self.log.info(f'Publishing result message to queue: {processing_message.result_queue}')
             result_message = OcrdResultMessage(
                 job_id=str(job_id),
-                status=job_status.value,
+                status=job_state.value,
                 # Either path_to_mets or workspace_id must be set (mutually exclusive)
                 path_to_mets=processing_message.path_to_mets,
                 workspace_id=None
@@ -300,16 +301,16 @@ class ProcessingWorker:
 
         if return_code != 0:
             self.log.error(f'{executable} exited with non-zero return value {return_code}.')
+            return False
         else:
             self.log.debug(f'{executable} exited with success.')
-        return return_code == 0
+            return True
 
-    def set_job_state(self, job_id: Any, success: bool):
-        """Set the job status in mongodb to either success or failed
+    def set_job_state(self, job_id: Any, state: StateEnum):
+        """Set the job status in mongodb
         """
         # TODO: the way to interact with mongodb needs to be thought about. Beanie seems not
         #       suitable as the worker is not async, thus using pymongo here
-        state = StateEnum.success if success else StateEnum.failed
         with pymongo.MongoClient(self.db_url) as client:
             db = client['ocrd']
             db.Job.update_one({'_id': job_id}, {'$set': {'state': state}}, upsert=False)
