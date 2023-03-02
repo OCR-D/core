@@ -59,7 +59,7 @@ def ocrd_cli_wrap_processor(
         sys.exit()
     # If either of these two is provided but not both
     if bool(queue) != bool(database):
-        raise Exception("Both queue and database addresses must be provided - not just either of them.")
+        raise Exception("Options --queue and --database require each other.")
     # If both of these are provided - start the processing worker instead of the processor - processorClass
     if queue and database:
         initLogging()
