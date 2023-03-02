@@ -1,8 +1,8 @@
 """
-Abstraction of the Deployment functionality
-The ProcessingServer (currently still called Server) provides the configuration parameters to the
-Deployer agent.
-The Deployer agent deploys the RabbitMQ Server, MongoDB and the Processing Hosts.
+Abstraction of the deployment functionality for processors.
+
+The Processing Server provides the configuration parameters to the Deployer agent.
+The Deployer agent runs the RabbitMQ Server, MongoDB and the Processing Hosts.
 Each Processing Host may have several Processing Workers.
 Each Processing Worker is an instance of an OCR-D processor.
 """
