@@ -69,12 +69,8 @@ def ocrd_cli_wrap_processor(
         logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
         # Get the ocrd_tool dictionary
-        f_out = StringIO()
-        with redirect_stdout(f_out):
-            processorClass(workspace=None, dump_json=True)
-        # TODO: Verify this. There is `ocrd_tool` parameter passed as an argument.
-        #  The following line overwrites the passed parameter.
-        ocrd_tool = parse_json_string_with_comments(f_out.getvalue())
+        processor = processorClass(workspace=None, dump_json=True)
+        ocrd_tool = processor.ocrd_tool
 
         try:
             processing_worker = ProcessingWorker(
