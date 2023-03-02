@@ -119,7 +119,7 @@ def run_processor(
                                      backend=backend)
         except Exception as err:
             log.exception("Failure in processor '%s'" % ocrd_tool['executable'])
-            return err
+            raise err
         finally:
             chdir(old_cwd)
         mem_usage_values = [mem for mem, _ in mem_usage]
@@ -132,7 +132,7 @@ def run_processor(
             processor.process()
         except Exception as err:
             log.exception("Failure in processor '%s'" % ocrd_tool['executable'])
-            return err
+            raise err
         finally:
             chdir(old_cwd)
 
