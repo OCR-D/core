@@ -22,7 +22,7 @@ from ocrd_network.processing_worker import ProcessingWorker
                    'Format: username:password@host:port/vhost')
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
-              help='The host and port of the MongoDB')
+              help='URL of the MongoDB service')
 def processing_worker_cli(processor_name: str, queue: str, database: str):
     """
     Start a processing worker (a specific ocr-d processor)
