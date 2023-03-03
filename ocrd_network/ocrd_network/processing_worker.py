@@ -35,6 +35,17 @@ from ocrd_network.rabbitmq_utils import (
     RMQPublisher
 )
 
+try:
+    # This env variable must be set before importing from Keras
+    environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    from tensorflow.keras.utils import disable_interactive_logging
+    # Enabled interactive logging throws an exception
+    # due to a call of sys.stdout.flush()
+    disable_interactive_logging()
+except Exception:
+    # Nothing should be handled here if TF is not available
+    pass
+
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
@@ -186,16 +197,6 @@ class ProcessingWorker:
         output_file_grps = processing_message.output_file_grps
         parameter = processing_message.parameters
         job_id = processing_message.job_id
-
-        # TODO: Find a proper solution for this dirty fix
-        if self.processor_name == 'ocrd-calamari-recognize':
-            # This env variable must be set before importing from Keras
-            environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-            from tensorflow.keras.utils import disable_interactive_logging
-
-            # Enabled interactive logging throws an exception
-            # due to a call of sys.stdout.flush()
-            disable_interactive_logging()
 
         self.set_job_state(job_id, StateEnum.running)
         if self.processor_class:
