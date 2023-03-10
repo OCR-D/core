@@ -8,6 +8,8 @@ from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
 from zipfile import ZipFile
 
+from mimetypes import guess_type
+from filetype import guess
 import requests
 from yaml import safe_load, safe_dump
 
@@ -317,7 +319,13 @@ class OcrdResourceManager():
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     suffixes = ''.join(Path(nth_url_segment(url)).suffixes)
-                    mimetype = EXT_TO_MIME.get(suffixes, 'application/octet-stream')
+                    mimetype = guess(f'../{archive_fname}')
+                    if mimetype is None:
+                        mimetype = guess_type(f'../{archive_fname}')[0]
+                    else:
+                        mimetype = mimetype.mime
+                    if mimetype is None:
+                        mimetype = EXT_TO_MIME.get(suffixes, 'application/octet-stream')
                     log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
                     if mimetype == 'application/zip':
                         with ZipFile(f'../{archive_fname}', 'r') as zipf:
