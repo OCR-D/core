@@ -6,14 +6,21 @@ OCR-D CLI: start the processing server
     :nested: full
 """
 import click
-from ocrd_utils import initLogging
-from ocrd_network import ProcessingServer
 import logging
+from ocrd_utils import initLogging
+from ocrd_network import (
+    ProcessingServer,
+    ProcessingServerParamType
+)
 
 
 @click.command('processing-server')
 @click.argument('path_to_config', required=True, type=click.STRING)
-@click.option('-a', '--address', help='Host (name/IP) and port to bind the Processing-Server to. Example: localhost:8080', required=True)
+@click.option('-a', '--address',
+              default="localhost:8080",
+              help='The URL of the Processing server, format: host:port',
+              type=ProcessingServerParamType(),
+              required=True)
 def processing_server_cli(path_to_config, address: str):
     """
     Start and manage processing workers with the processing server
@@ -28,10 +35,7 @@ def processing_server_cli(path_to_config, address: str):
     logging.getLogger('paramiko.transport').setLevel(logging.INFO)
     logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
-    try:
-        host, port = address.split(":")
-        port_int = int(port)
-    except ValueError:
-        raise click.UsageError('The --address option must have the format IP:PORT')
-    processing_server = ProcessingServer(path_to_config, host, port_int)
+    # Note, the address is already validated with the type field
+    host, port = address.split(":")
+    processing_server = ProcessingServer(path_to_config, host, port)
     processing_server.start()

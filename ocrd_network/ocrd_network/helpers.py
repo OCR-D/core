@@ -1,6 +1,4 @@
-from os import environ
-from os.path import join, exists
-from re import split
+from re import split as re_split
 
 
 def verify_database_url(mongodb_address: str) -> str:
@@ -8,9 +6,7 @@ def verify_database_url(mongodb_address: str) -> str:
     if not mongodb_address.startswith(database_prefix):
         error_msg = f'The database address must start with a prefix: {database_prefix}'
         raise ValueError(error_msg)
-
     address_without_prefix = mongodb_address[len(database_prefix):]
-    print(f'Address without prefix: {address_without_prefix}')
     elements = address_without_prefix.split(':', 1)
     if len(elements) != 2:
         raise ValueError('The database address is in wrong format')
@@ -34,7 +30,7 @@ def verify_and_parse_rabbitmq_addr(rabbitmq_address: str) -> dict:
     parsed_data['username'] = credentials[0]
     parsed_data['password'] = credentials[1]
 
-    host_info = split(pattern=r':|/', string=elements[1])
+    host_info = re_split(pattern=r':|/', string=elements[1])
     if len(host_info) != 3 and len(host_info) != 2:
         raise ValueError(
             'The RabbitMQ host info is in wrong format. Expected format: username:password@host:port/vhost')

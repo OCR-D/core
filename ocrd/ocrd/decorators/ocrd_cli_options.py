@@ -1,6 +1,8 @@
-from click import option, STRING
+from click import option
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
+from ocrd_network import QueueServerParamType, DatabaseParamType
+
 
 def ocrd_cli_options(f):
     """
@@ -26,8 +28,8 @@ def ocrd_cli_options(f):
         option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
         option('-g', '--page-id', help="ID(s) of the pages to process"),
         option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
-        option('--queue', help="The RabbitMQ server address in format: {host}:{port}/{vhost}", type=STRING),
-        option('--database', help="The MongoDB address in format: mongodb://{host}:{port}", type=STRING),
+        option('--queue', help="The URL of the Queue Server, format: username:password@host:port/vhost", type=QueueServerParamType()),
+        option('--database', help="The URL of the MongoDB, format: mongodb://host:port", type=DatabaseParamType()),
         option('-C', '--show-resource', help='Dump the content of processor resource RESNAME', metavar='RESNAME'),
         option('-L', '--list-resources', is_flag=True, default=False, help='List names of processor resources'),
         parameter_option,
@@ -43,3 +45,4 @@ def ocrd_cli_options(f):
     for param in params:
         param(f)
     return f
+

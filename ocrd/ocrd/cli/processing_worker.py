@@ -11,6 +11,7 @@ from ocrd_utils import (
     initLogging,
     get_ocrd_tool_json
 )
+from ocrd_network import QueueServerParamType, DatabaseParamType
 from ocrd_network.processing_worker import ProcessingWorker
 
 
@@ -18,11 +19,12 @@ from ocrd_network.processing_worker import ProcessingWorker
 @click.argument('processor_name', required=True, type=click.STRING)
 @click.option('-q', '--queue',
               default="admin:admin@localhost:5672/",
-              help='The username, password, host, port, and virtual host of the RabbitMQ Server. '
-                   'Format: username:password@host:port/vhost')
+              help='The URL of the Queue Server, format: username:password@host:port/vhost',
+              type=QueueServerParamType())
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
-              help='URL of the MongoDB service')
+              help='The URL of the MongoDB, format: mongodb://host:port',
+              type=DatabaseParamType())
 def processing_worker_cli(processor_name: str, queue: str, database: str):
     """
     Start a processing worker (a specific ocr-d processor)
