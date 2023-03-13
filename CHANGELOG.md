@@ -9,6 +9,7 @@ Fixed:
 
   * `ocrd resmgr`: handle namespaces packages gracefully for Python `<=` 3.6, #917, #985
   * `ocrd resmgr`: guess media type with `filetype.py` in addition to `MIME_TO_EXT`, #991
+  * `OcrdMets`: Insert `mets:agent` in a schema-compliant way, #976, #977
 
 Added:
 
