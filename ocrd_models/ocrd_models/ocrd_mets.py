@@ -213,7 +213,12 @@ class OcrdMets(OcrdXmlDocument):
             el_metsHdr = ET.Element(TAG_METS_METSHDR)
             self._tree.getroot().insert(0, el_metsHdr)
         #  assert(el_metsHdr is not None)
-        el_agent = ET.SubElement(el_metsHdr, TAG_METS_AGENT)
+        el_agent = ET.Element(TAG_METS_AGENT)
+        try:
+            el_agent_last = next(el_metsHdr.iterchildren(tag=TAG_METS_AGENT, reversed=True))
+            el_agent_last.addnext(el_agent)
+        except StopIteration:
+            el_metsHdr.insert(0, el_agent)
         #  print(ET.tostring(el_metsHdr))
         return OcrdAgent(el_agent, *args, **kwargs)
 

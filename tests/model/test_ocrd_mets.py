@@ -226,7 +226,6 @@ def test_agent(sbb_sample_01):
     sbb_sample_01.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'YETOTHERSTILL')
     assert len(sbb_sample_01.agents) == beforelen + 1
 
-
 def test_metshdr():
     """
     Test whether metsHdr is created on-demand
