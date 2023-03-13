@@ -8,9 +8,12 @@ from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
 from zipfile import ZipFile
 
+from mimetypes import guess_type
+from filetype import guess
 import requests
+from gdown.parse_url import parse_url as gparse_url
+from gdown.download import get_url_from_gdrive_confirmation
 from yaml import safe_load, safe_dump
-import magic
 
 # https://github.com/OCR-D/core/issues/867
 # https://stackoverflow.com/questions/50900727/skip-converting-entities-while-loading-a-yaml-string-using-pyyaml
@@ -19,7 +22,7 @@ yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp
     yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger, directory_size, get_moduledir
+from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -236,6 +239,16 @@ class OcrdResourceManager():
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
         with open(filename, 'wb') as f:
+            gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
+            if gdrive_file_id:
+                if not is_gdrive_download_link:
+                    url = "https://drive.google.com/uc?id={id}".format(id=gdrive_file_id)
+                try:
+                    with requests.get(url, stream=True) as r:
+                        if "Content-Disposition" not in r.headers:
+                            url = get_url_from_gdrive_confirmation(r.text)
+                except RuntimeError as e:
+                    log.warning("Cannot unwrap Google Drive URL: ", e)
             with requests.get(url, stream=True) as r:
                 for data in r.iter_content(chunk_size=4096):
                     if progress_cb:
@@ -317,14 +330,23 @@ class OcrdResourceManager():
                     self._copy_impl(url, archive_fname, progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    mimetype = magic.from_file(f'../{archive_fname}', mime=True)
+                    suffixes = ''.join(Path(nth_url_segment(url)).suffixes)
+                    mimetype = guess(f'../{archive_fname}')
+                    if mimetype is None:
+                        mimetype = guess_type(f'../{archive_fname}')[0]
+                    else:
+                        mimetype = mimetype.mime
+                    if mimetype is None:
+                        mimetype = EXT_TO_MIME.get(suffixes, 'application/octet-stream')
                     log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
                     if mimetype == 'application/zip':
                         with ZipFile(f'../{archive_fname}', 'r') as zipf:
                             zipf.extractall()
-                    else:
+                    elif mimetype in ('application/gzip', 'application/x-xz'):
                         with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
                             tar.extractall()
+                    else:
+                        raise RuntimeError("Unable to handle extraction of %s archive %s" % (mimetype, url))
                     log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
                     if Path(path_in_archive).is_dir():
                         copytree(path_in_archive, str(fpath))

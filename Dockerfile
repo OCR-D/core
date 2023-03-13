@@ -18,20 +18,23 @@ COPY Makefile .
 COPY README.md .
 COPY LICENSE .
 RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
-RUN apt-get update && apt-get -y install \
-    ca-certificates \
-    software-properties-common \
-    python3-dev \
-    python3-pip \
-    make \
-    wget \
-    time \
-    curl \
-    sudo \
-    git \
+RUN apt-get update && apt-get -y install software-properties-common \
+    && apt-get update && apt-get -y install \
+        ca-certificates \
+        python3-dev \
+        python3-pip \
+        gcc \
+        make \
+        wget \
+        time \
+        curl \
+        sudo \
+        git \
     && make deps-ubuntu \
-    && pip3 install --upgrade pip setuptools \
+    && pip install --upgrade pip setuptools \
     && make install \
+    && apt-get remove -y gcc \
+    && apt-get autoremove -y \
     && $FIXUP \
     && rm -rf /build-ocrd
 

@@ -148,7 +148,7 @@ def test_workspace_str(plain_workspace):
 def test_workspace_backup(plain_workspace):
 
     # act
-    plain_workspace.automatic_backup = True
+    plain_workspace.automatic_backup = WorkspaceBackupManager(plain_workspace)
     plain_workspace.save_mets()
     plain_workspace.reload_mets()
 
