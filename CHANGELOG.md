@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Docker: install `python3-venv`, do not install `python3-pip`, #1003, #1004, OCR-D/ocrd_all#352
+
 ## [2.47.0] - 2023-03-15
 
 Fixed:
