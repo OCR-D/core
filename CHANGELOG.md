@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.47.3] - 2023-03-15
+
 Fixed:
 
   * Docker: reintroduce `python3-pip` because why not, #1004
@@ -1684,6 +1686,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.47.3]: ../../compare/v2.47.3..v2.47.2
 [2.47.2]: ../../compare/v2.47.2..v2.47.1
 [2.47.1]: ../../compare/v2.47.1..v2.47.0
 [2.47.0]: ../../compare/v2.47.0..v2.46.0
