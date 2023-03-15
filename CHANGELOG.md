@@ -11,6 +11,7 @@ Fixed:
   * `ocrd resmgr`: guess media type with `filetype.py` in addition to `MIME_TO_EXT`, #991
   * `OcrdMets`: Insert `mets:agent` in a schema-compliant way, #976, #977
   * `ocrd_cli_wrap_processor`: remove unnecessary ocrd_tool kwarg, #998, #999
+  * Docker base image builds again, except CUDA, #986
 
 Added:
 
