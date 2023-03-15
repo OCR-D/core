@@ -15,6 +15,10 @@ Added:
 
   * `ocrd resmgr`: support Google Drive links, #993, #992
 
+Changed:
+
+  * Use the new `importlib.resources.files` API, #995, #996
+
 ## [2.46.0] - 2023-02-16
 
 Changed:
