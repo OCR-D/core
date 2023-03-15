@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.47.0] - 2023-03-15
+
 Fixed:
 
   * `ocrd resmgr`: handle namespaces packages gracefully for Python `<=` 3.6, #917, #985
