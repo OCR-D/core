@@ -5,6 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Docker: Use `pip3` not `pip`, #986
+  * `make install`: Speed up opencv built for (now unsupported) python `<= 3.6`, #986, OCR-D/ocrd_calamari#72
+
+Added:
+
+  * CI/CD: GH action to deploy docker images to ghcr.io, #986
+
 ## [2.47.1] - 2023-03-15
 
 Fixed:
