@@ -20,6 +20,7 @@ Added:
 Changed:
 
   * Use the new `importlib.resources.files` API, #995, #996
+  * `ocrd resmgr`: resources for `ocrd_anybaseocr` removed from central list, provided by the project, #989, OCR-D/ocrd_anybaseocr#100
 
 ## [2.46.0] - 2023-02-16
 
