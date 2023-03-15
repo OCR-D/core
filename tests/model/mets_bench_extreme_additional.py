@@ -49,7 +49,7 @@ def benchmark_find_files(number_of_pages, mets):
     benchmark_find_files_filegrp(number_of_pages, mets)
     benchmark_find_files_fileid(number_of_pages, mets)
     benchmark_find_files_physical_page(number_of_pages, mets)
-    # This is not really useful to measure. 
+    # This is not really useful to measure.
     # We iterate all files in both cached and non-cached in the same routine
     # When no specific search parameters are provided
     # benchmark_find_files_all(number_of_pages, mets)
@@ -88,7 +88,7 @@ def test_b500(benchmark):
 @mark.benchmark(group="search", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
 def test_s500(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_500
         benchmark_find_files(500, mets_500)
 del mets_500

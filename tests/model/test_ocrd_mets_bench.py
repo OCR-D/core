@@ -65,7 +65,7 @@ def benchmark_find_files_fileid(number_of_pages, mets):
     assert_len(1, mets, dict(ID='FULL_0001_TIF'))
     # Worst case - does not exist
     assert_len(0, mets, dict(ID='FULL_0001_TIF-NOTEXISTS'))
-        
+
 def benchmark_find_files_physical_page(number_of_pages, mets):
 	# Best case - first physical page
     assert_len(1, mets, dict(pageId='PHYS_0001'))
@@ -117,28 +117,28 @@ def test_b50(benchmark):
 @mark.benchmark(group="search")
 def test_s5(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_5
         benchmark_find_files(5, mets_5)
 
 @mark.benchmark(group="search")
 def test_s10(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_10
         benchmark_find_files(10, mets_10)
 
 @mark.benchmark(group="search")
 def test_s20(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_20
         benchmark_find_files(20, mets_20)
 
 @mark.benchmark(group="search")
 def test_s50(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_50
         benchmark_find_files(50, mets_50)
 
@@ -196,24 +196,24 @@ def test_s5_c(benchmark):
 @mark.benchmark(group="search")
 def test_s10_c(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_c_10
         benchmark_find_files(10, mets_c_10)
 
 @mark.benchmark(group="search")
 def test_s20_c(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_c_20
         benchmark_find_files(20, mets_c_20)
 
 @mark.benchmark(group="search")
 def test_s50_c(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_c_50
         benchmark_find_files(50, mets_c_50)
-     
+
 del mets_c_5
 del mets_c_10
 del mets_c_20
@@ -221,7 +221,7 @@ del mets_c_50
 
 def manual_t():
     mets = _build_mets(2, cache_flag=False)
-    mets_cached = _build_mets(2, cache_flag=True)    
+    mets_cached = _build_mets(2, cache_flag=True)
 
     # print("METS>--------------------------------------------------------------------")
     # print(mets)
@@ -233,11 +233,11 @@ def manual_t():
     benchmark_find_files(2, mets)
     print("-----Cached-Bench-------------------------------------------------------------")
     benchmark_find_files(2, mets_cached)
-    
+
     print("-----Regular------------------------------------------------------------------")
     print("len=%d" % len(mets.find_all_files(fileGrp='SEG-REG')))
     print(mets.find_all_files(fileGrp='SEG-REG'))
-    
+
     print("-----Cached-------------------------------------------------------------------")
     print("len=%d" % len(mets_cached.find_all_files(fileGrp='SEG-REG')))
     print(mets_cached.find_all_files(fileGrp='SEG-REG'))

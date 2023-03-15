@@ -50,7 +50,7 @@ def benchmark_find_files(number_of_pages, mets):
     benchmark_find_files_filegrp(number_of_pages, mets)
     benchmark_find_files_fileid(number_of_pages, mets)
     benchmark_find_files_physical_page(number_of_pages, mets)
-    # This is not really useful to measure. 
+    # This is not really useful to measure.
     # We iterate all files in both cached and non-cached in the same routine
     # When no specific search parameters are provided
     # benchmark_find_files_all(number_of_pages, mets)
@@ -94,7 +94,7 @@ def test_b50(benchmark):
 @mark.benchmark(group="search", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
 def test_s50(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_50
         benchmark_find_files(50, mets_50)
 del mets_50
@@ -130,7 +130,7 @@ def test_b500(benchmark):
 @mark.benchmark(group="search", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
 def test_s500(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_500
         benchmark_find_files(500, mets_500)
 del mets_500
@@ -168,7 +168,7 @@ def test_b1000(benchmark):
 @mark.benchmark(group="search", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
 def test_s1000(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_1000
         benchmark_find_files(1000, mets_1000)
 del mets_1000
@@ -205,7 +205,7 @@ def test_b2000(benchmark):
 @mark.benchmark(group="search", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
 def test_s2000(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_2000
         benchmark_find_files(2000, mets_2000)
 del mets_2000
@@ -242,7 +242,7 @@ def test_b5000(benchmark):
 @mark.benchmark(group="search", max_time=0.1, min_rounds=1, disable_gc=False, warmup=False)
 def test_s5000(benchmark):
     @benchmark
-    def ret(): 
+    def ret():
         global mets_5000
         benchmark_find_files(5000, mets_5000)
 del mets_5000
