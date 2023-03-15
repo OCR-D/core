@@ -288,7 +288,10 @@ class Deployer:
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
         # `xyz` before and after the code to easily be able to filter out the pid via regex when
         # returning from the function
-        stdin.write(f'{cmd} & \n echo xyz$!xyz \n exit \n')
+        logpath = '/tmp/ocrd-processing-server-startup.log'
+        stdin.write(f'echo starting processor with \'{cmd}\' >> {logpath} \n')
+        stdin.write(f'{cmd} >> {logpath} 2>&1 &\n')
+        stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
         stdin.close()
