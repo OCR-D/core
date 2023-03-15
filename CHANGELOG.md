@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.47.2] - 2023-03-15
+
 Fixed:
 
   * Docker: Use `pip3` not `pip`, #986
@@ -1678,6 +1680,10 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.47.2]: ../../compare/v2.47.2..v2.47.1
+[2.47.1]: ../../compare/v2.47.1..v2.47.0
+[2.47.0]: ../../compare/v2.47.0..v2.46.0
+[2.46.0]: ../../compare/v2.46.0..v2.45.1
 [2.45.1]: ../../compare/v2.45.1..v2.45.0
 [2.45.0]: ../../compare/v2.45.0..v2.44.0
 [2.44.0]: ../../compare/v2.44.0..v2.43.0
