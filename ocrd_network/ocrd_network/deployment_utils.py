@@ -1,6 +1,8 @@
 from __future__ import annotations
 from enum import Enum
 from typing import Union, List
+from distutils.spawn import find_executable as which
+import re
 
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
@@ -29,6 +31,23 @@ def create_ssh_client(address: str, username: str, password: Union[str, None],
 def create_docker_client(address: str, username: str, password: Union[str, None],
                          keypath: Union[str, None]) -> CustomDockerClient:
     return CustomDockerClient(username, address, password=password, keypath=keypath)
+
+
+def is_bashlib_processor(processor_name):
+    """ Determine if a processor is a bashlib processor
+
+    Returns True if processor_name is available as a program and does not contain a python hashbang
+    in line 1 """
+    if not processor_name.startswith("ocrd"):
+        return False
+    program = which(processor_name)
+    if not program:
+        return False
+    with open(program) as fin:
+        line = fin.readline().strip()
+        if re.fullmatch('[#][!].*/python[0-9.]*', line):
+            return False
+    return True
 
 
 class HostData:

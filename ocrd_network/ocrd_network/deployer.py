@@ -23,6 +23,7 @@ from ocrd_network.deployment_utils import (
     CustomDockerClient,
     DeployType,
     HostData,
+    is_bashlib_processor,
 )
 from ocrd_network.rabbitmq_utils import RMQPublisher
 
@@ -30,7 +31,7 @@ from ocrd_network.rabbitmq_utils import RMQPublisher
 class Deployer:
     """Wraps the deployment functionality of the Processing Server
 
-    Deployer is the one acting. 
+    Deployer is the one acting.
     :py:attr:`config` is for representation of the config file only.
     :py:attr:`hosts` is for managing processor information, not for actually processing.
     """
@@ -278,11 +279,14 @@ class Deployer:
         Returns:
             str: pid of running process
         """
-        # TODO: some processors are bashlib. They have to be started differently
         self.log.info(f'Starting native processor: {processor_name}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} --database {database_url} --queue {queue_url}'
+        if is_bashlib_processor(processor_name):
+            cmd = f'ocrd processing-worker {processor_name} --database {database_url} ' \
+                f'--queue {queue_url}'
+        else:
+            cmd = f'{processor_name} --database {database_url} --queue {queue_url}'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
