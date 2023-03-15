@@ -23,7 +23,6 @@ from .mets_find_options import mets_find_options
 
 def ocrd_cli_wrap_processor(
     processorClass,
-    ocrd_tool=None,
     mets=None,
     working_dir=None,
     dump_json=False,
@@ -114,4 +113,4 @@ def ocrd_cli_wrap_processor(
                 pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
                 print(s.getvalue())
             atexit.register(exit)
-        run_processor(processorClass, ocrd_tool, mets, workspace=workspace, **kwargs)
+        run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
