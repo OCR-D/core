@@ -148,7 +148,7 @@ class ProcessingServer(FastAPI):
                            'Trying to kill parts of incompletely deployed service')
             self.deployer.kill_all()
             raise
-        uvicorn.run(self, host=self.hostname, port=self.port)
+        uvicorn.run(self, host=self.hostname, port=int(self.port))
 
     @staticmethod
     def parse_config(config_path: str) -> ProcessingServerConfig:
