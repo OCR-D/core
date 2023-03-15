@@ -22,7 +22,6 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && apt-get update && apt-get -y install \
         ca-certificates \
         python3-dev \
-        python3-pip \
         python3-venv \
         gcc \
         make \
