@@ -99,16 +99,16 @@ class RMQConnector:
             destination_exchange: str,
             source_exchange: str,
             routing_key: str,
-            parameters: Optional[Any] = None
+            arguments: Optional[Any] = None
     ) -> None:
-        if parameters is None:
-            parameters = {}
+        if arguments is None:
+            arguments = {}
         if channel and channel.is_open:
             channel.exchange_bind(
                 destination=destination_exchange,
                 source=source_exchange,
                 routing_key=routing_key,
-                parameters=parameters
+                arguments=arguments
             )
 
     @staticmethod
