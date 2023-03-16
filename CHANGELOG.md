@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `resmgr`: `ocrd-typegroups-classifier` resources now listed decentrally, #1011, OCR-D/ocrd_typegroups_classifier#15
+
 ## [2.47.3] - 2023-03-15
 
 Fixed:
