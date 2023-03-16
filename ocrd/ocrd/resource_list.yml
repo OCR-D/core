@@ -46,11 +46,6 @@ ocrd-cis-ocropy-recognize:
     name: LatinHist.pyrnn.gz
     description: ocropy historical latin model by github.com/chreul
     size: 16989864
-ocrd-typegroups-classifier:
-  - url: https://github.com/seuretm/ocrd_typegroups_classifier/raw/master/ocrd_typegroups_classifier/models/densenet121.tgc
-    name: densenet121.tgc
-    description: Network to predict font families with. Bundled with standard installation.
-    size: 28509377
 ocrd-sbb-binarize:
   - url: https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz
     description: updated default models provided by github.com/qurator-spk
