@@ -3,7 +3,7 @@ from re import split as re_split
 
 
 class ProcessingServerParamType(ParamType):
-    name = "Processing server string format"
+    name = 'Processing server string format'
     expected_format = 'host:port'
 
     def convert(self, value, param, ctx):
@@ -18,7 +18,7 @@ class ProcessingServerParamType(ParamType):
 
 
 class QueueServerParamType(ParamType):
-    name = "Queue server string format"
+    name = 'Queue server string format'
     expected_format = 'username:password@host:port/vhost'
 
     def convert(self, value, param, ctx):
@@ -39,7 +39,7 @@ class QueueServerParamType(ParamType):
 
 
 class DatabaseParamType(ParamType):
-    name = "Database string format"
+    name = 'Database string format'
     expected_format = 'mongodb://host:port'
 
     def convert(self, value, param, ctx):

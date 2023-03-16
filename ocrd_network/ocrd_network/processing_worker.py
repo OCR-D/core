@@ -61,11 +61,11 @@ class ProcessingWorker:
             self.db_url = verify_database_url(mongodb_addr)
             self.log.debug(f'Verified MongoDB URL: {self.db_url}')
             rmq_data = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
-            self.rmq_username = rmq_data["username"]
-            self.rmq_password = rmq_data["password"]
-            self.rmq_host = rmq_data["host"]
-            self.rmq_port = rmq_data["port"]
-            self.rmq_vhost = rmq_data["vhost"]
+            self.rmq_username = rmq_data['username']
+            self.rmq_password = rmq_data['password']
+            self.rmq_host = rmq_data['host']
+            self.rmq_port = rmq_data['port']
+            self.rmq_vhost = rmq_data['vhost']
             self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
             self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         except ValueError as e:

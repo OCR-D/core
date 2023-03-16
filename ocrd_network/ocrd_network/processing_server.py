@@ -45,8 +45,8 @@ class ProcessingServer(FastAPI):
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
         super().__init__(on_startup=[self.on_startup], on_shutdown=[self.on_shutdown],
-                         title="OCR-D Processing Server",
-                         description="OCR-D processing and processors")
+                         title='OCR-D Processing Server',
+                         description='OCR-D processing and processors')
         self.log = getLogger(__name__)
         self.hostname = host
         self.port = port
@@ -119,7 +119,7 @@ class ProcessingServer(FastAPI):
         @self.exception_handler(RequestValidationError)
         async def validation_exception_handler(request: Request, exc: RequestValidationError):
             exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
-            self.log.error(f"{request}: {exc_str}")
+            self.log.error(f'{request}: {exc_str}')
             content = {'status_code': 10422, 'message': exc_str, 'data': None}
             return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
@@ -228,8 +228,7 @@ class ProcessingServer(FastAPI):
             if not ocrd_tool:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=(f'Processor \'{processor_name}\' not available. It\'s ocrd_tool is '
-                            'empty or missing')
+                    detail=f"Processor '{processor_name}' not available. It's ocrd_tool is empty or missing"
                 )
             validator = ParameterValidator(ocrd_tool)
             report = validator.validate(data.parameters)
@@ -240,14 +239,14 @@ class ProcessingServer(FastAPI):
         if bool(data.path) == bool(data.workspace_id):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail='Either \'path\' or \'workspace_id\' must be set'
+                detail="Either 'path' or 'workspace_id' must be set"
             )
         elif data.workspace_id:
             workspace = await Workspace.get(data.workspace_id)
             if not workspace:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f'Workspace for id \'{data.workspace_id}\' not existing'
+                    detail=f"Workspace for id '{data.workspace_id}' not existing"
                 )
             data.path = workspace.workspace_mets_path
 

@@ -36,6 +36,6 @@ def processing_server_cli(path_to_config, address: str):
     logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
     # Note, the address is already validated with the type field
-    host, port = address.split(":")
+    host, port = address.split(':')
     processing_server = ProcessingServer(path_to_config, host, port)
     processing_server.start()

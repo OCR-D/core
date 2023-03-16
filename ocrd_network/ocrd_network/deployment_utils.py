@@ -23,7 +23,7 @@ def create_ssh_client(address: str, username: str, password: Union[str, None],
     try:
         client.connect(hostname=address, username=username, password=password, key_filename=keypath)
     except Exception:
-        getLogger(__name__).error(f'Error creating SSHClient for host: \'{address}\'')
+        getLogger(__name__).error(f"Error creating SSHClient for host: '{address}'")
         raise
     return client
 
@@ -107,7 +107,7 @@ class CustomDockerClient(DockerClient):
             self.password = password
             self.keypath = keypath
             if not self.password and not self.keypath:
-                raise Exception('either "password" or "keypath" must be provided')
+                raise Exception("either 'password' or 'keypath' must be provided")
             super().__init__(base_url)
 
         def _create_paramiko_client(self, base_url: str) -> None:

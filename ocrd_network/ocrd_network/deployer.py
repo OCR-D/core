@@ -90,8 +90,7 @@ class Deployer:
     def _deploy_processing_worker(self, processor: WorkerConfig, host: HostData,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
 
-        self.log.debug(f'deploy \'{processor.deploy_type}\' processor: \'{processor}\' on'
-                       f'\'{host.config.address}\'')
+        self.log.debug(f"deploy '{processor.deploy_type}' processor: '{processor}' on '{host.config.address}'")
 
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
@@ -187,8 +186,8 @@ class Deployer:
                        ports_mapping: Union[Dict, None] = None) -> str:
         """ Start mongodb in docker
         """
-        self.log.debug(f'Trying to deploy image[{image}], '
-                       f'with modes: detach[{detach}], remove[{remove}]')
+        self.log.debug(f"Trying to deploy '{image}', with modes: "
+                       f"detach='{detach}', remove='{remove}'")
 
         if not self.config or not self.config.mongo.address:
             raise ValueError('Deploying MongoDB has failed - missing configuration.')
@@ -257,12 +256,12 @@ class Deployer:
 
     def kill_processing_worker(self, host: HostData) -> None:
         for pid in host.pids_native:
-            self.log.debug(f'Trying to kill/stop native processor: with PID: \'{pid}\'')
+            self.log.debug(f"Trying to kill/stop native processor: with PID: '{pid}'")
             host.ssh_client.exec_command(f'kill {pid}')
         host.pids_native = []
 
         for pid in host.pids_docker:
-            self.log.debug(f'Trying to kill/stop docker container with PID: {pid}')
+            self.log.debug(f"Trying to kill/stop docker container with PID: '{pid}'")
             host.docker_client.containers.get(pid).stop()
         host.pids_docker = []
 
@@ -293,7 +292,7 @@ class Deployer:
         # `xyz` before and after the code to easily be able to filter out the pid via regex when
         # returning from the function
         logpath = '/tmp/ocrd-processing-server-startup.log'
-        stdin.write(f'echo starting processor with \'{cmd}\' >> {logpath} \n')
+        stdin.write(f"echo starting processor with '{cmd}' >> '{logpath}'\n")
         stdin.write(f'{cmd} >> {logpath} 2>&1 &\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
