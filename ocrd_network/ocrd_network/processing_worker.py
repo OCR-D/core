@@ -24,8 +24,8 @@ from ocrd.processor.helpers import (
     run_processor
 )
 from ocrd_network.helpers import (
-    verify_database_url,
-    verify_and_parse_rabbitmq_addr
+    verify_database_uri,
+    verify_and_parse_mq_uri
 )
 from ocrd_network.models.job import StateEnum
 from ocrd_network.rabbitmq_utils import (
@@ -58,9 +58,9 @@ class ProcessingWorker:
         self.log.addHandler(file_handler)
 
         try:
-            self.db_url = verify_database_url(mongodb_addr)
+            self.db_url = verify_database_uri(mongodb_addr)
             self.log.debug(f'Verified MongoDB URL: {self.db_url}')
-            rmq_data = verify_and_parse_rabbitmq_addr(rabbitmq_addr)
+            rmq_data = verify_and_parse_mq_uri(rabbitmq_addr)
             self.rmq_username = rmq_data['username']
             self.rmq_password = rmq_data['password']
             self.rmq_host = rmq_data['host']

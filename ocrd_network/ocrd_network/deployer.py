@@ -132,7 +132,7 @@ class Deployer:
                                       self.config.queue.password, self.config.queue.keypath)
         if not ports_mapping:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
-            # 15672, 15671: HTTP API clients, management UI and rabbitmqadmin, without and with TLS
+            # 15672, 15671: HTTP API clients, management UI and rabbitmq admin, without and with TLS
             # 25672: used for internode and CLI tools communication and is allocated from
             # a dynamic range (limited to a single port by default, computed as AMQP port + 20000)
             ports_mapping = {
@@ -157,8 +157,11 @@ class Deployer:
 
         # Build the RabbitMQ Server URL to return
         rmq_host = self.config.queue.address
-        rmq_port = self.config.queue.port
-        rmq_vhost = '/'  # the default virtual host
+        # note, integer validation is already performed
+        rmq_port = int(self.config.queue.port)
+        # the default virtual host since no field is
+        # provided in the processing server config.yml
+        rmq_vhost = '/'
 
         self.wait_for_rabbitmq_availability(rmq_host, rmq_port, rmq_vhost,
                                             self.config.queue.credentials[0],
@@ -168,7 +171,7 @@ class Deployer:
         self.log.info(f'The RabbitMQ server was deployed on host: {rabbitmq_hostinfo}')
         return rabbitmq_hostinfo
 
-    def wait_for_rabbitmq_availability(self, host: str, port: str, vhost: str, username: str,
+    def wait_for_rabbitmq_availability(self, host: str, port: int, vhost: str, username: str,
                                        password: str) -> None:
         max_waiting_steps = 15
         while max_waiting_steps > 0:
@@ -210,13 +213,11 @@ class Deployer:
         self.mongo_pid = res.id
         client.close()
 
-        # Build the MongoDB URL to return
-        mongodb_prefix = 'mongodb://'
         mongodb_host = self.config.mongo.address
         mongodb_port = self.config.mongo.port
-        mongodb_url = f'{mongodb_prefix}{mongodb_host}:{mongodb_port}'
-        self.log.info(f'The MongoDB was deployed on url: {mongodb_url}')
-        return mongodb_url
+        mongodb_hostinfo = f'{mongodb_host}:{mongodb_port}'
+        self.log.info(f'The MongoDB was deployed on host: {mongodb_hostinfo}')
+        return mongodb_hostinfo
 
     def kill_rabbitmq(self) -> None:
         if not self.mq_pid:

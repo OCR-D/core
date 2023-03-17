@@ -129,9 +129,10 @@ class ProcessingServer(FastAPI):
         try:
             rabbitmq_hostinfo = self.deployer.deploy_rabbitmq()
             # Assign the credentials to the rabbitmq url parameter
-            rabbitmq_url = f'{self.rmq_username}:{self.rmq_password}@{rabbitmq_hostinfo}'
+            rabbitmq_url = f'amqp://{self.rmq_username}:{self.rmq_password}@{rabbitmq_hostinfo}'
 
-            self.mongodb_url = self.deployer.deploy_mongodb()
+            mongodb_hostinfo = self.deployer.deploy_mongodb()
+            self.mongodb_url = f'mongodb://{mongodb_hostinfo}'
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.connect_publisher()

@@ -1,42 +1,34 @@
-from re import split as re_split
+from re import match as re_match
+from pika import URLParameters
+from pymongo import uri_parser as mongo_uri_parser
 
 
-def verify_database_url(mongodb_address: str) -> str:
-    database_prefix = 'mongodb://'
-    if not mongodb_address.startswith(database_prefix):
-        error_msg = f'The database address must start with a prefix: {database_prefix}'
-        raise ValueError(error_msg)
-    address_without_prefix = mongodb_address[len(database_prefix):]
-    elements = address_without_prefix.split(':', 1)
-    if len(elements) != 2:
-        raise ValueError('The database address is in wrong format')
-    db_host = elements[0]
-    db_port = int(elements[1])
-    mongodb_url = f'{database_prefix}{db_host}:{db_port}'
-    return mongodb_url
+def verify_database_uri(mongodb_address: str) -> str:
+    try:
+        # perform validation check
+        mongo_uri_parser.parse_uri(uri=mongodb_address, validate=True)
+    except Exception as error:
+        raise ValueError(f"The database address '{mongodb_address}' is in wrong format, {error}")
+    return mongodb_address
 
 
-def verify_and_parse_rabbitmq_addr(rabbitmq_address: str) -> dict:
-    parsed_data = {}
-    elements = rabbitmq_address.split('@')
-    if len(elements) != 2:
-        raise ValueError('The RabbitMQ address is in wrong format. Expected format: username:password@host:port/vhost')
+def verify_and_parse_mq_uri(rabbitmq_address: str):
+    """
+    Check the full list of available parameters in the docs here:
+    https://pika.readthedocs.io/en/stable/_modules/pika/connection.html#URLParameters
+    """
 
-    credentials = elements[0].split(':')
-    if len(credentials) != 2:
-        raise ValueError(
-            'The RabbitMQ credentials are in wrong format. Expected format: username:password@host:port/vhost')
+    uri_pattern = r"^(?:([^:\/?#\s]+):\/{2})?(?:([^@\/?#\s]+)@)?([^\/?#\s]+)?(?:\/([^?#\s]*))?(?:[?]([^#\s]+))?\S*$"
+    match = re_match(pattern=uri_pattern, string=rabbitmq_address)
+    if not match:
+        raise ValueError(f"The message queue server address is in wrong format: '{rabbitmq_address}'")
+    url_params = URLParameters(rabbitmq_address)
 
-    parsed_data['username'] = credentials[0]
-    parsed_data['password'] = credentials[1]
-
-    host_info = re_split(pattern=r':|/', string=elements[1])
-    if len(host_info) != 3 and len(host_info) != 2:
-        raise ValueError(
-            'The RabbitMQ host info is in wrong format. Expected format: username:password@host:port/vhost')
-
-    parsed_data['host'] = host_info[0]
-    parsed_data['port'] = int(host_info[1])
-    # The default global vhost is /
-    parsed_data['vhost'] = '/' if len(host_info) == 2 else f'/{host_info[2]}'
+    parsed_data = {
+        'username': url_params.credentials.username,
+        'password': url_params.credentials.password,
+        'host': url_params.host,
+        'port': url_params.port,
+        'vhost': url_params.virtual_host
+    }
     return parsed_data

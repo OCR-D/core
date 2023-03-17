@@ -18,8 +18,8 @@ from ocrd_network.processing_worker import ProcessingWorker
 @click.command('processing-worker')
 @click.argument('processor_name', required=True, type=click.STRING)
 @click.option('-q', '--queue',
-              default="admin:admin@localhost:5672/",
-              help='The URL of the Queue Server, format: username:password@host:port/vhost',
+              default="amqp://admin:admin@localhost:5672/",
+              help='The URL of the Queue Server, format: amqp://username:password@host:port/vhost',
               type=QueueServerParamType())
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
