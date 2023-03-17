@@ -8,9 +8,8 @@ Each Processing Worker is an instance of an OCR-D processor.
 """
 
 from __future__ import annotations
-from typing import Dict, Union, Optional
+from typing import Dict, Union
 from paramiko import SSHClient
-from pathlib import Path
 from re import search as re_search
 from time import sleep
 
@@ -114,16 +113,16 @@ class Deployer:
                 host.pids_docker.append(pid)
             sleep(0.1)
 
-    def deploy_rabbitmq(self, image: str = 'rabbitmq:3-management', detach: bool = True,
-                        remove: bool = True, ports_mapping: Union[Dict, None] = None) -> str:
+    def deploy_rabbitmq(self, image: str, detach: bool, remove: bool,
+                        ports_mapping: Union[Dict, None] = None) -> str:
         """Start docker-container with rabbitmq
 
         This method deploys the RabbitMQ Server. Handling of creation of queues, submitting messages
         to queues, and receiving messages from queues is part of the RabbitMQ Library which is part
         of the OCR-D WebAPI implementation.
         """
-        self.log.debug(f'Trying to deploy image[{image}], '
-                       f'with modes: detach[{detach}], remove[{remove}]')
+        self.log.debug(f"Trying to deploy '{image}', with modes: "
+                       f"detach='{detach}', remove='{remove}'")
 
         if not self.config or not self.config.queue.address:
             raise ValueError('Deploying RabbitMQ has failed - missing configuration.')
@@ -145,6 +144,7 @@ class Deployer:
             detach=detach,
             remove=remove,
             ports=ports_mapping,
+            # The default credentials to be used by the processing workers
             environment=[
                 f'RABBITMQ_DEFAULT_USER={self.config.queue.credentials[0]}',
                 f'RABBITMQ_DEFAULT_PASS={self.config.queue.credentials[1]}'
@@ -182,10 +182,11 @@ class Deployer:
                 max_waiting_steps -= 1
                 sleep(2)
             else:
+                # TODO: Disconnect the dummy_publisher here before returning...
                 return
         raise RuntimeError('Error waiting for queue startup: timeout exceeded')
 
-    def deploy_mongodb(self, image: str = 'mongo', detach: bool = True, remove: bool = True,
+    def deploy_mongodb(self, image: str, detach: bool, remove: bool,
                        ports_mapping: Union[Dict, None] = None) -> str:
         """ Start mongodb in docker
         """
@@ -213,9 +214,7 @@ class Deployer:
         self.mongo_pid = res.id
         client.close()
 
-        mongodb_host = self.config.mongo.address
-        mongodb_port = self.config.mongo.port
-        mongodb_hostinfo = f'{mongodb_host}:{mongodb_port}'
+        mongodb_hostinfo = f'{self.config.mongo.address}:{self.config.mongo.port}'
         self.log.info(f'The MongoDB was deployed on host: {mongodb_hostinfo}')
         return mongodb_hostinfo
 

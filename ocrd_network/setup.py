@@ -7,6 +7,7 @@ install_requires = open('requirements.txt').read().split('\n')
 install_requires.append('ocrd_utils == %s' % VERSION)
 install_requires.append('ocrd_validators == %s' % VERSION)
 
+# TODO: This needs to be revisited! Seems badly adapted from ocrd/setup.py
 setup(
     name='ocrd_network',
     version=VERSION,

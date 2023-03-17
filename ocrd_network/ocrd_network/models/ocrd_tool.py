@@ -1,9 +1,5 @@
-# This model is directly taken from the Triet's implementation:
-# REST API wrapper for the processor #884
-
-from typing import List, Optional
-
 from pydantic import BaseModel
+from typing import List, Optional
 
 
 class OcrdTool(BaseModel):

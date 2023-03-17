@@ -29,8 +29,7 @@ class QueueServerParamType(ParamType):
             # perform validation check only
             verify_and_parse_mq_uri(value)
         except Exception as error:
-            # TODO: remove the identifier my_error
-            self.fail(f'my_error: {error}', param, ctx)
+            self.fail(f'{error}', param, ctx)
         return value
 
 

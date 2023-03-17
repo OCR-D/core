@@ -127,11 +127,15 @@ class ProcessingServer(FastAPI):
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
         try:
-            rabbitmq_hostinfo = self.deployer.deploy_rabbitmq()
+            rabbitmq_hostinfo = self.deployer.deploy_rabbitmq(
+                image='rabbitmq:3-management', detach=True, remove=True)
+
             # Assign the credentials to the rabbitmq url parameter
             rabbitmq_url = f'amqp://{self.rmq_username}:{self.rmq_password}@{rabbitmq_hostinfo}'
 
-            mongodb_hostinfo = self.deployer.deploy_mongodb()
+            mongodb_hostinfo = self.deployer.deploy_mongodb(
+                image='mongo', detach=True, remove=True)
+
             self.mongodb_url = f'mongodb://{mongodb_hostinfo}'
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
