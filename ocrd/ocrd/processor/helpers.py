@@ -84,6 +84,7 @@ def run_processor(
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
 
+    old_cwd = getcwd()
     processor = get_processor(
         processor_class=processorClass,
         parameter=parameter,
@@ -94,8 +95,6 @@ def run_processor(
         output_file_grp=output_file_grp,
         instance_caching=instance_caching
     )
-
-    old_cwd = getcwd()
     chdir(processor.workspace.directory)
 
     ocrd_tool = processor.ocrd_tool
