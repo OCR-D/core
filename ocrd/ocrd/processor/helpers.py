@@ -88,13 +88,14 @@ def run_processor(
     processor = get_processor(
         processor_class=processorClass,
         parameter=parameter,
-        workspace=workspace,
+        workspace=None,
         ocrd_tool=ocrd_tool,
         page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
         instance_caching=instance_caching
     )
+    processor.workspace = workspace
     chdir(processor.workspace.directory)
 
     ocrd_tool = processor.ocrd_tool
