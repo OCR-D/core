@@ -23,10 +23,6 @@ from ocrd_network.database import (
     sync_initiate_database,
     sync_set_processing_job_state
 )
-from ocrd_network.helpers import (
-    verify_database_uri,
-    verify_and_parse_mq_uri
-)
 from ocrd_network.models.job import StateEnum
 from ocrd_network.rabbitmq_utils import (
     OcrdProcessingMessage,
@@ -34,7 +30,10 @@ from ocrd_network.rabbitmq_utils import (
     RMQConsumer,
     RMQPublisher
 )
-from ocrd_network.utils import call_sync
+from ocrd_network.utils import (
+    verify_database_uri,
+    verify_and_parse_mq_uri
+)
 
 try:
     # This env variable must be set before importing from Keras
