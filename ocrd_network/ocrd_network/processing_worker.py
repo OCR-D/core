@@ -11,6 +11,7 @@ is a single OCR-D Processor instance.
 import json
 import logging
 from os import environ, getpid
+import requests
 from typing import Any, List
 
 import pika.spec
@@ -161,7 +162,7 @@ class ProcessingWorker:
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
             raise Exception(f'Failed to process processing message with tag: {delivery_tag}, reason: {e}')
 
-        self.log.info(f'Successfully processed message ')
+        self.log.info(f'Successfully processed RabbitMQ message')
         self.log.debug(f'Acking message with tag: {delivery_tag}')
         channel.basic_ack(delivery_tag=delivery_tag, multiple=False)
 
@@ -188,63 +189,80 @@ class ProcessingWorker:
 
         # This can be path if invoking `run_processor`
         # but must be ocrd.Workspace if invoking `run_cli`.
-        workspace_path = processing_message.path_to_mets
-
+        path_to_mets = processing_message.path_to_mets
         # Build the workspace from the workspace_path
-        workspace = Resolver().workspace_from_url(workspace_path)
+        workspace = Resolver().workspace_from_url(path_to_mets)
 
-        page_id = processing_message.page_id
-        input_file_grps = processing_message.input_file_grps
-        output_file_grps = processing_message.output_file_grps
-        parameter = processing_message.parameters
         job_id = processing_message.job_id
-
         sync_set_processing_job_state(job_id=job_id, job_state=StateEnum.running)
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             return_status = self.run_processor_from_worker(
                 processor_class=self.processor_class,
                 workspace=workspace,
-                page_id=page_id,
-                input_file_grps=input_file_grps,
-                output_file_grps=output_file_grps,
-                parameter=parameter
+                page_id=processing_message.page_id,
+                input_file_grps=processing_message.input_file_grps,
+                output_file_grps=processing_message.output_file_grps,
+                parameter=processing_message.parameters
             )
         else:
             self.log.debug(f'Invoking the cli: {self.processor_name}')
             return_status = self.run_cli_from_worker(
                 executable=self.processor_name,
                 workspace=workspace,
-                page_id=page_id,
-                input_file_grps=input_file_grps,
-                output_file_grps=output_file_grps,
-                parameter=parameter
+                page_id=processing_message.page_id,
+                input_file_grps=processing_message.input_file_grps,
+                output_file_grps=processing_message.output_file_grps,
+                parameter=processing_message.parameters
             )
         job_state = StateEnum.success if return_status else StateEnum.failed
         sync_set_processing_job_state(job_id=job_id, job_state=job_state)
 
-        # If the result_queue field is set, send the job status to a result queue
-        if processing_message.result_queue:
-            if self.rmq_publisher is None:
-                self.connect_publisher()
+        result_queue_name = processing_message.result_queue_name
+        callback_url = processing_message.callback_url
 
-            # create_queue method is idempotent - nothing happens if
-            # a queue with the specified name already exists
-            self.rmq_publisher.create_queue(queue_name=processing_message.result_queue)
-            self.log.info(f'Publishing result message to queue: {processing_message.result_queue}')
+        if result_queue_name or callback_url:
             result_message = OcrdResultMessage(
                 job_id=str(job_id),
                 status=job_state.value,
                 # Either path_to_mets or workspace_id must be set (mutually exclusive)
-                path_to_mets=processing_message.path_to_mets,
+                path_to_mets=path_to_mets,
                 workspace_id=None
             )
-            self.log.debug(f'Result message: {result_message}')
-            encoded_result_message = OcrdResultMessage.encode_yml(result_message)
-            self.rmq_publisher.publish_to_queue(
-                queue_name=processing_message.result_queue,
-                message=encoded_result_message
-            )
+            self.log.info(f'Result message: {result_message}')
+
+        # If the result_queue field is set, send the result message to a result queue
+        if result_queue_name:
+            self.publish_to_result_queue(result_queue_name, result_message)
+
+        # If the callback_url field is set, post the result message to a callback url
+        if callback_url:
+            self.post_to_callback_url(processing_message.callback_url, result_message)
+
+    def publish_to_result_queue(self, result_queue: str, result_message: OcrdResultMessage):
+        if self.rmq_publisher is None:
+            self.connect_publisher()
+        # create_queue method is idempotent - nothing happens if
+        # a queue with the specified name already exists
+        self.rmq_publisher.create_queue(queue_name=result_queue)
+        self.log.info(f'Publishing result message to queue: {result_queue}')
+        encoded_result_message = OcrdResultMessage.encode_yml(result_message)
+        self.rmq_publisher.publish_to_queue(
+            queue_name=result_queue,
+            message=encoded_result_message
+        )
+
+    def post_to_callback_url(self, callback_url: str, result_message: OcrdResultMessage):
+        self.log.info(f'Posting result message to callback_url "{callback_url}"')
+        headers = {"accept": "application/json"}
+        json_data = {
+            "job_id": result_message.job_id,
+            "status": result_message.status,
+            "path_to_mets": result_message.path_to_mets,
+            "workspace_id": result_message.workspace_id
+        }
+        response = requests.post(url=callback_url, headers=headers, json=json_data)
+        self.log.info(f'Response from callback_url "{response}"')
 
     def run_processor_from_worker(
             self,

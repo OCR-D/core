@@ -23,6 +23,8 @@ class JobInput(BaseModel):
     output_file_grps: Optional[List[str]]
     page_id: Optional[str] = None
     parameters: dict = {}  # Always set to empty dict when None, otherwise it fails ocr-d-validation
+    result_queue: Optional[str] = None
+    callback_url: Optional[str] = None
 
     class Config:
         schema_extra = {
@@ -59,6 +61,8 @@ class Job(Document):
     output_file_grps: Optional[List[str]]
     page_id: Optional[str]
     parameters: Optional[dict]
+    result_queue_name: Optional[str]
+    callback_url: Optional[str]
     start_time: Optional[datetime]
     end_time: Optional[datetime]
 

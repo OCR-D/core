@@ -255,8 +255,25 @@ class ProcessingServer(FastAPI):
                 )
             data.path = workspace.workspace_mets_path
 
-        job = Job(**data.dict(exclude_unset=True, exclude_none=True), processor_name=processor_name,
-                  state=StateEnum.queued)
+        result_queue_name = None
+        if data.result_queue and data.result_queue.lower() in ["true", "t", "yes", "1"]:
+            result_queue_name = processor_name + '-result'
+            with open('/home/mm/Desktop/a.txt', 'w+') as file_debugger:
+                file_debugger.write(f'The results for "{processor_name}" will '
+                                    f'be posted to queue with id "{processor_name}-queue"')
+            self.log.info(f'The results for "{processor_name}" will '
+                          f'be posted to queue with id "{processor_name}-queue"')
+        else:
+            with open('/home/mm/Desktop/a.txt', 'w+') as file_debugger:
+                file_debugger.write('The result queue is not set')
+            self.log.info('The result queue is not set')
+
+        job = Job(
+            **data.dict(exclude_unset=True, exclude_none=True),
+            processor_name=processor_name,
+            state=StateEnum.queued,
+            result_queue_name=result_queue_name
+        )
         await job.insert()
         processing_message = OcrdProcessingMessage.from_job(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)

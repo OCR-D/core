@@ -1,4 +1,3 @@
-# Check here for more details: Message structure #139
 from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -19,6 +18,7 @@ class OcrdProcessingMessage:
             page_id: str = None,
             parameters: Dict[str, Any] = None,
             result_queue_name: str = None,
+            callback_url: str = None
     ) -> None:
         if not job_id:
             raise ValueError('job_id must be set')
@@ -41,10 +41,10 @@ class OcrdProcessingMessage:
         self.output_file_grps = output_file_grps
         # e.g., "PHYS_0005..PHYS_0010" will process only pages between 5-10
         self.page_id = page_id if page_id else None
-        # e.g., "ocrd-cis-ocropy-binarize-result"
-        self.result_queue = result_queue_name if result_queue_name else (self.processor_name + "-result")
         # processor parameters
         self.parameters = parameters if parameters else None
+        self.result_queue_name = result_queue_name
+        self.callback_url = callback_url
         self.created_time = created_time
 
     @staticmethod
@@ -69,7 +69,8 @@ class OcrdProcessingMessage:
             output_file_grps=data.get('output_file_grps', None),
             page_id=data.get('page_id', None),
             parameters=data.get('parameters', None),
-            result_queue_name=data.get('result_queue', None),
+            result_queue_name=data.get('result_queue_name', None),
+            callback_url=data.get('callback_url', None)
         )
 
     @staticmethod
@@ -82,6 +83,8 @@ class OcrdProcessingMessage:
             output_file_grps=job.output_file_grps,
             page_id=job.page_id,
             parameters=job.parameters,
+            result_queue_name=job.result_queue_name,
+            callback_url=job.callback_url
         )
 
 
