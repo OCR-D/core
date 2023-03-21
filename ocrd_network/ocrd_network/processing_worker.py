@@ -15,13 +15,13 @@ from typing import Any, List
 
 import pika.spec
 import pika.adapters.blocking_connection
-import pymongo
 
 from ocrd import Resolver
 from ocrd_utils import getLogger
-from ocrd.processor.helpers import (
-    run_cli,
-    run_processor
+from ocrd.processor.helpers import run_cli, run_processor
+from ocrd_network.database import (
+    sync_initiate_database,
+    sync_set_processing_job_state
 )
 from ocrd_network.helpers import (
     verify_database_uri,
@@ -34,6 +34,7 @@ from ocrd_network.rabbitmq_utils import (
     RMQConsumer,
     RMQPublisher
 )
+from ocrd_network.utils import call_sync
 
 try:
     # This env variable must be set before importing from Keras
@@ -56,6 +57,7 @@ class ProcessingWorker:
         file_handler.setFormatter(logging.Formatter(logging_format))
         file_handler.setLevel(logging.DEBUG)
         self.log.addHandler(file_handler)
+        sync_initiate_database(mongodb_addr)  # Database client
 
         try:
             self.db_url = verify_database_uri(mongodb_addr)
@@ -198,7 +200,7 @@ class ProcessingWorker:
         parameter = processing_message.parameters
         job_id = processing_message.job_id
 
-        self.set_job_state(job_id, StateEnum.running)
+        sync_set_processing_job_state(job_id=job_id, job_state=StateEnum.running)
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             return_status = self.run_processor_from_worker(
@@ -220,7 +222,7 @@ class ProcessingWorker:
                 parameter=parameter
             )
         job_state = StateEnum.success if return_status else StateEnum.failed
-        self.set_job_state(job_id, job_state)
+        sync_set_processing_job_state(job_id=job_id, job_state=job_state)
 
         # If the result_queue field is set, send the job status to a result queue
         if processing_message.result_queue:
@@ -306,12 +308,3 @@ class ProcessingWorker:
         else:
             self.log.debug(f'{executable} exited with success.')
             return True
-
-    def set_job_state(self, job_id: Any, state: StateEnum):
-        """Set the job status in mongodb
-        """
-        # TODO: the way to interact with mongodb needs to be thought about. Beanie seems not
-        #       suitable as the worker is not async, thus using pymongo here
-        with pymongo.MongoClient(self.db_url) as client:
-            db = client['ocrd']
-            db.Job.update_one({'_id': job_id}, {'$set': {'state': state}}, upsert=False)

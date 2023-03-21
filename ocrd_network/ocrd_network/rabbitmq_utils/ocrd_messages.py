@@ -90,7 +90,7 @@ class OcrdResultMessage:
                  path_to_mets: Optional[str] = None) -> None:
         if not (workspace_id or path_to_mets):
             raise ValueError('Either `workspace_id` or `path_to_mets` must be set')
-        
+
         self.job_id = job_id
         self.status = status
         # Either of these two below
