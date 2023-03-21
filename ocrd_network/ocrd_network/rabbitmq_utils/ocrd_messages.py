@@ -88,14 +88,14 @@ class OcrdProcessingMessage:
 class OcrdResultMessage:
     def __init__(self, job_id: str, status: str, workspace_id: Optional[str] = None,
                  path_to_mets: Optional[str] = None) -> None:
+        if not (workspace_id or path_to_mets):
+            raise ValueError('Either `workspace_id` or `path_to_mets` must be set')
+        
         self.job_id = job_id
         self.status = status
         # Either of these two below
         self.workspace_id = workspace_id
         self.path_to_mets = path_to_mets
-
-        if not (workspace_id or path_to_mets):
-            raise ValueError('Either `workspace_id` or `path_to_mets` must be set')
 
     @staticmethod
     def encode_yml(ocrd_result_message: OcrdResultMessage) -> bytes:
