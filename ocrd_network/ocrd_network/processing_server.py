@@ -258,10 +258,6 @@ class ProcessingServer(FastAPI):
         result_queue_name = None
         if data.result_queue and data.result_queue.lower() in ["true", "t", "yes", "1"]:
             result_queue_name = processor_name + '-result'
-            self.log.info(f'The results for "{processor_name}" will '
-                          f'be posted to queue with id "{processor_name}-queue"')
-        else:
-            self.log.info('The result queue is not set')
 
         job = Job(
             **data.dict(exclude_unset=True, exclude_none=True),
