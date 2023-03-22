@@ -2,7 +2,7 @@ from beanie import Document
 from typing import Optional
 
 
-class Workspace(Document):
+class DBWorkspace(Document):
     """
     Model to store a workspace in the mongo-database.
 
@@ -16,7 +16,7 @@ class Workspace(Document):
         bag_info_adds               bag-info.txt can also (optionally) contain additional
                                     key-value-pairs which are saved here
     """
-    id: str
+    workspace_id: str
     workspace_mets_path: str
     ocrd_identifier: str
     bagit_profile_identifier: str

@@ -11,8 +11,11 @@ from ocrd_utils import (
     initLogging,
     get_ocrd_tool_json
 )
-from ocrd_network import QueueServerParamType, DatabaseParamType
-from ocrd_network.processing_worker import ProcessingWorker
+from ocrd_network import (
+    DatabaseParamType,
+    ProcessingWorker,
+    QueueServerParamType,
+)
 
 
 @click.command('processing-worker')

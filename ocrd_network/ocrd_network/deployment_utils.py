@@ -9,10 +9,15 @@ from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
 
 from ocrd_utils import getLogger
-from ocrd_network.deployment_config import *
+from .deployment_config import *
 
 __all__ = [
-    'DeployType'
+    'create_docker_client',
+    'create_ssh_client',
+    'CustomDockerClient',
+    'DeployType',
+    'HostData',
+    'is_bashlib_processor'
 ]
 
 

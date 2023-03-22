@@ -13,7 +13,7 @@ from pika import (
 )
 from pika.adapters.blocking_connection import BlockingChannel
 
-from ocrd_network.rabbitmq_utils.constants import (
+from .constants import (
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_EXCHANGER_TYPE,
     DEFAULT_QUEUE,

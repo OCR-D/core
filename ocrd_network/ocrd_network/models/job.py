@@ -13,7 +13,7 @@ class StateEnum(str, Enum):
     failed = 'FAILED'
 
 
-class JobInput(BaseModel):
+class PYJobInput(BaseModel):
     """ Wraps the parameters required to make a run-processor-request
     """
     path_to_mets: Optional[str] = None
@@ -39,7 +39,7 @@ class JobInput(BaseModel):
         }
 
 
-class JobOutput(BaseModel):
+class PYJobOutput(BaseModel):
     """ Wraps output information for a job-response
     """
     job_id: str
@@ -49,7 +49,7 @@ class JobOutput(BaseModel):
     workspace_id: Optional[str]
 
 
-class Job(Document):
+class DBProcessorJob(Document):
     """ Job representation in the database
     """
     job_id: str
@@ -70,8 +70,8 @@ class Job(Document):
     class Settings:
         use_enum_values = True
 
-    def to_job_output(self) -> JobOutput:
-        return JobOutput(
+    def to_job_output(self) -> PYJobOutput:
+        return PYJobOutput(
             job_id=self.job_id,
             processor_name=self.processor_name,
             state=self.state,

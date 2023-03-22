@@ -15,16 +15,19 @@ database (runs in docker) currently has no volume set.
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from ocrd_network.models.job import Job, JobOutput, StateEnum
-from ocrd_network.models.workspace import Workspace
-from ocrd_network.utils import call_sync
+from .models import (
+    DBProcessorJob,
+    DBWorkspace,
+    StateEnum
+)
+from .utils import call_sync
 
 
 async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
         database=client.get_default_database(default='ocrd'),
-        document_models=[Job, Workspace]
+        document_models=[DBProcessorJob, DBWorkspace]
     )
 
 
@@ -33,17 +36,28 @@ async def sync_initiate_database(db_url: str):
     await initiate_database(db_url)
 
 
-async def get_processing_job(job_id: str) -> Job:
-    job = await Job.find_one(Job.job_id == job_id)
+async def db_get_workspace(workspace_id: str):
+    workspace = await DBWorkspace.find_one(
+        DBWorkspace.workspace_id == workspace_id
+    )
+    if not workspace:
+        raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
+    return workspace
+
+
+async def db_get_processing_job(job_id: str) -> DBProcessorJob:
+    job = await DBProcessorJob.find_one(
+        DBProcessorJob.job_id == job_id)
     if not job:
-        raise ValueError(f'Processing job with id "{job_id}" not available in the DB.')
+        raise ValueError(f'Processing job with id "{job_id}" not in the DB.')
     return job
 
 
 async def set_processing_job_state(job_id: str, job_state: StateEnum):
-    job = await Job.find_one(Job.job_id == job_id)
+    job = await DBProcessorJob.find_one(
+        DBProcessorJob.job_id == job_id)
     if not job:
-        raise ValueError(f'Processing job with id "{job_id}" not available in the DB.')
+        raise ValueError(f'Processing job with id "{job_id}" not in the DB.')
     job.state = job_state
     await job.save()
 
@@ -54,9 +68,10 @@ async def sync_set_processing_job_state(job_id: str, job_state: StateEnum):
 
 
 async def get_processing_job_state(job_id: str) -> StateEnum:
-    job = await Job.find_one(Job.job_id == job_id)
+    job = await DBProcessorJob.find_one(
+        DBProcessorJob.job_id == job_id)
     if not job:
-        raise ValueError(f'Processing job with id "{job_id}" not available in the DB.')
+        raise ValueError(f'Processing job with id "{job_id}" not in the DB.')
     return job.state
 
 

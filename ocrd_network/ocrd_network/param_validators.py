@@ -1,6 +1,6 @@
 from click import ParamType
 
-from ocrd_network.utils import (
+from .utils import (
     verify_database_uri,
     verify_and_parse_mq_uri
 )

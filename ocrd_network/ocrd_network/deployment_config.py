@@ -1,6 +1,6 @@
 from typing import Dict
 
-from ocrd_network.deployment_utils import DeployType
+from .deployment_utils import DeployType
 
 __all__ = [
     'ProcessingServerConfig',

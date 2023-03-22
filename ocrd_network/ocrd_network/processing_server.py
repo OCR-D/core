@@ -8,18 +8,21 @@ from fastapi.responses import JSONResponse
 
 from ocrd_utils import getLogger, get_ocrd_tool_json
 from ocrd_validators import ParameterValidator, ProcessingServerValidator
-import ocrd_network.database as db
-from ocrd_network.deployer import Deployer
-from ocrd_network.deployment_config import ProcessingServerConfig
-from ocrd_network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
-from ocrd_network.models.job import (
-    Job,
-    JobInput,
-    JobOutput,
+from .database import (
+    db_get_processing_job,
+    db_get_workspace,
+    initiate_database
+)
+from .deployer import Deployer
+from .deployment_config import ProcessingServerConfig
+from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
+from .models import (
+    DBProcessorJob,
+    PYJobInput,
+    PYJobOutput,
     StateEnum
 )
-from ocrd_network.models.workspace import Workspace
-from ocrd_network.utils import generate_id
+from .utils import generate_id
 
 
 class ProcessingServer(FastAPI):
@@ -71,7 +74,7 @@ class ProcessingServer(FastAPI):
             tags=['processing'],
             status_code=status.HTTP_200_OK,
             summary='Submit a job to this processor',
-            response_model=JobOutput,
+            response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
@@ -83,7 +86,7 @@ class ProcessingServer(FastAPI):
             tags=['processing'],
             status_code=status.HTTP_200_OK,
             summary='Get information about a job based on its ID',
-            response_model=JobOutput,
+            response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
@@ -155,7 +158,7 @@ class ProcessingServer(FastAPI):
         return ProcessingServerConfig(obj)
 
     async def on_startup(self):
-        await db.initiate_database(db_url=self.mongodb_url)
+        await initiate_database(db_url=self.mongodb_url)
 
     async def on_shutdown(self) -> None:
         """
@@ -208,7 +211,7 @@ class ProcessingServer(FastAPI):
         self._processor_list = list(res)
         return self._processor_list
 
-    async def push_processor_job(self, processor_name: str, data: JobInput) -> JobOutput:
+    async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         """ Queue a processor job
         """
         if processor_name not in self.processor_list:
@@ -237,7 +240,7 @@ class ProcessingServer(FastAPI):
                 detail="Either 'path' or 'workspace_id' must be provided, but not both"
             )
         elif data.workspace_id:
-            workspace = await Workspace.get(data.workspace_id)
+            workspace = await db_get_workspace(data.workspace_id)
             if not workspace:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -245,7 +248,7 @@ class ProcessingServer(FastAPI):
                 )
             data.path_to_mets = workspace.workspace_mets_path
 
-        job = Job(
+        job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
             job_id=generate_id(),
             processor_name=processor_name,
@@ -270,11 +273,11 @@ class ProcessingServer(FastAPI):
             )
         return get_ocrd_tool_json(processor_name)
 
-    async def get_job(self, _processor_name: str, job_id: str) -> JobOutput:
+    async def get_job(self, _processor_name: str, job_id: str) -> PYJobOutput:
         """ Return processing job-information from the database
         """
         try:
-            job = await db.get_processing_job(job_id)
+            job = await db_get_processing_job(job_id)
             return job.to_job_output()
         except Exception as error:
             # Write the "error" to a log file

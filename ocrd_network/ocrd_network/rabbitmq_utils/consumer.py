@@ -9,14 +9,14 @@ from typing import Any, Union
 
 from pika import PlainCredentials
 
-from ocrd_network.rabbitmq_utils.constants import (
+from .constants import (
     DEFAULT_QUEUE,
     LOG_LEVEL,
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
     RABBIT_MQ_VHOST as VHOST
 )
-from ocrd_network.rabbitmq_utils.connector import RMQConnector
+from .connector import RMQConnector
 
 
 class RMQConsumer(RMQConnector):

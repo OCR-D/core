@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 
-class OcrdTool(BaseModel):
+class PYOcrdTool(BaseModel):
     executable: str
     categories: List[str]
     description: str

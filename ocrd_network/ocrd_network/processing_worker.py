@@ -20,18 +20,19 @@ import pika.adapters.blocking_connection
 from ocrd import Resolver
 from ocrd_utils import getLogger
 from ocrd.processor.helpers import run_cli, run_processor
-from ocrd_network.database import (
+
+from .database import (
     sync_initiate_database,
     sync_set_processing_job_state
 )
-from ocrd_network.models.job import StateEnum
-from ocrd_network.rabbitmq_utils import (
+from .models import StateEnum
+from .rabbitmq_utils import (
     OcrdProcessingMessage,
     OcrdResultMessage,
     RMQConsumer,
     RMQPublisher
 )
-from ocrd_network.utils import (
+from .utils import (
     verify_database_uri,
     verify_and_parse_mq_uri
 )

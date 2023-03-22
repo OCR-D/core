@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import yaml
-from ocrd_network.models.job import Job
+from ..models import DBProcessorJob
 
 
 class OcrdProcessingMessage:
@@ -74,7 +74,7 @@ class OcrdProcessingMessage:
         )
 
     @staticmethod
-    def from_job(job: Job) -> OcrdProcessingMessage:
+    def from_job(job: DBProcessorJob) -> OcrdProcessingMessage:
         return OcrdProcessingMessage(
             job_id=job.job_id,
             processor_name=job.processor_name,
