@@ -3,9 +3,9 @@ from contextlib import ExitStack
 from pathlib import Path
 
 try:
-    from importlib.resources import path, read_binary
+    from importlib.resources import as_file, files
 except ImportError:
-    from importlib_resources import path, read_binary  # type: ignore
+    from importlib_resources import as_file, files  # type: ignore
 
 try:
     from importlib.metadata import distribution as get_distribution
@@ -29,7 +29,7 @@ def resource_filename(package: str, resource: str) -> Path:
         The resource to look up
     """
     parent_package = package.rsplit('.',1)[0]
-    return _file_manager.enter_context(path(parent_package, resource))
+    return _file_manager.enter_context(as_file(files(parent_package).joinpath(resource)))
 
 
 def resource_string(package: str, resource: str) -> bytes:
@@ -44,7 +44,6 @@ def resource_string(package: str, resource: str) -> bytes:
         The resource to look up
     """
     parent_package = package.rsplit('.',1)[0]
-    return read_binary(parent_package, resource)
-
+    return files(parent_package).joinpath(resource).read_bytes()
 
 __all__ = ['resource_filename', 'resource_string', 'get_distribution']

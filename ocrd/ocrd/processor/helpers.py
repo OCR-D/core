@@ -35,7 +35,6 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
 
 def run_processor(
         processorClass,
-        ocrd_tool=None,
         mets_url=None,
         resolver=None,
         workspace=None,
@@ -59,7 +58,6 @@ def run_processor(
 
     Instantiate a Python object for :py:attr:`processorClass`, passing:
     - the workspace,
-    - :py:attr:`ocrd_tool`
     - :py:attr:`page_id`
     - :py:attr:`input_file_grp`
     - :py:attr:`output_file_grp`
@@ -89,7 +87,6 @@ def run_processor(
         processor_class=processorClass,
         parameter=parameter,
         workspace=None,
-        ocrd_tool=ocrd_tool,
         page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
@@ -109,13 +106,13 @@ def run_processor(
         backend = 'psutil_pss' if 'PSS' in environ['OCRD_PROFILE'] else 'psutil'
         try:
             mem_usage = memory_usage(proc=processor.process,
-                                    # only run process once
-                                    max_iterations=1,
-                                    interval=.1, timeout=None, timestamps=True,
-                                    # include sub-processes
-                                    multiprocess=True, include_children=True,
-                                    # get proportional set size instead of RSS
-                                    backend=backend)
+                                     # only run process once
+                                     max_iterations=1,
+                                     interval=.1, timeout=None, timestamps=True,
+                                     # include sub-processes
+                                     multiprocess=True, include_children=True,
+                                     # get proportional set size instead of RSS
+                                     backend=backend)
         except Exception as err:
             log.exception("Failure in processor '%s'" % ocrd_tool['executable'])
             raise err
@@ -134,17 +131,17 @@ def run_processor(
             raise err
         finally:
             chdir(old_cwd)
-    
+
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
     logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
         ocrd_tool['executable'],
         t1_wall,
         t1_cpu,
-        input_file_grp or '',
-        output_file_grp or '',
-        json.dumps(parameter) or '',
-        page_id or ''
+        processor.input_file_grp or '',
+        processor.output_file_grp or '',
+        json.dumps(processor.parameter) or '',
+        processor.page_id or ''
     ))
     workspace.mets.add_agent(
         name=name,
@@ -152,13 +149,14 @@ def run_processor(
         othertype='SOFTWARE',
         role='OTHER',
         otherrole=otherrole,
-        notes=[({'option': 'input-file-grp'}, input_file_grp or ''),
-               ({'option': 'output-file-grp'}, output_file_grp or ''),
-               ({'option': 'parameter'}, json.dumps(parameter or '')),
-               ({'option': 'page-id'}, page_id or '')]
+        notes=[({'option': 'input-file-grp'}, processor.input_file_grp or ''),
+               ({'option': 'output-file-grp'}, processor.output_file_grp or ''),
+               ({'option': 'parameter'}, json.dumps(processor.parameter or '')),
+               ({'option': 'page-id'}, processor.page_id or '')]
     )
     workspace.save_mets()
     return processor
+
 
 def run_cli(
         executable,
@@ -321,7 +319,6 @@ def get_processor(
         processor_class,
         parameter: dict,
         workspace: Workspace = None,
-        ocrd_tool: dict = None,
         page_id: str = None,
         input_file_grp: List[str] = None,
         output_file_grp: List[str] = None,
@@ -340,7 +337,6 @@ def get_processor(
             return cached_processor
         return processor_class(
             workspace=workspace,
-            ocrd_tool=ocrd_tool,
             page_id=page_id,
             input_file_grp=input_file_grp,
             output_file_grp=output_file_grp,
