@@ -244,7 +244,7 @@ class ProcessingServer(FastAPI):
         if bool(data.path) == bool(data.workspace_id):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Arguments 'path' and 'workspace_id' are mutually exclusive"
+                detail="Either 'path' or 'workspace_id' must be provided, but not both"
             )
         elif data.workspace_id:
             workspace = await Workspace.get(data.workspace_id)
