@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.48.0] - 2023-03-22
+
 Changed:
 
   * :fire: ocrd.run_processor / ocrd.processor.get_processor: rm unnecessary ocrd_tool kwarg #998, #1009
@@ -1702,6 +1704,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.48.0]: ../../compare/v2.48.0..v2.47.4
 [2.47.4]: ../../compare/v2.47.4..v2.47.3
 [2.47.3]: ../../compare/v2.47.3..v2.47.2
 [2.47.2]: ../../compare/v2.47.2..v2.47.1
