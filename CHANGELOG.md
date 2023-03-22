@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.48.1] - 2023-03-22
+
 Changed:
 
   * `make docker-cuda`: Support CUDA 11.3 not 11.2, #1020
@@ -1708,6 +1710,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.48.1]: ../../compare/v2.48.1..v2.48.0
 [2.48.0]: ../../compare/v2.48.0..v2.47.4
 [2.47.4]: ../../compare/v2.47.4..v2.47.3
 [2.47.3]: ../../compare/v2.47.3..v2.47.2
