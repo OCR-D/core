@@ -221,9 +221,9 @@ class ProcessingWorker:
             result_message = OcrdResultMessage(
                 job_id=str(job_id),
                 status=job_state.value,
-                # Either path_to_mets or workspace_id must be set (mutually exclusive)
                 path_to_mets=path_to_mets,
-                workspace_id=None
+                # May not be always available
+                workspace_id=processing_message.workspace_id
             )
             self.log.info(f'Result message: {result_message}')
 
