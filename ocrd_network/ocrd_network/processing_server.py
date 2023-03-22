@@ -8,21 +8,12 @@ from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from ocrd_utils import (
-    getLogger,
-    get_ocrd_tool_json,
-)
-from ocrd_validators import (
-    ParameterValidator,
-    ProcessingServerValidator
-)
+from ocrd_utils import getLogger, get_ocrd_tool_json
+from ocrd_validators import ParameterValidator, ProcessingServerValidator
 from ocrd_network.database import initiate_database
 from ocrd_network.deployer import Deployer
 from ocrd_network.deployment_config import ProcessingServerConfig
-from ocrd_network.rabbitmq_utils import (
-    RMQPublisher,
-    OcrdProcessingMessage
-)
+from ocrd_network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from ocrd_network.models.job import (
     Job,
     JobInput,
@@ -255,15 +246,10 @@ class ProcessingServer(FastAPI):
                 )
             data.path = workspace.workspace_mets_path
 
-        result_queue_name = None
-        if data.result_queue and data.result_queue.lower() in ["true", "t", "yes", "1"]:
-            result_queue_name = processor_name + '-result'
-
         job = Job(
             **data.dict(exclude_unset=True, exclude_none=True),
             processor_name=processor_name,
-            state=StateEnum.queued,
-            result_queue_name=result_queue_name
+            state=StateEnum.queued
         )
         await job.insert()
         processing_message = OcrdProcessingMessage.from_job(job)

@@ -23,7 +23,7 @@ class JobInput(BaseModel):
     output_file_grps: Optional[List[str]]
     page_id: Optional[str] = None
     parameters: dict = {}  # Always set to empty dict when None, otherwise it fails ocr-d-validation
-    result_queue: Optional[str] = None
+    result_queue_name: Optional[str] = None
     callback_url: Optional[str] = None
 
     class Config:

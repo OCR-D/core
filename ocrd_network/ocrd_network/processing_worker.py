@@ -219,7 +219,7 @@ class ProcessingWorker:
 
         if result_queue_name or callback_url:
             result_message = OcrdResultMessage(
-                job_id=str(job_id),
+                job_id=job_id,
                 status=job_state.value,
                 path_to_mets=path_to_mets,
                 # May not be always available
