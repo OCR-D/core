@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * :fire: ocrd.run_processor / ocrd.processor.get_processor: rm unnecessary ocrd_tool kwarg #998, #1009
+  * chdir into workspace directory for both cached and uncached `get_processor`, #972, 987
 
 ## [2.47.4] - 2023-03-16
 
