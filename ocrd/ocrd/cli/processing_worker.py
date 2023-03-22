@@ -1,7 +1,7 @@
 """
 OCR-D CLI: start the processing worker
 
-.. click:: ocrd.cli.processing_worker:zip_cli
+.. click:: ocrd.cli.processing_worker:processing_worker_cli
     :prog: ocrd processing-worker
     :nested: full
 """

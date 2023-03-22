@@ -1,7 +1,7 @@
 """
 OCR-D CLI: start the processing server
 
-.. click:: ocrd.cli.processing_server:zip_cli
+.. click:: ocrd.cli.processing_server:processing_server_cli
     :prog: ocrd processing-server
     :nested: full
 """

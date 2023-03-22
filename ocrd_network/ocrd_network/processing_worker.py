@@ -59,8 +59,8 @@ class ProcessingWorker:
         self.log.addHandler(file_handler)
 
         try:
-            self.db_url = verify_database_uri(mongodb_addr)
-            self.log.debug(f'Verified MongoDB URL: {self.db_url}')
+            verify_database_uri(mongodb_addr)
+            self.log.debug(f'Verified MongoDB URL: {mongodb_addr}')
             rmq_data = verify_and_parse_mq_uri(rabbitmq_addr)
             self.rmq_username = rmq_data['username']
             self.rmq_password = rmq_data['password']
