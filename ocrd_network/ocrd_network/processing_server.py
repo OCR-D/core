@@ -1,4 +1,3 @@
-import json
 from typing import Dict
 import uvicorn
 from yaml import safe_load
@@ -288,4 +287,4 @@ class ProcessingServer(FastAPI):
     async def list_processors(self) -> str:
         """ Return a list of all available processors
         """
-        return json.dumps(self.processor_list)
+        return self.processor_list
