@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `make docker-cuda`: Support CUDA 11.3 not 11.2, #1020
+
 ## [2.48.0] - 2023-03-22
 
 Changed:
