@@ -250,7 +250,7 @@ class ProcessingWorker:
 
     def post_to_callback_url(self, callback_url: str, result_message: OcrdResultMessage):
         self.log.info(f'Posting result message to callback_url "{callback_url}"')
-        headers = {"accept": "application/json"}
+        headers = {"Content-Type": "application/json"}
         json_data = {
             "job_id": result_message.job_id,
             "status": result_message.status,

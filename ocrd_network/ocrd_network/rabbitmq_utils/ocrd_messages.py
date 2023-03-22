@@ -10,27 +10,27 @@ class OcrdProcessingMessage:
             self,
             job_id: str = None,
             processor_name: str = None,
-            created_time: int = None,
             path_to_mets: str = None,
-            workspace_id: str = None,
+            workspace_id: Optional[str] = None,
             input_file_grps: List[str] = None,
             output_file_grps: Optional[List[str]] = None,
-            page_id: str = None,
+            page_id: Optional[str] = None,
             parameters: Dict[str, Any] = None,
-            result_queue_name: str = None,
-            callback_url: str = None
+            result_queue_name: Optional[str] = None,
+            callback_url: Optional[str] = None,
+            created_time: Optional[int] = None
     ) -> None:
         if not job_id:
-            raise ValueError('job_id must be set')
+            raise ValueError('job_id must be provided')
         if not processor_name:
-            raise ValueError('processor_name must be set')
+            raise ValueError('processor_name must be provided')
+        if not input_file_grps or len(input_file_grps) == 0:
+            raise ValueError('input_file_grps must be provided and contain at least 1 element')
+        if not (workspace_id or path_to_mets):
+            raise ValueError('Either "workspace_id" or "path_to_mets" must be provided')
         if not created_time:
             # We should not raise a ValueError but just calculate it
             created_time = int(datetime.utcnow().timestamp())
-        if not input_file_grps or len(input_file_grps) == 0:
-            raise ValueError('input_file_grps must be set and contain at least 1 element')
-        if not (workspace_id or path_to_mets):
-            raise ValueError('Either `workspace_id` or `path_to_mets` must be set')
 
         self.job_id = job_id  # uuid
         self.processor_name = processor_name  # "ocrd-.*"
@@ -78,7 +78,7 @@ class OcrdProcessingMessage:
         return OcrdProcessingMessage(
             job_id=str(job.id),
             processor_name=job.processor_name,
-            path_to_mets=job.path,
+            path_to_mets=job.path_to_mets,
             input_file_grps=job.input_file_grps,
             output_file_grps=job.output_file_grps,
             page_id=job.page_id,
@@ -89,8 +89,9 @@ class OcrdProcessingMessage:
 
 
 class OcrdResultMessage:
-    def __init__(self, job_id: str, status: str, workspace_id: Optional[str] = None,
-                 path_to_mets: Optional[str] = None) -> None:
+    def __init__(self, job_id: str, status: str,
+                 path_to_mets: Optional[str] = None,
+                 workspace_id: Optional[str] = None) -> None:
         self.job_id = job_id
         self.status = status
         self.workspace_id = workspace_id
