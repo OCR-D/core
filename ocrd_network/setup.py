@@ -17,7 +17,11 @@ setup(
     url='https://github.com/OCR-D/core',
     license='Apache License 2.0',
     install_requires=install_requires,
-    packages=['ocrd_network'],
+    packages=[
+        'ocrd_network',
+        'ocrd_network.models',
+        'ocrd_network.rabbitmq_utils'
+    ],
     package_data={
         '': ['*.yml', '*.xsd']
     },
