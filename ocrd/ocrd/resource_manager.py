@@ -8,7 +8,11 @@ from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
 from zipfile import ZipFile
 
+from mimetypes import guess_type
+from filetype import guess
 import requests
+from gdown.parse_url import parse_url as gparse_url
+from gdown.download import get_url_from_gdrive_confirmation
 from yaml import safe_load, safe_dump
 
 # https://github.com/OCR-D/core/issues/867
@@ -235,6 +239,16 @@ class OcrdResourceManager():
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info("Downloading %s to %s" % (url, filename))
         with open(filename, 'wb') as f:
+            gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
+            if gdrive_file_id:
+                if not is_gdrive_download_link:
+                    url = "https://drive.google.com/uc?id={id}".format(id=gdrive_file_id)
+                try:
+                    with requests.get(url, stream=True) as r:
+                        if "Content-Disposition" not in r.headers:
+                            url = get_url_from_gdrive_confirmation(r.text)
+                except RuntimeError as e:
+                    log.warning("Cannot unwrap Google Drive URL: ", e)
             with requests.get(url, stream=True) as r:
                 for data in r.iter_content(chunk_size=4096):
                     if progress_cb:
@@ -317,7 +331,13 @@ class OcrdResourceManager():
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     suffixes = ''.join(Path(nth_url_segment(url)).suffixes)
-                    mimetype = EXT_TO_MIME.get(suffixes, 'application/octet-stream')
+                    mimetype = guess(f'../{archive_fname}')
+                    if mimetype is None:
+                        mimetype = guess_type(f'../{archive_fname}')[0]
+                    else:
+                        mimetype = mimetype.mime
+                    if mimetype is None:
+                        mimetype = EXT_TO_MIME.get(suffixes, 'application/octet-stream')
                     log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
                     if mimetype == 'application/zip':
                         with ZipFile(f'../{archive_fname}', 'r') as zipf:

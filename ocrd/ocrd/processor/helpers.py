@@ -35,7 +35,6 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
 
 def run_processor(
         processorClass,
-        ocrd_tool=None,
         mets_url=None,
         resolver=None,
         workspace=None,
@@ -59,7 +58,6 @@ def run_processor(
 
     Instantiate a Python object for :py:attr:`processorClass`, passing:
     - the workspace,
-    - :py:attr:`ocrd_tool`
     - :py:attr:`page_id`
     - :py:attr:`input_file_grp`
     - :py:attr:`output_file_grp`
@@ -88,8 +86,7 @@ def run_processor(
     processor = get_processor(
         processor_class=processorClass,
         parameter=parameter,
-        workspace=None,
-        ocrd_tool=ocrd_tool,
+        workspace=workspace,
         page_id=page_id,
         input_file_grp=input_file_grp,
         output_file_grp=output_file_grp,
@@ -320,7 +317,6 @@ def get_processor(
         processor_class,
         parameter: dict,
         workspace: Workspace = None,
-        ocrd_tool: dict = None,
         page_id: str = None,
         input_file_grp: List[str] = None,
         output_file_grp: List[str] = None,
@@ -339,7 +335,6 @@ def get_processor(
             return cached_processor
         return processor_class(
             workspace=workspace,
-            ocrd_tool=ocrd_tool,
             page_id=page_id,
             input_file_grp=input_file_grp,
             output_file_grp=output_file_grp,

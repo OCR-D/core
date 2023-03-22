@@ -5,9 +5,57 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: ocrd.run_processor / ocrd.processor.get_processor: rm unnecessary ocrd_tool kwarg #998, #1009
+
+## [2.47.4] - 2023-03-16
+
+Changed:
+
+  * `resmgr`: `ocrd-typegroups-classifier` resources now listed decentrally, #1011, OCR-D/ocrd_typegroups_classifier#15
+
+## [2.47.3] - 2023-03-15
+
+Fixed:
+
+  * Docker: reintroduce `python3-pip` because why not, #1004
+
+## [2.47.2] - 2023-03-15
+
+Fixed:
+
+  * Docker: Use `pip3` not `pip`, #986
+  * `make install`: Speed up opencv built for (now unsupported) python `<= 3.6`, #986, OCR-D/ocrd_calamari#72
+
+Added:
+
+  * CI/CD: GH action to deploy docker images to ghcr.io, #986
+
+## [2.47.1] - 2023-03-15
+
+Fixed:
+
+  * Docker: install `python3-venv`, do not install `python3-pip`, #1003, #1004, OCR-D/ocrd_all#352
+
+## [2.47.0] - 2023-03-15
+
 Fixed:
 
   * `ocrd resmgr`: handle namespaces packages gracefully for Python `<=` 3.6, #917, #985
+  * `ocrd resmgr`: guess media type with `filetype.py` in addition to `MIME_TO_EXT`, #991
+  * `OcrdMets`: Insert `mets:agent` in a schema-compliant way, #976, #977
+  * `ocrd_cli_wrap_processor`: remove unnecessary ocrd_tool kwarg, #998, #999
+  * Docker base image builds again, except CUDA, #986
+
+Added:
+
+  * `ocrd resmgr`: support Google Drive links, #993, #992
+
+Changed:
+
+  * Use the new `importlib.resources.files` API, #995, #996
+  * `ocrd resmgr`: resources for `ocrd_anybaseocr` removed from central list, provided by the project, #989, OCR-D/ocrd_anybaseocr#100
 
 ## [2.46.0] - 2023-02-16
 
@@ -1648,6 +1696,12 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.47.4]: ../../compare/v2.47.4..v2.47.3
+[2.47.3]: ../../compare/v2.47.3..v2.47.2
+[2.47.2]: ../../compare/v2.47.2..v2.47.1
+[2.47.1]: ../../compare/v2.47.1..v2.47.0
+[2.47.0]: ../../compare/v2.47.0..v2.46.0
+[2.46.0]: ../../compare/v2.46.0..v2.45.1
 [2.45.1]: ../../compare/v2.45.1..v2.45.0
 [2.45.0]: ../../compare/v2.45.0..v2.44.0
 [2.44.0]: ../../compare/v2.44.0..v2.43.0

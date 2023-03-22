@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from os.path import join, exists
 
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor, DUMMY_TOOL
+from tests.data import DummyProcessor
 
 from ocrd import Processor, Resolver
 from ocrd.decorators import (
@@ -131,7 +131,6 @@ class TestDecorators(TestCase):
             with self.assertRaisesRegex(Exception, 'already in METS'):
                 ocrd_cli_wrap_processor(
                     DummyProcessor,
-                    ocrd_tool=DUMMY_TOOL,
                     mets=ws.mets_target,
                     input_file_grp='IN-GRP',
                     output_file_grp='OUT-GRP',
@@ -139,7 +138,6 @@ class TestDecorators(TestCase):
             # with overwrite, it shouldn't fail
             ocrd_cli_wrap_processor(
                 DummyProcessor,
-                ocrd_tool=DUMMY_TOOL,
                 mets=ws.mets_target,
                 input_file_grp='IN-GRP',
                 output_file_grp='OUT-GRP',
@@ -155,7 +153,6 @@ class TestDecorators(TestCase):
     #         self.assertTrue(exists(join(ws.directory, 'ID4.tif')), 'files exist')
     #         ocrd_cli_wrap_processor(
     #             DummyProcessor,
-    #             ocrd_tool=DUMMY_TOOL,
     #             mets=ws.mets_target,
     #             parameter={"foo": 42},
     #             input_file_grp='IN-GRP',
@@ -177,7 +174,6 @@ class TestDecorators(TestCase):
     #         self.assertTrue(exists(join(ws.directory, 'ID4.tif')), 'files exist')
     #         ocrd_cli_wrap_processor(
     #             DummyProcessor,
-    #             ocrd_tool=DUMMY_TOOL,
     #             mets=ws.mets_target,
     #             parameter={"foo": 42},
     #             input_file_grp='IN-GRP',

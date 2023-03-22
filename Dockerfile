@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
+ENV PIP=pip3
 
 WORKDIR /build-ocrd
 COPY ocrd ./ocrd
@@ -23,6 +24,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         ca-certificates \
         python3-dev \
         python3-pip \
+        python3-venv \
         gcc \
         make \
         wget \
@@ -31,7 +33,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         sudo \
         git \
     && make deps-ubuntu \
-    && pip install --upgrade pip setuptools \
+    && pip3 install --upgrade pip setuptools \
     && make install \
     && apt-get remove -y gcc \
     && apt-get autoremove -y \

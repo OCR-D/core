@@ -31,7 +31,7 @@ from ocrd_modelfactory import page_from_file
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_backup import WorkspaceBackupManager
-
+from ocrd_validators import WorkspaceValidator
 
 TMP_FOLDER = '/tmp/test-core-workspace'
 SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
@@ -730,6 +730,22 @@ def test_merge_force(plain_workspace, tmp_path):
     files = list(plain_workspace.find_files())
     assert len(files) == 1
 
+@pytest.fixture(name='workspace_metsDocumentID')
+def _fixture_metsDocumentID(tmp_path):
+    resolver = Resolver()
+    mets_content = (Path(__file__).parent / "data/mets-with-metsDocumentID.xml").read_text()
+    with open(tmp_path / 'mets.xml', 'w', encoding='utf-8') as f:
+        f.write(mets_content)
+    yield Workspace(Resolver, directory=tmp_path)
+
+def test_agent_before_metsDocumentID(workspace_metsDocumentID):
+    report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
+    assert report.is_valid
+    workspace_metsDocumentID.mets.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'OTHER')
+    workspace_metsDocumentID.save_mets()
+    report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
+    print(report.errors)
+    assert report.is_valid
 
 if __name__ == '__main__':
     main(__file__)
