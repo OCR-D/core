@@ -14,7 +14,6 @@ database (runs in docker) currently has no volume set.
 """
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
-from typing import Any
 
 from ocrd_network.models.job import Job, JobOutput, StateEnum
 from ocrd_network.models.workspace import Workspace
@@ -34,8 +33,15 @@ async def sync_initiate_database(db_url: str):
     await initiate_database(db_url)
 
 
-async def set_processing_job_state(job_id: Any, job_state: StateEnum):
-    job = await Job.get(job_id)
+async def get_processing_job(job_id: str) -> Job:
+    job = await Job.find_one(Job.job_id == job_id)
+    if not job:
+        raise ValueError(f'Processing job with id "{job_id}" not available in the DB.')
+    return job
+
+
+async def set_processing_job_state(job_id: str, job_state: StateEnum):
+    job = await Job.find_one(Job.job_id == job_id)
     if not job:
         raise ValueError(f'Processing job with id "{job_id}" not available in the DB.')
     job.state = job_state
@@ -43,17 +49,17 @@ async def set_processing_job_state(job_id: Any, job_state: StateEnum):
 
 
 @call_sync
-async def sync_set_processing_job_state(job_id: Any, job_state: StateEnum):
+async def sync_set_processing_job_state(job_id: str, job_state: StateEnum):
     await set_processing_job_state(job_id, job_state)
 
 
-async def get_processing_job_state(job_id: Any) -> StateEnum:
-    job = await Job.get(job_id)
+async def get_processing_job_state(job_id: str) -> StateEnum:
+    job = await Job.find_one(Job.job_id == job_id)
     if not job:
         raise ValueError(f'Processing job with id "{job_id}" not available in the DB.')
     return job.state
 
 
 @call_sync
-async def sync_get_processing_job_state(job_id: Any) -> StateEnum:
+async def sync_get_processing_job_state(job_id: str) -> StateEnum:
     return await get_processing_job_state(job_id)

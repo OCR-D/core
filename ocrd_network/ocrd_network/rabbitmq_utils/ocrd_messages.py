@@ -76,7 +76,7 @@ class OcrdProcessingMessage:
     @staticmethod
     def from_job(job: Job) -> OcrdProcessingMessage:
         return OcrdProcessingMessage(
-            job_id=str(job.id),
+            job_id=job.job_id,
             processor_name=job.processor_name,
             path_to_mets=job.path_to_mets,
             input_file_grps=job.input_file_grps,

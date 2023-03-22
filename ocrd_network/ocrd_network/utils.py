@@ -2,6 +2,7 @@ from functools import wraps
 from re import match as re_match
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
+from uuid import uuid4
 
 
 # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
@@ -46,3 +47,12 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
         'vhost': url_params.virtual_host
     }
     return parsed_data
+
+
+def generate_id() -> str:
+    """
+    Generate the id to be used for processing job ids.
+    Note, workspace_id and workflow_id in the reference
+    WebAPI implementation are produced in the same manner
+    """
+    return str(uuid4())

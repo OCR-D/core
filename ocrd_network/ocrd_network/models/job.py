@@ -52,6 +52,7 @@ class JobOutput(BaseModel):
 class Job(Document):
     """ Job representation in the database
     """
+    job_id: str
     processor_name: str
     path_to_mets: str
     workspace_id: Optional[str]
@@ -71,7 +72,7 @@ class Job(Document):
 
     def to_job_output(self) -> JobOutput:
         return JobOutput(
-            job_id=str(self.id),
+            job_id=self.job_id,
             processor_name=self.processor_name,
             state=self.state,
             workspace_path=self.path_to_mets if not self.workspace_id else None,

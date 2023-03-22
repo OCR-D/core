@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from ocrd_utils import getLogger, get_ocrd_tool_json
 from ocrd_validators import ParameterValidator, ProcessingServerValidator
-from ocrd_network.database import initiate_database
+import ocrd_network.database as db
 from ocrd_network.deployer import Deployer
 from ocrd_network.deployment_config import ProcessingServerConfig
 from ocrd_network.rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
@@ -21,6 +21,7 @@ from ocrd_network.models.job import (
     StateEnum
 )
 from ocrd_network.models.workspace import Workspace
+from ocrd_network.utils import generate_id
 
 
 class ProcessingServer(FastAPI):
@@ -156,7 +157,7 @@ class ProcessingServer(FastAPI):
         return ProcessingServerConfig(obj)
 
     async def on_startup(self):
-        await initiate_database(db_url=self.mongodb_url)
+        await db.initiate_database(db_url=self.mongodb_url)
 
     async def on_shutdown(self) -> None:
         """
@@ -248,6 +249,7 @@ class ProcessingServer(FastAPI):
 
         job = Job(
             **data.dict(exclude_unset=True, exclude_none=True),
+            job_id=generate_id(),
             processor_name=processor_name,
             state=StateEnum.queued
         )
@@ -270,16 +272,19 @@ class ProcessingServer(FastAPI):
             )
         return get_ocrd_tool_json(processor_name)
 
-    async def get_job(self, _processor_name: str, job_id: PydanticObjectId) -> JobOutput:
-        """ Return job-information from the database
+    async def get_job(self, _processor_name: str, job_id: str) -> JobOutput:
+        """ Return processing job-information from the database
         """
-        job = await Job.get(job_id)
-        if job:
+        try:
+            job = await db.get_processing_job(job_id)
             return job.to_job_output()
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Job not found.'
-        )
+        except Exception as error:
+            # Write the "error" to a log file
+            # for internal debugging
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Job not found.'
+            )
 
     async def list_processors(self) -> str:
         """ Return a list of all available processors
