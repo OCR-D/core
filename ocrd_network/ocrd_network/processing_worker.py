@@ -220,7 +220,7 @@ class ProcessingWorker:
         if result_queue_name or callback_url:
             result_message = OcrdResultMessage(
                 job_id=job_id,
-                status=job_state.value,
+                state=job_state.value,
                 path_to_mets=path_to_mets,
                 # May not be always available
                 workspace_id=processing_message.workspace_id
@@ -253,7 +253,7 @@ class ProcessingWorker:
         headers = {"Content-Type": "application/json"}
         json_data = {
             "job_id": result_message.job_id,
-            "status": result_message.status,
+            "state": result_message.state,
             "path_to_mets": result_message.path_to_mets,
             "workspace_id": result_message.workspace_id
         }

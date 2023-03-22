@@ -3,7 +3,6 @@ from typing import Dict
 import uvicorn
 from yaml import safe_load
 
-from beanie import PydanticObjectId
 from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse

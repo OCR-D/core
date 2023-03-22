@@ -89,11 +89,11 @@ class OcrdProcessingMessage:
 
 
 class OcrdResultMessage:
-    def __init__(self, job_id: str, status: str,
+    def __init__(self, job_id: str, state: str,
                  path_to_mets: Optional[str] = None,
                  workspace_id: Optional[str] = None) -> None:
         self.job_id = job_id
-        self.status = status
+        self.state = state
         self.workspace_id = workspace_id
         self.path_to_mets = path_to_mets
 
@@ -111,7 +111,7 @@ class OcrdResultMessage:
         data = yaml.load(msg, Loader=yaml.Loader)
         return OcrdResultMessage(
             job_id=data.get('job_id', None),
-            status=data.get('status', None),
+            state=data.get('state', None),
             path_to_mets=data.get('path_to_mets', None),
             workspace_id=data.get('workspace_id', None),
         )
