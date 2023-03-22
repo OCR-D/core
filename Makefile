@@ -70,7 +70,7 @@ deps-test:
 install:
 	$(PIP) install -U pip wheel setuptools fastentrypoints
 	@# speedup for end-of-life builds
-	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary -U opencv-python-headless numpy; fi
+	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary opencv-python-headless numpy; fi
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 	@# workaround for shapely#1598
 	$(PIP) install --no-binary shapely --force-reinstall shapely
@@ -219,7 +219,7 @@ docker docker-cuda:
 	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build docker GPU / CUDA image
-docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu18.04
+docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu20.04
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
 docker-cuda: DOCKER_ARGS += --build-arg FIXUP="make cuda-ubuntu cuda-ldconfig"
 
@@ -231,23 +231,23 @@ docker-cuda: DOCKER_ARGS += --build-arg FIXUP="make cuda-ubuntu cuda-ldconfig"
 
 # Install native CUDA toolkit in different versions
 cuda-ubuntu: cuda-ldconfig
-	apt-get -y install --no-install-recommends cuda-runtime-10-0 cuda-runtime-10-1 cuda-runtime-10-2 cuda-runtime-11-0 cuda-runtime-11-1 cuda-runtime-11-3 libcudnn7
+	apt-get -y install --no-install-recommends cuda-runtime-11-0 cuda-runtime-11-1 cuda-runtime-11-2 cuda-runtime-11-7 cuda-runtime-12-1
 
 cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
 	ldconfig
 
 /etc/ld.so.conf.d/cuda.conf:
 	@echo > $@
-	@echo /usr/local/cuda-10.0/lib64 >> $@
-	@echo /usr/local/cuda-10.0/targets/x86_64-linux/lib >> $@
-	@echo /usr/local/cuda-10.1/lib64 >> $@
-	@echo /usr/local/cuda-10.1/targets/x86_64-linux/lib >> $@
-	@echo /usr/local/cuda-10.2/lib64 >> $@
-	@echo /usr/local/cuda-10.2/targets/x86_64-linux/lib >> $@
 	@echo /usr/local/cuda-11.0/lib64 >> $@
 	@echo /usr/local/cuda-11.0/targets/x86_64-linux/lib >> $@
 	@echo /usr/local/cuda-11.1/lib64 >> $@
 	@echo /usr/local/cuda-11.1/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-11.2/lib64 >> $@
+	@echo /usr/local/cuda-11.2/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-11.7/lib64 >> $@
+	@echo /usr/local/cuda-11.7/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-12.1/lib64 >> $@
+	@echo /usr/local/cuda-12.1/targets/x86_64-linux/lib >> $@
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install
