@@ -9,6 +9,11 @@ Changed:
 
   * :fire: ocrd.run_processor / ocrd.processor.get_processor: rm unnecessary ocrd_tool kwarg #998, #1009
   * chdir into workspace directory for both cached and uncached `get_processor`, #972, 987
+  * :fire: new CUDA base image 20.04, support CUDA runtime 11/12, not 10, #1014
+
+Fixed:
+
+  * `make install`: do not update opencv-python-headless or numpy for python `<= 3.6`, #1014
 
 ## [2.47.4] - 2023-03-16
 
