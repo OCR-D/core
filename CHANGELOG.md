@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `{run,get}_processor`: remove unnecessary `ocrd_tool` kwarg from more places, #998, #999, #1009
+
 ## [2.47.4] - 2023-03-16
 
 Changed:
