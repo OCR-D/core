@@ -57,7 +57,6 @@ class ProcessingWorker:
         file_handler.setFormatter(logging.Formatter(logging_format))
         file_handler.setLevel(logging.DEBUG)
         self.log.addHandler(file_handler)
-        sync_initiate_database(mongodb_addr)  # Database client
 
         try:
             self.db_url = verify_database_uri(mongodb_addr)
@@ -73,19 +72,16 @@ class ProcessingWorker:
         except ValueError as e:
             raise ValueError(e)
 
+        sync_initiate_database(mongodb_addr)  # Database client
         self.ocrd_tool = ocrd_tool
-
         # The str name of the OCR-D processor instance to be started
         self.processor_name = processor_name
-
         # The processor class to be used to instantiate the processor
         # Think of this as a func pointer to the constructor of the respective OCR-D processor
         self.processor_class = processor_class
-
         # Gets assigned when `connect_consumer` is called on the worker object
         # Used to consume OcrdProcessingMessage from the queue with name {processor_name}
         self.rmq_consumer = None
-
         # Gets assigned when the `connect_publisher` is called on the worker object
         # The publisher is connected when the `result_queue` field of the OcrdProcessingMessage is set for first time
         # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
