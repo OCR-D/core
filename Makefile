@@ -231,7 +231,7 @@ docker-cuda: DOCKER_ARGS += --build-arg FIXUP="make cuda-ubuntu cuda-ldconfig"
 
 # Install native CUDA toolkit in different versions
 cuda-ubuntu: cuda-ldconfig
-	apt-get -y install --no-install-recommends cuda-runtime-11-0 cuda-runtime-11-1 cuda-runtime-11-2 cuda-runtime-11-7 cuda-runtime-12-1
+	apt-get -y install --no-install-recommends cuda-runtime-11-0 cuda-runtime-11-1 cuda-runtime-11-3 cuda-runtime-11-7 cuda-runtime-12-1
 
 cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
 	ldconfig
@@ -242,8 +242,8 @@ cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
 	@echo /usr/local/cuda-11.0/targets/x86_64-linux/lib >> $@
 	@echo /usr/local/cuda-11.1/lib64 >> $@
 	@echo /usr/local/cuda-11.1/targets/x86_64-linux/lib >> $@
-	@echo /usr/local/cuda-11.2/lib64 >> $@
-	@echo /usr/local/cuda-11.2/targets/x86_64-linux/lib >> $@
+	@echo /usr/local/cuda-11.3/lib64 >> $@
+	@echo /usr/local/cuda-11.3/targets/x86_64-linux/lib >> $@
 	@echo /usr/local/cuda-11.7/lib64 >> $@
 	@echo /usr/local/cuda-11.7/targets/x86_64-linux/lib >> $@
 	@echo /usr/local/cuda-12.1/lib64 >> $@
