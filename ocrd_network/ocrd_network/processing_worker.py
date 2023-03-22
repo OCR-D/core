@@ -227,13 +227,13 @@ class ProcessingWorker:
             )
             self.log.info(f'Result message: {result_message}')
 
-        # If the result_queue field is set, send the result message to a result queue
-        if result_queue_name:
-            self.publish_to_result_queue(result_queue_name, result_message)
+            # If the result_queue field is set, send the result message to a result queue
+            if result_queue_name:
+                self.publish_to_result_queue(result_queue_name, result_message)
 
-        # If the callback_url field is set, post the result message to a callback url
-        if callback_url:
-            self.post_to_callback_url(processing_message.callback_url, result_message)
+            # If the callback_url field is set, post the result message to a callback url
+            if callback_url:
+                self.post_to_callback_url(processing_message.callback_url, result_message)
 
     def publish_to_result_queue(self, result_queue: str, result_message: OcrdResultMessage):
         if self.rmq_publisher is None:
