@@ -232,7 +232,7 @@ class ProcessingServer(FastAPI):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
 
         # determine path to mets if workspace_id is provided
-        if bool(data.path) == bool(data.workspace_id):
+        if bool(data.path_to_mets) == bool(data.workspace_id):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Either 'path' or 'workspace_id' must be provided, but not both"
@@ -244,7 +244,7 @@ class ProcessingServer(FastAPI):
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Workspace for id '{data.workspace_id}' not existing"
                 )
-            data.path = workspace.workspace_mets_path
+            data.path_to_mets = workspace.workspace_mets_path
 
         job = Job(
             **data.dict(exclude_unset=True, exclude_none=True),

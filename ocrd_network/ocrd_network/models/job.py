@@ -16,7 +16,7 @@ class StateEnum(str, Enum):
 class JobInput(BaseModel):
     """ Wraps the parameters required to make a run-processor-request
     """
-    path: Optional[str] = None
+    path_to_mets: Optional[str] = None
     workspace_id: Optional[str] = None
     description: Optional[str] = None
     input_file_grps: List[str]
@@ -53,7 +53,7 @@ class Job(Document):
     """ Job representation in the database
     """
     processor_name: str
-    path: str
+    path_to_mets: str
     workspace_id: Optional[str]
     description: Optional[str]
     state: StateEnum
@@ -74,6 +74,6 @@ class Job(Document):
             job_id=str(self.id),
             processor_name=self.processor_name,
             state=self.state,
-            workspace_path=self.path if not self.workspace_id else None,
+            workspace_path=self.path_to_mets if not self.workspace_id else None,
             workspace_id=self.workspace_id,
         )
