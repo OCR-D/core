@@ -1,13 +1,12 @@
 from typing import Dict
 import uvicorn
-from yaml import safe_load
 
 from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from ocrd_utils import getLogger, get_ocrd_tool_json
-from ocrd_validators import ParameterValidator, ProcessingServerConfigValidator
+from ocrd_validators import ParameterValidator
 from .database import (
     db_get_processing_job,
     db_get_workspace,
@@ -22,7 +21,7 @@ from .models import (
     PYJobOutput,
     StateEnum
 )
-from .utils import generate_id
+from .utils import generate_created_time, generate_id
 
 
 class ProcessingServer(FastAPI):
@@ -43,7 +42,7 @@ class ProcessingServer(FastAPI):
         self.log = getLogger(__name__)
         self.hostname = host
         self.port = port
-        self.config = ProcessingServer.parse_config(config_path)
+        self.config = ProcessingServerConfig(config_path)
         self.deployer = Deployer(self.config)
         self.mongodb_url = None
         self.rmq_host = self.config.queue.address
@@ -148,15 +147,6 @@ class ProcessingServer(FastAPI):
             raise
         uvicorn.run(self, host=self.hostname, port=int(self.port))
 
-    @staticmethod
-    def parse_config(config_path: str) -> ProcessingServerConfig:
-        with open(config_path) as fin:
-            obj = safe_load(fin)
-        report = ProcessingServerConfigValidator.validate(obj)
-        if not report.is_valid:
-            raise Exception(f'Processing-Server configuration file is invalid:\n{report.errors}')
-        return ProcessingServerConfig(obj)
-
     async def on_startup(self):
         await initiate_database(db_url=self.mongodb_url)
 
@@ -211,6 +201,23 @@ class ProcessingServer(FastAPI):
         self._processor_list = list(res)
         return self._processor_list
 
+    @staticmethod
+    def create_processing_message(job: DBProcessorJob) -> OcrdProcessingMessage:
+        processing_message = OcrdProcessingMessage(
+            job_id=job.job_id,
+            processor_name=job.processor_name,
+            created_time=generate_created_time(),
+            path_to_mets=job.path_to_mets,
+            workspace_id=job.workspace_id,
+            input_file_grps=job.input_file_grps,
+            output_file_grps=job.output_file_grps,
+            page_id=job.page_id,
+            parameters=job.parameters,
+            result_queue_name=job.result_queue_name,
+            callback_url=job.callback_url,
+        )
+        return processing_message
+
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         """ Queue a processor job
         """
@@ -226,10 +233,9 @@ class ProcessingServer(FastAPI):
             if not ocrd_tool:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Processor '{processor_name}' not available. It's ocrd_tool is empty or missing"
+                    detail=f"Processor '{processor_name}' not available. Empty or missing ocrd_tool"
                 )
-            validator = ParameterValidator(ocrd_tool)
-            report = validator.validate(data.parameters)
+            report = ParameterValidator(ocrd_tool).validate(data.parameters)
             if not report.is_valid:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
 
@@ -255,7 +261,7 @@ class ProcessingServer(FastAPI):
             state=StateEnum.queued
         )
         await job.insert()
-        processing_message = OcrdProcessingMessage.from_job(job)
+        processing_message = self.create_processing_message(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         if self.rmq_publisher:
             self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)

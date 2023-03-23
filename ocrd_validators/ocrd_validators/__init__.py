@@ -12,6 +12,7 @@ __all__ = [
     'XsdMetsValidator',
     'XsdPageValidator',
     'ProcessingServerConfigValidator',
+    'OcrdNetworkMessageValidator'
 ]
 
 from .parameter_validator import ParameterValidator
@@ -24,3 +25,4 @@ from .xsd_validator import XsdValidator
 from .xsd_mets_validator import XsdMetsValidator
 from .xsd_page_validator import XsdPageValidator
 from .processing_server_config_validator import ProcessingServerConfigValidator
+from .ocrd_network_message_validator import OcrdNetworkMessageValidator

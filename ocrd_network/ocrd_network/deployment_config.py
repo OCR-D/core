@@ -1,5 +1,6 @@
 from typing import Dict
-
+from yaml import safe_load
+from ocrd_validators import ProcessingServerConfigValidator
 from .deployment_utils import DeployType
 
 __all__ = [
@@ -12,7 +13,15 @@ __all__ = [
 
 
 class ProcessingServerConfig:
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config_path: str) -> None:
+        # Load and validate the config
+        with open(config_path) as fin:
+            config = safe_load(fin)
+        report = ProcessingServerConfigValidator.validate(config)
+        if not report.is_valid:
+            raise Exception(f'Processing-Server configuration file is invalid:\n{report.errors}')
+
+        # Split the configurations
         self.mongo = MongoConfig(config['database'])
         self.queue = QueueConfig(config['process_queue'])
         self.hosts = []

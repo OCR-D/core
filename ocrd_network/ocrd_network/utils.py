@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import wraps
 from re import match as re_match
 from pika import URLParameters
@@ -16,6 +17,19 @@ def call_sync(func):
             return asyncio.get_event_loop().run_until_complete(result)
         return result
     return func_wrapper
+
+
+def generate_created_time() -> int:
+    return int(datetime.utcnow().timestamp())
+
+
+def generate_id() -> str:
+    """
+    Generate the id to be used for processing job ids.
+    Note, workspace_id and workflow_id in the reference
+    WebAPI implementation are produced in the same manner
+    """
+    return str(uuid4())
 
 
 def verify_database_uri(mongodb_address: str) -> str:
@@ -47,12 +61,3 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
         'vhost': url_params.virtual_host
     }
     return parsed_data
-
-
-def generate_id() -> str:
-    """
-    Generate the id to be used for processing job ids.
-    Note, workspace_id and workflow_id in the reference
-    WebAPI implementation are produced in the same manner
-    """
-    return str(uuid4())

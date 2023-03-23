@@ -184,10 +184,17 @@ class ProcessingWorker:
             raise ValueError(f'Processor name is not matching. Expected: {self.processor_name},'
                              f'Got: {processing_message.processor_name}')
 
-        # This can be path if invoking `run_processor`
-        # but must be ocrd.Workspace if invoking `run_cli`.
-        path_to_mets = processing_message.path_to_mets
-        # Build the workspace from the workspace_path
+        # All of this is needed because the OcrdProcessingMessage object
+        # may not contain certain keys. Simply passing None in the OcrdProcessingMessage constructor
+        # breaks the message validator schema which expects String, but not None due to the Optional[] wrapper.
+        pm_keys = processing_message.__dict__.keys()
+        output_file_grps = processing_message.output_file_grps if 'output_file_grps' in pm_keys else None
+        path_to_mets = processing_message.path_to_mets if 'path_to_mets' in pm_keys else None
+        workspace_id = processing_message.workspace_id if 'workspace_id' in pm_keys else None
+        page_id = processing_message.page_id if 'page_id' in pm_keys else None
+        result_queue_name = processing_message.result_queue_name if 'result_queue_name' in pm_keys else None
+        callback_url = processing_message.callback_url if 'callback_url' in pm_keys else None
+
         workspace = Resolver().workspace_from_url(path_to_mets)
 
         job_id = processing_message.job_id
@@ -197,9 +204,9 @@ class ProcessingWorker:
             return_status = self.run_processor_from_worker(
                 processor_class=self.processor_class,
                 workspace=workspace,
-                page_id=processing_message.page_id,
+                page_id=page_id,
                 input_file_grps=processing_message.input_file_grps,
-                output_file_grps=processing_message.output_file_grps,
+                output_file_grps=output_file_grps,
                 parameter=processing_message.parameters
             )
         else:
@@ -207,16 +214,13 @@ class ProcessingWorker:
             return_status = self.run_cli_from_worker(
                 executable=self.processor_name,
                 workspace=workspace,
-                page_id=processing_message.page_id,
+                page_id=page_id,
                 input_file_grps=processing_message.input_file_grps,
-                output_file_grps=processing_message.output_file_grps,
+                output_file_grps=output_file_grps,
                 parameter=processing_message.parameters
             )
         job_state = StateEnum.success if return_status else StateEnum.failed
         sync_set_processing_job_state(job_id=job_id, job_state=job_state)
-
-        result_queue_name = processing_message.result_queue_name
-        callback_url = processing_message.callback_url
 
         if result_queue_name or callback_url:
             result_message = OcrdResultMessage(
@@ -224,7 +228,7 @@ class ProcessingWorker:
                 state=job_state.value,
                 path_to_mets=path_to_mets,
                 # May not be always available
-                workspace_id=processing_message.workspace_id
+                workspace_id=workspace_id
             )
             self.log.info(f'Result message: {result_message}')
 
@@ -234,7 +238,7 @@ class ProcessingWorker:
 
             # If the callback_url field is set, post the result message to a callback url
             if callback_url:
-                self.post_to_callback_url(processing_message.callback_url, result_message)
+                self.post_to_callback_url(callback_url, result_message)
 
     def publish_to_result_queue(self, result_queue: str, result_message: OcrdResultMessage):
         if self.rmq_publisher is None:
