@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from ocrd_utils import getLogger, get_ocrd_tool_json
-from ocrd_validators import ParameterValidator, ProcessingServerValidator
+from ocrd_validators import ParameterValidator, ProcessingServerConfigValidator
 from .database import (
     db_get_processing_job,
     db_get_workspace,
@@ -152,7 +152,7 @@ class ProcessingServer(FastAPI):
     def parse_config(config_path: str) -> ProcessingServerConfig:
         with open(config_path) as fin:
             obj = safe_load(fin)
-        report = ProcessingServerValidator.validate(obj)
+        report = ProcessingServerConfigValidator.validate(obj)
         if not report.is_valid:
             raise Exception(f'Processing-Server configuration file is invalid:\n{report.errors}')
         return ProcessingServerConfig(obj)

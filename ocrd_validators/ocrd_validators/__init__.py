@@ -11,7 +11,7 @@ __all__ = [
     'XsdValidator',
     'XsdMetsValidator',
     'XsdPageValidator',
-    'ProcessingServerValidator',
+    'ProcessingServerConfigValidator',
 ]
 
 from .parameter_validator import ParameterValidator
@@ -23,4 +23,4 @@ from .ocrd_zip_validator import OcrdZipValidator
 from .xsd_validator import XsdValidator
 from .xsd_mets_validator import XsdMetsValidator
 from .xsd_page_validator import XsdPageValidator
-from .processing_server_validator import ProcessingServerValidator
+from .processing_server_config_validator import ProcessingServerConfigValidator
