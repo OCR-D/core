@@ -195,6 +195,9 @@ class ProcessingWorker:
         result_queue_name = processing_message.result_queue_name if 'result_queue_name' in pm_keys else None
         callback_url = processing_message.callback_url if 'callback_url' in pm_keys else None
 
+        if not path_to_mets and workspace_id:
+            path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
+
         workspace = Resolver().workspace_from_url(path_to_mets)
 
         job_id = processing_message.job_id

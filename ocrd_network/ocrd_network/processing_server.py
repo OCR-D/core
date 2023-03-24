@@ -239,21 +239,21 @@ class ProcessingServer(FastAPI):
             if not report.is_valid:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
 
-        # determine path to mets if workspace_id is provided
         if bool(data.path_to_mets) == bool(data.workspace_id):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Either 'path' or 'workspace_id' must be provided, but not both"
             )
+        # This check is done to return early in case
+        # the workspace_id is provided but not existing in the DB
         elif data.workspace_id:
             try:
-                workspace = await db_get_workspace(data.workspace_id)
+                await db_get_workspace(data.workspace_id)
             except ValueError:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Workspace with id '{data.workspace_id}' not existing"
                 )
-            data.path_to_mets = workspace.workspace_mets_path
 
         job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),

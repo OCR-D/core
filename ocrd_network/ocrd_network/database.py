@@ -36,13 +36,18 @@ async def sync_initiate_database(db_url: str):
     await initiate_database(db_url)
 
 
-async def db_get_workspace(workspace_id: str):
+async def db_get_workspace(workspace_id: str) -> DBWorkspace:
     workspace = await DBWorkspace.find_one(
         DBWorkspace.workspace_id == workspace_id
     )
     if not workspace:
         raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
     return workspace
+
+
+@call_sync
+async def sync_db_get_workspace(workspace_id: str) -> DBWorkspace:
+    return await db_get_workspace(workspace_id)
 
 
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
