@@ -66,6 +66,7 @@ class DBProcessorJob(Document):
     callback_url: Optional[str]
     start_time: Optional[datetime]
     end_time: Optional[datetime]
+    exec_time: Optional[str]
 
     class Settings:
         use_enum_values = True

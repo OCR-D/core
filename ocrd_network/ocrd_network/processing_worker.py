@@ -8,6 +8,7 @@ According to the current requirements, each ProcessingWorker
 is a single OCR-D Processor instance.
 """
 
+from datetime import datetime
 import json
 import logging
 from os import environ, getpid
@@ -24,7 +25,7 @@ from ocrd.processor.helpers import run_cli, run_processor
 from .database import (
     sync_initiate_database,
     sync_db_get_workspace,
-    sync_set_processing_job_state
+    sync_db_update_processing_job,
 )
 from .models import StateEnum
 from .rabbitmq_utils import (
@@ -34,6 +35,7 @@ from .rabbitmq_utils import (
     RMQPublisher
 )
 from .utils import (
+    calculate_execution_time,
     verify_database_uri,
     verify_and_parse_mq_uri
 )
@@ -202,7 +204,14 @@ class ProcessingWorker:
         workspace = Resolver().workspace_from_url(path_to_mets)
 
         job_id = processing_message.job_id
-        sync_set_processing_job_state(job_id=job_id, job_state=StateEnum.running)
+
+        start_time = datetime.now()
+        sync_db_update_processing_job(
+            job_id=job_id,
+            state=StateEnum.running,
+            path_to_mets=path_to_mets,
+            start_time=start_time
+        )
         if self.processor_class:
             self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
             return_status = self.run_processor_from_worker(
@@ -223,8 +232,16 @@ class ProcessingWorker:
                 output_file_grps=output_file_grps,
                 parameter=processing_message.parameters
             )
+        end_time = datetime.now()
+        # Execution duration in ms
+        execution_duration = calculate_execution_time(start_time, end_time)
         job_state = StateEnum.success if return_status else StateEnum.failed
-        sync_set_processing_job_state(job_id=job_id, job_state=job_state)
+        sync_db_update_processing_job(
+            job_id=job_id,
+            state=job_state,
+            end_time=end_time,
+            exec_time=f'{execution_duration} ms'
+        )
 
         if result_queue_name or callback_url:
             result_message = OcrdResultMessage(

@@ -19,6 +19,14 @@ def call_sync(func):
     return func_wrapper
 
 
+def calculate_execution_time(start: datetime, end: datetime) -> int:
+    """
+    Calculates the difference between `start` and `end` datetime.
+    Returns the result in milliseconds
+    """
+    return int((end - start).total_seconds() * 1000)
+
+
 def generate_created_time() -> int:
     return int(datetime.utcnow().timestamp())
 
