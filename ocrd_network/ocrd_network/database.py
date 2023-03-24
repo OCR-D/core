@@ -17,8 +17,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from .models import (
     DBProcessorJob,
-    DBWorkspace,
-    StateEnum
+    DBWorkspace
 )
 from .utils import call_sync
 
@@ -63,28 +62,33 @@ async def sync_db_get_processing_job(job_id: str) -> DBProcessorJob:
     return await db_get_processing_job(job_id)
 
 
-async def set_processing_job_state(job_id: str, job_state: StateEnum):
+async def db_update_processing_job(job_id: str, **kwargs):
     job = await DBProcessorJob.find_one(
         DBProcessorJob.job_id == job_id)
     if not job:
         raise ValueError(f'Processing job with id "{job_id}" not in the DB.')
-    job.state = job_state
+
+    # TODO: This may not be the best Pythonic way to do it. However, it works!
+    #  There must be a shorter way with Pydantic. Suggest an improvement.
+    job_keys = list(job.__dict__.keys())
+    for key, value in kwargs.items():
+        if key not in job_keys:
+            raise ValueError(f'Field "{key}" is not available.')
+        if key == 'state':
+            job.state = value
+        elif key == 'start_time':
+            job.start_time = value
+        elif key == 'end_time':
+            job.end_time = value
+        elif key == 'path_to_mets':
+            job.path_to_mets = value
+        elif key == 'exec_time':
+            job.exec_time = value
+        else:
+            raise ValueError(f'Field "{key}" is not updatable.')
     await job.save()
 
 
 @call_sync
-async def sync_set_processing_job_state(job_id: str, job_state: StateEnum):
-    await set_processing_job_state(job_id, job_state)
-
-
-async def get_processing_job_state(job_id: str) -> StateEnum:
-    job = await DBProcessorJob.find_one(
-        DBProcessorJob.job_id == job_id)
-    if not job:
-        raise ValueError(f'Processing job with id "{job_id}" not in the DB.')
-    return job.state
-
-
-@call_sync
-async def sync_get_processing_job_state(job_id: str) -> StateEnum:
-    return await get_processing_job_state(job_id)
+async def sync_db_update_processing_job(job_id: str, **kwargs):
+    await db_update_processing_job(job_id=job_id, **kwargs)
