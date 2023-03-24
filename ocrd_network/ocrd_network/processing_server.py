@@ -246,8 +246,9 @@ class ProcessingServer(FastAPI):
                 detail="Either 'path' or 'workspace_id' must be provided, but not both"
             )
         elif data.workspace_id:
-            workspace = await db_get_workspace(data.workspace_id)
-            if not workspace:
+            try:
+                workspace = await db_get_workspace(data.workspace_id)
+            except ValueError:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Workspace for id '{data.workspace_id}' not existing"
@@ -285,9 +286,7 @@ class ProcessingServer(FastAPI):
         try:
             job = await db_get_processing_job(job_id)
             return job.to_job_output()
-        except Exception as error:
-            # Write the "error" to a log file
-            # for internal debugging
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='Job not found.'
