@@ -14,6 +14,7 @@ setup(
     url='https://github.com/OCR-D/core',
     license='Apache License 2.0',
     packages=['ocrd_utils'],
+    python_requires=">=3.7",
     install_requires=install_requires,
     package_data={'': ['*.json', '*.yml', '*.xml']},
     keywords=['OCR', 'OCR-D']
