@@ -38,22 +38,6 @@ def create_docker_client(address: str, username: str, password: Union[str, None]
     return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
-def is_bashlib_processor(processor_name):
-    """ Determine if a processor is a bashlib processor
-
-    Returns True if processor_name is available as a program and does not contain a python hashbang
-    in line 1 """
-    if not processor_name.startswith("ocrd"):
-        return False
-    program = which(processor_name)
-    if not program:
-        return False
-    with open(program) as fin:
-        line = fin.readline().strip()
-        if re.fullmatch('[#][!].*/python[0-9.]*', line):
-            return False
-    return True
-
 
 class HostData:
     """class to store runtime information for a host
