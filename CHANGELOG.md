@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * :fire: publish Docker images to ghcr.io, not docker.io, #997
+  * `ocrd resmgr`: eynollah models now provided by eynollah itself, qurator-spk/eynollah#91
 
 ## [2.48.1] - 2023-03-22
 
