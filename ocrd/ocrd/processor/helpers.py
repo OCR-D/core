@@ -240,11 +240,11 @@ def generate_processor_help(ocrd_tool, processor_instance=None):
     if processor_instance:
         module = inspect.getmodule(processor_instance)
         if module and module.__doc__:
-            doc_help += '\n' + inspect.cleandoc(module.__doc__)
+            doc_help += '\n' + inspect.cleandoc(module.__doc__) + '\n'
         if processor_instance.__doc__:
-            doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__)
+            doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__) + '\n'
         if processor_instance.process.__doc__:
-            doc_help += '\n' + inspect.cleandoc(processor_instance.process.__doc__)
+            doc_help += '\n' + inspect.cleandoc(processor_instance.process.__doc__) + '\n'
         if doc_help:
             doc_help = '\n\n' + wrap_text(doc_help, width=72,
                                           initial_indent='  > ',
@@ -255,43 +255,47 @@ Usage: %s [OPTIONS]
 
   %s%s
 
-Options:
+Options for processing:
+  -m, --mets URL-PATH             URL or file path of METS to process [./mets.xml]
+  -w, --working-dir PATH          Working directory of local workspace [dirname(URL-PATH)]
   -I, --input-file-grp USE        File group(s) used as input
   -O, --output-file-grp USE       File group(s) used as output
-  -g, --page-id ID                Physical page ID(s) to process
+  -g, --page-id ID                Physical page ID(s) to process [all]
   --overwrite                     Remove existing output pages/images
-                                  (with --page-id, remove only those)
-  --queue                         The RabbitMQ server address in format: {host}:{port}/{vhost}"
-  --database                      The MongoDB address in format: mongodb://{host}:{port}"
+                                  (with "--page-id", remove only those)
   --profile                       Enable profiling
-  --profile-file                  Write cProfile stats to this file. Implies --profile
+  --profile-file PROF-PATH        Write cProfile stats to PROF-PATH. Implies "--profile"
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
                                   or JSON file path
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
-                                  taking precedence over --parameter
-  -m, --mets URL-PATH             URL or file path of METS to process
-  -w, --working-dir PATH          Working directory of local workspace
+                                  taking precedence over "--parameter"
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
-                                  Log level
+                                  Override log level globally [INFO]
+
+Options for Processing Worker server:
+  --queue                         The RabbitMQ server address in format
+                                  "amqp://{user}:{pass}@{host}:{port}/{vhost}"
+                                  [amqp://admin:admin@localhost:5672]
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+
+Options for information:
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
-  -J, --dump-json                 Dump tool description as JSON and exit
-  -D, --dump-module-dir           Output the 'module' directory with resources for this processor
-  -h, --help                      This help message
+  -J, --dump-json                 Dump tool description as JSON
+  -D, --dump-module-dir           Show the 'module' resource location path for this processor
+  -h, --help                      Show this message
   -V, --version                   Show version
 
 Parameters:
 %s
-Default Wiring:
-  %s -> %s
 
 ''' % (
     ocrd_tool['executable'],
     ocrd_tool['description'],
     doc_help,
     parameter_help,
-    ocrd_tool.get('input_file_grp', 'NONE'),
-    ocrd_tool.get('output_file_grp', 'NONE')
 )
 
 
