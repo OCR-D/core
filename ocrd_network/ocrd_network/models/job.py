@@ -54,7 +54,7 @@ class DBProcessorJob(Document):
     """
     job_id: str
     processor_name: str
-    path_to_mets: str
+    path_to_mets: Optional[str]
     workspace_id: Optional[str]
     description: Optional[str]
     state: StateEnum

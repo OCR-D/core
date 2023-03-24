@@ -23,6 +23,7 @@ from ocrd.processor.helpers import run_cli, run_processor
 
 from .database import (
     sync_initiate_database,
+    sync_db_get_workspace,
     sync_set_processing_job_state
 )
 from .models import StateEnum

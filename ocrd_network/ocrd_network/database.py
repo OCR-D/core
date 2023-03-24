@@ -58,6 +58,11 @@ async def db_get_processing_job(job_id: str) -> DBProcessorJob:
     return job
 
 
+@call_sync
+async def sync_db_get_processing_job(job_id: str) -> DBProcessorJob:
+    return await db_get_processing_job(job_id)
+
+
 async def set_processing_job_state(job_id: str, job_state: StateEnum):
     job = await DBProcessorJob.find_one(
         DBProcessorJob.job_id == job_id)
