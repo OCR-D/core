@@ -251,7 +251,7 @@ class ProcessingServer(FastAPI):
             except ValueError:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Workspace for id '{data.workspace_id}' not existing"
+                    detail=f"Workspace with id '{data.workspace_id}' not existing"
                 )
             data.path_to_mets = workspace.workspace_mets_path
 
@@ -280,7 +280,7 @@ class ProcessingServer(FastAPI):
             )
         return get_ocrd_tool_json(processor_name)
 
-    async def get_job(self, _processor_name: str, job_id: str) -> PYJobOutput:
+    async def get_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         """ Return processing job-information from the database
         """
         try:
@@ -288,8 +288,8 @@ class ProcessingServer(FastAPI):
             return job.to_job_output()
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Job not found.'
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
             )
 
     async def list_processors(self) -> str:
