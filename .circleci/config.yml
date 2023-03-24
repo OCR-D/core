@@ -21,7 +21,7 @@ jobs:
 
   test-python37:
     docker:
-      - image: python:3.7.16
+      - image: cimg/python:3.7.16
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -31,7 +31,7 @@ jobs:
 
   test-python38:
     docker:
-      - image: python:3.8.16
+      - image: cimg/python:3.8.16
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -41,7 +41,7 @@ jobs:
 
   test-python39:
     docker:
-      - image: python:3.9.16
+      - image: cimg/python:3.9.16
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -51,7 +51,7 @@ jobs:
 
   test-python310:
     docker:
-      - image: python:3.10.10
+      - image: cimg/python:3.10.10
     working_directory: ~/ocrd-core
     steps:
       - checkout
@@ -61,7 +61,7 @@ jobs:
 
   test-python311:
     docker:
-      - image: python:3.11.2
+      - image: cimg/python:3.11.2
     working_directory: ~/ocrd-core
     steps:
       - checkout
