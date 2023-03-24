@@ -40,6 +40,7 @@ from .utils import (
     verify_and_parse_mq_uri
 )
 
+# TODO: Check this again when the logging is refactored
 try:
     # This env variable must be set before importing from Keras
     environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
