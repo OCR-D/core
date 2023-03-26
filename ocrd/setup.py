@@ -22,6 +22,7 @@ setup(
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     include_package_data=True,
+    python_requires=">=3.7",
     install_requires=install_requires,
     entry_points={
         'console_scripts': [

@@ -15,6 +15,7 @@ setup(
     author_email='unixprog@gmail.com',
     url='https://github.com/OCR-D/core',
     license='Apache License 2.0',
+    python_requires=">=3.7",
     install_requires=install_requires,
     packages=[
         'ocrd_network',

@@ -1,4 +1,4 @@
-from click import option
+from click import option, Path
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
 from ocrd_network import QueueServerParamType, DatabaseParamType
@@ -19,28 +19,28 @@ def ocrd_cli_options(f):
     """
     # XXX Note that the `--help` output is statically generate_processor_help
     params = [
-        option('-m', '--mets', help="METS to process", default="mets.xml"),
-        option('-w', '--working-dir', help="Working Directory"),
+        option('-m', '--mets', default="mets.xml"),
+        option('-w', '--working-dir'),
         # TODO OCR-D/core#274
-        # option('-I', '--input-file-grp', help='File group(s) used as input. **required**'),
-        # option('-O', '--output-file-grp', help='File group(s) used as output. **required**'),
-        option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT'),
-        option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT'),
-        option('-g', '--page-id', help="ID(s) of the pages to process"),
-        option('--overwrite', help="Overwrite the output file group or a page range (--page-id)", is_flag=True, default=False),
-        option('--queue', help="The URL of the Queue Server, format: username:password@host:port/vhost", type=QueueServerParamType()),
-        option('--database', help="The URL of the MongoDB, format: mongodb://host:port", type=DatabaseParamType()),
-        option('-C', '--show-resource', help='Dump the content of processor resource RESNAME', metavar='RESNAME'),
-        option('-L', '--list-resources', is_flag=True, default=False, help='List names of processor resources'),
+        # option('-I', '--input-file-grp', required=True),
+        # option('-O', '--output-file-grp', required=True),
+        option('-I', '--input-file-grp', default='INPUT'),
+        option('-O', '--output-file-grp', default='OUTPUT'),
+        option('-g', '--page-id'),
+        option('--overwrite', is_flag=True, default=False),
+        option('--profile', is_flag=True, default=False),
+        option('--profile-file', type=Path(dir_okay=False, writable=True)),
         parameter_option,
         parameter_override_option,
-        option('-J', '--dump-json', help="Dump tool description as JSON and exit", is_flag=True, default=False),
-        option('-D', '--dump-module-dir', help="Print processor's 'moduledir' of resourcess", is_flag=True, default=False),
         loglevel_option,
-        option('-V', '--version', help="Show version", is_flag=True, default=False),
-        option('-h', '--help', help="This help message", is_flag=True, default=False),
-        option('--profile', help="Enable profiling", is_flag=True, default=False),
-        option('--profile-file', help="Write cProfile stats to this file. Implies --profile"),
+        option('--queue', type=QueueServerParamType()),
+        option('--database', type=DatabaseParamType()),
+        option('-C', '--show-resource'),
+        option('-L', '--list-resources', is_flag=True, default=False),
+        option('-J', '--dump-json', is_flag=True, default=False),
+        option('-D', '--dump-module-dir', is_flag=True, default=False),
+        option('-h', '--help', is_flag=True, default=False),
+        option('-V', '--version', is_flag=True, default=False),
     ]
     for param in params:
         param(f)

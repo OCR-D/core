@@ -143,34 +143,45 @@ ocrd__parse_argv () {
             --profile) ocrd__argv[profile]=true ;;
             --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
+            --queue) ocrd__worker_queue="$2" ; shift ;;
+            --database) ocrd__worker_database="$2" ; shift ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
         shift
     done
 
-    if [[ ! -e "${ocrd__argv[mets_file]}" ]];then
+    if [ -v ocrd__worker_queue -a -v ocrd__worker_database ]; then
+        ocrd processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
+        exit
+    elif [ -v ocrd__worker_queue ]; then
+        ocrd__raise "Processing Worker also requires a --database argument"
+    elif [ -v ocrd__worker_database ]; then
+        ocrd__raise "Processing Worker also requires a --queue argument"
+    fi
+
+    if [[ ! -e "${ocrd__argv[mets_file]}" ]]; then
         ocrd__raise "METS file '${ocrd__argv[mets_file]}' not found"
     fi
 
-    if [[ ! -d "${ocrd__argv[working_dir]:=$(dirname "${ocrd__argv[mets_file]}")}" ]];then
+    if [[ ! -d "${ocrd__argv[working_dir]:=$(dirname "${ocrd__argv[mets_file]}")}" ]]; then
         ocrd__raise "workdir '${ocrd__argv[working_dir]}' not a directory. Use -w/--working-dir to set correctly"
     fi
 
-    if [[ ! "${ocrd__argv[log_level]:=INFO}" =~ OFF|ERROR|WARN|INFO|DEBUG|TRACE ]];then
+    if [[ ! "${ocrd__argv[log_level]:=INFO}" =~ OFF|ERROR|WARN|INFO|DEBUG|TRACE ]]; then
         ocrd__raise "log level '${ocrd__argv[log_level]}' is invalid"
     fi
 
-    if [[ -z "${ocrd__argv[input_file_grp]:=}" ]];then
+    if [[ -z "${ocrd__argv[input_file_grp]:=}" ]]; then
         ocrd__raise "Provide --input-file-grp/-I explicitly!"
     fi
 
-    if [[ -z "${ocrd__argv[output_file_grp]:=}" ]];then
+    if [[ -z "${ocrd__argv[output_file_grp]:=}" ]]; then
         ocrd__raise "Provide --output-file-grp/-O explicitly!"
     fi
 
     # enable profiling (to be extended/acted upon by caller)
-    if [[ ${ocrd__argv[profile]} = true ]];then
-        if [[ -n "${ocrd__argv[profile_file]}" ]];then
+    if [[ ${ocrd__argv[profile]} = true ]]; then
+        if [[ -n "${ocrd__argv[profile_file]}" ]]; then
             exec 3> "${ocrd__argv[profile_file]}"
         else
             exec 3>&2
