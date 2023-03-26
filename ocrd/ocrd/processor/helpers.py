@@ -260,7 +260,7 @@ Options for processing:
   -w, --working-dir PATH          Working directory of local workspace [dirname(URL-PATH)]
   -I, --input-file-grp USE        File group(s) used as input
   -O, --output-file-grp USE       File group(s) used as output
-  -g, --page-id ID                Physical page ID(s) to process [all]
+  -g, --page-id ID                Physical page ID(s) to process instead of full document []
   --overwrite                     Remove existing output pages/images
                                   (with "--page-id", remove only those)
   --profile                       Enable profiling
