@@ -62,7 +62,8 @@ class RMQPublisher(RMQConnector):
             self,
             queue_name: str,
             exchange_name: Optional[str] = None,
-            exchange_type: Optional[str] = None
+            exchange_type: Optional[str] = None,
+            passive: bool = False
     ) -> None:
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
@@ -76,7 +77,8 @@ class RMQPublisher(RMQConnector):
         )
         RMQConnector.queue_declare(
             channel=self._channel,
-            queue_name=queue_name
+            queue_name=queue_name,
+            passive=passive
         )
         RMQConnector.queue_bind(
             channel=self._channel,

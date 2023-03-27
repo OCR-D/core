@@ -5,6 +5,8 @@ from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from pika.exceptions import ChannelClosedByBroker
+
 from ocrd_utils import getLogger, get_ocrd_tool_json
 from ocrd_validators import ParameterValidator
 from .database import (
@@ -221,11 +223,24 @@ class ProcessingServer(FastAPI):
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         """ Queue a processor job
         """
+        if not self.rmq_publisher or not self.rmq_publisher._connection or not self.rmq_publisher._channel:
+            self.log.error('RMQPublisher is not connected')
+            raise Exception('RMQPublisher is not connected')
+
         if processor_name not in self.processor_list:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Processor not available'
-            )
+            try:
+                # Only checks if the process queue exists, if not raises ValueError
+                self.rmq_publisher.create_queue(processor_name, passive=True)
+            except ChannelClosedByBroker as error:
+                self.log.warning(f"Process queue with id '{processor_name}' not existing: {error}")
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Process queue with id '{processor_name}' not existing"
+                )
+            finally:
+                # Reconnect publisher - not efficient, but works
+                # TODO: Revisit when reconnection strategy is implemented
+                self.connect_publisher(enable_acks=True)
 
         # validate additional parameters
         if data.parameters:
@@ -264,10 +279,14 @@ class ProcessingServer(FastAPI):
         await job.insert()
         processing_message = self.create_processing_message(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
-        if self.rmq_publisher:
+
+        try:
             self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
-        else:
-            raise Exception('RMQPublisher is not connected')
+        except Exception as error:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f'RMQPublisher has failed: {error}'
+            )
         return job.to_job_output()
 
     async def get_processor_info(self, processor_name) -> Dict:
