@@ -79,7 +79,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/{_processor_name}/{job_id}',
+            path='/processor/{processor_name}/{job_id}',
             endpoint=self.get_job,
             methods=['GET'],
             tags=['processing'],
