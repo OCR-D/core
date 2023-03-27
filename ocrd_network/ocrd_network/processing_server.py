@@ -223,8 +223,7 @@ class ProcessingServer(FastAPI):
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         """ Queue a processor job
         """
-        if not self.rmq_publisher or not self.rmq_publisher._connection or not self.rmq_publisher._channel:
-            self.log.error('RMQPublisher is not connected')
+        if not self.rmq_publisher:
             raise Exception('RMQPublisher is not connected')
 
         if processor_name not in self.processor_list:
