@@ -77,6 +77,8 @@ class Deployer:
                     host.config.keypath
                 )
 
+            # TODO: Call the _deploy_processor_server() here and adapt accordingly
+
             for processor in host.config.processors:
                 self._deploy_processing_worker(processor, host, rabbitmq_url, mongodb_url)
 
@@ -111,6 +113,10 @@ class Deployer:
                 )
                 host.pids_docker.append(pid)
             sleep(0.1)
+
+    def _deploy_processor_server(self, mongodb_url: str) -> None:
+        # TODO: Method for deploying a processor server
+        pass
 
     def deploy_rabbitmq(self, image: str, detach: bool, remove: bool,
                         ports_mapping: Union[Dict, None] = None) -> str:

@@ -33,6 +33,7 @@ from .zip import zip_cli
 from .log import log_cli
 from .processing_server import processing_server_cli
 from .processing_worker import processing_worker_cli
+from .processor_server import processor_server_cli
 
 
 @click.group()
@@ -53,3 +54,4 @@ cli.add_command(log_cli)
 cli.add_command(resmgr_cli)
 cli.add_command(processing_server_cli)
 cli.add_command(processing_worker_cli)
+cli.add_command(processor_server_cli)
