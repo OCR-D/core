@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
 
-from ocrd_utils import getLogger, get_ocrd_tool_json
+from ocrd_utils import getLogger
 from ocrd_validators import ParameterValidator
 from .database import (
     db_get_processing_job,
@@ -23,7 +23,11 @@ from .models import (
     PYJobOutput,
     StateEnum
 )
-from .utils import generate_created_time, generate_id
+from .utils import (
+    download_ocrd_all_tool_json,
+    generate_created_time,
+    generate_id
+)
 
 
 class ProcessingServer(FastAPI):
@@ -44,6 +48,7 @@ class ProcessingServer(FastAPI):
         self.log = getLogger(__name__)
         self.hostname = host
         self.port = port
+        self.ocrd_all_tool_json = download_ocrd_all_tool_json()
         self.config = ProcessingServerConfig(config_path)
         self.deployer = Deployer(self.config)
         self.mongodb_url = None
@@ -243,11 +248,11 @@ class ProcessingServer(FastAPI):
 
         # validate additional parameters
         if data.parameters:
-            ocrd_tool = get_ocrd_tool_json(processor_name)
+            ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
             if not ocrd_tool:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Processor '{processor_name}' not available. Empty or missing ocrd_tool"
+                    detail=f"Ocrd tool JSON of '{processor_name}' not found!"
                 )
             report = ParameterValidator(ocrd_tool).validate(data.parameters)
             if not report.is_valid:
@@ -291,12 +296,13 @@ class ProcessingServer(FastAPI):
     async def get_processor_info(self, processor_name) -> Dict:
         """ Return a processor's ocrd-tool.json
         """
-        if processor_name not in self.processor_list:
+        ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
+        if not ocrd_tool:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Processor not available'
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Ocrd tool JSON of '{processor_name}' not found!"
             )
-        return get_ocrd_tool_json(processor_name)
+        return ocrd_tool
 
     async def get_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         """ Return processing job-information from the database
