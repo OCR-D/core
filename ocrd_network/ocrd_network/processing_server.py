@@ -228,18 +228,17 @@ class ProcessingServer(FastAPI):
 
         if processor_name not in self.processor_list:
             try:
-                # Only checks if the process queue exists, if not raises ValueError
+                # Only checks if the process queue exists, if not raises ChannelClosedByBroker
                 self.rmq_publisher.create_queue(processor_name, passive=True)
             except ChannelClosedByBroker as error:
                 self.log.warning(f"Process queue with id '{processor_name}' not existing: {error}")
+                # Reconnect publisher - not efficient, but works
+                # TODO: Revisit when reconnection strategy is implemented
+                self.connect_publisher(enable_acks=True)
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Process queue with id '{processor_name}' not existing"
                 )
-            finally:
-                # Reconnect publisher - not efficient, but works
-                # TODO: Revisit when reconnection strategy is implemented
-                self.connect_publisher(enable_acks=True)
 
         # validate additional parameters
         if data.parameters:
