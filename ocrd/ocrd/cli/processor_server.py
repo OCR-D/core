@@ -38,8 +38,8 @@ def processor_server_cli(processor_name: str, address: str, database: str):
 
     try:
         processor_server = ProcessorServer(
-            processor_name=processor_name,
             mongodb_addr=database,
+            processor_name=processor_name,
             processor_class=None,  # For readability purposes assigned here
         )
         processor_server.run_server(host=host, port=port, access_log=False)

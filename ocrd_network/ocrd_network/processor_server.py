@@ -1,22 +1,29 @@
 from contextlib import redirect_stdout
+from datetime import datetime
 from io import StringIO
+import json
+import logging
+from os import environ, getpid
 from subprocess import run, PIPE
+from typing import List
 import uvicorn
 
 from fastapi import FastAPI, HTTPException, status, BackgroundTasks
 
+from ocrd.processor.helpers import run_cli, run_processor
 from ocrd import Resolver
-# from ocrd.processor.helpers import run_processor_from_api, run_cli_from_api
 from ocrd_validators import ParameterValidator
 from ocrd_utils import (
+    getLogger,
     get_ocrd_tool_json,
-    parse_json_string_with_comments,
-    set_json_key_value_overrides
+    parse_json_string_with_comments
 )
 
 from .database import (
     DBProcessorJob,
     db_get_processing_job,
+    db_get_workspace,
+    db_update_processing_job,
     initiate_database
 )
 from .models import (
@@ -25,13 +32,36 @@ from .models import (
     PYOcrdTool,
     StateEnum
 )
+from .utils import calculate_execution_time, generate_id
+
+# TODO: Check this again when the logging is refactored
+try:
+    # This env variable must be set before importing from Keras
+    environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    from tensorflow.keras.utils import disable_interactive_logging
+    # Enabled interactive logging throws an exception
+    # due to a call of sys.stdout.flush()
+    disable_interactive_logging()
+except Exception:
+    # Nothing should be handled here if TF is not available
+    pass
 
 
 class ProcessorServer(FastAPI):
+    def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
+        if not (processor_name or processor_class):
+            raise ValueError('Either "processor_name" or "processor_class" must be provided')
 
-    def __init__(self, processor_name: str, mongodb_addr: str, processor_class=None):
-        self.processor_name = processor_name
+        self.log = getLogger(__name__)
+        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
+        file_handler = logging.FileHandler(f'/tmp/server_{processor_name}_{getpid()}.log', mode='a')
+        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        file_handler.setFormatter(logging.Formatter(logging_format))
+        file_handler.setLevel(logging.DEBUG)
+        self.log.addHandler(file_handler)
+
         self.db_url = mongodb_addr
+        self.processor_name = processor_name
         self.ProcessorClass = processor_class
         self.ocrd_tool = None
         self.version = None
@@ -42,6 +72,9 @@ class ProcessorServer(FastAPI):
         if not self.ocrd_tool:
             raise Exception(f"The ocrd_tool is empty or missing")
 
+        if not self.processor_name:
+            self.processor_name = self.ocrd_tool['executable']
+
         tags_metadata = [
             {
                 'name': 'Processing',
@@ -50,7 +83,7 @@ class ProcessorServer(FastAPI):
         ]
 
         super().__init__(
-            title=self.ocrd_tool['executable'],
+            title=self.processor_name,
             description=self.ocrd_tool['description'],
             version=self.version,
             openapi_tags=tags_metadata,
@@ -99,11 +132,73 @@ class ProcessorServer(FastAPI):
         DBProcessorJob.Settings.name = self.processor_name
 
     async def get_processor_info(self):
+        if not self.ocrd_tool:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f'Empty or missing ocrd_tool'
+            )
         return self.ocrd_tool
 
-    async def process(self, data: PYJobInput, background_tasks: BackgroundTasks):
-        # TODO: Adapt from #884
-        pass
+    # Note: The Processing server pushes to a queue, while
+    #  the Processor Server creates (pushes to) a background task
+    async def push_processor_job(self, data: PYJobInput, background_tasks: BackgroundTasks):
+        if not self.ocrd_tool:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f'Empty or missing ocrd_tool'
+            )
+        report = ParameterValidator(self.ocrd_tool).validate(dict(data.parameters))
+        if not report.is_valid:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
+
+        if bool(data.path_to_mets) == bool(data.workspace_id):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Either 'path' or 'workspace_id' must be provided, but not both"
+            )
+
+        # This check is done to return early in case
+        # the workspace_id is provided but not existing in the DB
+        elif data.workspace_id:
+            try:
+                await db_get_workspace(data.workspace_id)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Workspace with id '{data.workspace_id}' not existing"
+                )
+
+        job = DBProcessorJob(
+            **data.dict(exclude_unset=True, exclude_none=True),
+            job_id=generate_id(),
+            processor_name=self.processor_name,
+            state=StateEnum.queued
+        )
+        await job.insert()
+
+        if self.ProcessorClass:
+            # Run the processor in the background
+            background_tasks.add_task(
+                self.run_processor_from_server,
+                job_id=job.id,
+                workspace_id=data.workspace_id,
+                page_id=data.page_id,
+                parameter=data.parameters,
+                input_file_grps=data.input_file_grps,
+                output_file_grps=data.output_file_grps,
+            )
+        else:
+            # Run the CLI in the background
+            background_tasks.add_task(
+                self.run_cli_from_server,
+                job_id=job.id,
+                workspace_id=data.workspace_id,
+                page_id=data.page_id,
+                input_file_grps=data.input_file_grps,
+                output_file_grps=data.output_file_grps,
+                parameter=data.parameters
+            )
+        return job.to_job_output()
 
     async def get_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         """ Return processing job-information from the database
@@ -144,8 +239,111 @@ class ProcessorServer(FastAPI):
                 check=True,
                 universal_newlines=True
             ).stdout
-        # the version string is in format: Version %s, ocrd/core %s
         return version_str
 
     def run_server(self, host, port):
         uvicorn.run(self, host=host, port=port, access_log=False)
+
+    async def run_cli_from_server(
+            self,
+            job_id: str,
+            processor_name: str,
+            workspace_id: str,
+            input_file_grps: List[str],
+            output_file_grps: List[str],
+            page_id: str,
+            parameters: dict
+    ):
+        log = getLogger('ocrd.processor.helpers.run_cli_from_api')
+
+        # Turn input/output file groups into a comma separated string
+        input_file_grps_str = ','.join(input_file_grps)
+        output_file_grps_str = ','.join(output_file_grps)
+
+        workspace_db = await db_get_workspace(workspace_id)
+        path_to_mets = workspace_db.workspace_mets_path
+        workspace = Resolver().workspace_from_url(path_to_mets)
+
+        start_time = datetime.now()
+        await db_update_processing_job(
+            job_id=job_id,
+            state=StateEnum.running,
+            start_time=start_time
+        )
+        # Execute the processor
+        return_code = run_cli(
+            executable=processor_name,
+            workspace=workspace,
+            page_id=page_id,
+            input_file_grp=input_file_grps_str,
+            output_file_grp=output_file_grps_str,
+            parameter=json.dumps(parameters),
+            mets_url=workspace.mets_target
+        )
+        end_time = datetime.now()
+        # Execution duration in ms
+        execution_duration = calculate_execution_time(start_time, end_time)
+
+        if return_code != 0:
+            job_state = StateEnum.failed
+            log.error(f'{self.processor_name} exited with non-zero return value {return_code}.')
+        else:
+            job_state = StateEnum.success
+
+        await db_update_processing_job(
+            job_id=job_id,
+            state=job_state,
+            end_time=end_time,
+            exec_time=f'{execution_duration} ms'
+        )
+
+    async def run_processor_from_server(
+            self,
+            job_id: str,
+            workspace_id: str,
+            input_file_grps: List[str],
+            output_file_grps: List[str],
+            page_id: str,
+            parameters: dict,
+    ):
+        log = getLogger('ocrd.processor.helpers.run_processor_from_api')
+
+        # Turn input/output file groups into a comma separated string
+        input_file_grps_str = ','.join(input_file_grps)
+        output_file_grps_str = ','.join(output_file_grps)
+
+        workspace_db = await db_get_workspace(workspace_id)
+        path_to_mets = workspace_db.workspace_mets_path
+        workspace = Resolver().workspace_from_url(path_to_mets)
+
+        is_success = True
+        start_time = datetime.now()
+        await db_update_processing_job(
+            job_id=job_id,
+            state=StateEnum.running,
+            start_time=start_time
+        )
+        try:
+            run_processor(
+                processorClass=self.ProcessorClass,
+                workspace=workspace,
+                page_id=page_id,
+                parameter=parameters,
+                input_file_grp=input_file_grps_str,
+                output_file_grp=output_file_grps_str,
+                instance_caching=True
+            )
+        except Exception as e:
+            is_success = False
+            log.exception(e)
+
+        end_time = datetime.now()
+        # Execution duration in ms
+        execution_duration = calculate_execution_time(start_time, end_time)
+        job_state = StateEnum.success if is_success else StateEnum.failed
+        await db_update_processing_job(
+            job_id=job_id,
+            state=job_state,
+            end_time=end_time,
+            exec_time=f'{execution_duration} ms'
+        )

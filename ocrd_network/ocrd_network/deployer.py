@@ -90,7 +90,7 @@ class Deployer:
     def _deploy_processing_worker(self, processor: WorkerConfig, host: HostData,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
 
-        self.log.debug(f"deploy '{processor.deploy_type}' processor: '{processor}' on '{host.config.address}'")
+        self.log.debug(f"deploy '{processor.deploy_type}' worker: '{processor}' on '{host.config.address}'")
 
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
@@ -114,7 +114,11 @@ class Deployer:
                 host.pids_docker.append(pid)
             sleep(0.1)
 
-    def _deploy_processor_server(self, mongodb_url: str) -> None:
+    def _deploy_processor_server(self, processor: WorkerConfig, host: HostData, mongodb_url: str) -> None:
+        self.log.debug(f"deploy '{processor.deploy_type}' processor server: '{processor}' on '{host.config.address}'")
+
+
+
         # TODO: Method for deploying a processor server
         pass
 
