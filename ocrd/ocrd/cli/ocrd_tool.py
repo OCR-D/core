@@ -88,16 +88,6 @@ def ocrd_tool_tool(ctx, tool_name):
 # ocrd ocrd-tool tool description
 # ----------------------------------------------------------------------
 
-class BashProcessor(Processor):
-    @property
-    def moduledir(self):
-        return os.path.dirname(ctx.filename)
-    # set docstrings to empty
-    # fixme: override the module-level docstring, too
-    __doc__ = None
-    def process(self):
-        return super()
-
 @ocrd_tool_tool.command('description', help="Describe tool")
 @pass_ocrd_tool
 def ocrd_tool_tool_description(ctx):
@@ -106,6 +96,10 @@ def ocrd_tool_tool_description(ctx):
 @ocrd_tool_tool.command('list-resources', help="List tool's file resources")
 @pass_ocrd_tool
 def ocrd_tool_tool_list_resources(ctx):
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
     BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
                   list_resources=True)
 
@@ -113,12 +107,22 @@ def ocrd_tool_tool_list_resources(ctx):
 @click.argument('res_name')
 @pass_ocrd_tool
 def ocrd_tool_tool_show_resource(ctx, res_name):
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
     BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
                   show_resource=res_name)
 
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @pass_ocrd_tool
 def ocrd_tool_tool_params_help(ctx):
+    class BashProcessor(Processor):
+        # set docstrings to empty
+        # fixme: override the module-level docstring, too
+        __doc__ = None
+        def process(self):
+            return super()
     BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
                   show_help=True)
 
