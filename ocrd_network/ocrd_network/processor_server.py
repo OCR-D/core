@@ -1,6 +1,4 @@
-from contextlib import redirect_stdout
 from datetime import datetime
-from io import StringIO
 import json
 import logging
 from os import environ, getpid
@@ -14,9 +12,9 @@ from ocrd.processor.helpers import run_cli, run_processor
 from ocrd import Resolver
 from ocrd_validators import ParameterValidator
 from ocrd_utils import (
+    initLogging,
     getLogger,
-    get_ocrd_tool_json,
-    parse_json_string_with_comments
+    get_ocrd_tool_json
 )
 
 from .database import (
@@ -51,14 +49,8 @@ class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
             raise ValueError('Either "processor_name" or "processor_class" must be provided')
-
+        initLogging()
         self.log = getLogger(__name__)
-        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
-        file_handler = logging.FileHandler(f'/tmp/server_{processor_name}_{getpid()}.log', mode='a')
-        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        file_handler.setFormatter(logging.Formatter(logging_format))
-        file_handler.setLevel(logging.DEBUG)
-        self.log.addHandler(file_handler)
 
         self.db_url = mongodb_addr
         self.processor_name = processor_name
@@ -105,7 +97,7 @@ class ProcessorServer(FastAPI):
 
         self.router.add_api_route(
             path='/',
-            endpoint=self.process,
+            endpoint=self.create_processor_job_task,
             methods=['POST'],
             tags=['Processing'],
             status_code=status.HTTP_202_ACCEPTED,
@@ -141,7 +133,7 @@ class ProcessorServer(FastAPI):
 
     # Note: The Processing server pushes to a queue, while
     #  the Processor Server creates (pushes to) a background task
-    async def push_processor_job(self, data: PYJobInput, background_tasks: BackgroundTasks):
+    async def create_processor_job_task(self, data: PYJobInput, background_tasks: BackgroundTasks):
         if not self.ocrd_tool:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -216,10 +208,7 @@ class ProcessorServer(FastAPI):
         if self.ocrd_tool:
             return self.ocrd_tool
         if self.ProcessorClass:
-            str_out = StringIO()
-            with redirect_stdout(str_out):
-                self.ProcessorClass(workspace=None, dump_json=True)
-            ocrd_tool = parse_json_string_with_comments(str_out.getvalue())
+            ocrd_tool = self.ProcessorClass(workspace=None, version=True).ocrd_tool
         else:
             ocrd_tool = get_ocrd_tool_json(self.processor_name)
         return ocrd_tool
@@ -228,10 +217,7 @@ class ProcessorServer(FastAPI):
         if self.version:
             return self.version
         if self.ProcessorClass:
-            str_out = StringIO()
-            with redirect_stdout(str_out):
-                self.ProcessorClass(workspace=None, show_version=True)
-            version_str = str_out.getvalue()
+            version_str = self.ProcessorClass(workspace=None, version=True).version
         else:
             version_str = run(
                 [self.processor_name, '--version'],
@@ -241,8 +227,14 @@ class ProcessorServer(FastAPI):
             ).stdout
         return version_str
 
-    def run_server(self, host, port):
-        uvicorn.run(self, host=host, port=port, access_log=False)
+    def run_server(self, host, port, access_log=False):
+        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
+        file_handler = logging.FileHandler(f'/tmp/server_{self.processor_name}_{port}_{getpid()}.log', mode='a')
+        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        file_handler.setFormatter(logging.Formatter(logging_format))
+        file_handler.setLevel(logging.DEBUG)
+        self.log.addHandler(file_handler)
+        uvicorn.run(self, host=host, port=port, access_log=access_log)
 
     async def run_cli_from_server(
             self,

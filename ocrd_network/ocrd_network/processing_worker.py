@@ -19,7 +19,7 @@ import pika.spec
 import pika.adapters.blocking_connection
 
 from ocrd import Resolver
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, initLogging
 from ocrd.processor.helpers import run_cli, run_processor
 
 from .database import (
@@ -55,6 +55,7 @@ except Exception:
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
+        initLogging()
         self.log = getLogger(__name__)
         # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
         file_handler = logging.FileHandler(f'/tmp/worker_{processor_name}_{getpid()}.log', mode='a')

@@ -16,8 +16,7 @@ __all__ = [
     'create_ssh_client',
     'CustomDockerClient',
     'DeployType',
-    'HostData',
-    'is_bashlib_processor'
+    'HostData'
 ]
 
 
@@ -38,7 +37,6 @@ def create_docker_client(address: str, username: str, password: Union[str, None]
     return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
-
 class HostData:
     """class to store runtime information for a host
     """
@@ -48,6 +46,11 @@ class HostData:
         self.docker_client: Union[CustomDockerClient, None] = None
         self.pids_native: List[str] = []
         self.pids_docker: List[str] = []
+        # TODO: Revisit this, currently just mimicking the old impl
+        self.processor_server_pids_native: List[str] = []
+        self.processor_server_pids_docker: List[str] = []
+        # Key: processor_name, Value: list of ports
+        self.processor_server_ports: dict = {}
 
     @staticmethod
     def from_config(config: List[HostConfig]) -> List[HostData]:

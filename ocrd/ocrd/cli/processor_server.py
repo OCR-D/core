@@ -17,15 +17,21 @@ from ocrd_network import (
 
 @click.command('processor-server')
 @click.argument('processor_name', required=True, type=click.STRING)
-@click.option('-d', '--address',
+@click.option('--agent_type',
+              help='The type of this network agent',
+              default="server",
+              type=click.STRING,
+              required=True)
+@click.option('--agent_address',
               help='The URL of the processor server, format: host:port',
               type=ProcessingServerParamType(),
               required=True)
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
               help='The URL of the MongoDB, format: mongodb://host:port',
-              type=DatabaseParamType())
-def processor_server_cli(processor_name: str, address: str, database: str):
+              type=DatabaseParamType(),
+              required=True)
+def processor_server_cli(processor_name: str, agent_type: str, agent_address: str, database: str):
     """
     Start ocr-d processor as a server
     """
@@ -33,16 +39,14 @@ def processor_server_cli(processor_name: str, address: str, database: str):
     # TODO: Remove before the release
     logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
-    # Note, the address is already validated with the type field
-    host, port = address.split(':')
-
     try:
+        # TODO: Better validate that inside the ProcessorServer itself
+        host, port = agent_address.split(':')
         processor_server = ProcessorServer(
             mongodb_addr=database,
             processor_name=processor_name,
             processor_class=None,  # For readability purposes assigned here
         )
-        processor_server.run_server(host=host, port=port, access_log=False)
-
+        processor_server.run_server(host=host, port=int(port))
     except Exception as e:
         raise Exception("Processor server has failed with error") from e

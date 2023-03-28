@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Dict, Union
 from paramiko import SSHClient
 from re import search as re_search
+from os import getpid
 from time import sleep
 
 
@@ -77,10 +78,29 @@ class Deployer:
                     host.config.keypath
                 )
 
-            # TODO: Call the _deploy_processor_server() here and adapt accordingly
-
             for processor in host.config.processors:
                 self._deploy_processing_worker(processor, host, rabbitmq_url, mongodb_url)
+
+            # TODO: This is not optimal - the entire method should be refactored!
+            if (any(s.deploy_type == DeployType.native for s in host.config.servers)
+                    and not host.ssh_client):
+                host.ssh_client = create_ssh_client(
+                    host.config.address,
+                    host.config.username,
+                    host.config.password,
+                    host.config.keypath
+                )
+            if (any(s.deploy_type == DeployType.docker for s in host.config.servers)
+                    and not host.docker_client):
+                host.docker_client = create_docker_client(
+                    host.config.address,
+                    host.config.username,
+                    host.config.password,
+                    host.config.keypath
+                )
+
+            for server in host.config.servers:
+                self._deploy_processor_server(server, host, mongodb_url)
 
             if host.ssh_client:
                 host.ssh_client.close()
@@ -89,8 +109,7 @@ class Deployer:
 
     def _deploy_processing_worker(self, processor: WorkerConfig, host: HostData,
                                   rabbitmq_url: str, mongodb_url: str) -> None:
-
-        self.log.debug(f"deploy '{processor.deploy_type}' worker: '{processor}' on '{host.config.address}'")
+        self.log.debug(f"deploy '{processor.deploy_type}' processing worker: '{processor.name}' on '{host.config.address}'")
 
         for _ in range(processor.count):
             if processor.deploy_type == DeployType.native:
@@ -114,13 +133,28 @@ class Deployer:
                 host.pids_docker.append(pid)
             sleep(0.1)
 
-    def _deploy_processor_server(self, processor: WorkerConfig, host: HostData, mongodb_url: str) -> None:
-        self.log.debug(f"deploy '{processor.deploy_type}' processor server: '{processor}' on '{host.config.address}'")
+    # TODO: Revisit this to remove code duplications of deploy_* methods
+    def _deploy_processor_server(self, server: ProcessorServerConfig, host: HostData, mongodb_url: str) -> None:
+        self.log.debug(f"deploy '{server.deploy_type}' processor server: '{server.name}' on '{host.config.address}'")
+        if server.deploy_type == DeployType.native:
+            assert host.ssh_client
+            pid = self.start_native_processor_server(
+                client=host.ssh_client,
+                processor_name=server.name,
+                agent_address=f'{host.config.address}:{server.port}',
+                database_url=mongodb_url,
+            )
+            host.processor_server_pids_native.append(pid)
 
-
-
-        # TODO: Method for deploying a processor server
-        pass
+            if server.name in host.processor_server_ports:
+                if host.processor_server_ports[server.name]:
+                    host.processor_server_ports[server.name] = host.processor_server_ports[server.name].append(server.port)
+                else:
+                    host.processor_server_ports[server.name] = [server.port]
+            else:
+                host.processor_server_ports[server.name] = [server.port]
+        else:
+            raise Exception("Deploying docker processor server is not supported yet!")
 
     def deploy_rabbitmq(self, image: str, detach: bool, remove: bool,
                         ports_mapping: Union[Dict, None] = None) -> str:
@@ -261,18 +295,43 @@ class Deployer:
                 host.docker_client = create_docker_client(host.config.address, host.config.username,
                                                           host.config.password, host.config.keypath)
             # Kill deployed OCR-D processor instances on this Processing worker host
-            self.kill_processing_worker(host)
+            self.kill_processing_workers(host)
 
-    def kill_processing_worker(self, host: HostData) -> None:
-        for pid in host.pids_native:
-            self.log.debug(f"Trying to kill/stop native processor: with PID: '{pid}'")
-            host.ssh_client.exec_command(f'kill {pid}')
-        host.pids_native = []
+            # Kill deployed Processor Server instances on this host
+            self.kill_processor_servers(host)
 
-        for pid in host.pids_docker:
-            self.log.debug(f"Trying to kill/stop docker container with PID: '{pid}'")
-            host.docker_client.containers.get(pid).stop()
-        host.pids_docker = []
+    # TODO: Optimize the code duplication from start_* and kill_* methods
+    def kill_processing_workers(self, host: HostData) -> None:
+        amount = len(host.pids_native)
+        if amount:
+            self.log.info(f"Trying to kill/stop {amount} native processing workers:")
+            for pid in host.pids_native:
+                self.log.info(f"Native with PID: '{pid}'")
+                host.ssh_client.exec_command(f'kill {pid}')
+            host.pids_native = []
+        amount = len(host.pids_docker)
+        if amount:
+            self.log.info(f"Trying to kill/stop {amount} docker processing workers:")
+            for pid in host.pids_docker:
+                self.log.info(f"Docker with PID: '{pid}'")
+                host.docker_client.containers.get(pid).stop()
+            host.pids_docker = []
+
+    def kill_processor_servers(self, host: HostData) -> None:
+        amount = len(host.processor_server_pids_native)
+        if amount:
+            self.log.info(f"Trying to kill/stop {amount} native processor servers:")
+            for pid in host.processor_server_pids_native:
+                self.log.info(f"Native with PID: '{pid}'")
+                host.ssh_client.exec_command(f'kill {pid}')
+            host.processor_server_pids_native = []
+        amount = len(host.processor_server_pids_docker)
+        if amount:
+            self.log.info(f"Trying to kill/stop {amount} docker processor servers:")
+            for pid in host.processor_server_pids_docker:
+                self.log.info(f"Docker with PID: '{pid}'")
+                host.docker_client.containers.get(pid).stop()
+            host.processor_server_pids_docker = []
 
     def start_native_processor(self, client: SSHClient, processor_name: str, queue_url: str,
                                database_url: str) -> str:
@@ -287,17 +346,17 @@ class Deployer:
         Returns:
             str: pid of running process
         """
-        self.log.info(f'Starting native processor: {processor_name}')
+        self.log.info(f'Starting native processing worker: {processor_name}')
         channel = client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} --database {database_url} --queue {queue_url}'
+        cmd = f'{processor_name} --agent_type worker --database {database_url} --queue {queue_url}'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
         # `xyz` before and after the code to easily be able to filter out the pid via regex when
         # returning from the function
         logpath = '/tmp/ocrd-processing-server-startup.log'
-        stdin.write(f"echo starting processor with '{cmd}' >> '{logpath}'\n")
+        stdin.write(f"echo starting processing worker with '{cmd}' >> '{logpath}'\n")
         stdin.write(f'{cmd} >> {logpath} 2>&1 &\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
@@ -307,8 +366,31 @@ class Deployer:
 
     def start_docker_processor(self, client: CustomDockerClient, processor_name: str,
                                queue_url: str, database_url: str) -> str:
+
+        # TODO: Raise an exception here as well?
+        #  raise Exception("Deploying docker processing worker is not supported yet!")
+
         self.log.info(f'Starting docker container processor: {processor_name}')
         # TODO: add real command here to start processing server in docker here
         res = client.containers.run('debian', 'sleep 500s', detach=True, remove=True)
         assert res and res.id, f'Running processor: {processor_name} in docker-container failed'
         return res.id
+
+    # TODO: Just a copy of the above start_native_processor() method.
+    #  Far from being great... But should be good as a starting point
+    def start_native_processor_server(self, client: SSHClient, processor_name: str, agent_address: str, database_url: str) -> str:
+        self.log.info(f"Starting native processor server: {processor_name} on {agent_address}")
+        channel = client.invoke_shell()
+        stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
+        cmd = f'{processor_name} --agent_type server --agent_address {agent_address} --database {database_url}'
+        port = agent_address.split(':')[1]
+        logpath = f'/tmp/server_{processor_name}_{port}_{getpid()}.log'
+        # TODO: This entire stdin/stdout thing is broken with servers!
+        stdin.write(f"echo starting processor server with '{cmd}' >> '{logpath}'\n")
+        stdin.write(f'{cmd} >> {logpath} 2>&1 &\n')
+        stdin.write('echo xyz$!xyz \n exit \n')
+        output = stdout.read().decode('utf-8')
+        stdout.close()
+        stdin.close()
+        return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
+        pass

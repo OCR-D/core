@@ -20,15 +20,22 @@ from ocrd_network import (
 
 @click.command('processing-worker')
 @click.argument('processor_name', required=True, type=click.STRING)
+@click.option('--agent_type',
+              help='The type of this network agent',
+              default="worker",
+              type=click.STRING,
+              required=True)
 @click.option('-q', '--queue',
               default="amqp://admin:admin@localhost:5672/",
               help='The URL of the Queue Server, format: amqp://username:password@host:port/vhost',
-              type=QueueServerParamType())
+              type=QueueServerParamType(),
+              required=True)
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
               help='The URL of the MongoDB, format: mongodb://host:port',
-              type=DatabaseParamType())
-def processing_worker_cli(processor_name: str, queue: str, database: str):
+              type=DatabaseParamType(),
+              required=True)
+def processing_worker_cli(processor_name: str, agent_type: str, queue: str, database: str):
     """
     Start a processing worker (a specific ocr-d processor)
     """

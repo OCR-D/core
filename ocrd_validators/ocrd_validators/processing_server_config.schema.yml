@@ -58,6 +58,7 @@ properties:
         - address
         - username
         - workers
+        - servers
       oneOf:
         - required:
             - password
@@ -75,7 +76,7 @@ properties:
           description: Path to private key file
           type: string
         workers:
-          description: List of workers which will be deployed
+          description: List of processing workers that will be deployed
           type: array
           minItems: 1
           items:
@@ -97,12 +98,41 @@ properties:
                 minimum: 1
                 default: 1
               deploy_type:
-                description: Should the processor be deployed natively or with Docker
+                description: Should the processing worker be deployed natively or with Docker
                 type: string
                 enum:
                   - native
                   - docker
                 default: native
+        servers:
+          description: List of processor servers that will be deployed
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - name
+              - port
+            properties:
+              name:
+                description: Name of the processor
+                type: string
+                pattern: "^ocrd-.*$"
+                examples:
+                  - ocrd-cis-ocropy-binarize
+                  - ocrd-olena-binarize
+              deploy_type:
+                description: Should the processor server natively or with Docker
+                type: string
+                enum:
+                  - native
+                  - docker
+                default: native
+              port:
+                description: The port number to be deployed on the host
+                $ref: "#/$defs/port"
+
 $defs:
   address:
     type: string

@@ -8,6 +8,7 @@ __all__ = [
     'HostConfig',
     'WorkerConfig',
     'MongoConfig',
+    'ProcessorServerConfig',
     'QueueConfig',
 ]
 
@@ -49,6 +50,12 @@ class HostConfig:
             self.processors.append(
                 WorkerConfig(worker['name'], worker['number_of_instance'], deploy_type)
             )
+        self.servers = []
+        for server in config['servers']:
+            deploy_type = DeployType.from_str(server['deploy_type'])
+            self.servers.append(
+                ProcessorServerConfig(server['name'], deploy_type, server['port'])
+            )
 
 
 class WorkerConfig:
@@ -59,6 +66,15 @@ class WorkerConfig:
         self.name = name
         self.count = count
         self.deploy_type = deploy_type
+
+
+# TODO: Not a big fan of the way these configs work...
+#  Implemented this way to fit the general logic of previous impl
+class ProcessorServerConfig:
+    def __init__(self, name: str, deploy_type: DeployType, port: int):
+        self.name = name
+        self.deploy_type = deploy_type
+        self.port = port
 
 
 class MongoConfig:

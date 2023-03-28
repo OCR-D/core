@@ -1,3 +1,4 @@
+import click
 from click import option, Path
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
@@ -33,6 +34,8 @@ def ocrd_cli_options(f):
         parameter_option,
         parameter_override_option,
         loglevel_option,
+        option('--agent_type', type=click.STRING),
+        option('--agent_address', type=click.STRING),
         option('--queue', type=QueueServerParamType()),
         option('--database', type=DatabaseParamType()),
         option('-C', '--show-resource'),
@@ -45,4 +48,3 @@ def ocrd_cli_options(f):
     for param in params:
         param(f)
     return f
-

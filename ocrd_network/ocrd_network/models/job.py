@@ -25,6 +25,9 @@ class PYJobInput(BaseModel):
     parameters: dict = {}  # Always set to empty dict when None, otherwise it fails ocr-d-validation
     result_queue_name: Optional[str] = None
     callback_url: Optional[str] = None
+    # Used to toggle between sending requests to 'worker and 'server',
+    # i.e., Processing Worker and Processor Server, respectively
+    agent_type: Optional[str] = 'worker'
 
     class Config:
         schema_extra = {
