@@ -245,17 +245,16 @@ class ProcessingServer(FastAPI):
                     detail=f"Process queue with id '{processor_name}' not existing"
                 )
 
-        # validate additional parameters
-        if data.parameters:
-            ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
-            if not ocrd_tool:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Ocrd tool JSON of '{processor_name}' not found!"
-                )
-            report = ParameterValidator(ocrd_tool).validate(data.parameters)
-            if not report.is_valid:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
+        # validate parameters
+        ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
+        if not ocrd_tool:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Ocrd tool JSON of '{processor_name}' not found!"
+            )
+        report = ParameterValidator(ocrd_tool).validate(dict(data.parameters))
+        if not report.is_valid:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
 
         if bool(data.path_to_mets) == bool(data.workspace_id):
             raise HTTPException(
