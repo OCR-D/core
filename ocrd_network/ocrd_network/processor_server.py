@@ -1,25 +1,14 @@
 from datetime import datetime
-import json
 import logging
-from os import environ, getpid
+from os import getpid
 from subprocess import run, PIPE
-from typing import List
 import uvicorn
 
 from fastapi import FastAPI, HTTPException, status, BackgroundTasks
 
-from ocrd.processor.helpers import run_cli, run_processor
-from ocrd import Resolver
-from ocrd_validators import ParameterValidator
-from ocrd_utils import (
-    getLogger,
-    get_ocrd_tool_json
-)
-
+from ocrd_utils import getLogger, get_ocrd_tool_json
 from .database import (
     DBProcessorJob,
-    db_get_processing_job,
-    db_get_workspace,
     db_update_processing_job,
     initiate_database
 )
@@ -29,19 +18,20 @@ from .models import (
     PYOcrdTool,
     StateEnum
 )
-from .utils import calculate_execution_time, generate_id
+from .process_helpers import run_single_execution
+from .server_utils import (
+    _get_processor_job,
+    validate_and_resolve_mets_path,
+    validate_job_input
+)
+from .utils import (
+    calculate_execution_time,
+    generate_id,
+    tf_disable_interactive_logs
+)
 
 # TODO: Check this again when the logging is refactored
-try:
-    # This env variable must be set before importing from Keras
-    environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    from tensorflow.keras.utils import disable_interactive_logging
-    # Enabled interactive logging throws an exception
-    # due to a call of sys.stdout.flush()
-    disable_interactive_logging()
-except Exception:
-    # Nothing should be handled here if TF is not available
-    pass
+tf_disable_interactive_logs()
 
 
 class ProcessorServer(FastAPI):
@@ -107,7 +97,7 @@ class ProcessorServer(FastAPI):
 
         self.router.add_api_route(
             path='/{job_id}',
-            endpoint=self.get_job,
+            endpoint=self.get_processor_job,
             methods=['GET'],
             tags=['Processing'],
             status_code=status.HTTP_200_OK,
@@ -131,78 +121,53 @@ class ProcessorServer(FastAPI):
 
     # Note: The Processing server pushes to a queue, while
     #  the Processor Server creates (pushes to) a background task
-    async def create_processor_job_task(self, data: PYJobInput, background_tasks: BackgroundTasks):
-        if not self.ocrd_tool:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f'Empty or missing ocrd_tool'
-            )
-        report = ParameterValidator(self.ocrd_tool).validate(dict(data.parameters))
-        if not report.is_valid:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
+    async def create_processor_job_task(self, job_input: PYJobInput, background_tasks: BackgroundTasks):
+        validate_job_input(self.log, self.processor_name, self.ocrd_tool, job_input)
+        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=True)
 
-        if bool(data.path_to_mets) == bool(data.workspace_id):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Either 'path' or 'workspace_id' must be provided, but not both"
-            )
-
-        # This check is done to return early in case
-        # the workspace_id is provided but not existing in the DB
-        elif data.workspace_id:
-            try:
-                await db_get_workspace(data.workspace_id)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Workspace with id '{data.workspace_id}' not existing"
-                )
-
+        job_id = generate_id()
         job = DBProcessorJob(
-            **data.dict(exclude_unset=True, exclude_none=True),
-            job_id=generate_id(),
+            **job_input.dict(exclude_unset=True, exclude_none=True),
+            job_id=job_id,
             processor_name=self.processor_name,
             state=StateEnum.queued
         )
         await job.insert()
 
-        if self.ProcessorClass:
-            # Run the processor in the background
-            background_tasks.add_task(
-                self.run_processor_from_server,
-                job_id=job.job_id,
-                workspace_id=data.workspace_id,
-                path_to_mets=data.path_to_mets,
-                page_id=data.page_id,
-                parameters=data.parameters,
-                input_file_grps=data.input_file_grps,
-                output_file_grps=data.output_file_grps,
-            )
-        else:
-            # Run the CLI in the background
-            background_tasks.add_task(
-                self.run_cli_from_server,
-                job_id=job.job_id,
-                workspace_id=data.workspace_id,
-                path_to_mets=data.path_to_mets,
-                page_id=data.page_id,
-                input_file_grps=data.input_file_grps,
-                output_file_grps=data.output_file_grps,
-                parameters=data.parameters
-            )
-        return job.to_job_output()
-
-    async def get_job(self, processor_name: str, job_id: str) -> PYJobOutput:
-        """ Return processing job-information from the database
-        """
+        execution_failed = False
+        start_time = datetime.now()
+        await db_update_processing_job(
+            job_id=job_id,
+            state=StateEnum.running,
+            start_time=start_time
+        )
         try:
-            job = await db_get_processing_job(job_id)
-            return job.to_job_output()
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
+            background_tasks.add_task(
+                run_single_execution,
+                ProcessorClass=self.ProcessorClass,
+                executable=self.processor_name,
+                abs_path_to_mets=job.path_to_mets,
+                input_file_grps=job.input_file_grps,
+                output_file_grps=job.output_file_grps,
+                page_id=job.page_id,
+                parameters=job.parameters
             )
+        except Exception as error:
+            self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {job.path_to_mets}, "
+                           f"input_grps: {job.input_file_grps}, output_file_grps: {job.output_file_grps}, "
+                           f"page_id: {job.page_id}, parameters: {job.parameters}")
+            self.log.error(error)
+            execution_failed = True
+        end_time = datetime.now()
+        exec_duration = calculate_execution_time(start_time, end_time)
+        job_state = StateEnum.success if not execution_failed else StateEnum.failed
+        await db_update_processing_job(
+            job_id=job_id,
+            state=job_state,
+            end_time=end_time,
+            exec_time=f'{exec_duration} ms'
+        )
+        return job.to_job_output()
 
     def get_ocrd_tool(self):
         if self.ocrd_tool:
@@ -236,108 +201,5 @@ class ProcessorServer(FastAPI):
         self.log.addHandler(file_handler)
         uvicorn.run(self, host=host, port=port, access_log=access_log)
 
-    async def run_cli_from_server(
-            self,
-            job_id: str,
-            processor_name: str,
-            workspace_id: str,
-            path_to_mets: str,
-            input_file_grps: List[str],
-            output_file_grps: List[str],
-            page_id: str,
-            parameters: dict
-    ):
-        log = getLogger('ocrd.processor.helpers.run_cli_from_api')
-
-        # Turn input/output file groups into a comma separated string
-        input_file_grps_str = ','.join(input_file_grps)
-        output_file_grps_str = ','.join(output_file_grps)
-
-        if not path_to_mets and workspace_id:
-            path_to_mets = await db_get_workspace(workspace_id).workspace_mets_path
-        workspace = Resolver().workspace_from_url(path_to_mets)
-
-        start_time = datetime.now()
-        await db_update_processing_job(
-            job_id=job_id,
-            state=StateEnum.running,
-            start_time=start_time
-        )
-        # Execute the processor
-        return_code = run_cli(
-            executable=processor_name,
-            workspace=workspace,
-            page_id=page_id,
-            input_file_grp=input_file_grps_str,
-            output_file_grp=output_file_grps_str,
-            parameter=json.dumps(parameters),
-            mets_url=workspace.mets_target
-        )
-        end_time = datetime.now()
-        # Execution duration in ms
-        execution_duration = calculate_execution_time(start_time, end_time)
-
-        if return_code != 0:
-            job_state = StateEnum.failed
-            log.error(f'{self.processor_name} exited with non-zero return value {return_code}.')
-        else:
-            job_state = StateEnum.success
-
-        await db_update_processing_job(
-            job_id=job_id,
-            state=job_state,
-            end_time=end_time,
-            exec_time=f'{execution_duration} ms'
-        )
-
-    async def run_processor_from_server(
-            self,
-            job_id: str,
-            workspace_id: str,
-            path_to_mets: str,
-            input_file_grps: List[str],
-            output_file_grps: List[str],
-            page_id: str,
-            parameters: dict,
-    ):
-        log = getLogger('ocrd.processor.helpers.run_processor_from_api')
-
-        # Turn input/output file groups into a comma separated string
-        input_file_grps_str = ','.join(input_file_grps)
-        output_file_grps_str = ','.join(output_file_grps)
-
-        if not path_to_mets and workspace_id:
-            path_to_mets = await db_get_workspace(workspace_id).workspace_mets_path
-        workspace = Resolver().workspace_from_url(path_to_mets)
-
-        is_success = True
-        start_time = datetime.now()
-        await db_update_processing_job(
-            job_id=job_id,
-            state=StateEnum.running,
-            start_time=start_time
-        )
-        try:
-            run_processor(
-                processorClass=self.ProcessorClass,
-                workspace=workspace,
-                page_id=page_id,
-                parameter=parameters,
-                input_file_grp=input_file_grps_str,
-                output_file_grp=output_file_grps_str,
-                instance_caching=True
-            )
-        except Exception as e:
-            is_success = False
-            log.exception(e)
-
-        end_time = datetime.now()
-        # Execution duration in ms
-        execution_duration = calculate_execution_time(start_time, end_time)
-        job_state = StateEnum.success if is_success else StateEnum.failed
-        await db_update_processing_job(
-            job_id=job_id,
-            state=job_state,
-            end_time=end_time,
-            exec_time=f'{execution_duration} ms'
-        )
+    async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
+        return await _get_processor_job(self.log, processor_name, job_id)

@@ -17,11 +17,6 @@ from ocrd_network import (
 
 @click.command('processor-server')
 @click.argument('processor_name', required=True, type=click.STRING)
-@click.option('--agent_type',
-              help='The type of this network agent',
-              default="server",
-              type=click.STRING,
-              required=True)
 @click.option('--agent_address',
               help='The URL of the processor server, format: host:port',
               type=ProcessingServerParamType(),

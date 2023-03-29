@@ -9,18 +9,14 @@ is a single OCR-D Processor instance.
 """
 
 from datetime import datetime
-import json
 import logging
-from os import environ, getpid
+from os import getpid
 import requests
-from typing import Any, List
 
 import pika.spec
 import pika.adapters.blocking_connection
 
-from ocrd import Resolver
 from ocrd_utils import getLogger
-from ocrd.processor.helpers import run_cli, run_processor
 
 from .database import (
     sync_initiate_database,
@@ -28,6 +24,7 @@ from .database import (
     sync_db_update_processing_job,
 )
 from .models import StateEnum
+from .process_helpers import run_single_execution
 from .rabbitmq_utils import (
     OcrdProcessingMessage,
     OcrdResultMessage,
@@ -36,21 +33,13 @@ from .rabbitmq_utils import (
 )
 from .utils import (
     calculate_execution_time,
+    tf_disable_interactive_logs,
     verify_database_uri,
     verify_and_parse_mq_uri
 )
 
 # TODO: Check this again when the logging is refactored
-try:
-    # This env variable must be set before importing from Keras
-    environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    from tensorflow.keras.utils import disable_interactive_logging
-    # Enabled interactive logging throws an exception
-    # due to a call of sys.stdout.flush()
-    disable_interactive_logging()
-except Exception:
-    # Nothing should be handled here if TF is not available
-    pass
+tf_disable_interactive_logs()
 
 
 class ProcessingWorker:
@@ -83,7 +72,7 @@ class ProcessingWorker:
         self.processor_name = processor_name
         # The processor class to be used to instantiate the processor
         # Think of this as a func pointer to the constructor of the respective OCR-D processor
-        self.processor_class = processor_class
+        self.ProcessorClass = processor_class
         # Gets assigned when `connect_consumer` is called on the worker object
         # Used to consume OcrdProcessingMessage from the queue with name {processor_name}
         self.rmq_consumer = None
@@ -192,20 +181,21 @@ class ProcessingWorker:
         # may not contain certain keys. Simply passing None in the OcrdProcessingMessage constructor
         # breaks the message validator schema which expects String, but not None due to the Optional[] wrapper.
         pm_keys = processing_message.__dict__.keys()
+        job_id = processing_message.job_id
+        input_file_grps = processing_message.input_file_grps
         output_file_grps = processing_message.output_file_grps if 'output_file_grps' in pm_keys else None
         path_to_mets = processing_message.path_to_mets if 'path_to_mets' in pm_keys else None
         workspace_id = processing_message.workspace_id if 'workspace_id' in pm_keys else None
         page_id = processing_message.page_id if 'page_id' in pm_keys else None
         result_queue_name = processing_message.result_queue_name if 'result_queue_name' in pm_keys else None
         callback_url = processing_message.callback_url if 'callback_url' in pm_keys else None
+        parameters = processing_message.parameters if processing_message.parameters else {}
 
         if not path_to_mets and workspace_id:
             path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
 
-        workspace = Resolver().workspace_from_url(path_to_mets)
-
-        job_id = processing_message.job_id
-
+        execution_failed = False
+        self.log.debug(f'Invoking processor: {self.processor_name}')
         start_time = datetime.now()
         sync_db_update_processing_job(
             job_id=job_id,
@@ -213,35 +203,30 @@ class ProcessingWorker:
             path_to_mets=path_to_mets,
             start_time=start_time
         )
-        if self.processor_class:
-            self.log.debug(f'Invoking the pythonic processor: {self.processor_name}')
-            return_status = self.run_processor_from_worker(
-                processor_class=self.processor_class,
-                workspace=workspace,
-                page_id=page_id,
-                input_file_grps=processing_message.input_file_grps,
-                output_file_grps=output_file_grps,
-                parameter=processing_message.parameters
-            )
-        else:
-            self.log.debug(f'Invoking the cli: {self.processor_name}')
-            return_status = self.run_cli_from_worker(
+        try:
+            run_single_execution(
+                ProcessorClass=self.ProcessorClass,
                 executable=self.processor_name,
-                workspace=workspace,
-                page_id=page_id,
-                input_file_grps=processing_message.input_file_grps,
+                abs_path_to_mets=path_to_mets,
+                input_file_grps=input_file_grps,
                 output_file_grps=output_file_grps,
-                parameter=processing_message.parameters
+                page_id=page_id,
+                parameters=processing_message.parameters
             )
+        except Exception as error:
+            self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {path_to_mets}, "
+                           f"input_grps: {input_file_grps}, output_file_grps: {output_file_grps}, "
+                           f"page_id: {page_id}, parameters: {parameters}")
+            self.log.error(error)
+            execution_failed = True
         end_time = datetime.now()
-        # Execution duration in ms
-        execution_duration = calculate_execution_time(start_time, end_time)
-        job_state = StateEnum.success if return_status else StateEnum.failed
+        exec_duration = calculate_execution_time(start_time, end_time)
+        job_state = StateEnum.success if not execution_failed else StateEnum.failed
         sync_db_update_processing_job(
             job_id=job_id,
             state=job_state,
             end_time=end_time,
-            exec_time=f'{execution_duration} ms'
+            exec_time=f'{exec_duration} ms'
         )
 
         if result_queue_name or callback_url:
@@ -253,11 +238,9 @@ class ProcessingWorker:
                 workspace_id=workspace_id
             )
             self.log.info(f'Result message: {result_message}')
-
             # If the result_queue field is set, send the result message to a result queue
             if result_queue_name:
                 self.publish_to_result_queue(result_queue_name, result_message)
-
             # If the callback_url field is set, post the result message to a callback url
             if callback_url:
                 self.post_to_callback_url(callback_url, result_message)
@@ -286,65 +269,3 @@ class ProcessingWorker:
         }
         response = requests.post(url=callback_url, headers=headers, json=json_data)
         self.log.info(f'Response from callback_url "{response}"')
-
-    def run_processor_from_worker(
-            self,
-            processor_class,
-            workspace,
-            page_id: str,
-            input_file_grps: List[str],
-            output_file_grps: List[str],
-            parameter: dict,
-    ) -> bool:
-        input_file_grps_str = ','.join(input_file_grps)
-        output_file_grps_str = ','.join(output_file_grps)
-
-        success = True
-        try:
-            run_processor(
-                processorClass=processor_class,
-                workspace=workspace,
-                page_id=page_id,
-                parameter=parameter,
-                input_file_grp=input_file_grps_str,
-                output_file_grp=output_file_grps_str,
-                instance_caching=True
-            )
-        except Exception as e:
-            success = False
-            self.log.exception(e)
-
-        if not success:
-            self.log.error(f'{processor_class} failed with an exception.')
-        else:
-            self.log.debug(f'{processor_class} exited with success.')
-        return success
-
-    def run_cli_from_worker(
-            self,
-            executable: str,
-            workspace,
-            page_id: str,
-            input_file_grps: List[str],
-            output_file_grps: List[str],
-            parameter: dict
-    ) -> bool:
-        input_file_grps_str = ','.join(input_file_grps)
-        output_file_grps_str = ','.join(output_file_grps)
-
-        return_code = run_cli(
-            executable=executable,
-            workspace=workspace,
-            page_id=page_id,
-            input_file_grp=input_file_grps_str,
-            output_file_grp=output_file_grps_str,
-            parameter=json.dumps(parameter),
-            mets_url=workspace.mets_target
-        )
-
-        if return_code != 0:
-            self.log.error(f'{executable} exited with non-zero return value {return_code}.')
-            return False
-        else:
-            self.log.debug(f'{executable} exited with success.')
-            return True

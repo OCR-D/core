@@ -10,20 +10,20 @@ from fastapi.responses import JSONResponse
 from pika.exceptions import ChannelClosedByBroker
 
 from ocrd_utils import getLogger, get_ocrd_tool_json
-from ocrd_validators import ParameterValidator
-from .database import (
-    db_get_processing_job,
-    db_get_workspace,
-    initiate_database
-)
+from .database import initiate_database
 from .deployer import Deployer
 from .deployment_config import ProcessingServerConfig
-from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from .models import (
     DBProcessorJob,
     PYJobInput,
     PYJobOutput,
     StateEnum
+)
+from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
+from .server_utils import (
+    _get_processor_job,
+    validate_and_resolve_mets_path,
+    validate_job_input,
 )
 from .utils import generate_created_time, generate_id
 
@@ -90,7 +90,7 @@ class ProcessingServer(FastAPI):
 
         self.router.add_api_route(
             path='/processor/{processor_name}/{job_id}',
-            endpoint=self.get_job,
+            endpoint=self.get_processor_job,
             methods=['GET'],
             tags=['processing'],
             status_code=status.HTTP_200_OK,
@@ -240,13 +240,55 @@ class ProcessingServer(FastAPI):
         )
         return processing_message
 
+    def check_if_queue_exists(self, processor_name):
+        try:
+            # Only checks if the process queue exists, if not raises ChannelClosedByBroker
+            self.rmq_publisher.create_queue(processor_name, passive=True)
+        except ChannelClosedByBroker as error:
+            self.log.warning(f"Process queue with id '{processor_name}' not existing: {error}")
+            # Reconnect publisher - not efficient, but works
+            # TODO: Revisit when reconnection strategy is implemented
+            self.connect_publisher(enable_acks=True)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Process queue with id '{processor_name}' not existing"
+            )
+
+    def query_ocrd_tool_json_from_server(self, processor_name):
+        processor_server_url = None
+        # Check if a processor server with processor_name was deployed
+        # TODO: Revisit when the config file classes are refactored (made more abstract).
+        #  This is such a mess now due to the bad abstraction and bad naming conventions!
+        for host_config in self.config.hosts:
+            for processor_server in host_config.servers:
+                if processor_server.name == processor_name:
+                    processor_server_url = f"http://{host_config.address}:{processor_server.port}/"
+        if not processor_server_url:
+            self.log.exception(f"Processor Server of '{processor_name}' is not available")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Processor Server of '{processor_name}' is not available"
+            )
+        # Request the tool json from the Processor Server
+        response = requests.get(
+            processor_server_url,
+            headers={'Content-Type': 'application/json'}
+        )
+        if not response.status_code == 200:
+            self.log.exception(f"Failed to retrieve '{processor_name}' from: {processor_server_url}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to retrieve '{processor_name}' from: {processor_server_url}"
+            )
+        ocrd_tool = response.json()
+        return ocrd_tool, processor_server_url
+
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         if data.agent_type not in ['worker', 'server']:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Unknown network agent with value: {data.agent_type}"
             )
-
         job_output = None
         if data.agent_type == 'worker':
             job_output = await self.push_to_processing_queue(processor_name, data)
@@ -261,56 +303,17 @@ class ProcessingServer(FastAPI):
         return job_output
 
     # TODO: Revisit and remove duplications between push_to_* methods
-    async def push_to_processing_queue(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
-        # Validate existence of the Workspace in the DB
-        if bool(data.path_to_mets) == bool(data.workspace_id):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Either 'path' or 'workspace_id' must be provided, but not both"
-            )
-        # This check is done to return early in case
-        # the workspace_id is provided but not existing in the DB
-        elif data.workspace_id:
-            try:
-                await db_get_workspace(data.workspace_id)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Workspace with id '{data.workspace_id}' not existing"
-                )
-
-        if not self.rmq_publisher:
-            raise Exception('RMQPublisher is not connected')
-
-        if processor_name not in self._processing_workers_list:
-            try:
-                # Only checks if the process queue exists, if not raises ChannelClosedByBroker
-                self.rmq_publisher.create_queue(processor_name, passive=True)
-            except ChannelClosedByBroker as error:
-                self.log.warning(f"Process queue with id '{processor_name}' not existing: {error}")
-                # Reconnect publisher - not efficient, but works
-                # TODO: Revisit when reconnection strategy is implemented
-                self.connect_publisher(enable_acks=True)
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Process queue with id '{processor_name}' not existing"
-                )
-
+    async def push_to_processing_queue(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
         # TODO: Getting the tool shall be adapted to the change in #1028
         ocrd_tool = get_ocrd_tool_json(processor_name)
-        if not ocrd_tool:
-            self.log.exception(f"Processor '{processor_name}' not available. Empty or missing ocrd_tool")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Processor '{processor_name}' not available. Empty or missing ocrd_tool"
-            )
-        report = ParameterValidator(ocrd_tool).validate(dict(data.parameters))
-        if not report.is_valid:
-            self.log.exception(f"Invalid parameters for {processor_name}: {report.errors}")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
-
+        validate_job_input(self.log, processor_name, ocrd_tool, job_input)
+        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)
+        if not self.rmq_publisher:
+            raise Exception('RMQPublisher is not connected')
+        if processor_name not in self.processing_workers_list:
+            self.check_if_queue_exists(processor_name)
         job = DBProcessorJob(
-            **data.dict(exclude_unset=True, exclude_none=True),
+            **job_input.dict(exclude_unset=True, exclude_none=True),
             job_id=generate_id(),
             processor_name=processor_name,
             state=StateEnum.queued
@@ -318,7 +321,6 @@ class ProcessingServer(FastAPI):
         await job.insert()
         processing_message = self.create_processing_message(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
-
         try:
             self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
         except Exception as error:
@@ -329,71 +331,18 @@ class ProcessingServer(FastAPI):
             )
         return job.to_job_output()
 
-    async def push_to_processor_server(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
-        # Validate existence of the Workspace in the DB
-        if bool(data.path_to_mets) == bool(data.workspace_id):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Either 'path' or 'workspace_id' must be provided, but not both"
-            )
-        # This check is done to return early in case
-        # the workspace_id is provided but not existing in the DB
-        elif data.workspace_id:
-            try:
-                await db_get_workspace(data.workspace_id)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Workspace with id '{data.workspace_id}' not existing"
-                )
-
-        processor_server_url = None
-
-        # Check if a processor server with processor_name was deployed
-        # TODO: Revisit when the config file classes are refactored (made more abstract).
-        #  This is such a mess now due to the bad abstraction and bad naming conventions!
-        for host_config in self.config.hosts:
-            for processor_server in host_config.servers:
-                if processor_server.name == processor_name:
-                    processor_server_url = f"http://{host_config.address}:{processor_server.port}/"
-
-        if not processor_server_url:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Processor Server of '{processor_name}' is not available"
-            )
-
-        # Request the tool json from the Processor Server
-        response = requests.get(
-            processor_server_url,
-            headers={'Content-Type': 'application/json'}
-        )
-        if not response.status_code == 200:
-            self.log.exception(f"Failed to retrieve '{processor_name}' from: {processor_server_url}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to retrieve '{processor_name}' from: {processor_server_url}"
-            )
-        ocrd_tool = response.json()
-        if not ocrd_tool:
-            self.log.exception(f"Failed to retrieve ocrd tool json of '{processor_name}' from: {processor_server_url}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to retrieve ocrd tool json of '{processor_name}' from: {processor_server_url}"
-            )
-        report = ParameterValidator(ocrd_tool).validate(dict(data.parameters))
-        if not report.is_valid:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
-
+    async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
+        ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
+        validate_job_input(self.log, processor_name, ocrd_tool, job_input)
+        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)
         try:
-            json_data = json.dumps(data.dict(exclude_unset=True, exclude_none=True))
+            json_data = json.dumps(job_input.dict(exclude_unset=True, exclude_none=True))
         except Exception as e:
             self.log.exception(f"Failed to json dump the PYJobInput, error: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to json dump the PYJobInput, error: {e}"
             )
-
         # Post a processing job to the Processor Server
         response = requests.post(
             processor_server_url,
@@ -406,9 +355,11 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to post '{processor_name}' job to: {processor_server_url}"
             )
-
         job_output = response.json()
         return job_output
+
+    async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
+        return await _get_processor_job(self.log, processor_name, job_id)
 
     async def get_processor_info(self, processor_name) -> Dict:
         """ Return a processor's ocrd-tool.json
@@ -420,18 +371,6 @@ class ProcessingServer(FastAPI):
             )
         return get_ocrd_tool_json(processor_name)
 
-    async def get_job(self, processor_name: str, job_id: str) -> PYJobOutput:
-        """ Return processing job-information from the database
-        """
-        try:
-            job = await db_get_processing_job(job_id)
-            return job.to_job_output()
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
-            )
-
     async def list_processors(self) -> List[str]:
         """ Return a list of all available processors
         """
@@ -440,8 +379,8 @@ class ProcessingServer(FastAPI):
         # TODO: 1) Revisit this. Currently, it adds labels in
         #  front of the names for differentiation purposes
         # TODO: 2) This could be optimized by holding a dynamic list
-        for worker_name in self._processing_workers_list:
+        for worker_name in self.processing_workers_list:
             processor_names_list.append(f'worker {worker_name}')
-        for server_name in self._processor_servers_list:
+        for server_name in self.processor_servers_list:
             processor_names_list.append(f'server {server_name}')
         return processor_names_list

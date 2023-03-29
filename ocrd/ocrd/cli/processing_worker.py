@@ -20,11 +20,6 @@ from ocrd_network import (
 
 @click.command('processing-worker')
 @click.argument('processor_name', required=True, type=click.STRING)
-@click.option('--agent_type',
-              help='The type of this network agent',
-              default="worker",
-              type=click.STRING,
-              required=True)
 @click.option('-q', '--queue',
               default="amqp://admin:admin@localhost:5672/",
               help='The URL of the Queue Server, format: amqp://username:password@host:port/vhost',
