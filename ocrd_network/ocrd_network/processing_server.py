@@ -364,7 +364,10 @@ class ProcessingServer(FastAPI):
             )
 
         # Request the tool json from the Processor Server
-        response = requests.get(processor_server_url, headers={'Accept': 'application/json'})
+        response = requests.get(
+            processor_server_url,
+            headers={'Content-Type': 'application/json'}
+        )
         if not response.status_code == 200:
             self.log.exception(f"Failed to retrieve '{processor_name}' from: {processor_server_url}")
             raise HTTPException(
@@ -392,14 +395,19 @@ class ProcessingServer(FastAPI):
             )
 
         # Post a processing job to the Processor Server
-        response = requests.post(processor_server_url, headers={'Accept': 'application/json'}, json=json_data)
+        response = requests.post(
+            processor_server_url,
+            headers={'Content-Type': 'application/json'},
+            json=json.loads(json_data)
+        )
         if not response.status_code == 202:
             self.log.exception(f"Failed to post '{processor_name}' job to: {processor_server_url}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to post '{processor_name}' job to: {processor_server_url}"
             )
-        job_output = response.json
+
+        job_output = response.json()
         return job_output
 
     async def get_processor_info(self, processor_name) -> Dict:
