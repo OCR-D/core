@@ -1,3 +1,4 @@
+import json
 import requests
 from typing import Dict, List
 import uvicorn
@@ -375,8 +376,16 @@ class ProcessingServer(FastAPI):
         if not report.is_valid:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
 
+        try:
+            json_data = json.dumps(data.dict(exclude_unset=True, exclude_none=True))
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to json dump the PYJobInput, error: {e}"
+            )
+
         # Post a processing job to the Processor Server
-        response = requests.post(processor_server_url, headers={'Accept': 'application/json'}, json=data)
+        response = requests.post(processor_server_url, headers={'Accept': 'application/json'}, json=json_data)
         if not response.status_code == 202:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

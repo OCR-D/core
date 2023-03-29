@@ -61,73 +61,73 @@ def ocrd_cli_wrap_processor(
         )
         sys.exit()
 
-    # Used for checking/starting network agents for the WebAPI architecture
-    # Has no side effects if neither of the 4 ocrd_network parameters are passed
-    check_and_run_network_agent(processorClass, agent_type, agent_address, database, queue)
-
     initLogging()
-    LOG = getLogger('ocrd_cli_wrap_processor')
-    # LOG.info('kwargs=%s' % kwargs)
-    # Merge parameter overrides and parameters
-    if 'parameter_override' in kwargs:
-        set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
-    # TODO OCR-D/core#274
-    # Assert -I / -O
-    # if not kwargs['input_file_grp']:
-    #     raise ValueError('-I/--input-file-grp is required')
-    # if not kwargs['output_file_grp']:
-    #     raise ValueError('-O/--output-file-grp is required')
-    resolver = Resolver()
-    working_dir, mets, _ = resolver.resolve_mets_arguments(working_dir, mets, None)
-    workspace = resolver.workspace_from_url(mets, working_dir)
-    page_id = kwargs.get('page_id')
-    # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
-    # if overwrite
-    #     if 'output_file_grp' not in kwargs or not kwargs['output_file_grp']:
-    #         raise Exception("--overwrite requires --output-file-grp")
-    #     LOG.info("Removing files because of --overwrite")
-    #     for grp in kwargs['output_file_grp'].split(','):
-    #         if page_id:
-    #             for one_page_id in kwargs['page_id'].split(','):
-    #                 LOG.debug("Removing files in output file group %s with page ID %s", grp, one_page_id)
-    #                 for file in workspace.mets.find_files(pageId=one_page_id, fileGrp=grp):
-    #                     workspace.remove_file(file, force=True, keep_file=False, page_recursive=True)
-    #         else:
-    #             LOG.debug("Removing all files in output file group %s ", grp)
-    #             # TODO: can be reduced to `page_same_group=True` as soon as core#505 has landed (in all processors)
-    #             workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=False)
-    #     workspace.save_mets()
-    # XXX While https://github.com/OCR-D/core/issues/505 is open, set 'overwrite_mode' globally on the workspace
-    if overwrite:
-        workspace.overwrite_mode = True
-    report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
-    if not report.is_valid:
-        raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
-    # Set up profiling behavior from environment variables/flags
-    if not profile and 'OCRD_PROFILE' in environ:
-        if 'CPU' in environ['OCRD_PROFILE']:
-            profile = True
-    if not profile_file and 'OCRD_PROFILE_FILE' in environ:
-        profile_file = environ['OCRD_PROFILE_FILE']
-    if profile or profile_file:
-        import cProfile
-        import pstats
-        import io
-        import atexit
-        print("Profiling...")
-        pr = cProfile.Profile()
-        pr.enable()
-        def exit():
-            pr.disable()
-            print("Profiling completed")
-            if profile_file:
-                with open(profile_file, 'wb') as f:
-                    pr.dump_stats(profile_file)
-            s = io.StringIO()
-            pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
-            print(s.getvalue())
-        atexit.register(exit)
-    run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
+
+    if agent_type:
+        check_and_run_network_agent(processorClass, agent_type, agent_address, database, queue)
+    else:
+        LOG = getLogger('ocrd_cli_wrap_processor')
+        # LOG.info('kwargs=%s' % kwargs)
+        # Merge parameter overrides and parameters
+        if 'parameter_override' in kwargs:
+            set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
+        # TODO OCR-D/core#274
+        # Assert -I / -O
+        # if not kwargs['input_file_grp']:
+        #     raise ValueError('-I/--input-file-grp is required')
+        # if not kwargs['output_file_grp']:
+        #     raise ValueError('-O/--output-file-grp is required')
+        resolver = Resolver()
+        working_dir, mets, _ = resolver.resolve_mets_arguments(working_dir, mets, None)
+        workspace = resolver.workspace_from_url(mets, working_dir)
+        page_id = kwargs.get('page_id')
+        # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
+        # if overwrite
+        #     if 'output_file_grp' not in kwargs or not kwargs['output_file_grp']:
+        #         raise Exception("--overwrite requires --output-file-grp")
+        #     LOG.info("Removing files because of --overwrite")
+        #     for grp in kwargs['output_file_grp'].split(','):
+        #         if page_id:
+        #             for one_page_id in kwargs['page_id'].split(','):
+        #                 LOG.debug("Removing files in output file group %s with page ID %s", grp, one_page_id)
+        #                 for file in workspace.mets.find_files(pageId=one_page_id, fileGrp=grp):
+        #                     workspace.remove_file(file, force=True, keep_file=False, page_recursive=True)
+        #         else:
+        #             LOG.debug("Removing all files in output file group %s ", grp)
+        #             # TODO: can be reduced to `page_same_group=True` as soon as core#505 has landed (in all processors)
+        #             workspace.remove_file_group(grp, recursive=True, force=True, keep_files=False, page_recursive=True, page_same_group=False)
+        #     workspace.save_mets()
+        # XXX While https://github.com/OCR-D/core/issues/505 is open, set 'overwrite_mode' globally on the workspace
+        if overwrite:
+            workspace.overwrite_mode = True
+        report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
+        if not report.is_valid:
+            raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
+        # Set up profiling behavior from environment variables/flags
+        if not profile and 'OCRD_PROFILE' in environ:
+            if 'CPU' in environ['OCRD_PROFILE']:
+                profile = True
+        if not profile_file and 'OCRD_PROFILE_FILE' in environ:
+            profile_file = environ['OCRD_PROFILE_FILE']
+        if profile or profile_file:
+            import cProfile
+            import pstats
+            import io
+            import atexit
+            print("Profiling...")
+            pr = cProfile.Profile()
+            pr.enable()
+            def exit():
+                pr.disable()
+                print("Profiling completed")
+                if profile_file:
+                    with open(profile_file, 'wb') as f:
+                        pr.dump_stats(profile_file)
+                s = io.StringIO()
+                pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
+                print(s.getvalue())
+            atexit.register(exit)
+        run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
 
 
 def check_and_run_network_agent(ProcessorClass, agent_type: str, agent_address: str, database: str, queue: str):

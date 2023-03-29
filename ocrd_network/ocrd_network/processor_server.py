@@ -12,7 +12,6 @@ from ocrd.processor.helpers import run_cli, run_processor
 from ocrd import Resolver
 from ocrd_validators import ParameterValidator
 from ocrd_utils import (
-    initLogging,
     getLogger,
     get_ocrd_tool_json
 )
@@ -49,7 +48,6 @@ class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
             raise ValueError('Either "processor_name" or "processor_class" must be provided')
-        initLogging()
         self.log = getLogger(__name__)
 
         self.db_url = mongodb_addr
@@ -172,10 +170,11 @@ class ProcessorServer(FastAPI):
             # Run the processor in the background
             background_tasks.add_task(
                 self.run_processor_from_server,
-                job_id=job.id,
+                job_id=job.job_id,
                 workspace_id=data.workspace_id,
+                path_to_mets=data.path_to_mets,
                 page_id=data.page_id,
-                parameter=data.parameters,
+                parameters=data.parameters,
                 input_file_grps=data.input_file_grps,
                 output_file_grps=data.output_file_grps,
             )
@@ -183,12 +182,13 @@ class ProcessorServer(FastAPI):
             # Run the CLI in the background
             background_tasks.add_task(
                 self.run_cli_from_server,
-                job_id=job.id,
+                job_id=job.job_id,
                 workspace_id=data.workspace_id,
+                path_to_mets=data.path_to_mets,
                 page_id=data.page_id,
                 input_file_grps=data.input_file_grps,
                 output_file_grps=data.output_file_grps,
-                parameter=data.parameters
+                parameters=data.parameters
             )
         return job.to_job_output()
 
@@ -241,6 +241,7 @@ class ProcessorServer(FastAPI):
             job_id: str,
             processor_name: str,
             workspace_id: str,
+            path_to_mets: str,
             input_file_grps: List[str],
             output_file_grps: List[str],
             page_id: str,
@@ -252,8 +253,8 @@ class ProcessorServer(FastAPI):
         input_file_grps_str = ','.join(input_file_grps)
         output_file_grps_str = ','.join(output_file_grps)
 
-        workspace_db = await db_get_workspace(workspace_id)
-        path_to_mets = workspace_db.workspace_mets_path
+        if not path_to_mets and workspace_id:
+            path_to_mets = await db_get_workspace(workspace_id).workspace_mets_path
         workspace = Resolver().workspace_from_url(path_to_mets)
 
         start_time = datetime.now()
@@ -293,6 +294,7 @@ class ProcessorServer(FastAPI):
             self,
             job_id: str,
             workspace_id: str,
+            path_to_mets: str,
             input_file_grps: List[str],
             output_file_grps: List[str],
             page_id: str,
@@ -304,8 +306,8 @@ class ProcessorServer(FastAPI):
         input_file_grps_str = ','.join(input_file_grps)
         output_file_grps_str = ','.join(output_file_grps)
 
-        workspace_db = await db_get_workspace(workspace_id)
-        path_to_mets = workspace_db.workspace_mets_path
+        if not path_to_mets and workspace_id:
+            path_to_mets = await db_get_workspace(workspace_id).workspace_mets_path
         workspace = Resolver().workspace_from_url(path_to_mets)
 
         is_success = True
