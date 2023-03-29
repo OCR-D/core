@@ -1,10 +1,5 @@
-from os.path import isfile
 from os import environ
 import sys
-from contextlib import redirect_stdout
-from io import StringIO
-
-import click
 
 from ocrd_utils import (
     is_local_filename,
@@ -151,6 +146,9 @@ def check_and_run_network_agent(ProcessorClass, agent_type: str, agent_address: 
                 raise ValueError("Options '--agent_type=worker' and '--queue' are mutually inclusive")
             if agent_address:
                 raise ValueError("Options '--agent_type=worker' and '--agent_address' are mutually exclusive")
+
+        import logging
+        logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
         processor = ProcessorClass(workspace=None, dump_json=True)
         if agent_type == 'worker':

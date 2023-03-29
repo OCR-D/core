@@ -253,9 +253,10 @@ class ProcessingServer(FastAPI):
         if data.agent_type == 'server':
             job_output = await self.push_to_processor_server(processor_name, data)
         if not job_output:
+            self.log.exception('Failed to create job output')
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create job output"
+                detail='Failed to create job output'
             )
         return job_output
 
@@ -298,12 +299,14 @@ class ProcessingServer(FastAPI):
         # TODO: Getting the tool shall be adapted to the change in #1028
         ocrd_tool = get_ocrd_tool_json(processor_name)
         if not ocrd_tool:
+            self.log.exception(f"Processor '{processor_name}' not available. Empty or missing ocrd_tool")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Processor '{processor_name}' not available. Empty or missing ocrd_tool"
             )
         report = ParameterValidator(ocrd_tool).validate(dict(data.parameters))
         if not report.is_valid:
+            self.log.exception(f"Invalid parameters for {processor_name}: {report.errors}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
 
         job = DBProcessorJob(
@@ -319,6 +322,7 @@ class ProcessingServer(FastAPI):
         try:
             self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
         except Exception as error:
+            self.log.exception(f'RMQPublisher has failed: {error}')
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f'RMQPublisher has failed: {error}'
@@ -362,12 +366,14 @@ class ProcessingServer(FastAPI):
         # Request the tool json from the Processor Server
         response = requests.get(processor_server_url, headers={'Accept': 'application/json'})
         if not response.status_code == 200:
+            self.log.exception(f"Failed to retrieve '{processor_name}' from: {processor_server_url}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to retrieve '{processor_name}' from: {processor_server_url}"
             )
         ocrd_tool = response.json()
         if not ocrd_tool:
+            self.log.exception(f"Failed to retrieve ocrd tool json of '{processor_name}' from: {processor_server_url}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to retrieve ocrd tool json of '{processor_name}' from: {processor_server_url}"
@@ -379,6 +385,7 @@ class ProcessingServer(FastAPI):
         try:
             json_data = json.dumps(data.dict(exclude_unset=True, exclude_none=True))
         except Exception as e:
+            self.log.exception(f"Failed to json dump the PYJobInput, error: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to json dump the PYJobInput, error: {e}"
@@ -387,6 +394,7 @@ class ProcessingServer(FastAPI):
         # Post a processing job to the Processor Server
         response = requests.post(processor_server_url, headers={'Accept': 'application/json'}, json=json_data)
         if not response.status_code == 202:
+            self.log.exception(f"Failed to post '{processor_name}' job to: {processor_server_url}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to post '{processor_name}' job to: {processor_server_url}"
