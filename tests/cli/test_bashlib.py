@@ -1,7 +1,7 @@
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 from pkg_resources import parse_version
-import os
+import os, sys
 import subprocess
 import tempfile
 import yaml
@@ -23,11 +23,8 @@ class TestBashlibCli(TestCase):
         # pattern input=script would not work with additional args
         with tempfile.NamedTemporaryFile(mode='w') as scriptfile:
             scriptfile.write(script)
-            assert os.path.exists(scriptfile.name)
             result = subprocess.run(['bash', scriptfile.name] + list(args),
-                                universal_newlines=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                    text=True, capture_output=True)
         return result.returncode, result.stdout, result.stderr
             
     def setUp(self):
@@ -75,14 +72,14 @@ class TestBashlibCli(TestCase):
     def test_bashlib_defs(self):
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && type -t ocrd__wrap && type -t ocrd__minversion")
-        assert exit_code == 0, err
-        assert len(err) == 0, err
-        assert 'function' in out, out
+        assert exit_code == 0
+        assert len(err) == 0
+        assert 'function' in out
 
     def test_bashlib_minversion(self):
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && ocrd__minversion 2.29.0")
-        assert exit_code == 0, err
+        assert exit_code == 0
         version = parse_version(VERSION)
         version = "%d.%d.%d" % (version.major, version.minor+1, 0)
         exit_code, out, err = self.invoke_bash(
@@ -92,15 +89,22 @@ class TestBashlibCli(TestCase):
 
     def test_bashlib_cp_processor(self):
         tool = {
-          "executable": "ocrd-cp",
-          "description": "dummy processor copying",
-          "steps": ["preprocessing/optimization"],
-          "categories": ["Image preprocessing"],
-          "parameters": {"message": {
-            "type": "string",
-            "default": "",
-            "description": "message to print on stdout"
-          }}
+            "version": "1.0",
+            "tools": {
+                "ocrd-cp": {
+                  "executable": "ocrd-cp",
+                  "description": "dummy processor copying",
+                  "steps": ["preprocessing/optimization"],
+                  "categories": ["Image preprocessing"],
+                  "parameters": {
+                      "message": {
+                        "type": "string",
+                        "default": "",
+                        "description": "message to print on stdout"
+                      }
+                  }
+                }
+            }
         }
         script = """#!/bin/bash
         set -eu
@@ -113,12 +117,12 @@ class TestBashlibCli(TestCase):
         cd "${ocrd__argv[working_dir]}"
         mets=$(basename ${ocrd__argv[mets_file]})
         for ((n=0; n<${#ocrd__files[*]}; n++)); do
-            local in_fpath=($(ocrd__input_file $n url))
-            local in_id=($(ocrd__input_file $n ID))
-            local in_mimetype=($(ocrd__input_file $n mimetype))
-            local in_pageId=($(ocrd__input_file $n pageId))
-            local out_id=$(ocrd__input_file $n outputFileId)
-            local out_fpath="${ocrd__argv[output_file_grp]}/${out_id}.xml
+            in_fpath=($(ocrd__input_file $n url))
+            in_id=($(ocrd__input_file $n ID))
+            in_mimetype=($(ocrd__input_file $n mimetype))
+            in_pageId=($(ocrd__input_file $n pageId))
+            out_id=$(ocrd__input_file $n outputFileId)
+            out_fpath="${ocrd__argv[output_file_grp]}/${out_id}.xml"
             if ! test -f "${in_fpath#file://}"; then
                 ocrd__log error "input file '${in_fpath#file://}' (ID=${in_id} pageId=${in_pageId} MIME=${in_mimetype}) is not on disk"
                 continue
@@ -135,7 +139,7 @@ class TestBashlibCli(TestCase):
                 options=()
             fi
             mkdir -p $out_file_grp
-            cp $options "$in_fpath" "$out_fpath"
+            cp ${options[*]} "$in_fpath" "$out_fpath"
             if [ -n "$message" ]; then
                 echo "$message"
             fi
@@ -152,8 +156,8 @@ class TestBashlibCli(TestCase):
                     json.dump(tool, toolfile)
                 exit_code, out, err = self.invoke_bash(
                     script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world')
-                assert exit_code == 0, err
-                assert 'hello world' in out, out
+                assert exit_code == 0
+                assert 'hello world' in out
                 assert os.path.isdir('OCR-D-GT-PAGE2')
 
 if __name__ == "__main__":
