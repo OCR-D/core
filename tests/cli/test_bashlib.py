@@ -1,9 +1,10 @@
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 from pkg_resources import parse_version
-import os, sys
+import os
 import subprocess
 import tempfile
+import pathlib
 import yaml
 import json
 import pytest
@@ -113,8 +114,16 @@ class TestBashlibCli(TestCase):
         MIMETYPE_PAGE=$(ocrd bashlib constants MIMETYPE_PAGE)
         source $(ocrd bashlib filename)
         ocrd__wrap ocrd-tool.json ocrd-cp "$@"
+
+        IFS=',' read -ra in_file_grps <<< ${ocrd__argv[input_file_grp]}
+        if ((${#in_file_grps[*]}>1)); then
+            ocrd__log info "running on multiple input fileGrps ${in_file_grps[*]}"
+        else
+            ocrd__log info "running on single input fileGrp ${in_file_grps}"
+        fi
         out_file_grp=${ocrd__argv[output_file_grp]}
         message="${params[message]}"
+
         cd "${ocrd__argv[working_dir]}"
         mets=$(basename ${ocrd__argv[mets_file]})
         for ((n=0; n<${#ocrd__files[*]}; n++)); do
@@ -122,17 +131,22 @@ class TestBashlibCli(TestCase):
             in_id=($(ocrd__input_file $n ID))
             in_mimetype=($(ocrd__input_file $n mimetype))
             in_pageId=($(ocrd__input_file $n pageId))
-            out_id=$(ocrd__input_file $n outputFileId)
-            out_fpath="${ocrd__argv[output_file_grp]}/${out_id}.xml"
             if ! test -f "${in_fpath#file://}"; then
                 ocrd__log error "input file '${in_fpath#file://}' (ID=${in_id} pageId=${in_pageId} MIME=${in_mimetype}) is not on disk"
                 continue
             fi
             if [ "x${in_mimetype}" = x${MIMETYPE_PAGE} ]; then
-                ocrd__log info "processing PAGE-XML input file $in_id ($in_pageId)"
+                ocrd__log info "processing PAGE-XML input file $in_fpath ($in_id / $in_pageId)"
+                out_suf=.xml
             else
-                ocrd__log info "processing ${in_mimetype} input file $in_id ($in_pageId)"
+                ocrd__log info "processing ${in_mimetype} input file $in_fpath ($in_id / $in_pageId)"
+                out_suf=.${in_fpath##*.}
             fi
+            for ((i=1; i<${#in_fpath[*]}; i++)); do
+                ocrd__log warning "ignoring ${in_mimetype[$i]} input file ${in_fpath[$i]} (${in_id[$i]} ${in_pageId[$i]})"
+            done
+            out_id=$(ocrd__input_file $n outputFileId)
+            out_fpath="${ocrd__argv[output_file_grp]}/${out_id}${out_suf}"
             declare -a options
             if [[ "${ocrd__argv[overwrite]}" == true ]]; then
                 options=( --force )
@@ -155,11 +169,25 @@ class TestBashlibCli(TestCase):
             with pushd_popd(wsdir):
                 with open('ocrd-tool.json', 'w') as toolfile:
                     json.dump(tool, toolfile)
+                # run on 1 input
                 exit_code, out, err = self.invoke_bash(
                     script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world')
+                assert 'single input fileGrp' in err
+                assert 'processing PAGE-XML' in err
                 assert exit_code == 0
                 assert 'hello world' in out
-                assert os.path.isdir('OCR-D-GT-PAGE2')
+                path = pathlib.Path('OCR-D-GT-PAGE2')
+                assert path.is_dir()
+                assert next(path.glob('*.xml'), None)
+                # run on 2 inputs
+                exit_code, out, err = self.invoke_bash(
+                    script, '-I', 'OCR-D-IMG,OCR-D-GT-PAGE', '-O', 'OCR-D-IMG2')
+                assert 'multiple input fileGrps' in err
+                assert exit_code == 0
+                assert 'ignoring application/vnd.prima.page+xml' in err
+                path = pathlib.Path('OCR-D-IMG2')
+                assert path.is_dir()
+                assert next(path.glob('*.tif'), None)
 
 if __name__ == "__main__":
     main(__file__)
