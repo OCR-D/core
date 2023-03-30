@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import uvicorn
 
 from fastapi import FastAPI, status, Request, HTTPException
@@ -315,7 +315,7 @@ class ProcessingServer(FastAPI):
                 detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
             )
 
-    async def list_processors(self) -> str:
+    async def list_processors(self) -> List[str]:
         """ Return a list of all available processors
         """
         return self.processor_list
