@@ -14,11 +14,13 @@ from ocrd_utils.constants import VERSION, MIME_TO_EXT, MIMETYPE_PAGE
 from ocrd_validators.constants import BAGIT_TXT
 from ocrd_models.constants import TAG_MODS_IDENTIFIER
 
+from ocrd_utils import pushd_popd
+
 class TestBashlibCli(TestCase):
 
     def invoke_bash(self, script, *args):
         # pattern input=script would not work with additional args
-        with tempfile.NamedTemporaryFile() as scriptfile:
+        with tempfile.NamedTemporaryFile(mode='w') as scriptfile:
             scriptfile.write(script)
             scriptfile.close()
             result = subprocess.run(['bash', scriptfile.name] + args,
