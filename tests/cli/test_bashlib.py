@@ -25,7 +25,12 @@ class TestBashlibCli(TestCase):
         with tempfile.NamedTemporaryFile(mode='w+') as scriptfile:
             scriptfile.write(script)
             scriptfile.flush()
+            os.chmod(scriptfile.name, 755)
+            cwd = os.getcwd()
+            path = os.getenv('PATH')
             result = subprocess.run(['bash', scriptfile.name] + list(args),
+                                    # ocrd-tool needs scriptfile.name in PATH
+                                    env=dict(PATH=path + ':' + cwd),
                                     text=True, capture_output=True)
         return result.returncode, result.stdout, result.stderr
             
