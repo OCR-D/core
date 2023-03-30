@@ -20,17 +20,20 @@ from ocrd_utils import pushd_popd
 
 class TestBashlibCli(TestCase):
 
-    def invoke_bash(self, script, *args):
+    def invoke_bash(self, script, *args, executable=None):
         # pattern input=script would not work with additional args
         with tempfile.NamedTemporaryFile(mode='w+') as scriptfile:
             scriptfile.write(script)
             scriptfile.flush()
-            os.chmod(scriptfile.name, 755)
-            cwd = os.getcwd()
-            path = os.getenv('PATH')
-            result = subprocess.run(['bash', scriptfile.name] + list(args),
-                                    # ocrd-tool needs scriptfile.name in PATH
-                                    env=dict(PATH=path + ':' + cwd),
+            env = None
+            if isinstance(executable, str):
+                # ocrd-tool needs scriptfile.name in PATH
+                os.symlink(scriptfile.name, executable)
+                os.chmod(executable, 755)
+                cwd = os.getcwd()
+                path = os.getenv('PATH')
+                env = dict(PATH=path + ':' + cwd)
+            result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
                                     text=True, capture_output=True)
         return result.returncode, result.stdout, result.stderr
             
@@ -176,7 +179,8 @@ class TestBashlibCli(TestCase):
                     json.dump(tool, toolfile)
                 # run on 1 input
                 exit_code, out, err = self.invoke_bash(
-                    script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world')
+                    script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world',
+                    executable='ocrd-cp')
                 assert 'single input fileGrp' in err
                 assert 'processing PAGE-XML' in err
                 assert exit_code == 0
@@ -186,7 +190,8 @@ class TestBashlibCli(TestCase):
                 assert next(path.glob('*.xml'), None)
                 # run on 2 inputs
                 exit_code, out, err = self.invoke_bash(
-                    script, '-I', 'OCR-D-IMG,OCR-D-GT-PAGE', '-O', 'OCR-D-IMG2')
+                    script, '-I', 'OCR-D-IMG,OCR-D-GT-PAGE', '-O', 'OCR-D-IMG2',
+                    executable='ocrd-cp')
                 assert 'multiple input fileGrps' in err
                 assert exit_code == 0
                 assert 'ignoring application/vnd.prima.page+xml' in err
