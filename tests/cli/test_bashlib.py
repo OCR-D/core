@@ -23,7 +23,7 @@ class TestBashlibCli(TestCase):
         with tempfile.NamedTemporaryFile(mode='w') as scriptfile:
             scriptfile.write(script)
             scriptfile.close()
-            result = subprocess.run(['bash', scriptfile.name] + args,
+            result = subprocess.run(['bash', scriptfile.name] + list(args),
                                 universal_newlines=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
@@ -68,7 +68,7 @@ class TestBashlibCli(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 _, out, err = self.invoke_cli(bashlib_cli, ['input-files', '-I', 'OCR-D-IMG'])
-                assert ("[url]='OCR-D-IMG/INPUT_0017.tif' [ID]='INPUT_0017' [mimetype]='image/tiff'"
+                assert ("[url]='OCR-D-IMG/INPUT_0017.tif' [ID]='INPUT_0017' [mimetype]='image/tiff' "
                         "[pageId]='PHYS_0017' [outputFileId]='OUTPUT_PHYS_0017'") in out
 
     def test_bashlib_defs(self):
@@ -147,7 +147,8 @@ class TestBashlibCli(TestCase):
         """
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
-                json.dump(tool, open('ocrd-tool.json'))
+                with open('ocrd-tool.json', 'w') as toolfile:
+                    json.dump(tool, toolfile)
                 exit_code, out, err = self.invoke_bash(
                     script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world')
                 assert exit_code == 0
