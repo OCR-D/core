@@ -21,8 +21,9 @@ class TestBashlibCli(TestCase):
 
     def invoke_bash(self, script, *args):
         # pattern input=script would not work with additional args
-        with tempfile.NamedTemporaryFile(mode='w') as scriptfile:
+        with tempfile.NamedTemporaryFile(mode='w+') as scriptfile:
             scriptfile.write(script)
+            scriptfile.flush()
             result = subprocess.run(['bash', scriptfile.name] + list(args),
                                     text=True, capture_output=True)
         return result.returncode, result.stdout, result.stderr
