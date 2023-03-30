@@ -22,7 +22,7 @@ class TestBashlibCli(TestCase):
         # pattern input=script would not work with additional args
         with tempfile.NamedTemporaryFile(mode='w') as scriptfile:
             scriptfile.write(script)
-            scriptfile.close()
+            assert os.path.exists(scriptfile.name)
             result = subprocess.run(['bash', scriptfile.name] + list(args),
                                 universal_newlines=True,
                                 stdout=subprocess.PIPE,
@@ -74,14 +74,14 @@ class TestBashlibCli(TestCase):
     def test_bashlib_defs(self):
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && type -t ocrd__wrap && type -t ocrd__minversion")
-        assert exit_code == 0
-        assert len(err) == 0
-        assert 'function' in out
+        assert exit_code == 0, err
+        assert len(err) == 0, err
+        assert 'function' in out, out
 
     def test_bashlib_minversion(self):
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && ocrd__minversion 2.29.0")
-        assert exit_code == 0
+        assert exit_code == 0, err
         version = parse_version(VERSION)
         version = "%d.%d.%d" % (version.major, version.minor+1, 0)
         exit_code, out, err = self.invoke_bash(
@@ -151,8 +151,8 @@ class TestBashlibCli(TestCase):
                     json.dump(tool, toolfile)
                 exit_code, out, err = self.invoke_bash(
                     script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world')
-                assert exit_code == 0
-                assert 'hello world' in out
+                assert exit_code == 0, err
+                assert 'hello world' in out, out
                 assert os.path.isdir('OCR-D-GT-PAGE2')
 
 if __name__ == "__main__":
