@@ -23,29 +23,31 @@ class TestBashlibCli(TestCase):
 
     def invoke_bash(self, script, *args, executable=None):
         # pattern input=script would not work with additional args
-        with tempfile.NamedTemporaryFile(mode='w+') as scriptfile:
-            scriptfile.write(script)
-            scriptfile.flush()
-            env = None
-            if isinstance(executable, str):
-                # ocrd-tool needs executable in PATH
-                scriptdir = os.path.dirname(scriptfile.name)
-                if os.path.lexists(executable):
-                    os.unlink(executable)
-                os.symlink(scriptfile.name, executable)
-                os.chmod(scriptfile.name, 755)
-                cwd = os.getcwd()
-                path = os.getenv('PATH')
-                env = dict(PATH=path + ':' + cwd)
-            try:
-                result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
-                                        text=True, capture_output=True)
-                print(result.stdout)
-                print(result.stderr, file=sys.stderr)
-                return result.returncode, result.stdout, result.stderr
-            except Exception as e:
-                traceback.print_exc()
-                return -1, "", str(e)
+        scriptfile = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+        scriptfile.write(script)
+        scriptfile.close()
+        env = None
+        if isinstance(executable, str):
+            # ocrd-tool needs executable in PATH
+            scriptdir = os.path.dirname(scriptfile.name)
+            if os.path.lexists(executable):
+                os.unlink(executable)
+            os.symlink(scriptfile.name, executable)
+            os.chmod(scriptfile.name, 755)
+            cwd = os.getcwd()
+            path = os.getenv('PATH')
+            env = dict(PATH=path + ':' + cwd)
+        try:
+            result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
+                                    text=True, capture_output=True)
+            print(result.stdout)
+            print(result.stderr, file=sys.stderr)
+            return result.returncode, result.stdout, result.stderr
+        except Exception as e:
+            traceback.print_exc()
+            return -1, "", str(e)
+        finally:
+            os.remove(scriptfile.name)
             
     def setUp(self):
         self.maxDiff = None
