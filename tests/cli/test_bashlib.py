@@ -39,7 +39,7 @@ class TestBashlibCli(TestCase):
             env = dict(PATH=path + ':' + cwd)
         try:
             result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
-                                    text=True, capture_output=True)
+                                    universal_newlines=True, capture_output=True)
             print(result.stdout)
             print(result.stderr, file=sys.stderr)
             return result.returncode, result.stdout, result.stderr
