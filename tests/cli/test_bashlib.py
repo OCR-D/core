@@ -29,11 +29,13 @@ class TestBashlibCli(TestCase):
             if isinstance(executable, str):
                 # ocrd-tool needs scriptfile.name in PATH
                 scriptdir = os.path.dirname(scriptfile.name)
-                executable = os.path.join(scriptdir, executable)
+                if os.path.exists(executable) or os.path.islink(executable):
+                    os.unlink(executable)
                 os.symlink(scriptfile.name, executable)
                 os.chmod(scriptfile.name, 755)
+                cwd = os.getcwd()
                 path = os.getenv('PATH')
-                env = dict(PATH=path + ':' + scriptdir)
+                env = dict(PATH=path + ':' + cwd)
             result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
                                     text=True, capture_output=True)
         return result.returncode, result.stdout, result.stderr
