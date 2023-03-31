@@ -1,7 +1,8 @@
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 from pkg_resources import parse_version
-import os
+import os, sys
+import traceback
 import subprocess
 import tempfile
 import pathlib
@@ -27,18 +28,24 @@ class TestBashlibCli(TestCase):
             scriptfile.flush()
             env = None
             if isinstance(executable, str):
-                # ocrd-tool needs scriptfile.name in PATH
+                # ocrd-tool needs executable in PATH
                 scriptdir = os.path.dirname(scriptfile.name)
-                if os.path.exists(executable) or os.path.islink(executable):
+                if os.path.lexists(executable):
                     os.unlink(executable)
                 os.symlink(scriptfile.name, executable)
                 os.chmod(scriptfile.name, 755)
                 cwd = os.getcwd()
                 path = os.getenv('PATH')
                 env = dict(PATH=path + ':' + cwd)
-            result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
-                                    text=True, capture_output=True)
-        return result.returncode, result.stdout, result.stderr
+            try:
+                result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
+                                        text=True, capture_output=True)
+                print(result.stdout)
+                print(result.stderr, file=sys.stderr)
+                return result.returncode, result.stdout, result.stderr
+            except Exception as e:
+                traceback.print_exc()
+                return -1, "", str(e)
             
     def setUp(self):
         self.maxDiff = None
