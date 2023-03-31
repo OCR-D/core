@@ -26,7 +26,7 @@ class TestBashlibCli(TestCase):
         scriptfile = tempfile.NamedTemporaryFile(mode='w+', delete=False)
         scriptfile.write(script)
         scriptfile.close()
-        env = None
+        env = dict(os.environ)
         if isinstance(executable, str):
             # ocrd-tool needs executable in PATH
             scriptdir = os.path.dirname(scriptfile.name)
@@ -35,8 +35,8 @@ class TestBashlibCli(TestCase):
             os.symlink(scriptfile.name, executable)
             os.chmod(scriptfile.name, 755)
             cwd = os.getcwd()
-            path = os.getenv('PATH')
-            env = dict(PATH=path + ':' + cwd)
+            path = env['PATH']
+            env.update(PATH=path + ':' + cwd)
         try:
             result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
                                     # py37+: text=True, capture_output=True
