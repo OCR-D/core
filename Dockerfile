@@ -41,4 +41,8 @@ RUN apt-get update && apt-get -y install software-properties-common \
 
 WORKDIR /data
 
+# remove any entry points from base image
+RUN rm -fr /opt/nvidia
+ENTRYPOINT []
+
 CMD ["/usr/local/bin/ocrd", "--help"]
