@@ -34,6 +34,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         git \
     && make deps-ubuntu \
     && pip3 install --upgrade pip setuptools \
+    && hash -r \
     && make install \
     && apt-get remove -y gcc \
     && apt-get autoremove -y \
