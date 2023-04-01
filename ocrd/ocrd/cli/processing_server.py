@@ -10,7 +10,7 @@ import logging
 from ocrd_utils import initLogging
 from ocrd_network import (
     ProcessingServer,
-    ProcessingServerParamType
+    ServerAddressParamType,
 )
 
 
@@ -19,7 +19,7 @@ from ocrd_network import (
 @click.option('-a', '--address',
               default="localhost:8080",
               help='The URL of the Processing server, format: host:port',
-              type=ProcessingServerParamType(),
+              type=ServerAddressParamType(),
               required=True)
 def processing_server_cli(path_to_config, address: str):
     """

@@ -30,7 +30,7 @@ from ocrd_network import (
               help='The URL of the MongoDB, format: mongodb://host:port',
               type=DatabaseParamType(),
               required=True)
-def processing_worker_cli(processor_name: str, agent_type: str, queue: str, database: str):
+def processing_worker_cli(processor_name: str, queue: str, database: str):
     """
     Start a processing worker (a specific ocr-d processor)
     """

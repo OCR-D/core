@@ -6,8 +6,8 @@ from .utils import (
 )
 
 
-class ProcessingServerParamType(ParamType):
-    name = 'Processing server string format'
+class ServerAddressParamType(ParamType):
+    name = 'Server address string format'
     expected_format = 'host:port'
 
     def convert(self, value, param, ctx):

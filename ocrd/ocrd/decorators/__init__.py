@@ -128,54 +128,57 @@ def ocrd_cli_wrap_processor(
 
 def check_and_run_network_agent(ProcessorClass, agent_type: str, agent_address: str, database: str, queue: str):
     if not agent_type and (agent_address or database or queue):
-        raise ValueError("Options '--database', '--queue', and 'agent_address' are valid only with '--agent_type'")
-    if agent_type:
-        if not database:
-            raise ValueError("Options '--agent_type' and '--database' are mutually inclusive")
-        allowed_agent_types = ['server', 'worker']
-        if agent_type not in allowed_agent_types:
-            agents_str = ', '.join(allowed_agent_types)
-            raise ValueError(f"Wrong agent type parameter. Allowed agent types: {agents_str}")
-        if agent_type == 'server':
-            if not agent_address:
-                raise ValueError("Options '--agent_type=server' and '--agent_address' are mutually inclusive")
-            if queue:
-                raise ValueError("Options '--agent_type=server' and '--queue' are mutually exclusive")
-        if agent_type == 'worker':
-            if not queue:
-                raise ValueError("Options '--agent_type=worker' and '--queue' are mutually inclusive")
-            if agent_address:
-                raise ValueError("Options '--agent_type=worker' and '--agent_address' are mutually exclusive")
+        raise ValueError("Options '--database', '--queue', and '--address' are valid only with '--type'")
+    if not agent_type:
+        return
 
-        import logging
-        logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
+    if not database:
+        raise ValueError("Options '--type' and '--database' are mutually inclusive")
+    allowed_agent_types = ['server', 'worker']
+    if agent_type not in allowed_agent_types:
+        agents_str = ', '.join(allowed_agent_types)
+        raise ValueError(f"Wrong type parameter. Allowed types: {agents_str}")
+    if agent_type == 'server':
+        if not agent_address:
+            raise ValueError("Options '--type=server' and '--address' are mutually inclusive")
+        if queue:
+            raise ValueError("Options '--type=server' and '--queue' are mutually exclusive")
+    if agent_type == 'worker':
+        if not queue:
+            raise ValueError("Options '--type=worker' and '--queue' are mutually inclusive")
+        if agent_address:
+            raise ValueError("Options '--type=worker' and '--address' are mutually exclusive")
 
-        processor = ProcessorClass(workspace=None, dump_json=True)
-        if agent_type == 'worker':
-            try:
-                # TODO: Passing processor_name and ocrd_tool is reduntant
-                processing_worker = ProcessingWorker(
-                    rabbitmq_addr=queue,
-                    mongodb_addr=database,
-                    processor_name=processor.ocrd_tool['executable'],
-                    ocrd_tool=processor.ocrd_tool,
-                    processor_class=ProcessorClass,
-                )
-                # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
-                processing_worker.connect_consumer()
-                # Start consuming from the queue with name `processor_name`
-                processing_worker.start_consuming()
-            except Exception as e:
-                sys.exit(f"Processing worker has failed with error: {e}")
-        if agent_type == 'server':
-            try:
-                # TODO: Better validate that inside the ProcessorServer itself
-                host, port = agent_address.split(':')
-                processor_server = ProcessorServer(
-                    mongodb_addr=database,
-                    processor_name=processor.ocrd_tool['executable'],
-                    processor_class=ProcessorClass,
-                )
-                processor_server.run_server(host=host, port=int(port))
-            except Exception as e:
-                sys.exit(f"Processor server has failed with error: {e}")
+    import logging
+    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
+
+    processor = ProcessorClass(workspace=None, dump_json=True)
+    if agent_type == 'worker':
+        try:
+            # TODO: Passing processor_name and ocrd_tool is reduntant
+            processing_worker = ProcessingWorker(
+                rabbitmq_addr=queue,
+                mongodb_addr=database,
+                processor_name=processor.ocrd_tool['executable'],
+                ocrd_tool=processor.ocrd_tool,
+                processor_class=ProcessorClass,
+            )
+            # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
+            processing_worker.connect_consumer()
+            # Start consuming from the queue with name `processor_name`
+            processing_worker.start_consuming()
+        except Exception as e:
+            sys.exit(f"Processing worker has failed with error: {e}")
+    if agent_type == 'server':
+        try:
+            # TODO: Better validate that inside the ProcessorServer itself
+            host, port = agent_address.split(':')
+            processor_server = ProcessorServer(
+                mongodb_addr=database,
+                processor_name=processor.ocrd_tool['executable'],
+                processor_class=ProcessorClass,
+            )
+            processor_server.run_server(host=host, port=int(port))
+        except Exception as e:
+            sys.exit(f"Processor server has failed with error: {e}")
+    sys.exit(0)

@@ -10,23 +10,23 @@ import logging
 from ocrd_utils import initLogging
 from ocrd_network import (
     DatabaseParamType,
-    ProcessingServerParamType,
+    ServerAddressParamType,
     ProcessorServer,
 )
 
 
 @click.command('processor-server')
 @click.argument('processor_name', required=True, type=click.STRING)
-@click.option('--agent_address',
+@click.option('-a', '--address',
               help='The URL of the processor server, format: host:port',
-              type=ProcessingServerParamType(),
+              type=ServerAddressParamType(),
               required=True)
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
               help='The URL of the MongoDB, format: mongodb://host:port',
               type=DatabaseParamType(),
               required=True)
-def processor_server_cli(processor_name: str, agent_type: str, agent_address: str, database: str):
+def processor_server_cli(processor_name: str, address: str, database: str):
     """
     Start ocr-d processor as a server
     """
@@ -36,7 +36,7 @@ def processor_server_cli(processor_name: str, agent_type: str, agent_address: st
 
     try:
         # TODO: Better validate that inside the ProcessorServer itself
-        host, port = agent_address.split(':')
+        host, port = address.split(':')
         processor_server = ProcessorServer(
             mongodb_addr=database,
             processor_name=processor_name,
