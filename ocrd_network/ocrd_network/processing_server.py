@@ -9,10 +9,9 @@ from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
 
-from ocrd_utils import getLogger, get_ocrd_tool_json
+from ocrd_utils import getLogger
 from .database import initiate_database
 from .deployer import Deployer
-from .deployment_config import ProcessingServerConfig
 from .models import (
     DBProcessorJob,
     PYJobInput,
@@ -25,7 +24,11 @@ from .server_utils import (
     validate_and_resolve_mets_path,
     validate_job_input,
 )
-from .utils import generate_created_time, generate_id
+from .utils import (
+    download_ocrd_all_tool_json,
+    generate_created_time,
+    generate_id
+)
 
 
 class ProcessingServer(FastAPI):
@@ -44,28 +47,26 @@ class ProcessingServer(FastAPI):
                          title='OCR-D Processing Server',
                          description='OCR-D processing and processors')
         self.log = getLogger(__name__)
+        self.log.info(f"Downloading ocrd all tool json")
+        self.ocrd_all_tool_json = download_ocrd_all_tool_json(
+            ocrd_all_url="https://ocr-d.de/js/ocrd-all-tool.json"
+        )
         self.hostname = host
         self.port = port
-        self.config = ProcessingServerConfig(config_path)
-        self.deployer = Deployer(self.config)
+        # The deployer is used for:
+        # - deploying agents when the Processing Server is started
+        # - retrieving runtime data of agents
+        self.deployer = Deployer(config_path)
         self.mongodb_url = None
-        self.rmq_host = self.config.queue.address
-        self.rmq_port = self.config.queue.port
+        # TODO: Combine these under a single URL, rabbitmq_utils needs an update
+        self.rmq_host = self.deployer.data_queue.address
+        self.rmq_port = self.deployer.data_queue.port
         self.rmq_vhost = '/'
-        self.rmq_username = self.config.queue.credentials[0]
-        self.rmq_password = self.config.queue.credentials[1]
+        self.rmq_username = self.deployer.data_queue.username
+        self.rmq_password = self.deployer.data_queue.password
 
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
-
-        # TODO: These will change dynamically
-        #  according to the new requirements
-        # This list holds a set of all processing worker
-        # names mentioned in the config file
-        self._processing_workers_list = None
-        # This list holds a set of all processor server
-        # names mentioned in the config file
-        self._processor_servers_list = None
 
         # Create routes
         self.router.add_api_route(
@@ -129,27 +130,21 @@ class ProcessingServer(FastAPI):
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
         try:
-            rabbitmq_hostinfo = self.deployer.deploy_rabbitmq(
-                image='rabbitmq:3-management', detach=True, remove=True)
+            self.deployer.deploy_rabbitmq(image='rabbitmq:3-management', detach=True, remove=True)
+            rabbitmq_url = self.deployer.data_queue.url
 
-            # Assign the credentials to the rabbitmq url parameter
-            rabbitmq_url = f'amqp://{self.rmq_username}:{self.rmq_password}@{rabbitmq_hostinfo}'
-
-            mongodb_hostinfo = self.deployer.deploy_mongodb(
-                image='mongo', detach=True, remove=True)
-
-            self.mongodb_url = f'mongodb://{mongodb_hostinfo}'
+            self.deployer.deploy_mongodb(image='mongo', detach=True, remove=True)
+            self.mongodb_url = self.deployer.data_mongo.url
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.connect_publisher()
-
             self.log.debug(f'Creating message queues on RabbitMQ instance url: {rabbitmq_url}')
             self.create_message_queues()
 
-            # Deploy processing hosts where processing workers are running on
-            # Note: A deployed processing worker starts listening to a message queue with id
-            #       processor.name
-            self.deployer.deploy_hosts(rabbitmq_url, self.mongodb_url)
+            self.deployer.deploy_hosts(
+                mongodb_url=self.mongodb_url,
+                rabbitmq_url=rabbitmq_url
+            )
         except Exception:
             self.log.error('Error during startup of processing server. '
                            'Trying to kill parts of incompletely deployed service')
@@ -191,37 +186,30 @@ class ProcessingServer(FastAPI):
         self.log.info('Successfully connected RMQPublisher.')
 
     def create_message_queues(self) -> None:
-        """Create the message queues based on the occurrence of `processor.name` in the config file
+        """ Create the message queues based on the occurrence of
+        `workers.name` in the config file.
         """
-        for host in self.config.hosts:
-            for processor in host.processors:
-                # The existence/validity of the processor.name is not tested.
-                # Even if an ocr-d processor does not exist, the queue is created
-                self.log.info(f'Creating a message queue with id: {processor.name}')
-                self.rmq_publisher.create_queue(queue_name=processor.name)
 
-    @property
-    def processing_workers_list(self):
-        if self._processing_workers_list:
-            return self._processing_workers_list
-        res = set([])
-        for host in self.config.hosts:
-            for processor in host.processors:
-                res.add(processor.name)
-        self._processing_workers_list = list(res)
-        return self._processing_workers_list
+        # TODO: Remove
+        """
+        queue_names = set([])
+        for data_host in self.deployer.data_hosts:
+            for data_worker in data_host.data_workers:
+                queue_names.add(data_worker.processor_name)
+        """
 
-    # TODO: Revisit. This is just mimicking the method above.
-    @property
-    def processor_servers_list(self):
-        if self._processor_servers_list:
-            return self._processor_servers_list
-        res = set([])
-        for host in self.config.hosts:
-            for processor_server in host.servers:
-                res.add(processor_server.name)
-        self._processor_servers_list = list(res)
-        return self._processor_server_list
+        # The abstract version of the above lines
+        queue_names = self.deployer.find_matching_processors(
+            worker_only=True,
+            str_names_only=True,
+            unique_only=True
+        )
+
+        for queue_name in queue_names:
+            # The existence/validity of the worker.name is not tested.
+            # Even if an ocr-d processor does not exist, the queue is created
+            self.log.info(f'Creating a message queue with id: {queue_name}')
+            self.rmq_publisher.create_queue(queue_name=queue_name)
 
     @staticmethod
     def create_processing_message(job: DBProcessorJob) -> OcrdProcessingMessage:
@@ -255,14 +243,7 @@ class ProcessingServer(FastAPI):
             )
 
     def query_ocrd_tool_json_from_server(self, processor_name):
-        processor_server_url = None
-        # Check if a processor server with processor_name was deployed
-        # TODO: Revisit when the config file classes are refactored (made more abstract).
-        #  This is such a mess now due to the bad abstraction and bad naming conventions!
-        for host_config in self.config.hosts:
-            for processor_server in host_config.servers:
-                if processor_server.name == processor_name:
-                    processor_server_url = f"http://{host_config.address}:{processor_server.port}/"
+        processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
         if not processor_server_url:
             self.log.exception(f"Processor Server of '{processor_name}' is not available")
             raise HTTPException(
@@ -304,14 +285,19 @@ class ProcessingServer(FastAPI):
 
     # TODO: Revisit and remove duplications between push_to_* methods
     async def push_to_processing_queue(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
-        # TODO: Getting the tool shall be adapted to the change in #1028
-        ocrd_tool = get_ocrd_tool_json(processor_name)
+        ocrd_tool = await self.get_processor_info(processor_name)
         validate_job_input(self.log, processor_name, ocrd_tool, job_input)
         job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)
         if not self.rmq_publisher:
             raise Exception('RMQPublisher is not connected')
-        if processor_name not in self.processing_workers_list:
+        deployed_processors = self.deployer.find_matching_processors(
+            worker_only=True,
+            str_names_only=True,
+            unique_only=True
+        )
+        if processor_name not in deployed_processors:
             self.check_if_queue_exists(processor_name)
+
         job = DBProcessorJob(
             **job_input.dict(exclude_unset=True, exclude_none=True),
             job_id=generate_id(),
@@ -364,23 +350,25 @@ class ProcessingServer(FastAPI):
     async def get_processor_info(self, processor_name) -> Dict:
         """ Return a processor's ocrd-tool.json
         """
-        if processor_name not in self._processing_workers_list:
+        ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
+        if not ocrd_tool:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Processor not available'
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Ocrd tool JSON of '{processor_name}' not available!"
             )
-        return get_ocrd_tool_json(processor_name)
+
+        # TODO: Returns the ocrd tool json even of processors
+        #  that are not deployed. This may or may not be desired.
+        return ocrd_tool
 
     async def list_processors(self) -> List[str]:
-        """ Return a list of all available processors
-        """
-        processor_names_list = []
-
-        # TODO: 1) Revisit this. Currently, it adds labels in
-        #  front of the names for differentiation purposes
-        # TODO: 2) This could be optimized by holding a dynamic list
-        for worker_name in self.processing_workers_list:
-            processor_names_list.append(f'worker {worker_name}')
-        for server_name in self.processor_servers_list:
-            processor_names_list.append(f'server {server_name}')
+        # There is no caching on the Processing Server side
+        processor_names_list = self.deployer.find_matching_processors(
+            docker_only=False,
+            native_only=False,
+            worker_only=False,
+            server_only=False,
+            str_names_only=True,
+            unique_only=True
+        )
         return processor_names_list

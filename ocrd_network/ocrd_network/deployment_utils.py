@@ -1,63 +1,30 @@
 from __future__ import annotations
-from enum import Enum
-from typing import Union, List
-from distutils.spawn import find_executable as which
-import re
-
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
+from time import sleep
 
-from ocrd_utils import getLogger
-from .deployment_config import *
+from .rabbitmq_utils import RMQPublisher
 
 __all__ = [
     'create_docker_client',
     'create_ssh_client',
-    'CustomDockerClient',
-    'DeployType',
-    'HostData'
+    'wait_for_rabbitmq_availability'
 ]
 
 
-def create_ssh_client(address: str, username: str, password: Union[str, None],
-                      keypath: Union[str, None]) -> SSHClient:
+def create_ssh_client(address: str, username: str, password: str = "", keypath: str = "") -> SSHClient:
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy)
     try:
         client.connect(hostname=address, username=username, password=password, key_filename=keypath)
-    except Exception:
-        getLogger(__name__).error(f"Error creating SSHClient for host: '{address}'")
-        raise
+    except Exception as error:
+        raise Exception(f"Error creating SSHClient of host '{address}', reason:") from error
     return client
 
 
-def create_docker_client(address: str, username: str, password: Union[str, None],
-                         keypath: Union[str, None]) -> CustomDockerClient:
+def create_docker_client(address: str, username: str, password: str = "", keypath: str = "") -> CustomDockerClient:
     return CustomDockerClient(username, address, password=password, keypath=keypath)
-
-
-class HostData:
-    """class to store runtime information for a host
-    """
-    def __init__(self, config: HostConfig) -> None:
-        self.config = config
-        self.ssh_client: Union[SSHClient, None] = None
-        self.docker_client: Union[CustomDockerClient, None] = None
-        self.pids_native: List[str] = []
-        self.pids_docker: List[str] = []
-        # TODO: Revisit this, currently just mimicking the old impl
-        self.processor_server_pids_native: List[str] = []
-        self.processor_server_pids_docker: List[str] = []
-        # Key: processor_name, Value: list of ports
-        self.processor_server_ports: dict = {}
-
-    @staticmethod
-    def from_config(config: List[HostConfig]) -> List[HostData]:
-        res = []
-        for host_config in config:
-            res.append(HostData(host_config))
-        return res
 
 
 class CustomDockerClient(DockerClient):
@@ -85,21 +52,20 @@ class CustomDockerClient(DockerClient):
         # the super-constructor is not called on purpose: it solely instantiates the APIClient. The
         # missing `version` in that call would raise an error. APIClient is provided here as a
         # replacement for what the super-constructor does
-        if not user or not host:
+        if not (user and host):
             raise ValueError('Missing argument: user and host must both be provided')
-        if 'password' not in kwargs and 'keypath' not in kwargs:
+        if bool('password' not in kwargs) != ('keypath' not in kwargs):
             raise ValueError('Missing argument: one of password and keyfile is needed')
         self.api = APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
         ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
         self.api.mount('http+docker://ssh', ssh_adapter)
 
     class CustomSshHttpAdapter(SSHHTTPAdapter):
-        def __init__(self, base_url, password: Union[str, None] = None,
-                     keypath: Union[str, None] = None) -> None:
+        def __init__(self, base_url, password: str = "", keypath: str = "") -> None:
             self.password = password
             self.keypath = keypath
-            if not self.password and not self.keypath:
-                raise Exception("either 'password' or 'keypath' must be provided")
+            if bool(self.password) == bool(self.keypath):
+                raise Exception("Either 'password' or 'keypath' must be provided")
             super().__init__(base_url)
 
         def _create_paramiko_client(self, base_url: str) -> None:
@@ -115,18 +81,22 @@ class CustomDockerClient(DockerClient):
             self.ssh_client.set_missing_host_key_policy(AutoAddPolicy)
 
 
-class DeployType(Enum):
-    """ Deploy-Type of the processing server.
-    """
-    docker = 1
-    native = 2
-
-    @staticmethod
-    def from_str(label: str) -> DeployType:
-        return DeployType[label.lower()]
-
-    def is_native(self) -> bool:
-        return self == DeployType.native
-
-    def is_docker(self) -> bool:
-        return self == DeployType.docker
+def wait_for_rabbitmq_availability(
+        host: str,
+        port: int,
+        vhost: str,
+        username: str,
+        password: str
+) -> None:
+    max_waiting_steps = 15
+    while max_waiting_steps > 0:
+        try:
+            dummy_publisher = RMQPublisher(host=host, port=port, vhost=vhost)
+            dummy_publisher.authenticate_and_connect(username=username, password=password)
+        except Exception:
+            max_waiting_steps -= 1
+            sleep(2)
+        else:
+            # TODO: Disconnect the dummy_publisher here before returning...
+            return
+    raise RuntimeError('Error waiting for queue startup: timeout exceeded')

@@ -1,10 +1,15 @@
 from datetime import datetime
 from functools import wraps
-from re import match as re_match
 from os import environ
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
+from re import match as re_match
+import requests
+from typing import Dict
 from uuid import uuid4
+from yaml import safe_load
+
+from ocrd_validators import ProcessingServerConfigValidator
 
 
 # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
@@ -54,6 +59,16 @@ def generate_id() -> str:
     return str(uuid4())
 
 
+def validate_and_load_config(config_path: str) -> Dict:
+    # Load and validate the config
+    with open(config_path) as fin:
+        config = safe_load(fin)
+    report = ProcessingServerConfigValidator.validate(config)
+    if not report.is_valid:
+        raise Exception(f'Processing-Server configuration file is invalid:\n{report.errors}')
+    return config
+
+
 def verify_database_uri(mongodb_address: str) -> str:
     try:
         # perform validation check
@@ -83,3 +98,13 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
         'vhost': url_params.virtual_host
     }
     return parsed_data
+
+
+def download_ocrd_all_tool_json(ocrd_all_url: str):
+    if not ocrd_all_url:
+        raise ValueError(f'The URL of ocrd all tool json is empty')
+    headers = {'Accept': 'application/json'}
+    response = requests.get(ocrd_all_url, headers=headers)
+    if not response.status_code == 200:
+        raise ValueError(f"Failed to download ocrd all tool json from: '{ocrd_all_url}'")
+    return response.json()
