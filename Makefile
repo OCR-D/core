@@ -72,8 +72,6 @@ install:
 	@# speedup for end-of-life builds
 	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary opencv-python-headless numpy; fi
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
-	@# workaround for shapely#1598
-	$(PIP) install --no-binary shapely --force-reinstall shapely
 
 # Install with pip install -e
 install-dev: uninstall
