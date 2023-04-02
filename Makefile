@@ -9,7 +9,7 @@ TESTDIR = tests
 
 SPHINX_APIDOC = 
 
-BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd
+BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
 
 FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
 

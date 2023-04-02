@@ -25,6 +25,7 @@
 	* [ocrd_models](#ocrd_models)
 	* [ocrd_modelfactory](#ocrd_modelfactory)
 	* [ocrd_validators](#ocrd_validators)
+	* [ocrd_network](#ocrd_network)
 	* [ocrd](#ocrd)
 * [bash library](#bash-library)
 	* [bashlib API](#bashlib-api)
@@ -121,6 +122,12 @@ See [README for `ocrd_modelfactory`](./ocrd_modelfactory/README.md) for further 
 Schemas and routines for validating BagIt, `ocrd-tool.json`, workspaces, METS, page, CLI parameters etc.
 
 See [README for `ocrd_validators`](./ocrd_validators/README.md) for further information.
+
+### ocrd_network
+
+Components related to OCR-D Web API
+
+See [README for `ocrd_network`](./ocrd_network/README.md) for further information.
 
 ### ocrd
 
