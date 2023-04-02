@@ -9,6 +9,10 @@ Added:
 
   * :fire: `ocrd_network`: Components related to OCR-D Web API, #974
 
+Changed:
+
+  * `bashlib`: support file input from multiple file groups, #1027, #1031
+
 Fixed:
 
   * Don't output default docstrings for bashlib processors, #1026
