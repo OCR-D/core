@@ -125,7 +125,7 @@ See [README for `ocrd_validators`](./ocrd_validators/README.md) for further info
 
 ### ocrd_network
 
-Tools for offering (web-)services with OCR-D
+Components related to OCR-D Web API
 
 See [README for `ocrd_network`](./ocrd_network/README.md) for further information.
 
