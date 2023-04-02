@@ -117,8 +117,14 @@ def ocrd_tool_tool_show_resource(ctx, res_name):
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @pass_ocrd_tool
 def ocrd_tool_tool_params_help(ctx):
-    Processor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-              show_help=True)
+    class BashProcessor(Processor):
+        # set docstrings to empty
+        # fixme: override the module-level docstring, too
+        __doc__ = None
+        def process(self):
+            return super()
+    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+                  show_help=True)
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories
