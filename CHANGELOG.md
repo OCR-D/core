@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * :fire: `ocrd_network`: Components related to OCR-D Web API, #974
+
+Fixed:
+
+  * Don't output default docstrings for bashlib processors, #1026
+
 ## [2.49.0] - 2023-03-24
 
 Changed:
