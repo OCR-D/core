@@ -8,12 +8,11 @@ import tempfile
 import pathlib
 import yaml
 import json
-import pytest
 
 from ocrd.cli.bashlib import bashlib_cli
 
 from ocrd.constants import BASHLIB_FILENAME
-from ocrd_utils.constants import VERSION, MIME_TO_EXT, MIMETYPE_PAGE
+from ocrd_utils.constants import VERSION, MIMETYPE_PAGE
 from ocrd_validators.constants import BAGIT_TXT
 from ocrd_models.constants import TAG_MODS_IDENTIFIER
 
@@ -33,10 +32,10 @@ class TestBashlibCli(TestCase):
             if os.path.lexists(executable):
                 os.unlink(executable)
             os.symlink(scriptfile.name, executable)
-            os.chmod(scriptfile.name, 755)
+            os.chmod(scriptfile.name, 0x755)
             cwd = os.getcwd()
             path = env['PATH']
-            env.update(PATH=path + ':' + cwd)
+            env.update(PATH=f'{path}:{cwd}')
         try:
             result = subprocess.run(['bash', scriptfile.name] + list(args), env=env,
                                     # py37+: text=True, capture_output=True
