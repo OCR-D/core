@@ -217,7 +217,7 @@ class ProcessingWorker:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {path_to_mets}, "
                            f"input_grps: {input_file_grps}, output_file_grps: {output_file_grps}, "
                            f"page_id: {page_id}, parameters: {parameters}")
-            self.log.error(error)
+            self.log.exception(error)
             execution_failed = True
         end_time = datetime.now()
         exec_duration = calculate_execution_time(start_time, end_time)

@@ -134,6 +134,15 @@ class ProcessorServer(FastAPI):
         )
         await job.insert()
 
+        background_tasks.add_task(
+            self.processor_job_task,
+            job_id=job_id,
+            job=job
+        )
+
+        return job.to_job_output()
+
+    async def processor_job_task(self, job_id: str, job: DBProcessorJob):
         execution_failed = False
         start_time = datetime.now()
         await db_update_processing_job(
@@ -142,8 +151,7 @@ class ProcessorServer(FastAPI):
             start_time=start_time
         )
         try:
-            background_tasks.add_task(
-                run_single_execution,
+            run_single_execution(
                 ProcessorClass=self.ProcessorClass,
                 executable=self.processor_name,
                 abs_path_to_mets=job.path_to_mets,
@@ -156,7 +164,7 @@ class ProcessorServer(FastAPI):
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {job.path_to_mets}, "
                            f"input_grps: {job.input_file_grps}, output_file_grps: {job.output_file_grps}, "
                            f"page_id: {job.page_id}, parameters: {job.parameters}")
-            self.log.error(error)
+            self.log.exception(error)
             execution_failed = True
         end_time = datetime.now()
         exec_duration = calculate_execution_time(start_time, end_time)
@@ -167,7 +175,6 @@ class ProcessorServer(FastAPI):
             end_time=end_time,
             exec_time=f'{exec_duration} ms'
         )
-        return job.to_job_output()
 
     def get_ocrd_tool(self):
         if self.ocrd_tool:
