@@ -3,7 +3,8 @@ from typing import Dict, List
 
 from .deployment_utils import (
     create_docker_client,
-    create_ssh_client
+    create_ssh_client,
+    DeployType
 )
 
 __all__ = [
@@ -37,23 +38,23 @@ class DataHost:
         for worker in config['workers']:
             name = worker['name']
             count = worker['number_of_instance']
-            deploy_type = worker['deploy_type']
+            deploy_type = DeployType.DOCKER if worker['deploy_type'] == 'docker' else DeployType.NATIVE
+            if not self.needs_ssh and deploy_type == DeployType.NATIVE:
+                self.needs_ssh = True
+            if not self.needs_docker and deploy_type == DeployType.DOCKER:
+                self.needs_docker = True
             for _ in range(count):
                 self.data_workers.append(DataProcessingWorker(self.address, deploy_type, name))
-            if not self.needs_ssh and deploy_type == 'native':
-                self.needs_ssh = True
-            if not self.needs_docker and deploy_type == 'docker':
-                self.needs_docker = True
 
         for server in config['servers']:
             name = server['name']
-            deploy_type = server['deploy_type']
             port = server['port']
-            self.data_servers.append(DataProcessorServer(self.address, port, deploy_type, name))
-            if not self.needs_ssh and deploy_type == 'native':
+            deploy_type = DeployType.DOCKER if server['deploy_type'] == 'docker' else DeployType.NATIVE
+            if not self.needs_ssh and deploy_type == DeployType.NATIVE:
                 self.needs_ssh = True
-            if not self.needs_docker and deploy_type == 'docker':
+            if not self.needs_docker and deploy_type == DeployType.DOCKER:
                 self.needs_docker = True
+            self.data_servers.append(DataProcessorServer(self.address, port, deploy_type, name))
 
         # Key: processor_name, Value: list of ports
         self.server_ports: dict = {}
@@ -75,7 +76,7 @@ class DataHost:
 
 
 class DataProcessingWorker:
-    def __init__(self, host: str, deploy_type: str, processor_name: str) -> None:
+    def __init__(self, host: str, deploy_type: DeployType, processor_name: str) -> None:
         self.host = host
         self.deploy_type = deploy_type
         self.processor_name = processor_name
@@ -84,7 +85,7 @@ class DataProcessingWorker:
 
 
 class DataProcessorServer:
-    def __init__(self, host: str, port: int, deploy_type: str, processor_name: str) -> None:
+    def __init__(self, host: str, port: int, deploy_type: DeployType, processor_name: str) -> None:
         self.host = host
         self.port = port
         self.deploy_type = deploy_type

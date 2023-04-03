@@ -16,6 +16,7 @@ from ocrd_utils import getLogger
 
 from .deployment_utils import (
     create_docker_client,
+    DeployType,
     wait_for_rabbitmq_availability
 )
 
@@ -78,16 +79,16 @@ class Deployer:
         for data_host in self.data_hosts:
             if not server_only:
                 for data_worker in data_host.data_workers:
-                    if data_worker.deploy_type == 'native' and docker_only:
+                    if data_worker.deploy_type == DeployType.NATIVE and docker_only:
                         continue
-                    if data_worker.deploy_type == 'docker' and native_only:
+                    if data_worker.deploy_type == DeployType.DOCKER and native_only:
                         continue
                     matched_objects.append(data_worker)
             if not worker_only:
                 for data_server in data_host.data_servers:
-                    if data_server.deploy_type == 'native' and docker_only:
+                    if data_server.deploy_type == DeployType.NATIVE and docker_only:
                         continue
-                    if data_server.deploy_type == 'docker' and native_only:
+                    if data_server.deploy_type == DeployType.DOCKER and native_only:
                         continue
                     matched_objects.append(data_server)
         if str_names_only:
@@ -167,7 +168,7 @@ class Deployer:
                        f"name: '{data_worker.processor_name}', "
                        f"address: '{host_data.address}'")
 
-        if data_worker.deploy_type == 'native':
+        if data_worker.deploy_type == DeployType.NATIVE:
             assert host_data.ssh_client  # to satisfy mypy
             pid = self.start_native_processor(
                 ssh_client=host_data.ssh_client,
@@ -176,8 +177,7 @@ class Deployer:
                 database_url=mongodb_url,
             )
             data_worker.pid = pid
-        else:
-            assert data_worker.deploy_type == 'docker'
+        elif data_worker.deploy_type == DeployType.DOCKER:
             assert host_data.docker_client  # to satisfy mypy
             pid = self.start_docker_processor(
                 docker_client=host_data.docker_client,
@@ -200,7 +200,7 @@ class Deployer:
                        f"name: '{data_server.processor_name}', "
                        f"address: '{data_server.host}:{data_server.port}'")
 
-        if data_server.deploy_type == 'native':
+        if data_server.deploy_type == DeployType.NATIVE:
             assert host_data.ssh_client
             pid = self.start_native_processor_server(
                 ssh_client=host_data.ssh_client,
@@ -219,7 +219,7 @@ class Deployer:
                     host_data.server_ports[name] = [port]
             else:
                 host_data.server_ports[data_server.processor_name] = [data_server.port]
-        else:
+        elif data_server.deploy_type == DeployType.DOCKER:
             raise Exception("Deploying docker processor server is not supported yet!")
 
     def deploy_rabbitmq(
@@ -319,7 +319,7 @@ class Deployer:
 
         mongodb_hostinfo = f'{self.data_mongo.address}:{self.data_mongo.port}'
         self.log.info(f'The MongoDB was deployed on host: {mongodb_hostinfo}')
-        return mongodb_hostinfo
+        return self.data_mongo.url
 
     def kill_rabbitmq(self) -> None:
         if not self.data_queue.pid:
@@ -359,7 +359,7 @@ class Deployer:
                 host_data.create_client(client_type='ssh')
                 assert host_data.ssh_client
             if host_data.needs_docker:
-                host_data.create_client(client_type='ssh')
+                host_data.create_client(client_type='docker')
                 assert host_data.docker_client
 
             self.log.debug(f'Killing/Stopping processing workers on host: {host_data.address}')
@@ -385,10 +385,10 @@ class Deployer:
         for worker in host_data.data_workers:
             if not worker.pid:
                 continue
-            if worker.deploy_type == 'native':
+            if worker.deploy_type == DeployType.NATIVE:
                 host_data.ssh_client.exec_command(f'kill {worker.pid}')
                 self.log.info(f"Stopped native worker with pid: '{worker.pid}'")
-            if worker.deploy_type == 'docker':
+            elif worker.deploy_type == DeployType.DOCKER:
                 host_data.docker_client.containers.get(worker.pid).stop()
                 self.log.info(f"Stopped docker worker with container id: '{worker.pid}'")
         host_data.data_workers = []
@@ -402,10 +402,10 @@ class Deployer:
         for server in host_data.data_servers:
             if not server.pid:
                 continue
-            if server.deploy_type == 'native':
+            if server.deploy_type == DeployType.NATIVE:
                 host_data.ssh_client.exec_command(f'kill {server.pid}')
                 self.log.info(f"Stopped native server with pid: '{server.pid}'")
-            if server.deploy_type == 'docker':
+            elif server.deploy_type == DeployType.DOCKER:
                 host_data.docker_client.containers.get(server.pid).stop()
                 self.log.info(f"Stopped docker server with container id: '{server.pid}'")
         host_data.data_servers = []

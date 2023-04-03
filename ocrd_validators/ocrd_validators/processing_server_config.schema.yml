@@ -123,7 +123,7 @@ properties:
                   - ocrd-cis-ocropy-binarize
                   - ocrd-olena-binarize
               deploy_type:
-                description: Should the processor server natively or with Docker
+                description: Should the processor server be deployed natively or with Docker
                 type: string
                 enum:
                   - native

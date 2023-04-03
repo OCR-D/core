@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
@@ -9,6 +10,7 @@ from .rabbitmq_utils import RMQPublisher
 __all__ = [
     'create_docker_client',
     'create_ssh_client',
+    'DeployType',
     'wait_for_rabbitmq_availability'
 ]
 
@@ -54,7 +56,7 @@ class CustomDockerClient(DockerClient):
         # replacement for what the super-constructor does
         if not (user and host):
             raise ValueError('Missing argument: user and host must both be provided')
-        if bool('password' not in kwargs) != ('keypath' not in kwargs):
+        if ('password' not in kwargs) != ('keypath' not in kwargs):
             raise ValueError('Missing argument: one of password and keyfile is needed')
         self.api = APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
         ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
@@ -100,3 +102,10 @@ def wait_for_rabbitmq_availability(
             # TODO: Disconnect the dummy_publisher here before returning...
             return
     raise RuntimeError('Error waiting for queue startup: timeout exceeded')
+
+
+class DeployType(Enum):
+    """ Deploy-Type of the processing worker/processor server.
+    """
+    DOCKER = 1
+    NATIVE = 2
