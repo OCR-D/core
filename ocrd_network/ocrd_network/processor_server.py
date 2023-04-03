@@ -134,6 +134,16 @@ class ProcessorServer(FastAPI):
         )
         await job.insert()
 
+        # TODO: Background tasks solution was just adopted from #884,
+        #  but seems to not suit what we are trying to achieve...
+        #  However, using Celery or RabbitMQ, takes away the point
+        #  of having REST API Processor Server, or does it?
+
+        #  FastAPI Caveat: If you need to perform heavy background
+        #  computation and you don't necessarily need it to be run
+        #  by the same process (for example, you don't need to share
+        #  memory, variables, etc), you might benefit from using
+        #  other bigger tools like Celery.
         background_tasks.add_task(
             self.processor_job_task,
             job_id=job_id,
