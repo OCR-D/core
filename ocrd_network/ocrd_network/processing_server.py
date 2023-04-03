@@ -245,10 +245,6 @@ class ProcessingServer(FastAPI):
                     detail=f"Process queue with id '{processor_name}' not existing"
                 )
 
-<<<<<<< HEAD
-        # validate parameters
-=======
->>>>>>> a88495ff5522a096dff466dd2714f02de4695b6a
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
             raise HTTPException(
