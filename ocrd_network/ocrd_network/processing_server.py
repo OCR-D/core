@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import uvicorn
 
 from fastapi import FastAPI, status, Request, HTTPException
@@ -245,7 +245,10 @@ class ProcessingServer(FastAPI):
                     detail=f"Process queue with id '{processor_name}' not existing"
                 )
 
+<<<<<<< HEAD
         # validate parameters
+=======
+>>>>>>> a88495ff5522a096dff466dd2714f02de4695b6a
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
             raise HTTPException(
@@ -314,7 +317,7 @@ class ProcessingServer(FastAPI):
                 detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
             )
 
-    async def list_processors(self) -> str:
+    async def list_processors(self) -> List[str]:
         """ Return a list of all available processors
         """
         return self.processor_list
