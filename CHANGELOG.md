@@ -5,6 +5,25 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * :fire: `ocrd_network`: Components related to OCR-D Web API, #974
+
+Changed:
+
+  * `bashlib`: support file input from multiple file groups, #1027, #1031
+
+Fixed:
+
+  * Don't output default docstrings for bashlib processors, #1026
+
+## [2.49.0] - 2023-03-24
+
+Changed:
+
+  * :fire: (for now: also) publish Docker images to ghcr.io, not docker.io, #997
+  * `ocrd resmgr`: eynollah models now provided by eynollah itself, qurator-spk/eynollah#91
+
 ## [2.48.1] - 2023-03-22
 
 Changed:
