@@ -69,10 +69,6 @@ def processor_server_cli(processor_name: str, address: str, database: str):
     Start Processor Server
     (standalone REST API OCR-D processor)
     """
-    initLogging()
-    # TODO: Remove before the release
-    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
-
     try:
         # TODO: Better validate that inside the ProcessorServer itself
         host, port = address.split(':')
@@ -103,9 +99,6 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
     Start Processing Worker
     (a specific ocr-d processor consuming tasks from RabbitMQ queue)
     """
-    initLogging()
-    # TODO: Remove before the release
-    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
     # Get the ocrd_tool dictionary
     # ocrd_tool = parse_json_string_with_comments(
