@@ -6,7 +6,11 @@ import uvicorn
 
 from fastapi import FastAPI, HTTPException, status, BackgroundTasks
 
-from ocrd_utils import getLogger, get_ocrd_tool_json
+from ocrd_utils import (
+    get_ocrd_tool_json,
+    getLogger,
+    parse_json_string_with_comments,
+)
 from .database import (
     DBProcessorJob,
     db_update_processing_job,
@@ -144,6 +148,9 @@ class ProcessorServer(FastAPI):
         #  by the same process (for example, you don't need to share
         #  memory, variables, etc), you might benefit from using
         #  other bigger tools like Celery.
+
+        # Check here as well:
+        # 1) https://github.com/tiangolo/fastapi/discussions/8666
         background_tasks.add_task(
             self.processor_job_task,
             job_id=job_id,
@@ -190,7 +197,16 @@ class ProcessorServer(FastAPI):
         if self.ocrd_tool:
             return self.ocrd_tool
         if self.ProcessorClass:
-            ocrd_tool = self.ProcessorClass(workspace=None, version=True).ocrd_tool
+            # The way of accessing ocrd tool like in the line below may be problematic
+            # ocrd_tool = self.ProcessorClass(workspace=None, version=True).ocrd_tool
+            ocrd_tool = parse_json_string_with_comments(
+                run(
+                    [self.processor_name, '--dump-json'],
+                    stdout=PIPE,
+                    check=True,
+                    universal_newlines=True
+                ).stdout
+            )
         else:
             ocrd_tool = get_ocrd_tool_json(self.processor_name)
         return ocrd_tool
@@ -198,15 +214,19 @@ class ProcessorServer(FastAPI):
     def get_version(self) -> str:
         if self.version:
             return self.version
+
+        """ 
         if self.ProcessorClass:
-            version_str = self.ProcessorClass(workspace=None, version=True).version
-        else:
-            version_str = run(
-                [self.processor_name, '--version'],
-                stdout=PIPE,
-                check=True,
-                universal_newlines=True
-            ).stdout
+            # The way of accessing the version like in the line below may be problematic
+            # version_str = self.ProcessorClass(workspace=None, version=True).version
+            return version_str
+        """
+        version_str = run(
+            [self.processor_name, '--version'],
+            stdout=PIPE,
+            check=True,
+            universal_newlines=True
+        ).stdout
         return version_str
 
     def run_server(self, host, port, access_log=False):
