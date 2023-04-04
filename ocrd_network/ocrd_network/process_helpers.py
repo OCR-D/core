@@ -6,8 +6,8 @@ from ocrd.processor.helpers import run_cli, run_processor
 
 
 # A wrapper for run_processor() and run_cli()
-def run_single_execution(
-        ProcessorClass,
+def invoke_processor(
+        processor_class,
         executable: str,
         abs_path_to_mets: str,
         input_file_grps: List[str],
@@ -15,15 +15,15 @@ def run_single_execution(
         page_id: str,
         parameters: dict,
 ) -> None:
-    if not (ProcessorClass or executable):
+    if not (processor_class or executable):
         raise ValueError(f'Missing processor class and executable')
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
     workspace = Resolver().workspace_from_url(abs_path_to_mets)
-    if ProcessorClass:
+    if processor_class:
         try:
             run_processor(
-                processorClass=ProcessorClass,
+                processorClass=processor_class,
                 workspace=workspace,
                 input_file_grp=input_file_grps_str,
                 output_file_grp=output_file_grps_str,

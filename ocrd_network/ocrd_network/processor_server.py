@@ -22,7 +22,7 @@ from .models import (
     PYOcrdTool,
     StateEnum
 )
-from .process_helpers import run_single_execution
+from .process_helpers import invoke_processor
 from .server_utils import (
     _get_processor_job,
     validate_and_resolve_mets_path,
@@ -46,7 +46,7 @@ class ProcessorServer(FastAPI):
 
         self.db_url = mongodb_addr
         self.processor_name = processor_name
-        self.ProcessorClass = processor_class
+        self.processor_class = processor_class
         self.ocrd_tool = None
         self.version = None
 
@@ -89,7 +89,7 @@ class ProcessorServer(FastAPI):
 
         self.router.add_api_route(
             path='/',
-            endpoint=self.create_processor_job_task,
+            endpoint=self.create_processor_task,
             methods=['POST'],
             tags=['Processing'],
             status_code=status.HTTP_202_ACCEPTED,
@@ -125,7 +125,7 @@ class ProcessorServer(FastAPI):
 
     # Note: The Processing server pushes to a queue, while
     #  the Processor Server creates (pushes to) a background task
-    async def create_processor_job_task(self, job_input: PYJobInput, background_tasks: BackgroundTasks):
+    async def create_processor_task(self, job_input: PYJobInput, background_tasks: BackgroundTasks):
         validate_job_input(self.log, self.processor_name, self.ocrd_tool, job_input)
         job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=True)
 
@@ -152,14 +152,14 @@ class ProcessorServer(FastAPI):
         # Check here as well:
         # 1) https://github.com/tiangolo/fastapi/discussions/8666
         background_tasks.add_task(
-            self.processor_job_task,
+            self.run_processor_task,
             job_id=job_id,
             job=job
         )
 
         return job.to_job_output()
 
-    async def processor_job_task(self, job_id: str, job: DBProcessorJob):
+    async def run_processor_task(self, job_id: str, job: DBProcessorJob):
         execution_failed = False
         start_time = datetime.now()
         await db_update_processing_job(
@@ -168,8 +168,8 @@ class ProcessorServer(FastAPI):
             start_time=start_time
         )
         try:
-            run_single_execution(
-                ProcessorClass=self.ProcessorClass,
+            invoke_processor(
+                processor_class=self.processor_class,
                 executable=self.processor_name,
                 abs_path_to_mets=job.path_to_mets,
                 input_file_grps=job.input_file_grps,
@@ -196,9 +196,9 @@ class ProcessorServer(FastAPI):
     def get_ocrd_tool(self):
         if self.ocrd_tool:
             return self.ocrd_tool
-        if self.ProcessorClass:
+        if self.processor_class:
             # The way of accessing ocrd tool like in the line below may be problematic
-            # ocrd_tool = self.ProcessorClass(workspace=None, version=True).ocrd_tool
+            # ocrd_tool = self.processor_class(workspace=None, version=True).ocrd_tool
             ocrd_tool = parse_json_string_with_comments(
                 run(
                     [self.processor_name, '--dump-json'],
@@ -216,9 +216,9 @@ class ProcessorServer(FastAPI):
             return self.version
 
         """ 
-        if self.ProcessorClass:
+        if self.processor_class:
             # The way of accessing the version like in the line below may be problematic
-            # version_str = self.ProcessorClass(workspace=None, version=True).version
+            # version_str = self.processor_class(workspace=None, version=True).version
             return version_str
         """
         version_str = run(

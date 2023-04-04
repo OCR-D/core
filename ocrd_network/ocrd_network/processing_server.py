@@ -317,7 +317,7 @@ class ProcessingServer(FastAPI):
             )
         return job.to_job_output()
 
-    async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
+    async def push_to_processo_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
         ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
         validate_job_input(self.log, processor_name, ocrd_tool, job_input)
         job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)

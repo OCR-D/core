@@ -24,7 +24,7 @@ from .database import (
     sync_db_update_processing_job,
 )
 from .models import StateEnum
-from .process_helpers import run_single_execution
+from .process_helpers import invoke_processor
 from .rabbitmq_utils import (
     OcrdProcessingMessage,
     OcrdResultMessage,
@@ -72,7 +72,7 @@ class ProcessingWorker:
         self.processor_name = processor_name
         # The processor class to be used to instantiate the processor
         # Think of this as a func pointer to the constructor of the respective OCR-D processor
-        self.ProcessorClass = processor_class
+        self.processor_class = processor_class
         # Gets assigned when `connect_consumer` is called on the worker object
         # Used to consume OcrdProcessingMessage from the queue with name {processor_name}
         self.rmq_consumer = None
@@ -204,8 +204,8 @@ class ProcessingWorker:
             start_time=start_time
         )
         try:
-            run_single_execution(
-                ProcessorClass=self.ProcessorClass,
+            invoke_processor(
+                processor_class=self.processor_class,
                 executable=self.processor_name,
                 abs_path_to_mets=path_to_mets,
                 input_file_grps=input_file_grps,
