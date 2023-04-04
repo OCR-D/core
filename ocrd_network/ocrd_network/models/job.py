@@ -32,7 +32,7 @@ class PYJobInput(BaseModel):
     class Config:
         schema_extra = {
             'example': {
-                'path': '/path/to/mets.xml',
+                'path_to_mets': '/path/to/mets.xml',
                 'description': 'The description of this execution',
                 'input_file_grps': ['INPUT_FILE_GROUP'],
                 'output_file_grps': ['OUTPUT_FILE_GROUP'],
