@@ -22,6 +22,7 @@
 
 # Note: The Mets Server is still not placed on the architecture diagram and probably won't be a part of
 # the network package. The reason, Mets Server is tightly coupled with the `OcrdWorkspace`.
+from .client import Client
 from .processing_server import ProcessingServer
 from .processing_worker import ProcessingWorker
 from .processor_server import ProcessorServer
