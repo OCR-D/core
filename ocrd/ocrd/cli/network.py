@@ -9,10 +9,12 @@ OCR-D CLI: management of network components
 import click
 import logging
 from ocrd_utils import initLogging
-from ocrd_network.cli.client import client_cli
-from ocrd_network.cli.processing_server import processing_server_cli
-from ocrd_network.cli.processing_worker import processing_worker_cli
-from ocrd_network.cli.processor_server import processor_server_cli
+from ocrd_network.cli import (
+    client_cli,
+    processing_server_cli,
+    processing_worker_cli,
+    processor_server_cli,
+)
 
 
 @click.group("network")

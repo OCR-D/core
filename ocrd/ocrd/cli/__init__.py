@@ -31,7 +31,7 @@ from ocrd.cli.resmgr import resmgr_cli
 from ocrd.decorators import ocrd_loglevel
 from .zip import zip_cli
 from .log import log_cli
-from ocrd.cli.network import network_cli
+from .network import network_cli
 
 
 @click.group()
