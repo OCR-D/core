@@ -72,6 +72,8 @@ install:
 	@# speedup for end-of-life builds
 	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary opencv-python-headless numpy; fi
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+	@# workaround for shapely#1598
+	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
 install-dev: uninstall
@@ -223,6 +225,7 @@ docker docker-cuda:
 # cf. https://github.com/NVIDIA/nvidia-docker/wiki/CUDA#description
 docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.3.1-devel-ubuntu20.04
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
+docker-cuda: DOCKER_ARGS += --build-arg FIXUP="apt-get install libcudnn8"
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install
