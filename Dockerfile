@@ -36,7 +36,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && pip3 install --upgrade pip setuptools \
     && hash -r \
     && make install \
-    && $FIXUP \
+    && eval $FIXUP \
     && rm -rf /build-ocrd
 
 WORKDIR /data

@@ -223,9 +223,9 @@ docker docker-cuda:
 #  no good *cudnn* because it will not be used by pip installs,
 #  and cudnn-devel does not contain nvcc etc.)
 # cf. https://github.com/NVIDIA/nvidia-docker/wiki/CUDA#description
-docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.3.1-devel-ubuntu20.04
+docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.8.0-devel-ubuntu20.04
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
-docker-cuda: DOCKER_ARGS += --build-arg FIXUP="apt-get install libcudnn8"
+docker-cuda: DOCKER_ARGS += --build-arg FIXUP="pip3 install nvidia-pyindex && pip3 install nvidia-cudnn-cu11==8.6.0.163 && echo /usr/local/lib/python3.8/dist-packages/nvidia/cudnn/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && echo /usr/local/lib/python3.8/dist-packages/nvidia/cublas/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && ldconfig"
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install
