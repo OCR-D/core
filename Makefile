@@ -70,7 +70,7 @@ deps-test:
 install:
 	$(PIP) install -U pip wheel setuptools fastentrypoints
 	@# speedup for end-of-life builds
-	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) config set global.prefer-binary "opencv-python-headless numpy"; fi
+	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) config set global.prefer-binary "opencv-python-headless=1 numpy=1"; fi
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
@@ -215,7 +215,7 @@ pyclean:
 .PHONY: docker docker-cuda
 
 # Build docker image
-docker docker-cuda:
+docker docker-cuda: 
 	docker build --progress=plain -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build docker GPU / CUDA image
