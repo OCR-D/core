@@ -70,7 +70,8 @@ deps-test:
 install:
 	$(PIP) install -U pip wheel setuptools fastentrypoints
 	@# speedup for end-of-life builds
-	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) config set global.prefer-binary "opencv-python-headless=1 numpy=1"; fi
+	@# we cannot use pip config here due to pip#11988
+	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary opencv-python-headless numpy; fi
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
