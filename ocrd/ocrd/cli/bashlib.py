@@ -112,8 +112,12 @@ def bashlib_input_files(**kwargs):
                           page_id=kwargs['page_id'],
                           input_file_grp=kwargs['input_file_grp'],
                           output_file_grp=kwargs['output_file_grp'])
-    for input_file in processor.input_files:
+    for input_files in processor.zip_input_files(mimetype=None, on_error='abort'):
         for field in ['url', 'ID', 'mimetype', 'pageId']:
             # make this bash-friendly (show initialization for associative array)
-            print("[%s]='%s'" % (field, getattr(input_file, field)), end=' ')
-        print("[outputFileId]='%s'" % make_file_id(input_file, kwargs['output_file_grp']))
+            if len(input_files) > 1:
+                # single quotes allow us to preserve the list value inside the alist
+                print("[%s]='%s'" % (field, ' '.join(getattr(res, field) for res in input_files)), end=' ')
+            else:
+                print("[%s]='%s'" % (field, getattr(input_files[0], field)), end=' ')
+        print("[outputFileId]='%s'" % make_file_id(input_files[0], kwargs['output_file_grp']))

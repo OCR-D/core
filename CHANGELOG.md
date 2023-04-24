@@ -5,6 +5,20 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.50.0] - 2023-04-24
+
+Added:
+
+  * :fire: `ocrd_network`: Components related to OCR-D Web API, #974
+
+Changed:
+
+  * `bashlib`: support file input from multiple file groups, #1027, #1031
+
+Fixed:
+
+  * Don't output default docstrings for bashlib processors, #1026
+
 ## [2.49.0] - 2023-03-24
 
 Changed:
@@ -1717,6 +1731,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.50.0]: ../../compare/v2.50.0..v2.49.0
+[2.49.0]: ../../compare/v2.49.0..v2.48.1
 [2.48.1]: ../../compare/v2.48.1..v2.48.0
 [2.48.0]: ../../compare/v2.48.0..v2.47.4
 [2.47.4]: ../../compare/v2.47.4..v2.47.3
