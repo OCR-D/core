@@ -43,13 +43,13 @@ RUN apt-get update && apt-get -y install software-properties-common \
 RUN if echo $BASE_IMAGE | fgrep -q cuda; then \
     pip3 install nvidia-pyindex && \
     pip3 install nvidia-cudnn-cu11==8.6.0.163 && \
-    pip3 install nvidia-cublas-cu11 && \
-    pip3 install nvidia-cusparse-cu11 && \
-    pip3 install nvidia-cusolver-cu11 && \
-    pip3 install nvidia-curand-cu11 && \
-    pip3 install nvidia-cufft-cu11 && \
-    pip3 install nvidia-cuda-runtime-cu11 && \
-    pip3 install nvidia-cuda-nvrtc-cu11 && \
+    pip3 install nvidia-cublas-cu117 && \
+    pip3 install nvidia-cusparse-cu117 && \
+    pip3 install nvidia-cusolver-cu117 && \
+    pip3 install nvidia-curand-cu117 && \
+    pip3 install nvidia-cufft-cu117 && \
+    pip3 install nvidia-cuda-runtime-cu117 && \
+    pip3 install nvidia-cuda-nvrtc-cu117 && \
     echo /usr/local/lib/python3.8/site-packages/nvidia/cudnn/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
     echo /usr/local/lib/python3.8/site-packages/nvidia/cublas/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
     echo /usr/local/lib/python3.8/site-packages/nvidia/cusparse/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
