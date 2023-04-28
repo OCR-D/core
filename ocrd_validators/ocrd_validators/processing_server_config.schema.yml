@@ -57,13 +57,16 @@ properties:
       required:
         - address
         - username
-        - workers
-        - servers
       oneOf:
         - required:
             - password
         - required:
             - path_to_privkey
+      anyOf:
+        - required:
+            - workers
+        - required:
+            - servers
       properties:
         address:
           description: The IP address or domain name of the target machine
