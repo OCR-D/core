@@ -145,18 +145,17 @@ ocrd__parse_argv () {
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
             --queue) ocrd__worker_queue="$2" ; shift ;;
             --database) ocrd__worker_database="$2" ; shift ;;
+            --type) ocrd__worker_type="$2" ; shift ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
         shift
     done
 
-    if [ -v ocrd__worker_queue -a -v ocrd__worker_database ]; then
-        ocrd processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
+    if [ -v ocrd__worker_queue -a -v ocrd__worker_database -a -v ocrd__worker_type ]; then
+        ocrd processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}" --type "${ocrd__worker_type}"
         exit
-    elif [ -v ocrd__worker_queue ]; then
-        ocrd__raise "Processing Worker also requires a --database argument"
-    elif [ -v ocrd__worker_database ]; then
-        ocrd__raise "Processing Worker also requires a --queue argument"
+    elif [ -v ocrd__worker_queue -o -v ocrd__worker_database -o -v ocrd__worker_type ]; then
+        ocrd__raise "For Processing Worker all 3 arguments --database, --queue and --type are required"
     fi
 
     if [[ ! -e "${ocrd__argv[mets_file]}" ]]; then
