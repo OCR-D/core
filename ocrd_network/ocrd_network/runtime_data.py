@@ -35,10 +35,10 @@ class DataHost:
         self.data_workers: List[DataProcessingWorker] = []
         self.data_servers: List[DataProcessorServer] = []
 
-        for worker in config['workers']:
+        for worker in config.get('workers', []):
             name = worker['name']
             count = worker['number_of_instance']
-            deploy_type = DeployType.DOCKER if worker['deploy_type'] == 'docker' else DeployType.NATIVE
+            deploy_type = DeployType.DOCKER if worker.get('deploy_type', None) == 'docker' else DeployType.NATIVE
             if not self.needs_ssh and deploy_type == DeployType.NATIVE:
                 self.needs_ssh = True
             if not self.needs_docker and deploy_type == DeployType.DOCKER:
@@ -46,10 +46,10 @@ class DataHost:
             for _ in range(count):
                 self.data_workers.append(DataProcessingWorker(self.address, deploy_type, name))
 
-        for server in config['servers']:
+        for server in config.get('servers', []):
             name = server['name']
             port = server['port']
-            deploy_type = DeployType.DOCKER if server['deploy_type'] == 'docker' else DeployType.NATIVE
+            deploy_type = DeployType.DOCKER if server.get('deploy_type', None) == 'docker' else DeployType.NATIVE
             if not self.needs_ssh and deploy_type == DeployType.NATIVE:
                 self.needs_ssh = True
             if not self.needs_docker and deploy_type == DeployType.DOCKER:
