@@ -6,6 +6,7 @@ PIP ?= pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = tests
+PYTEST_ARGS = --continue-on-collection-errors
 
 SPHINX_APIDOC = 
 
@@ -42,6 +43,7 @@ help:
 	@echo "    DOCKER_BASE_IMAGE  Docker base image. Default: '$(DOCKER_BASE_IMAGE)'."
 	@echo "    DOCKER_ARGS        Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
 	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
+	@echo "    PYTEST_ARGS        arguments for pytest. Default: $(PYTEST_ARGS)"
 
 # END-EVAL
 
@@ -149,9 +151,9 @@ assets: repo/assets
 .PHONY: test
 # Run all unit tests
 test: assets
-	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10 --ignore=$(TESTDIR)/test_logging.py --ignore-glob="$(TESTDIR)/**/*bench*.py" $(TESTDIR)
+	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest $(PYTEST_ARGS) -k TestLogging $(TESTDIR)
+	HOME=$(CURDIR) $(PYTHON) -m pytest $(PYTEST_ARGS) -k TestLogging $(TESTDIR)
+	$(PYTHON) -m pytest $(PYTEST_ARGS) --durations=10 --ignore=$(TESTDIR)/test_logging.py --ignore-glob="$(TESTDIR)/**/*bench*.py" $(TESTDIR)
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
