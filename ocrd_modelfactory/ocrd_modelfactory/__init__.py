@@ -8,11 +8,9 @@ from pathlib import Path
 from yaml import safe_load, safe_dump
 
 from PIL import Image
-from mimetypes import guess_type
-from filetype import guess
 from lxml import etree as ET
 
-from ocrd_utils import VERSION, MIMETYPE_PAGE, EXT_TO_MIME
+from ocrd_utils import VERSION, MIMETYPE_PAGE, guess_media_type
 from ocrd_models import OcrdExif, OcrdFile
 from ocrd_models.ocrd_page import (
     PcGtsType, PageType, MetadataType,
@@ -94,17 +92,7 @@ def page_from_file(input_file, with_tree=False):
             and reverse mapping, too (cf. :py:func:`ocrd_models.ocrd_page.parseEtree`)
     """
     if not isinstance(input_file, OcrdFile):
-        mimetype = guess(input_file)
-        if mimetype is None:
-            mimetype = guess_type(input_file)[0]
-        else:
-            mimetype = mimetype.mime
-        if mimetype is None:
-            mimetype = EXT_TO_MIME.get(Path(input_file).suffix, None)
-        if mimetype is None:
-            raise ValueError("Could not determine MIME type of input_file must")
-        if mimetype == 'application/xml':
-            mimetype = MIMETYPE_PAGE
+        mimetype = guess_media_type(input_file, application_xml=MIMETYPE_PAGE)
         input_file = OcrdFile(ET.Element("dummy"),
                               local_filename=input_file,
                               mimetype=mimetype)
