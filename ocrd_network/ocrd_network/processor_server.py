@@ -137,26 +137,7 @@ class ProcessorServer(FastAPI):
             state=StateEnum.queued
         )
         await job.insert()
-
-        # TODO: Background tasks solution was just adopted from #884,
-        #  but seems to not suit what we are trying to achieve...
-        #  However, using Celery or RabbitMQ, takes away the point
-        #  of having REST API Processor Server, or does it?
-
-        #  FastAPI Caveat: If you need to perform heavy background
-        #  computation and you don't necessarily need it to be run
-        #  by the same process (for example, you don't need to share
-        #  memory, variables, etc), you might benefit from using
-        #  other bigger tools like Celery.
-
-        # Check here as well:
-        # 1) https://github.com/tiangolo/fastapi/discussions/8666
-        background_tasks.add_task(
-            self.run_processor_task,
-            job_id=job_id,
-            job=job
-        )
-
+        await self.run_processor_task(job_id=job_id, job=job)
         return job.to_job_output()
 
     async def run_processor_task(self, job_id: str, job: DBProcessorJob):
