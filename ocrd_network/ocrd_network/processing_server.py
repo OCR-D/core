@@ -1,5 +1,6 @@
 import json
 import requests
+import httpx
 from typing import Dict, List
 import uvicorn
 
@@ -329,12 +330,20 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to json dump the PYJobInput, error: {e}"
             )
-        # Post a processing job to the Processor Server
-        response = requests.post(
-            processor_server_url,
-            headers={'Content-Type': 'application/json'},
-            json=json.loads(json_data)
-        )
+        
+        # TODO: The amount of pages should come as a request input
+        #  currently, use 200 as a default
+        amount_of_pages = 200
+        request_timeout = 20.0 * amount_of_pages  # 20 sec timeout per page
+        # Post a processing job to the Processor Server asynchronously
+        timeout = httpx.Timeout(timeout=request_timeout, connect=30.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                processor_server_url,
+                headers={'Content-Type': 'application/json'},
+                json=json.loads(json_data)
+            )
+
         if not response.status_code == 202:
             self.log.exception(f"Failed to post '{processor_name}' job to: {processor_server_url}")
             raise HTTPException(
