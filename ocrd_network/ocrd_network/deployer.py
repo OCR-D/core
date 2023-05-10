@@ -305,11 +305,20 @@ class Deployer:
             ports_mapping = {
                 27017: self.data_mongo.port
             }
+        if self.data_mongo.username:
+            environment = [
+                f'MONGO_INITDB_ROOT_USERNAME={self.data_mongo.username}',
+                f'MONGO_INITDB_ROOT_PASSWORD={self.data_mongo.password}'
+            ]
+        else:
+            environment = []
+
         res = client.containers.run(
             image=image,
             detach=detach,
             remove=remove,
-            ports=ports_mapping
+            ports=ports_mapping,
+            environment=environment
         )
         if not res or not res.id:
             raise RuntimeError('Failed to start MongoDB docker container on host: '

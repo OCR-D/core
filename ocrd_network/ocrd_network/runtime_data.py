@@ -101,9 +101,15 @@ class DataMongoDB:
         self.ssh_username = config['ssh']['username']
         self.ssh_keypath = config['ssh'].get('path_to_privkey', None)
         self.ssh_password = config['ssh'].get('password', None)
-        self.username = config['credentials']['username']
-        self.password = config['credentials']['password']
-        self.url = f'mongodb://{self.address}:{self.port}'
+
+        if 'credentials' in config:
+            self.username = config['credentials']['username']
+            self.password = config['credentials']['password']
+            self.url = f'mongodb://{self.username}:{self.password}@{self.address}:{self.port}'
+        else:
+            self.username = None
+            self.password = None
+            self.url = f'mongodb://{self.address}:{self.port}'
         # Assigned when deployed
         self.pid = None
 
