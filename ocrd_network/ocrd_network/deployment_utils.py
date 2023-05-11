@@ -85,7 +85,7 @@ class CustomDockerClient(DockerClient):
             self.ssh_client.set_missing_host_key_policy(AutoAddPolicy)
 
 
-def wait_for_rabbitmq_availability(
+def verify_rabbitmq_available(
         host: str,
         port: int,
         vhost: str,
@@ -103,17 +103,8 @@ def wait_for_rabbitmq_availability(
         else:
             # TODO: Disconnect the dummy_publisher here before returning...
             return
-    raise RuntimeError('Error waiting for queue startup: timeout exceeded')
-
-
-def verify_rabbitmq_available(host: str, port: int, vhost: str, username: str,
-                              password: str) -> None:
-    try:
-        dummy_publisher = RMQPublisher(host=host, port=port, vhost=vhost)
-        dummy_publisher.authenticate_and_connect(username=username, password=password)
-    except Exception:
-        raise Exception(f'Cannot connet to Rabbitmq host: {host}, port: {port}, '
-                        f'vhost: {vhost}, username: {username}')
+    raise RuntimeError(f'Cannot connet to Rabbitmq host: {host}, port: {port}, '
+                       f'vhost: {vhost}, username: {username}')
 
 
 def verify_mongodb_available(mongo_url: str) -> None:
@@ -121,7 +112,7 @@ def verify_mongodb_available(mongo_url: str) -> None:
         client = MongoClient(mongo_url, serverSelectionTimeoutMS=1000.0)
         client.admin.command("ismaster")
     except Exception:
-        raise Exception(f'Cannot connet to MongoDb: {re.sub(r":[^@]+@", ":****@", mongo_url)}')
+        raise RuntimeError(f'Cannot connet to MongoDb: {re.sub(r":[^@]+@", ":****@", mongo_url)}')
 
 
 class DeployType(Enum):

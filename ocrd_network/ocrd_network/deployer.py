@@ -17,7 +17,6 @@ from ocrd_utils import getLogger
 from .deployment_utils import (
     create_docker_client,
     DeployType,
-    wait_for_rabbitmq_availability,
     verify_mongodb_available,
     verify_rabbitmq_available,
 )
@@ -240,13 +239,6 @@ class Deployer:
                 self.data_queue.username,
                 self.data_queue.password
             )
-            wait_for_rabbitmq_availability(
-                host=self.data_queue.address,
-                port=int(self.data_queue.port),
-                vhost='/',
-                username=self.data_queue.username,
-                password=self.data_queue.password
-            )
             return self.data_queue.url
         self.log.debug(f"Trying to deploy '{image}', with modes: "
                        f"detach='{detach}', remove='{remove}'")
@@ -290,7 +282,7 @@ class Deployer:
         rmq_port = int(self.data_queue.port)
         rmq_vhost = '/'
 
-        wait_for_rabbitmq_availability(
+        verify_rabbitmq_available(
             host=rmq_host,
             port=rmq_port,
             vhost=rmq_vhost,
