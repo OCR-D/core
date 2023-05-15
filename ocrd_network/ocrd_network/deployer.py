@@ -301,7 +301,7 @@ class Deployer:
             ports_mapping: Union[Dict, None] = None
     ) -> str:
         if self.data_mongo.skip_deployment:
-            self.log.debug('MongoDb is externaly managed. Skipping deployment')
+            self.log.debug('MongoDB is externaly managed. Skipping deployment')
             verify_mongodb_available(self.data_mongo.url);
             return self.data_mongo.url
 

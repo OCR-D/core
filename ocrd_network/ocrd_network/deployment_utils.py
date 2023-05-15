@@ -103,7 +103,7 @@ def verify_rabbitmq_available(
         else:
             # TODO: Disconnect the dummy_publisher here before returning...
             return
-    raise RuntimeError(f'Cannot connet to Rabbitmq host: {host}, port: {port}, '
+    raise RuntimeError(f'Cannot connect to RabbitMQ host: {host}, port: {port}, '
                        f'vhost: {vhost}, username: {username}')
 
 
@@ -112,7 +112,7 @@ def verify_mongodb_available(mongo_url: str) -> None:
         client = MongoClient(mongo_url, serverSelectionTimeoutMS=1000.0)
         client.admin.command("ismaster")
     except Exception:
-        raise RuntimeError(f'Cannot connet to MongoDb: {re.sub(r":[^@]+@", ":****@", mongo_url)}')
+        raise RuntimeError(f'Cannot connect to MongoDB: {re.sub(r":[^@]+@", ":****@", mongo_url)}')
 
 
 class DeployType(Enum):
