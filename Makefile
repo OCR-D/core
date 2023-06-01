@@ -33,7 +33,6 @@ help:
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker GPU / CUDA image"
-	@echo "    cuda-ubuntu    Install native CUDA toolkit in different versions"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
@@ -44,15 +43,6 @@ help:
 	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
-
-# Docker tag. Default: '$(DOCKER_TAG)'.
-DOCKER_TAG = ocrd/core
-
-# Docker base image. Default: '$(DOCKER_BASE_IMAGE)'.
-DOCKER_BASE_IMAGE = ubuntu:20.04
-
-# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL = $(PIP) install
@@ -215,17 +205,22 @@ pyclean:
 
 .PHONY: docker docker-cuda
 
-# Build docker image
-docker docker-cuda: 
-	docker build --progress=plain -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
+DOCKER_ARGS = 
 
-# Build docker GPU / CUDA image
-# (we need *devel* for compilation via nvcc etc. of our dependencies inside the build,
-#  no good *cudnn* because it will not be used by pip installs,
-#  and cudnn-devel does not contain nvcc etc.)
-# cf. https://github.com/NVIDIA/nvidia-docker/wiki/CUDA#description
-docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.8.0-devel-ubuntu20.04
+# Build docker image
+docker: DOCKER_BASE_IMAGE = ubuntu:20.04
+docker: DOCKER_TAG = ocrd/core
+docker: DOCKER_FILE = Dockerfile
+
+docker-cuda: DOCKER_BASE_IMAGE = ocrd/core
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
+docker-cuda: DOCKER_FILE = Dockerfile.cuda
+
+docker-cuda: docker
+
+docker docker-cuda: 
+	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install

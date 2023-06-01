@@ -1,6 +1,5 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
-ARG BASE_IMAGE
 ARG FIXUP=echo
 MAINTAINER OCR-D
 ENV DEBIAN_FRONTEND noninteractive
@@ -40,30 +39,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && make install \
     && eval $FIXUP \
     && rm -rf /build-ocrd
-RUN if echo $BASE_IMAGE | fgrep -q cuda; then \
-    pip3 install nvidia-pyindex && \
-    pip3 install nvidia-cudnn-cu11==8.6.0.163 && \
-    pip3 install nvidia-cublas-cu117 && \
-    pip3 install nvidia-cusparse-cu117 && \
-    pip3 install nvidia-cusolver-cu117 && \
-    pip3 install nvidia-curand-cu117 && \
-    pip3 install nvidia-cufft-cu117 && \
-    pip3 install nvidia-cuda-runtime-cu117 && \
-    pip3 install nvidia-cuda-nvrtc-cu117 && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/cudnn/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/cublas/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/cusparse/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/cusolver/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/curand/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/cufft/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/cuda_runtime/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    echo /usr/local/lib/python3.8/site-packages/nvidia/cuda_nvrtc/lib/ >> /etc/ld.so.conf.d/000_cuda.conf && \
-    ldconfig; fi
 
 WORKDIR /data
-
-# remove any entry points from base image
-RUN rm -fr /opt/nvidia
-ENTRYPOINT []
 
 CMD ["/usr/local/bin/ocrd", "--help"]

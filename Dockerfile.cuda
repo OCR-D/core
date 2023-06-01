@@ -1,0 +1,38 @@
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
+
+ENV MAMBA_EXE=/usr/local/bin/conda
+ENV MAMBA_ROOT_PREFIX=/conda
+ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
+ENV CONDA_PREFIX=$MAMBA_ROOT_PREFIX
+ENV CONDA_SHLVL='1'
+
+WORKDIR $MAMBA_ROOT_PREFIX
+
+RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+RUN mv bin/micromamba $MAMBA_EXE
+RUN hash -r
+RUN echo $CONDA_PREFIX/lib >> /etc/ld.so.conf.d/conda.conf
+# get CUDA toolkit, including compiler and libraries with dev
+# nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
+#RUN conda install -c nvidia/label/cuda-11.8.0 cuda && conda clean -a
+# conda-forge has cudnn but no cudatoolkit-dev anymore
+# so let's combine nvidia and conda-forge (will be same lib versions, no waste of space):
+RUN conda install -c conda-forge \
+          cudatoolkit=11.8.0 \
+          cudnn=8.8.* && \
+    conda clean -a && \
+    find $CONDA_PREFIX -name "*_static.a" -delete
+RUN conda install -c nvidia/label/cuda-11.8.0 \
+          cuda-nvcc \
+          cuda-cudart-dev \
+          cuda-libraries-dev && \
+    conda clean -a && \
+    find $CONDA_PREFIX -name "*_static.a" -delete
+# gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
+RUN ldconfig
+
+WORKDIR /data
+
+CMD ["/usr/local/bin/ocrd", "--help"]
+
