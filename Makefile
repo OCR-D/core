@@ -254,5 +254,6 @@ cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install
-	for mod in $(BUILD_ORDER);do (cd $$mod; $(PYTHON) setup.py sdist bdist_wheel);done
-	version=`$(FIND_VERSION)`; twine upload ocrd*/dist/ocrd*$$version*{tar.gz,whl}
+	$(PIP) install build
+	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build -n ./$(MODULE) &&) echo done
+	twine upload ocrd*/dist/ocrd*$(OCRD_VERSION)*{tar.gz,whl}
