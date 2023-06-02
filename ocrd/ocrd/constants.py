@@ -1,7 +1,7 @@
 """
 Constants for ocrd.
 """
-from ocrd_utils.package_resources import resource_filename
+from pkg_resources import resource_filename
 
 __all__ = [
     'TMP_PREFIX',

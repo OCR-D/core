@@ -1,11 +1,10 @@
 """
 Constants for ocrd_utils.
 """
+from pkg_resources import get_distribution
 from re import compile as regex_compile
 from os import environ
 from os.path import join, expanduser
-
-from ocrd_utils.package_resources import get_distribution
 
 __all__ = [
     'EXT_TO_MIME',

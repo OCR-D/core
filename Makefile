@@ -58,7 +58,7 @@ deps-test:
 
 # (Re)install the tool
 install:
-	$(PIP) install -U pip wheel setuptools fastentrypoints
+	$(PIP) install -U pip wheel setuptools
 	@# speedup for end-of-life builds
 	@# we cannot use pip config here due to pip#11988
 	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary opencv-python-headless numpy; fi
