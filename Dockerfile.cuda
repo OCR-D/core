@@ -54,8 +54,6 @@ RUN pip3 install nvidia-pyindex \
     done \
  && ldconfig
 # gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
-RUN ldconfig
-
 
 WORKDIR /data
 
