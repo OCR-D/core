@@ -10,6 +10,7 @@ TESTDIR = tests
 SPHINX_APIDOC = 
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
+reverse = $(if $(wordlist 2,2,$(1)),$(call reverse,$(wordlist 2,$(words $(1)),$(1))) $(firstword $(1)),$(1))
 
 PEP_440_PATTERN := '([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?'
 OCRD_VERSION != fgrep version= ocrd_utils/setup.py | grep -Po $(PEP_440_PATTERN)
@@ -83,7 +84,7 @@ install-dev: uninstall
 
 # Uninstall the tool
 uninstall:
-	for mod in $(BUILD_ORDER);do $(PIP) uninstall -y $$mod;done
+	$(PIP) uninstall -y $(call reverse,$(BUILD_ORDER))
 
 # Regenerate python code from PAGE XSD
 generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
