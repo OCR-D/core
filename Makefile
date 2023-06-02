@@ -11,7 +11,8 @@ SPHINX_APIDOC =
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
 
-FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
+PEP_440_PATTERN := '([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?'
+OCRD_VERSION != fgrep version= ocrd_utils/setup.py | grep -Po $(PEP_440_PATTERN)
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -71,7 +72,8 @@ install:
 	$(PIP) install -U pip wheel setuptools fastentrypoints
 	@# speedup for end-of-life builds
 	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary opencv-python-headless numpy; fi
-	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd$*(OCRD_VERSION)*.whl)
+	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) &&) echo done
 	@# workaround for shapely#1598
 	$(PIP) install --no-binary shapely --force-reinstall shapely
 
