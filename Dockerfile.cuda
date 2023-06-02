@@ -12,25 +12,50 @@ WORKDIR $MAMBA_ROOT_PREFIX
 RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
 RUN mv bin/micromamba $MAMBA_EXE
 RUN hash -r
+RUN mkdir -p $CONDA_PREFIX/lib $CONDA_PREFIX/include
 RUN echo $CONDA_PREFIX/lib >> /etc/ld.so.conf.d/conda.conf
-# get CUDA toolkit, including compiler and libraries with dev
-# nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
+# Get CUDA toolkit, including compiler and libraries with dev.
+# The nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
 #RUN conda install -c nvidia/label/cuda-11.8.0 cuda && conda clean -a
-# conda-forge has cudnn but no cudatoolkit-dev anymore
+# The conda-forge channel has cudnn but no cudatoolkit-dev anymore,
 # so let's combine nvidia and conda-forge (will be same lib versions, no waste of space):
-RUN conda install -c conda-forge \
-          cudatoolkit=11.8.0 \
-          cudnn=8.8.* && \
-    conda clean -a && \
-    find $CONDA_PREFIX -name "*_static.a" -delete
 RUN conda install -c nvidia/label/cuda-11.8.0 \
-          cuda-nvcc \
-          cuda-cudart-dev \
-          cuda-libraries-dev && \
-    conda clean -a && \
-    find $CONDA_PREFIX -name "*_static.a" -delete
+                  cuda-nvcc \
+                  cuda-cccl \
+ && conda clean -a \
+ && find $CONDA_PREFIX -name "*_static.a" -delete
+                  # cuda-cudart-dev \
+                  # cuda-libraries-dev \
+#RUN conda install -c conda-forge \
+#          cudatoolkit=11.8.0 \
+#          cudnn=8.8.* && \
+#    conda clean -a && \
+#    find $CONDA_PREFIX -name "*_static.a" -delete
+# Since Torch will pull in the CUDA libraries (as Python pkgs) anyway,
+# let's jump the shark and pull these via NGC index directly,
+# but then share them with the rest of the system so native compilation/linking
+# works, too:
+RUN pip3 install nvidia-pyindex \
+ && pip3 install nvidia-cudnn-cu11==8.6.0.163 \
+                 nvidia-cublas-cu11 \
+                 nvidia-cusparse-cu11 \
+                 nvidia-cusolver-cu11 \
+                 nvidia-curand-cu11 \
+                 nvidia-cufft-cu11 \
+                 nvidia-cuda-runtime-cu11 \
+                 nvidia-cuda-nvrtc-cu11 \
+ && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_nvrtc; do \
+        for lib in /usr/local/lib/python3.8/site-packages/nvidia/$pkg/lib/lib*.so.*; do \
+            base=$(basename $lib); \
+            ln -s $lib $CONDA_PREFIX/lib/$base.so; \
+            ln -s $lib $CONDA_PREFIX/lib/${base%.so.*}.so; \
+        done \
+     && ln -s /usr/local/lib/python3.8/site-packages/nvidia/$pkg/include/* $CONDA_PREFIX/include/; \
+    done \
+ && ldconfig
 # gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
 RUN ldconfig
+
 
 WORKDIR /data
 
