@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.51.0] - 2023-06-07
+
 Changed:
 
   * `core cuda` Docker: CUDA base image working again, based on `ocrd/core` not `nvidia/cuda` in a separate `Dockerfile.cuda`, #1041
@@ -1744,6 +1746,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.51.0]: ../../compare/v2.51.0..v2.50.0
 [2.50.0]: ../../compare/v2.50.0..v2.49.0
 [2.49.0]: ../../compare/v2.49.0..v2.48.1
 [2.48.1]: ../../compare/v2.48.1..v2.48.0
