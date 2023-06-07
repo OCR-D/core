@@ -5,6 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `core cuda` Docker: CUDA base image working again, based on `ocrd/core` not `nvidia/cuda` in a separate `Dockerfile.cuda`, #1041
+  * `core-cuda` Docker: adopt #1008 (venv under /usr/local, as in ocrd_all, instead of dist-packages), #1041
+  * `core-cuda` Docker: use conda ([micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)) for CUDA toolkit, and [nvidia-pyindex](https://pypi.org/project/nvidia-pyindex/) for CUDA libs – instead of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) base image, #1041
+  * more robust workaround for shapely#1598, #1041
+
+Removed:
+
+  * Revert #882 (fastentrypoints) as it enforces deps versions at runtime
+  * Drop `ocrd_utils.package_resources` and use `pkg_resources.*` directly, #1041
+  * `ocrd resmgr`: Drop redundant (processor-provided) entries in the central `resource_list.yml`.
+
 ## [2.50.0] - 2023-04-24
 
 Added:
