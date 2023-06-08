@@ -3,10 +3,9 @@
 > Python modules implementing [OCR-D specs](https://github.com/OCR-D/spec) and related tools
 
 [![image](https://img.shields.io/pypi/v/ocrd.svg)](https://pypi.org/project/ocrd/)
-[![image](https://travis-ci.org/OCR-D/core.svg?branch=master)](https://travis-ci.org/OCR-D/core)
 [![image](https://circleci.com/gh/OCR-D/core.svg?style=svg)](https://circleci.com/gh/OCR-D/core)
+[![Docker Image CI](https://github.com/OCR-D/core/actions/workflows/docker-image.yml/badge.svg)](https://github.com/OCR-D/core/actions/workflows/docker-image.yml)
 [![image](https://scrutinizer-ci.com/g/OCR-D/core/badges/build.png?b=master)](https://scrutinizer-ci.com/g/OCR-D/core)
-[![Docker Automated build](https://img.shields.io/docker/automated/ocrd/core.svg)](https://hub.docker.com/r/ocrd/core/tags/)
 [![image](https://codecov.io/gh/OCR-D/core/branch/master/graph/badge.svg)](https://codecov.io/gh/OCR-D/core)
 [![image](https://scrutinizer-ci.com/g/OCR-D/core/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/OCR-D/core)
 
