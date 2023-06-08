@@ -22,8 +22,6 @@ jobs:
     - # Activate cache export feature to reduce build time of images
       name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-    - name: Setup upterm session
-      uses: lhotari/action-upterm@v1
     - name: Build the Docker image
       # default tag uses docker.io, so override on command-line
       run: make docker DOCKER_TAG=${{ env.DOCKER_TAG }}
