@@ -19,7 +19,8 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
+	@echo "    deps-cuda      Dependencies for deployment with GPU support via Conda"
+	@echo "    deps-ubuntu    Dependencies for deployment in an Ubuntu/Debian Linux"
 	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
 	@echo "    install-dev    Install with pip install -e"
@@ -46,6 +47,58 @@ help:
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL = $(PIP) install
+
+deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
+deps-cuda: export CONDA_PREFIX ?= /conda
+deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+deps-cuda:
+	curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+	mv bin/micromamba $(CONDA_EXE)
+# Install Conda system-wide (for interactive / login shells)
+	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
+	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
+	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
+# Get CUDA toolkit, including compiler and libraries with dev,
+# however, the Nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
+#conda install -c nvidia/label/cuda-11.8.0 cuda && conda clean -a
+#
+# The conda-forge channel has cudnn and cudatoolkit but no cudatoolkit-dev anymore (and we need both!),
+# so let's combine nvidia and conda-forge (will be same lib versions, no waste of space),
+# but omitting cuda-cudart-dev and cuda-libraries-dev (as these will be pulled by pip for torch anyway):
+	conda install -c nvidia/label/cuda-11.8.0 \
+	                 cuda-nvcc \
+	                 cuda-cccl \
+	 && conda clean -a \
+	 && find $(CONDA_PREFIX) -name "*_static.a" -delete
+#conda install -c conda-forge \
+#          cudatoolkit=11.8.0 \
+#          cudnn=8.8.* && \
+#conda clean -a && \
+#find $(CONDA_PREFIX) -name "*_static.a" -delete
+#
+# Since Torch will pull in the CUDA libraries (as Python pkgs) anyway,
+# let's jump the shark and pull these via NGC index directly,
+# but then share them with the rest of the system so native compilation/linking
+# works, too:
+	$(PIP) install nvidia-pyindex \
+	 && $(PIP) install nvidia-cudnn-cu11==8.6.0.163 \
+	                   nvidia-cublas-cu11 \
+	                   nvidia-cusparse-cu11 \
+	                   nvidia-cusolver-cu11 \
+	                   nvidia-curand-cu11 \
+	                   nvidia-cufft-cu11 \
+	                   nvidia-cuda-runtime-cu11 \
+	                   nvidia-cuda-nvrtc-cu11 \
+	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_nvrtc; do \
+	        for lib in $(PYTHON_PREFIX)/nvidia/$$pkg/lib/lib*.so.*; do \
+	            base=`basename $$lib`; \
+	            ln -s $$lib $(CONDA_PREFIX)/lib/$$base.so; \
+	            ln -s $$lib $(CONDA_PREFIX)/lib/$${base%.so.*}.so; \
+	        done \
+	     && ln -s $(PYTHON_PREFIX)/nvidia/$$pkg/include/* $(CONDA_PREFIX)/include/; \
+	    done \
+	 && ldconfig
+# gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
