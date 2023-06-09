@@ -60,11 +60,13 @@ deps-cuda:
 	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
 # Get CUDA toolkit, including compiler and libraries with dev,
 # however, the Nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
+#MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
 #conda install -c nvidia/label/cuda-11.8.0 cuda && conda clean -a
 #
 # The conda-forge channel has cudnn and cudatoolkit but no cudatoolkit-dev anymore (and we need both!),
 # so let's combine nvidia and conda-forge (will be same lib versions, no waste of space),
 # but omitting cuda-cudart-dev and cuda-libraries-dev (as these will be pulled by pip for torch anyway):
+	MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
 	conda install -c nvidia/label/cuda-11.8.0 \
 	                 cuda-nvcc \
 	                 cuda-cccl \
