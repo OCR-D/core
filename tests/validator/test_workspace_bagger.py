@@ -33,7 +33,7 @@ class TestWorkspaceBagger(TestCase):
 
     def test_bag_zip_and_spill(self):
         self.workspace.mets.find_all_files(ID='INPUT_0017')[0].url = 'bad-scheme://foo'
-        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
+        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://ocr-d.de'
         self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
         self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), join(self.tempdir, 'out'))
 
@@ -52,7 +52,7 @@ class TestWorkspaceBagger(TestCase):
     def test_bag_partial_http_nostrict(self):
         self.bagger.strict = False
         makedirs(BACKUPDIR)
-        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://google.com'
+        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://ocr-d.de'
         self.bagger.bag(self.workspace, 'kant_aufklaerung_1784')
 
     def test_bag_full(self):

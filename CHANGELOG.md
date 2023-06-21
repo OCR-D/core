@@ -7,6 +7,27 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
+  * `make deps-cuda`: Makefile target to set up a working CUDA installation, both for native and Dockerfile.cuda, #1055
+
+## [2.51.0] - 2023-06-07
+
+Changed:
+
+  * `core cuda` Docker: CUDA base image working again, based on `ocrd/core` not `nvidia/cuda` in a separate `Dockerfile.cuda`, #1041
+  * `core-cuda` Docker: adopt #1008 (venv under /usr/local, as in ocrd_all, instead of dist-packages), #1041
+  * `core-cuda` Docker: use conda ([micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)) for CUDA toolkit, and [nvidia-pyindex](https://pypi.org/project/nvidia-pyindex/) for CUDA libs – instead of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) base image, #1041
+  * more robust workaround for shapely#1598, #1041
+
+Removed:
+
+  * Revert #882 (fastentrypoints) as it enforces deps versions at runtime
+  * Drop `ocrd_utils.package_resources` and use `pkg_resources.*` directly, #1041
+  * `ocrd resmgr`: Drop redundant (processor-provided) entries in the central `resource_list.yml`.
+
+## [2.50.0] - 2023-04-24
+
+Added:
+
   * :fire: `ocrd_network`: Components related to OCR-D Web API, #974
 
 Changed:
@@ -1729,6 +1750,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.51.0]: ../../compare/v2.51.0..v2.50.0
+[2.50.0]: ../../compare/v2.50.0..v2.49.0
+[2.49.0]: ../../compare/v2.49.0..v2.48.1
 [2.48.1]: ../../compare/v2.48.1..v2.48.0
 [2.48.0]: ../../compare/v2.48.0..v2.47.4
 [2.47.4]: ../../compare/v2.47.4..v2.47.3

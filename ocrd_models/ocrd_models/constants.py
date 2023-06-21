@@ -1,7 +1,7 @@
 """
 Constants for ocrd_models.
 """
-from ocrd_utils.package_resources import resource_string
+from pkg_resources import resource_string
 import re
 
 __all__ = [
