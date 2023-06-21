@@ -98,12 +98,24 @@ class DataMongoDB:
     def __init__(self, config: Dict) -> None:
         self.address = config['address']
         self.port = int(config['port'])
-        self.ssh_username = config['ssh']['username']
-        self.ssh_keypath = config['ssh'].get('path_to_privkey', None)
-        self.ssh_password = config['ssh'].get('password', None)
-        self.username = config['credentials']['username']
-        self.password = config['credentials']['password']
-        self.url = f'mongodb://{self.address}:{self.port}'
+        if 'ssh' in config:
+            self.ssh_username = config['ssh']['username']
+            self.ssh_keypath = config['ssh'].get('path_to_privkey', None)
+            self.ssh_password = config['ssh'].get('password', None)
+        else:
+            self.ssh_username = None
+            self.ssh_keypath = None
+            self.ssh_password = None
+
+        if 'credentials' in config:
+            self.username = config['credentials']['username']
+            self.password = config['credentials']['password']
+            self.url = f'mongodb://{self.username}:{self.password}@{self.address}:{self.port}'
+        else:
+            self.username = None
+            self.password = None
+            self.url = f'mongodb://{self.address}:{self.port}'
+        self.skip_deployment = config.get('skip_deployment', False)
         # Assigned when deployed
         self.pid = None
 
@@ -112,12 +124,19 @@ class DataRabbitMQ:
     def __init__(self, config: Dict) -> None:
         self.address = config['address']
         self.port = int(config['port'])
-        self.ssh_username = config['ssh']['username']
-        self.ssh_keypath = config['ssh'].get('path_to_privkey', None)
-        self.ssh_password = config['ssh'].get('password', None)
+        if 'ssh' in config:
+            self.ssh_username = config['ssh']['username']
+            self.ssh_keypath = config['ssh'].get('path_to_privkey', None)
+            self.ssh_password = config['ssh'].get('password', None)
+        else:
+            self.ssh_username = None
+            self.ssh_keypath = None
+            self.ssh_password = None
+
         self.vhost = '/'
         self.username = config['credentials']['username']
         self.password = config['credentials']['password']
         self.url = f'amqp://{self.username}:{self.password}@{self.address}:{self.port}{self.vhost}'
+        self.skip_deployment = config.get('skip_deployment', False)
         # Assigned when deployed
         self.pid = None

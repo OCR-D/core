@@ -26,6 +26,9 @@ properties:
       ssh:
         description: Information required for an SSH connection
         $ref: "#/$defs/ssh"
+      skip_deployment:
+        description: set to true to deploy queue yourself
+        type: boolean
   database:
     description: Information about the MongoDB
     type: object
@@ -46,6 +49,9 @@ properties:
       ssh:
         description: Information required for an SSH connection
         $ref: "#/$defs/ssh"
+      skip_deployment:
+        description: set to true to deploy database yourself
+        type: boolean
   hosts:
     description: A list of hosts where Processing Servers will be deployed
     type: array

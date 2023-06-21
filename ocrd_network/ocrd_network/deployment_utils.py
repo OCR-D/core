@@ -4,8 +4,10 @@ from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
 from time import sleep
+import re
 
 from .rabbitmq_utils import RMQPublisher
+from pymongo import MongoClient
 
 __all__ = [
     'create_docker_client',
@@ -83,7 +85,7 @@ class CustomDockerClient(DockerClient):
             self.ssh_client.set_missing_host_key_policy(AutoAddPolicy)
 
 
-def wait_for_rabbitmq_availability(
+def verify_rabbitmq_available(
         host: str,
         port: int,
         vhost: str,
@@ -101,7 +103,16 @@ def wait_for_rabbitmq_availability(
         else:
             # TODO: Disconnect the dummy_publisher here before returning...
             return
-    raise RuntimeError('Error waiting for queue startup: timeout exceeded')
+    raise RuntimeError(f'Cannot connect to RabbitMQ host: {host}, port: {port}, '
+                       f'vhost: {vhost}, username: {username}')
+
+
+def verify_mongodb_available(mongo_url: str) -> None:
+    try:
+        client = MongoClient(mongo_url, serverSelectionTimeoutMS=1000.0)
+        client.admin.command("ismaster")
+    except Exception:
+        raise RuntimeError(f'Cannot connect to MongoDB: {re.sub(r":[^@]+@", ":****@", mongo_url)}')
 
 
 class DeployType(Enum):

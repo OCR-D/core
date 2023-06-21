@@ -17,7 +17,8 @@ from ocrd_utils import getLogger
 from .deployment_utils import (
     create_docker_client,
     DeployType,
-    wait_for_rabbitmq_availability
+    verify_mongodb_available,
+    verify_rabbitmq_available,
 )
 
 from .runtime_data import (
@@ -229,6 +230,16 @@ class Deployer:
             remove: bool,
             ports_mapping: Union[Dict, None] = None
     ) -> str:
+        if self.data_queue.skip_deployment:
+            self.log.debug(f"RabbitMQ is externaly managed. Skipping deployment")
+            verify_rabbitmq_available(
+                self.data_queue.address,
+                self.data_queue.port,
+                self.data_queue.vhost,
+                self.data_queue.username,
+                self.data_queue.password
+            )
+            return self.data_queue.url
         self.log.debug(f"Trying to deploy '{image}', with modes: "
                        f"detach='{detach}', remove='{remove}'")
 
@@ -271,7 +282,7 @@ class Deployer:
         rmq_port = int(self.data_queue.port)
         rmq_vhost = '/'
 
-        wait_for_rabbitmq_availability(
+        verify_rabbitmq_available(
             host=rmq_host,
             port=rmq_port,
             vhost=rmq_vhost,
@@ -289,6 +300,11 @@ class Deployer:
             remove: bool,
             ports_mapping: Union[Dict, None] = None
     ) -> str:
+        if self.data_mongo.skip_deployment:
+            self.log.debug('MongoDB is externaly managed. Skipping deployment')
+            verify_mongodb_available(self.data_mongo.url);
+            return self.data_mongo.url
+
         self.log.debug(f"Trying to deploy '{image}', with modes: "
                        f"detach='{detach}', remove='{remove}'")
 
@@ -305,11 +321,20 @@ class Deployer:
             ports_mapping = {
                 27017: self.data_mongo.port
             }
+        if self.data_mongo.username:
+            environment = [
+                f'MONGO_INITDB_ROOT_USERNAME={self.data_mongo.username}',
+                f'MONGO_INITDB_ROOT_PASSWORD={self.data_mongo.password}'
+            ]
+        else:
+            environment = []
+
         res = client.containers.run(
             image=image,
             detach=detach,
             remove=remove,
-            ports=ports_mapping
+            ports=ports_mapping,
+            environment=environment
         )
         if not res or not res.id:
             raise RuntimeError('Failed to start MongoDB docker container on host: '
@@ -322,7 +347,9 @@ class Deployer:
         return self.data_mongo.url
 
     def kill_rabbitmq(self) -> None:
-        if not self.data_queue.pid:
+        if self.data_queue.skip_deployment:
+            return
+        elif not self.data_queue.pid:
             self.log.warning('No running RabbitMQ instance found')
             return
         client = create_docker_client(
@@ -337,7 +364,9 @@ class Deployer:
         self.log.info('The RabbitMQ is stopped')
 
     def kill_mongodb(self) -> None:
-        if not self.data_mongo.pid:
+        if self.data_mongo.skip_deployment:
+            return
+        elif not self.data_mongo.pid:
             self.log.warning('No running MongoDB instance found')
             return
         client = create_docker_client(
