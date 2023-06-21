@@ -19,7 +19,8 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
-	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
+	@echo "    deps-cuda      Dependencies for deployment with GPU support via Conda"
+	@echo "    deps-ubuntu    Dependencies for deployment in an Ubuntu/Debian Linux"
 	@echo "    deps-test      Install test python deps via pip"
 	@echo "    install        (Re)install the tool"
 	@echo "    install-dev    Install with pip install -e"
@@ -32,30 +33,74 @@ help:
 	@echo "    docs-clean     Clean docs"
 	@echo "    docs-coverage  Calculate docstring coverage"
 	@echo "    docker         Build docker image"
-	@echo "    docker-cuda    Build docker GPU / CUDA image"
-	@echo "    cuda-ubuntu    Install native CUDA toolkit in different versions"
+	@echo "    docker-cuda    Build docker image for GPU / CUDA"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
-	@echo "    DOCKER_TAG         Docker tag. Default: '$(DOCKER_TAG)'."
-	@echo "    DOCKER_BASE_IMAGE  Docker base image. Default: '$(DOCKER_BASE_IMAGE)'."
+	@echo "    DOCKER_TAG         Docker target image tag. Default: '$(DOCKER_TAG)'."
+	@echo "    DOCKER_BASE_IMAGE  Docker source image tag. Default: '$(DOCKER_BASE_IMAGE)'."
 	@echo "    DOCKER_ARGS        Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
 	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
 
-# Docker tag. Default: '$(DOCKER_TAG)'.
-DOCKER_TAG = ocrd/core
-
-# Docker base image. Default: '$(DOCKER_BASE_IMAGE)'.
-DOCKER_BASE_IMAGE = ubuntu:20.04
-
-# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
-
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL = $(PIP) install
+
+deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
+deps-cuda: export CONDA_PREFIX ?= /conda
+deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+deps-cuda:
+	curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+	mv bin/micromamba $(CONDA_EXE)
+# Install Conda system-wide (for interactive / login shells)
+	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
+	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
+	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
+# Get CUDA toolkit, including compiler and libraries with dev,
+# however, the Nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
+#MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
+#conda install -c nvidia/label/cuda-11.8.0 cuda && conda clean -a
+#
+# The conda-forge channel has cudnn and cudatoolkit but no cudatoolkit-dev anymore (and we need both!),
+# so let's combine nvidia and conda-forge (will be same lib versions, no waste of space),
+# but omitting cuda-cudart-dev and cuda-libraries-dev (as these will be pulled by pip for torch anyway):
+	MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
+	conda install -c nvidia/label/cuda-11.8.0 \
+	                 cuda-nvcc \
+	                 cuda-cccl \
+	 && conda clean -a \
+	 && find $(CONDA_PREFIX) -name "*_static.a" -delete
+#conda install -c conda-forge \
+#          cudatoolkit=11.8.0 \
+#          cudnn=8.8.* && \
+#conda clean -a && \
+#find $(CONDA_PREFIX) -name "*_static.a" -delete
+#
+# Since Torch will pull in the CUDA libraries (as Python pkgs) anyway,
+# let's jump the shark and pull these via NGC index directly,
+# but then share them with the rest of the system so native compilation/linking
+# works, too:
+	$(PIP) install nvidia-pyindex \
+	 && $(PIP) install nvidia-cudnn-cu11==8.6.0.163 \
+	                   nvidia-cublas-cu11 \
+	                   nvidia-cusparse-cu11 \
+	                   nvidia-cusolver-cu11 \
+	                   nvidia-curand-cu11 \
+	                   nvidia-cufft-cu11 \
+	                   nvidia-cuda-runtime-cu11 \
+	                   nvidia-cuda-nvrtc-cu11 \
+	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_nvrtc; do \
+	        for lib in $(PYTHON_PREFIX)/nvidia/$$pkg/lib/lib*.so.*; do \
+	            base=`basename $$lib`; \
+	            ln -s $$lib $(CONDA_PREFIX)/lib/$$base.so; \
+	            ln -s $$lib $(CONDA_PREFIX)/lib/$${base%.so.*}.so; \
+	        done \
+	     && ln -s $(PYTHON_PREFIX)/nvidia/$$pkg/include/* $(CONDA_PREFIX)/include/; \
+	    done \
+	 && ldconfig
+# gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
@@ -68,12 +113,13 @@ deps-test:
 
 # (Re)install the tool
 install:
-	$(PIP) install -U pip wheel setuptools fastentrypoints
+	$(PIP) install -U pip wheel setuptools
 	@# speedup for end-of-life builds
+	@# we cannot use pip config here due to pip#11988
 	if $(PYTHON) -V | fgrep -e 3.5 -e 3.6; then $(PIP) install --prefer-binary opencv-python-headless numpy; fi
 	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
 	@# workaround for shapely#1598
-	$(PIP) install --no-binary shapely --force-reinstall shapely
+	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
 install-dev: uninstall
@@ -149,9 +195,16 @@ assets: repo/assets
 .PHONY: test
 # Run all unit tests
 test: assets
+	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10\
+		--ignore=$(TESTDIR)/test_logging.py \
+		--ignore=$(TESTDIR)/test_logging_conf.py \
+		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
+		$(TESTDIR)
+	#$(MAKE) test-logging
+
+test-logging:
 	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10 --ignore=$(TESTDIR)/test_logging.py --ignore-glob="$(TESTDIR)/**/*bench*.py" $(TESTDIR)
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
@@ -214,40 +267,22 @@ pyclean:
 
 .PHONY: docker docker-cuda
 
+# Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
+DOCKER_ARGS = 
+
 # Build docker image
-docker docker-cuda:
-	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+docker: DOCKER_BASE_IMAGE = ubuntu:20.04
+docker: DOCKER_TAG = ocrd/core
+docker: DOCKER_FILE = Dockerfile
 
-# Build docker GPU / CUDA image
-docker-cuda: DOCKER_BASE_IMAGE = nvidia/cuda:11.3.1-cudnn8-runtime-ubuntu20.04
+docker-cuda: DOCKER_BASE_IMAGE = ocrd/core
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
-docker-cuda: DOCKER_ARGS += --build-arg FIXUP="make cuda-ubuntu cuda-ldconfig"
+docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
-#
-# CUDA
-#
+docker-cuda: docker
 
-.PHONY: cuda-ubuntu cuda-ldconfig
-
-# Install native CUDA toolkit in different versions
-cuda-ubuntu: cuda-ldconfig
-	apt-get -y install --no-install-recommends cuda-runtime-11-0 cuda-runtime-11-1 cuda-runtime-11-3 cuda-runtime-11-7 cuda-runtime-12-1
-
-cuda-ldconfig: /etc/ld.so.conf.d/cuda.conf
-	ldconfig
-
-/etc/ld.so.conf.d/cuda.conf:
-	@echo > $@
-	@echo /usr/local/cuda-11.0/lib64 >> $@
-	@echo /usr/local/cuda-11.0/targets/x86_64-linux/lib >> $@
-	@echo /usr/local/cuda-11.1/lib64 >> $@
-	@echo /usr/local/cuda-11.1/targets/x86_64-linux/lib >> $@
-	@echo /usr/local/cuda-11.3/lib64 >> $@
-	@echo /usr/local/cuda-11.3/targets/x86_64-linux/lib >> $@
-	@echo /usr/local/cuda-11.7/lib64 >> $@
-	@echo /usr/local/cuda-11.7/targets/x86_64-linux/lib >> $@
-	@echo /usr/local/cuda-12.1/lib64 >> $@
-	@echo /usr/local/cuda-12.1/targets/x86_64-linux/lib >> $@
+docker docker-cuda: 
+	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: uninstall install

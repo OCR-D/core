@@ -128,7 +128,7 @@ class TestBashlibCli(TestCase):
                 }
             }
         }
-        script = """#!/bin/bash
+        script = """#!/usr/bin/env bash
         set -eu
         set -o pipefail
         MIMETYPE_PAGE=$(ocrd bashlib constants MIMETYPE_PAGE)
