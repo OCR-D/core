@@ -332,6 +332,7 @@ class ProcessingServer(FastAPI):
             )
         
         # TODO: The amount of pages should come as a request input
+        # TODO: cf https://github.com/OCR-D/core/pull/1030/files#r1152551161
         #  currently, use 200 as a default
         amount_of_pages = 200
         request_timeout = 20.0 * amount_of_pages  # 20 sec timeout per page
