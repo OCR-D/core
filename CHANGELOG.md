@@ -8,6 +8,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added:
 
   * `make deps-cuda`: Makefile target to set up a working CUDA installation, both for native and Dockerfile.cuda, #1055
+  * Implementation of the Standalone Processor Server module, #1030
+
+Changed:
+
+  * Refactoring the Network CLI, all network module CLI are in `ocrd_network` now, #1030
+  * The Processing Server uses [`ocrd-all-tool.json`](https://ocr-d.de/js/ocrd-all-tool.json) file, removing local processor install dependencies, #1030
+  * Overall improvement and refactoring of the `ocrd_network` package, #1030
+  * Optionally skip deployment of mongodb and rabbitmq to make external usage/management possible, #1048
+
 
 ## [2.51.0] - 2023-06-07
 
