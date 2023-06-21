@@ -17,6 +17,10 @@ Changed:
   * Overall improvement and refactoring of the `ocrd_network` package, #1030
   * Optionally skip deployment of mongodb and rabbitmq to make external usage/management possible, #1048
 
+Removed:
+
+  * Obsolete travis CI configuration removed, #1056
+  * Support for end-of-life python versions 3.5 and 3.6, #1057
 
 ## [2.51.0] - 2023-06-07
 
