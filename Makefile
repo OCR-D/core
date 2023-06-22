@@ -11,7 +11,7 @@ SPHINX_APIDOC =
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
 
-FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Po "([0-9ab]+\.?)+"
+FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Eo "([0-9ab]+\.?)+"
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
