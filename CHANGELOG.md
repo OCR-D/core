@@ -22,6 +22,10 @@ Removed:
   * Obsolete travis CI configuration removed, #1056
   * Support for end-of-life python versions 3.5 and 3.6, #1057
 
+Fixed:
+  
+  * Makefile `FIND_VERSION` macro: use `grep -E` instead of `grep -P` for macos compatibility, #1060
+
 ## [2.51.0] - 2023-06-07
 
 Changed:
