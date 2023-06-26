@@ -16,8 +16,8 @@ jobs:
     steps:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
-      - run: make install PIP_INSTALL="pip install --user"
-      - run: make deps-test test benchmark PIP_INSTALL="pip install --user"
+      - run: make install PIP_INSTALL="pip3 install --user"
+      - run: make deps-test test benchmark PIP_INSTALL="pip3 install --user"
 
   test-python37:
     docker:
