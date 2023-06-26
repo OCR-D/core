@@ -7,7 +7,7 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
-SPHINX_APIDOC = 
+SPHINX_APIDOC =
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
 reverse = $(if $(wordlist 2,2,$(1)),$(call reverse,$(wordlist 2,$(words $(1)),$(1))) $(firstword $(1)),$(1))
