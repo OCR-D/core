@@ -571,15 +571,40 @@ class OcrdMets(OcrdXmlDocument):
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
             namespaces=NS)
 
-    def get_physical_pages(self, for_fileIds=None):
+    def get_physical_pages(self, for_fileIds=None, for_pageIds=None):
         """
         List all page IDs (the ``@ID`` of each physical ``mets:structMap`` ``mets:div``),
-        optionally for a subset of ``mets:file`` ``@ID`` :py:attr:`for_fileIds`.
+        optionally for a subset of ``mets:file`` ``@ID`` :py:attr:`for_fileIds`,
+        or for a subset selector expression (comma-separated, range, and/or regex) :py:attr:`for_pageIds`.
         """
-        if for_fileIds is None:
+        if for_fileIds is None and for_pageIds is None:
             return self.physical_pages
+        if for_pageIds is not None:
+            ret = []
+            pageId_patterns = []
+            for pageId_token in re.split(r',', for_pageIds):
+                if pageId_token.startswith(REGEX_PREFIX):
+                    pageId_patterns.append(re.compile(pageId_token[REGEX_PREFIX_LEN:]))
+                elif '..' in pageId_token:
+                    pageId_patterns += generate_range(*pageId_token.split('..', 1))
+                else:
+                    pageId_patterns += [pageId_token]
+            if self._cache_flag:
+                for page_id in self._page_cache.keys():
+                    if page_id in pageId_patterns or \
+                        any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
+                        ret.append(page_id)
+            else:
+                for page in self._tree.getroot().xpath(
+                    'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                        namespaces=NS):
+                    page_id = page.get('ID')
+                    if page_id in pageId_patterns or \
+                        any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
+                        ret.append(page_id)
+            return ret
+
         ret = [None] * len(for_fileIds)
-        
         if self._cache_flag:
             for pageId in self._fptr_cache.keys():
                 for fptr in self._fptr_cache[pageId].keys():
