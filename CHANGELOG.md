@@ -26,6 +26,7 @@ Fixed:
 
   * Makefile `FIND_VERSION` macro: use `grep -E` instead of `grep -P` for macos compatibility, #1060
   * `ocrd resmgr`: detect HTTP errors as such and don't try to continue if HTTP >= 400, #1062
+  * `PageValidator`: Ensure TextLine has coordinates when checking for Baseline containment, #1049
 
 ## [2.51.0] - 2023-06-07
 
