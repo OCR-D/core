@@ -12,13 +12,12 @@ jobs:
     working_directory: ~/ocrd-core
     environment:
       PIP: pip3
-      PIP_INSTALL: pip install --user
       PYTHON: python3
     steps:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
-      - run: make install
-      - run: make deps-test test benchmark
+      - run: make install PIP_INSTALL="pip install --user"
+      - run: make deps-test test benchmark PIP_INSTALL="pip install --user"
 
   test-python37:
     docker:
