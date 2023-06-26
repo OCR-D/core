@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.52.0] - 2023-06-26
+
 Added:
 
   * `make deps-cuda`: Makefile target to set up a working CUDA installation, both for native and Dockerfile.cuda, #1055
@@ -1772,6 +1774,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.52.0]: ../../compare/v2.52.0..v2.51.0
 [2.51.0]: ../../compare/v2.51.0..v2.50.0
 [2.50.0]: ../../compare/v2.50.0..v2.49.0
 [2.49.0]: ../../compare/v2.49.0..v2.48.1
