@@ -8,8 +8,6 @@ from tarfile import open as open_tarfile
 from urllib.parse import urlparse, unquote
 from zipfile import ZipFile
 
-from mimetypes import guess_type
-from filetype import guess
 import requests
 from gdown.parse_url import parse_url as gparse_url
 from gdown.download import get_url_from_gdrive_confirmation
@@ -22,7 +20,7 @@ yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp
     yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment
+from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment, guess_media_type
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -250,6 +248,7 @@ class OcrdResourceManager():
                 except RuntimeError as e:
                     log.warning("Cannot unwrap Google Drive URL: ", e)
             with requests.get(url, stream=True) as r:
+                r.raise_for_status()
                 for data in r.iter_content(chunk_size=4096):
                     if progress_cb:
                         progress_cb(len(data))
@@ -330,14 +329,7 @@ class OcrdResourceManager():
                     self._copy_impl(url, archive_fname, progress_cb)
                 Path('out').mkdir()
                 with pushd_popd('out'):
-                    suffixes = ''.join(Path(nth_url_segment(url)).suffixes)
-                    mimetype = guess(f'../{archive_fname}')
-                    if mimetype is None:
-                        mimetype = guess_type(f'../{archive_fname}')[0]
-                    else:
-                        mimetype = mimetype.mime
-                    if mimetype is None:
-                        mimetype = EXT_TO_MIME.get(suffixes, 'application/octet-stream')
+                    mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
                     log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
                     if mimetype == 'application/zip':
                         with ZipFile(f'../{archive_fname}', 'r') as zipf:

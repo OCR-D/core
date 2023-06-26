@@ -279,6 +279,7 @@ Options for Processing Worker server:
   --database                      The MongoDB server address in format
                                   "mongodb://{host}:{port}"
                                   [mongodb://localhost:27018]
+  --type                          type of processing: either "worker" or "server"
 
 Options for information:
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
@@ -301,7 +302,7 @@ Parameters:
 
 # Taken from https://github.com/OCR-D/core/pull/884
 @freeze_args
-@lru_cache(maxsize=environ.get('OCRD_MAX_PROCESSOR_CACHE', 128))  
+@lru_cache(maxsize=environ.get('OCRD_MAX_PROCESSOR_CACHE', 128))
 def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.

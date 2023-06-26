@@ -5,6 +5,46 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `make deps-cuda`: Makefile target to set up a working CUDA installation, both for native and Dockerfile.cuda, #1055
+  * Implementation of the Standalone Processor Server module, #1030
+  * `ocrd_utils.guess_media_type` to consistently try to determine media type from a file name, #1045
+
+Changed:
+
+  * Refactoring the Network CLI, all network module CLI are in `ocrd_network` now, #1030
+  * The Processing Server uses [`ocrd-all-tool.json`](https://ocr-d.de/js/ocrd-all-tool.json) file, removing local processor install dependencies, #1030
+  * Overall improvement and refactoring of the `ocrd_network` package, #1030
+  * Optionally skip deployment of mongodb and rabbitmq to make external usage/management possible, #1048
+  * `page_from_file` now also accepts a (`str`) file path in addition to `OcrdFile`, #1045
+
+Removed:
+
+  * Obsolete travis CI configuration removed, #1056
+  * Support for end-of-life python versions 3.5 and 3.6, #1057
+
+Fixed:
+
+  * Makefile `FIND_VERSION` macro: use `grep -E` instead of `grep -P` for macos compatibility, #1060
+  * `ocrd resmgr`: detect HTTP errors as such and don't try to continue if HTTP >= 400, #1062
+  * `PageValidator`: Ensure TextLine has coordinates when checking for Baseline containment, #1049
+
+## [2.51.0] - 2023-06-07
+
+Changed:
+
+  * `core cuda` Docker: CUDA base image working again, based on `ocrd/core` not `nvidia/cuda` in a separate `Dockerfile.cuda`, #1041
+  * `core-cuda` Docker: adopt #1008 (venv under /usr/local, as in ocrd_all, instead of dist-packages), #1041
+  * `core-cuda` Docker: use conda ([micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)) for CUDA toolkit, and [nvidia-pyindex](https://pypi.org/project/nvidia-pyindex/) for CUDA libs – instead of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) base image, #1041
+  * more robust workaround for shapely#1598, #1041
+
+Removed:
+
+  * Revert #882 (fastentrypoints) as it enforces deps versions at runtime
+  * Drop `ocrd_utils.package_resources` and use `pkg_resources.*` directly, #1041
+  * `ocrd resmgr`: Drop redundant (processor-provided) entries in the central `resource_list.yml`.
+
 ## [2.50.0] - 2023-04-24
 
 Added:
@@ -1731,6 +1771,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.51.0]: ../../compare/v2.51.0..v2.50.0
 [2.50.0]: ../../compare/v2.50.0..v2.49.0
 [2.49.0]: ../../compare/v2.49.0..v2.48.1
 [2.48.1]: ../../compare/v2.48.1..v2.48.0

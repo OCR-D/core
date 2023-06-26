@@ -8,6 +8,7 @@ __all__ = [
     'get_ocrd_tool_json',
     'get_moduledir',
     'get_processor_resource_types',
+    'guess_media_type',
     'pushd_popd',
     'unzip_file_to_dir',
     'atomic_write',
@@ -24,10 +25,12 @@ from pathlib import Path
 from os.path import exists, abspath as abspath_, join, isdir
 from zipfile import ZipFile
 from subprocess import run, PIPE
+from mimetypes import guess_type as mimetypes_guess
+from filetype import guess as filetype_guess
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
-from .constants import XDG_DATA_HOME
+from .constants import XDG_DATA_HOME, EXT_TO_MIME
 from .logging import getLogger
 
 def abspath(url):
@@ -228,3 +231,20 @@ def directory_size(path):
     """
     path = Path(path)
     return sum(f.stat().st_size for f in path.glob('**/*') if f.is_file())
+
+def guess_media_type(input_file : str, fallback : str = None, application_xml : str = 'application/xml'):
+    """
+    Guess the media type of a file path
+    """
+    mimetype = filetype_guess(input_file)
+    if mimetype is not None:
+        mimetype = mimetype.mime
+    else:
+        mimetype = mimetypes_guess(input_file)[0]
+    if mimetype is None:
+        mimetype = EXT_TO_MIME.get(''.join(Path(input_file).suffixes), fallback)
+    if mimetype is None:
+        raise ValueError("Could not determine MIME type of input_file must")
+    if mimetype == 'application/xml':
+        mimetype = application_xml
+    return mimetype

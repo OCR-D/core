@@ -1,4 +1,7 @@
-from typing import Dict
+import json
+import requests
+import httpx
+from typing import Dict, List
 import uvicorn
 
 from fastapi import FastAPI, status, Request, HTTPException
@@ -7,23 +10,26 @@ from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
 
-from ocrd_utils import getLogger, get_ocrd_tool_json
-from ocrd_validators import ParameterValidator
-from .database import (
-    db_get_processing_job,
-    db_get_workspace,
-    initiate_database
-)
+from ocrd_utils import getLogger
+from .database import initiate_database
 from .deployer import Deployer
-from .deployment_config import ProcessingServerConfig
-from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from .models import (
     DBProcessorJob,
     PYJobInput,
     PYJobOutput,
     StateEnum
 )
-from .utils import generate_created_time, generate_id
+from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
+from .server_utils import (
+    _get_processor_job,
+    validate_and_resolve_mets_path,
+    validate_job_input,
+)
+from .utils import (
+    download_ocrd_all_tool_json,
+    generate_created_time,
+    generate_id
+)
 
 
 class ProcessingServer(FastAPI):
@@ -42,22 +48,26 @@ class ProcessingServer(FastAPI):
                          title='OCR-D Processing Server',
                          description='OCR-D processing and processors')
         self.log = getLogger(__name__)
+        self.log.info(f"Downloading ocrd all tool json")
+        self.ocrd_all_tool_json = download_ocrd_all_tool_json(
+            ocrd_all_url="https://ocr-d.de/js/ocrd-all-tool.json"
+        )
         self.hostname = host
         self.port = port
-        self.config = ProcessingServerConfig(config_path)
-        self.deployer = Deployer(self.config)
+        # The deployer is used for:
+        # - deploying agents when the Processing Server is started
+        # - retrieving runtime data of agents
+        self.deployer = Deployer(config_path)
         self.mongodb_url = None
-        self.rmq_host = self.config.queue.address
-        self.rmq_port = self.config.queue.port
+        # TODO: Combine these under a single URL, rabbitmq_utils needs an update
+        self.rmq_host = self.deployer.data_queue.address
+        self.rmq_port = self.deployer.data_queue.port
         self.rmq_vhost = '/'
-        self.rmq_username = self.config.queue.credentials[0]
-        self.rmq_password = self.config.queue.credentials[1]
+        self.rmq_username = self.deployer.data_queue.username
+        self.rmq_password = self.deployer.data_queue.password
 
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
-
-        # This list holds all processors mentioned in the config file
-        self._processor_list = None
 
         # Create routes
         self.router.add_api_route(
@@ -82,7 +92,7 @@ class ProcessingServer(FastAPI):
 
         self.router.add_api_route(
             path='/processor/{processor_name}/{job_id}',
-            endpoint=self.get_job,
+            endpoint=self.get_processor_job,
             methods=['GET'],
             tags=['processing'],
             status_code=status.HTTP_200_OK,
@@ -121,27 +131,21 @@ class ProcessingServer(FastAPI):
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
         try:
-            rabbitmq_hostinfo = self.deployer.deploy_rabbitmq(
-                image='rabbitmq:3-management', detach=True, remove=True)
+            self.deployer.deploy_rabbitmq(image='rabbitmq:3-management', detach=True, remove=True)
+            rabbitmq_url = self.deployer.data_queue.url
 
-            # Assign the credentials to the rabbitmq url parameter
-            rabbitmq_url = f'amqp://{self.rmq_username}:{self.rmq_password}@{rabbitmq_hostinfo}'
-
-            mongodb_hostinfo = self.deployer.deploy_mongodb(
-                image='mongo', detach=True, remove=True)
-
-            self.mongodb_url = f'mongodb://{mongodb_hostinfo}'
+            self.deployer.deploy_mongodb(image='mongo', detach=True, remove=True)
+            self.mongodb_url = self.deployer.data_mongo.url
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.connect_publisher()
-
             self.log.debug(f'Creating message queues on RabbitMQ instance url: {rabbitmq_url}')
             self.create_message_queues()
 
-            # Deploy processing hosts where processing workers are running on
-            # Note: A deployed processing worker starts listening to a message queue with id
-            #       processor.name
-            self.deployer.deploy_hosts(rabbitmq_url, self.mongodb_url)
+            self.deployer.deploy_hosts(
+                mongodb_url=self.mongodb_url,
+                rabbitmq_url=rabbitmq_url
+            )
         except Exception:
             self.log.error('Error during startup of processing server. '
                            'Trying to kill parts of incompletely deployed service')
@@ -183,25 +187,30 @@ class ProcessingServer(FastAPI):
         self.log.info('Successfully connected RMQPublisher.')
 
     def create_message_queues(self) -> None:
-        """Create the message queues based on the occurrence of `processor.name` in the config file
+        """ Create the message queues based on the occurrence of
+        `workers.name` in the config file.
         """
-        for host in self.config.hosts:
-            for processor in host.processors:
-                # The existence/validity of the processor.name is not tested.
-                # Even if an ocr-d processor does not exist, the queue is created
-                self.log.info(f'Creating a message queue with id: {processor.name}')
-                self.rmq_publisher.create_queue(queue_name=processor.name)
 
-    @property
-    def processor_list(self):
-        if self._processor_list:
-            return self._processor_list
-        res = set([])
-        for host in self.config.hosts:
-            for processor in host.processors:
-                res.add(processor.name)
-        self._processor_list = list(res)
-        return self._processor_list
+        # TODO: Remove
+        """
+        queue_names = set([])
+        for data_host in self.deployer.data_hosts:
+            for data_worker in data_host.data_workers:
+                queue_names.add(data_worker.processor_name)
+        """
+
+        # The abstract version of the above lines
+        queue_names = self.deployer.find_matching_processors(
+            worker_only=True,
+            str_names_only=True,
+            unique_only=True
+        )
+
+        for queue_name in queue_names:
+            # The existence/validity of the worker.name is not tested.
+            # Even if an ocr-d processor does not exist, the queue is created
+            self.log.info(f'Creating a message queue with id: {queue_name}')
+            self.rmq_publisher.create_queue(queue_name=queue_name)
 
     @staticmethod
     def create_processing_message(job: DBProcessorJob) -> OcrdProcessingMessage:
@@ -220,55 +229,78 @@ class ProcessingServer(FastAPI):
         )
         return processing_message
 
-    async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
-        """ Queue a processor job
-        """
-        if not self.rmq_publisher:
-            raise Exception('RMQPublisher is not connected')
-
-        if processor_name not in self.processor_list:
-            try:
-                # Only checks if the process queue exists, if not raises ChannelClosedByBroker
-                self.rmq_publisher.create_queue(processor_name, passive=True)
-            except ChannelClosedByBroker as error:
-                self.log.warning(f"Process queue with id '{processor_name}' not existing: {error}")
-                # Reconnect publisher - not efficient, but works
-                # TODO: Revisit when reconnection strategy is implemented
-                self.connect_publisher(enable_acks=True)
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Process queue with id '{processor_name}' not existing"
-                )
-
-        # validate parameters
-        ocrd_tool = get_ocrd_tool_json(processor_name)
-        if not ocrd_tool:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Processor '{processor_name}' not available. Empty or missing ocrd_tool"
-            )
-        report = ParameterValidator(ocrd_tool).validate(dict(data.parameters))
-        if not report.is_valid:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
-
-        if bool(data.path_to_mets) == bool(data.workspace_id):
+    def check_if_queue_exists(self, processor_name):
+        try:
+            # Only checks if the process queue exists, if not raises ChannelClosedByBroker
+            self.rmq_publisher.create_queue(processor_name, passive=True)
+        except ChannelClosedByBroker as error:
+            self.log.warning(f"Process queue with id '{processor_name}' not existing: {error}")
+            # Reconnect publisher - not efficient, but works
+            # TODO: Revisit when reconnection strategy is implemented
+            self.connect_publisher(enable_acks=True)
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Either 'path' or 'workspace_id' must be provided, but not both"
+                detail=f"Process queue with id '{processor_name}' not existing"
             )
-        # This check is done to return early in case
-        # the workspace_id is provided but not existing in the DB
-        elif data.workspace_id:
-            try:
-                await db_get_workspace(data.workspace_id)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Workspace with id '{data.workspace_id}' not existing"
-                )
+
+    def query_ocrd_tool_json_from_server(self, processor_name):
+        processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
+        if not processor_server_url:
+            self.log.exception(f"Processor Server of '{processor_name}' is not available")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Processor Server of '{processor_name}' is not available"
+            )
+        # Request the tool json from the Processor Server
+        response = requests.get(
+            processor_server_url,
+            headers={'Content-Type': 'application/json'}
+        )
+        if not response.status_code == 200:
+            self.log.exception(f"Failed to retrieve '{processor_name}' from: {processor_server_url}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to retrieve '{processor_name}' from: {processor_server_url}"
+            )
+        ocrd_tool = response.json()
+        return ocrd_tool, processor_server_url
+
+    async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
+        if data.agent_type not in ['worker', 'server']:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Unknown network agent with value: {data.agent_type}"
+            )
+        job_output = None
+        if data.agent_type == 'worker':
+            job_output = await self.push_to_processing_queue(processor_name, data)
+        if data.agent_type == 'server':
+            job_output = await self.push_to_processor_server(processor_name, data)
+        if not job_output:
+            self.log.exception('Failed to create job output')
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='Failed to create job output'
+            )
+        return job_output
+
+    # TODO: Revisit and remove duplications between push_to_* methods
+    async def push_to_processing_queue(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
+        ocrd_tool = await self.get_processor_info(processor_name)
+        validate_job_input(self.log, processor_name, ocrd_tool, job_input)
+        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)
+        if not self.rmq_publisher:
+            raise Exception('RMQPublisher is not connected')
+        deployed_processors = self.deployer.find_matching_processors(
+            worker_only=True,
+            str_names_only=True,
+            unique_only=True
+        )
+        if processor_name not in deployed_processors:
+            self.check_if_queue_exists(processor_name)
 
         job = DBProcessorJob(
-            **data.dict(exclude_unset=True, exclude_none=True),
+            **job_input.dict(exclude_unset=True, exclude_none=True),
             job_id=generate_id(),
             processor_name=processor_name,
             state=StateEnum.queued
@@ -276,39 +308,77 @@ class ProcessingServer(FastAPI):
         await job.insert()
         processing_message = self.create_processing_message(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
-
         try:
             self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
         except Exception as error:
+            self.log.exception(f'RMQPublisher has failed: {error}')
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f'RMQPublisher has failed: {error}'
             )
         return job.to_job_output()
 
+    async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
+        ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
+        validate_job_input(self.log, processor_name, ocrd_tool, job_input)
+        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)
+        try:
+            json_data = json.dumps(job_input.dict(exclude_unset=True, exclude_none=True))
+        except Exception as e:
+            self.log.exception(f"Failed to json dump the PYJobInput, error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to json dump the PYJobInput, error: {e}"
+            )
+        
+        # TODO: The amount of pages should come as a request input
+        # TODO: cf https://github.com/OCR-D/core/pull/1030/files#r1152551161
+        #  currently, use 200 as a default
+        amount_of_pages = 200
+        request_timeout = 20.0 * amount_of_pages  # 20 sec timeout per page
+        # Post a processing job to the Processor Server asynchronously
+        timeout = httpx.Timeout(timeout=request_timeout, connect=30.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                processor_server_url,
+                headers={'Content-Type': 'application/json'},
+                json=json.loads(json_data)
+            )
+
+        if not response.status_code == 202:
+            self.log.exception(f"Failed to post '{processor_name}' job to: {processor_server_url}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to post '{processor_name}' job to: {processor_server_url}"
+            )
+        job_output = response.json()
+        return job_output
+
+    async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
+        return await _get_processor_job(self.log, processor_name, job_id)
+
     async def get_processor_info(self, processor_name) -> Dict:
         """ Return a processor's ocrd-tool.json
         """
-        if processor_name not in self.processor_list:
+        ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
+        if not ocrd_tool:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Processor not available'
-            )
-        return get_ocrd_tool_json(processor_name)
-
-    async def get_job(self, processor_name: str, job_id: str) -> PYJobOutput:
-        """ Return processing job-information from the database
-        """
-        try:
-            job = await db_get_processing_job(job_id)
-            return job.to_job_output()
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Ocrd tool JSON of '{processor_name}' not available!"
             )
 
-    async def list_processors(self) -> str:
-        """ Return a list of all available processors
-        """
-        return self.processor_list
+        # TODO: Returns the ocrd tool json even of processors
+        #  that are not deployed. This may or may not be desired.
+        return ocrd_tool
+
+    async def list_processors(self) -> List[str]:
+        # There is no caching on the Processing Server side
+        processor_names_list = self.deployer.find_matching_processors(
+            docker_only=False,
+            native_only=False,
+            worker_only=False,
+            server_only=False,
+            str_names_only=True,
+            unique_only=True
+        )
+        return processor_names_list

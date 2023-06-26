@@ -19,6 +19,7 @@ setup(
     install_requires=install_requires,
     packages=[
         'ocrd_network',
+        'ocrd_network.cli',
         'ocrd_network.models',
         'ocrd_network.rabbitmq_utils'
     ],
