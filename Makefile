@@ -50,7 +50,7 @@ help:
 # END-EVAL
 
 # pip install command. Default: $(PIP_INSTALL)
-PIP_INSTALL = $(PIP) install
+PIP_INSTALL ?= $(PIP) install
 
 deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
 deps-cuda: export CONDA_PREFIX ?= /conda
