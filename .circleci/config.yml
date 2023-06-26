@@ -18,11 +18,7 @@ jobs:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
       - run: make install
-      - run: echo $PATH
-      - run: python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-      - run: ls -la $(python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))")
-      - run: PATH="/usr/local/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/bin:$PATH" ocrd-dummy --help
-      - run: make deps-test test benchmark
+      - run: PATH="/Users/distiller/Library/Python/3.9/bin:$PATH" make deps-test test benchmark
 
   test-python37:
     docker:
