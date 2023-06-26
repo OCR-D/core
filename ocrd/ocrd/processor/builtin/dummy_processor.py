@@ -1,6 +1,6 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from os.path import join, basename
-from ocrd_utils.package_resources import resource_string
+from pkg_resources import resource_string
 
 import click
 
@@ -17,7 +17,7 @@ from ocrd_utils import (
 )
 from ocrd_modelfactory import page_from_file
 
-OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'ocrd-tool.json').decode('utf8'))
+OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
 
 class DummyProcessor(Processor):
     """

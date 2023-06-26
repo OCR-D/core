@@ -1,20 +1,10 @@
-"""
-OCR-D CLI: start the processing worker
-
-.. click:: ocrd.cli.processing_worker:processing_worker_cli
-    :prog: ocrd processing-worker
-    :nested: full
-"""
 import click
-import logging
-from ocrd_utils import (
-    initLogging,
-    get_ocrd_tool_json
-)
-from ocrd_network import (
+from ocrd_utils import get_ocrd_tool_json
+
+from .. import (
     DatabaseParamType,
     ProcessingWorker,
-    QueueServerParamType,
+    QueueServerParamType
 )
 
 
@@ -23,18 +13,18 @@ from ocrd_network import (
 @click.option('-q', '--queue',
               default="amqp://admin:admin@localhost:5672/",
               help='The URL of the Queue Server, format: amqp://username:password@host:port/vhost',
-              type=QueueServerParamType())
+              type=QueueServerParamType(),
+              required=True)
 @click.option('-d', '--database',
               default="mongodb://localhost:27018",
               help='The URL of the MongoDB, format: mongodb://host:port',
-              type=DatabaseParamType())
+              type=DatabaseParamType(),
+              required=True)
 def processing_worker_cli(processor_name: str, queue: str, database: str):
     """
-    Start a processing worker (a specific ocr-d processor)
+    Start Processing Worker
+    (a specific ocr-d processor consuming tasks from RabbitMQ queue)
     """
-    initLogging()
-    # TODO: Remove before the release
-    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
     # Get the ocrd_tool dictionary
     # ocrd_tool = parse_json_string_with_comments(

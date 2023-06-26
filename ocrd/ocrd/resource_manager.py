@@ -248,6 +248,7 @@ class OcrdResourceManager():
                 except RuntimeError as e:
                     log.warning("Cannot unwrap Google Drive URL: ", e)
             with requests.get(url, stream=True) as r:
+                r.raise_for_status()
                 for data in r.iter_content(chunk_size=4096):
                     if progress_cb:
                         progress_cb(len(data))

@@ -9,6 +9,7 @@ import tempfile
 import sys
 from bagit import Bag, make_manifests, _load_tag_file, _make_tag_file, _make_tagmanifest_file  # pylint: disable=no-name-in-module
 from distutils.dir_util import copy_tree
+from pkg_resources import get_distribution
 
 from ocrd_utils import (
     pushd_popd,
@@ -22,7 +23,6 @@ from ocrd_utils import (
 from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
 from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import to_xml
-from ocrd_utils.package_resources import get_distribution
 
 from .workspace import Workspace
 

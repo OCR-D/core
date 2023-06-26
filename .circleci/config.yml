@@ -16,7 +16,9 @@ jobs:
     steps:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
-      - run: make install 
+      - run: which bash
+      - run: bash --version
+      - run: make install
       - run: make deps-test test benchmark
 
   test-python37:

@@ -59,19 +59,3 @@ ocrd-sbb-binarize:
     type: archive
     path_in_archive: models
     size: 1654623597
-ocrd-sbb-textline-detector:
-  - url: https://qurator-data.de/sbb_textline_detector/models.tar.gz
-    description: default models provided by github.com/qurator-spk
-    name: default
-    type: archive
-    size: 1194551551
-ocrd-kraken-segment:
-  - url: https://github.com/mittagessen/kraken/raw/master/kraken/blla.mlmodel
-    description: Pretrained baseline segmentation model
-    name: blla.mlmodel
-    size: 5046835
-ocrd-kraken-recognize:
-  - url: https://zenodo.org/record/2577813/files/en_best.mlmodel?download=1
-    name: en_best.mlmodel
-    description: This model has been trained on a large corpus of modern printed English text\naugmented with ~10000 lines of historical pages
-    size: 2930723
