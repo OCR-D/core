@@ -18,6 +18,8 @@ jobs:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
       - run: make install
+      - run: echo $PATH
+      - run: ocrd-dummy --help
       - run: make deps-test test benchmark
 
   test-python37:
