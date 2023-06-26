@@ -23,8 +23,9 @@ Removed:
   * Support for end-of-life python versions 3.5 and 3.6, #1057
 
 Fixed:
-  
+
   * Makefile `FIND_VERSION` macro: use `grep -E` instead of `grep -P` for macos compatibility, #1060
+  * `ocrd resmgr`: detect HTTP errors as such and don't try to continue if HTTP >= 400, #1062
 
 ## [2.51.0] - 2023-06-07
 
