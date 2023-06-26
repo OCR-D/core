@@ -329,7 +329,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                                                          baseline_points, baseline_line))
                 log.debug("Invalid coords of baseline in %s", node_id)
                 consistent = False
-            elif not baseline_line.within(node_poly.buffer(PARENT_SLACK)):
+            elif node_poly and not baseline_line.within(node_poly.buffer(PARENT_SLACK)):
                 report.add_error(CoordinateConsistencyError("Baseline", node_id, file_id,
                                                             parent_points, baseline_points))
                 log.debug("Inconsistent coords of baseline in %s %s", tag, node_id)
