@@ -18,6 +18,7 @@ Changed:
   * Overall improvement and refactoring of the `ocrd_network` package, #1030
   * Optionally skip deployment of mongodb and rabbitmq to make external usage/management possible, #1048
   * `page_from_file` now also accepts a (`str`) file path in addition to `OcrdFile`, #1045
+  * packaging: install/uninstall in correct build order, use `python -m build` instead of `python setup.py sdist bdist_wheel`, #1051
 
 Removed:
 
