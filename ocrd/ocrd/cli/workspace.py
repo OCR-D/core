@@ -535,13 +535,20 @@ def list_groups(ctx):
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('list-page')
+@click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
 @pass_workspace
-def list_pages(ctx):
+def list_pages(ctx, page_id):
     """
     List physical page IDs
+
+    (If any ``FILTER`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
-    print("\n".join(workspace.mets.physical_pages))
+    if page_id is None:
+        print("\n".join(workspace.mets.physical_pages))
+    else:
+        print("\n".join(workspace.mets.get_physical_pages(for_pageIds=page_id)))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
