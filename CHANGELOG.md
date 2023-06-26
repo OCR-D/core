@@ -9,6 +9,7 @@ Added:
 
   * `make deps-cuda`: Makefile target to set up a working CUDA installation, both for native and Dockerfile.cuda, #1055
   * Implementation of the Standalone Processor Server module, #1030
+  * `ocrd_utils.guess_media_type` to consistently try to determine media type from a file name, #1045
 
 Changed:
 
@@ -16,6 +17,7 @@ Changed:
   * The Processing Server uses [`ocrd-all-tool.json`](https://ocr-d.de/js/ocrd-all-tool.json) file, removing local processor install dependencies, #1030
   * Overall improvement and refactoring of the `ocrd_network` package, #1030
   * Optionally skip deployment of mongodb and rabbitmq to make external usage/management possible, #1048
+  * `page_from_file` now also accepts a (`str`) file path in addition to `OcrdFile`, #1045
 
 Removed:
 
