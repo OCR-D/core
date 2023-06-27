@@ -1,0 +1,14 @@
+[build-system]
+requires = [
+         "setuptools>=42",
+         "setuptools_scm[toml]",
+         "wheel",
+]  # PEP 508 specifications.
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ocrd_modelfactory"
+dynamic = ["version"]
+
+[tool.setuptools_scm]
+root = ".."
