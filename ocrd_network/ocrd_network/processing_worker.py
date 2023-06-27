@@ -269,3 +269,14 @@ class ProcessingWorker:
         }
         response = requests.post(url=callback_url, headers=headers, json=json_data)
         self.log.info(f'Response from callback_url "{response}"')
+
+    def create_queue(self):
+        """Create the queue for this worker
+
+        Originally only the processing-server created the queues for the workers according to the
+        configuration file. This is intended to make external deployment of workers possible.
+        """
+        if self.rmq_publisher is None:
+            self.connect_publisher()
+        # the following function is idempotent
+        self.rmq_publisher.create_queue(queue_name=self.processor_name)

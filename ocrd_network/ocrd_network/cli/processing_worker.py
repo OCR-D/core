@@ -20,7 +20,12 @@ from .. import (
               help='The URL of the MongoDB, format: mongodb://host:port',
               type=DatabaseParamType(),
               required=True)
-def processing_worker_cli(processor_name: str, queue: str, database: str):
+@click.option('--create-queue',
+              is_flag=True,
+              help='Create the rabbitmq-queue for the worker. Usually the processing server starts'
+              'the workers and creates the queues. This is to make external addition of workers for'
+              'new processors possible')
+def processing_worker_cli(processor_name: str, queue: str, database: str, create_queue: bool):
     """
     Start Processing Worker
     (a specific ocr-d processor consuming tasks from RabbitMQ queue)
@@ -33,7 +38,7 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
 
     ocrd_tool = get_ocrd_tool_json(processor_name)
     if not ocrd_tool:
-        raise Exception(f"The ocrd_tool is empty or missing")
+        raise Exception("The ocrd_tool is empty or missing")
 
     try:
         processing_worker = ProcessingWorker(
@@ -43,6 +48,8 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
             ocrd_tool=ocrd_tool,
             processor_class=None,  # For readability purposes assigned here
         )
+        if create_queue:
+            processing_worker.create_queue()
         # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
         processing_worker.connect_consumer()
         # Start consuming from the queue with name `processor_name`
