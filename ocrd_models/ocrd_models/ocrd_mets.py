@@ -753,6 +753,18 @@ class OcrdMets(OcrdXmlDocument):
             mets_div.remove(mets_fptr)
         return ret
 
+    @property
+    def physical_pages_labels(self):
+        """
+        Map all page IDs (the ``@ID`` of each physical ``mets:structMap`` ``mets:div``) to their
+        ``@ORDER``, ``@ORDERLABEL`` and ``@LABEL`` attributes, if any.
+        """
+        divs = self._tree.getroot().xpath(
+            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+            namespaces=NS)
+        return {div.get('ID'): (div.get('ORDER', None), div.get('ORDERLABEL', None), div.get('LABEL', None))
+                for div in divs}
+
     def merge(self, other_mets, force=False, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None, after_add_cb=None, **kwargs):
         """
         Add all files from other_mets.
