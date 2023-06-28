@@ -13,9 +13,6 @@ SPHINX_APIDOC =
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
 reverse = $(if $(wordlist 2,2,$(1)),$(call reverse,$(wordlist 2,$(words $(1)),$(1))) $(firstword $(1)),$(1))
 
-PEP_440_PATTERN := '([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?'
-OCRD_VERSION != fgrep version= ocrd_utils/setup.py | grep -Eo $(PEP_440_PATTERN)
-
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
@@ -126,15 +123,16 @@ build:
 # or use -n ?
 
 # (Re)install the tool
-install:
-#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd$*(OCRD_VERSION)*.whl)
+install: #build
+#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*.whl)
 	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) &&) echo done
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
+install-dev: PIP_INSTALL = $(PIP) install -e
 install-dev: uninstall
-	$(MAKE) install PIP_INSTALL="$(PIP) install -e"
+	$(MAKE) install
 
 # Uninstall the tool
 uninstall:
@@ -296,7 +294,5 @@ docker docker-cuda:
 	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
-pypi: uninstall install
-	$(PIP) install build
-	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build -n ./$(MODULE) &&) echo done
-	twine upload ocrd*/dist/ocrd*$(OCRD_VERSION)*{tar.gz,whl}
+pypi: build
+	twine upload ocrd*/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*{tar.gz,whl}
