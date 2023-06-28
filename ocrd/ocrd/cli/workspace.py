@@ -370,21 +370,22 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 @workspace_cli.command('find')
 @mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
-        default=['url'],
-        multiple=True,
-        type=click.Choice([
-            'url',
-            'mimetype',
-            'page_id',
-            'pageId',
-            'file_id',
-            'ID',
-            'file_grp',
-            'fileGrp',
-            'basename',
-            'basename_without_extension',
-            'local_filename',
-        ]))
+              default=['url'],
+              show_default=True,
+              multiple=True,
+              type=click.Choice([
+                  'url',
+                  'mimetype',
+                  'page_id',
+                  'pageId',
+                  'file_id',
+                  'ID',
+                  'file_grp',
+                  'fileGrp',
+                  'basename',
+                  'basename_without_extension',
+                  'local_filename',
+              ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
@@ -536,8 +537,18 @@ def list_groups(ctx):
 
 @workspace_cli.command('list-page')
 @click.option('-g', '--page-id', help="Page ID", metavar='FILTER')
+@click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
+              default=['ID'],
+              show_default=True,
+              multiple=True,
+              type=click.Choice([
+                  'ID',
+                  'ORDER',
+                  'ORDERLABEL',
+                  'LABEL',
+              ]))
 @pass_workspace
-def list_pages(ctx, page_id):
+def list_pages(ctx, page_id, output_field):
     """
     List physical page IDs
 
@@ -546,9 +557,20 @@ def list_pages(ctx, page_id):
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     if page_id is None:
-        print("\n".join(workspace.mets.physical_pages))
+        pages = workspace.mets.physical_pages
     else:
-        print("\n".join(workspace.mets.get_physical_pages(for_pageIds=page_id)))
+        pages = workspace.mets.get_physical_pages(for_pageIds=page_id)
+    if output_field == ['ID']:
+        print("\n".join(pages))
+    else:
+        labels = workspace.mets.physical_pages_labels
+        def field2label(page, field):
+            if field == 'ID':
+                return page
+            return labels[page][['ORDER', 'ORDERLABEL', 'LABEL'].index(field)]
+        for page in pages:
+            print("\t".join(field2label(page, field) or ''
+                            for field in output_field))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
