@@ -25,9 +25,10 @@ help:
 	@echo "    deps-cuda      Dependencies for deployment with GPU support via Conda"
 	@echo "    deps-ubuntu    Dependencies for deployment in an Ubuntu/Debian Linux"
 	@echo "    deps-test      Install test python deps via pip"
-	@echo "    install        (Re)install the tool"
+	@echo "    build          (Re)build source and binary distributions of pkges"
+	@echo "    install        (Re)install the packages"
 	@echo "    install-dev    Install with pip install -e"
-	@echo "    uninstall      Uninstall the tool"
+	@echo "    uninstall      Uninstall the packages"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
@@ -51,6 +52,8 @@ help:
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL ?= $(PIP) install
+
+.PHONY: deps-cuda deps-ubuntu deps-test
 
 deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
 deps-cuda: export CONDA_PREFIX ?= /conda
@@ -114,6 +117,13 @@ deps-ubuntu:
 deps-test:
 	$(PIP) install -U pip
 	$(PIP) install -r requirements_test.txt
+
+.PHONY: build install install-dev uninstall
+
+build:
+	$(PIP) install build setuptools_scm
+	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build ./$(MODULE) &&) echo done
+# or use -n ?
 
 # (Re)install the tool
 install:
