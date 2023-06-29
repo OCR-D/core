@@ -86,6 +86,10 @@ class WorkspaceValidator():
         self.download = download
         self.page_strictness = page_strictness
         self.page_coordinate_consistency = page_coordinate_consistency
+        self.page_checks = []
+        # there will be more options to come
+        if 'mets_fileid_page_pcgtsid' not in self.skip:
+            self.page_checks.append('pcgtsid')
 
         self.src_dir = src_dir
         self.workspace = None
@@ -100,7 +104,10 @@ class WorkspaceValidator():
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
-            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'dimension', 'url'
+            skip (list): Tests to skip. One or more of 
+                'mets_unique_identifier', 'mets_file_group_names', 
+                'mets_files', 'pixel_density', 'dimension', 'url',
+                'mets_fileid_page_pcgtsid'
             download (boolean): Whether to download files
 
         Returns:
@@ -292,7 +299,7 @@ class WorkspaceValidator():
                                                  check_coords=self.page_coordinate_consistency in ['poly', 'both'],
                                                  check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
             pg = page_from_file(ocrd_file)
-            if pg.pcGtsId != ocrd_file.ID:
+            if 'pcgtsid' in self.page_checks and pg.pcGtsId != ocrd_file.ID:
                 page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pg.pcGtsId or '', ocrd_file.ID or ''))
             self.report.merge_report(page_report)
 
