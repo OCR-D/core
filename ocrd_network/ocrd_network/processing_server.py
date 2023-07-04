@@ -11,7 +11,11 @@ from fastapi.responses import JSONResponse
 from pika.exceptions import ChannelClosedByBroker
 
 from ocrd_utils import getLogger
-from .database import initiate_database
+from .database import (
+    initiate_database,
+    db_get_workspace,
+    db_update_workspace
+)
 from .deployer import Deployer
 from .models import (
     DBProcessorJob,
@@ -270,6 +274,29 @@ class ProcessingServer(FastAPI):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Unknown network agent with value: {data.agent_type}"
+            )
+        workspace_db = await db_get_workspace(
+            workspace_id=data.workspace_id,
+            workspace_mets_path=data.path_to_mets
+        )
+        if not workspace_db:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
+            )
+        else:
+            # The workspace is currently locked (being processed)
+            if workspace_db.being_processed:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Workspace with id: {data.workspace_id} or "
+                           f"path: {data.path_to_mets} is currently being processed"
+                )
+            # Lock the workspace
+            await db_update_workspace(
+                workspace_id=data.workspace_id,
+                workspace_mets_path=data.path_to_mets,
+                being_processed=True
             )
         job_output = None
         if data.agent_type == 'worker':
