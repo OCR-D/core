@@ -38,6 +38,7 @@ from .ocrd_agent import OcrdAgent
 
 REGEX_PREFIX_LEN = len(REGEX_PREFIX)
 
+
 class OcrdMets(OcrdXmlDocument):
     """
     API to a single METS file
@@ -66,7 +67,8 @@ class OcrdMets(OcrdXmlDocument):
         if 'OCRD_METS_CACHING' in environ:
             cache_override = environ['OCRD_METS_CACHING'] in ('true', '1')
             getLogger('ocrd_models.ocrd_mets').debug('METS Caching %s because OCRD_METS_CACHING is %s',
-                    'enabled' if cache_override else 'disabled', environ['OCRD_METS_CACHING'])
+                                                     'enabled' if cache_override else 'disabled',
+                                                     environ['OCRD_METS_CACHING'])
             self._cache_flag = cache_override
 
         # If cache is enabled
@@ -84,7 +86,8 @@ class OcrdMets(OcrdXmlDocument):
         """
         String representation
         """
-        return 'OcrdMets[cached=%s,fileGrps=%s,files=%s]' % (self._cache_flag, self.file_groups, list(self.find_files()))
+        return 'OcrdMets[cached=%s,fileGrps=%s,files=%s]' % (
+        self._cache_flag, self.file_groups, list(self.find_files()))
 
     def _fill_caches(self):
         """
@@ -108,7 +111,7 @@ class OcrdMets(OcrdXmlDocument):
 
             for el_file in el_fileGrp:
                 file_id = el_file.get('ID')
-                self._file_cache[fileGrp_use].update({file_id : el_file})
+                self._file_cache[fileGrp_use].update({file_id: el_file})
                 # log.info("File added to the cache: %s" % file_id)
 
         # Fill with pages
@@ -129,7 +132,7 @@ class OcrdMets(OcrdXmlDocument):
             # log.info("Page_id added to the cache: %s" % div_id)
 
             for el_fptr in el_div:
-                self._fptr_cache[div_id].update({el_fptr.get('FILEID') : el_fptr})
+                self._fptr_cache[div_id].update({el_fptr.get('FILEID'): el_fptr})
                 # log.info("Fptr added to the cache: %s" % el_fptr.get('FILEID'))
 
         # log.info("Len of page_cache: %s" % len(self._page_cache))
@@ -143,7 +146,7 @@ class OcrdMets(OcrdXmlDocument):
         self._file_cache = None
         self._page_cache = None
         self._fptr_cache = None
-        
+
     def refresh_caches(self):
         if self._cache_flag:
             # Cache for the files (mets:file) - two nested dictionaries
@@ -164,11 +167,11 @@ class OcrdMets(OcrdXmlDocument):
             # The inner dictionary's Key: 'fptr.FILEID'
             # The inner dictionary's Value: a 'fptr' object at some memory location
             self._fptr_cache = {}
-            
+
             # Note, if the empty_mets() function is used to instantiate OcrdMets
             # Then the cache is empty even after this operation
             self._fill_caches()
-        
+
     @property
     def unique_identifier(self):
         """
@@ -179,7 +182,7 @@ class OcrdMets(OcrdXmlDocument):
             found = self._tree.getroot().find('.//mods:identifier[@type="%s"]' % t, NS)
             if found is not None:
                 return found.text
-        
+
     @unique_identifier.setter
     def unique_identifier(self, purl):
         """
@@ -230,7 +233,7 @@ class OcrdMets(OcrdXmlDocument):
 
         # WARNING: Actually we cannot return strings in place of elements!
         if self._cache_flag:
-           return list(self._file_cache.keys())
+            return list(self._file_cache.keys())
 
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
@@ -267,25 +270,13 @@ class OcrdMets(OcrdXmlDocument):
         """
         pageId_list = []
         if pageId:
-            pageId_patterns = []
-            for pageId_token in re.split(r',', pageId):
-                if pageId_token.startswith(REGEX_PREFIX):
-                    pageId_patterns.append(re.compile(pageId_token[REGEX_PREFIX_LEN:]))
-                elif '..' in pageId_token:
-                    pageId_patterns += generate_range(*pageId_token.split('..', 1))
+            # returns divs instead of strings of ids
+            physical_pages = self.get_physical_pages(for_pageIds=pageId, return_divs=True)
+            for div in physical_pages:
+                if self._cache_flag:
+                    pageId_list += self._fptr_cache[div.get('ID')]
                 else:
-                    pageId_patterns += [pageId_token]
-            if self._cache_flag:
-                for page_id in self._page_cache.keys():
-                    if page_id in pageId_patterns or \
-                        any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
-                        pageId_list += self._fptr_cache[page_id]
-            else:
-                for page in self._tree.getroot().xpath(
-                    '//mets:div[@TYPE="page"]', namespaces=NS):
-                    if page.get('ID') in pageId_patterns or \
-                        any([isinstance(p, typing.Pattern) and p.fullmatch(page.get('ID')) for p in pageId_patterns]):
-                        pageId_list += [fptr.get('FILEID') for fptr in page.findall('mets:fptr', NS)]
+                    pageId_list += [fptr.get('FILEID') for fptr in div.findall('mets:fptr', NS)]
 
         if ID and ID.startswith(REGEX_PREFIX):
             ID = re.compile(ID[REGEX_PREFIX_LEN:])
@@ -295,19 +286,20 @@ class OcrdMets(OcrdXmlDocument):
             mimetype = re.compile(mimetype[REGEX_PREFIX_LEN:])
         if url and url.startswith(REGEX_PREFIX):
             url = re.compile(url[REGEX_PREFIX_LEN:])
-            
+
         candidates = []
         if self._cache_flag:
             if fileGrp:
                 if isinstance(fileGrp, str):
                     candidates += self._file_cache.get(fileGrp, {}).values()
                 else:
-                    candidates = [x for fileGrp_needle, el_file_list in self._file_cache.items() if fileGrp.match(fileGrp_needle) for x in el_file_list.values()]
+                    candidates = [x for fileGrp_needle, el_file_list in self._file_cache.items() if
+                                  fileGrp.match(fileGrp_needle) for x in el_file_list.values()]
             else:
                 candidates = [el_file for id_to_file in self._file_cache.values() for el_file in id_to_file.values()]
         else:
             candidates = self._tree.getroot().xpath('//mets:file', namespaces=NS)
-            
+
         for cand in candidates:
             if ID:
                 if isinstance(ID, str):
@@ -364,11 +356,11 @@ class OcrdMets(OcrdXmlDocument):
         if el_fileGrp is None:
             el_fileGrp = ET.SubElement(el_fileSec, TAG_METS_FILEGRP)
             el_fileGrp.set('USE', fileGrp)
-            
+
             if self._cache_flag:
                 # Assign an empty dictionary that will hold the files of the added fileGrp
                 self._file_cache[fileGrp] = {}
-                
+
         return el_fileGrp
 
     def rename_file_group(self, old, new):
@@ -379,7 +371,7 @@ class OcrdMets(OcrdXmlDocument):
         if el_fileGrp is None:
             raise FileNotFoundError("No such fileGrp '%s'" % old)
         el_fileGrp.set('USE', new)
-        
+
         if self._cache_flag:
             self._file_cache[new] = self._file_cache.pop(old)
 
@@ -406,7 +398,7 @@ class OcrdMets(OcrdXmlDocument):
                 el_fileGrp = el_fileSec.find('mets:fileGrp[@USE="%s"]' % USE, NS)
         else:
             el_fileGrp = USE
-        if el_fileGrp is None:   # pylint: disable=len-as-condition
+        if el_fileGrp is None:  # pylint: disable=len-as-condition
             msg = "No such fileGrp: %s" % USE
             if force:
                 log.warning(msg)
@@ -434,7 +426,8 @@ class OcrdMets(OcrdXmlDocument):
 
         el_fileGrp.getparent().remove(el_fileGrp)
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None, ignore=False, **kwargs):
+    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None,
+                 ignore=False, **kwargs):
         """
         Instantiate and add a new :py:class:`ocrd_models.ocrd_file.OcrdFile`.
         Arguments:
@@ -463,16 +456,19 @@ class OcrdMets(OcrdXmlDocument):
             mets_file = next(self.find_files(ID=ID, fileGrp=fileGrp), None)
             if mets_file:
                 if mets_file.fileGrp == fileGrp and \
-                   mets_file.pageId == pageId and \
-                   mets_file.mimetype == mimetype:
+                        mets_file.pageId == pageId and \
+                        mets_file.mimetype == mimetype:
                     if not force:
-                        raise FileExistsError(f"A file with ID=={ID} already exists {mets_file} and neither force nor ignore are set")
+                        raise FileExistsError(
+                            f"A file with ID=={ID} already exists {mets_file} and neither force nor ignore are set")
                     self.remove_file(ID=ID, fileGrp=fileGrp)
                 else:
-                    raise FileExistsError(f"A file with ID=={ID} already exists {mets_file} but unrelated - cannot mitigate")
+                    raise FileExistsError(
+                        f"A file with ID=={ID} already exists {mets_file} but unrelated - cannot mitigate")
 
         # To get rid of Python's FutureWarning - checking if v is not None
-        kwargs = {k: v for k, v in locals().items() if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v is not None}
+        kwargs = {k: v for k, v in locals().items() if
+                  k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v is not None}
         # This separation is needed to reuse the same el_mets_file element in the caching if block
         el_mets_file = ET.SubElement(el_fileGrp, TAG_METS_FILE)
         # The caching of the physical page is done in the OcrdFile constructor
@@ -495,7 +491,7 @@ class OcrdMets(OcrdXmlDocument):
             if len(files) > 1:
                 return files
             else:
-                return files[0] # for backwards-compatibility
+                return files[0]  # for backwards-compatibility
         if any(1 for kwarg in kwargs
                if isinstance(kwarg, str) and kwarg.startswith(REGEX_PREFIX)):
             # allow empty results if filter criteria involve a regex
@@ -566,16 +562,17 @@ class OcrdMets(OcrdXmlDocument):
         """
         if self._cache_flag:
             return list(self._page_cache.keys())
-            
+
         return self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
             namespaces=NS)
 
-    def get_physical_pages(self, for_fileIds=None, for_pageIds=None):
+    def get_physical_pages(self, for_fileIds=None, for_pageIds=None, return_divs=False):
         """
         List all page IDs (the ``@ID`` of each physical ``mets:structMap`` ``mets:div``),
         optionally for a subset of ``mets:file`` ``@ID`` :py:attr:`for_fileIds`,
         or for a subset selector expression (comma-separated, range, and/or regex) :py:attr:`for_pageIds`.
+        If return_divs is set, returns div memory objects instead of strings of ids
         """
         if for_fileIds is None and for_pageIds is None:
             return self.physical_pages
@@ -592,16 +589,22 @@ class OcrdMets(OcrdXmlDocument):
             if self._cache_flag:
                 for page_id in self._page_cache.keys():
                     if page_id in pageId_patterns or \
-                        any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
-                        ret.append(page_id)
+                            any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
+                        if return_divs:
+                            ret.append(self._page_cache[page_id])
+                        else:
+                            ret.append(page_id)
             else:
                 for page in self._tree.getroot().xpath(
-                    'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                        'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
                         namespaces=NS):
                     page_id = page.get('ID')
                     if page_id in pageId_patterns or \
-                        any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
-                        ret.append(page_id)
+                            any([isinstance(p, typing.Pattern) and p.fullmatch(page_id) for p in pageId_patterns]):
+                        if return_divs:
+                            ret.append(page)
+                        else:
+                            ret.append(page_id)
             return ret
 
         ret = [None] * len(for_fileIds)
@@ -609,14 +612,22 @@ class OcrdMets(OcrdXmlDocument):
             for pageId in self._fptr_cache.keys():
                 for fptr in self._fptr_cache[pageId].keys():
                     if fptr in for_fileIds:
-                        ret[for_fileIds.index(fptr)] = pageId
+                        index = for_fileIds.index(fptr)
+                        if return_divs:
+                            ret[index] = self._page_cache[pageId]
+                        else:
+                            ret[index] = pageId
         else:
-          for page in self._tree.getroot().xpath(
-              'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
-                  namespaces=NS):
-              for fptr in page.findall('mets:fptr', NS):
-                  if fptr.get('FILEID') in for_fileIds:
-                      ret[for_fileIds.index(fptr.get('FILEID'))] = page.get('ID')
+            for page in self._tree.getroot().xpath(
+                    'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                    namespaces=NS):
+                for fptr in page.findall('mets:fptr', NS):
+                    if fptr.get('FILEID') in for_fileIds:
+                        index = for_fileIds.index(fptr.get('FILEID'))
+                        if return_divs:
+                            ret[index] = page
+                        else:
+                            ret[index] = page.get('ID')
         return ret
 
     def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
@@ -657,14 +668,14 @@ class OcrdMets(OcrdXmlDocument):
         if el_seqdiv is None:
             el_seqdiv = ET.SubElement(el_structmap, TAG_METS_DIV)
             el_seqdiv.set('TYPE', 'physSequence')
-        
+
         el_pagediv = None
         if self._cache_flag:
             if pageId in self._page_cache:
                 el_pagediv = self._page_cache[pageId]
         else:
             el_pagediv = el_seqdiv.find('mets:div[@ID="%s"]' % pageId, NS)
-        
+
         if el_pagediv is None:
             el_pagediv = ET.SubElement(el_seqdiv, TAG_METS_DIV)
             el_pagediv.set('TYPE', 'page')
@@ -679,13 +690,13 @@ class OcrdMets(OcrdXmlDocument):
                 # Create a new entry in the fptr cache and 
                 # assign an empty dictionary to hold the fileids
                 self._fptr_cache[pageId] = {}
-                
+
         el_fptr = ET.SubElement(el_pagediv, TAG_METS_FPTR)
         el_fptr.set('FILEID', ocrd_file.ID)
 
         if self._cache_flag:
             # Assign the ocrd fileID to the pageId in the cache
-            self._fptr_cache[el_pagediv.get('ID')].update({ocrd_file.ID : el_fptr})
+            self._fptr_cache[el_pagediv.get('ID')].update({ocrd_file.ID: el_fptr})
 
     def get_physical_page_for_file(self, ocrd_file):
         """
@@ -740,10 +751,11 @@ class OcrdMets(OcrdXmlDocument):
         if self._cache_flag:
             for page_id in self._fptr_cache.keys():
                 if fileId in self._fptr_cache[page_id].keys():
-                    mets_fptrs.append(self._fptr_cache[page_id][fileId]) 
+                    mets_fptrs.append(self._fptr_cache[page_id][fileId])
         else:
             mets_fptrs = self._tree.getroot().xpath(
-                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' % fileId, namespaces=NS)
+                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' % fileId,
+                namespaces=NS)
         ret = []
         for mets_fptr in mets_fptrs:
             mets_div = mets_fptr.getparent()
@@ -765,7 +777,8 @@ class OcrdMets(OcrdXmlDocument):
         return {div.get('ID'): (div.get('ORDER', None), div.get('ORDERLABEL', None), div.get('LABEL', None))
                 for div in divs}
 
-    def merge(self, other_mets, force=False, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None, after_add_cb=None, **kwargs):
+    def merge(self, other_mets, force=False, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None,
+              after_add_cb=None, **kwargs):
         """
         Add all files from other_mets.
         Accepts the same kwargs as :py:func:`find_files`
@@ -784,13 +797,14 @@ class OcrdMets(OcrdXmlDocument):
             pageId_mapping = {}
         for f_src in other_mets.find_files(**kwargs):
             f_dest = self.add_file(
-                    fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
-                    mimetype=f_src.mimetype,
-                    url=f_src.url,
-                    ID=fileId_mapping.get(f_src.ID, f_src.ID),
-                    pageId=pageId_mapping.get(f_src.pageId, f_src.pageId),
-                    force=force)
+                fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
+                mimetype=f_src.mimetype,
+                url=f_src.url,
+                ID=fileId_mapping.get(f_src.ID, f_src.ID),
+                pageId=pageId_mapping.get(f_src.pageId, f_src.pageId),
+                force=force)
             # FIXME: merge metsHdr, amdSec, dmdSec as well
             # FIXME: merge structMap logical and structLink as well
             if after_add_cb:
                 after_add_cb(f_dest)
+
