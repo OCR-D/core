@@ -55,24 +55,16 @@ async def sync_db_get_workspace(workspace_id: str = None, workspace_mets_path: s
     return await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path)
 
 
-async def db_get_workspace_by_path(workspace_mets_path: str) -> DBWorkspace:
-    workspace = await DBWorkspace.find_one(
-        DBWorkspace.workspace_mets_path == workspace_mets_path
-    )
-    if not workspace:
-        raise ValueError(f'Workspace with path "{workspace_mets_path}" not in the DB.')
-    return workspace
-
-
-@call_sync
-async def sync_db_get_workspace_by_path(workspace_mets_path: str) -> DBWorkspace:
-    return await db_get_workspace_by_path(workspace_mets_path=workspace_mets_path)
-
-
-async def db_update_workspace(workspace_id: str, **kwargs):
-    workspace = await DBWorkspace.find_one(
-        DBWorkspace.workspace_id == workspace_id
-    )
+async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs):
+    workspace = None
+    if workspace_id:
+        workspace = await DBWorkspace.find_one(
+            DBWorkspace.workspace_id == workspace_id
+        )
+    if workspace_mets_path:
+        workspace = await DBWorkspace.find_one(
+            DBWorkspace.workspace_mets_path == workspace_mets_path
+        )
     if not workspace:
         raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
 
@@ -104,8 +96,8 @@ async def db_update_workspace(workspace_id: str, **kwargs):
 
 
 @call_sync
-async def sync_db_update_workspace(workspace_id: str, **kwargs):
-    await db_update_workspace(workspace_id=workspace_id, **kwargs)
+async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs):
+    await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
 
 
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
