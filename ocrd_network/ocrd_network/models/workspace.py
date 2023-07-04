@@ -15,6 +15,8 @@ class DBWorkspace(Document):
         ocrd_mets                   Ocrd-Mets (optional)
         bag_info_adds               bag-info.txt can also (optionally) contain additional
                                     key-value-pairs which are saved here
+        deleted                     the document is deleted if set, however, the record is still preserved
+        being_processed             whether the workspace is currently used in a workflow execution or not
     """
     workspace_id: str
     workspace_mets_path: str
@@ -24,6 +26,7 @@ class DBWorkspace(Document):
     ocrd_mets: Optional[str]
     bag_info_adds: Optional[dict]
     deleted: bool = False
+    being_processed: bool = False
 
     class Settings:
         name = "workspace"
