@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, BackgroundTasks
+from fastapi import HTTPException, status
 from ocrd_validators import ParameterValidator
 from .database import (
     db_get_processing_job,
@@ -22,21 +22,21 @@ async def _get_processor_job(logger, processor_name: str, job_id: str) -> PYJobO
         )
 
 
-async def validate_and_resolve_mets_path(logger, job_input: PYJobInput, resolve: bool = False) -> PYJobInput:
+async def validate_and_return_mets_path(logger, job_input: PYJobInput) -> str:
     # This check is done to return early in case the workspace_id is provided
     # but the abs mets path cannot be queried from the DB
     if not job_input.path_to_mets and job_input.workspace_id:
         try:
             db_workspace = await db_get_workspace(job_input.workspace_id)
-            if resolve:
-                job_input.path_to_mets = db_workspace.workspace_mets_path
+            path_to_mets = db_workspace.workspace_mets_path
         except ValueError as e:
             logger.exception(f"Workspace with id '{job_input.workspace_id}' not existing: {e}")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Workspace with id '{job_input.workspace_id}' not existing"
             )
-    return job_input
+        return path_to_mets
+    return job_input.path_to_mets
 
 
 def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:

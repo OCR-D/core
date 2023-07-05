@@ -3,6 +3,7 @@ import requests
 import httpx
 from typing import Dict, List
 import uvicorn
+from queue import Queue
 
 from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -23,10 +24,14 @@ from .models import (
     PYJobOutput,
     StateEnum
 )
-from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
+from .rabbitmq_utils import (
+    RMQPublisher,
+    OcrdProcessingMessage,
+    OcrdResultMessage
+)
 from .server_utils import (
     _get_processor_job,
-    validate_and_resolve_mets_path,
+    validate_and_return_mets_path,
     validate_job_input,
 )
 from .utils import (
@@ -73,6 +78,11 @@ class ProcessingServer(FastAPI):
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
 
+        # Used for buffering/caching processing requests in the Processing Server
+        # Key: `workspace_id` or `path_to_mets` depending on which is provided
+        # Value: Queue that holds PYInputJob elements
+        self.processing_requests_cache = {}
+
         # Create routes
         self.router.add_api_route(
             path='/stop',
@@ -104,6 +114,15 @@ class ProcessingServer(FastAPI):
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/processor/result_callback/{job_id}',
+            endpoint=self.remove_from_request_cache,
+            methods=['POST'],
+            tags=['processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Callback used by a worker or processor server for successful processing of a request',
         )
 
         self.router.add_api_route(
@@ -270,6 +289,13 @@ class ProcessingServer(FastAPI):
         return ocrd_tool, processor_server_url
 
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
+        if data.job_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Job id field is set but must not be: {data.job_id}"
+            )
+        data.job_id = generate_id()  # Generate processing job id
+
         if data.agent_type not in ['worker', 'server']:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -284,25 +310,55 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
             )
-        else:
-            # The workspace is currently locked (being processed)
-            if workspace_db.being_processed:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Workspace with id: {data.workspace_id} or "
-                           f"path: {data.path_to_mets} is currently being processed"
-                )
-            # Lock the workspace
-            await db_update_workspace(
-                workspace_id=data.workspace_id,
-                workspace_mets_path=data.path_to_mets,
-                being_processed=True
+
+        # The workspace is currently locked (being processed)
+        # TODO: Do the proper caching here, after the refactored code is working
+        if workspace_db.being_processed:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Workspace with id: {data.workspace_id} or "
+                       f"path: {data.path_to_mets} is currently being processed"
             )
+
+        workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
+        # If a record queue of this workspace_id does not exist in the requests cache
+        if not self.processing_requests_cache.get(workspace_key, None):
+            self.processing_requests_cache[workspace_key] = Queue()
+        # Add the processing request to the internal queue
+        self.processing_requests_cache[workspace_key].put(data)
+
+        data = self.processing_requests_cache[workspace_key].get()
+        # Lock the workspace
+        await db_update_workspace(
+            workspace_id=data.workspace_id,
+            workspace_mets_path=data.path_to_mets,
+            being_processed=True
+        )
+
+        # Since the path is not resolved yet,
+        # the return value is not important for the Processing Server
+        await validate_and_return_mets_path(self.log, data)
+
+        # Create a DB entry
+        job = DBProcessorJob(
+            **data.dict(exclude_unset=True, exclude_none=True),
+            processor_name=processor_name,
+            internal_callback_url=f"/processor/result_callback/{data.job_id}",
+            state=StateEnum.queued
+        )
+        await job.insert()
+
         job_output = None
         if data.agent_type == 'worker':
-            job_output = await self.push_to_processing_queue(processor_name, data)
+            ocrd_tool = await self.get_processor_info(processor_name)
+            validate_job_input(self.log, processor_name, ocrd_tool, data)
+            processing_message = self.create_processing_message(job)
+            await self.push_to_processing_queue(processor_name, processing_message)
+            job_output = job.to_job_output()
         if data.agent_type == 'server':
-            job_output = await self.push_to_processor_server(processor_name, data)
+            ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
+            validate_job_input(self.log, processor_name, ocrd_tool, data)
+            job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
         if not job_output:
             self.log.exception('Failed to create job output')
             raise HTTPException(
@@ -312,10 +368,7 @@ class ProcessingServer(FastAPI):
         return job_output
 
     # TODO: Revisit and remove duplications between push_to_* methods
-    async def push_to_processing_queue(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
-        ocrd_tool = await self.get_processor_info(processor_name)
-        validate_job_input(self.log, processor_name, ocrd_tool, job_input)
-        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)
+    async def push_to_processing_queue(self, processor_name: str, processing_message: OcrdProcessingMessage):
         if not self.rmq_publisher:
             raise Exception('RMQPublisher is not connected')
         deployed_processors = self.deployer.find_matching_processors(
@@ -326,14 +379,6 @@ class ProcessingServer(FastAPI):
         if processor_name not in deployed_processors:
             self.check_if_queue_exists(processor_name)
 
-        job = DBProcessorJob(
-            **job_input.dict(exclude_unset=True, exclude_none=True),
-            job_id=generate_id(),
-            processor_name=processor_name,
-            state=StateEnum.queued
-        )
-        await job.insert()
-        processing_message = self.create_processing_message(job)
         encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         try:
             self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
@@ -343,12 +388,8 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f'RMQPublisher has failed: {error}'
             )
-        return job.to_job_output()
 
-    async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
-        ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
-        validate_job_input(self.log, processor_name, ocrd_tool, job_input)
-        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=False)
+    async def push_to_processor_server(self, processor_name: str, processor_server_url: str, job_input: PYJobInput) -> PYJobOutput:
         try:
             json_data = json.dumps(job_input.dict(exclude_unset=True, exclude_none=True))
         except Exception as e:
@@ -383,6 +424,10 @@ class ProcessingServer(FastAPI):
 
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, processor_name, job_id)
+
+    async def remove_from_request_cache(self, processor_name: str, job_id: str, ocrd_result: OcrdResultMessage):
+        # TODO: Implement, after the refactored code is working
+        pass
 
     async def get_processor_info(self, processor_name) -> Dict:
         """ Return a processor's ocrd-tool.json
