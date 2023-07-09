@@ -327,7 +327,7 @@ class WorkspaceValidator():
                 if is_local_filename(imageFilename) and not Path(imageFilename).exists():
                     self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.url, imageFilename))
             if 'mets_fileid_page_pcgtsid' in self.page_checks and pcgts.pcGtsId != f.ID:
-                page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pcgts.pcGtsId or '', f.ID or ''))
+                self.report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pcgts.pcGtsId or '', f.ID or ''))
 
 
     def _validate_page_xsd(self):
