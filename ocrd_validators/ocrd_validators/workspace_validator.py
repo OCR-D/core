@@ -313,8 +313,8 @@ class WorkspaceValidator():
                                                  check_coords=self.page_coordinate_consistency in ['poly', 'both'],
                                                  check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
             pg = page_from_file(f)
-            if 'pcgtsid' in self.page_checks and pg.pcGtsId != ocrd_file.ID:
-                page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pg.pcGtsId or '', ocrd_file.ID or ''))
+            if 'pcgtsid' in self.page_checks and pg.pcGtsId != f.ID:
+                page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pg.pcGtsId or '', f.ID or ''))
             self.report.merge_report(page_report)
 
     def _validate_page_xsd(self):
