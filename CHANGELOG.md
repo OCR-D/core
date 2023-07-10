@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `WorkspaceValidator`: make the check for consistency of `pc:Page[@pcGtsId]` and `mets:file[@ID]` optional with the `mets_fileid_page_pcgtsid` skip flag, #1066
+
+Changed:
+
+  * `WorkspaceValidator`: Download files temporarily/on-demand, #1066
+
 ## [2.52.0] - 2023-06-26
 
 Added:
