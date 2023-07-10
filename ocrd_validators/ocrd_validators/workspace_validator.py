@@ -149,7 +149,7 @@ class WorkspaceValidator():
                     self._validate_multipage()
                 if 'mets_xsd' not in self.skip:
                     self._validate_mets_xsd()
-                if len(self.page_checks):
+                if self.page_checks:
                     self._validate_page()
             except Exception: # pylint: disable=broad-except
                 self.report.add_error("Validation aborted with exception: %s" % format_exc())
