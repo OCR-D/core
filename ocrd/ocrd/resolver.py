@@ -1,6 +1,7 @@
 from tempfile import mkdtemp
 from pathlib import Path
 from warnings import warn
+from os import environ
 
 import requests
 
@@ -23,7 +24,7 @@ class Resolver():
     Handle uploads, downloads, repository access, and manage temporary directories
     """
 
-    def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None):
+    def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None, retries=None, timeout=None):
         """
         Download a file to a directory.
 
@@ -36,11 +37,15 @@ class Resolver():
 
         Args:
             directory (string): Directory to download files to
-            basename (string, None): basename part of the filename on disk.
             url (string): URL to download from
-            if_exists (string, "skip"): What to do if target file already exists. \
+
+        Keyword Args:
+            basename (string, None): basename part of the filename on disk.
+            if_exists (string, "skip"): What to do if target file already exists.
                 One of ``skip`` (default), ``overwrite`` or ``raise``
             subdir (string, None): Subdirectory to create within the directory. Think ``mets:fileGrp``.
+            retries (int, None): Number of retries to attempt on network failure.
+            timeout (tuple, None): Timeout in seconds for establishing a connection and reading next chunk of data.
 
         Returns:
             Local filename string, *relative* to directory
@@ -100,7 +105,46 @@ class Resolver():
             dst_path.write_bytes(src_path.read_bytes())
         else:
             log.debug("Downloading URL '%s' to '%s'", url, dst_path)
-            response = requests.get(url)
+            if 'OCRD_DOWNLOAD_RETRIES' in environ:
+                retries = retries or int(environ['OCRD_DOWNLOAD_RETRIES'])
+            retries = retries or 0
+            for _ in range(retries + 1):
+                try:
+                    if timeout is None and 'OCRD_DOWNLOAD_TIMEOUT' in environ:
+                        timeout = environ['OCRD_DOWNLOAD_TIMEOUT'].split(',')
+                        if len(timeout) > 1:
+                            timeout = tuple(float(x) for x in timeout)
+                        else:
+                            timeout = float(timeout[0])
+                    response = requests.get(url, timeout=timeout)
+                    if response.status_code in [
+                            # probably too wide:
+                            408, # Request Timeout
+                            409, # Conflict
+                            410, # Gone
+                            412, # Precondition Failed
+                            417, # Expectation Failed
+                            423, # Locked
+                            424, # Fail
+                            425, # Too Early
+                            426, # Upgrade Required
+                            428, # Precondition Required
+                            429, # Too Many Requests
+                            440, # Login Timeout
+                            500, # Internal Server Error
+                            503, # Service Unavailable
+                            504, # Gateway Timeout
+                            509, # Bandwidth Limit Exceeded
+                            529, # Site Overloaded
+                            598, # Proxy Read Timeout
+                            599, # Proxy Connect Timeout
+                    ]:
+                        continue
+                except (requests.Timeout, requests.ConnectionError) as error:
+                    response = error
+                    continue
+            if isinstance(response, Exception):
+                raise Exception("HTTP request failed: %s (%s)" % (url, response))
             if response.status_code != 200:
                 raise Exception("HTTP request failed: %s (HTTP %d)" % (url, response.status_code))
             contents = handle_oai_response(response)
