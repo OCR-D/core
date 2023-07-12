@@ -100,7 +100,7 @@ def test_handle_response_for_invalid_content(mock_get, response_dir):
     resolver.download_to_directory(response_dir, url)
 
     # assert
-    mock_get.assert_called_once_with(url)
+    mock_get.assert_called_once_with(url, timeout=None)
     log_output = capt.getvalue()
     assert 'WARNING ocrd_models.utils.handle_oai_response' in log_output
 

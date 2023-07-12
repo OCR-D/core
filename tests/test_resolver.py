@@ -48,7 +48,7 @@ def _get_kant_data(key):
             return (_file.read(), mime)
 
 
-def request_behavior(*args):
+def request_behavior(*args, **kwargs):
     resp = mock.Mock()
     resp.status_code = 200
     resp.headers = {}
