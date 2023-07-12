@@ -64,13 +64,13 @@ Variables:
 \b
   OCRD_PROFILE
     Whether to enable gathering runtime statistics
-    on the `ocrd.profile` logger:
-    - non-empty: yields CPU and wall-time,
+    on the `ocrd.profile` logger (comma-separated):
+    - `CPU`: yields CPU and wall-time,
     - `RSS`: also yields peak memory (resident set size)
     - `PSS`: also yields peak memory (proportional set size)
   OCRD_PROFILE_FILE
-    When profiling is enabled, file to write to
-    (instead of standard log handler).
+    When profiling is enabled, data file to write to
+    (for external analysis tools like snakeviz).
 """
 
 def command_with_replaced_help(*replacements):

@@ -96,6 +96,24 @@ Some parts of the software are configured via environement variables:
   * `PSS`: Enable proportionate memory profiling
 * `OCRD_PROFILE_FILE`: If set, then the CPU profile is written to this file for later peruse with a analysis tools like [snakeviz](https://jiffyclub.github.io/snakeviz/)
 
+* `PATH`: Search path for processor executables (affects `ocrd process` and `ocrd resmgr`).
+* `HOME`: Directory to look for `ocrd_logging.conf`, fallback for unset XDG variables (see below).
+
+* `XDG_CONFIG_HOME`: Directory to look for `./ocrd/resources.yml` (i.e. `ocrd resmgr` user database) – defaults to `$HOME/.config`.
+* `XDG_DATA_HOME`: Directory to look for `./ocrd-resources/*` (i.e. `ocrd resmgr` data location) – defaults to `$HOME/.local/share`.
+
+* `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of workspace files.
+* `OCRD_DOWNLOAD_TIMEOUT`: Timeout in seconds for connecting or reading (comma-separated) when downloading.
+
+* `OCRD_METS_CACHING`: Whether to enable in-memory storage of OcrdMets data structures for speedup during processing or workspace operations.
+
+* `OCRD_MAX_PROCESSOR_CACHE`: Maximum number of processor instances (for each set of parameters) to be kept in memory (including loaded models) for processing workers or processor servers.
+
+* `OCRD_NETWORK_SERVER_ADDR_PROCESSING`: Default address of Processing Server to connect to (for `ocrd network client processing`).
+* `OCRD_NETWORK_SERVER_ADDR_WORKFLOW`: Default address of Workflow Server to connect to (for `ocrd network client workflow`).
+* `OCRD_NETWORK_SERVER_ADDR_WORKSPACE`: Default address of Workspace Server to connect to (for `ocrd network client workspace`).
+
+
 ## Packages
 
 ### ocrd_utils
