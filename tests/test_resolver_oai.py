@@ -1,4 +1,4 @@
-from unittest import mock
+from unittest.mock import patch
 from pytest import fixture
 from shutil import copy
 from logging import StreamHandler, Formatter
@@ -56,7 +56,7 @@ def test_handle_response_mets(plain_xml_response_content):
     assert result.startswith(expected_start)
 
 
-@mock.object(Session, "get")
+@patch.object(Session, "get")
 def test_handle_common_oai_response(mock_get, response_dir, oai_response_content):
     """Base use case with valid OAI Response data"""
     initLogging()
@@ -77,7 +77,7 @@ def test_handle_common_oai_response(mock_get, response_dir, oai_response_content
     assert result == 'oai'
 
 
-@mock.object(Session, "get")
+@patch.object(Session, "get")
 def test_handle_response_for_invalid_content(mock_get, response_dir):
     """If invalid content is returned, store warning log entry"""
 

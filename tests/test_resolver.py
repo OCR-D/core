@@ -7,8 +7,9 @@ from pathlib import (
     Path
 )
 from requests import Session
-from unittest import (
-    mock
+from unittest.mock import (
+    patch,
+    Mock
 )
 from PIL import (
     Image
@@ -50,7 +51,7 @@ def _get_kant_data(key):
 
 
 def request_behavior(*args, **kwargs):
-    resp = mock.Mock()
+    resp = Mock()
     resp.status_code = 200
     resp.headers = {}
     the_key = args[0].split('/')[-1]
@@ -69,7 +70,7 @@ def test_workspace_from_url_bad():
     assert "Must pass 'mets_url'" in str(exc)
 
 
-@mock.object(Session, "get")
+@patch.object(Session, "get")
 def test_workspace_from_url_kant(mock_request, tmp_path):
 
     # arrange
@@ -89,7 +90,7 @@ def test_workspace_from_url_kant(mock_request, tmp_path):
     assert mock_request.call_count == 1
 
 
-@mock.object(Session, "get")
+@patch.object(Session, "get")
 def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
 
     # arrange
@@ -114,7 +115,7 @@ def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
     assert mock_request.call_count == 7
 
 
-@mock.object(Session, "get")
+@patch.object(Session, "get")
 def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp_path):
 
     # arrange
@@ -134,7 +135,7 @@ def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp
     assert mock_request.call_count == 0
 
 
-@mock.object(Session, "get")
+@patch.object(Session, "get")
 def test_workspace_from_url_404(mock_request):
     """Expected behavior when try create workspace from invalid online target
     """
