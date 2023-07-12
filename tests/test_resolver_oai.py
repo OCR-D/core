@@ -72,7 +72,7 @@ def test_handle_common_oai_response(mock_get, response_dir, oai_response_content
     result = resolver.download_to_directory(response_dir, url)
 
     # assert
-    mock_get.assert_called_once_with(url)
+    mock_get.assert_called_once_with(url, timeout=None)
     assert result == 'oai'
 
 
