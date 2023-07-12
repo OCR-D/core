@@ -6,6 +6,7 @@ import shutil
 from pathlib import (
     Path
 )
+from requests import Session
 from unittest import (
     mock
 )
@@ -68,7 +69,7 @@ def test_workspace_from_url_bad():
     assert "Must pass 'mets_url'" in str(exc)
 
 
-@mock.patch("requests.get")
+@mock.object(Session, "get")
 def test_workspace_from_url_kant(mock_request, tmp_path):
 
     # arrange
@@ -88,7 +89,7 @@ def test_workspace_from_url_kant(mock_request, tmp_path):
     assert mock_request.call_count == 1
 
 
-@mock.patch("requests.get")
+@mock.object(Session, "get")
 def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
 
     # arrange
@@ -113,7 +114,7 @@ def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
     assert mock_request.call_count == 7
 
 
-@mock.patch("requests.get")
+@mock.object(Session, "get")
 def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp_path):
 
     # arrange
@@ -133,7 +134,7 @@ def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp
     assert mock_request.call_count == 0
 
 
-@mock.patch("requests.get")
+@mock.object(Session, "get")
 def test_workspace_from_url_404(mock_request):
     """Expected behavior when try create workspace from invalid online target
     """
