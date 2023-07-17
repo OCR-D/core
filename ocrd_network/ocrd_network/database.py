@@ -88,8 +88,8 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
             workspace.bag_info_adds = value
         elif key == 'deleted':
             workspace.deleted = value
-        elif key == 'being_processed':
-            workspace.being_processed = value
+        elif key == 'pages_locked':
+            workspace.pages_locked = value
         else:
             raise ValueError(f'Field "{key}" is not updatable.')
     await workspace.save()

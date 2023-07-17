@@ -22,6 +22,7 @@ class StateEnum(str, Enum):
 class PYJobInput(BaseModel):
     """ Wraps the parameters required to make a run-processor-request
     """
+    processor_name: Optional[str] = None
     path_to_mets: Optional[str] = None
     workspace_id: Optional[str] = None
     description: Optional[str] = None

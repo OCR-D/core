@@ -1,5 +1,5 @@
 from beanie import Document
-from typing import Optional
+from typing import Dict, Optional
 
 
 class DBWorkspace(Document):
@@ -16,7 +16,9 @@ class DBWorkspace(Document):
         bag_info_adds               bag-info.txt can also (optionally) contain additional
                                     key-value-pairs which are saved here
         deleted                     the document is deleted if set, however, the record is still preserved
-        being_processed             whether the workspace is currently used in a workflow execution or not
+        pages_locked                a data structure that holds output `fileGrp`s and their respective locked `page_id`
+                                    that are currently being processed by an OCR-D processor (server or worker).
+                                    If no `page_id` field is set, an identifier "all" will be used to represent all pages.
     """
     workspace_id: str
     workspace_mets_path: str
@@ -26,7 +28,10 @@ class DBWorkspace(Document):
     ocrd_mets: Optional[str]
     bag_info_adds: Optional[dict]
     deleted: bool = False
-    being_processed: bool = False
+    # Dictionary structure:
+    # Key: fileGrp
+    # Value: Set of `page_id`s
+    pages_locked: Optional[Dict] = {}
 
     class Settings:
         name = "workspace"

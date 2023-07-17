@@ -1,7 +1,7 @@
 import json
 import requests
 import httpx
-from typing import Dict, List
+from typing import Dict, List, Optional
 import uvicorn
 from queue import Queue
 
@@ -10,12 +10,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
-
 from ocrd_utils import getLogger
 from .database import (
     initiate_database,
+    db_get_processing_job,
     db_get_workspace,
-    db_update_workspace
+    db_update_workspace,
 )
 from .deployer import Deployer
 from .models import (
@@ -26,11 +26,11 @@ from .models import (
 )
 from .rabbitmq_utils import (
     RMQPublisher,
-    OcrdProcessingMessage,
-    OcrdResultMessage
+    OcrdProcessingMessage
 )
 from .server_utils import (
     _get_processor_job,
+    expand_page_ids,
     validate_and_return_mets_path,
     validate_job_input,
 )
@@ -117,12 +117,12 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/result_callback/{job_id}',
+            path='/processor/result_callback',
             endpoint=self.remove_from_request_cache,
             methods=['POST'],
             tags=['processing'],
             status_code=status.HTTP_200_OK,
-            summary='Callback used by a worker or processor server for successful processing of a request',
+            summary='Callback used by a worker or processor server for reporting result of a processing request',
         )
 
         self.router.add_api_route(
@@ -294,7 +294,8 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Job id field is set but must not be: {data.job_id}"
             )
-        data.job_id = generate_id()  # Generate processing job id
+        # Generate processing job id
+        data.job_id = generate_id()
 
         if data.agent_type not in ['worker', 'server']:
             raise HTTPException(
@@ -311,39 +312,71 @@ class ProcessingServer(FastAPI):
                 detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
             )
 
-        # The workspace is currently locked (being processed)
-        # TODO: Do the proper caching here, after the refactored code is working
-        if workspace_db.being_processed:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Workspace with id: {data.workspace_id} or "
-                       f"path: {data.path_to_mets} is currently being processed"
-            )
-
-        workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
-        # If a record queue of this workspace_id does not exist in the requests cache
-        if not self.processing_requests_cache.get(workspace_key, None):
-            self.processing_requests_cache[workspace_key] = Queue()
-        # Add the processing request to the internal queue
-        self.processing_requests_cache[workspace_key].put(data)
-
-        data = self.processing_requests_cache[workspace_key].get()
-        # Lock the workspace
-        await db_update_workspace(
-            workspace_id=data.workspace_id,
-            workspace_mets_path=data.path_to_mets,
-            being_processed=True
-        )
-
         # Since the path is not resolved yet,
         # the return value is not important for the Processing Server
         await validate_and_return_mets_path(self.log, data)
+
+        page_ids = expand_page_ids(data.page_id)
+
+        # A flag whether the current request must be cached
+        # This is set to true if for any output fileGrp there
+        # is a page_id value that have been previously locked
+        cache_current_request = False
+
+        # Check if there are any locked pages for the current request
+        locked_ws_pages = workspace_db.pages_locked
+        for output_fileGrp in data.output_file_grps:
+            if output_fileGrp in locked_ws_pages:
+                if "all_pages" in locked_ws_pages[output_fileGrp]:
+                    cache_current_request = True
+                    break
+                # If there are request page ids that are already locked
+                if not locked_ws_pages[output_fileGrp].isdisjoint(page_ids):
+                    cache_current_request = True
+                    break
+
+        if cache_current_request:
+            # Append the processor name to the request itself
+            data.processor_name = processor_name
+
+            workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
+            # If a record queue of this workspace_id does not exist in the requests cache
+            if not self.processing_requests_cache.get(workspace_key, None):
+                self.processing_requests_cache[workspace_key] = Queue()
+            # Add the processing request to the internal queue
+            self.processing_requests_cache[workspace_key].put(data)
+
+            return PYJobOutput(
+                job_id=data.job_id,
+                processor_name=processor_name,
+                workspace_id=data.workspace_id,
+                workspace_path=data.path_to_mets,
+                state=StateEnum.cached
+            )
+        else:
+            # Update locked pages by locking the pages in the request
+            for output_fileGrp in data.output_file_grps:
+                if output_fileGrp not in locked_ws_pages:
+                    locked_ws_pages[output_fileGrp] = set()
+                # The page id list is not empty - only some pages are in the request
+                if page_ids:
+                    locked_ws_pages[output_fileGrp].update(page_ids)
+                else:
+                    # Lock all pages with a single value
+                    locked_ws_pages[output_fileGrp].add("all_pages")
+
+            # Update the locked pages dictionary in the database
+            await db_update_workspace(
+                workspace_id=data.workspace_id,
+                workspace_mets_path=data.path_to_mets,
+                pages_locked=locked_ws_pages
+            )
 
         # Create a DB entry
         job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
             processor_name=processor_name,
-            internal_callback_url=f"/processor/result_callback/{data.job_id}",
+            internal_callback_url=f"/processor/result_callback",
             state=StateEnum.queued
         )
         await job.insert()
@@ -425,9 +458,92 @@ class ProcessingServer(FastAPI):
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, processor_name, job_id)
 
-    async def remove_from_request_cache(self, processor_name: str, job_id: str, ocrd_result: OcrdResultMessage):
-        # TODO: Implement, after the refactored code is working
-        pass
+    async def remove_from_request_cache(self, job_id: str, state: StateEnum,
+                                        workspace_id: Optional[str], path_to_mets: Optional[str]):
+        if state == StateEnum.failed:
+            # TODO: Call the callback to the Workflow server if the current processing step has failed
+            pass
+
+        if state != StateEnum.success:
+            # TODO: Handle other potential error cases
+            pass
+
+        job_db = await db_get_processing_job(job_id)
+        if not job_db:
+            self.log.exception(f"Processing job with id: {job_id} not found in DB")
+        job_output_file_grps = job_db.output_file_grps
+        job_page_ids = expand_page_ids(job_db.page_id)
+
+        # TODO: Unlock previously locked workspace pages
+        workspace_db = await db_get_workspace(
+            workspace_id=workspace_id,
+            workspace_mets_path=path_to_mets
+        )
+        if not workspace_db:
+            self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+
+        locked_ws_pages = workspace_db.pages_locked
+
+        # Update locked pages by locking the pages in the request
+        for output_fileGrp in job_output_file_grps:
+            if output_fileGrp in locked_ws_pages:
+                if job_page_ids:
+                    # Unlock the previously locked pages
+                    locked_ws_pages[output_fileGrp].difference_update(set(job_page_ids))
+                else:
+                    # Remove the single variable used to indicate all pages are locked
+                    locked_ws_pages[output_fileGrp].remove("all_pages")
+
+        # Update the locked pages dictionary in the database
+        await db_update_workspace(
+            workspace_id=workspace_id,
+            workspace_mets_path=path_to_mets,
+            pages_locked=locked_ws_pages
+        )
+
+        # Take the next request from the cache (if any available)
+        workspace_key = workspace_id if workspace_id else path_to_mets
+
+        if workspace_key not in self.processing_requests_cache:
+            # No internal queue available for that workspace
+            return
+
+        if self.processing_requests_cache[workspace_key].empty():
+            # The queue is empty - delete it
+            try:
+                del self.processing_requests_cache[workspace_key]
+            except KeyError as ex:
+                self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
+            return
+
+        # Process the next request in the internal queue
+        # TODO: Refactor and optimize the duplications here
+        #  and last lines in `push_processor_job` method
+        data = self.processing_requests_cache[workspace_key].get()
+        processor_name = data.processor_name
+
+        # Create a DB entry
+        job = DBProcessorJob(
+            **data.dict(exclude_unset=True, exclude_none=True),
+            processor_name=processor_name,
+            internal_callback_url=f"/processor/result_callback",
+            state=StateEnum.queued
+        )
+        await job.insert()
+
+        job_output = None
+        if data.agent_type == 'worker':
+            ocrd_tool = await self.get_processor_info(processor_name)
+            validate_job_input(self.log, processor_name, ocrd_tool, data)
+            processing_message = self.create_processing_message(job)
+            await self.push_to_processing_queue(processor_name, processing_message)
+            job_output = job.to_job_output()
+        if data.agent_type == 'server':
+            ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
+            validate_job_input(self.log, processor_name, ocrd_tool, data)
+            job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
+        if not job_output:
+            self.log.exception(f'Failed to create job output for job input data: {data}')
 
     async def get_processor_info(self, processor_name) -> Dict:
         """ Return a processor's ocrd-tool.json

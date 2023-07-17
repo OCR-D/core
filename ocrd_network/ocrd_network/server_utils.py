@@ -1,5 +1,11 @@
+import re
 from fastapi import HTTPException, status
+from typing import Dict, List
 from ocrd_validators import ParameterValidator
+from ocrd_utils import (
+    generate_range,
+    REGEX_PREFIX
+)
 from .database import (
     db_get_processing_job,
     db_get_workspace,
@@ -37,6 +43,20 @@ async def validate_and_return_mets_path(logger, job_input: PYJobInput) -> str:
             )
         return path_to_mets
     return job_input.path_to_mets
+
+
+def expand_page_ids(page_id: str) -> List:
+    page_ids = []
+    if not page_id:
+        return page_ids
+    for page_id_token in re.split(r',', page_id):
+        if page_id_token.startswith(REGEX_PREFIX):
+            page_ids.append(re.compile(page_id_token[len(REGEX_PREFIX):]))
+        elif '..' in page_id_token:
+            page_ids += generate_range(*page_id_token.split('..', 1))
+        else:
+            page_ids += [page_id_token]
+    return page_ids
 
 
 def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
