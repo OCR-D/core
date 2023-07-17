@@ -320,7 +320,7 @@ class ProcessingServer(FastAPI):
 
         # A flag whether the current request must be cached
         # This is set to true if for any output fileGrp there
-        # is a page_id value that have been previously locked
+        # is a page_id value that has been previously locked
         cache_current_request = False
 
         # Check if there are any locked pages for the current request
@@ -474,7 +474,7 @@ class ProcessingServer(FastAPI):
         job_output_file_grps = job_db.output_file_grps
         job_page_ids = expand_page_ids(job_db.page_id)
 
-        # TODO: Unlock previously locked workspace pages
+        # Read DB workspace entry
         workspace_db = await db_get_workspace(
             workspace_id=workspace_id,
             workspace_mets_path=path_to_mets
@@ -482,9 +482,8 @@ class ProcessingServer(FastAPI):
         if not workspace_db:
             self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
 
+        # Update locked pages by unlocking the pages in the request
         locked_ws_pages = workspace_db.pages_locked
-
-        # Update locked pages by locking the pages in the request
         for output_fileGrp in job_output_file_grps:
             if output_fileGrp in locked_ws_pages:
                 if job_page_ids:

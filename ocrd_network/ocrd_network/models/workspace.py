@@ -18,7 +18,7 @@ class DBWorkspace(Document):
         deleted                     the document is deleted if set, however, the record is still preserved
         pages_locked                a data structure that holds output `fileGrp`s and their respective locked `page_id`
                                     that are currently being processed by an OCR-D processor (server or worker).
-                                    If no `page_id` field is set, an identifier "all" will be used to represent all pages.
+                                    If no `page_id` field is set, an identifier "all_pages" will be used.
     """
     workspace_id: str
     workspace_mets_path: str
