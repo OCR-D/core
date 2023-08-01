@@ -25,7 +25,13 @@ from .. import (
               help='Create the rabbitmq-queue for the worker. Usually the processing server starts'
               'the workers and creates the queues. This is to make external addition of workers for'
               'new processors possible')
-def processing_worker_cli(processor_name: str, queue: str, database: str, create_queue: bool):
+@click.option('--retry-attempts',
+              type=int,
+              default=1,
+              help='Retry creating the connection. There is two seconds wait between attempts. '
+              'Helpfull if the server needs time to be fully started')
+def processing_worker_cli(processor_name: str, queue: str, database: str, create_queue: bool,
+                          retry_attempts=1):
     """
     Start Processing Worker
     (a specific ocr-d processor consuming tasks from RabbitMQ queue)
@@ -49,7 +55,7 @@ def processing_worker_cli(processor_name: str, queue: str, database: str, create
             processor_class=None,  # For readability purposes assigned here
         )
         if create_queue:
-            processing_worker.create_queue()
+            processing_worker.create_queue(connection_attempts=retry_attempts, retry_delay=2)
         # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
         processing_worker.connect_consumer()
         # Start consuming from the queue with name `processor_name`
