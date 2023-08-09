@@ -15,6 +15,7 @@ import requests
 
 import pika.spec
 import pika.adapters.blocking_connection
+from pika.exceptions import AMQPConnectionError
 
 from ocrd_utils import getLogger
 
@@ -279,15 +280,15 @@ class ProcessingWorker:
         configuration file. This is intended to make external deployment of workers possible.
         """
         if self.rmq_publisher is None:
-            attempts = connection_attempts
-            while attempts > 0:
+            attempts_left = connection_attempts if connection_attempts > 0 else 1
+            while attempts_left > 0:
                 try:
                     self.connect_publisher()
                     break
-                except BaseException as e:
-                    if attempts <= 1:
+                except AMQPConnectionError as e:
+                    if attempts_left <= 1:
                         raise e
-                    attempts -= 1
+                    attempts_left -= 1
                     sleep(retry_delay)
 
         # the following function is idempotent
