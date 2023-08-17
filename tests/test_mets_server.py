@@ -60,24 +60,18 @@ def add_agent_socket(i):
         notes=[({'foo': 'bar'}, f'note{i}')]
     )
 
-def test_mets_server_add_file_and_agents(start_mets_server):
+def test_mets_server_add_file(start_mets_server):
     NO_FILES = 500
-    NO_AGENTS = 30
 
     # add NO_FILES files in parallel
     with Pool() as pool:
         pool.map(add_file_socket, list(range(NO_FILES)))
-
-    # add NO_AGENTS agents in parallel
-    with Pool() as pool:
-        pool.map(add_agent_socket, list(range(NO_AGENTS)))
 
     workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
 
     assert set(workspace_socket.mets.file_groups) == set( ['OCR-D-IMG', 'OCR-D-GT-PAGE', 'OCR-D-GT-ALTO', 'FOO'])
     assert len(workspace_socket.mets.find_all_files(fileGrp='FOO')) == NO_FILES
     assert len(workspace_socket.mets.find_all_files(file_grp='FOO')) == NO_FILES
-    assert len(workspace_socket.mets.agents) == NO_AGENTS
 
     # not yet synced
     workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
@@ -88,3 +82,26 @@ def test_mets_server_add_file_and_agents(start_mets_server):
     workspace_file.reload_mets()
 
     assert len(workspace_file.mets.find_all_files(fileGrp='FOO')) == NO_FILES
+
+def test_mets_server_add_agents(start_mets_server):
+    NO_AGENTS = 30
+
+    workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+    no_agents_before = len(workspace_socket.mets.agents)
+
+    # add NO_AGENTS agents in parallel
+    with Pool() as pool:
+        pool.map(add_agent_socket, list(range(NO_AGENTS)))
+
+    assert len(workspace_socket.mets.agents) == NO_AGENTS + no_agents_before
+    # XXX not a tuple
+    assert workspace_socket.mets.agents[-1].notes[0][0] == {'{https://ocr-d.de}foo': 'bar'}
+
+    workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
+    assert len(workspace_file.mets.agents) == no_agents_before
+
+    # sync
+    workspace_socket.mets.save()
+    workspace_file.reload_mets()
+
+    assert len(workspace_file.mets.agents) == NO_AGENTS + no_agents_before

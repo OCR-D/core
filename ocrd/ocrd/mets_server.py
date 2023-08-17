@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 import uvicorn
 
-from ocrd_models import OcrdMets, OcrdFile
+from ocrd_models import OcrdMets, OcrdFile, OcrdAgent
 from ocrd_utils import initLogging, getLogger, deprecated_alias
 
 #
@@ -41,9 +41,9 @@ class OcrdAgentModel(BaseModel):
     name : str = Field()
     _type : str = Field()
     role : str = Field()
-    otherrole : str = Field()
+    otherrole : Optional[str] = Field()
     othertype : str = Field()
-    notes : List[Tuple[Dict[str, str], Optional[str]]] = Field()
+    notes : Optional[List[Tuple[Dict[str, str], Optional[str]]]] = Field()
 
     @staticmethod
     def create(name : str, _type : str, role : str, otherrole : str, othertype : str, notes : List[Tuple[Dict[str, str], Optional[str]]]):
@@ -59,13 +59,21 @@ class OcrdFileListModel(BaseModel):
             files=[OcrdFileModel.create(file_grp=f.fileGrp, file_id=f.ID, mimetype=f.mimetype, page_id=f.pageId, url=f.url) for f in files]
         )
 
-
 class OcrdFileGroupListModel(BaseModel):
     file_groups : List[str] = Field()
 
     @staticmethod
     def create(file_groups : List[str]):
         return OcrdFileGroupListModel(file_groups=file_groups)
+
+class OcrdAgentListModel(BaseModel):
+    agents : List[OcrdAgentModel] = Field()
+
+    @staticmethod
+    def create(agents : List[OcrdAgent]):
+        return OcrdAgentListModel(
+            agents=[OcrdAgentModel(name=a.name, _type=a.type, role=a.role, otherrole=a.otherrole, othertype=a.othertype, notes=a.notes) for a in agents]
+        )
 
 #
 # Client
@@ -75,7 +83,7 @@ class ClientSideOcrdFile:
     """
     Provides the same interface as :py:class:`ocrd_models.ocrd_file.OcrdFile`
     but without attachment to :py:class:`ocrd_models.ocrd_mets.OcrdMets` since
-    this represents the response of the :py:class:`ocrd.mets_server.OcrdWorkspaceServer`.
+    this represents the response of the :py:class:`ocrd.mets_server.OcrdMetsServer`.
     """
 
     def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None, fileGrp=None):
@@ -98,11 +106,40 @@ class ClientSideOcrdFile:
         self.pageId = pageId
         self.fileGrp = fileGrp
 
+class ClientSideOcrdAgent():
+    """
+    Provides the same interface as :py:class:`ocrd_models.ocrd_file.OcrdAgent`
+    but without attachment to :py:class:`ocrd_models.ocrd_mets.OcrdMets` since
+    this represents the response of the :py:class:`ocrd.mets_server.OcrdMetsServer`.
+    """
+
+    def __init__(self, el, name=None, _type=None, othertype=None, role=None, otherrole=None,
+                 notes=None):
+        """
+        Args:
+            el (): ignored
+        Keyword Args:
+            name (string):
+            _type (string):
+            othertype (string):
+            role (string):
+            otherrole (string):
+            notes (dict):
+        """
+        self.name = name
+        self.type = _type
+        self.othertype = othertype
+        self.role = role
+        self.otherrole = otherrole
+        self.notes = notes
+
 class ClientSideOcrdMets():
     """
     Replacement for :py:class:`ocrd_models.ocrd_mets.OcrdMets` with overrides for
     :py:meth:`ocrd_models.ocrd_mets.OcrdMets.find_files`,
     :py:meth:`ocrd_models.ocrd_mets.OcrdMets.find_all_files`, and
+    :py:meth:`ocrd_models.ocrd_mets.OcrdMets.add_agent`,
+    :py:meth:`ocrd_models.ocrd_mets.OcrdMets.agents`,
     :py:meth:`ocrd_models.ocrd_mets.OcrdMets.add_file` to query via HTTP a
     :py:class:`ocrd.mets_server.OcrdMetsServer`.
     """
@@ -134,8 +171,12 @@ class ClientSideOcrdMets():
         return list(self.find_files(*args, **kwargs))
 
     def add_agent(self, *args, **kwargs):
-        return self.session.request('POST', f'{self.url}/agent', data=OcrdAgentModel.create(**kwargs).dict())
+        return self.session.request('POST', f'{self.url}/agent', json=OcrdAgentModel.create(**kwargs).dict())
 
+    @property
+    def agents(self):
+        # print(self.session.request('GET', f'{self.url}/agent').json())
+        return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in self.session.request('GET', f'{self.url}/agent').json()['agents']]
 
     @property
     def file_groups(self):
@@ -144,7 +185,7 @@ class ClientSideOcrdMets():
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
     def add_file(self, file_grp, content=None, file_id=None, url=None, mimetype=None, page_id=None, **kwargs):
-        r = self.session.request(
+        return self.session.request(
             'POST',
             f'{self.url}/file',
             data=OcrdFileModel.create(
@@ -250,6 +291,10 @@ class OcrdMetsServer():
             kwargs = agent.dict()
             workspace.mets.add_agent(**kwargs)
             return agent
+
+        @app.get('/agent', response_model=OcrdAgentListModel)
+        async def agents():
+            return OcrdAgentListModel.create(workspace.mets.agents)
 
         @app.delete('/')
         async def stop():
