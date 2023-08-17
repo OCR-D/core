@@ -53,7 +53,12 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.pass_context
 def workspace_cli(ctx, directory, mets, mets_basename, mets_server_host, mets_server_port, mets_server_socket, backup):
     """
-    Working with workspace
+    Managing workspaces
+
+    A workspace comprises a METS file and a directory as point of reference.
+
+    Operates on the file system directly or via a METS server 
+    (already running via some prior `server start` subcommand).
     """
     initLogging()
     ctx.obj = WorkspaceCtx(
