@@ -400,7 +400,7 @@ class Workspace():
             if "file_id" in kwargs:
                 kwargs["ID"] = kwargs.pop("file_id")
 
-            ret = self.mets.add_file(file_grp, **kwargs, content=content)
+            ret = self.mets.add_file(file_grp, **kwargs)
 
             if not self.is_remote and content is not None:
                 with open(kwargs['local_filename'], 'wb') as f:
