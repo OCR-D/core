@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 from requests import request, Session as requests_session
 from requests_unixsocket import Session as requests_unixsocket_session
-from pydantic import BaseModel, Field, constr, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 import uvicorn
 
@@ -116,7 +116,16 @@ class ClientSideOcrdMets():
             self.url = f'http://{host}:{port}'
             self.session = requests_session()
 
+    @deprecated_alias(ID="file_id")
+    @deprecated_alias(pageId="page_id")
+    @deprecated_alias(fileGrp="file_grp")
     def find_files(self, **kwargs):
+        if 'pageId' in kwargs:
+            kwargs['page_id'] = kwargs.pop('pageId')
+        if 'ID' in kwargs:
+            kwargs['file_id'] = kwargs.pop('ID')
+        if 'fileGrp' in kwargs:
+            kwargs['file_grp'] = kwargs.pop('fileGrp')
         r = self.session.request('GET', f'{self.url}/file', params={**kwargs})
         for f in r.json()['files']:
             yield ClientSideOcrdFile(None, ID=f['file_id'], pageId=f['page_id'], fileGrp=f['file_grp'], url=f['url'], mimetype=f['mimetype'])
@@ -125,7 +134,8 @@ class ClientSideOcrdMets():
         return list(self.find_files(*args, **kwargs))
 
     def add_agent(self, *args, **kwargs):
-        return self.session.request('POST', f'{self.url}/agent', data=OcrdAgentModel.create(**kwargs))
+        return self.session.request('POST', f'{self.url}/agent', data=OcrdAgentModel.create(**kwargs).dict())
+
 
     @property
     def file_groups(self):
@@ -158,11 +168,17 @@ class OcrdMetsServer():
 
     def __init__(self, workspace, host, port, socket):
         self.workspace = workspace
+        if socket and host:
+            raise ValueError("Expecting either socket or host/port")
+        if not socket and not(host and port):
+            raise ValueError("Expecting both host and port")
         self.host = host
         self.port = port
         self.socket = socket
         self.log = getLogger('ocrd.workspace_client')
 
+    def shutdown(self):
+        _exit(0)
 
     def startup(self):
 
@@ -207,7 +223,6 @@ class OcrdMetsServer():
 
         @app.post('/file', response_model=OcrdFileModel)
         async def add_file(
-            data : bytes = File(),
             file_grp : str = Form(),
             file_id : str = Form(),
             page_id : Union[str, None] = Form(),
@@ -222,7 +237,6 @@ class OcrdMetsServer():
             # Add to workspace
             kwargs = file_resource.dict()
             kwargs['page_id'] = page_id
-            kwargs['content'] = data
             kwargs['local_filename'] = kwargs.pop('url')
             workspace.add_file(**kwargs)
             return file_resource
