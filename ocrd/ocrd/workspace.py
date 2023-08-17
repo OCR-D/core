@@ -381,7 +381,7 @@ class Workspace():
             content is not None)
         if 'page_id' not in kwargs:
             raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
-        if not self.is_remote and content is not None and not kwargs.get('local_filename'):
+        if content is not None and not kwargs.get('local_filename'):
             raise Exception("'content' was set but no 'local_filename'")
         if self.overwrite_mode:
             kwargs['force'] = True
