@@ -402,7 +402,9 @@ class Workspace():
 
             ret = self.mets.add_file(file_grp, **kwargs)
 
-            if not self.is_remote and content is not None:
+            # content being set implies is_remote==False because METS server
+            # does not pass file contents
+            if content is not None:
                 with open(kwargs['local_filename'], 'wb') as f:
                     if isinstance(content, str):
                         content = bytes(content, 'utf-8')

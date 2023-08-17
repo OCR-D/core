@@ -299,7 +299,6 @@ class OcrdMetsServer():
             file_resource = OcrdFileModel.create(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, local_filename=local_filename)
             # Add to workspace
             kwargs = file_resource.dict()
-            kwargs['page_id'] = page_id
             workspace.add_file(**kwargs)
             return file_resource
 
