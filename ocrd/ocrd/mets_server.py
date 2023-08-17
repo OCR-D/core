@@ -152,6 +152,10 @@ class ClientSideOcrdMets():
             self.url = f'http://{host}:{port}'
             self.session = requests_session()
 
+    def __getattr__(self, name):
+        if hasattr(self, name):
+            return self.get(name)
+        raise Exception("ClientSideOcrdMets has no access to '%s' - try without METS server", name)
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")
