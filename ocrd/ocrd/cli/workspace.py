@@ -46,9 +46,9 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location [default: METS_URL directory or .]"')
 @click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
 @click.option('-m', '--mets', default=None, help='The path/URL of the METS file [default: WORKSPACE_DIR/mets.xml]', metavar="METS_URL")
-@click.option('-h', '--host', 'mets_server_host', help="host for the server")
-@click.option('-p', '--port', 'mets_server_port',  help="Port for the server", type=int)
-@click.option('-s', '--socket','mets_server_socket',  help="Path to a UNIX socket to be created instead of binding to port")
+@click.option('-H', '--host', 'mets_server_host', help="TCP host of METS server")
+@click.option('-P', '--port', 'mets_server_port',  help="TCP port of METS server", type=int)
+@click.option('-S', '--socket','mets_server_socket',  help="Unix domain socket path of METS server", type=click.Path(dir_okay=False, writable=True))
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
 def workspace_cli(ctx, directory, mets, mets_basename, mets_server_host, mets_server_port, mets_server_socket, backup):
