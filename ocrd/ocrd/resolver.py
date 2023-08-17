@@ -116,9 +116,7 @@ class Resolver():
         mets_basename=None,
         download=False,
         src_baseurl=None,
-        mets_server_host=None,
-        mets_server_port=None,
-        mets_server_socket=None,
+        mets_server_url=None,
     ):
         """
         Create a workspace from a METS by URL (i.e. clone if :py:attr:`mets_url` is remote or :py:attr:`dst_dir` is given).
@@ -176,11 +174,7 @@ class Resolver():
 
         self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'skip')
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl,
-                mets_server_host=mets_server_host,
-                mets_server_port=mets_server_port,
-                mets_server_socket=mets_server_socket,
-                )
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl, mets_server_url=mets_server_url)
 
         if download:
             for f in workspace.mets.find_files():
@@ -216,20 +210,13 @@ class Resolver():
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
 
-    def resolve_mets_arguments(self, directory, mets_url, mets_basename, mets_server_host, mets_server_port, mets_server_socket):
+    def resolve_mets_arguments(self, directory, mets_url, mets_basename, mets_server_url):
         """
-        Resolve the ``--mets``, ``--mets-basename``, `--directory``, ``--mets-server-host``,
-        ``--mets-server-port``, and ``--mets-server-socket`` arguments
-        into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
+        Resolve the ``--mets``, ``--mets-basename``, `--directory``,
+        ``--mets-server-url``, arguments into a coherent set of arguments
+        according to https://github.com/OCR-D/core/issues/517
         """
         log = getLogger('ocrd.resolver.resolve_mets_arguments')
-
-        # Determine --mets-server-*
-        if (mets_server_host or mets_server_port or mets_server_socket):
-            if mets_server_socket and (mets_server_host or mets_server_port):
-                raise ValueError('--mets-server-socket incompatible with --mets-server-host/--mets-server--port')
-            if bool(mets_server_host) != bool(mets_server_port):
-                raise ValueError('--mets-server-host and --mets-server-port must both be set or unset')
 
         mets_is_remote = mets_url and (mets_url.startswith('http://') or mets_url.startswith('https://'))
 
@@ -273,6 +260,6 @@ class Resolver():
                     if not is_file_in_directory(directory, mets_url):
                         raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
 
-        return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_host, mets_server_port, mets_server_socket
+        return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_url
 
 

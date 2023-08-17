@@ -47,9 +47,7 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
-        mets_server_host=None,
-        mets_server_port=None,
-        mets_server_socket=None,
+        mets_server_url=None,
         instance_caching=False  # TODO don't set this yet!
 ): # pylint: disable=too-many-locals
     """
@@ -274,6 +272,8 @@ Options for processing:
                                   taking precedence over --parameter
   -m, --mets URL-PATH             URL or file path of METS to process
   --mets-server-url URL           URL of a METS Server for parallel incremental access to METS
+                                  If URL starts with http:// start an HTTP server there,
+                                  otherwise URL is a path to an on-demand-created unix socket
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Override log level globally [INFO]

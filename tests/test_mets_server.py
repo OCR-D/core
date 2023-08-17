@@ -29,7 +29,7 @@ def start_mets_server():
     copytree(assets.path_to('kant_aufklaerung_1784/data'), WORKSPACE_DIR)
     workspace = Workspace(Resolver(), WORKSPACE_DIR)
     # p = multiprocessing.Process(target=_start_mets_server, kwargs={'host': 'localhost', 'port': 12345, 'workspace': workspace})
-    p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'socket': SOCKET_PATH, 'host': None, 'port': None})
+    p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': SOCKET_PATH})
     p.start()
     # sleep to start up server
     sleep(2)
@@ -39,22 +39,14 @@ def start_mets_server():
 
 @fixture()
 def workspace_socket():
-    yield Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
-
-def test_mets_server_invalid_args():
-    with raises(ValueError):
-        OcrdMetsServer(workspace=None, socket=True, host=True, port=True)
-    with raises(ValueError):
-        OcrdMetsServer(workspace=None, socket=False, host=False, port=True)
-    with raises(ValueError):
-        OcrdMetsServer(workspace=None, socket=False, host=True, port=False)
+    yield Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
 
 def add_file_socket(i):
-    workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+    workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
     workspace_socket.add_file(local_filename=f'foo{i}', mimetype=MIMETYPE_PAGE, page_id=f'page{1}', file_grp='FOO', file_id=f'FOO_page{i}_foo{i}')
 
 def add_agent_socket(i):
-    workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+    workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
     workspace_socket.mets.add_agent(
         name=f'proc{i}',
         _type='baz',
@@ -108,7 +100,7 @@ def test_mets_server_add_agents(start_mets_server, workspace_socket):
     assert len(workspace_file.mets.agents) == NO_AGENTS + no_agents_before
 
 def test_mets_server_str(start_mets_server, workspace_socket):
-    workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+    workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
     f = next(workspace_socket.find_files())
     assert str(f) == '<OcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
     a = workspace_socket.mets.agents[0]
@@ -121,4 +113,3 @@ def test_mets_test_unimplemented(start_mets_server, workspace_socket):
 
 def test_mets_test_unique_identifier(start_mets_server, workspace_socket):
     assert workspace_socket.mets.unique_identifier == 'http://kant_aufklaerung_1784'
-

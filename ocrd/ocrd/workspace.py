@@ -70,15 +70,15 @@ class Workspace():
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None, mets_server_host=None, mets_server_port=None, mets_server_socket=None):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None, mets_server_url=None):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
         self.overwrite_mode = False
-        self.is_remote = bool(mets_server_host or mets_server_socket)
+        self.is_remote = bool(mets_server_url)
         if mets is None:
             if self.is_remote:
-                mets = ClientSideOcrdMets(mets_server_host, mets_server_port, mets_server_socket)
+                mets = ClientSideOcrdMets(mets_server_url)
             else:
                 mets = OcrdMets(filename=self.mets_target)
         self.mets = mets

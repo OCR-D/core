@@ -23,9 +23,7 @@ from .mets_find_options import mets_find_options
 def ocrd_cli_wrap_processor(
     processorClass,
     mets=None,
-    mets_server_host=None,
-    mets_server_port=None,
-    mets_server_socket=None,
+    mets_server_url=None,
     working_dir=None,
     dump_json=False,
     dump_module_dir=False,
@@ -77,8 +75,8 @@ def ocrd_cli_wrap_processor(
     # if not kwargs['output_file_grp']:
     #     raise ValueError('-O/--output-file-grp is required')
     resolver = Resolver()
-    working_dir, mets, _, mets_server_host, mets_server_port, mets_server_socket = \
-            resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_host, mets_server_port, mets_server_socket)
+    working_dir, mets, _, mets_server_url = \
+            resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_url)
     workspace = resolver.workspace_from_url(mets, working_dir)
     page_id = kwargs.get('page_id')
     # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505

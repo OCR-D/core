@@ -5,6 +5,7 @@ import re
 from os import environ, _exit
 from io import BytesIO
 from typing import Any, Dict, Optional, Union, List, Tuple
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, File, Form, Response
 from fastapi.responses import JSONResponse
@@ -159,14 +160,11 @@ class ClientSideOcrdMets():
     :py:class:`ocrd.mets_server.OcrdMetsServer`.
     """
 
-    def __init__(self, host, port, socket):
-        self.log = getLogger('ocrd.mets_client.%s' % ('uds' if socket else 'tcp'))
-        if socket:
-            self.url = f'http+unix://{socket.replace("/", "%2F")}'
-            self.session = requests_unixsocket_session()
-        else:
-            self.url = f'http://{host}:{port}'
-            self.session = requests_session()
+    def __init__(self, url):
+        protocol = 'tcp' if url.startswith('http://') else 'uds'
+        self.log = getLogger(f'ocrd.mets_client.{protocol}')
+        self.url = url if protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
+        self.session = requests_session() if protocol == 'tcp' else requests_unixsocket_session()
 
     def __getattr__(self, name):
         raise NotImplementedError(f"ClientSideOcrdMets has no access to '{name}' - try without METS server")
@@ -232,15 +230,9 @@ class ClientSideOcrdMets():
 
 class OcrdMetsServer():
 
-    def __init__(self, workspace, host, port, socket):
+    def __init__(self, workspace, url):
         self.workspace = workspace
-        if socket and host:
-            raise ValueError("Expecting either socket or host/port")
-        if not socket and not(host and port):
-            raise ValueError("Expecting both host and port")
-        self.host = host
-        self.port = port
-        self.socket = socket
+        self.url = url
         self.log = getLogger('ocrd.workspace_client')
 
     def shutdown(self):
@@ -330,4 +322,9 @@ class OcrdMetsServer():
             # os._exit because uvicorn catches SystemExit raised by sys.exit
             _exit(0)
 
-        uvicorn.run(app, host=self.host, port=self.port, uds=self.socket)
+        if self.url.startswith('http'):
+            parsed = urlparse(self.url)
+            uvicorn_kwargs = {'host': parsed.hostname, 'port': parsed.port}
+        else:
+            uvicorn_kwargs = {'uds': self.url}
+        uvicorn.run(app, **uvicorn_kwargs)

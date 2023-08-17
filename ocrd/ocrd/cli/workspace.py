@@ -26,13 +26,13 @@ from . import command_with_replaced_help
 
 class WorkspaceCtx():
 
-    def __init__(self, directory, mets_url, mets_basename, mets_server_host, mets_server_port, mets_server_socket, automatic_backup):
+    def __init__(self, directory, mets_url, mets_basename, mets_server_url, automatic_backup):
         self.log = getLogger('ocrd.cli.workspace')
         if mets_basename:
             self.log.warning(DeprecationWarning('--mets-basename is deprecated. Use --mets/--directory instead.'))
         self.resolver = Resolver()
-        self.directory, self.mets_url, self.mets_basename, self.mets_server_host, self.mets_server_port, self.mets_server_socket \
-                = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename, mets_server_host, mets_server_port, mets_server_socket)
+        self.directory, self.mets_url, self.mets_basename, self.mets_server_url \
+                = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename, mets_server_url)
         self.automatic_backup = automatic_backup
 
 
@@ -46,12 +46,10 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location [default: METS_URL directory or .]"')
 @click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
 @click.option('-m', '--mets', default=None, help='The path/URL of the METS file [default: WORKSPACE_DIR/mets.xml]', metavar="METS_URL")
-@click.option('-H', '--host', 'mets_server_host', help="TCP host of METS server")
-@click.option('-P', '--port', 'mets_server_port',  help="TCP port of METS server", type=int)
-@click.option('-S', '--socket','mets_server_socket',  help="Unix domain socket path of METS server", type=click.Path(dir_okay=False, writable=True))
+@click.option('-U', '--mets-server-url', 'mets_server_url', help="TCP host of METS server")
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets, mets_basename, mets_server_host, mets_server_port, mets_server_socket, backup):
+def workspace_cli(ctx, directory, mets, mets_basename, mets_server_url, backup):
     """
     Managing workspaces
 
@@ -65,9 +63,7 @@ def workspace_cli(ctx, directory, mets, mets_basename, mets_server_host, mets_se
         directory,
         mets_url=mets,
         mets_basename=mets_basename,
-        mets_server_host=mets_server_host,
-        mets_server_port=mets_server_port,
-        mets_server_socket=mets_server_socket,
+        mets_server_url=mets_server_url,
         automatic_backup=backup
     )
 
@@ -199,9 +195,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         directory=ctx.directory,
         mets_basename=ctx.mets_basename,
         automatic_backup=ctx.automatic_backup,
-        mets_server_host=ctx.mets_server_host,
-        mets_server_port=ctx.mets_server_port,
-        mets_server_socket=ctx.mets_server_socket,
+        mets_server_url=ctx.mets_server_url,
     )
 
     log = getLogger('ocrd.cli.workspace.add')
@@ -244,9 +238,6 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
         'local_filename': local_filename,
         'url': fname
     }
-    if ctx.mets_server_host or ctx.mets_server_socket:
-        with open(fname, 'rb') as fhandle:
-            kwargs['content'] = fhandle.read()
     workspace.add_file(file_grp, **kwargs)
     workspace.save_mets()
 
@@ -444,9 +435,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
         ctx.resolver,
         directory=ctx.directory,
         mets_basename=ctx.mets_basename,
-        mets_server_host=ctx.mets_server_host,
-        mets_server_port=ctx.mets_server_port,
-        mets_server_socket=ctx.mets_server_socket,
+        mets_server_url=ctx.mets_server_url,
     )
     for f in workspace.find_files(
             file_id=file_id,
@@ -732,7 +721,7 @@ def workspace_backup_undo(ctx):
 @click.pass_context
 def workspace_serve_cli(ctx): # pylint: disable=unused-argument
     """Control a METS server for this workspace"""
-    assert ctx.mets_server_host or ctx.mets_server_socket, "For METS server commands, you must provide '--host/-H' or '--socket/-S' parameters"
+    assert ctx.mets_server_url, "For METS server commands, you must provide '-U/--mets-server-url'"
 
 @workspace_serve_cli.command('stop')
 @pass_workspace
@@ -742,9 +731,7 @@ def workspace_serve_stop(ctx): # pylint: disable=unused-argument
         ctx.resolver,
         directory=ctx.directory,
         mets_basename=ctx.mets_basename,
-        mets_server_host=ctx.mets_server_host,
-        mets_server_port=ctx.mets_server_port,
-        mets_server_socket=ctx.mets_server_socket,
+        mets_server_url=ctx.mets_server_url,
     )
     workspace.mets.stop()
 
@@ -754,11 +741,9 @@ def workspace_serve_start(ctx): # pylint: disable=unused-argument
     """
     Start a METS server
 
-    (For TCP backend, pass a network interface to bind to as the '--host/-H' parameter.)
+    (For TCP backend, pass a network interface to bind to as the '-U/--mets-server-url' parameter.)
     """
     OcrdMetsServer(
         workspace=Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename),
-        host=ctx.mets_server_host,
-        port=ctx.mets_server_port,
-        socket=ctx.mets_server_socket,
+        url=ctx.mets_server_url,
     ).startup()
