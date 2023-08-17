@@ -222,9 +222,6 @@ class OcrdMetsServer():
 
     def startup(self):
 
-        # XXX HACK 
-        # circumventing dependency injection like this is bad and
-        # needs to be refactored once it's all runnign
         workspace = self.workspace
 
         app = FastAPI(
@@ -301,10 +298,7 @@ class OcrdMetsServer():
             """
             getLogger('ocrd_models.ocrd_mets').info('Shutting down')
             workspace.save_mets()
-            # XXX HACK os._exit to not trigger SystemExit caught by uvicorn with sys.exit
+            # os._exit because uvicorn catches SystemExit raised by sys.exit
             _exit(0)
 
-
         uvicorn.run(app, host=self.host, port=self.port, uds=self.socket)
-
-
