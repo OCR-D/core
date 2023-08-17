@@ -1,7 +1,7 @@
 """
 Validating ``ocrd-tool.json``.
 
-See `specs <https://ocr-d.github.io/ocrd_tool>`_.
+See `specs <https://ocr-d.de/en/spec/ocrd_tool>`_.
 """
 from .constants import OCRD_TOOL_SCHEMA
 from .json_validator import JsonValidator

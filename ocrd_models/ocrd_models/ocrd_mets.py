@@ -213,7 +213,12 @@ class OcrdMets(OcrdXmlDocument):
             el_metsHdr = ET.Element(TAG_METS_METSHDR)
             self._tree.getroot().insert(0, el_metsHdr)
         #  assert(el_metsHdr is not None)
-        el_agent = ET.SubElement(el_metsHdr, TAG_METS_AGENT)
+        el_agent = ET.Element(TAG_METS_AGENT)
+        try:
+            el_agent_last = next(el_metsHdr.iterchildren(tag=TAG_METS_AGENT, reversed=True))
+            el_agent_last.addnext(el_agent)
+        except StopIteration:
+            el_metsHdr.insert(0, el_agent)
         #  print(ET.tostring(el_metsHdr))
         return OcrdAgent(el_agent, *args, **kwargs)
 
@@ -337,7 +342,7 @@ class OcrdMets(OcrdXmlDocument):
 
             # Note: why we instantiate a class only to find out that the local_only is set afterwards
             # Checking local_only and url before instantiation should be better?
-            f = OcrdFile(cand, mets=self)
+            f = OcrdFile(cand, mets=self, loctype=cand.get('LOCTYPE'))
 
             # If only local resources should be returned and f is not a file path: skip the file
             if local_only and not is_local_filename(f.url):

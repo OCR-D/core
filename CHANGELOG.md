@@ -5,6 +5,169 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `WorkspaceValidator`: make the check for consistency of `pc:Page[@pcGtsId]` and `mets:file[@ID]` optional with the `mets_fileid_page_pcgtsid` skip flag, #1066
+
+Changed:
+
+  * `WorkspaceValidator`: Download files temporarily/on-demand, #1066
+
+## [2.52.0] - 2023-06-26
+
+Added:
+
+  * `make deps-cuda`: Makefile target to set up a working CUDA installation, both for native and Dockerfile.cuda, #1055
+  * Implementation of the Standalone Processor Server module, #1030
+  * `ocrd_utils.guess_media_type` to consistently try to determine media type from a file name, #1045
+
+Changed:
+
+  * Refactoring the Network CLI, all network module CLI are in `ocrd_network` now, #1030
+  * The Processing Server uses [`ocrd-all-tool.json`](https://ocr-d.de/js/ocrd-all-tool.json) file, removing local processor install dependencies, #1030
+  * Overall improvement and refactoring of the `ocrd_network` package, #1030
+  * Optionally skip deployment of mongodb and rabbitmq to make external usage/management possible, #1048
+  * `page_from_file` now also accepts a (`str`) file path in addition to `OcrdFile`, #1045
+  * packaging: install/uninstall in correct build order, use `python -m build` instead of `python setup.py sdist bdist_wheel`, #1051
+
+Removed:
+
+  * Obsolete travis CI configuration removed, #1056
+  * Support for end-of-life python versions 3.5 and 3.6, #1057
+
+Fixed:
+
+  * Makefile `FIND_VERSION` macro: use `grep -E` instead of `grep -P` for macos compatibility, #1060
+  * `ocrd resmgr`: detect HTTP errors as such and don't try to continue if HTTP >= 400, #1062
+  * `PageValidator`: Ensure TextLine has coordinates when checking for Baseline containment, #1049
+
+## [2.51.0] - 2023-06-07
+
+Changed:
+
+  * `core cuda` Docker: CUDA base image working again, based on `ocrd/core` not `nvidia/cuda` in a separate `Dockerfile.cuda`, #1041
+  * `core-cuda` Docker: adopt #1008 (venv under /usr/local, as in ocrd_all, instead of dist-packages), #1041
+  * `core-cuda` Docker: use conda ([micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)) for CUDA toolkit, and [nvidia-pyindex](https://pypi.org/project/nvidia-pyindex/) for CUDA libs – instead of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) base image, #1041
+  * more robust workaround for shapely#1598, #1041
+
+Removed:
+
+  * Revert #882 (fastentrypoints) as it enforces deps versions at runtime
+  * Drop `ocrd_utils.package_resources` and use `pkg_resources.*` directly, #1041
+  * `ocrd resmgr`: Drop redundant (processor-provided) entries in the central `resource_list.yml`.
+
+## [2.50.0] - 2023-04-24
+
+Added:
+
+  * :fire: `ocrd_network`: Components related to OCR-D Web API, #974
+
+Changed:
+
+  * `bashlib`: support file input from multiple file groups, #1027, #1031
+
+Fixed:
+
+  * Don't output default docstrings for bashlib processors, #1026
+
+## [2.49.0] - 2023-03-24
+
+Changed:
+
+  * :fire: (for now: also) publish Docker images to ghcr.io, not docker.io, #997
+  * `ocrd resmgr`: eynollah models now provided by eynollah itself, qurator-spk/eynollah#91
+
+## [2.48.1] - 2023-03-22
+
+Changed:
+
+  * `make docker-cuda`: Support CUDA 11.3 not 11.2, #1020
+
+## [2.48.0] - 2023-03-22
+
+Changed:
+
+  * :fire: ocrd.run_processor / ocrd.processor.get_processor: rm unnecessary ocrd_tool kwarg #998, #1009
+  * chdir into workspace directory for both cached and uncached `get_processor`, #972, 987
+  * :fire: new CUDA base image 20.04, support CUDA runtime 11/12, not 10, #1014
+
+Fixed:
+
+  * `make install`: do not update opencv-python-headless or numpy for python `<= 3.6`, #1014
+
+## [2.47.4] - 2023-03-16
+
+Changed:
+
+  * `resmgr`: `ocrd-typegroups-classifier` resources now listed decentrally, #1011, OCR-D/ocrd_typegroups_classifier#15
+
+## [2.47.3] - 2023-03-15
+
+Fixed:
+
+  * Docker: reintroduce `python3-pip` because why not, #1004
+
+## [2.47.2] - 2023-03-15
+
+Fixed:
+
+  * Docker: Use `pip3` not `pip`, #986
+  * `make install`: Speed up opencv built for (now unsupported) python `<= 3.6`, #986, OCR-D/ocrd_calamari#72
+
+Added:
+
+  * CI/CD: GH action to deploy docker images to ghcr.io, #986
+
+## [2.47.1] - 2023-03-15
+
+Fixed:
+
+  * Docker: install `python3-venv`, do not install `python3-pip`, #1003, #1004, OCR-D/ocrd_all#352
+
+## [2.47.0] - 2023-03-15
+
+Fixed:
+
+  * `ocrd resmgr`: handle namespaces packages gracefully for Python `<=` 3.6, #917, #985
+  * `ocrd resmgr`: guess media type with `filetype.py` in addition to `MIME_TO_EXT`, #991
+  * `OcrdMets`: Insert `mets:agent` in a schema-compliant way, #976, #977
+  * `ocrd_cli_wrap_processor`: remove unnecessary ocrd_tool kwarg, #998, #999
+  * Docker base image builds again, except CUDA, #986
+
+Added:
+
+  * `ocrd resmgr`: support Google Drive links, #993, #992
+
+Changed:
+
+  * Use the new `importlib.resources.files` API, #995, #996
+  * `ocrd resmgr`: resources for `ocrd_anybaseocr` removed from central list, provided by the project, #989, OCR-D/ocrd_anybaseocr#100
+
+## [2.46.0] - 2023-02-16
+
+Changed:
+
+  * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
+  * `WorkspaceBackupManager`: add snapshot on init if enabled, #981
+  * :fire: end-of-life for python 3.6, test from 3.7 to 3.11, #956
+  * :fire: update base image to Ubuntu 20.04, #956
+
+Fixed:
+
+  * `bashlib`: Handle empty list of input files, #978
+  * `OcrdMets.find_files`: don't override the `@LOCTYPE` of file candidates, #980
+  * `ocrd resmgr`: replace libmagic with simple lookup by suffix, #982, #984
+
+Added:
+
+  * `helpers`: `get_cached_processor` to get instances of a processor in preparation for #974, #972
+
+## [2.45.1] - 2023-01-20
+
+Fixed:
+
+  * `ocrd resmgr`: insert new entries first, so dedup works as expected, #971
+
 ## [2.45.0] - 2022-12-13
 
 Fixed:
@@ -1619,6 +1782,19 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.52.0]: ../../compare/v2.52.0..v2.51.0
+[2.51.0]: ../../compare/v2.51.0..v2.50.0
+[2.50.0]: ../../compare/v2.50.0..v2.49.0
+[2.49.0]: ../../compare/v2.49.0..v2.48.1
+[2.48.1]: ../../compare/v2.48.1..v2.48.0
+[2.48.0]: ../../compare/v2.48.0..v2.47.4
+[2.47.4]: ../../compare/v2.47.4..v2.47.3
+[2.47.3]: ../../compare/v2.47.3..v2.47.2
+[2.47.2]: ../../compare/v2.47.2..v2.47.1
+[2.47.1]: ../../compare/v2.47.1..v2.47.0
+[2.47.0]: ../../compare/v2.47.0..v2.46.0
+[2.46.0]: ../../compare/v2.46.0..v2.45.1
+[2.45.1]: ../../compare/v2.45.1..v2.45.0
 [2.45.0]: ../../compare/v2.45.0..v2.44.0
 [2.44.0]: ../../compare/v2.44.0..v2.43.0
 [2.43.0]: ../../compare/v2.43.0..v2.42.1

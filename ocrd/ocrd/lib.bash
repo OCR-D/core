@@ -3,14 +3,14 @@
     exit 1
 
 ## ### `ocrd__raise`
-## 
+##
 ## Raise an error and exit.
 ocrd__raise () {
     echo >&2 "ERROR: $1"; exit 127
 }
 
 ## ### `ocrd__log`
-## 
+##
 ## Delegate logging to `ocrd log`
 ocrd__log () {
     local log_level="${ocrd__argv[log_level]:-}"
@@ -23,7 +23,7 @@ ocrd__log () {
 
 
 ## ### `ocrd__minversion`
-## 
+##
 ## Ensure minimum version
 # ht https://stackoverflow.com/posts/4025065
 ocrd__minversion () {
@@ -53,28 +53,28 @@ ocrd__minversion () {
 }
 
 ## ### `ocrd__dumpjson`
-## 
+##
 ## Output ocrd-tool.json.
-## 
+##
 ## Requires `$OCRD_TOOL_JSON` and `$OCRD_TOOL_NAME` to be set:
-## 
+##
 ## ```sh
 ## export OCRD_TOOL_JSON=/path/to/ocrd-tool.json
 ## export OCRD_TOOL_NAME=ocrd-foo-bar
 ## ```
-## 
+##
 ocrd__dumpjson () {
     ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" dump
 }
 
-## 
+##
 ## Output file resource content.
 ##
 ocrd__show_resource () {
     ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" show-resource "$1"
 }
 
-## 
+##
 ## Output file resources names.
 ##
 ocrd__list_resources () {
@@ -82,9 +82,9 @@ ocrd__list_resources () {
 }
 
 ## ### `ocrd__usage`
-## 
+##
 ## Print usage
-## 
+##
 ocrd__usage () {
 
     ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" help
@@ -92,9 +92,9 @@ ocrd__usage () {
 }
 
 ## ### `ocrd__parse_argv`
-## 
+##
 ## Expects an associative array ("hash"/"dict") `ocrd__argv` to be defined:
-## 
+##
 ## ```sh
 ## declare -A ocrd__argv=()
 ## ```
@@ -146,34 +146,60 @@ ocrd__parse_argv () {
             --profile) ocrd__argv[profile]=true ;;
             --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
+            --queue) ocrd__worker_queue="$2" ; shift ;;
+            --database) ocrd__worker_database="$2" ; shift ;;
+            --type) ocrd__worker_type="$2" ; shift ;;
+            --address) ocrd__worker_address="$2" ; shift ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
         shift
     done
 
-    if [[ ! -e "${ocrd__argv[mets_file]}" ]];then
+    if [ -v ocrd__worker_queue -o -v ocrd__worker_database -o -v ocrd__worker_type -o -v ocrd__worker_address ]; then
+        if ! [ -v ocrd__worker_type ] ; then
+            ocrd__raise "For Processing Worker / Processor Server --type is required"
+        elif ! [ -v ocrd__worker_database ]; then
+            ocrd__raise "For the Processing Worker / Processor Server --database is required"
+        fi
+        if [ ${ocrd__worker_type} = "worker" ]; then
+            if ! [ -v ocrd__worker_queue ]; then
+                ocrd__raise "For the Processing Worker --queue is required"
+            fi
+            ocrd network processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
+        elif [ ${ocrd__worker_type} = "server" ]; then
+            if ! [ -v ocrd__worker_address ]; then
+                ocrd__raise "For the Processor Server --address is required"
+            fi
+            ocrd network processor-server $OCRD_TOOL_NAME --database "${ocrd__worker_database}" --address "${ocrd__worker_address}"
+        else
+            ocrd__raise "--type must be either 'worker' or 'server' not '${ocrd__worker_type}'"
+        fi
+        exit
+    fi
+
+    if [[ ! -e "${ocrd__argv[mets_file]}" ]]; then
         ocrd__raise "METS file '${ocrd__argv[mets_file]}' not found"
     fi
 
-    if [[ ! -d "${ocrd__argv[working_dir]:=$(dirname "${ocrd__argv[mets_file]}")}" ]];then
+    if [[ ! -d "${ocrd__argv[working_dir]:=$(dirname "${ocrd__argv[mets_file]}")}" ]]; then
         ocrd__raise "workdir '${ocrd__argv[working_dir]}' not a directory. Use -w/--working-dir to set correctly"
     fi
 
-    if [[ ! "${ocrd__argv[log_level]:=INFO}" =~ OFF|ERROR|WARN|INFO|DEBUG|TRACE ]];then
+    if [[ ! "${ocrd__argv[log_level]:=INFO}" =~ OFF|ERROR|WARN|INFO|DEBUG|TRACE ]]; then
         ocrd__raise "log level '${ocrd__argv[log_level]}' is invalid"
     fi
 
-    if [[ -z "${ocrd__argv[input_file_grp]:=}" ]];then
+    if [[ -z "${ocrd__argv[input_file_grp]:=}" ]]; then
         ocrd__raise "Provide --input-file-grp/-I explicitly!"
     fi
 
-    if [[ -z "${ocrd__argv[output_file_grp]:=}" ]];then
+    if [[ -z "${ocrd__argv[output_file_grp]:=}" ]]; then
         ocrd__raise "Provide --output-file-grp/-O explicitly!"
     fi
 
     # enable profiling (to be extended/acted upon by caller)
-    if [[ ${ocrd__argv[profile]} = true ]];then
-        if [[ -n "${ocrd__argv[profile_file]}" ]];then
+    if [[ ${ocrd__argv[profile]} = true ]]; then
+        if [[ -n "${ocrd__argv[profile_file]}" ]]; then
             exec 3> "${ocrd__argv[profile_file]}"
         else
             exec 3>&2
@@ -241,7 +267,7 @@ ocrd__wrap () {
     ocrd__parse_argv "$@"
 
     i=0
-    declare -ag ocrd__files
+    declare -ag ocrd__files=()
     while read line; do
         eval declare -Ag "ocrd__file$i=( $line )"
         eval "ocrd__files[$i]=ocrd__file$i"

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import fastentrypoints
 from setuptools import setup, find_packages
 from ocrd_utils import VERSION
 
@@ -8,6 +7,7 @@ install_requires.append('ocrd_utils == %s' % VERSION)
 install_requires.append('ocrd_models == %s' % VERSION)
 install_requires.append('ocrd_modelfactory == %s' % VERSION)
 install_requires.append('ocrd_validators == %s' % VERSION)
+install_requires.append('ocrd_network == %s' % VERSION)
 
 setup(
     name='ocrd',
@@ -21,6 +21,7 @@ setup(
     license='Apache License 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     include_package_data=True,
+    python_requires=">=3.7",
     install_requires=install_requires,
     entry_points={
         'console_scripts': [

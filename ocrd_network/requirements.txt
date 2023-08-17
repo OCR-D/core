@@ -1,0 +1,7 @@
+uvicorn>=0.17.6
+fastapi>=0.78.0
+docker
+paramiko
+pika>=1.2.0
+beanie~=1.7
+httpx>=0.22.0

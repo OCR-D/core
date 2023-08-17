@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='ocrd_utils',
-    version='2.45.0',
+    version='2.52.0',
     description='OCR-D framework - shared code, helpers, constants',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -14,6 +14,7 @@ setup(
     url='https://github.com/OCR-D/core',
     license='Apache License 2.0',
     packages=['ocrd_utils'],
+    python_requires=">=3.7",
     install_requires=install_requires,
     package_data={'': ['*.json', '*.yml', '*.xml']},
     keywords=['OCR', 'OCR-D']

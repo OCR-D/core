@@ -2,9 +2,12 @@
 Constants for ocrd_validators.
 """
 import yaml
-from ocrd_utils.package_resources import resource_string, resource_filename
+from pkg_resources import resource_string, resource_filename
 
 __all__ = [
+    'PROCESSING_SERVER_CONFIG_SCHEMA',
+    'MESSAGE_SCHEMA_PROCESSING',
+    'MESSAGE_SCHEMA_RESULT',
     'OCRD_TOOL_SCHEMA',
     'RESOURCE_LIST_SCHEMA',
     'OCRD_BAGIT_PROFILE',
@@ -18,6 +21,9 @@ __all__ = [
     'XSD_PATHS',
 ]
 
+PROCESSING_SERVER_CONFIG_SCHEMA = yaml.safe_load(resource_string(__name__, 'processing_server_config.schema.yml'))
+MESSAGE_SCHEMA_PROCESSING = yaml.safe_load(resource_string(__name__, 'message_processing.schema.yml'))
+MESSAGE_SCHEMA_RESULT = yaml.safe_load(resource_string(__name__, 'message_result.schema.yml'))
 OCRD_TOOL_SCHEMA = yaml.safe_load(resource_string(__name__, 'ocrd_tool.schema.yml'))
 RESOURCE_LIST_SCHEMA = {
     'type': 'object',

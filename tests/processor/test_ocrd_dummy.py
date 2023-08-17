@@ -2,6 +2,7 @@
 # pylint: disable=invalid-name,line-too-long
 
 from io import BytesIO
+import os
 from pathlib import Path
 
 from PIL import Image
@@ -18,6 +19,7 @@ class TestDummyProcessor(TestCase):
     def test_copies_ok(self):
         with copy_of_directory(assets.url_of('SBB0000F29300010000/data')) as wsdir:
             workspace = Workspace(Resolver(), wsdir)
+            os.chdir(workspace.directory)
             input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
             self.assertEqual(len(input_files), 3)
             output_files = workspace.mets.find_all_files(fileGrp='OUTPUT')
@@ -53,6 +55,7 @@ class TestDummyProcessor(TestCase):
 
 def test_copy_file_false(tmpdir):
     workspace = Resolver().workspace_from_nothing(directory=tmpdir)
+    os.chdir(workspace.directory)
     for i in range(10):
         pil_image = Image.new('RGB', (100, 100))
         bhandle = BytesIO()

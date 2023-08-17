@@ -10,50 +10,69 @@ jobs:
       xcode: "12.5.1"
     # resource_class: macos.x86.medium.gen2
     working_directory: ~/ocrd-core
+    environment:
+      PIP: pip3
+      PYTHON: python3
+      PIP_INSTALL: pip3 install --user
     steps:
       - checkout
-      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos
-      - run: make deps-test install PIP=pip3
-      - run: make test benchmark PYTHON=python3
-
-  test-python36:
-    docker:
-      - image: python:3.6.12
-    working_directory: ~/ocrd-core
-    steps:
-      - checkout
-      - run: apt-get -y update
-      - run: make deps-ubuntu deps-test install
-      - run: make test benchmark
+      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
+      - run: make install
+      - run: PATH="/Users/distiller/Library/Python/3.9/bin:$PATH" make deps-test test benchmark
 
   test-python37:
     docker:
-      - image: python:3.7.9
+      - image: cimg/python:3.7
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: apt-get -y update
-      - run: make deps-ubuntu deps-test install
+      - run: sudo apt-get -y update
+      - run: sudo make deps-ubuntu 
+      - run: make install deps-test
       - run: make test benchmark
 
   test-python38:
     docker:
-      - image: python:3.8.5
+      - image: cimg/python:3.8
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: apt-get -y update
-      - run: make deps-ubuntu deps-test install
+      - run: sudo apt-get -y update
+      - run: sudo make deps-ubuntu
+      - run: make install deps-test
       - run: make test benchmark
 
   test-python39:
     docker:
-      - image: python:3.9
+      - image: cimg/python:3.9
     working_directory: ~/ocrd-core
     steps:
       - checkout
-      - run: apt-get -y update
-      - run: make deps-ubuntu deps-test install
+      - run: sudo apt-get -y update
+      - run: sudo make deps-ubuntu
+      - run: make install deps-test
+      - run: make test benchmark
+
+  test-python310:
+    docker:
+      - image: cimg/python:3.10
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: sudo apt-get -y update
+      - run: sudo make deps-ubuntu
+      - run: make install deps-test
+      - run: make test benchmark
+
+  test-python311:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: ~/ocrd-core
+    steps:
+      - checkout
+      - run: sudo apt-get -y update
+      - run: sudo make deps-ubuntu
+      - run: make install deps-test
       - run: make test benchmark
 
   deploy:
@@ -61,7 +80,8 @@ jobs:
       - image: circleci/buildpack-deps:stretch
     steps:
       - checkout
-      - setup_remote_docker      # https://circleci.com/docs/2.0/building-docker-images/
+      - setup_remote_docker: # https://circleci.com/docs/2.0/building-docker-images/
+          docker_layer_caching: true
       - run: make docker
       - run: make docker-cuda
       - run:
@@ -80,8 +100,9 @@ workflows:
               only: master
   test-pull-request:
     jobs:
-      - test-python36
       - test-python37
       - test-python38
       - test-python39
+      - test-python310
+      - test-python311
       - test-macos

@@ -1,11 +1,13 @@
 from tempfile import mkdtemp
 from tests.base import TestCase, main, assets
 from shutil import rmtree
+from pathlib import Path
 from os import environ as ENV, getcwd
 from os.path import expanduser, join
 
 from ocrd_utils.os import (
     list_resource_candidates,
+    guess_media_type,
 )
 
 class TestOsUtils(TestCase):
@@ -33,6 +35,15 @@ class TestOsUtils(TestCase):
             '$HOME/.local/share/ocrd-resources/ocrd-dummy',
             '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
+
+    def test_guess_media_type(self):
+        testdata = Path(__file__).parent / '../data'
+        assert guess_media_type(__file__) == 'text/x-python'
+        assert guess_media_type(testdata / 'filename.tar.gz') == 'application/gzip'
+        assert guess_media_type(testdata / 'filename.tar.xz') == 'application/x-xz'
+        assert guess_media_type(testdata / 'filename.zip') == 'application/zip'
+        assert guess_media_type(testdata / 'mets-with-metsDocumentID.xml') == 'application/xml'
+        assert guess_media_type(testdata / 'mets-with-metsDocumentID.xml', application_xml='text/x-mets') == 'text/x-mets'
 
 
 if __name__ == '__main__':

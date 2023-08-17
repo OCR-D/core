@@ -104,6 +104,8 @@ env2/
 
 # vim swp
 *.swp
+# emacs bkup
+*~
 
 ocrd.egg-info
 .pytest_cache

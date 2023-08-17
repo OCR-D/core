@@ -82,7 +82,11 @@ class Workspace():
             else:
                 mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
-        self.automatic_backup = automatic_backup
+        if automatic_backup:
+            self.automatic_backup = WorkspaceBackupManager(self)
+            self.automatic_backup.add()
+        else:
+            self.automatic_backup = None
         self.baseurl = baseurl
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
 
