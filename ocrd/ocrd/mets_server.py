@@ -134,7 +134,7 @@ class ClientSideOcrdAgent():
 
 class ClientSideOcrdMets():
     """
-    Replacement for :py:class:`ocrd_models.ocrd_mets.OcrdMets` with overrides for
+    Partial substitute for :py:class:`ocrd_models.ocrd_mets.OcrdMets` which provides for
     :py:meth:`ocrd_models.ocrd_mets.OcrdMets.find_files`,
     :py:meth:`ocrd_models.ocrd_mets.OcrdMets.find_all_files`, and
     :py:meth:`ocrd_models.ocrd_mets.OcrdMets.add_agent`,

@@ -753,6 +753,8 @@ def workspace_serve_stop(ctx): # pylint: disable=unused-argument
 def workspace_serve_start(ctx): # pylint: disable=unused-argument
     """
     Start a METS server
+
+    (For TCP backend, pass a network interface to bind to as the '--host/-H' parameter.)
     """
     OcrdMetsServer(
         workspace=Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename),
