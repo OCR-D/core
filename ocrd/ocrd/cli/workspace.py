@@ -731,7 +731,22 @@ def workspace_backup_undo(ctx):
 @workspace_cli.group('server')
 @click.pass_context
 def workspace_serve_cli(ctx): # pylint: disable=unused-argument
-    pass
+    """Control a METS server for this workspace"""
+    assert ctx.mets_server_host or ctx.mets_server_socket, "For METS server commands, you must provide '--host/-H' or '--socket/-S' parameters"
+
+@workspace_serve_cli.command('stop')
+@pass_workspace
+def workspace_serve_stop(ctx): # pylint: disable=unused-argument
+    """Stop the METS server"""
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        mets_server_host=ctx.mets_server_host,
+        mets_server_port=ctx.mets_server_port,
+        mets_server_socket=ctx.mets_server_socket,
+    )
+    workspace.mets.stop()
 
 @workspace_serve_cli.command('start')
 @pass_workspace
