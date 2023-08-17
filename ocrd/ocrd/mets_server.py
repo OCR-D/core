@@ -197,6 +197,8 @@ class ClientSideOcrdMets():
     def save(self):
         self.session.request('PUT', self.url)
 
+    def stop(self):
+        self.session.request('DELETE', self.url)
 
 #
 # Server
