@@ -37,6 +37,10 @@ def start_mets_server():
     p.terminate()
     rmtree(WORKSPACE_DIR, ignore_errors=True)
 
+@fixture()
+def workspace_socket():
+    yield Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+
 def test_mets_server_invalid_args():
     with raises(ValueError):
         OcrdMetsServer(workspace=None, socket=True, host=True, port=True)
@@ -60,14 +64,12 @@ def add_agent_socket(i):
         notes=[({'foo': 'bar'}, f'note{i}')]
     )
 
-def test_mets_server_add_file(start_mets_server):
+def test_mets_server_add_file(start_mets_server, workspace_socket):
     NO_FILES = 500
 
     # add NO_FILES files in parallel
     with Pool() as pool:
         pool.map(add_file_socket, list(range(NO_FILES)))
-
-    workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
 
     assert set(workspace_socket.mets.file_groups) == set( ['OCR-D-IMG', 'OCR-D-GT-PAGE', 'OCR-D-GT-ALTO', 'FOO'])
     assert len(workspace_socket.mets.find_all_files(fileGrp='FOO')) == NO_FILES
@@ -83,10 +85,9 @@ def test_mets_server_add_file(start_mets_server):
 
     assert len(workspace_file.mets.find_all_files(fileGrp='FOO')) == NO_FILES
 
-def test_mets_server_add_agents(start_mets_server):
+def test_mets_server_add_agents(start_mets_server, workspace_socket):
     NO_AGENTS = 30
 
-    workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
     no_agents_before = len(workspace_socket.mets.agents)
 
     # add NO_AGENTS agents in parallel
@@ -106,16 +107,18 @@ def test_mets_server_add_agents(start_mets_server):
 
     assert len(workspace_file.mets.agents) == NO_AGENTS + no_agents_before
 
-def test_mets_server_str(start_mets_server):
-    workspace = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
-    f = next(workspace.find_files())
+def test_mets_server_str(start_mets_server, workspace_socket):
+    workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+    f = next(workspace_socket.find_files())
     assert str(f) == '<OcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
-    a = workspace.mets.agents[0]
+    a = workspace_socket.mets.agents[0]
     assert str(a) == '<OcrdAgent [type=---, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
-    assert str(workspace.mets) == '<ClientSideOcrdMets[url=http+unix://%2Ftmp%2Focrd-mets-server.sock]>'
+    assert str(workspace_socket.mets) == '<ClientSideOcrdMets[url=http+unix://%2Ftmp%2Focrd-mets-server.sock]>'
 
-def test_mets_test_unimplemented(start_mets_server):
-    workspace = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+def test_mets_test_unimplemented(start_mets_server, workspace_socket):
     with raises(NotImplementedError):
-        workspace.mets.rename_file_group('OCR-D-IMG', 'FOO')
+        workspace_socket.mets.rename_file_group('OCR-D-IMG', 'FOO')
+
+def test_mets_test_unique_identifier(start_mets_server, workspace_socket):
+    assert workspace_socket.mets.unique_identifier == 'http://kant_aufklaerung_1784'
 

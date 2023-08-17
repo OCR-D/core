@@ -6,7 +6,7 @@ from os import environ, _exit
 from io import BytesIO
 from typing import Any, Dict, Optional, Union, List, Tuple
 
-from fastapi import FastAPI, Request, File, Form, UploadFile
+from fastapi import FastAPI, Request, File, Form, Response
 from fastapi.responses import JSONResponse
 from requests import request, Session as requests_session
 from requests_unixsocket import Session as requests_unixsocket_session
@@ -199,6 +199,10 @@ class ClientSideOcrdMets():
         return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in self.session.request('GET', f'{self.url}/agent').json()['agents']]
 
     @property
+    def unique_identifier(self):
+        return self.session.request('GET', f'{self.url}/unique_identifier').text
+
+    @property
     def file_groups(self):
         return self.session.request('GET', f'{self.url}/file_groups').json()['file_groups']
 
@@ -312,6 +316,10 @@ class OcrdMetsServer():
         @app.get('/agent', response_model=OcrdAgentListModel)
         async def agents():
             return OcrdAgentListModel.create(workspace.mets.agents)
+
+        @app.get('/unique_identifier', response_model=str)
+        async def unique_identifier():
+            return Response(content=workspace.mets.unique_identifier, media_type='text/plain')
 
         @app.delete('/')
         async def stop():
