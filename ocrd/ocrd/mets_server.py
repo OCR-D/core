@@ -95,6 +95,7 @@ class ClientSideOcrdFile:
             mimetype (string): ``@MIMETYPE`` of this ``mets:file``
             pageId (string): ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
             loctype (string): ``@LOCTYPE`` of this ``mets:file``
+            url (string): ignored XXX the remote/original file once we have proper mets:FLocat bookkeeping 
             local_filename (): ``@xlink:href`` of this ``mets:file`` - XXX the local file once we have proper mets:FLocat bookkeeping
             ID (string): ``@ID`` of this ``mets:file``
         """
@@ -104,6 +105,13 @@ class ClientSideOcrdFile:
         self.loctype = loctype
         self.pageId = pageId
         self.fileGrp = fileGrp
+
+    def __str__(self):
+        props = ', '.join([
+            '='.join([k, getattr(self, k) if hasattr(self, k) and getattr(self, k) else '---'])
+            for k in ['fileGrp', 'ID', 'mimetype', 'url', 'local_filename']
+        ])
+        return '<OcrdFile %s]/>' % (props)
 
 class ClientSideOcrdAgent():
     """
@@ -132,6 +140,14 @@ class ClientSideOcrdAgent():
         self.otherrole = otherrole
         self.notes = notes
 
+    def __str__(self):
+        props = ', '.join([
+            '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
+            for k in ['type', 'othertype', 'role', 'otherrole', 'name']
+        ])
+        return '<OcrdAgent [' + props + ']/>'
+
+
 class ClientSideOcrdMets():
     """
     Partial substitute for :py:class:`ocrd_models.ocrd_mets.OcrdMets` which provides for
@@ -153,9 +169,11 @@ class ClientSideOcrdMets():
             self.session = requests_session()
 
     def __getattr__(self, name):
-        if hasattr(self, name):
-            return self.get(name)
-        raise Exception("ClientSideOcrdMets has no access to '%s' - try without METS server", name)
+        raise NotImplementedError(f"ClientSideOcrdMets has no access to '{name}' - try without METS server")
+
+    def __str__(self):
+        return f'<ClientSideOcrdMets[url={self.url}]>'
+
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")

@@ -105,3 +105,17 @@ def test_mets_server_add_agents(start_mets_server):
     workspace_file.reload_mets()
 
     assert len(workspace_file.mets.agents) == NO_AGENTS + no_agents_before
+
+def test_mets_server_str(start_mets_server):
+    workspace = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+    f = next(workspace.find_files())
+    assert str(f) == '<OcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
+    a = workspace.mets.agents[0]
+    assert str(a) == '<OcrdAgent [type=---, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
+    assert str(workspace.mets) == '<ClientSideOcrdMets[url=http+unix://%2Ftmp%2Focrd-mets-server.sock]>'
+
+def test_mets_test_unimplemented(start_mets_server):
+    workspace = Workspace(Resolver(), WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
+    with raises(NotImplementedError):
+        workspace.mets.rename_file_group('OCR-D-IMG', 'FOO')
+
