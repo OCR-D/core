@@ -47,7 +47,7 @@ def test_mets_server_invalid_args():
 
 def add_file_socket(i):
     workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
-    workspace_socket.add_file(url=f'foo{i}', mimetype=MIMETYPE_PAGE, page_id=f'page{1}', file_grp='FOO', file_id=f'FOO_page{i}_foo{i}')
+    workspace_socket.add_file(local_filename=f'foo{i}', mimetype=MIMETYPE_PAGE, page_id=f'page{1}', file_grp='FOO', file_id=f'FOO_page{i}_foo{i}')
 
 def add_agent_socket(i):
     workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_socket=SOCKET_PATH)
