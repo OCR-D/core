@@ -5,6 +5,7 @@ Utility functions for strings, paths and URL.
 import re
 import json
 from .constants import REGEX_FILE_ID
+from .deprecate import deprecation_warning
 
 __all__ = [
     'assert_file_grp_cardinality',
@@ -137,6 +138,7 @@ def is_local_filename(url):
     """
     Whether a url is a local filename.
     """
+    deprecation_warning("Deprecated so we spot inconsistent URL/file handling")
     return url.startswith('file://') or not('://' in url)
 
 def is_string(val):

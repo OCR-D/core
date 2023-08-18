@@ -99,6 +99,8 @@ Utility functions and constants usable in various circumstances.
     Exports of :py:mod:`ocrd_utils.logging`
 
 * :py:func:`deprecated_alias`
+* :py:func:`rename_kwargs`
+* :py:func:`deprecation_warning`
 
     Decorator to mark a kwarg as deprecated
 """
@@ -118,7 +120,9 @@ from .constants import (
     )
 
 from .deprecate import (
-    deprecated_alias)
+    deprecated_alias,
+    rename_kwargs,
+    deprecation_warning)
 
 from .image import (
     adjust_canvas_to_rotation,

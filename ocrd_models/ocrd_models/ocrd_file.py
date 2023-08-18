@@ -3,7 +3,7 @@ API to ``mets:file``
 """
 from os.path import splitext, basename
 
-from ocrd_utils import is_local_filename, get_local_filename, MIME_TO_EXT, EXT_TO_MIME
+from ocrd_utils import deprecation_warning
 
 from .ocrd_xml_base import ET
 from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
@@ -13,7 +13,7 @@ class OcrdFile():
     Represents a single ``mets:file/mets:FLocat`` (METS file entry).
     """
 
-    def __init__(self, el, mimetype=None, pageId=None, local_filename=None, mets=None, url=None, ID=None):
+    def __init__(self, el, mimetype=None, pageId=None, local_filename=None, mets=None, url=None, ID=None, loctype=None):
         """
         Args:
             el (LxmlElement): etree Element of the ``mets:file`` this represents. Create new if not provided
@@ -25,9 +25,12 @@ class OcrdFile():
             url (string): original ``@xlink:href`` of this ``mets:file``
             local_filename (string): ``@xlink:href`` pointing to the locally cached version of the file in the workspace
             ID (string): ``@ID`` of this ``mets:file``
+            loctype (string): DEPRECATED do not use
         """
         if el is None:
             raise ValueError("Must provide mets:file element this OcrdFile represents")
+        if loctype:
+            deprecation_warning("'loctype' is not supported in OcrdFile anymore, use 'url' or 'local_filename'")
         self._el = el
         self.mets = mets
         self.ID = ID
@@ -165,7 +168,7 @@ class OcrdFile():
     @property
     def url(self):
         """
-        Get the ``@xlink:href`` of this ``mets:file``.
+        Get the remote/original URL ``@xlink:href`` of this ``mets:file``.
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"]', NS)
         if el_FLocat is not None:
@@ -175,7 +178,7 @@ class OcrdFile():
     @url.setter
     def url(self, url):
         """
-        Set the ``@xlink:href`` of this ``mets:file`` to :py:attr:`url`.
+        Set the remote/original URL ``@xlink:href`` of this ``mets:file`` to :py:attr:`url`.
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"]', NS)
         if url is None:
@@ -190,7 +193,7 @@ class OcrdFile():
     @property
     def local_filename(self):
         """
-        Get the ``@xlink:href`` of this ``mets:file``.
+        Get the local/cached ``@xlink:href`` of this ``mets:file``.
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', NS)
         if el_FLocat is not None:
@@ -200,7 +203,7 @@ class OcrdFile():
     @local_filename.setter
     def local_filename(self, fname):
         """
-        Set the ``@xlink:href`` of this ``mets:file`` to :py:attr:`local_filename`.
+        Set the local/cached ``@xlink:href`` of this ``mets:file`` to :py:attr:`local_filename`.
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"][@OTHERLOCTYPE="FILE"]', NS)
         if fname is None:

@@ -9,8 +9,8 @@ from lxml import etree as ET
 from copy import deepcopy
 
 from ocrd_utils import (
-    is_local_filename,
     getLogger,
+    deprecation_warning,
     generate_range,
     VERSION,
     REGEX_PREFIX,
@@ -242,7 +242,7 @@ class OcrdMets(OcrdXmlDocument):
         return list(self.find_files(*args, **kwargs))
 
     # pylint: disable=multiple-statements
-    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
+    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_filename=None, local_only=False):
         """
         Search ``mets:file`` entries in this METS document and yield results.
         The :py:attr:`ID`, :py:attr:`pageId`, :py:attr:`fileGrp`,
@@ -259,7 +259,8 @@ class OcrdMets(OcrdXmlDocument):
             ID (string) : ``@ID`` of the ``mets:file``
             fileGrp (string) : ``@USE`` of the ``mets:fileGrp`` to list files of
             pageId (string) : ``@ID`` of the corresponding physical ``mets:structMap`` entry (physical page)
-            url (string) : ``@xlink:href`` (URL or path) of ``mets:Flocat`` of ``mets:file``
+            url (string) : ``@xlink:href`` remote/original URL of ``mets:Flocat`` of ``mets:file``
+            local_filename (string) : ``@xlink:href`` local/cached filename of ``mets:Flocat`` of ``mets:file``
             mimetype (string) : ``@MIMETYPE`` of ``mets:file``
             local (boolean) : Whether to restrict results to local files in the filesystem
         Yields:
@@ -331,7 +332,7 @@ class OcrdMets(OcrdXmlDocument):
                     if not mimetype.fullmatch(cand.get('MIMETYPE') or ''): continue
 
             if url:
-                cand_locat = cand.find('mets:FLocat', namespaces=NS)
+                cand_locat = cand.find('mets:FLocat[@LOCTYPE="URL"]', namespaces=NS)
                 if cand_locat is None:
                     continue
                 cand_url = cand_locat.get('{%s}href' % NS['xlink'])
@@ -340,14 +341,23 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     if not url.fullmatch(cand_url): continue
 
-            # Note: why we instantiate a class only to find out that the local_only is set afterwards
-            # Checking local_only and url before instantiation should be better?
-            f = OcrdFile(cand, mets=self, loctype=cand.get('LOCTYPE'))
+            if local_filename:
+                cand_locat = cand.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', namespaces=NS)
+                if cand_locat is None:
+                    continue
+                cand_local_filename = cand_locat.get('{%s}href' % NS['xlink'])
+                if isinstance(local_filename, str):
+                    if cand_local_filename != local_filename: continue
+                else:
+                    if not local_filename.fullmatch(cand_local_filename): continue
 
-            # If only local resources should be returned and f is not a file path: skip the file
-            if local_only and not is_local_filename(f.url):
-                continue
-            yield f
+            if local_only:
+                deprecation_warning("'local_only' is deprecated, use 'local_filename=\"//.+\"' instead")
+                is_local = cand.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"][@xlink:href]', namespaces=NS)
+                if is_local is None:
+                    continue
+
+            yield OcrdFile(cand, mets=self)
 
     def add_file_group(self, fileGrp):
         """
