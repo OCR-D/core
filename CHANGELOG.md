@@ -13,6 +13,7 @@ Fixed:
 Changed:
 
   * `WorkspaceValidator`: Download files temporarily/on-demand, #1066
+  * `ocrd-* --version` now prints only the version of the processor without noise or core version, #1068
 
 Added
 
