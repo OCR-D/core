@@ -13,6 +13,13 @@ Changed:
 
   * `WorkspaceValidator`: Download files temporarily/on-demand, #1066
 
+Added
+
+  * Environement variables to control optional retries and timeouts for downloading files:
+    * `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of workspace files.
+    * `OCRD_DOWNLOAD_TIMEOUT`: Timeout in seconds for connecting or reading (comma-separated) when downloading.
+  * Environment variables used throughout core are now documented in README and `ocrd --help`
+
 ## [2.52.0] - 2023-06-26
 
 Added:
