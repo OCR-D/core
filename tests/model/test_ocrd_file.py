@@ -41,7 +41,7 @@ def test_set_url():
 def test_constructor_url():
     f = create_ocrd_file_with_defaults(url="foo")
     assert f.url == 'foo'
-    assert f.local_filename == ''
+    assert f.local_filename == None
 
 def test_set_id_none():
     f = create_ocrd_file_with_defaults()
@@ -57,8 +57,11 @@ def test_basename():
 
 
 def test_basename_from_url():
+    """
+    Changed behavior, basename no longer derived from f.url
+    """
     f = create_ocrd_file_with_defaults(url="http://foo.bar/quux")
-    assert f.basename == 'quux'
+    assert f.basename == None
 
 
 @pytest.mark.parametrize("local_filename,extension",

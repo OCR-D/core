@@ -2,6 +2,7 @@
 API to ``mets:file``
 """
 from os.path import splitext, basename
+from pathlib import Path
 
 from ocrd_utils import deprecation_warning
 
@@ -23,7 +24,7 @@ class OcrdFile():
             pageId (string): ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
             local_filename (string): Local filename
             url (string): original ``@xlink:href`` of this ``mets:file``
-            local_filename (string): ``@xlink:href`` pointing to the locally cached version of the file in the workspace
+            local_filename (Path): ``@xlink:href`` pointing to the locally cached version of the file in the workspace
             ID (string): ``@ID`` of this ``mets:file``
             loctype (string): DEPRECATED do not use
         """
@@ -35,9 +36,10 @@ class OcrdFile():
         self.mets = mets
         self.ID = ID
         self.mimetype = mimetype
-        self.local_filename = local_filename
         self.pageId = pageId
 
+        if local_filename:
+            self.local_filename = Path(local_filename)
         if url:
             self.url = url
 
@@ -51,7 +53,7 @@ class OcrdFile():
         #  ])
         #  return 'OcrdFile[' + '\n\t' + props + '\n\t]'
         props = ', '.join([
-            '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
+            '='.join([k, str(getattr(self, k)) if getattr(self, k) else '---'])
             for k in ['ID', 'mimetype', 'url', 'local_filename']
         ])
         try:
@@ -69,26 +71,26 @@ class OcrdFile():
     @property
     def basename(self):
         """
-        Get the ``os.path.basename`` of the local file, if any.
+        Get the ``.name`` of the local file
         """
-        return basename(self.local_filename if self.local_filename else self.url)
+        if not self.local_filename:
+            return
+        return self.local_filename.name
 
     @property
     def extension(self):
-        _basename, ext = splitext(self.basename)
-        if _basename.endswith('.tar'):
-            ext = ".tar" + ext
-        return ext
+        if not self.local_filename:
+            return
+        return ''.join(self.local_filename.suffixes)
 
     @property
     def basename_without_extension(self):
         """
         Get the ``os.path.basename`` of the local file, if any, with extension removed.
         """
-        ret = self.basename.rsplit('.', 1)[0]
-        if ret.endswith('.tar'):
-            ret = ret[0:len(ret)-4]
-        return ret
+        if not self.local_filename:
+            return
+        return self.local_filename.name[:-len(self.extension)]
 
     @property
     def ID(self):
@@ -197,8 +199,7 @@ class OcrdFile():
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', NS)
         if el_FLocat is not None:
-            return el_FLocat.get("{%s}href" % NS["xlink"])
-        return ''
+            return Path(el_FLocat.get("{%s}href" % NS["xlink"]))
 
     @local_filename.setter
     def local_filename(self, fname):
@@ -212,6 +213,6 @@ class OcrdFile():
             return
         if el_FLocat is None:
             el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
-        el_FLocat.set("{%s}href" % NS["xlink"], fname)
+        el_FLocat.set("{%s}href" % NS["xlink"], str(fname))
         el_FLocat.set("LOCTYPE", "OTHER")
         el_FLocat.set("OTHERLOCTYPE", "FILE")
