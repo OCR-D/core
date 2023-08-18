@@ -1,5 +1,6 @@
 uvicorn>=0.17.6
 fastapi>=0.78.0
+pydantic==1.*
 docker
 paramiko
 pika>=1.2.0

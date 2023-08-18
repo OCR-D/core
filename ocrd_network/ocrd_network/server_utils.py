@@ -41,10 +41,10 @@ async def validate_and_resolve_mets_path(logger, job_input: PYJobInput, resolve:
 
 def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
     if bool(job_input.path_to_mets) == bool(job_input.workspace_id):
-        logger.exception("Either 'path' or 'workspace_id' must be provided, but not both")
+        logger.exception("Either 'path_to_mets' or 'workspace_id' must be provided, but not both")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Either 'path' or 'workspace_id' must be provided, but not both"
+            detail="Either 'path_to_mets' or 'workspace_id' must be provided, but not both"
         )
     if not ocrd_tool:
         logger.exception(f"Processor '{processor_name}' not available. Empty or missing ocrd_tool")
