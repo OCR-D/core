@@ -15,8 +15,11 @@ import requests
 
 import pika.spec
 import pika.adapters.blocking_connection
+from pika.exceptions import AMQPConnectionError
 
 from ocrd_utils import getLogger
+
+from time import sleep
 
 from .database import (
     sync_initiate_database,
@@ -269,3 +272,24 @@ class ProcessingWorker:
         }
         response = requests.post(url=callback_url, headers=headers, json=json_data)
         self.log.info(f'Response from callback_url "{response}"')
+
+    def create_queue(self, connection_attempts=1, retry_delay=1):
+        """Create the queue for this worker
+
+        Originally only the processing-server created the queues for the workers according to the
+        configuration file. This is intended to make external deployment of workers possible.
+        """
+        if self.rmq_publisher is None:
+            attempts_left = connection_attempts if connection_attempts > 0 else 1
+            while attempts_left > 0:
+                try:
+                    self.connect_publisher()
+                    break
+                except AMQPConnectionError as e:
+                    if attempts_left <= 1:
+                        raise e
+                    attempts_left -= 1
+                    sleep(retry_delay)
+
+        # the following function is idempotent
+        self.rmq_publisher.create_queue(queue_name=self.processor_name)
