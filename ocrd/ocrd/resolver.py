@@ -28,24 +28,29 @@ class Resolver():
 
     def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None, retries=None, timeout=None):
         """
-        Download a file to a directory.
+        Download a URL ``url`` to a local file in ``directory``.
 
-        Early Shortcut: If `url` is a local file and that file is already in the directory, keep it there.
+        If ``url`` looks like a file path, check whether that exists.
+        If it does exist and is within ``directory` already, return early.
+        If it does exist but is outside of ``directory``. copy it.
+        If ``url` does not appear to be a file path, try downloading via HTTP, retrying ``retries`` times with timeout ``timeout`` between calls.
 
-        If `basename` is not given but subdir is, assume user knows what she's doing and
-        use last URL segment as the basename.
+        If ``basename`` is not given but ``subdir`` is, set ``basename`` to the last path segment of ``url``.
 
-        If `basename` is not given and no subdir is given, use the alnum characters in the URL as the basename.
+        If the target file already exists within ``directory``, behavior depends on ``if_exists``:
+            - ``skip`` (default): do nothing and return early. Note that this
+            - ``overwrite``: overwrite the existing file
+            - ``raise``: raise a ``FileExistsError``
 
         Args:
             directory (string): Directory to download files to
             url (string): URL to download from
 
         Keyword Args:
-            basename (string, None): basename part of the filename on disk.
+            basename (string, None): basename part of the filename on disk. Defaults to last path segment of ``url`` if unset.
             if_exists (string, "skip"): What to do if target file already exists.
                 One of ``skip`` (default), ``overwrite`` or ``raise``
-            subdir (string, None): Subdirectory to create within the directory. Think ``mets:fileGrp``.
+            subdir (string, None): Subdirectory to create within the directory. Think ``mets:fileGrp[@USE]``.
             retries (int, None): Number of retries to attempt on network failure.
             timeout (tuple, None): Timeout in seconds for establishing a connection and reading next chunk of data.
 
@@ -56,17 +61,16 @@ class Resolver():
         log.debug("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
 
         if not url:
-            raise Exception("'url' must be a string")
+            raise ValueError(f"'url' must be a non-empty string, not '{url}'")
         if not directory:
-            raise Exception("'directory' must be a string")  # actually Path would also work
+            raise ValueError(f"'directory' must be a non-empty string, not '{url}'")  # actually Path would also work
 
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)
-        directory = str(directory.resolve())
 
         subdir_path = Path(subdir if subdir else '')
         basename_path = Path(basename if basename else nth_url_segment(url))
-        ret = str(Path(subdir_path, basename_path))
+        ret = Path(subdir_path, basename_path)
         dst_path = Path(directory, ret)
 
         #  log.info("\n\tdst_path='%s \n\turl=%s", dst_path, url)
@@ -80,32 +84,33 @@ class Resolver():
         src_path = None
         if is_local_filename(url):
             try:
-                # XXX this raises FNFE in Python 3.5 if src_path doesn't exist but not 3.6+
                 src_path = Path(get_local_filename(url)).resolve()
             except FileNotFoundError as e:
                 log.error("Failed to resolve URL locally: %s --> '%s' which does not exist" % (url, src_path))
                 raise e
             if not src_path.exists():
-                raise FileNotFoundError("File path passed as 'url' to download_to_directory does not exist: %s" % url)
+                raise FileNotFoundError(f"File path passed as 'url' to download_to_directory does not exist: '{url}")
             if src_path == dst_path:
                 log.debug("Stop early, src_path and dst_path are the same: '%s' (url: '%s')" % (src_path, url))
-                return ret
+                return str(ret)
 
         # Respect 'if_exists' arg
         if dst_path.exists():
             if if_exists == 'skip':
-                return ret
+                return str(ret)
             if if_exists == 'raise':
-                raise FileExistsError("File already exists and if_exists == 'raise': %s" % (dst_path))
+                raise FileExistsError(f"File already exists and if_exists == 'raise': {dst_path}")
 
         # Create dst_path parent dir
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Copy files or download remote assets
         if src_path:
+            # src_path set, so it is a file source, we can copy directly
             log.debug("Copying file '%s' to '%s'", src_path, dst_path)
             dst_path.write_bytes(src_path.read_bytes())
         else:
+            # src_path not set, it's an http URL, try to download
             log.debug("Downloading URL '%s' to '%s'", url, dst_path)
             if 'OCRD_DOWNLOAD_RETRIES' in environ:
                 retries = retries or int(environ['OCRD_DOWNLOAD_RETRIES'])
@@ -146,7 +151,7 @@ class Resolver():
             contents = handle_oai_response(response)
             dst_path.write_bytes(contents)
 
-        return ret
+        return str(ret)
 
     def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, src_baseurl=None):
         """
@@ -202,7 +207,6 @@ class Resolver():
 
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
             mets_basename, mets_url, src_baseurl, dst_dir)
-
         self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'skip')
 
         workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl)

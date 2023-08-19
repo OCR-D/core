@@ -166,23 +166,34 @@ class Workspace():
         log = getLogger('ocrd.workspace.download_file')
         log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
-            try:
-                # If the f.local_filename is already a file path, and is within self.directory, do nothing
+            if f.local_filename:
                 file_path = Path(f.local_filename).absolute()
-                if not (file_path.exists() and file_path.relative_to(str(Path(self.directory).resolve()))):
-                    raise FileNotFoundError("Not already downloaded, moving on")
-            except FileNotFoundError as e:
+                if file_path.exists():
+                    if file_path.relative_to(Path(self.directory).resolve()):
+                        # If the f.local_filename exists and is within self.directory, nothing to do
+                        log.info(f"'local_filename' {f.local_filename} already within {self.directory}, nothing to do")
+                        return f
+                    # f.local_filename exists, but not within self.directory, copy it
+                    log.info("Copying 'local_filename' %s to workspace directory %s" % (f.local_filename, self.directory))
+                    f.local_filename = self.resolver.download_to_directory(self.directory, f.local_filename, subdir=f.fileGrp)
+                    return f
+                else:
+                    if f.url:
+                        log.info("OcrdFile has 'local_filename' but it doesn't resolve, try to download from set 'url' %s", f.url)
+                    elif self.baseurl:
+                        log.info("OcrdFile has 'local_filename' but it doesn't resolve and no 'url', concatenate 'baseurl' %s and 'local_filename' %s",
+                                self.baseurl, f.local_filename)
+                        f.url = '%s/%s' % (self.baseurl, f.local_filename)
+                    else:
+                        raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file,"
+                                                 "and no 'url' to download and no 'baseurl' set on workspace, nothing we can do.")
+            if f.url:
+                # If f.url is set, download the file to the workspace
                 basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
-                try:
-                    f.local_filename = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
-                except FileNotFoundError as e:
-                    if not self.baseurl:
-                        raise Exception("No baseurl defined by workspace. Cannot retrieve '%s'" % f.url)
-                    if _recursion_count >= 1:
-                        raise FileNotFoundError("Already tried prepending baseurl '%s'. Cannot retrieve '%s'" % (self.baseurl, f.url))
-                    log.debug("First run of resolver.download_to_directory(%s) failed, try prepending baseurl '%s': %s", f.url, self.baseurl, e)
-                    f.local_filename = '%s/%s' % (self.baseurl, f.url)
-                    f.local_filename = self.download_file(f, _recursion_count + 1).local_filename
+                f.local_filename = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
+            else:
+                # If neither f.local_filename nor f.url is set, fail
+                raise ValueError("OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
             return f
 
     def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
@@ -459,7 +470,7 @@ class Workspace():
         log = getLogger('ocrd.workspace._resolve_image_as_pil')
         with pushd_popd(self.directory):
             try:
-                f = next(self.mets.find_files(url=image_url))
+                f = next(self.mets.find_files(local_filename=image_url))
                 pil_image = Image.open(self.download_file(f).local_filename)
             except StopIteration:
                 with download_temporary_file(image_url) as f:
