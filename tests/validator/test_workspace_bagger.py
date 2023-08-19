@@ -60,7 +60,7 @@ class TestWorkspaceBagger(TestCase):
         f = self.workspace.mets.find_all_files(ID='INPUT_0017')[0]
         f.url = 'bad-scheme://foo'
         f.local_filename = None
-        with self.assertRaisesRegex(Exception, "Not an http URL"):
+        with self.assertRaisesRegex(Exception, "No connection adapters were found for 'bad-scheme://foo'"):
             self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False)
         self.bagger.strict = False
 

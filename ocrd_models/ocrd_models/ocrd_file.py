@@ -208,8 +208,8 @@ class OcrdFile():
         Set the local/cached ``@xlink:href`` of this ``mets:file`` to :py:attr:`local_filename`.
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', NS)
-        if fname is None:
-            if el_FLocat:
+        if not fname:
+            if el_FLocat is not None:
                 self._el.remove(el_FLocat)
             return
         if el_FLocat is None:

@@ -14,6 +14,7 @@ from pkg_resources import get_distribution
 from ocrd_utils import (
     pushd_popd,
     getLogger,
+    MIME_TO_EXT,
     is_local_filename,
     unzip_file_to_dir,
 
@@ -57,31 +58,28 @@ class WorkspaceBagger():
 
     def _bag_mets_files(self, workspace, bagdir, ocrd_mets, processes):
         mets = workspace.mets
-        changed_urls = {}
+        changed_local_filenames = {}
 
         log = getLogger('ocrd.workspace_bagger')
         # TODO allow filtering by fileGrp@USE and such
         with pushd_popd(workspace.directory):
-            # URLs of the files before changing
+            # local_filenames of the files before changing
             for f in mets.find_files():
-                log.info("Resolving %s", f.url)
-                if is_local_filename(f.url):
-                    # nothing to do then
-                    pass
-                elif not f.url.startswith('http'):
-                    self._log_or_raise("Not an http URL: %s" % f.url)
-                    continue
-                log.info("Resolved %s", f.url)
+                log.info("Handling OcrdFile %s", f)
 
-                file_grp_dir = join(bagdir, 'data', f.fileGrp)
-                if not isdir(file_grp_dir):
-                    makedirs(file_grp_dir)
+                file_grp_dir = Path(bagdir, 'data', f.fileGrp)
+                if not file_grp_dir.is_dir():
+                    file_grp_dir.mkdir()
 
-                _basename = "%s%s" % (f.ID, f.extension)
-                _relpath = join(f.fileGrp, _basename)
-                self.resolver.download_to_directory(file_grp_dir, f.url, basename=_basename)
-                changed_urls[f.url] = _relpath
-                f.url = _relpath
+                if f.local_filename:
+                    _relpath = join(f.fileGrp, f.basename)
+                    self.resolver.download_to_directory(file_grp_dir, f.local_filename, basename=f.basename)
+                    changed_local_filenames[str(f.local_filename)] = _relpath
+                else:
+                    _relpath = join(f.fileGrp, f"{f.ID}{MIME_TO_EXT[f.mimetype]}")
+                    self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.basename)
+                    changed_local_filenames[f.url] = _relpath
+                f.local_filename = _relpath
 
             # save mets.xml
             with open(join(bagdir, 'data', ocrd_mets), 'wb') as f:
@@ -95,21 +93,19 @@ class WorkspaceBagger():
             for page_file in bag_workspace.mets.find_files(mimetype=MIMETYPE_PAGE):
                 pcgts = page_from_file(page_file)
                 changed = False
-                #  page_doc.set(imageFileName
-            #  for old, new in changed_urls:
-                for old, new in changed_urls.items():
+                for old, new in changed_local_filenames.items():
                     if pcgts.get_Page().imageFilename == old:
                         pcgts.get_Page().imageFilename = new
                         changed = True
                     # TODO replace AlternativeImage, recursively...
                 if changed:
-                    with open(page_file.url, 'w') as out:
+                    with open(page_file.local_filename, 'w') as out:
                         out.write(to_xml(pcgts))
                     #  log.info("Replace %s -> %s in %s" % (old, new, page_file))
 
-            chdir(bagdir)
-            total_bytes, total_files = make_manifests('data', processes, algorithms=['sha512'])
-            log.info("New vs. old: %s" % changed_urls)
+            with pushd_popd(bagdir):
+                total_bytes, total_files = make_manifests('data', processes, algorithms=['sha512'])
+            log.info("New vs. old: %s" % changed_local_filenames)
         return total_bytes, total_files
 
     def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_base_version_checksum, ocrd_mets='mets.xml'):

@@ -168,6 +168,7 @@ class Workspace():
         """
         log = getLogger('ocrd.workspace.download_file')
         with pushd_popd(self.directory):
+            print(f)
             if f.local_filename:
                 file_path = Path(f.local_filename).absolute()
                 if file_path.exists():
