@@ -288,10 +288,10 @@ class WorkspaceValidator():
         for f in self.mets.find_files():
             if f._el.get('GROUPID'): # pylint: disable=protected-access
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
-            if not f.url:
-                self.report.add_error("File '%s' has no mets:Flocat/@xlink:href" % f.ID)
+            if not f.url and not f.local_filename:
+                self.report.add_error("File '%s' has neither mets:Flocat[@LOCTYPE='URL']/@xlink:href nor mets:FLocat[@LOCTYPE='OTHER'][@OTHERLOCTYPE='FILE']/xlink:href" % f.ID)
                 continue
-            if 'url' not in self.skip and ':/' in f.url:
+            if f.url and 'url' not in self.skip:
                 if re.match(r'^file:/[^/]', f.url):
                     self.report.add_error("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
                 scheme = f.url[0:f.url.index(':')]

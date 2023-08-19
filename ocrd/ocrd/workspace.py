@@ -114,18 +114,21 @@ class Workspace():
         """
         def after_add_cb(f):
             """callback to run on merged OcrdFile instances in the destination"""
+            print(f)
+            if not f.local_filename:
+                # OcrdFile has no local_filename, so nothing to be copied
+                return
             if not copy_files:
                 fpath_src = Path(other_workspace.directory).resolve()
                 fpath_dst = Path(self.directory).resolve()
                 dstprefix = fpath_src.relative_to(fpath_dst) # raises ValueError if not a subpath
-                if is_local_filename(f.url):
-                    f.url = str(Path(dstprefix, f.url))
+                f.local_filename = dstprefix / f.local_filename
                 return
-            fpath_src = Path(other_workspace.directory, f.url)
-            fpath_dest = Path(self.directory, f.url)
+            fpath_src = Path(other_workspace.directory, f.local_filename)
+            fpath_dest = Path(self.directory, f.local_filename)
             if fpath_src.exists():
                 if fpath_dest.exists() and not overwrite:
-                    raise Exception("Copying %s to %s would overwrite the latter" % (fpath_src, fpath_dest))
+                    raise FileExistsError("Copying %s to %s would overwrite the latter" % (fpath_src, fpath_dest))
                 if not fpath_dest.parent.is_dir():
                     makedirs(str(fpath_dest.parent))
                 with open(str(fpath_src), 'rb') as fstream_in, open(str(fpath_dest), 'wb') as fstream_out:
@@ -164,28 +167,27 @@ class Workspace():
         Download a :py:class:`ocrd_models.ocrd_file.OcrdFile` to the workspace.
         """
         log = getLogger('ocrd.workspace.download_file')
-        log.debug('download_file %s [_recursion_count=%s]' % (f, _recursion_count))
         with pushd_popd(self.directory):
             if f.local_filename:
                 file_path = Path(f.local_filename).absolute()
                 if file_path.exists():
-                    if file_path.relative_to(Path(self.directory).resolve()):
+                    try:
+                        file_path.relative_to(Path(self.directory).resolve()) # raises ValueError if not relative
                         # If the f.local_filename exists and is within self.directory, nothing to do
                         log.info(f"'local_filename' {f.local_filename} already within {self.directory}, nothing to do")
-                        return f
-                    # f.local_filename exists, but not within self.directory, copy it
-                    log.info("Copying 'local_filename' %s to workspace directory %s" % (f.local_filename, self.directory))
-                    f.local_filename = self.resolver.download_to_directory(self.directory, f.local_filename, subdir=f.fileGrp)
+                    except ValueError:
+                        # f.local_filename exists, but not within self.directory, copy it
+                        log.info("Copying 'local_filename' %s to workspace directory %s" % (f.local_filename, self.directory))
+                        f.local_filename = self.resolver.download_to_directory(self.directory, f.local_filename, subdir=f.fileGrp)
                     return f
+                if f.url:
+                    log.info("OcrdFile has 'local_filename' but it doesn't resolve, try to download from set 'url' %s", f.url)
+                elif self.baseurl:
+                    log.info("OcrdFile has 'local_filename' but it doesn't resolve and no 'url', concatenate 'baseurl' %s and 'local_filename' %s",
+                            self.baseurl, f.local_filename)
+                    f.url = '%s/%s' % (self.baseurl, f.local_filename)
                 else:
-                    if f.url:
-                        log.info("OcrdFile has 'local_filename' but it doesn't resolve, try to download from set 'url' %s", f.url)
-                    elif self.baseurl:
-                        log.info("OcrdFile has 'local_filename' but it doesn't resolve and no 'url', concatenate 'baseurl' %s and 'local_filename' %s",
-                                self.baseurl, f.local_filename)
-                        f.url = '%s/%s' % (self.baseurl, f.local_filename)
-                    else:
-                        raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file,"
+                    raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file,"
                                                  "and no 'url' to download and no 'baseurl' set on workspace, nothing we can do.")
             if f.url:
                 # If f.url is set, download the file to the workspace
@@ -213,7 +215,7 @@ class Workspace():
         """
         log = getLogger('ocrd.workspace.remove_file')
         log.debug('Deleting mets:file %s', file_id)
-        if not force and self.overwrite_mode:
+        if self.overwrite_mode:
             force = True
         if isinstance(file_id, OcrdFile):
             file_id = file_id.ID
@@ -229,7 +231,7 @@ class Workspace():
                 with pushd_popd(self.directory):
                     ocrd_page = parse(self.download_file(ocrd_file).local_filename, silence=True)
                     for img_url in ocrd_page.get_AllAlternativeImagePaths():
-                        img_kwargs = {'url': img_url}
+                        img_kwargs = {'local_filename': img_url}
                         if page_same_group:
                             img_kwargs['fileGrp'] = ocrd_file.fileGrp
                         for img_file in self.mets.find_files(**img_kwargs):
@@ -305,34 +307,34 @@ class Workspace():
         log = getLogger('ocrd.workspace.rename_file_group')
 
         if old not in self.mets.file_groups:
-            raise ValueError("No such fileGrp: %s" % old)
+            raise ValueError(f"No such fileGrp: {old}")
         if new in self.mets.file_groups:
-            raise ValueError("fileGrp already exists %s" % new)
+            raise ValueError(f"fileGrp already exists {new}")
 
         with pushd_popd(self.directory):
             # create workspace dir ``new``
             log.info("mkdir %s" % new)
             if not Path(new).is_dir():
                 Path(new).mkdir()
-            url_replacements = {}
+            local_filename_replacements = {}
             log.info("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_url = old_url = mets_file.local_filename
+                new_local_filename = old_local_filename = str(mets_file.local_filename)
                 # Directory part
-                new_url = sub(r'^%s/' % old, r'%s/' % new, new_url)
+                new_local_filename = sub(r'^%s/' % old, r'%s/' % new, new_local_filename)
                 # File part
-                new_url = sub(r'/%s' % old, r'/%s' % new, new_url)
-                url_replacements[mets_file.local_filename] = new_url
+                new_local_filename = sub(r'/%s' % old, r'/%s' % new, new_local_filename)
+                local_filename_replacements[str(mets_file.local_filename)] = new_local_filename
                 # move file from ``old`` to ``new``
-                move(mets_file.local_filename, new_url)
+                mets_file.local_filename.rename(new_local_filename)
                 # change the url of ``mets:file``
-                mets_file.local_filename = new_url
+                mets_file.local_filename = new_local_filename
                 # change the file ID and update structMap
                 # change the file ID and update structMap
                 new_id = sub(r'^%s' % old, r'%s' % new, mets_file.ID)
                 try:
                     next(self.mets.find_files(ID=new_id))
-                    log.warning("ID %s already exists, not changing ID while renaming %s -> %s" % (new_id, old_url, new_url))
+                    log.warning("ID %s already exists, not changing ID while renaming %s -> %s" % (new_id, old_local_filename, new_local_filename))
                 except StopIteration:
                     mets_file.ID = new_id
             # change file paths in PAGE-XML imageFilename and filename attributes
@@ -340,17 +342,17 @@ class Workspace():
                 log.info("Renaming file references in PAGE-XML %s" % page_file)
                 pcgts = page_from_file(page_file)
                 changed = False
-                for old_url, new_url in url_replacements.items():
-                    if pcgts.get_Page().imageFilename == old_url:
+                for old_local_filename, new_local_filename in local_filename_replacements.items():
+                    if pcgts.get_Page().imageFilename == old_local_filename:
                         changed = True
-                        log.info("Rename pc:Page/@imageFilename: %s -> %s" % (old_url, new_url))
-                        pcgts.get_Page().imageFilename = new_url
+                        log.info("Rename pc:Page/@imageFilename: %s -> %s" % (old_local_filename, new_local_filename))
+                        pcgts.get_Page().imageFilename = new_local_filename
                 for ai in pcgts.get_Page().get_AllAlternativeImages():
-                    for old_url, new_url in url_replacements.items():
-                        if ai.filename == old_url:
+                    for old_local_filename, new_local_filename in local_filename_replacements.items():
+                        if ai.filename == old_local_filename:
                             changed = True
-                            log.info("Rename pc:Page/../AlternativeImage: %s -> %s" % (old_url, new_url))
-                            ai.filename = new_url
+                            log.info("Rename pc:Page/../AlternativeImage: %s -> %s" % (old_local_filename, new_local_filename))
+                            ai.filename = new_local_filename
                 if changed:
                     log.info("PAGE-XML changed, writing %s" % (page_file.local_filename))
                     with open(page_file.local_filename, 'w', encoding='utf-8') as f:
@@ -393,11 +395,9 @@ class Workspace():
         with pushd_popd(self.directory):
             if kwargs.get('local_filename'):
                 # If the local filename has folder components, create those folders
-                local_filename_dir = kwargs['local_filename'].rsplit('/', 1)[0]
-                if local_filename_dir != kwargs['local_filename'] and not Path(local_filename_dir).is_dir():
+                local_filename_dir = str(kwargs['local_filename']).rsplit('/', 1)[0]
+                if local_filename_dir != str(kwargs['local_filename']) and not Path(local_filename_dir).is_dir():
                     makedirs(local_filename_dir)
-                if 'url' not in kwargs:
-                    kwargs['url'] = kwargs['local_filename']
 
             #  print(kwargs)
             kwargs["pageId"] = kwargs.pop("page_id")
@@ -437,15 +437,17 @@ class Workspace():
         """
         if not image_url:
             # avoid "finding" just any file
-            raise Exception("Cannot resolve empty image path")
+            raise ValueError(f"'image_url' must be a non-empty string, not '{image_url}' ({type(image_url)})")
         try:
-            f = next(self.mets.find_files(url=image_url))
-            image_filename = self.download_file(f).local_filename
-            ocrd_exif = exif_from_filename(image_filename)
+            f = next(self.mets.find_files(local_filename=str(image_url)))
+            return exif_from_filename(f.local_filename)
         except StopIteration:
-            with download_temporary_file(image_url) as f:
-                ocrd_exif = exif_from_filename(f.name)
-        return ocrd_exif
+            try:
+                f = next(self.mets.find_files(url=str(image_url)))
+                return exif_from_filename(self.download_file(f).local_filename)
+            except StopIteration:
+                with download_temporary_file(image_url) as f:
+                    return exif_from_filename(f.name)
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
     def resolve_image_as_pil(self, image_url, coords=None):
@@ -470,11 +472,15 @@ class Workspace():
         log = getLogger('ocrd.workspace._resolve_image_as_pil')
         with pushd_popd(self.directory):
             try:
-                f = next(self.mets.find_files(local_filename=image_url))
-                pil_image = Image.open(self.download_file(f).local_filename)
+                f = next(self.mets.find_files(local_filename=str(image_url)))
+                pil_image = Image.open(f.local_filename)
             except StopIteration:
-                with download_temporary_file(image_url) as f:
-                    pil_image = Image.open(f.name)
+                try:
+                    f = next(self.mets.find_files(url=str(image_url)))
+                    pil_image = Image.open(self.download_file(f).local_filename)
+                except StopIteration:
+                    with download_temporary_file(image_url) as f:
+                        pil_image = Image.open(f.name)
             pil_image.load() # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
@@ -1035,7 +1041,7 @@ class Workspace():
             The (absolute) path of the created file.
         """
         log = getLogger('ocrd.workspace.save_image_file')
-        if not force and self.overwrite_mode:
+        if self.overwrite_mode:
             force = True
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])

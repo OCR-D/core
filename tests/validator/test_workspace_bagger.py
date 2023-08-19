@@ -183,4 +183,4 @@ class TestWorkspaceBagger(TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    main(__name__)

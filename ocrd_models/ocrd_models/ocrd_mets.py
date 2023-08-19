@@ -352,7 +352,7 @@ class OcrdMets(OcrdXmlDocument):
                     if not local_filename.fullmatch(cand_local_filename): continue
 
             if local_only:
-                deprecation_warning("'local_only' is deprecated, use 'local_filename=\"//.+\"' instead")
+                # deprecation_warning("'local_only' is deprecated, use 'local_filename=\"//.+\"' instead")
                 is_local = cand.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"][@xlink:href]', namespaces=NS)
                 if is_local is None:
                     continue
@@ -366,7 +366,7 @@ class OcrdMets(OcrdXmlDocument):
             fileGrp (string): ``@USE`` of the new ``mets:fileGrp``.
         """
         if ',' in fileGrp:
-            raise Exception('fileGrp must not contain commas')
+            raise ValueError('fileGrp must not contain commas')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)
@@ -374,11 +374,11 @@ class OcrdMets(OcrdXmlDocument):
         if el_fileGrp is None:
             el_fileGrp = ET.SubElement(el_fileSec, TAG_METS_FILEGRP)
             el_fileGrp.set('USE', fileGrp)
-            
+
             if self._cache_flag:
                 # Assign an empty dictionary that will hold the files of the added fileGrp
                 self._file_cache[fileGrp] = {}
-                
+
         return el_fileGrp
 
     def rename_file_group(self, old, new):
@@ -760,6 +760,7 @@ class OcrdMets(OcrdXmlDocument):
                     fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
                     mimetype=f_src.mimetype,
                     url=f_src.url,
+                    local_filename=f_src.local_filename,
                     ID=fileId_mapping.get(f_src.ID, f_src.ID),
                     pageId=pageId_mapping.get(f_src.pageId, f_src.pageId),
                     force=force)

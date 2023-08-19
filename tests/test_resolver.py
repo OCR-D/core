@@ -174,7 +174,7 @@ def test_workspace_from_url0():
 
     # assert
     assert '%s.tif' % f.ID == 'FILE_0001_IMAGE.tif'
-    assert f.local_filename == 'OCR-D-IMG/FILE_0001_IMAGE.tif'
+    assert f.local_filename == Path('OCR-D-IMG/FILE_0001_IMAGE.tif')
 
 
 def test_resolve_image0():

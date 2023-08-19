@@ -61,10 +61,11 @@ class Resolver():
         log.debug("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
 
         if not url:
-            raise ValueError(f"'url' must be a non-empty string, not '{url}'")
+            raise ValueError(f"'url' must be a non-empty string, not '{url}'") # actually Path also ok
         if not directory:
             raise ValueError(f"'directory' must be a non-empty string, not '{url}'")  # actually Path would also work
 
+        url = str(url)
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -73,13 +74,13 @@ class Resolver():
         ret = Path(subdir_path, basename_path)
         dst_path = Path(directory, ret)
 
-        #  log.info("\n\tdst_path='%s \n\turl=%s", dst_path, url)
-        #  print('url=%s', url)
-        #  print('directory=%s', directory)
-        #  print('subdir_path=%s', subdir_path)
-        #  print('basename_path=%s', basename_path)
-        #  print('ret=%s', ret)
-        #  print('dst_path=%s', dst_path)
+        # log.info("\n\tdst_path='%s \n\turl=%s", dst_path, url)
+        # print(f'>>> url={url}')
+        # print(f'>>> directory={directory}')
+        # print(f'>>> subdir_path={subdir_path}')
+        # print(f'>>> basename_path={basename_path}')
+        # print(f'>>> dst_path={dst_path}')
+        # print(f'>>> ret={ret}')
 
         src_path = None
         if is_local_filename(url):

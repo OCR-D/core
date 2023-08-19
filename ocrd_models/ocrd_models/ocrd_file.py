@@ -63,8 +63,9 @@ class OcrdFile():
         return '<OcrdFile fileGrp=%s %s]/> ' % (fileGrp, props)
 
     def __eq__(self, other):
-        return self.ID == other.ID # and \
-               # self.url == other.url and \
+        return self.ID == other.ID \
+           and self.url == other.url \
+           and self.local_filename == other.local_filename
                # EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and \
                # self.fileGrp == other.fileGrp
 
@@ -206,7 +207,7 @@ class OcrdFile():
         """
         Set the local/cached ``@xlink:href`` of this ``mets:file`` to :py:attr:`local_filename`.
         """
-        el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"][@OTHERLOCTYPE="FILE"]', NS)
+        el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', NS)
         if fname is None:
             if el_FLocat:
                 self._el.remove(el_FLocat)
