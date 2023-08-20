@@ -104,7 +104,7 @@ def bashlib_input_files(**kwargs):
     working_dir = kwargs.pop('working_dir')
     if is_local_filename(mets) and not isfile(get_local_filename(mets)):
         msg = "File does not exist: %s" % mets
-        raise Exception(msg)
+        raise FileNotFoundError(msg)
     resolver = Resolver()
     workspace = resolver.workspace_from_url(mets, working_dir)
     processor = Processor(workspace,
@@ -113,11 +113,11 @@ def bashlib_input_files(**kwargs):
                           input_file_grp=kwargs['input_file_grp'],
                           output_file_grp=kwargs['output_file_grp'])
     for input_files in processor.zip_input_files(mimetype=None, on_error='abort'):
-        for field in ['url', 'ID', 'mimetype', 'pageId']:
+        for field in ['url', 'local_filename', 'ID', 'mimetype', 'pageId']:
             # make this bash-friendly (show initialization for associative array)
             if len(input_files) > 1:
                 # single quotes allow us to preserve the list value inside the alist
-                print("[%s]='%s'" % (field, ' '.join(getattr(res, field) for res in input_files)), end=' ')
+                print("[%s]='%s'" % (field, ' '.join(str(getattr(res, field)) for res in input_files)), end=' ')
             else:
-                print("[%s]='%s'" % (field, getattr(input_files[0], field)), end=' ')
+                print("[%s]='%s'" % (field, str(getattr(input_files[0], field))), end=' ')
         print("[outputFileId]='%s'" % make_file_id(input_files[0], kwargs['output_file_grp']))

@@ -195,14 +195,10 @@ assets: repo/assets
 
 .PHONY: test
 # Run all unit tests
-# XXX TODO need to fix this before merge, silencing the deprecation warnings about PEP420 and ignoring the long-running bashlib/resmgr test
-		#-W 'ignore:Deprecated call to `pkg_r:DeprecationWarning' 
 test: assets
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore=$(TESTDIR)/test_logging.py \
-		--ignore=$(TESTDIR)/cli/test_bashlib.py \
-		--ignore=$(TESTDIR)/test_resource_manager.py \
 		--ignore=$(TESTDIR)/test_logging_conf.py \
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		$(TESTDIR)
