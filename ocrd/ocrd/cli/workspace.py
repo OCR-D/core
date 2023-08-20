@@ -372,7 +372,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 @workspace_cli.command('find')
 @mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
-        default=['local_filename', 'url'],
+        default=['local_filename'],
         multiple=True,
         type=click.Choice([
             'url',
@@ -388,9 +388,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             'local_filename',
         ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
+@click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download, wait):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download, undo_download, wait):
     """
     Find files.
 
@@ -413,6 +414,9 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
             modified_mets = True
             if wait:
                 time.sleep(wait)
+        if undo_download and f.local_filename:
+            f.local_filename = None
+            modified_mets = True
         ret.append([f.ID if field == 'pageId' else str(getattr(f, field)) or ''
                     for field in output_field])
     if modified_mets:
