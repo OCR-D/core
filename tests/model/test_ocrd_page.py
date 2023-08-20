@@ -428,7 +428,7 @@ def test_serialize_no_empty_readingorder():
     """
     https://github.com/OCR-D/core/issues/602
     """
-    pcgts = page_from_image(create_ocrd_file_with_defaults(url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
+    pcgts = page_from_image(create_ocrd_file_with_defaults(local_filename=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
     pcgts.get_Page().set_ReadingOrder(ReadingOrderType())
     assert pcgts.get_Page().get_ReadingOrder()
     pcgts = parseString(to_xml(pcgts, skip_declaration=True))
@@ -439,7 +439,7 @@ def test_hashable():
     """
     https://github.com/OCR-D/ocrd_segment/issues/45
     """
-    pcgts = page_from_image(create_ocrd_file_with_defaults(url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
+    pcgts = page_from_image(create_ocrd_file_with_defaults(local_filename=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
     page = pcgts.get_Page()
     testset = set()
     testset.add(pcgts)

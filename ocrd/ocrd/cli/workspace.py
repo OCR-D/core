@@ -372,7 +372,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 @workspace_cli.command('find')
 @mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
-        default=['url'],
+        default=['local_filename', 'url'],
         multiple=True,
         type=click.Choice([
             'url',
@@ -413,7 +413,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
             modified_mets = True
             if wait:
                 time.sleep(wait)
-        ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
+        ret.append([f.ID if field == 'pageId' else str(getattr(f, field)) or ''
                     for field in output_field])
     if modified_mets:
         workspace.save_mets()

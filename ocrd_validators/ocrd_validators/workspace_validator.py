@@ -185,16 +185,16 @@ class WorkspaceValidator():
         """
         self.log.debug('_validate_imagefilename')
         for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not is_local_filename(f.url) and not self.download:
-                self.log.warning("Won't download remote PAGE XML '%s'", f.url)
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
             page = page_from_file(f).get_Page()
             imageFilename = page.imageFilename
             if not self.mets.find_files(url=imageFilename):
-                self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
+                self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.local_filename, imageFilename))
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.url, imageFilename))
+                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.local_filename, imageFilename))
 
     def _validate_dimension(self):
         """
@@ -202,8 +202,8 @@ class WorkspaceValidator():
         """
         self.log.info('_validate_dimension')
         for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not is_local_filename(f.url) and not self.download:
-                self.log.warning("Won't download remote PAGE XML '%s'", f.url)
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
             page = page_from_file(f).get_Page()
@@ -221,16 +221,16 @@ class WorkspaceValidator():
         """
         self.log.debug('_validate_multipage')
         for f in self.mets.find_files(mimetype='//image/.*'):
-            if not is_local_filename(f.url) and not self.download:
-                self.log.warning("Won't download remote image '%s'", f.url)
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
             try:
-                exif = self.workspace.resolve_image_exif(f.url)
+                exif = self.workspace.resolve_image_exif(f.local_filename)
                 if exif.n_frames > 1:
                     self.report.add_error("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
             except FileNotFoundError:
-                self.report.add_error("Image %s: Could not retrieve %s" % (f.ID, f.url))
+                self.report.add_error("Image %s: Could not retrieve %s (local_filename=%s, url=%s)" % (f.ID, f.local_filename, f.url))
                 return
 
     def _validate_pixel_density(self):
@@ -241,11 +241,11 @@ class WorkspaceValidator():
         """
         self.log.debug('_validate_pixel_density')
         for f in self.mets.find_files(mimetype='//image/.*'):
-            if not is_local_filename(f.url) and not self.download:
-                self.log.warning("Won't download remote image '%s'", f.url)
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
-            exif = self.workspace.resolve_image_exif(f.url)
+            exif = self.workspace.resolve_image_exif(f.local_filename)
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)
                 if v is None or v <= 72:
@@ -288,7 +288,7 @@ class WorkspaceValidator():
         for f in self.mets.find_files():
             if f._el.get('GROUPID'): # pylint: disable=protected-access
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
-            if not f.url and not f.local_filename:
+            if not (f.url or f.local_filename):
                 self.report.add_error("File '%s' has neither mets:Flocat[@LOCTYPE='URL']/@xlink:href nor mets:FLocat[@LOCTYPE='OTHER'][@OTHERLOCTYPE='FILE']/xlink:href" % f.ID)
                 continue
             if f.url and 'url' not in self.skip:
@@ -304,8 +304,8 @@ class WorkspaceValidator():
         """
         self.log.debug('_validate_page')
         for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not is_local_filename(f.url) and not self.download:
-                self.log.warning("Won't download remote PAGE XML '%s'", f.url)
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
             page_report = PageValidator.validate(ocrd_file=f,
@@ -323,8 +323,8 @@ class WorkspaceValidator():
         """
         self.log.debug('_validate_page_xsd')
         for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not is_local_filename(f.url) and not self.download:
-                self.log.warning("Won't download remote PAGE XML '%s'", f.url)
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
             for err in XsdPageValidator.validate(Path(f.local_filename)).errors:
