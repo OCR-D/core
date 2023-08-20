@@ -161,7 +161,6 @@ from .logging import (
     getLevelName,
     getLogger,
     initLogging,
-    logging,
     setOverrideLogLevel,
     )
 
