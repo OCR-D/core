@@ -1,4 +1,3 @@
-from os import environ
 import sys
 
 from ocrd_utils import (
@@ -7,7 +6,7 @@ from ocrd_utils import (
     set_json_key_value_overrides,
 )
 
-from ocrd_utils import getLogger, initLogging, parse_json_string_with_comments
+from ocrd_utils import getLogger, initLogging, parse_json_string_with_comments, config
 from ocrd_validators import WorkspaceValidator
 
 from ocrd_network import ProcessingWorker, ProcessorServer
@@ -100,11 +99,10 @@ def ocrd_cli_wrap_processor(
     if not report.is_valid:
         raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
     # Set up profiling behavior from environment variables/flags
-    if not profile and 'OCRD_PROFILE' in environ:
-        if 'CPU' in environ['OCRD_PROFILE']:
-            profile = True
-    if not profile_file and 'OCRD_PROFILE_FILE' in environ:
-        profile_file = environ['OCRD_PROFILE_FILE']
+    if not profile and 'CPU' in config.OCRD_PROFILE:
+        profile = True
+    if not profile_file and config.is_set('OCRD_PROFILE_FILE'):
+        profile_file = config.OCRD_PROFILE_FILE
     if profile or profile_file:
         import cProfile
         import pstats

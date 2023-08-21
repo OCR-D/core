@@ -1,7 +1,7 @@
 """
 Helper methods for running and documenting processors
 """
-from os import chdir, environ, getcwd
+from os import chdir, getcwd
 from time import perf_counter, process_time
 from functools import lru_cache
 import json
@@ -14,7 +14,7 @@ from sparklines import sparklines
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger, pushd_popd
+from ocrd_utils import freeze_args, getLogger, pushd_popd, config
 
 
 __all__ = [
@@ -102,8 +102,8 @@ def run_processor(
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
     t0_cpu = process_time()
-    if any(x in environ.get('OCRD_PROFILE', '') for x in ['RSS', 'PSS']):
-        backend = 'psutil_pss' if 'PSS' in environ['OCRD_PROFILE'] else 'psutil'
+    if any(x in config.OCRD_PROFILE for x in ['RSS', 'PSS']):
+        backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
         try:
             mem_usage = memory_usage(proc=processor.process,
                                      # only run process once
@@ -302,7 +302,7 @@ Parameters:
 
 # Taken from https://github.com/OCR-D/core/pull/884
 @freeze_args
-@lru_cache(maxsize=environ.get('OCRD_MAX_PROCESSOR_CACHE', 128))
+@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
 def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.

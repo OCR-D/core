@@ -193,3 +193,5 @@ from .str import (
     parse_json_string_with_comments,
     remove_non_path_from_url,
     safe_filename)
+
+from .config import config

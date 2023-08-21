@@ -1,7 +1,6 @@
 from tempfile import mkdtemp
 from pathlib import Path
 from warnings import warn
-from os import environ
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -9,6 +8,7 @@ from requests.packages.urllib3.util.retry import Retry
 
 from ocrd.constants import TMP_PREFIX
 from ocrd_utils import (
+    config,
     getLogger,
     is_local_filename,
     get_local_filename,
@@ -107,14 +107,10 @@ class Resolver():
             dst_path.write_bytes(src_path.read_bytes())
         else:
             log.debug("Downloading URL '%s' to '%s'", url, dst_path)
-            if 'OCRD_DOWNLOAD_RETRIES' in environ:
-                retries = retries or int(environ['OCRD_DOWNLOAD_RETRIES'])
-            if timeout is None and 'OCRD_DOWNLOAD_TIMEOUT' in environ:
-                timeout = environ['OCRD_DOWNLOAD_TIMEOUT'].split(',')
-                if len(timeout) > 1:
-                    timeout = tuple(float(x) for x in timeout)
-                else:
-                    timeout = float(timeout[0])
+            if not retries and config.is_set('OCRD_DOWNLOAD_RETRIES'):
+                retries = config.OCRD_DOWNLOAD_RETRIES
+            if timeout is None and config.is_set('OCRD_DOWNLOAD_TIMEOUT'):
+                timeout = config.OCRD_DOWNLOAD_TIMEOUT
             session = requests.Session()
             retries = Retry(total=retries or 0,
                             status_forcelist=[
