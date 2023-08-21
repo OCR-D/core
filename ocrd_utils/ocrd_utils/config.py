@@ -9,6 +9,7 @@ in the `ocrd` package for the actual values
 
 from os import environ
 from pathlib import Path
+from textwrap import fill, indent
 
 class OcrdEnvVariable():
 
@@ -34,6 +35,23 @@ class OcrdEnvVariable():
         self.has_default = default[0]
         self.default = default[1]
 
+    def __str__(self):
+        return f'{self.name}: {self.description}'
+
+    def describe(self, wrap_text=True, indent_text=True):
+        desc = self.description
+        if self.has_default:
+            default = self.default() if callable(self.default) else self.default
+            desc += f' (Default: "{default}")'
+        ret = ''
+        ret  = f'{self.name}\n'
+        if wrap_text:
+            desc = fill(desc, width=50)
+        if indent_text:
+            ret = f'  {ret}'
+            desc = indent(desc, '    ')
+        return ret + desc
+
 class OcrdEnvConfig():
 
     def __init__(self):
@@ -41,11 +59,17 @@ class OcrdEnvConfig():
 
     def add(self, name, *args, **kwargs):
         self._variables[name] = OcrdEnvVariable(name, *args, **kwargs)
+        return self._variables[name]
 
     def has_default(self, name):
         if not name in self._variables:
             raise ValueError(f"Unregistered env variable {name}")
         return self._variables[name].has_default
+
+    def describe(self, name, *args, **kwargs):
+        if not name in self._variables:
+            raise ValueError(f"Unregistered env variable {name}")
+        return self._variables[name].describe(*args, **kwargs)
 
     def __getattr__(self, name):
         if not name in self._variables:
@@ -86,15 +110,17 @@ config.add('OCRD_MAX_PROCESSOR_CACHE',
 
 config.add("OCRD_PROFILE",
     description="""\
-This variable configures the built-in CPU and memory profiling. If empty, no profiling is done. Otherwise expected to contain any of the following tokens:
-  * `CPU`: Enable CPU profiling of processor runs
-  * `RSS`: Enable RSS memory profiling
-  * `PSS`: Enable proportionate memory profiling""",
-  validator=lambda val : val in ('', 'CPU', 'RSS', 'PSS'),
+Whether to enable gathering runtime statistics
+on the `ocrd.profile` logger (comma-separated):
+- `CPU`: yields CPU and wall-time,
+- `RSS`: also yields peak memory (resident set size)
+- `PSS`: also yields peak memory (proportional set size)
+""",
+  validator=lambda val : all(t in ('', 'CPU', 'RSS', 'PSS') for t in val.split(',')),
   default=(True, ''))
 
 config.add("OCRD_PROFILE_FILE",
-    description="If set, then the CPU profile is written to this file for later peruse with a analysis tools like [snakeviz](https://jiffyclub.github.io/snakeviz/)")
+    description="If set, then the CPU profile is written to this file for later peruse with a analysis tools like snakeviz")
 
 config.add("OCRD_DOWNLOAD_RETRIES",
     description="Number of times to retry failed attempts for downloads of workspace files.",
@@ -126,7 +152,8 @@ config.add("OCRD_NETWORK_SERVER_ADDR_WORKSPACE",
         default=(True, ''))
 
 config.add("HOME",
-    description="HOME directory, cf. https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html",
+    description="Directory to look for `ocrd_logging.conf`, fallback for unset XDG variables.",
+    # description="HOME directory, cf. https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html",
     validator=lambda val: Path(val).is_dir(),
     parser=lambda val: Path(val),
     default=(True, lambda: Path.home()))

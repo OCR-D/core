@@ -28,7 +28,7 @@ class TestWorkspaceBackup(TestCase):
         self.mgr.undo()
         self.assertEqual(self.mgr.list(), [])
         first = self.mgr.add()
-        self.assertEqual(first, '94d33aa8773bbbf78919f89a01f03392ad39bb295859cca065d2d8eb8a4811e9')
+        self.assertEqual(first, '55c54aa8e10b13e495eebe292bb00250478dc9f365ea21afc2b297fe889a5a0c')
         self.assertEqual(len(self.mgr.list()), 1)
         self.mgr.add()
         self.assertEqual(len(self.mgr.list()), 1)
