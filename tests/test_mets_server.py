@@ -1,6 +1,7 @@
 from pytest import fixture, raises
 from tests.base import assets
 
+from itertools import repeat
 from multiprocessing import Process, Pool
 from shutil import rmtree, copytree
 from os import remove
@@ -12,42 +13,41 @@ from ocrd import Resolver, OcrdMetsServer, Workspace
 from ocrd_utils import pushd_popd, MIMETYPE_PAGE
 
 WORKSPACE_DIR = '/tmp/ocrd-mets-server'
-SOCKET_PATH   = '/tmp/ocrd-mets-server.sock'
+TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://localhost:12345']
 
-@fixture(scope='session')
-def start_mets_server():
+@fixture(scope='session', name='start_mets_server', params=TRANSPORTS)
+def fixture_start_mets_server(request):
     def _start_mets_server(*args, **kwargs):
         mets_server = OcrdMetsServer(*args, **kwargs)
         mets_server.startup()
 
-    if exists(SOCKET_PATH):
-        remove(SOCKET_PATH)
+    mets_server_url = request.param
+
+    if mets_server_url == TRANSPORTS[0]:
+        if exists(mets_server_url):
+            remove(mets_server_url)
 
     if exists(WORKSPACE_DIR):
         rmtree(WORKSPACE_DIR, ignore_errors=True)
 
     copytree(assets.path_to('kant_aufklaerung_1784/data'), WORKSPACE_DIR)
     workspace = Workspace(Resolver(), WORKSPACE_DIR)
-    # p = multiprocessing.Process(target=_start_mets_server, kwargs={'host': 'localhost', 'port': 12345, 'workspace': workspace})
-    p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': SOCKET_PATH})
+    p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': request.param})
     p.start()
-    # sleep to start up server
-    sleep(2)
-    yield p
+    sleep(2)  # sleep to start up server
+    yield mets_server_url, Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
     p.terminate()
     rmtree(WORKSPACE_DIR, ignore_errors=True)
 
-@fixture()
-def workspace_socket():
-    yield Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
+def add_file_server(x):
+    mets_server_url, i = x
+    workspace_server = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
+    workspace_server.add_file(local_filename=f'foo{i}', mimetype=MIMETYPE_PAGE, page_id=f'page{1}', file_grp='FOO', file_id=f'FOO_page{i}_foo{i}')
 
-def add_file_socket(i):
-    workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
-    workspace_socket.add_file(local_filename=f'foo{i}', mimetype=MIMETYPE_PAGE, page_id=f'page{1}', file_grp='FOO', file_id=f'FOO_page{i}_foo{i}')
-
-def add_agent_socket(i):
-    workspace_socket = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
-    workspace_socket.mets.add_agent(
+def add_agent_server(x):
+    mets_server_url, i = x
+    workspace_server = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
+    workspace_server.mets.add_agent(
         name=f'proc{i}',
         _type='baz',
         othertype='foo',
@@ -56,60 +56,67 @@ def add_agent_socket(i):
         notes=[({'foo': 'bar'}, f'note{i}')]
     )
 
-def test_mets_server_add_file(start_mets_server, workspace_socket):
+def test_mets_server_add_file(start_mets_server):
     NO_FILES = 500
+
+    mets_server_url, workspace_server = start_mets_server
 
     # add NO_FILES files in parallel
     with Pool() as pool:
-        pool.map(add_file_socket, list(range(NO_FILES)))
+        pool.map(add_file_server, zip(repeat(mets_server_url), range(NO_FILES)))
 
-    assert set(workspace_socket.mets.file_groups) == set( ['OCR-D-IMG', 'OCR-D-GT-PAGE', 'OCR-D-GT-ALTO', 'FOO'])
-    assert len(workspace_socket.mets.find_all_files(fileGrp='FOO')) == NO_FILES
-    assert len(workspace_socket.mets.find_all_files(file_grp='FOO')) == NO_FILES
+    assert set(workspace_server.mets.file_groups) == set( ['OCR-D-IMG', 'OCR-D-GT-PAGE', 'OCR-D-GT-ALTO', 'FOO'])
+    assert len(workspace_server.mets.find_all_files(fileGrp='FOO')) == NO_FILES
+    assert len(workspace_server.mets.find_all_files(file_grp='FOO')) == NO_FILES
 
     # not yet synced
     workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
     assert len(workspace_file.mets.find_all_files(fileGrp='FOO')) == 0
 
     # sync
-    workspace_socket.mets.save()
+    workspace_server.mets.save()
     workspace_file.reload_mets()
 
     assert len(workspace_file.mets.find_all_files(fileGrp='FOO')) == NO_FILES
 
-def test_mets_server_add_agents(start_mets_server, workspace_socket):
+def test_mets_server_add_agents(start_mets_server):
     NO_AGENTS = 30
 
-    no_agents_before = len(workspace_socket.mets.agents)
+    mets_server_url, workspace_server = start_mets_server
+
+    no_agents_before = len(workspace_server.mets.agents)
 
     # add NO_AGENTS agents in parallel
     with Pool() as pool:
-        pool.map(add_agent_socket, list(range(NO_AGENTS)))
+        pool.map(add_agent_server, zip(repeat(mets_server_url), list(range(NO_AGENTS))))
 
-    assert len(workspace_socket.mets.agents) == NO_AGENTS + no_agents_before
+    assert len(workspace_server.mets.agents) == NO_AGENTS + no_agents_before
     # XXX not a tuple
-    assert workspace_socket.mets.agents[-1].notes[0][0] == {'{https://ocr-d.de}foo': 'bar'}
+    assert workspace_server.mets.agents[-1].notes[0][0] == {'{https://ocr-d.de}foo': 'bar'}
 
     workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
     assert len(workspace_file.mets.agents) == no_agents_before
 
     # sync
-    workspace_socket.mets.save()
+    workspace_server.mets.save()
     workspace_file.reload_mets()
 
     assert len(workspace_file.mets.agents) == NO_AGENTS + no_agents_before
 
-def test_mets_server_str(start_mets_server, workspace_socket):
-    workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
-    f = next(workspace_socket.find_files())
-    assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=OCR-D-IMG/INPUT_0017.ti, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
-    a = workspace_socket.mets.agents[0]
+def test_mets_server_str(start_mets_server):
+    mets_server_url, workspace_server = start_mets_server
+    workspace_server = Workspace(Resolver(), WORKSPACE_DIR, mets_server_url=mets_server_url)
+    f = next(workspace_server.find_files())
+    assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=OCR-D-IMG/INPUT_0017.tif, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
+    a = workspace_server.mets.agents[0]
     assert str(a) == '<ClientSideOcrdAgent [type=---, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
-    assert str(workspace_socket.mets) == '<ClientSideOcrdMets[url=http+unix://%2Ftmp%2Focrd-mets-server.sock]>'
+    assert str(workspace_server.mets) == '<ClientSideOcrdMets[url=%s]>' % ('http+unix://%2Ftmp%2Focrd-mets-server.sock' if mets_server_url == TRANSPORTS[0] else TRANSPORTS[1])
 
-def test_mets_test_unimplemented(start_mets_server, workspace_socket):
+def test_mets_test_unimplemented(start_mets_server):
+    _, workspace_server = start_mets_server
     with raises(NotImplementedError):
-        workspace_socket.mets.rename_file_group('OCR-D-IMG', 'FOO')
+        workspace_server.mets.rename_file_group('OCR-D-IMG', 'FOO')
 
-def test_mets_test_unique_identifier(start_mets_server, workspace_socket):
-    assert workspace_socket.mets.unique_identifier == 'http://kant_aufklaerung_1784'
+def test_mets_test_unique_identifier(start_mets_server):
+    _, workspace_server = start_mets_server
+    assert workspace_server.mets.unique_identifier == 'http://kant_aufklaerung_1784'
