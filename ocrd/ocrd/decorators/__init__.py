@@ -77,7 +77,7 @@ def ocrd_cli_wrap_processor(
     resolver = Resolver()
     working_dir, mets, _, mets_server_url = \
             resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_url)
-    workspace = resolver.workspace_from_url(mets, working_dir)
+    workspace = resolver.workspace_from_url(mets, working_dir, mets_server_url=mets_server_url)
     page_id = kwargs.get('page_id')
     # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
     # if overwrite

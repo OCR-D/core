@@ -24,13 +24,13 @@ __all__ = [
 ]
 
 
-def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
+def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None, mets_server_url=None):
     if workspace is None:
         if resolver is None:
             raise Exception("Need to pass a resolver to create a workspace")
         if mets_url is None:
             raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir)
+        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir, mets_server_url=mets_server_url)
     return workspace
 
 def run_processor(
@@ -78,7 +78,8 @@ def run_processor(
         workspace,
         resolver,
         mets_url,
-        working_dir
+        working_dir,
+        mets_server_url
     )
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
