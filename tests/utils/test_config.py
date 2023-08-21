@@ -21,19 +21,18 @@ def test_str():
     print(c.describe('OCRD_FOO_BAR_ETC'))
     assert c.describe('OCRD_FOO_BAR_ETC') == """\
   OCRD_FOO_BAR_ETC
-    Lorem ipsum dolor sit amet, consectetur
-    adipiscing elit. Phasellus lacinia, eros id
-    accumsan tempor, arcu augue viverra est, quis
-    ultrices lectus eros et quam. Donec vel metus
-    iaculis, maximus enim eget, mattis leo. Morbi
-    molestie placerat dolor non finibus. Vivamus
-    egestas rutrum est quis gravida. Vivamus sed
-    cursus lectus. Etiam sed felis nisl.
-    Suspendisse massa nunc, eleifend vitae pretium
-    sit amet, porta et velit. Pellentesque risus
-    justo, tincidunt at mattis ac, sollicitudin
-    sit amet quam. Donec euismod suscipit
-    bibendum. (Default: "42")"""
+    Lorem ipsum dolor sit amet, consectetur adipiscing
+    elit. Phasellus lacinia, eros id accumsan tempor,
+    arcu augue viverra est, quis ultrices lectus eros
+    et quam. Donec vel metus iaculis, maximus enim
+    eget, mattis leo. Morbi molestie placerat dolor
+    non finibus. Vivamus egestas rutrum est quis
+    gravida. Vivamus sed cursus lectus. Etiam sed
+    felis nisl. Suspendisse massa nunc, eleifend vitae
+    pretium sit amet, porta et velit. Pellentesque
+    risus justo, tincidunt at mattis ac, sollicitudin
+    sit amet quam. Donec euismod suscipit bibendum.
+    (Default: "42")"""
 
 def test_OCRD_METS_CACHING():
     with temp_env_var('OCRD_METS_CACHING', 'true'):
