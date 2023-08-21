@@ -102,9 +102,9 @@ def test_mets_server_add_agents(start_mets_server, workspace_socket):
 def test_mets_server_str(start_mets_server, workspace_socket):
     workspace_socket = Workspace(Resolver(), WORKSPACE_DIR, mets_server_url=SOCKET_PATH)
     f = next(workspace_socket.find_files())
-    assert str(f) == '<OcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
+    assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=OCR-D-IMG/INPUT_0017.ti, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
     a = workspace_socket.mets.agents[0]
-    assert str(a) == '<OcrdAgent [type=---, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
+    assert str(a) == '<ClientSideOcrdAgent [type=---, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
     assert str(workspace_socket.mets) == '<ClientSideOcrdMets[url=http+unix://%2Ftmp%2Focrd-mets-server.sock]>'
 
 def test_mets_test_unimplemented(start_mets_server, workspace_socket):

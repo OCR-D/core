@@ -194,5 +194,5 @@ class ClientSideOcrdAgent():
             '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
             for k in ['type', 'othertype', 'role', 'otherrole', 'name']
         ])
-        return '<OcrdAgent [' + props + ']/>'
+        return '<ClientSideOcrdAgent [' + props + ']/>'
 
