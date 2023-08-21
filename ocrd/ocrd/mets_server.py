@@ -32,11 +32,12 @@ class OcrdFileModel(BaseModel):
     file_id : str = Field()
     mimetype : str = Field()
     page_id : Union[str, None] = Field()
+    url : str = Field()
     local_filename : str = Field()
 
     @staticmethod
-    def create(file_grp : str, file_id : str, page_id : Union[str, None], local_filename : str, mimetype : str):
-        return OcrdFileModel(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, local_filename=local_filename)
+    def create(file_grp : str, file_id : str, page_id : Union[str, None], url : str, local_filename : str, mimetype : str):
+        return OcrdFileModel(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url, local_filename=local_filename)
 
 class OcrdAgentModel(BaseModel):
     name : str = Field()
@@ -57,7 +58,7 @@ class OcrdFileListModel(BaseModel):
     @staticmethod
     def create(files : List[OcrdFile]):
         return OcrdFileListModel(
-            files=[OcrdFileModel.create(file_grp=f.fileGrp, file_id=f.ID, mimetype=f.mimetype, page_id=f.pageId, local_filename=f.local_filename) for f in files]
+            files=[OcrdFileModel.create(file_grp=f.fileGrp, file_id=f.ID, mimetype=f.mimetype, page_id=f.pageId, url=f.url, local_filename=f.local_filename) for f in files]
         )
 
 class OcrdFileGroupListModel(BaseModel):
@@ -116,7 +117,7 @@ class ClientSideOcrdMets():
             kwargs['file_grp'] = kwargs.pop('fileGrp')
         r = self.session.request('GET', f'{self.url}/file', params={**kwargs})
         for f in r.json()['files']:
-            yield ClientSideOcrdFile(None, ID=f['file_id'], pageId=f['page_id'], fileGrp=f['file_grp'], local_filename=f['local_filename'], mimetype=f['mimetype'])
+            yield ClientSideOcrdFile(None, ID=f['file_id'], pageId=f['page_id'], fileGrp=f['file_grp'], url=f['url'], local_filename=f['local_filename'], mimetype=f['mimetype'])
 
     def find_all_files(self, *args, **kwargs):
         return list(self.find_files(*args, **kwargs))
@@ -138,8 +139,8 @@ class ClientSideOcrdMets():
 
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
-    def add_file(self, file_grp, content=None, file_id=None, local_filename=None, mimetype=None, page_id=None, **kwargs):
-        return self.session.request(
+    def add_file(self, file_grp, content=None, file_id=None, url=None, local_filename=None, mimetype=None, page_id=None, **kwargs):
+        self.session.request(
             'POST',
             f'{self.url}/file',
             data=OcrdFileModel.create(
@@ -147,8 +148,18 @@ class ClientSideOcrdMets():
                 file_grp=file_grp,
                 page_id=page_id,
                 mimetype=mimetype,
+                url=url,
                 local_filename=local_filename).dict(),
         )
+        return ClientSideOcrdFile(
+                None,
+                ID=file_id,
+                fileGrp=file_grp,
+                url=url,
+                pageId=page_id,
+                mimetype=mimetype,
+                local_filename=local_filename)
+
 
     def save(self):
         self.session.request('PUT', self.url)
@@ -214,13 +225,14 @@ class OcrdMetsServer():
             file_id : str = Form(),
             page_id : Union[str, None] = Form(),
             mimetype : str = Form(),
+            url : str = Form(),
             local_filename : str = Form(),
         ):
             """
             Add a file
             """
             # Validate
-            file_resource = OcrdFileModel.create(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, local_filename=local_filename)
+            file_resource = OcrdFileModel.create(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url, local_filename=local_filename)
             # Add to workspace
             kwargs = file_resource.dict()
             workspace.add_file(**kwargs)
