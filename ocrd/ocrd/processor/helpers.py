@@ -271,7 +271,7 @@ Options for processing:
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
                                   taking precedence over --parameter
   -m, --mets URL-PATH             URL or file path of METS to process
-  --mets-server-url URL           URL of a METS Server for parallel incremental access to METS
+  -U, --mets-server-url URL           URL of a METS Server for parallel incremental access to METS
                                   If URL starts with http:// start an HTTP server there,
                                   otherwise URL is a path to an on-demand-created unix socket
   -w, --working-dir PATH          Working directory of local workspace

@@ -26,7 +26,7 @@ def ocrd_cli_options(f):
     params = [
         option('-m', '--mets', help="METS to process", default="mets.xml"),
         option('-w', '--working-dir', help="Working Directory"),
-        option('--mets-server-url', help="METS server URL. Starts with http:// then TCP, otherwise unix socket path"),
+        option('-U', '-mets-server-url', help="METS server URL. Starts with http:// then TCP, otherwise unix socket path"),
         # TODO OCR-D/core#274
         # option('-I', '--input-file-grp', required=True),
         # option('-O', '--output-file-grp', required=True),
