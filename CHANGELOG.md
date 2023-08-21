@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.53.0] - 2023-08-21
+
 Fixed:
 
   * `WorkspaceValidator`: make the check for consistency of `pc:Page[@pcGtsId]` and `mets:file[@ID]` optional with the `mets_fileid_page_pcgtsid` skip flag, #1066
@@ -1793,6 +1795,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.53.0]: ../../compare/v2.53.0..v2.52.0
 [2.52.0]: ../../compare/v2.52.0..v2.51.0
 [2.51.0]: ../../compare/v2.51.0..v2.50.0
 [2.50.0]: ../../compare/v2.50.0..v2.49.0
