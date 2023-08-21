@@ -718,7 +718,7 @@ def workspace_backup_undo(ctx):
 # ----------------------------------------------------------------------
 
 @workspace_cli.group('server')
-@click.pass_context
+@pass_workspace
 def workspace_serve_cli(ctx): # pylint: disable=unused-argument
     """Control a METS server for this workspace"""
     assert ctx.mets_server_url, "For METS server commands, you must provide '-U/--mets-server-url'"
