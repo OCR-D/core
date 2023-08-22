@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  - METS Server: providing concurrent additional access to the METS file for parallel processing, #966
+
 ## [2.53.0] - 2023-08-21
 
 Fixed:
