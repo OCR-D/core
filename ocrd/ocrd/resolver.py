@@ -4,8 +4,7 @@ from warnings import warn
 from os import environ
 
 import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter, Retry
 
 from ocrd.constants import TMP_PREFIX
 from ocrd_utils import (
