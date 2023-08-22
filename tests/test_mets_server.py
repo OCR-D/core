@@ -13,7 +13,7 @@ from ocrd import Resolver, OcrdMetsServer, Workspace
 from ocrd_utils import pushd_popd, MIMETYPE_PAGE
 
 WORKSPACE_DIR = '/tmp/ocrd-mets-server'
-TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://localhost:12345']
+TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://127.0.0.1:12345']
 
 @fixture(scope='session', name='start_mets_server', params=TRANSPORTS)
 def fixture_start_mets_server(request):
