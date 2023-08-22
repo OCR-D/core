@@ -32,8 +32,8 @@ class OcrdFileModel(BaseModel):
     file_id : str = Field()
     mimetype : str = Field()
     page_id : Union[str, None] = Field()
-    url : str = Field()
-    local_filename : str = Field()
+    url : Union[str, None] = Field()
+    local_filename : Union[str, None] = Field()
 
     @staticmethod
     def create(file_grp : str, file_id : str, page_id : Union[str, None], url : str, local_filename : str, mimetype : str):
@@ -225,8 +225,8 @@ class OcrdMetsServer():
             file_id : str = Form(),
             page_id : Union[str, None] = Form(),
             mimetype : str = Form(),
-            url : str = Form(),
-            local_filename : str = Form(),
+            url : Union[str, None] = Form(),
+            local_filename : Union[str, None] = Form(),
         ):
             """
             Add a file
