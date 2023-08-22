@@ -117,6 +117,11 @@ def test_mets_test_unimplemented(start_mets_server):
     with raises(NotImplementedError):
         workspace_server.mets.rename_file_group('OCR-D-IMG', 'FOO')
 
+def test_mets_server_different_workspaces(start_mets_server):
+    mets_server_url, workspace_server = start_mets_server
+    with raises(ValueError, match="differs from local workspace"):
+        workspace = Resolver().workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'), mets_server_url=mets_server_url)
+
 def test_mets_test_unique_identifier(start_mets_server):
     _, workspace_server = start_mets_server
     assert workspace_server.mets.unique_identifier == 'http://kant_aufklaerung_1784'

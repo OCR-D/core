@@ -105,6 +105,10 @@ class ClientSideOcrdMets():
     def __str__(self):
         return f'<ClientSideOcrdMets[url={self.url}]>'
 
+    @property
+    def workspace_path(self):
+        return self.session.request('GET', f'{self.url}/workspace_path').text
+
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")
@@ -255,6 +259,10 @@ class OcrdMetsServer():
         @app.get('/unique_identifier', response_model=str)
         async def unique_identifier():
             return Response(content=workspace.mets.unique_identifier, media_type='text/plain')
+
+        @app.get('/workspace_path', response_model=str)
+        async def workspace_path():
+            return Response(content=workspace.directory, media_type="text/plain")
 
         @app.delete('/')
         async def stop():
