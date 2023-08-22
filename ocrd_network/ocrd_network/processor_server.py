@@ -14,7 +14,6 @@ from ocrd_utils import (
 from .database import (
     DBProcessorJob,
     db_update_processing_job,
-    db_update_workspace,
     initiate_database
 )
 from .models import (
@@ -179,12 +178,6 @@ class ProcessorServer(FastAPI):
             state=job_state,
             end_time=end_time,
             exec_time=f'{exec_duration} ms'
-        )
-        # Unlock the workspace
-        await db_update_workspace(
-            workspace_id=job.workspace_id,
-            workspace_mets_path=job.path_to_mets,
-            being_processed=False
         )
         result_message = OcrdResultMessage(
             job_id=job.job_id,

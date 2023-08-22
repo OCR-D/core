@@ -37,16 +37,20 @@ async def sync_initiate_database(db_url: str):
 
 async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = None) -> DBWorkspace:
     workspace = None
+    if not workspace_id and not workspace_mets_path:
+        raise ValueError(f'Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
     if workspace_id:
         workspace = await DBWorkspace.find_one(
             DBWorkspace.workspace_id == workspace_id
         )
+        if not workspace:
+            raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
     if workspace_mets_path:
         workspace = await DBWorkspace.find_one(
             DBWorkspace.workspace_mets_path == workspace_mets_path
         )
-    if not workspace:
-        raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
+        if not workspace:
+            raise ValueError(f'Workspace with path "{workspace_mets_path}" not in the DB.')
     return workspace
 
 
@@ -57,16 +61,20 @@ async def sync_db_get_workspace(workspace_id: str = None, workspace_mets_path: s
 
 async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs):
     workspace = None
+    if not workspace_id and not workspace_mets_path:
+        raise ValueError(f'Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
     if workspace_id:
         workspace = await DBWorkspace.find_one(
             DBWorkspace.workspace_id == workspace_id
         )
+        if not workspace:
+            raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
     if workspace_mets_path:
         workspace = await DBWorkspace.find_one(
             DBWorkspace.workspace_mets_path == workspace_mets_path
         )
-    if not workspace:
-        raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
+        if not workspace:
+            raise ValueError(f'Workspace with path "{workspace_mets_path}" not in the DB.')
 
     job_keys = list(workspace.__dict__.keys())
     for key, value in kwargs.items():

@@ -302,7 +302,7 @@ class Deployer:
     ) -> str:
         if self.data_mongo.skip_deployment:
             self.log.debug('MongoDB is externaly managed. Skipping deployment')
-            verify_mongodb_available(self.data_mongo.url);
+            verify_mongodb_available(self.data_mongo.url)
             return self.data_mongo.url
 
         self.log.debug(f"Trying to deploy '{image}', with modes: "

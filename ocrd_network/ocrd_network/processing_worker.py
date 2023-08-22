@@ -21,7 +21,6 @@ from .database import (
     sync_initiate_database,
     sync_db_get_workspace,
     sync_db_update_processing_job,
-    sync_db_update_workspace
 )
 from .models import StateEnum
 from .process_helpers import invoke_processor
@@ -229,12 +228,6 @@ class ProcessingWorker:
             state=job_state,
             end_time=end_time,
             exec_time=f'{exec_duration} ms'
-        )
-        # Unlock the workspace
-        sync_db_update_workspace(
-            workspace_id=workspace_id,
-            workspace_mets_path=path_to_mets,
-            being_processed=False
         )
         result_message = OcrdResultMessage(
             job_id=job_id,
