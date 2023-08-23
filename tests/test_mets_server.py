@@ -2,7 +2,8 @@ from pytest import fixture, raises
 from tests.base import assets
 
 from itertools import repeat
-from multiprocessing import Process, Pool
+from multiprocessing import Process, Pool, set_start_method
+set_start_method("fork")
 from shutil import rmtree, copytree
 from os import remove
 from os.path import exists
