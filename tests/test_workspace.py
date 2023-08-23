@@ -142,7 +142,7 @@ def test_workspace_str(plain_workspace):
 
     # assert
     ws_dir = plain_workspace.directory
-    assert str(plain_workspace) == 'Workspace[directory=%s, baseurl=None, file_groups=[], files=[]]' % ws_dir
+    assert str(plain_workspace) == 'Workspace[remote=False, directory=%s, baseurl=None, file_groups=[], files=[]]' % ws_dir
 
 
 def test_workspace_backup(plain_workspace):

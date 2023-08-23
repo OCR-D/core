@@ -5,6 +5,31 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  - METS Server: providing concurrent additional access to the METS file for parallel processing, #966
+
+## [2.53.0] - 2023-08-21
+
+Fixed:
+
+  * `WorkspaceValidator`: make the check for consistency of `pc:Page[@pcGtsId]` and `mets:file[@ID]` optional with the `mets_fileid_page_pcgtsid` skip flag, #1066
+  * `ocrd resmgr download`: use `basedir` as an arg and not a kwarg, #1078
+
+Changed:
+
+  * `WorkspaceValidator`: Download files temporarily/on-demand, #1066
+  * `ocrd-* --version` now prints only the version of the processor without noise or core version, #1068
+
+Added
+
+  * Environement variables to control optional retries and timeouts for downloading files:
+    * `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of workspace files. #1073
+    * `OCRD_DOWNLOAD_TIMEOUT`: Timeout in seconds for connecting or reading (comma-separated) when downloading. #1073
+  * Environment variables used throughout core are now documented in README and `ocrd --help`,  #1073
+  * Web API: `--create-queue` option to on-demand create RabbitMQ for processing workers, #1075
+  * Web API: `--queue-connec-attempts` to retry connection to RabbitMQ in case server is not yet running, #1075
+
 ## [2.52.0] - 2023-06-26
 
 Added:
@@ -1774,6 +1799,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.53.0]: ../../compare/v2.53.0..v2.52.0
 [2.52.0]: ../../compare/v2.52.0..v2.51.0
 [2.51.0]: ../../compare/v2.51.0..v2.50.0
 [2.50.0]: ../../compare/v2.50.0..v2.49.0

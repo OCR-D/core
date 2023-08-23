@@ -6,6 +6,7 @@ ignored-modules=cv2,tesserocr,ocrd.model
 ignore-patterns='.*generateds.*'
 disable =
     fixme,
+    E501,
     trailing-whitespace,
     logging-not-lazy,
     inconsistent-return-statements,

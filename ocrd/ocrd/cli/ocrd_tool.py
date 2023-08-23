@@ -48,7 +48,7 @@ def ocrd_tool_cli(ctx, json_file):
 @ocrd_tool_cli.command('version', help='Version of ocrd-tool.json')
 @pass_ocrd_tool
 def ocrd_tool_version(ctx):
-    print('Version "%s", ocrd/core "%s"' % (ctx.json['version'], OCRD_VERSION))
+    print(ctx.json['version'])
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool validate

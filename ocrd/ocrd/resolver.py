@@ -1,8 +1,10 @@
 from tempfile import mkdtemp
 from pathlib import Path
 from warnings import warn
+from os import environ
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from ocrd.constants import TMP_PREFIX
 from ocrd_utils import (
@@ -23,7 +25,7 @@ class Resolver():
     Handle uploads, downloads, repository access, and manage temporary directories
     """
 
-    def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None):
+    def download_to_directory(self, directory, url, basename=None, if_exists='skip', subdir=None, retries=None, timeout=None):
         """
         Download a file to a directory.
 
@@ -36,11 +38,15 @@ class Resolver():
 
         Args:
             directory (string): Directory to download files to
-            basename (string, None): basename part of the filename on disk.
             url (string): URL to download from
-            if_exists (string, "skip"): What to do if target file already exists. \
+
+        Keyword Args:
+            basename (string, None): basename part of the filename on disk.
+            if_exists (string, "skip"): What to do if target file already exists.
                 One of ``skip`` (default), ``overwrite`` or ``raise``
             subdir (string, None): Subdirectory to create within the directory. Think ``mets:fileGrp``.
+            retries (int, None): Number of retries to attempt on network failure.
+            timeout (tuple, None): Timeout in seconds for establishing a connection and reading next chunk of data.
 
         Returns:
             Local filename string, *relative* to directory
@@ -100,15 +106,57 @@ class Resolver():
             dst_path.write_bytes(src_path.read_bytes())
         else:
             log.debug("Downloading URL '%s' to '%s'", url, dst_path)
-            response = requests.get(url)
-            if response.status_code != 200:
-                raise Exception("HTTP request failed: %s (HTTP %d)" % (url, response.status_code))
+            if 'OCRD_DOWNLOAD_RETRIES' in environ:
+                retries = retries or int(environ['OCRD_DOWNLOAD_RETRIES'])
+            if timeout is None and 'OCRD_DOWNLOAD_TIMEOUT' in environ:
+                timeout = environ['OCRD_DOWNLOAD_TIMEOUT'].split(',')
+                if len(timeout) > 1:
+                    timeout = tuple(float(x) for x in timeout)
+                else:
+                    timeout = float(timeout[0])
+            session = requests.Session()
+            retries = Retry(total=retries or 0,
+                            status_forcelist=[
+                                # probably too wide (only transient failures):
+                                408, # Request Timeout
+                                409, # Conflict
+                                412, # Precondition Failed
+                                417, # Expectation Failed
+                                423, # Locked
+                                424, # Fail
+                                425, # Too Early
+                                426, # Upgrade Required
+                                428, # Precondition Required
+                                429, # Too Many Requests
+                                440, # Login Timeout
+                                500, # Internal Server Error
+                                503, # Service Unavailable
+                                504, # Gateway Timeout
+                                509, # Bandwidth Limit Exceeded
+                                529, # Site Overloaded
+                                598, # Proxy Read Timeout
+                                599, # Proxy Connect Timeout
+                    ])
+            adapter = HTTPAdapter(max_retries=retries)
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
+            response = session.get(url, timeout=timeout)
+            response.raise_for_status()
             contents = handle_oai_response(response)
             dst_path.write_bytes(contents)
 
         return ret
 
-    def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, src_baseurl=None):
+    def workspace_from_url(
+        self,
+        mets_url,
+        dst_dir=None,
+        clobber_mets=False,
+        mets_basename=None,
+        download=False,
+        src_baseurl=None,
+        mets_server_url=None,
+    ):
         """
         Create a workspace from a METS by URL (i.e. clone if :py:attr:`mets_url` is remote or :py:attr:`dst_dir` is given).
 
@@ -165,7 +213,7 @@ class Resolver():
 
         self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'skip')
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl)
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl, mets_server_url=mets_server_url)
 
         if download:
             for f in workspace.mets.find_files():
@@ -201,12 +249,14 @@ class Resolver():
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
 
-    def resolve_mets_arguments(self, directory, mets_url, mets_basename):
+    def resolve_mets_arguments(self, directory, mets_url, mets_basename, mets_server_url):
         """
-        Resolve the ``--mets``, ``--mets-basename`` and `--directory`` argument
-        into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
+        Resolve the ``--mets``, ``--mets-basename``, `--directory``,
+        ``--mets-server-url``, arguments into a coherent set of arguments
+        according to https://github.com/OCR-D/core/issues/517
         """
         log = getLogger('ocrd.resolver.resolve_mets_arguments')
+
         mets_is_remote = mets_url and (mets_url.startswith('http://') or mets_url.startswith('https://'))
 
         # XXX we might want to be more strict like this but it might break # legacy code
@@ -249,6 +299,6 @@ class Resolver():
                     if not is_file_in_directory(directory, mets_url):
                         raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
 
-        return str(Path(directory).resolve()), str(mets_url), str(mets_basename)
+        return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_url
 
 

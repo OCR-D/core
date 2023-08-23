@@ -24,8 +24,9 @@ def ocrd_cli_options(f):
     """
     # XXX Note that the `--help` output is statically generate_processor_help
     params = [
-        option('-m', '--mets', default="mets.xml"),
-        option('-w', '--working-dir'),
+        option('-m', '--mets', help="METS to process", default="mets.xml"),
+        option('-w', '--working-dir', help="Working Directory"),
+        option('-U', '--mets-server-url', help="METS server URL. Starts with http:// then TCP, otherwise unix socket path"),
         # TODO OCR-D/core#274
         # option('-I', '--input-file-grp', required=True),
         # option('-O', '--output-file-grp', required=True),
