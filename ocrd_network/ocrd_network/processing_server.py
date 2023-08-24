@@ -21,7 +21,6 @@ from .models import (
     DBProcessorJob,
     PYJobInput,
     PYJobOutput,
-    PYResultMessage,
     StateEnum
 )
 from .rabbitmq_utils import (
