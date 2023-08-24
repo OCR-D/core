@@ -18,7 +18,8 @@ class OcrdProcessingMessage:
             page_id: Optional[str],
             result_queue_name: Optional[str],
             callback_url: Optional[str],
-            parameters: Dict[str, Any] = None,
+            internal_callback_url: Optional[str],
+            parameters: Dict[str, Any] = None
     ) -> None:
         if not job_id:
             raise ValueError('job_id must be provided')
@@ -47,6 +48,8 @@ class OcrdProcessingMessage:
             self.result_queue_name = result_queue_name
         if callback_url:
             self.callback_url = callback_url
+        if internal_callback_url:
+            self.internal_callback_url = internal_callback_url
         self.parameters = parameters if parameters else {}
 
     @staticmethod
@@ -71,7 +74,8 @@ class OcrdProcessingMessage:
             page_id=data.get('page_id', None),
             parameters=data.get('parameters', None),
             result_queue_name=data.get('result_queue_name', None),
-            callback_url=data.get('callback_url', None)
+            callback_url=data.get('callback_url', None),
+            internal_callback_url=data.get('internal_callback_url', None)
         )
 
 

@@ -3,7 +3,6 @@ import requests
 import httpx
 from typing import Dict, List, Optional
 import uvicorn
-from queue import Queue
 
 from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -22,6 +21,7 @@ from .models import (
     DBProcessorJob,
     PYJobInput,
     PYJobOutput,
+    PYResultMessage,
     StateEnum
 )
 from .rabbitmq_utils import (
@@ -82,6 +82,9 @@ class ProcessingServer(FastAPI):
         # Key: `workspace_id` or `path_to_mets` depending on which is provided
         # Value: Queue that holds PYInputJob elements
         self.processing_requests_cache = {}
+
+        # Used by processing workers and/or processor servers to report back the results
+        self.internal_job_callback_url = f'http://{host}:{port}/processor/result_callback'
 
         # Create routes
         self.router.add_api_route(
@@ -249,6 +252,7 @@ class ProcessingServer(FastAPI):
             parameters=job.parameters,
             result_queue_name=job.result_queue_name,
             callback_url=job.callback_url,
+            internal_callback_url=job.internal_callback_url
         )
         return processing_message
 
@@ -265,6 +269,34 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Process queue with id '{processor_name}' not existing"
             )
+
+    # Returns true if all dependent jobs' states are success, else false
+    @staticmethod
+    async def check_if_job_dependencies_met(dependencies: List[str]) -> bool:
+        # Check the states of all dependent jobs
+        for dependency_job_id in dependencies:
+            dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
+            # Found a dependent job whose state is not success
+            if dependency_job_state != StateEnum.success:
+                return False
+        return True
+
+    async def find_next_request_from_internal_queue(self, internal_queue: List[PYJobInput]) -> PYJobInput:
+        found_index = None
+        found_request = None
+        for i in range(0, len(internal_queue)):
+            current_element = internal_queue[i]
+            # Request has other job dependencies
+            if current_element.depends_on:
+                if not await self.check_if_job_dependencies_met(current_element.depends_on):
+                    continue
+            found_index = i
+            break
+
+        if found_index:
+            # Consume the request from the internal queue
+            found_request = internal_queue.pop(found_index)
+        return found_request
 
     def query_ocrd_tool_json_from_server(self, processor_name):
         processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
@@ -323,17 +355,24 @@ class ProcessingServer(FastAPI):
         # is a page_id value that has been previously locked
         cache_current_request = False
 
-        # Check if there are any locked pages for the current request
+        # Check if there are any dependencies of the current request
+        if data.depends_on:
+            if not await self.check_if_job_dependencies_met(data.depends_on):
+                cache_current_request = True
+
         locked_ws_pages = workspace_db.pages_locked
-        for output_fileGrp in data.output_file_grps:
-            if output_fileGrp in locked_ws_pages:
-                if "all_pages" in locked_ws_pages[output_fileGrp]:
-                    cache_current_request = True
-                    break
-                # If there are request page ids that are already locked
-                if not locked_ws_pages[output_fileGrp].isdisjoint(page_ids):
-                    cache_current_request = True
-                    break
+        # No need for further check if the request should be cached
+        if not cache_current_request:
+            # Check if there are any locked pages for the current request
+            for output_fileGrp in data.output_file_grps:
+                if output_fileGrp in locked_ws_pages:
+                    if "all_pages" in locked_ws_pages[output_fileGrp]:
+                        cache_current_request = True
+                        break
+                    # If there are request page ids that are already locked
+                    if not locked_ws_pages[output_fileGrp].isdisjoint(page_ids):
+                        cache_current_request = True
+                        break
 
         if cache_current_request:
             # Append the processor name to the request itself
@@ -342,9 +381,9 @@ class ProcessingServer(FastAPI):
             workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
             # If a record queue of this workspace_id does not exist in the requests cache
             if not self.processing_requests_cache.get(workspace_key, None):
-                self.processing_requests_cache[workspace_key] = Queue()
-            # Add the processing request to the internal queue
-            self.processing_requests_cache[workspace_key].put(data)
+                self.processing_requests_cache[workspace_key] = []
+            # Add the processing request to the end of the internal queue
+            self.processing_requests_cache[workspace_key].append(data)
 
             return PYJobOutput(
                 job_id=data.job_id,
@@ -376,7 +415,7 @@ class ProcessingServer(FastAPI):
         job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
             processor_name=processor_name,
-            internal_callback_url=f"/processor/result_callback",
+            internal_callback_url=self.internal_job_callback_url,
             state=StateEnum.queued
         )
         await job.insert()
@@ -504,10 +543,10 @@ class ProcessingServer(FastAPI):
         workspace_key = workspace_id if workspace_id else path_to_mets
 
         if workspace_key not in self.processing_requests_cache:
-            # No internal queue available for that workspace
+            self.log.exception(f"No internal queue available for workspace with key: {workspace_key}")
             return
 
-        if self.processing_requests_cache[workspace_key].empty():
+        if not len(self.processing_requests_cache[workspace_key]):
             # The queue is empty - delete it
             try:
                 del self.processing_requests_cache[workspace_key]
@@ -515,17 +554,18 @@ class ProcessingServer(FastAPI):
                 self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
             return
 
-        # Process the next request in the internal queue
-        # TODO: Refactor and optimize the duplications here
-        #  and last lines in `push_processor_job` method
-        data = self.processing_requests_cache[workspace_key].get()
-        processor_name = data.processor_name
+        data = await self.find_next_request_from_internal_queue(self.processing_requests_cache[workspace_key])
+        # Nothing was consumed from the internal queue
+        if not data:
+            self.log.exception(f"No data was consumed from the internal queue")
+            return
 
+        processor_name = data.processor_name
         # Create a DB entry
         job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
             processor_name=processor_name,
-            internal_callback_url=f"/processor/result_callback",
+            internal_callback_url=self.internal_job_callback_url,
             state=StateEnum.queued
         )
         await job.insert()

@@ -192,7 +192,7 @@ class ProcessingWorker:
         page_id = processing_message.page_id if 'page_id' in pm_keys else None
         result_queue_name = processing_message.result_queue_name if 'result_queue_name' in pm_keys else None
         callback_url = processing_message.callback_url if 'callback_url' in pm_keys else None
-        internal_callback_url = processing_message.callback_url if 'internal_callback_url' in pm_keys else None
+        internal_callback_url = processing_message.internal_callback_url if 'internal_callback_url' in pm_keys else None
         parameters = processing_message.parameters if processing_message.parameters else {}
 
         if not path_to_mets and workspace_id:
@@ -239,7 +239,7 @@ class ProcessingWorker:
             # May not be always available
             workspace_id=workspace_id
         )
-        self.log.info(f'Result message: {result_message}')
+        self.log.info(f'Result message: {str(result_message)}')
         # If the result_queue field is set, send the result message to a result queue
         if result_queue_name:
             self.publish_to_result_queue(result_queue_name, result_message)
@@ -264,18 +264,6 @@ class ProcessingWorker:
             queue_name=result_queue,
             message=encoded_result_message
         )
-
-    def post_to_callback_url(self, callback_url: str, result_message: OcrdResultMessage):
-        self.log.info(f'Posting result message to callback_url "{callback_url}"')
-        headers = {"Content-Type": "application/json"}
-        json_data = {
-            "job_id": result_message.job_id,
-            "state": result_message.state,
-            "path_to_mets": result_message.path_to_mets,
-            "workspace_id": result_message.workspace_id
-        }
-        response = requests.post(url=callback_url, headers=headers, json=json_data)
-        self.log.info(f'Response from callback_url "{response}"')
 
     def create_queue(self, connection_attempts=1, retry_delay=1):
         """Create the queue for this worker
