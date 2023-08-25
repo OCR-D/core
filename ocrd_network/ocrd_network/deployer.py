@@ -39,6 +39,7 @@ class Deployer:
         self.data_mongo: DataMongoDB = DataMongoDB(config['database'])
         self.data_queue: DataRabbitMQ = DataRabbitMQ(config['process_queue'])
         self.data_hosts: List[DataHost] = []
+        self.internal_callback_url = config.get('internal_callback_url', None)
         for config_host in config['hosts']:
             self.data_hosts.append(DataHost(config_host))
 

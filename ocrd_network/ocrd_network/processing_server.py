@@ -84,7 +84,11 @@ class ProcessingServer(FastAPI):
         self.processing_requests_cache = {}
 
         # Used by processing workers and/or processor servers to report back the results
-        self.internal_job_callback_url = f'http://{host}:{port}/result_callback'
+        if self.deployer.internal_callback_url:
+            host = self.deployer.internal_callback_url
+            self.internal_job_callback_url = f'{host.rstrip("/")}/result_callback'
+        else:
+            self.internal_job_callback_url = f'http://{host}:{port}/result_callback'
 
         # Create routes
         self.router.add_api_route(
@@ -473,7 +477,7 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to json dump the PYJobInput, error: {e}"
             )
-        
+
         # TODO: The amount of pages should come as a request input
         # TODO: cf https://github.com/OCR-D/core/pull/1030/files#r1152551161
         #  currently, use 200 as a default
