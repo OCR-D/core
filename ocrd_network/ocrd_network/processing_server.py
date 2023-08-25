@@ -21,6 +21,7 @@ from .models import (
     DBProcessorJob,
     PYJobInput,
     PYJobOutput,
+    PYResultMessage,
     StateEnum
 )
 from .rabbitmq_utils import (
@@ -83,7 +84,7 @@ class ProcessingServer(FastAPI):
         self.processing_requests_cache = {}
 
         # Used by processing workers and/or processor servers to report back the results
-        self.internal_job_callback_url = f'http://{host}:{port}/processor/result_callback'
+        self.internal_job_callback_url = f'http://{host}:{port}/result_callback'
 
         # Create routes
         self.router.add_api_route(
@@ -119,7 +120,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/result_callback',
+            path='/result_callback',
             endpoint=self.remove_from_request_cache,
             methods=['POST'],
             tags=['processing'],
@@ -270,31 +271,32 @@ class ProcessingServer(FastAPI):
             )
 
     # Returns true if all dependent jobs' states are success, else false
-    @staticmethod
-    async def check_if_job_dependencies_met(dependencies: List[str]) -> bool:
+    async def check_if_job_dependencies_met(self, dependencies: List[str]) -> bool:
         # Check the states of all dependent jobs
         for dependency_job_id in dependencies:
+            self.log.debug(f"dependency_job_id: {dependency_job_id}")
             dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
+            self.log.debug(f"dependency_job_state: {dependency_job_state}")
             # Found a dependent job whose state is not success
             if dependency_job_state != StateEnum.success:
                 return False
         return True
 
     async def find_next_request_from_internal_queue(self, internal_queue: List[PYJobInput]) -> PYJobInput:
-        found_index = None
         found_request = None
-        for i in range(0, len(internal_queue)):
-            current_element = internal_queue[i]
+        for i, current_element in enumerate(internal_queue):
             # Request has other job dependencies
             if current_element.depends_on:
-                if not await self.check_if_job_dependencies_met(current_element.depends_on):
+                self.log.debug(f"current_element: {current_element}")
+                self.log.debug(f"job dependencies: {current_element.depends_on}")
+                satisfied_dependencies = await self.check_if_job_dependencies_met(current_element.depends_on)
+                self.log.debug(f"satisfied dependencies: {satisfied_dependencies}")
+                if not satisfied_dependencies:
                     continue
-            found_index = i
-            break
-
-        if found_index:
             # Consume the request from the internal queue
-            found_request = internal_queue.pop(found_index)
+            found_request = internal_queue.pop(i)
+            self.log.debug(f"found cached request to be processed: {found_request}")
+            break
         return found_request
 
     def query_ocrd_tool_json_from_server(self, processor_name):
@@ -328,6 +330,9 @@ class ProcessingServer(FastAPI):
         # Generate processing job id
         data.job_id = generate_id()
 
+        # Append the processor name to the request itself
+        data.processor_name = processor_name
+
         if data.agent_type not in ['worker', 'server']:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -357,6 +362,7 @@ class ProcessingServer(FastAPI):
         # Check if there are any dependencies of the current request
         if data.depends_on:
             if not await self.check_if_job_dependencies_met(data.depends_on):
+                self.log.debug(f"Caching the received request due to job dependencies")
                 cache_current_request = True
 
         locked_ws_pages = workspace_db.pages_locked
@@ -366,17 +372,16 @@ class ProcessingServer(FastAPI):
             for output_fileGrp in data.output_file_grps:
                 if output_fileGrp in locked_ws_pages:
                     if "all_pages" in locked_ws_pages[output_fileGrp]:
+                        self.log.debug(f"Caching the received request due to locked output file grp pages")
                         cache_current_request = True
                         break
                     # If there are request page ids that are already locked
                     if not locked_ws_pages[output_fileGrp].isdisjoint(page_ids):
+                        self.log.debug(f"Caching the received request due to locked output file grp pages")
                         cache_current_request = True
                         break
 
         if cache_current_request:
-            # Append the processor name to the request itself
-            data.processor_name = processor_name
-
             workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
             # If a record queue of this workspace_id does not exist in the requests cache
             if not self.processing_requests_cache.get(workspace_key, None):
@@ -413,7 +418,6 @@ class ProcessingServer(FastAPI):
         # Create a DB entry
         job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
-            processor_name=processor_name,
             internal_callback_url=self.internal_job_callback_url,
             state=StateEnum.queued
         )
@@ -496,8 +500,14 @@ class ProcessingServer(FastAPI):
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, processor_name, job_id)
 
-    async def remove_from_request_cache(self, job_id: str, state: StateEnum,
-                                        workspace_id: Optional[str], path_to_mets: Optional[str]):
+    async def remove_from_request_cache(self, result_message: PYResultMessage):
+        job_id = result_message.job_id
+        state = result_message.state
+        path_to_mets = result_message.path_to_mets
+        workspace_id = result_message.workspace_id
+
+        self.log.debug(f"Received result for job with id: {job_id} has state: {state}")
+
         if state == StateEnum.failed:
             # TODO: Call the callback to the Workflow server if the current processing step has failed
             pass
@@ -563,7 +573,6 @@ class ProcessingServer(FastAPI):
         # Create a DB entry
         job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
-            processor_name=processor_name,
             internal_callback_url=self.internal_job_callback_url,
             state=StateEnum.queued
         )
