@@ -1,6 +1,6 @@
 import re
 from fastapi import HTTPException, status
-from typing import Dict, List
+from typing import List
 from ocrd_validators import ParameterValidator
 from ocrd_utils import (
     generate_range,
@@ -10,7 +10,9 @@ from .database import (
     db_get_processing_job,
     db_get_workspace,
 )
-from .models import PYJobInput, PYJobOutput
+from .models import PYJobInput, PYJobOutput, DBWorkspace
+import uuid
+from pathlib import Path
 
 
 async def _get_processor_job(logger, processor_name: str, job_id: str) -> PYJobOutput:
@@ -78,10 +80,29 @@ def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: 
         logger.exception(f'Failed to validate processing job against the ocrd_tool: {e}')
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f'Failed to validate processing job against the ocrd_tool'
+            detail='Failed to validate processing job against the ocrd_tool'
         )
     else:
         if not report.is_valid:
             logger.exception(f'Failed to validate processing job '
                              f'against the ocrd_tool, errors: {report.errors}')
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
+
+
+async def create_db_workspace(workspace_path: str) -> DBWorkspace:
+    """ Create a workspace-database entry only from a mets-path
+    """
+    if not Path(workspace_path).exists():
+        return None
+    try:
+        return await db_get_workspace(workspace_mets_path=workspace_path)
+    except ValueError:
+        workspace_db = DBWorkspace(
+            workspace_id=str(uuid.uuid4()),
+            workspace_path=Path(workspace_path).parent,
+            workspace_mets_path=workspace_path,
+            ocrd_identifier="",
+            bagit_profile_identifier="",
+        )
+        await workspace_db.save()
+        return workspace_db

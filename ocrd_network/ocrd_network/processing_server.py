@@ -4,7 +4,13 @@ import httpx
 from typing import Dict, List
 import uvicorn
 
-from fastapi import FastAPI, status, Request, HTTPException
+from fastapi import (
+    FastAPI,
+    status,
+    Request,
+    HTTPException,
+    UploadFile
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -33,12 +39,14 @@ from .server_utils import (
     expand_page_ids,
     validate_and_return_mets_path,
     validate_job_input,
+    create_db_workspace,
 )
 from .utils import (
     download_ocrd_all_tool_json,
     generate_created_time,
     generate_id
 )
+from ocrd.task_sequence import ProcessorTask
 
 
 class ProcessingServer(FastAPI):
@@ -148,6 +156,15 @@ class ProcessingServer(FastAPI):
             tags=['processing', 'discovery'],
             status_code=status.HTTP_200_OK,
             summary='Get a list of all available processors',
+        )
+
+        self.router.add_api_route(
+            path='/workflow',
+            endpoint=self.run_workflow,
+            methods=['POST'],
+            tags=['workflow', 'processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Run a workflow',
         )
 
         @self.exception_handler(RequestValidationError)
@@ -670,3 +687,41 @@ class ProcessingServer(FastAPI):
             unique_only=True
         )
         return processor_names_list
+
+    # TODO: think about providing arguments in another way
+    # TODO: this function "just" writes to the queue and returns. A network-client functionality
+    #       should be available to react to everys processors callback. With this feedback
+    #       a blocking mechanism could be provided to inform about starting the cain and waiting for
+    #       the processors to finish and printing when reponses are received from the processors
+    async def run_workflow(self, workflow: UploadFile, workspace_path, callback_url=None) -> List:
+        # core cannot create workspaces by api, but processing-server needs the workspace in the
+        # database. Here the workspace is created if the path available and not existing in db:
+        #from pudb import set_trace; set_trace()
+        if not await create_db_workspace(workspace_path):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=f"Workspace with path: '{workspace_path}' not existing")
+
+        workflow = (await workflow.read()).decode("utf-8")
+        try:
+            tasks_list = workflow.splitlines()
+            tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
+        except BaseException as e:
+            print(e)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=f"Error parsing tasks: {e}")
+        outputs = []
+        last_job_id = ""
+        for task in tasks:
+            data = PYJobInput(
+                agent_type='worker',
+                path_to_mets=workspace_path,
+                input_file_grps=task.input_file_grps,
+                output_file_grps=task.output_file_grps,
+                parameters=task.parameters,
+                callback_url=callback_url,
+                depends_on=[last_job_id] if last_job_id else [],
+            )
+            output = await self.push_processor_job(task.executable, data)
+            outputs.append(output)
+            last_job_id = output.job_id
+        return outputs
