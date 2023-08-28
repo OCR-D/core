@@ -556,7 +556,7 @@ class ProcessingServer(FastAPI):
         workspace_key = workspace_id if workspace_id else path_to_mets
 
         if workspace_key not in self.processing_requests_cache:
-            self.log.exception(f"No internal queue available for workspace with key: {workspace_key}")
+            self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
             return
 
         if not len(self.processing_requests_cache[workspace_key]):
@@ -570,7 +570,7 @@ class ProcessingServer(FastAPI):
         data = await self.find_next_request_from_internal_queue(self.processing_requests_cache[workspace_key])
         # Nothing was consumed from the internal queue
         if not data:
-            self.log.exception(f"No data was consumed from the internal queue")
+            self.log.debug("No data was consumed from the internal queue")
             return
 
         processor_name = data.processor_name
