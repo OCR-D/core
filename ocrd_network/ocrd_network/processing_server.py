@@ -384,7 +384,7 @@ class ProcessingServer(FastAPI):
                         cache_current_request = True
                         break
                     # If there are request page ids that are already locked
-                    if not locked_ws_pages[output_fileGrp].isdisjoint(page_ids):
+                    if not set(locked_ws_pages[output_fileGrp]).isdisjoint(page_ids):
                         self.log.debug(f"Caching the received request due to locked output file grp pages")
                         cache_current_request = True
                         break
@@ -408,13 +408,13 @@ class ProcessingServer(FastAPI):
             # Update locked pages by locking the pages in the request
             for output_fileGrp in data.output_file_grps:
                 if output_fileGrp not in locked_ws_pages:
-                    locked_ws_pages[output_fileGrp] = set()
+                    locked_ws_pages[output_fileGrp] = []
                 # The page id list is not empty - only some pages are in the request
                 if page_ids:
-                    locked_ws_pages[output_fileGrp].update(page_ids)
+                    locked_ws_pages[output_fileGrp].append(page_ids)
                 else:
                     # Lock all pages with a single value
-                    locked_ws_pages[output_fileGrp].add("all_pages")
+                    locked_ws_pages[output_fileGrp].append("all_pages")
 
             # Update the locked pages dictionary in the database
             await db_update_workspace(
@@ -544,7 +544,7 @@ class ProcessingServer(FastAPI):
             if output_fileGrp in locked_ws_pages:
                 if job_page_ids:
                     # Unlock the previously locked pages
-                    locked_ws_pages[output_fileGrp].difference_update(set(job_page_ids))
+                    locked_ws_pages[output_fileGrp] = [x for x in locked_ws_pages if x not in job_page_ids]
                 else:
                     # Remove the single variable used to indicate all pages are locked
                     locked_ws_pages[output_fileGrp].remove("all_pages")
