@@ -279,7 +279,11 @@ class ProcessingServer(FastAPI):
         # Check the states of all dependent jobs
         for dependency_job_id in dependencies:
             self.log.debug(f"dependency_job_id: {dependency_job_id}")
-            dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
+            try:
+                dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
+            except ValueError:
+                # job_id not (yet) in db. Dependency not met
+                return False
             self.log.debug(f"dependency_job_state: {dependency_job_state}")
             # Found a dependent job whose state is not success
             if dependency_job_state != StateEnum.success:
