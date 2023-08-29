@@ -393,7 +393,9 @@ class ProcessingServer(FastAPI):
             workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
             # If a record queue of this workspace_id does not exist in the requests cache
             if not self.processing_requests_cache.get(workspace_key, None):
+                self.log.debug(f"Creating an internal queue for workspace_key: {workspace_key}")
                 self.processing_requests_cache[workspace_key] = []
+            self.log.debug(f"Caching the processing request: {data}")
             # Add the processing request to the end of the internal queue
             self.processing_requests_cache[workspace_key].append(data)
 
@@ -408,12 +410,15 @@ class ProcessingServer(FastAPI):
             # Update locked pages by locking the pages in the request
             for output_fileGrp in data.output_file_grps:
                 if output_fileGrp not in locked_ws_pages:
+                    self.log.debug(f"Creating an empty list for output file grp: {output_fileGrp}")
                     locked_ws_pages[output_fileGrp] = []
                 # The page id list is not empty - only some pages are in the request
                 if page_ids:
-                    locked_ws_pages[output_fileGrp].append(page_ids)
+                    self.log.debug(f"Locking pages for `{output_fileGrp}`: {page_ids}")
+                    locked_ws_pages[output_fileGrp].extend(page_ids)
                 else:
                     # Lock all pages with a single value
+                    self.log.debug(f"Locking all pages for `{output_fileGrp}`")
                     locked_ws_pages[output_fileGrp].append("all_pages")
 
             # Update the locked pages dictionary in the database
@@ -544,9 +549,12 @@ class ProcessingServer(FastAPI):
             if output_fileGrp in locked_ws_pages:
                 if job_page_ids:
                     # Unlock the previously locked pages
-                    locked_ws_pages[output_fileGrp] = [x for x in locked_ws_pages if x not in job_page_ids]
+                    self.log.debug(f"Unlocking pages of `{output_fileGrp}`: {job_page_ids}")
+                    locked_ws_pages[output_fileGrp] = [x for x in locked_ws_pages[output_fileGrp] if x not in job_page_ids]
+                    self.log.debug(f"Remaining locked pages of `{output_fileGrp}`: {locked_ws_pages[output_fileGrp]}")
                 else:
                     # Remove the single variable used to indicate all pages are locked
+                    self.log.debug(f"Unlocking all pages for: {output_fileGrp}")
                     locked_ws_pages[output_fileGrp].remove("all_pages")
 
         # Update the locked pages dictionary in the database
