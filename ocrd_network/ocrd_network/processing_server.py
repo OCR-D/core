@@ -1,7 +1,7 @@
 import json
 import requests
 import httpx
-from typing import Dict, List, Optional
+from typing import Dict, List
 import uvicorn
 
 from fastapi import FastAPI, status, Request, HTTPException
@@ -274,6 +274,52 @@ class ProcessingServer(FastAPI):
                 detail=f"Process queue with id '{processor_name}' not existing"
             )
 
+    def check_if_locked_pages_for_output_file_grps(
+            self,
+            locked_ws_pages: Dict,
+            output_file_grps: List[str],
+            page_ids: List[str]
+    ) -> bool:
+        for output_fileGrp in output_file_grps:
+            self.log.debug(f"Checking output file group: {output_fileGrp}")
+            if output_fileGrp in locked_ws_pages:
+                self.log.debug(f"Locked workspace pages has entry for output file group: {output_fileGrp}")
+                if "all_pages" in locked_ws_pages[output_fileGrp]:
+                    self.log.debug(f"Caching the received request due to locked output file grp pages")
+                    return True
+                # If there are request page ids that are already locked
+                if not set(locked_ws_pages[output_fileGrp]).isdisjoint(page_ids):
+                    self.log.debug(f"Caching the received request due to locked output file grp pages")
+                    return True
+
+    def lock_pages(self, locked_ws_pages: Dict, output_file_grps: List[str], page_ids: List[str]):
+        for output_fileGrp in output_file_grps:
+            if output_fileGrp not in locked_ws_pages:
+                self.log.debug(f"Creating an empty list for output file grp: {output_fileGrp}")
+                locked_ws_pages[output_fileGrp] = []
+            # The page id list is not empty - only some pages are in the request
+            if page_ids:
+                self.log.debug(f"Locking pages for `{output_fileGrp}`: {page_ids}")
+                locked_ws_pages[output_fileGrp].extend(page_ids)
+            else:
+                # Lock all pages with a single value
+                self.log.debug(f"Locking all pages for `{output_fileGrp}`")
+                locked_ws_pages[output_fileGrp].append("all_pages")
+
+    def unlock_pages(self, locked_ws_pages: Dict, output_file_grps: List[str], page_ids: List[str]):
+        for output_fileGrp in output_file_grps:
+            if output_fileGrp in locked_ws_pages:
+                if page_ids:
+                    # Unlock the previously locked pages
+                    self.log.debug(f"Unlocking pages of `{output_fileGrp}`: {page_ids}")
+                    locked_ws_pages[output_fileGrp] = [x for x in locked_ws_pages[output_fileGrp] if
+                                                       x not in page_ids]
+                    self.log.debug(f"Remaining locked pages of `{output_fileGrp}`: {locked_ws_pages[output_fileGrp]}")
+                else:
+                    # Remove the single variable used to indicate all pages are locked
+                    self.log.debug(f"Unlocking all pages for: {output_fileGrp}")
+                    locked_ws_pages[output_fileGrp].remove("all_pages")
+
     # Returns true if all dependent jobs' states are success, else false
     async def check_if_job_dependencies_met(self, dependencies: List[str]) -> bool:
         # Check the states of all dependent jobs
@@ -374,20 +420,16 @@ class ProcessingServer(FastAPI):
                 cache_current_request = True
 
         locked_ws_pages = workspace_db.pages_locked
-        # No need for further check if the request should be cached
+
+        # No need for further check of locked pages dependency
+        # if the request should be already cached
         if not cache_current_request:
             # Check if there are any locked pages for the current request
-            for output_fileGrp in data.output_file_grps:
-                if output_fileGrp in locked_ws_pages:
-                    if "all_pages" in locked_ws_pages[output_fileGrp]:
-                        self.log.debug(f"Caching the received request due to locked output file grp pages")
-                        cache_current_request = True
-                        break
-                    # If there are request page ids that are already locked
-                    if not set(locked_ws_pages[output_fileGrp]).isdisjoint(page_ids):
-                        self.log.debug(f"Caching the received request due to locked output file grp pages")
-                        cache_current_request = True
-                        break
+            cache_current_request = self.check_if_locked_pages_for_output_file_grps(
+                locked_ws_pages=locked_ws_pages,
+                output_file_grps=data.output_file_grps,
+                page_ids=page_ids
+            )
 
         if cache_current_request:
             workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
@@ -408,18 +450,11 @@ class ProcessingServer(FastAPI):
             )
         else:
             # Update locked pages by locking the pages in the request
-            for output_fileGrp in data.output_file_grps:
-                if output_fileGrp not in locked_ws_pages:
-                    self.log.debug(f"Creating an empty list for output file grp: {output_fileGrp}")
-                    locked_ws_pages[output_fileGrp] = []
-                # The page id list is not empty - only some pages are in the request
-                if page_ids:
-                    self.log.debug(f"Locking pages for `{output_fileGrp}`: {page_ids}")
-                    locked_ws_pages[output_fileGrp].extend(page_ids)
-                else:
-                    # Lock all pages with a single value
-                    self.log.debug(f"Locking all pages for `{output_fileGrp}`")
-                    locked_ws_pages[output_fileGrp].append("all_pages")
+            self.lock_pages(
+                locked_ws_pages=locked_ws_pages,
+                output_file_grps=data.output_file_grps,
+                page_ids=page_ids
+            )
 
             # Update the locked pages dictionary in the database
             await db_update_workspace(
@@ -477,7 +512,12 @@ class ProcessingServer(FastAPI):
                 detail=f'RMQPublisher has failed: {error}'
             )
 
-    async def push_to_processor_server(self, processor_name: str, processor_server_url: str, job_input: PYJobInput) -> PYJobOutput:
+    async def push_to_processor_server(
+            self,
+            processor_name: str,
+            processor_server_url: str,
+            job_input: PYJobInput
+    ) -> PYJobOutput:
         try:
             json_data = json.dumps(job_input.dict(exclude_unset=True, exclude_none=True))
         except Exception as e:
@@ -543,19 +583,13 @@ class ProcessingServer(FastAPI):
         if not workspace_db:
             self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
 
-        # Update locked pages by unlocking the pages in the request
         locked_ws_pages = workspace_db.pages_locked
-        for output_fileGrp in job_output_file_grps:
-            if output_fileGrp in locked_ws_pages:
-                if job_page_ids:
-                    # Unlock the previously locked pages
-                    self.log.debug(f"Unlocking pages of `{output_fileGrp}`: {job_page_ids}")
-                    locked_ws_pages[output_fileGrp] = [x for x in locked_ws_pages[output_fileGrp] if x not in job_page_ids]
-                    self.log.debug(f"Remaining locked pages of `{output_fileGrp}`: {locked_ws_pages[output_fileGrp]}")
-                else:
-                    # Remove the single variable used to indicate all pages are locked
-                    self.log.debug(f"Unlocking all pages for: {output_fileGrp}")
-                    locked_ws_pages[output_fileGrp].remove("all_pages")
+        # Update locked pages by unlocking the pages in the request
+        self.unlock_pages(
+            locked_ws_pages=locked_ws_pages,
+            output_file_grps=job_output_file_grps,
+            page_ids=job_page_ids
+        )
 
         # Update the locked pages dictionary in the database
         await db_update_workspace(
@@ -575,11 +609,13 @@ class ProcessingServer(FastAPI):
             # The queue is empty - delete it
             try:
                 del self.processing_requests_cache[workspace_key]
-            except KeyError as ex:
+            except KeyError:
                 self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
             return
 
-        consumed_requests = await self.find_next_requests_from_internal_queue(self.processing_requests_cache[workspace_key])
+        consumed_requests = await self.find_next_requests_from_internal_queue(
+            internal_queue=self.processing_requests_cache[workspace_key]
+        )
 
         if not len(consumed_requests):
             self.log.debug("No data was consumed from the internal queue")
