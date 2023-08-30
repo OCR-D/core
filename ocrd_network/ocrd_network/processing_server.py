@@ -290,8 +290,8 @@ class ProcessingServer(FastAPI):
                 return False
         return True
 
-    async def find_next_request_from_internal_queue(self, internal_queue: List[PYJobInput]) -> PYJobInput:
-        found_request = None
+    async def find_next_requests_from_internal_queue(self, internal_queue: List[PYJobInput]) -> List[PYJobInput]:
+        found_requests = []
         for i, current_element in enumerate(internal_queue):
             # Request has other job dependencies
             if current_element.depends_on:
@@ -304,8 +304,8 @@ class ProcessingServer(FastAPI):
             # Consume the request from the internal queue
             found_request = internal_queue.pop(i)
             self.log.debug(f"found cached request to be processed: {found_request}")
-            break
-        return found_request
+            found_requests.append(found_request)
+        return found_requests
 
     def query_ocrd_tool_json_from_server(self, processor_name):
         processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
@@ -579,34 +579,35 @@ class ProcessingServer(FastAPI):
                 self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
             return
 
-        data = await self.find_next_request_from_internal_queue(self.processing_requests_cache[workspace_key])
-        # Nothing was consumed from the internal queue
-        if not data:
+        consumed_requests = await self.find_next_requests_from_internal_queue(self.processing_requests_cache[workspace_key])
+
+        if not len(consumed_requests):
             self.log.debug("No data was consumed from the internal queue")
             return
 
-        processor_name = data.processor_name
-        # Create a DB entry
-        job = DBProcessorJob(
-            **data.dict(exclude_unset=True, exclude_none=True),
-            internal_callback_url=self.internal_job_callback_url,
-            state=StateEnum.queued
-        )
-        await job.insert()
+        for data in consumed_requests:
+            processor_name = data.processor_name
+            # Create a DB entry
+            job = DBProcessorJob(
+                **data.dict(exclude_unset=True, exclude_none=True),
+                internal_callback_url=self.internal_job_callback_url,
+                state=StateEnum.queued
+            )
+            await job.insert()
 
-        job_output = None
-        if data.agent_type == 'worker':
-            ocrd_tool = await self.get_processor_info(processor_name)
-            validate_job_input(self.log, processor_name, ocrd_tool, data)
-            processing_message = self.create_processing_message(job)
-            await self.push_to_processing_queue(processor_name, processing_message)
-            job_output = job.to_job_output()
-        if data.agent_type == 'server':
-            ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
-            validate_job_input(self.log, processor_name, ocrd_tool, data)
-            job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
-        if not job_output:
-            self.log.exception(f'Failed to create job output for job input data: {data}')
+            job_output = None
+            if data.agent_type == 'worker':
+                ocrd_tool = await self.get_processor_info(processor_name)
+                validate_job_input(self.log, processor_name, ocrd_tool, data)
+                processing_message = self.create_processing_message(job)
+                await self.push_to_processing_queue(processor_name, processing_message)
+                job_output = job.to_job_output()
+            if data.agent_type == 'server':
+                ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
+                validate_job_input(self.log, processor_name, ocrd_tool, data)
+                job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
+            if not job_output:
+                self.log.exception(f'Failed to create job output for job input data: {data}')
 
     async def get_processor_info(self, processor_name) -> Dict:
         """ Return a processor's ocrd-tool.json
