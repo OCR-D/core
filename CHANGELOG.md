@@ -7,10 +7,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
-  - METS Server: providing concurrent additional access to the METS file for parallel processing, #966
-  - Web API: Cache jobs in the processing server with an optional callback once processed, #1069
-  - Web API: Lock pages of a workspace to prevent simultaneous non-additive access to workspaces, #1069
-  - Web API: Support job dependency for caching complete fully-deterministic workflows, #1069
+  * METS Server: providing concurrent additional access to the METS file for parallel processing, #966
+  * Web API: Cache jobs in the processing server with an optional callback once processed, #1069
+  * Web API: Lock pages output file groups of a workspace to prevent simultaneous non-additive access to workspaces, #1069
+  * Web API: Support job dependency for caching complete fully-deterministic workflows, #1069
+  * Web API: Processing server will start all ready requests, not just the first one, #1069
 
 ## [2.53.0] - 2023-08-21
 
