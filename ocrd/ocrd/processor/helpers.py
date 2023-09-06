@@ -253,9 +253,13 @@ def generate_processor_help(ocrd_tool, processor_instance=None):
                                           subsequent_indent='  > ',
                                           preserve_paragraphs=True)
     return '''
-Usage: %s [OPTIONS]
+Usage: %s [worker] [OPTIONS]
 
   %s%s
+
+Subcommands:
+    worker      Start a processing worker rather than do local processing
+    server      Start a processor server rather than do local processing
 
 Options for processing:
   -m, --mets URL-PATH             URL or file path of METS to process [./mets.xml]
@@ -286,7 +290,6 @@ Options for Processing Worker server:
   --database                      The MongoDB server address in format
                                   "mongodb://{host}:{port}"
                                   [mongodb://localhost:27018]
-  --type                          type of processing: either "worker" or "server"
 
 Options for information:
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME

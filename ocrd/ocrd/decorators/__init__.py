@@ -20,6 +20,8 @@ from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
+SUBCOMMANDS = ['worker', 'server']
+
 def ocrd_cli_wrap_processor(
     processorClass,
     mets=None,
@@ -35,7 +37,7 @@ def ocrd_cli_wrap_processor(
     show_resource=None,
     list_resources=False,
     # ocrd_network params start #
-    agent_type=None,
+    subcommand=None,
     agent_address=None,
     queue=None,
     database=None,
@@ -45,6 +47,9 @@ def ocrd_cli_wrap_processor(
     if not sys.argv[1:]:
         processorClass(workspace=None, show_help=True)
         sys.exit(1)
+    if subcommand:
+        # Used for checking/starting network agents for the WebAPI architecture
+        check_and_run_network_agent(processorClass, subcommand, agent_address, database, queue)
     if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
             workspace=None,
@@ -58,10 +63,6 @@ def ocrd_cli_wrap_processor(
         sys.exit()
 
     initLogging()
-
-    # Used for checking/starting network agents for the WebAPI architecture
-    # Has no side effects if neither of the 4 ocrd_network parameters are passed
-    check_and_run_network_agent(processorClass, agent_type, agent_address, database, queue)
 
     LOG = getLogger('ocrd_cli_wrap_processor')
     # LOG.info('kwargs=%s' % kwargs)
@@ -128,59 +129,50 @@ def ocrd_cli_wrap_processor(
     run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
 
 
-def check_and_run_network_agent(ProcessorClass, agent_type: str, agent_address: str, database: str, queue: str):
-    if not agent_type and (agent_address or database or queue):
-        raise ValueError("Options '--database', '--queue', and '--address' are valid only with '--type'")
-    if not agent_type:
-        return
+def check_and_run_network_agent(ProcessorClass, subcommand: str, agent_address: str, database: str, queue: str, strict : bool = False):
+    """
+    """
+    if subcommand not in SUBCOMMANDS:
+        raise ValueError(f"SUBCOMMAND can only be one of {SUBCOMMANDS}")
 
     if not database:
-        raise ValueError("Options '--type' and '--database' are mutually inclusive")
-    allowed_agent_types = ['server', 'worker']
-    if agent_type not in allowed_agent_types:
-        agents_str = ', '.join(allowed_agent_types)
-        raise ValueError(f"Wrong type parameter. Allowed types: {agents_str}")
-    if agent_type == 'server':
+        raise ValueError("Option '--database' is invalid for subcommand {subcommand}")
+
+    if subcommand == 'server':
         if not agent_address:
-            raise ValueError("Options '--type=server' and '--address' are mutually inclusive")
+            raise ValueError("Option '--address' required for subcommand {subcommand}")
         if queue:
-            raise ValueError("Options '--type=server' and '--queue' are mutually exclusive")
-    if agent_type == 'worker':
-        if not queue:
-            raise ValueError("Options '--type=worker' and '--queue' are mutually inclusive")
+            raise ValueError("Option '--queue' invalid for subcommand {subcommand}")
+    if subcommand == 'worker':
         if agent_address:
-            raise ValueError("Options '--type=worker' and '--address' are mutually exclusive")
+            raise ValueError("Option '--address' invalid for subcommand {subcommand}")
+        if not queue:
+            raise ValueError("Option '--queue' required for subcommand {subcommand}")
 
     import logging
     logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
     processor = ProcessorClass(workspace=None, dump_json=True)
-    if agent_type == 'worker':
-        try:
-            # TODO: Passing processor_name and ocrd_tool is reduntant
-            processing_worker = ProcessingWorker(
-                rabbitmq_addr=queue,
-                mongodb_addr=database,
-                processor_name=processor.ocrd_tool['executable'],
-                ocrd_tool=processor.ocrd_tool,
-                processor_class=ProcessorClass,
-            )
-            # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
-            processing_worker.connect_consumer()
-            # Start consuming from the queue with name `processor_name`
-            processing_worker.start_consuming()
-        except Exception as e:
-            sys.exit(f"Processing worker has failed with error: {e}")
-    if agent_type == 'server':
-        try:
-            # TODO: Better validate that inside the ProcessorServer itself
-            host, port = agent_address.split(':')
-            processor_server = ProcessorServer(
-                mongodb_addr=database,
-                processor_name=processor.ocrd_tool['executable'],
-                processor_class=ProcessorClass,
-            )
-            processor_server.run_server(host=host, port=int(port))
-        except Exception as e:
-            sys.exit(f"Processor server has failed with error: {e}")
+    if subcommand == 'worker':
+        # TODO: Passing processor_name and ocrd_tool is reduntant
+        processing_worker = ProcessingWorker(
+            rabbitmq_addr=queue,
+            mongodb_addr=database,
+            processor_name=processor.ocrd_tool['executable'],
+            ocrd_tool=processor.ocrd_tool,
+            processor_class=ProcessorClass,
+        )
+        # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
+        processing_worker.connect_consumer()
+        # Start consuming from the queue with name `processor_name`
+        processing_worker.start_consuming()
+    elif subcommand == 'server':
+        # TODO: Better validate that inside the ProcessorServer itself
+        host, port = agent_address.split(':')
+        processor_server = ProcessorServer(
+            mongodb_addr=database,
+            processor_name=processor.ocrd_tool['executable'],
+            processor_class=ProcessorClass,
+        )
+        processor_server.run_server(host=host, port=int(port))
     sys.exit(0)
