@@ -15,6 +15,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
+from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import getLogger
 from .database import (
     initiate_database,
@@ -46,7 +47,6 @@ from .utils import (
     generate_created_time,
     generate_id
 )
-from ocrd.task_sequence import ProcessorTask
 
 
 class ProcessingServer(FastAPI):
@@ -717,7 +717,13 @@ class ProcessingServer(FastAPI):
     #       should be available to react to every processors callback. With this feedback
     #       a blocking mechanism could be provided to inform about starting the cain and waiting for
     #       the processors to finish and printing when responses are received from the processors
-    async def run_workflow(self, workflow: UploadFile, mets_path: str, callback_url: str = None) -> List:
+    async def run_workflow(
+            self,
+            workflow: UploadFile,
+            mets_path: str,
+            agent_type: str = 'worker',
+            callback_url: str = None
+    ) -> List:
         # core cannot create workspaces by api, but processing-server needs the workspace in the
         # database. Here the workspace is created if the path available and not existing in db:
         # from pudb import set_trace; set_trace()
@@ -733,19 +739,20 @@ class ProcessingServer(FastAPI):
             print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
-        outputs = []
+        responses = []
         last_job_id = ""
         for task in tasks:
             data = PYJobInput(
-                agent_type='worker',
+                processor_name=task.executable,
                 path_to_mets=mets_path,
                 input_file_grps=task.input_file_grps,
                 output_file_grps=task.output_file_grps,
                 parameters=task.parameters,
                 callback_url=callback_url,
+                agent_type=agent_type,
                 depends_on=[last_job_id] if last_job_id else [],
             )
-            output = await self.push_processor_job(task.executable, data)
-            outputs.append(output)
-            last_job_id = output.job_id
-        return outputs
+            response = await self.push_processor_job(data.processor_name, data)
+            responses.append(response)
+            last_job_id = response.job_id
+        return responses
