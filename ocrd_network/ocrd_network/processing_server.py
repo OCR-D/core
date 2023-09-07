@@ -18,6 +18,7 @@ from pika.exceptions import ChannelClosedByBroker
 from ocrd_utils import getLogger
 from .database import (
     initiate_database,
+    db_create_workspace,
     db_get_processing_job,
     db_get_workspace,
     db_update_workspace,
@@ -38,8 +39,7 @@ from .server_utils import (
     _get_processor_job,
     expand_page_ids,
     validate_and_return_mets_path,
-    validate_job_input,
-    create_db_workspace,
+    validate_job_input
 )
 from .utils import (
     download_ocrd_all_tool_json,
@@ -714,16 +714,16 @@ class ProcessingServer(FastAPI):
 
     # TODO: think about providing arguments in another way
     # TODO: this function "just" writes to the queue and returns. A network-client functionality
-    #       should be available to react to everys processors callback. With this feedback
+    #       should be available to react to every processors callback. With this feedback
     #       a blocking mechanism could be provided to inform about starting the cain and waiting for
-    #       the processors to finish and printing when reponses are received from the processors
-    async def run_workflow(self, workflow: UploadFile, workspace_path, callback_url=None) -> List:
+    #       the processors to finish and printing when responses are received from the processors
+    async def run_workflow(self, workflow: UploadFile, mets_path: str, callback_url: str = None) -> List:
         # core cannot create workspaces by api, but processing-server needs the workspace in the
         # database. Here the workspace is created if the path available and not existing in db:
-        #from pudb import set_trace; set_trace()
-        if not await create_db_workspace(workspace_path):
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                detail=f"Workspace with path: '{workspace_path}' not existing")
+        # from pudb import set_trace; set_trace()
+        if not await db_create_workspace(mets_path):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Mets file not existing: {mets_path}")
 
         workflow = (await workflow.read()).decode("utf-8")
         try:
@@ -738,7 +738,7 @@ class ProcessingServer(FastAPI):
         for task in tasks:
             data = PYJobInput(
                 agent_type='worker',
-                path_to_mets=workspace_path,
+                path_to_mets=mets_path,
                 input_file_grps=task.input_file_grps,
                 output_file_grps=task.output_file_grps,
                 parameters=task.parameters,

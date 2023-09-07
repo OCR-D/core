@@ -14,6 +14,8 @@ database (runs in docker) currently has no volume set.
 """
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
+from uuid import uuid4
+from pathlib import Path
 
 from .models import (
     DBProcessorJob,
@@ -33,6 +35,25 @@ async def initiate_database(db_url: str):
 @call_sync
 async def sync_initiate_database(db_url: str):
     await initiate_database(db_url)
+
+
+async def db_create_workspace(mets_path: str) -> DBWorkspace:
+    """ Create a workspace-database entry only from a mets-path
+    """
+    if not Path(mets_path).exists():
+        raise ValueError(f'Cannot create DB workspace entry, `{mets_path}` does not exist!')
+    try:
+        return await db_get_workspace(workspace_mets_path=mets_path)
+    except ValueError:
+        workspace_db = DBWorkspace(
+            workspace_id=str(uuid4()),
+            workspace_path=Path(mets_path).parent,
+            workspace_mets_path=mets_path,
+            ocrd_identifier="",
+            bagit_profile_identifier="",
+        )
+        await workspace_db.save()
+        return workspace_db
 
 
 async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = None) -> DBWorkspace:
