@@ -341,13 +341,13 @@ class ProcessingServer(FastAPI):
     async def check_if_job_dependencies_met(self, dependencies: List[str]) -> bool:
         # Check the states of all dependent jobs
         for dependency_job_id in dependencies:
-            self.log.debug(f"dependency_job_id: {dependency_job_id}")
             try:
                 dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
             except ValueError:
                 # job_id not (yet) in db. Dependency not met
+                self.log.debug(f"dependency_job_id: {dependency_job_id}, state: State not in the DB yet")
                 return False
-            self.log.debug(f"dependency_job_state: {dependency_job_state}")
+            self.log.debug(f"dependency_job_id: {dependency_job_id}, state: {dependency_job_state}")
             # Found a dependent job whose state is not success
             if dependency_job_state != StateEnum.success:
                 return False
@@ -358,10 +358,8 @@ class ProcessingServer(FastAPI):
         for i, current_element in enumerate(internal_queue):
             # Request has other job dependencies
             if current_element.depends_on:
-                self.log.debug(f"current_element: {current_element}")
-                self.log.debug(f"job dependencies: {current_element.depends_on}")
                 satisfied_dependencies = await self.check_if_job_dependencies_met(current_element.depends_on)
-                self.log.debug(f"satisfied dependencies: {satisfied_dependencies}")
+                self.log.debug(f"current element: {current_element}, satisfied dependencies: {satisfied_dependencies}")
                 if not satisfied_dependencies:
                     continue
             # Consume the request from the internal queue
@@ -432,6 +430,7 @@ class ProcessingServer(FastAPI):
 
         # Check if there are any dependencies of the current request
         if data.depends_on:
+            self.log.debug(f"Checking job dependencies of {data.processor_name}")
             if not await self.check_if_job_dependencies_met(data.depends_on):
                 self.log.debug(f"Caching the received request due to job dependencies")
                 cache_current_request = True
@@ -647,6 +646,31 @@ class ProcessingServer(FastAPI):
                 state=StateEnum.queued
             )
             await job.insert()
+
+            # Read DB workspace entry
+            workspace_db = await db_get_workspace(
+                workspace_id=workspace_id,
+                workspace_mets_path=path_to_mets
+            )
+            if not workspace_db:
+                self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+
+            locked_ws_pages = workspace_db.pages_locked
+            page_ids = expand_page_ids(data.page_id)
+
+            # Update locked pages by locking the pages in the request
+            self.lock_pages(
+                locked_ws_pages=locked_ws_pages,
+                output_file_grps=data.output_file_grps,
+                page_ids=page_ids
+            )
+
+            # Update the locked pages dictionary in the database
+            await db_update_workspace(
+                workspace_id=data.workspace_id,
+                workspace_mets_path=data.path_to_mets,
+                pages_locked=locked_ws_pages
+            )
 
             job_output = None
             if data.agent_type == 'worker':
