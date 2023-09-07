@@ -15,6 +15,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
+from ocrd import Resolver
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import getLogger
 from .database import (
@@ -722,6 +723,7 @@ class ProcessingServer(FastAPI):
             workflow: UploadFile,
             mets_path: str,
             agent_type: str = 'worker',
+            page_id: str = None,
             callback_url: str = None
     ) -> List:
         # core cannot create workspaces by api, but processing-server needs the workspace in the
@@ -739,6 +741,7 @@ class ProcessingServer(FastAPI):
             print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
+
         responses = []
         last_job_id = ""
         for task in tasks:
@@ -747,6 +750,7 @@ class ProcessingServer(FastAPI):
                 path_to_mets=mets_path,
                 input_file_grps=task.input_file_grps,
                 output_file_grps=task.output_file_grps,
+                page_id=page_id,
                 parameters=task.parameters,
                 callback_url=callback_url,
                 agent_type=agent_type,
