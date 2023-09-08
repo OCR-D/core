@@ -39,7 +39,7 @@ def ocrd_cli_options(f):
         parameter_option,
         parameter_override_option,
         loglevel_option,
-        option('--address', 'address', type=ServerAddressParamType()),
+        option('--address', type=ServerAddressParamType()),
         option('--queue', type=QueueServerParamType()),
         option('--database', type=DatabaseParamType()),
         option('-C', '--show-resource'),
