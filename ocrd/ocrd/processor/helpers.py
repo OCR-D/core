@@ -283,13 +283,21 @@ Options for processing:
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Override log level globally [INFO]
 
-Options for Processing Worker server:
+Options for Processing Worker:
   --queue                         The RabbitMQ server address in format
                                   "amqp://{user}:{pass}@{host}:{port}/{vhost}"
                                   [amqp://admin:admin@localhost:5672]
   --database                      The MongoDB server address in format
                                   "mongodb://{host}:{port}"
                                   [mongodb://localhost:27018]
+                                  
+Options for Processor Server:
+  --address                       The Processor server address in format
+                                  "{host}:{port}"
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+
 
 Options for information:
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
