@@ -343,10 +343,15 @@ class Processor():
 
         pages = dict()
         for i, ifg in enumerate(ifgs):
-            for file_ in sorted(self.workspace.mets.find_all_files(
+            files_ = sorted(self.workspace.mets.find_all_files(
                     pageId=self.page_id, fileGrp=ifg, mimetype=mimetype),
                                 # sort by MIME type so PAGE comes before images
-                                key=lambda file_: file_.mimetype):
+                                key=lambda file_: file_.mimetype)
+            # Warn if no files found but pageId was specified because that
+            # might be because of invalid page_id (range)
+            if self.page_id and not files_:
+                raise ValueError(f"Could not find any files for --page-id {self.page_id} - compare {self.page_id} with the output of 'orcd workspace list-page'.")
+            for file_ in files_:
                 if not file_.pageId:
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
