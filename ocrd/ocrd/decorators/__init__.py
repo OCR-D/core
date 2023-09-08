@@ -47,23 +47,24 @@ def ocrd_cli_wrap_processor(
     if not sys.argv[1:]:
         processorClass(workspace=None, show_help=True)
         sys.exit(1)
-    if subcommand:
-        # Used for checking/starting network agents for the WebAPI architecture
-        check_and_run_network_agent(processorClass, subcommand, address, database, queue)
-    if not subcommand and (address or queue or database):
-        raise ValueError(f"Subcommand options are passed without a subcommand")
-
     if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
             workspace=None,
             dump_json=dump_json,
             dump_module_dir=dump_module_dir,
             show_help=help,
+            subcommand=subcommand,
             show_version=version,
             show_resource=show_resource,
             list_resources=list_resources
         )
         sys.exit()
+    if subcommand:
+        # Used for checking/starting network agents for the WebAPI architecture
+        check_and_run_network_agent(processorClass, subcommand, address, database, queue)
+    elif address or queue or database:
+        raise ValueError(f"Subcommand options --adress --queue and --database are only valid for subcommands 'worker' or 'server'")
+
 
     initLogging()
 

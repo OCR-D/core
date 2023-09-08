@@ -212,32 +212,15 @@ def run_cli(
     result = run(args, check=False)
     return result.returncode
 
-def generate_processor_help(ocrd_tool, processor_instance=None):
+def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.
 
     Args:
          ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
          processor_instance (object, optional): the processor implementation
              (for adding any module/class/function docstrings)
+        subcommand (string): 'worker' or 'server'
     """
-    parameter_help = ''
-    if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
-        parameter_help = '  NONE\n'
-    else:
-        def wrap(s):
-            return wrap_text(s, initial_indent=' '*3,
-                             subsequent_indent=' '*4,
-                             width=72, preserve_paragraphs=True)
-        for param_name, param in ocrd_tool['parameters'].items():
-            parameter_help += wrap('"%s" [%s%s]' % (
-                param_name,
-                param['type'],
-                ' - REQUIRED' if 'required' in param and param['required'] else
-                ' - %s' % json.dumps(param['default']) if 'default' in param else ''))
-            parameter_help += '\n ' + wrap(param['description'])
-            if 'enum' in param:
-                parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
-            parameter_help += "\n"
     doc_help = ''
     if processor_instance:
         module = inspect.getmodule(processor_instance)
@@ -252,16 +235,29 @@ def generate_processor_help(ocrd_tool, processor_instance=None):
                                           initial_indent='  > ',
                                           subsequent_indent='  > ',
                                           preserve_paragraphs=True)
-    return '''
-Usage: %s [worker] [OPTIONS]
-
-  %s%s
-
-Subcommands:
+    subcommands = '''\
     worker      Start a processing worker rather than do local processing
     server      Start a processor server rather than do local processing
+'''
 
-Options for processing:
+    processing_worker_options = '''\
+  --queue                         The RabbitMQ server address in format
+                                  "amqp://{user}:{pass}@{host}:{port}/{vhost}"
+                                  [amqp://admin:admin@localhost:5672]
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+'''
+
+    processing_server_options = '''\
+  --address                       The Processor server address in format
+                                  "{host}:{port}"
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+'''
+
+    processing_options = '''\
   -m, --mets URL-PATH             URL or file path of METS to process [./mets.xml]
   -w, --working-dir PATH          Working directory of local workspace [dirname(URL-PATH)]
   -I, --input-file-grp USE        File group(s) used as input
@@ -282,40 +278,75 @@ Options for processing:
   -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Override log level globally [INFO]
+'''
 
-Options for Processing Worker:
-  --queue                         The RabbitMQ server address in format
-                                  "amqp://{user}:{pass}@{host}:{port}/{vhost}"
-                                  [amqp://admin:admin@localhost:5672]
-  --database                      The MongoDB server address in format
-                                  "mongodb://{host}:{port}"
-                                  [mongodb://localhost:27018]
-                                  
-Options for Processor Server:
-  --address                       The Processor server address in format
-                                  "{host}:{port}"
-  --database                      The MongoDB server address in format
-                                  "mongodb://{host}:{port}"
-                                  [mongodb://localhost:27018]
-
-
-Options for information:
+    information_options = '''\
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON
   -D, --dump-module-dir           Show the 'module' resource location path for this processor
   -h, --help                      Show this message
   -V, --version                   Show version
+'''
 
+    parameter_help = ''
+    if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
+        parameter_help = '  NONE\n'
+    else:
+        def wrap(s):
+            return wrap_text(s, initial_indent=' '*3,
+                             subsequent_indent=' '*4,
+                             width=72, preserve_paragraphs=True)
+        for param_name, param in ocrd_tool['parameters'].items():
+            parameter_help += wrap('"%s" [%s%s]' % (
+                param_name,
+                param['type'],
+                ' - REQUIRED' if 'required' in param and param['required'] else
+                ' - %s' % json.dumps(param['default']) if 'default' in param else ''))
+            parameter_help += '\n ' + wrap(param['description'])
+            if 'enum' in param:
+                parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
+            parameter_help += "\n"
+
+    if not subcommand:
+        return f'''
+Usage: {ocrd_tool['executable']} [worker|server] [OPTIONS]
+
+  {ocrd_tool['description']}{doc_help}
+
+Subcommands:
+{subcommands}
+Options for processing:
+{processing_options}
+Options for information:
+{information_options}
 Parameters:
-%s
+{parameter_help}
+'''
+    elif subcommand == 'worker':
+        return f'''
+Usage: {ocrd_tool['executable']} worker [OPTIONS]
 
-''' % (
-    ocrd_tool['executable'],
-    ocrd_tool['description'],
-    doc_help,
-    parameter_help,
-)
+  Run {ocrd_tool['executable']} as a processing worker.
+
+  {ocrd_tool['description']}{doc_help}
+
+Options:
+{processing_worker_options}
+'''
+    elif subcommand == 'server':
+        return f'''
+Usage: {ocrd_tool['executable']} server [OPTIONS]
+
+  Run {ocrd_tool['executable']} as a processor sever.
+
+  {ocrd_tool['description']}{doc_help}
+
+Options:
+{processing_server_options}
+'''
+    else:
+        pass
 
 
 # Taken from https://github.com/OCR-D/core/pull/884
