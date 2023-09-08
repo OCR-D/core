@@ -38,7 +38,7 @@ def ocrd_cli_wrap_processor(
     list_resources=False,
     # ocrd_network params start #
     subcommand=None,
-    agent_address=None,
+    address=None,
     queue=None,
     database=None,
     # ocrd_network params end #
@@ -49,7 +49,10 @@ def ocrd_cli_wrap_processor(
         sys.exit(1)
     if subcommand:
         # Used for checking/starting network agents for the WebAPI architecture
-        check_and_run_network_agent(processorClass, subcommand, agent_address, database, queue)
+        check_and_run_network_agent(processorClass, subcommand, address, database, queue)
+    if not subcommand and (address or queue or database):
+        raise ValueError(f"Subcommand options are passed without a subcommand")
+
     if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
             workspace=None,
@@ -129,25 +132,25 @@ def ocrd_cli_wrap_processor(
     run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
 
 
-def check_and_run_network_agent(ProcessorClass, subcommand: str, agent_address: str, database: str, queue: str, strict : bool = False):
+def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, database: str, queue: str):
     """
     """
     if subcommand not in SUBCOMMANDS:
         raise ValueError(f"SUBCOMMAND can only be one of {SUBCOMMANDS}")
 
     if not database:
-        raise ValueError("Option '--database' is invalid for subcommand {subcommand}")
+        raise ValueError(f"Option '--database' is invalid for subcommand {subcommand}")
 
     if subcommand == 'server':
-        if not agent_address:
-            raise ValueError("Option '--address' required for subcommand {subcommand}")
+        if not address:
+            raise ValueError(f"Option '--address' required for subcommand {subcommand}")
         if queue:
-            raise ValueError("Option '--queue' invalid for subcommand {subcommand}")
+            raise ValueError(f"Option '--queue' invalid for subcommand {subcommand}")
     if subcommand == 'worker':
-        if agent_address:
-            raise ValueError("Option '--address' invalid for subcommand {subcommand}")
+        if address:
+            raise ValueError(f"Option '--address' invalid for subcommand {subcommand}")
         if not queue:
-            raise ValueError("Option '--queue' required for subcommand {subcommand}")
+            raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
 
     import logging
     logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
@@ -168,7 +171,7 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, agent_address: 
         processing_worker.start_consuming()
     elif subcommand == 'server':
         # TODO: Better validate that inside the ProcessorServer itself
-        host, port = agent_address.split(':')
+        host, port = address.split(':')
         processor_server = ProcessorServer(
             mongodb_addr=database,
             processor_name=processor.ocrd_tool['executable'],
