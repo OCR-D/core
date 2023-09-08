@@ -9,9 +9,6 @@ import inspect
 from subprocess import run, PIPE
 from typing import List, Type
 
-from memory_profiler import memory_usage
-from sparklines import sparklines
-
 from click import wrap_text
 from ocrd.workspace import Workspace
 from ocrd_utils import freeze_args, getLogger, pushd_popd
@@ -106,6 +103,8 @@ def run_processor(
     t0_cpu = process_time()
     if any(x in environ.get('OCRD_PROFILE', '') for x in ['RSS', 'PSS']):
         backend = 'psutil_pss' if 'PSS' in environ['OCRD_PROFILE'] else 'psutil'
+        from memory_profiler import memory_usage
+        from sparklines import sparklines
         try:
             mem_usage = memory_usage(proc=processor.process,
                                      # only run process once
@@ -309,7 +308,7 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
             parameter_help += "\n"
 
     if not subcommand:
-        return f'''
+        return f'''\
 Usage: {ocrd_tool['executable']} [worker|server] [OPTIONS]
 
   {ocrd_tool['description']}{doc_help}
@@ -324,7 +323,7 @@ Parameters:
 {parameter_help}
 '''
     elif subcommand == 'worker':
-        return f'''
+        return f'''\
 Usage: {ocrd_tool['executable']} worker [OPTIONS]
 
   Run {ocrd_tool['executable']} as a processing worker.
@@ -335,7 +334,7 @@ Options:
 {processing_worker_options}
 '''
     elif subcommand == 'server':
-        return f'''
+        return f'''\
 Usage: {ocrd_tool['executable']} server [OPTIONS]
 
   Run {ocrd_tool['executable']} as a processor sever.

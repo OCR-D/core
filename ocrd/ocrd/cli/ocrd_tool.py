@@ -6,6 +6,7 @@ OCR-D CLI: ocrd-tool.json management
     :nested: full
 
 """
+from inspect import getmodule
 from json import dumps
 import codecs
 import sys
@@ -115,16 +116,18 @@ def ocrd_tool_tool_show_resource(ctx, res_name):
                   show_resource=res_name)
 
 @ocrd_tool_tool.command('help', help="Generate help for processors")
+@click.argument('subcommand', required=False)
 @pass_ocrd_tool
-def ocrd_tool_tool_params_help(ctx):
+def ocrd_tool_tool_params_help(ctx, subcommand):
     class BashProcessor(Processor):
         # set docstrings to empty
-        # fixme: override the module-level docstring, too
         __doc__ = None
+        # HACK: override the module-level docstring, too
+        getmodule(OcrdToolCtx).__doc__ = None
         def process(self):
             return super()
     BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  show_help=True)
+                  show_help=True, subcommand=subcommand)
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories
