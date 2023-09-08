@@ -24,13 +24,13 @@ __all__ = [
 ]
 
 
-def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
+def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None, mets_server_url=None):
     if workspace is None:
         if resolver is None:
             raise Exception("Need to pass a resolver to create a workspace")
         if mets_url is None:
             raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir)
+        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir, mets_server_url=mets_server_url)
     return workspace
 
 def run_processor(
@@ -47,6 +47,7 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
+        mets_server_url=None,
         instance_caching=False  # TODO don't set this yet!
 ): # pylint: disable=too-many-locals
     """
@@ -77,7 +78,8 @@ def run_processor(
         workspace,
         resolver,
         mets_url,
-        working_dir
+        working_dir,
+        mets_server_url
     )
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
@@ -268,7 +270,12 @@ Options for processing:
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
                                   or JSON file path
   -P, --param-override KEY VAL    Override a single JSON object key-value pair,
-                                  taking precedence over "--parameter"
+                                  taking precedence over --parameter
+  -m, --mets URL-PATH             URL or file path of METS to process
+  -U, --mets-server-url URL           URL of a METS Server for parallel incremental access to METS
+                                  If URL starts with http:// start an HTTP server there,
+                                  otherwise URL is a path to an on-demand-created unix socket
+  -w, --working-dir PATH          Working directory of local workspace
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Override log level globally [INFO]
 

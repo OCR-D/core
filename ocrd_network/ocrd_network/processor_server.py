@@ -4,7 +4,7 @@ from os import getpid
 from subprocess import run, PIPE
 import uvicorn
 
-from fastapi import FastAPI, HTTPException, status, BackgroundTasks
+from fastapi import FastAPI, HTTPException, status
 
 from ocrd_utils import (
     get_ocrd_tool_json,
@@ -23,13 +23,15 @@ from .models import (
     StateEnum
 )
 from .process_helpers import invoke_processor
+from .rabbitmq_utils import OcrdResultMessage
 from .server_utils import (
     _get_processor_job,
-    validate_and_resolve_mets_path,
+    validate_and_return_mets_path,
     validate_job_input
 )
 from .utils import (
     calculate_execution_time,
+    post_to_callback_url,
     generate_id,
     tf_disable_interactive_logs
 )
@@ -125,26 +127,30 @@ class ProcessorServer(FastAPI):
 
     # Note: The Processing server pushes to a queue, while
     #  the Processor Server creates (pushes to) a background task
-    async def create_processor_task(self, job_input: PYJobInput, background_tasks: BackgroundTasks):
+    async def create_processor_task(self, job_input: PYJobInput):
         validate_job_input(self.log, self.processor_name, self.ocrd_tool, job_input)
-        job_input = await validate_and_resolve_mets_path(self.log, job_input, resolve=True)
+        job_input.path_to_mets = await validate_and_return_mets_path(self.log, job_input)
 
-        job_id = generate_id()
-        job = DBProcessorJob(
-            **job_input.dict(exclude_unset=True, exclude_none=True),
-            job_id=job_id,
-            processor_name=self.processor_name,
-            state=StateEnum.queued
-        )
-        await job.insert()
-        await self.run_processor_task(job_id=job_id, job=job)
+        job = None
+        # The request is not forwarded from the Processing Server, assign a job_id
+        if not job_input.job_id:
+            job_id = generate_id()
+            # Create a DB entry
+            job = DBProcessorJob(
+                **job_input.dict(exclude_unset=True, exclude_none=True),
+                job_id=job_id,
+                processor_name=self.processor_name,
+                state=StateEnum.queued
+            )
+            await job.insert()
+        await self.run_processor_task(job=job)
         return job.to_job_output()
 
-    async def run_processor_task(self, job_id: str, job: DBProcessorJob):
+    async def run_processor_task(self, job: DBProcessorJob):
         execution_failed = False
         start_time = datetime.now()
         await db_update_processing_job(
-            job_id=job_id,
+            job_id=job.job_id,
             state=StateEnum.running,
             start_time=start_time
         )
@@ -168,11 +174,27 @@ class ProcessorServer(FastAPI):
         exec_duration = calculate_execution_time(start_time, end_time)
         job_state = StateEnum.success if not execution_failed else StateEnum.failed
         await db_update_processing_job(
-            job_id=job_id,
+            job_id=job.job_id,
             state=job_state,
             end_time=end_time,
             exec_time=f'{exec_duration} ms'
         )
+        result_message = OcrdResultMessage(
+            job_id=job.job_id,
+            state=job_state.value,
+            path_to_mets=job.path_to_mets,
+            # May not be always available
+            workspace_id=job.workspace_id
+        )
+        self.log.info(f'Result message: {result_message}')
+        if job.callback_url:
+            # If the callback_url field is set,
+            # post the result message (callback to a user defined endpoint)
+            post_to_callback_url(self.log, job.callback_url, result_message)
+        if job.internal_callback_url:
+            # If the internal callback_url field is set,
+            # post the result message (callback to Processing Server endpoint)
+            post_to_callback_url(self.log, job.internal_callback_url, result_message)
 
     def get_ocrd_tool(self):
         if self.ocrd_tool:

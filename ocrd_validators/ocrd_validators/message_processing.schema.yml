@@ -58,8 +58,13 @@ properties:
   callback_url:
     description: The URL where the result message will be POST-ed to
     type: string
-    format: uri,
-    pattern: "^https?://"
+    format: uri
+    pattern: "^http?://"
+  internal_callback_url:
+    description: The URL where the internal result message will be POST-ed to the Processing Server
+    type: string
+    format: uri
+    pattern: "^http?://"
   created_time:
     description: The Unix timestamp when the message was created
     type: integer

@@ -39,6 +39,7 @@ class Deployer:
         self.data_mongo: DataMongoDB = DataMongoDB(config['database'])
         self.data_queue: DataRabbitMQ = DataRabbitMQ(config['process_queue'])
         self.data_hosts: List[DataHost] = []
+        self.internal_callback_url = config.get('internal_callback_url', None)
         for config_host in config['hosts']:
             self.data_hosts.append(DataHost(config_host))
 
@@ -302,7 +303,7 @@ class Deployer:
     ) -> str:
         if self.data_mongo.skip_deployment:
             self.log.debug('MongoDB is externaly managed. Skipping deployment')
-            verify_mongodb_available(self.data_mongo.url);
+            verify_mongodb_available(self.data_mongo.url)
             return self.data_mongo.url
 
         self.log.debug(f"Trying to deploy '{image}', with modes: "

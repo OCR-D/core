@@ -4,8 +4,7 @@ from warnings import warn
 from os import environ
 
 import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter, Retry
 
 from ocrd.constants import TMP_PREFIX
 from ocrd_utils import (
@@ -154,7 +153,16 @@ class Resolver():
 
         return str(ret)
 
-    def workspace_from_url(self, mets_url, dst_dir=None, clobber_mets=False, mets_basename=None, download=False, src_baseurl=None):
+    def workspace_from_url(
+        self,
+        mets_url,
+        dst_dir=None,
+        clobber_mets=False,
+        mets_basename=None,
+        download=False,
+        src_baseurl=None,
+        mets_server_url=None,
+    ):
         """
         Create a workspace from a METS by URL (i.e. clone if :py:attr:`mets_url` is remote or :py:attr:`dst_dir` is given).
 
@@ -210,7 +218,7 @@ class Resolver():
             mets_basename, mets_url, src_baseurl, dst_dir)
         self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'skip')
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl)
+        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl, mets_server_url=mets_server_url)
 
         if download:
             for f in workspace.mets.find_files():
@@ -246,12 +254,14 @@ class Resolver():
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
 
-    def resolve_mets_arguments(self, directory, mets_url, mets_basename):
+    def resolve_mets_arguments(self, directory, mets_url, mets_basename, mets_server_url):
         """
-        Resolve the ``--mets``, ``--mets-basename`` and `--directory`` argument
-        into a coherent set of arguments according to https://github.com/OCR-D/core/issues/517
+        Resolve the ``--mets``, ``--mets-basename``, `--directory``,
+        ``--mets-server-url``, arguments into a coherent set of arguments
+        according to https://github.com/OCR-D/core/issues/517
         """
         log = getLogger('ocrd.resolver.resolve_mets_arguments')
+
         mets_is_remote = mets_url and (mets_url.startswith('http://') or mets_url.startswith('https://'))
 
         # XXX we might want to be more strict like this but it might break # legacy code
@@ -294,6 +304,6 @@ class Resolver():
                     if not is_file_in_directory(directory, mets_url):
                         raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
 
-        return str(Path(directory).resolve()), str(mets_url), str(mets_basename)
+        return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_url
 
 
