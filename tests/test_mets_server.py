@@ -3,6 +3,7 @@ from tests.base import assets
 
 from itertools import repeat
 from multiprocessing import Process, Pool, set_start_method
+# necessary for macos
 set_start_method("fork")
 from shutil import rmtree, copytree
 from os import remove
@@ -43,7 +44,14 @@ def fixture_start_mets_server(request):
 def add_file_server(x):
     mets_server_url, i = x
     workspace_server = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
-    workspace_server.add_file(local_filename=f'foo{i}', mimetype=MIMETYPE_PAGE, page_id=f'page{1}', file_grp='FOO', file_id=f'FOO_page{i}_foo{i}')
+    workspace_server.add_file(
+        local_filename=f'local_filename{i}',
+        mimetype=MIMETYPE_PAGE,
+        page_id=f'page{i}',
+        file_grp='FOO',
+        file_id=f'FOO_page{i}_foo{i}',
+        # url=f'url{i}'
+    )
 
 def add_agent_server(x):
     mets_server_url, i = x
@@ -108,7 +116,7 @@ def test_mets_server_str(start_mets_server):
     mets_server_url, workspace_server = start_mets_server
     workspace_server = Workspace(Resolver(), WORKSPACE_DIR, mets_server_url=mets_server_url)
     f = next(workspace_server.find_files())
-    assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=OCR-D-IMG/INPUT_0017.tif, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
+    assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
     a = workspace_server.mets.agents[0]
     assert str(a) == '<ClientSideOcrdAgent [type=---, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
     assert str(workspace_server.mets) == '<ClientSideOcrdMets[url=%s]>' % ('http+unix://%2Ftmp%2Focrd-mets-server.sock' if mets_server_url == TRANSPORTS[0] else TRANSPORTS[1])
