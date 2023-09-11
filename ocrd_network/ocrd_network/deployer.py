@@ -39,6 +39,7 @@ class Deployer:
         self.data_mongo: DataMongoDB = DataMongoDB(config['database'])
         self.data_queue: DataRabbitMQ = DataRabbitMQ(config['process_queue'])
         self.data_hosts: List[DataHost] = []
+        self.internal_callback_url = config.get('internal_callback_url', None)
         for config_host in config['hosts']:
             self.data_hosts.append(DataHost(config_host))
 
@@ -302,7 +303,7 @@ class Deployer:
     ) -> str:
         if self.data_mongo.skip_deployment:
             self.log.debug('MongoDB is externaly managed. Skipping deployment')
-            verify_mongodb_available(self.data_mongo.url);
+            verify_mongodb_available(self.data_mongo.url)
             return self.data_mongo.url
 
         self.log.debug(f"Trying to deploy '{image}', with modes: "
@@ -460,7 +461,7 @@ class Deployer:
         self.log.info(f'Starting native processing worker: {processor_name}')
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} --type worker --database {database_url} --queue {queue_url}'
+        cmd = f'{processor_name} worker --database {database_url} --queue {queue_url}'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
@@ -503,7 +504,7 @@ class Deployer:
         self.log.info(f"Starting native processor server: {processor_name} on {agent_address}")
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} --type server --address {agent_address} --database {database_url}'
+        cmd = f'{processor_name} server --address {agent_address} --database {database_url}'
         port = agent_address.split(':')[1]
         log_path = f'/tmp/server_{processor_name}_{port}_{getpid()}.log'
         # TODO: This entire stdin/stdout thing is broken with servers!

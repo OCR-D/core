@@ -6,7 +6,6 @@ OCR-D CLI: management of processor resources
     :nested: full
 """
 import sys
-from os import environ
 from pathlib import Path
 from distutils.spawn import find_executable as which
 from yaml import safe_load, safe_dump

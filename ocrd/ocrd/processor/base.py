@@ -9,6 +9,7 @@ __all__ = [
     'run_processor'
 ]
 
+from warnings import warn
 from pkg_resources import resource_filename
 from os.path import exists
 from shutil import copyfileobj
@@ -61,6 +62,7 @@ class Processor():
             show_resource=None,
             list_resources=False,
             show_help=False,
+            subcommand=None,
             show_version=False,
             dump_json=False,
             dump_module_dir=False,
@@ -92,6 +94,7 @@ class Processor():
              show_help (boolean): If true, then instead of processing, print a usage description \
                  including the standard CLI and all of this processor's ocrd-tool parameters and \
                  docstrings.
+             subcommand (string): 'worker' or 'server', only used here for the right --help output
              show_version (boolean): If true, then instead of processing, print information on \
                  this processor's version and OCR-D version. Exit afterwards.
              dump_json (boolean): If true, then instead of processing, print :py:attr:`ocrd_tool` \
@@ -127,7 +130,7 @@ class Processor():
                 sys.stdout.buffer.write(fpath.read_bytes())
             return
         if show_help:
-            self.show_help()
+            self.show_help(subcommand=subcommand)
             return
         self.version = version
         if show_version:
@@ -149,8 +152,8 @@ class Processor():
             raise Exception("Invalid parameters %s" % report.errors)
         self.parameter = parameter
 
-    def show_help(self):
-        print(generate_processor_help(self.ocrd_tool, processor_instance=self))
+    def show_help(self, subcommand=None):
+        print(generate_processor_help(self.ocrd_tool, processor_instance=self, subcommand=subcommand))
 
     def show_version(self):
         print("Version %s, ocrd/core %s" % (self.version, OCRD_VERSION))
@@ -343,10 +346,15 @@ class Processor():
 
         pages = dict()
         for i, ifg in enumerate(ifgs):
-            for file_ in sorted(self.workspace.mets.find_all_files(
+            files_ = sorted(self.workspace.mets.find_all_files(
                     pageId=self.page_id, fileGrp=ifg, mimetype=mimetype),
                                 # sort by MIME type so PAGE comes before images
-                                key=lambda file_: file_.mimetype):
+                                key=lambda file_: file_.mimetype)
+            # Warn if no files found but pageId was specified because that
+            # might be because of invalid page_id (range)
+            if self.page_id and not files_:
+                LOG.warning(f"Could not find any files for --page-id {self.page_id} - compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
+            for file_ in files_:
                 if not file_.pageId:
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
