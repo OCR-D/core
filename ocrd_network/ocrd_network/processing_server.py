@@ -15,7 +15,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
-from ocrd import Resolver
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import getLogger
 from .database import (
@@ -23,6 +22,7 @@ from .database import (
     db_create_workspace,
     db_get_processing_job,
     db_get_workspace,
+    db_update_processing_job,
     db_update_workspace,
 )
 from .deployer import Deployer
@@ -369,7 +369,7 @@ class ProcessingServer(FastAPI):
             found_requests.append(found_request)
         return found_requests
 
-    def cancel_dependent_jobs(self, job_id: str, internal_queue: List[PYJobInput]) -> List[PYJobInput]:
+    async def cancel_dependent_jobs(self, job_id: str, internal_queue: List[PYJobInput]) -> List[PYJobInput]:
         cancelled_jobs = []
         for i, current_element in enumerate(internal_queue):
             if job_id in current_element.depends_on:
@@ -377,8 +377,9 @@ class ProcessingServer(FastAPI):
                 self.log.debug(f"For job id: `{job_id}`, "
                                f"found cached dependent request to be cancelled: {found_request.job_id}")
                 cancelled_jobs.append(found_request)
+                await db_update_processing_job(job_id=job_id, state=StateEnum.cancelled)
                 # Recursively cancel dependent jobs for the cancelled job
-                recursively_cancelled = self.cancel_dependent_jobs(
+                recursively_cancelled = await self.cancel_dependent_jobs(
                     job_id=found_request.job_id,
                     internal_queue=internal_queue
                 )
@@ -474,6 +475,14 @@ class ProcessingServer(FastAPI):
             self.log.debug(f"Caching the processing request: {data}")
             # Add the processing request to the end of the internal queue
             self.processing_requests_cache[workspace_key].append(data)
+
+            # Create a DB entry
+            job = DBProcessorJob(
+                **data.dict(exclude_unset=True, exclude_none=True),
+                internal_callback_url=self.internal_job_callback_url,
+                state=StateEnum.cached
+            )
+            await job.insert()
 
             return PYJobOutput(
                 job_id=data.job_id,
@@ -598,7 +607,10 @@ class ProcessingServer(FastAPI):
         workspace_key = workspace_id if workspace_id else path_to_mets
         if state == StateEnum.failed:
             if len(self.processing_requests_cache[workspace_key]):
-                self.cancel_dependent_jobs(job_id=job_id, internal_queue=self.processing_requests_cache[workspace_key])
+                await self.cancel_dependent_jobs(
+                    job_id=job_id,
+                    internal_queue=self.processing_requests_cache[workspace_key]
+                )
 
         if state != StateEnum.success:
             # TODO: Handle other potential error cases
@@ -656,13 +668,8 @@ class ProcessingServer(FastAPI):
 
         for data in consumed_requests:
             processor_name = data.processor_name
-            # Create a DB entry
-            job = DBProcessorJob(
-                **data.dict(exclude_unset=True, exclude_none=True),
-                internal_callback_url=self.internal_job_callback_url,
-                state=StateEnum.queued
-            )
-            await job.insert()
+            self.log.debug(f"Changing the job status of: {job_id} from {StateEnum.cached} to {StateEnum.queued}")
+            job_db = await db_update_processing_job(job_id=job_id, state=StateEnum.queued)
 
             # Read DB workspace entry
             workspace_db = await db_get_workspace(
@@ -693,9 +700,9 @@ class ProcessingServer(FastAPI):
             if data.agent_type == 'worker':
                 ocrd_tool = await self.get_processor_info(processor_name)
                 validate_job_input(self.log, processor_name, ocrd_tool, data)
-                processing_message = self.create_processing_message(job)
+                processing_message = self.create_processing_message(job_db)
                 await self.push_to_processing_queue(processor_name, processing_message)
-                job_output = job.to_job_output()
+                job_output = job_db.to_job_output()
             if data.agent_type == 'server':
                 ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
                 validate_job_input(self.log, processor_name, ocrd_tool, data)
