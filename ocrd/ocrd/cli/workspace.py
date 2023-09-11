@@ -444,16 +444,17 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
             mimetype=mimetype,
             page_id=page_id,
         ):
+        ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
         if download and not f.local_filename:
             workspace.download_file(f)
             modified_mets = True
             if wait:
                 time.sleep(wait)
         if undo_download and f.local_filename:
+            ret_entry = [f'Removed local_filename {f.local_filename}']
             f.local_filename = None
             modified_mets = True
-        ret.append([f.ID if field == 'pageId' else str(getattr(f, field)) or ''
-                    for field in output_field])
+        ret.append(ret_entry)
     if modified_mets:
         workspace.save_mets()
     if 'pageId' in output_field:
