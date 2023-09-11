@@ -13,6 +13,7 @@ Added:
   * Web API: Support job dependency for caching complete fully-deterministic workflows, #1069
   * Web API: Processing server will start all ready requests, not just the first one, #1069
   * `ocrd_utils.config` to collect all configuration based on environment variables in one place, #1081
+  * Processor CLI: Warn if a given page ID cannot be found in METS, #1088, #1089
 
 Changed:
 
