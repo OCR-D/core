@@ -369,6 +369,23 @@ class ProcessingServer(FastAPI):
             found_requests.append(found_request)
         return found_requests
 
+    def cancel_dependent_jobs(self, job_id: str, internal_queue: List[PYJobInput]) -> List[PYJobInput]:
+        cancelled_jobs = []
+        for i, current_element in enumerate(internal_queue):
+            if job_id in current_element.depends_on:
+                found_request = internal_queue.pop(i)
+                self.log.debug(f"For job id: `{job_id}`, "
+                               f"found cached dependent request to be cancelled: {found_request.job_id}")
+                cancelled_jobs.append(found_request)
+                # Recursively cancel dependent jobs for the cancelled job
+                recursively_cancelled = self.cancel_dependent_jobs(
+                    job_id=found_request.job_id,
+                    internal_queue=internal_queue
+                )
+                # Add the recursively cancelled jobs to the main list of cancelled jobs
+                cancelled_jobs.extend(recursively_cancelled)
+        return cancelled_jobs
+
     def query_ocrd_tool_json_from_server(self, processor_name):
         processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
         if not processor_server_url:
@@ -578,9 +595,10 @@ class ProcessingServer(FastAPI):
 
         self.log.debug(f"Received result for job with id: {job_id} has state: {state}")
 
+        workspace_key = workspace_id if workspace_id else path_to_mets
         if state == StateEnum.failed:
-            # TODO: Call the callback to the Workflow server if the current processing step has failed
-            pass
+            if len(self.processing_requests_cache[workspace_key]):
+                self.cancel_dependent_jobs(job_id=job_id, internal_queue=self.processing_requests_cache[workspace_key])
 
         if state != StateEnum.success:
             # TODO: Handle other potential error cases
@@ -616,8 +634,6 @@ class ProcessingServer(FastAPI):
         )
 
         # Take the next request from the cache (if any available)
-        workspace_key = workspace_id if workspace_id else path_to_mets
-
         if workspace_key not in self.processing_requests_cache:
             self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
             return
