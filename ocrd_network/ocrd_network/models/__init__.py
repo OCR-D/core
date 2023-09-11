@@ -9,6 +9,7 @@ __all__ = [
     'PYJobInput',
     'PYJobOutput',
     'PYOcrdTool',
+    'PYResultMessage',
     'StateEnum',
 ]
 
@@ -18,5 +19,6 @@ from .job import (
     PYJobOutput,
     StateEnum
 )
+from .messages import PYResultMessage
 from .ocrd_tool import PYOcrdTool
 from .workspace import DBWorkspace

@@ -19,9 +19,12 @@ from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
+SUBCOMMANDS = ['worker', 'server']
+
 def ocrd_cli_wrap_processor(
     processorClass,
     mets=None,
+    mets_server_url=None,
     working_dir=None,
     dump_json=False,
     dump_module_dir=False,
@@ -33,8 +36,8 @@ def ocrd_cli_wrap_processor(
     show_resource=None,
     list_resources=False,
     # ocrd_network params start #
-    agent_type=None,
-    agent_address=None,
+    subcommand=None,
+    address=None,
     queue=None,
     database=None,
     # ocrd_network params end #
@@ -49,17 +52,20 @@ def ocrd_cli_wrap_processor(
             dump_json=dump_json,
             dump_module_dir=dump_module_dir,
             show_help=help,
+            subcommand=subcommand,
             show_version=version,
             show_resource=show_resource,
             list_resources=list_resources
         )
         sys.exit()
+    if subcommand:
+        # Used for checking/starting network agents for the WebAPI architecture
+        check_and_run_network_agent(processorClass, subcommand, address, database, queue)
+    elif address or queue or database:
+        raise ValueError(f"Subcommand options --adress --queue and --database are only valid for subcommands 'worker' or 'server'")
+
 
     initLogging()
-
-    # Used for checking/starting network agents for the WebAPI architecture
-    # Has no side effects if neither of the 4 ocrd_network parameters are passed
-    check_and_run_network_agent(processorClass, agent_type, agent_address, database, queue)
 
     LOG = getLogger('ocrd_cli_wrap_processor')
     # LOG.info('kwargs=%s' % kwargs)
@@ -73,8 +79,9 @@ def ocrd_cli_wrap_processor(
     # if not kwargs['output_file_grp']:
     #     raise ValueError('-O/--output-file-grp is required')
     resolver = Resolver()
-    working_dir, mets, _ = resolver.resolve_mets_arguments(working_dir, mets, None)
-    workspace = resolver.workspace_from_url(mets, working_dir)
+    working_dir, mets, _, mets_server_url = \
+            resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_url)
+    workspace = resolver.workspace_from_url(mets, working_dir, mets_server_url=mets_server_url)
     page_id = kwargs.get('page_id')
     # XXX not possible while processors do not adhere to # https://github.com/OCR-D/core/issues/505
     # if overwrite
@@ -124,59 +131,50 @@ def ocrd_cli_wrap_processor(
     run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
 
 
-def check_and_run_network_agent(ProcessorClass, agent_type: str, agent_address: str, database: str, queue: str):
-    if not agent_type and (agent_address or database or queue):
-        raise ValueError("Options '--database', '--queue', and '--address' are valid only with '--type'")
-    if not agent_type:
-        return
+def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, database: str, queue: str):
+    """
+    """
+    if subcommand not in SUBCOMMANDS:
+        raise ValueError(f"SUBCOMMAND can only be one of {SUBCOMMANDS}")
 
     if not database:
-        raise ValueError("Options '--type' and '--database' are mutually inclusive")
-    allowed_agent_types = ['server', 'worker']
-    if agent_type not in allowed_agent_types:
-        agents_str = ', '.join(allowed_agent_types)
-        raise ValueError(f"Wrong type parameter. Allowed types: {agents_str}")
-    if agent_type == 'server':
-        if not agent_address:
-            raise ValueError("Options '--type=server' and '--address' are mutually inclusive")
+        raise ValueError(f"Option '--database' is invalid for subcommand {subcommand}")
+
+    if subcommand == 'server':
+        if not address:
+            raise ValueError(f"Option '--address' required for subcommand {subcommand}")
         if queue:
-            raise ValueError("Options '--type=server' and '--queue' are mutually exclusive")
-    if agent_type == 'worker':
+            raise ValueError(f"Option '--queue' invalid for subcommand {subcommand}")
+    if subcommand == 'worker':
+        if address:
+            raise ValueError(f"Option '--address' invalid for subcommand {subcommand}")
         if not queue:
-            raise ValueError("Options '--type=worker' and '--queue' are mutually inclusive")
-        if agent_address:
-            raise ValueError("Options '--type=worker' and '--address' are mutually exclusive")
+            raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
 
     import logging
     logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
     processor = ProcessorClass(workspace=None, dump_json=True)
-    if agent_type == 'worker':
-        try:
-            # TODO: Passing processor_name and ocrd_tool is reduntant
-            processing_worker = ProcessingWorker(
-                rabbitmq_addr=queue,
-                mongodb_addr=database,
-                processor_name=processor.ocrd_tool['executable'],
-                ocrd_tool=processor.ocrd_tool,
-                processor_class=ProcessorClass,
-            )
-            # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
-            processing_worker.connect_consumer()
-            # Start consuming from the queue with name `processor_name`
-            processing_worker.start_consuming()
-        except Exception as e:
-            sys.exit(f"Processing worker has failed with error: {e}")
-    if agent_type == 'server':
-        try:
-            # TODO: Better validate that inside the ProcessorServer itself
-            host, port = agent_address.split(':')
-            processor_server = ProcessorServer(
-                mongodb_addr=database,
-                processor_name=processor.ocrd_tool['executable'],
-                processor_class=ProcessorClass,
-            )
-            processor_server.run_server(host=host, port=int(port))
-        except Exception as e:
-            sys.exit(f"Processor server has failed with error: {e}")
+    if subcommand == 'worker':
+        # TODO: Passing processor_name and ocrd_tool is reduntant
+        processing_worker = ProcessingWorker(
+            rabbitmq_addr=queue,
+            mongodb_addr=database,
+            processor_name=processor.ocrd_tool['executable'],
+            ocrd_tool=processor.ocrd_tool,
+            processor_class=ProcessorClass,
+        )
+        # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
+        processing_worker.connect_consumer()
+        # Start consuming from the queue with name `processor_name`
+        processing_worker.start_consuming()
+    elif subcommand == 'server':
+        # TODO: Better validate that inside the ProcessorServer itself
+        host, port = address.split(':')
+        processor_server = ProcessorServer(
+            mongodb_addr=database,
+            processor_name=processor.ocrd_tool['executable'],
+            processor_class=ProcessorClass,
+        )
+        processor_server.run_server(host=host, port=int(port))
     sys.exit(0)

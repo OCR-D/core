@@ -10,6 +10,7 @@ from uuid import uuid4
 from yaml import safe_load
 
 from ocrd_validators import ProcessingServerConfigValidator
+from .rabbitmq_utils import OcrdResultMessage
 
 
 # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
@@ -108,3 +109,16 @@ def download_ocrd_all_tool_json(ocrd_all_url: str):
     if not response.status_code == 200:
         raise ValueError(f"Failed to download ocrd all tool json from: '{ocrd_all_url}'")
     return response.json()
+
+
+def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMessage):
+    logger.info(f'Posting result message to callback_url "{callback_url}"')
+    headers = {"Content-Type": "application/json"}
+    json_data = {
+        "job_id": result_message.job_id,
+        "state": result_message.state,
+        "path_to_mets": result_message.path_to_mets,
+        "workspace_id": result_message.workspace_id
+    }
+    response = requests.post(url=callback_url, headers=headers, json=json_data)
+    logger.info(f'Response from callback_url "{response}"')

@@ -42,6 +42,7 @@ from ocrd_utils import (
 )
 
 from .workspace_backup import WorkspaceBackupManager
+from .mets_server import ClientSideOcrdMets
 
 __all__ = ['Workspace']
 
@@ -69,13 +70,20 @@ class Workspace():
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None):
+    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None, mets_server_url=None):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
         self.overwrite_mode = False
+        self.is_remote = bool(mets_server_url)
         if mets is None:
-            mets = OcrdMets(filename=self.mets_target)
+            if self.is_remote:
+                mets = ClientSideOcrdMets(mets_server_url)
+                if mets.workspace_path != self.directory:
+                    raise ValueError(f"METS server {mets_server_url} workspace directory {mets.workspace_path} differs "
+                            "from local workspace directory {self.directory}. These are not the same workspaces.")
+            else:
+                mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
         if automatic_backup:
             self.automatic_backup = WorkspaceBackupManager(self)
@@ -86,7 +94,8 @@ class Workspace():
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
 
     def __str__(self):
-        return 'Workspace[directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
+        return 'Workspace[remote=%s, directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
+            not not self.is_remote,
             self.directory,
             self.baseurl,
             self.mets.file_groups,
@@ -396,6 +405,8 @@ class Workspace():
 
             ret = self.mets.add_file(file_grp, **kwargs)
 
+            # content being set implies is_remote==False because METS server
+            # does not pass file contents
             if content is not None:
                 with open(kwargs['local_filename'], 'wb') as f:
                     if isinstance(content, str):
@@ -409,11 +420,14 @@ class Workspace():
         Write out the current state of the METS file to the filesystem.
         """
         log = getLogger('ocrd.workspace.save_mets')
-        log.debug("Saving mets '%s'", self.mets_target)
-        if self.automatic_backup:
-            self.automatic_backup.add()
-        with atomic_write(self.mets_target) as f:
-            f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
+        if self.is_remote:
+            self.mets.save()
+        else:
+            log.debug("Saving mets '%s'", self.mets_target)
+            if self.automatic_backup:
+                WorkspaceBackupManager(self).add()
+            with atomic_write(self.mets_target) as f:
+                f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
     def resolve_image_exif(self, image_url):
         """
