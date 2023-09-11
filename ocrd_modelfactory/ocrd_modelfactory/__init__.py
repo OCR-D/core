@@ -67,7 +67,7 @@ def page_from_image(input_file, with_tree=False):
             imageWidth=exif.width,
             imageHeight=exif.height,
             # XXX brittle
-            imageFilename=input_file.url if input_file.url is not None else input_file.local_filename
+            imageFilename=str(input_file.local_filename) if input_file.local_filename else input_file.url
         ),
         pcGtsId=input_file.ID
     )

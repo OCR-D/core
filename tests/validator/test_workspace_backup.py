@@ -46,4 +46,4 @@ class TestWorkspaceBackup(TestCase):
             self.mgr.restore(first, choose_first=False)
 
 if __name__ == '__main__':
-    main()
+    main(__name__)

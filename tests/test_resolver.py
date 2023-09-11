@@ -174,16 +174,17 @@ def test_workspace_from_url0():
 
     # assert
     assert '%s.tif' % f.ID == 'FILE_0001_IMAGE.tif'
-    assert f.local_filename == 'OCR-D-IMG/FILE_0001_IMAGE.tif'
+    assert f.local_filename == Path('OCR-D-IMG/FILE_0001_IMAGE.tif')
 
 
 def test_resolve_image0():
     workspace = Resolver().workspace_from_url(METS_HEROLD)
     input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
     f = input_files[0]
-    img_pil1 = workspace._resolve_image_as_pil(f.url)
+    print(f)
+    img_pil1 = workspace._resolve_image_as_pil(f.local_filename)
     assert img_pil1.size == (2875, 3749)
-    img_pil2 = workspace._resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
+    img_pil2 = workspace._resolve_image_as_pil(f.local_filename, [[0, 0], [1, 1]])
     assert img_pil2.size == (1, 1)
 
 
@@ -237,12 +238,12 @@ def test_workspace_from_nothing_noclobber(tmp_path):
 
 
 @pytest.mark.parametrize("url,basename,exc_msg",
-                         [(None, None, "'url' must be a string"),
-                          (None, 'foo', "'directory' must be a string")]
+                         [(None, None, "'url' must be a non-empty string"),
+                          (None, 'foo', "'directory' must be a non-empty string")]
                          )
 def test_download_to_directory_with_badargs(url, basename, exc_msg):
 
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(ValueError) as exc:
         Resolver().download_to_directory(url, basename)
 
     # assert exception message contained

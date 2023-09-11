@@ -1,10 +1,8 @@
 import functools
 import warnings
 
-"""
-https://stackoverflow.com/questions/49802412/how-to-implement-deprecation-in-python-with-argument-alias
-by user2357112 supports Monica
-"""
+def deprecation_warning(msg, stacklevel=2):
+    warnings.warn(msg, DeprecationWarning, stacklevel)
 
 def deprecated_alias(**aliases):
     """
@@ -19,6 +17,10 @@ def deprecated_alias(**aliases):
     return deco
 
 def rename_kwargs(func_name, kwargs, aliases):
+    """
+    https://stackoverflow.com/questions/49802412/how-to-implement-deprecation-in-python-with-argument-alias
+    by user2357112 supports Monica
+    """
     for alias, new in aliases.items():
         if alias in kwargs:
             if new in kwargs:

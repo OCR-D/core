@@ -26,18 +26,9 @@ def test_ocrd_file_without_filegrp():
     assert "set fileGrp" in str(val_err.value)
 
 
-def test_set_loctype():
-    f = create_ocrd_file_with_defaults()
-    assert f.loctype == 'OTHER'
-    assert f.otherloctype == 'FILE'
-    f.otherloctype = 'foo'
-    assert f.otherloctype == 'foo'
-    f.loctype = 'URN'
-    assert f.loctype == 'URN'
-    assert f.otherloctype == None
-    f.otherloctype = 'foo'
-    assert f.loctype, 'OTHER'
-
+def test_get_loctypes():
+    f = create_ocrd_file_with_defaults(local_filename='foo', url='bar')
+    assert f.loctypes == ['OTHER', 'URL']
 
 def test_set_url():
     f = create_ocrd_file_with_defaults()
@@ -50,8 +41,7 @@ def test_set_url():
 def test_constructor_url():
     f = create_ocrd_file_with_defaults(url="foo")
     assert f.url == 'foo'
-    assert f.local_filename == 'foo'
-
+    assert f.local_filename == None
 
 def test_set_id_none():
     f = create_ocrd_file_with_defaults()
@@ -67,8 +57,11 @@ def test_basename():
 
 
 def test_basename_from_url():
+    """
+    Changed behavior, basename no longer derived from f.url
+    """
     f = create_ocrd_file_with_defaults(url="http://foo.bar/quux")
-    assert f.basename == 'quux'
+    assert f.basename == None
 
 
 @pytest.mark.parametrize("local_filename,extension",
@@ -119,7 +112,6 @@ def test_ocrd_file_equality():
     assert f3 == f4
     f5 = mets.add_file('TEMP', ID='TEMP_1', mimetype='image/tiff')
     assert f3 == f5
-
 
 def test_fptr_changed_for_change_id():
     mets = OcrdMets.empty_mets()
