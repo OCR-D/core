@@ -9,6 +9,7 @@ __all__ = [
     'run_processor'
 ]
 
+from warnings import warn
 from pkg_resources import resource_filename
 from os.path import exists
 from shutil import copyfileobj
@@ -352,7 +353,7 @@ class Processor():
             # Warn if no files found but pageId was specified because that
             # might be because of invalid page_id (range)
             if self.page_id and not files_:
-                raise ValueError(f"Could not find any files for --page-id {self.page_id} - compare {self.page_id} with the output of 'orcd workspace list-page'.")
+                LOG.warning(f"Could not find any files for --page-id {self.page_id} - compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
             for file_ in files_:
                 if not file_.pageId:
                     continue
