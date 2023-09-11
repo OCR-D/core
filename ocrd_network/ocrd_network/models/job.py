@@ -9,6 +9,8 @@ from pydantic import BaseModel
 class StateEnum(str, Enum):
     # The processing job is cached inside the Processing Server requests cache
     cached = 'CACHED'
+    # The processing job was cancelled due to failed dependencies
+    cancelled = 'CANCELLED'
     # The processing job is queued inside the RabbitMQ
     queued = 'QUEUED'
     # Processing job is currently running in a Worker or Processor Server
