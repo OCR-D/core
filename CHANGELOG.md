@@ -13,6 +13,10 @@ Added:
   * Web API: Support job dependency for caching complete fully-deterministic workflows, #1069
   * Web API: Processing server will start all ready requests, not just the first one, #1069
 
+Changed:
+
+  * Processors now have `worker` and `server` subcommands, with separate --help, for starting processing worker/processor server, #1087
+
 ## [2.53.0] - 2023-08-21
 
 Fixed:
