@@ -8,69 +8,44 @@ OCR-D Command-line interface
 import re
 import click
 
+from ocrd_utils import config
+
 __all__ = ['cli']
 
-_epilog = """
+_epilog = f"""
 
-\b            
+\b
 Variables:
-  PATH    Search path for processor executables
-          (affects `ocrd process` and `ocrd resmgr`)
-  HOME    Directory to look for `ocrd_logging.conf`,
-          fallback for unset XDG variables.
-
 \b
-  XDG_CONFIG_HOME
-    Directory to look for `./ocrd/resources.yml`
-    (i.e. `ocrd resmgr` user database) - defaults to
-    `$HOME/.config`.
-  XDG_DATA_HOME
-    Directory to look for `./ocrd-resources/*`
-    (i.e. `ocrd resmgr` data location) - defaults to
-    `$HOME/.local/share`.
-
+  PATH
+    Search path for processor executables
+    (affects `ocrd process` and `ocrd resmgr`)
 \b
-  OCRD_DOWNLOAD_RETRIES
-    Number of times to retry failed attempts
-    for downloads of workspace files.
-  OCRD_DOWNLOAD_TIMEOUT
-    Timeout in seconds for connecting or reading
-    (comma-separated) when downloading.
-
+{config.describe('HOME')}
 \b
-  OCRD_METS_CACHING
-    Whether to enable in-memory storage of OcrdMets
-    data structures for speedup during processing or
-    workspace operations.
-
+{config.describe('XDG_CONFIG_HOME')}
 \b
-  OCRD_MAX_PROCESSOR_CACHE
-    Maximum number of processor instances
-    (for each set of parameters) to be kept
-    in memory (including loaded models) for
-    processing workers or processor servers.
-
+{config.describe('XDG_DATA_HOME')}
 \b
-  OCRD_NETWORK_SERVER_ADDR_PROCESSING
-    Default address of Processing Server to connect to
-    (for `ocrd network client processing`).
-  OCRD_NETWORK_SERVER_ADDR_WORKFLOW
-    Default address of Workflow Server to connect to
-    (for `ocrd network client workflow`).
-  OCRD_NETWORK_SERVER_ADDR_WORKSPACE
-    Default address of Workspace Server to connect to
-    (for `ocrd network client workspace`).
-
+{config.describe('OCRD_DOWNLOAD_RETRIES')}
 \b
-  OCRD_PROFILE
-    Whether to enable gathering runtime statistics
-    on the `ocrd.profile` logger (comma-separated):
-    - `CPU`: yields CPU and wall-time,
-    - `RSS`: also yields peak memory (resident set size)
-    - `PSS`: also yields peak memory (proportional set size)
-  OCRD_PROFILE_FILE
-    When profiling is enabled, data file to write to
-    (for external analysis tools like snakeviz).
+{config.describe('OCRD_DOWNLOAD_TIMEOUT')}
+\b
+{config.describe('OCRD_METS_CACHING')}
+\b
+{config.describe('OCRD_DOWNLOAD_TIMEOUT')}
+\b
+{config.describe('OCRD_MAX_PROCESSOR_CACHE')}
+\b
+{config.describe('OCRD_NETWORK_SERVER_ADDR_PROCESSING')}
+\b
+{config.describe('OCRD_NETWORK_SERVER_ADDR_WORKFLOW')}
+\b
+{config.describe('OCRD_NETWORK_SERVER_ADDR_WORKSPACE')}
+\b
+{config.describe('OCRD_PROFILE_FILE')}
+\b
+{config.describe('OCRD_PROFILE', wrap_text=False)}
 """
 
 def command_with_replaced_help(*replacements):

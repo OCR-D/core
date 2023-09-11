@@ -34,18 +34,6 @@ def calculate_execution_time(start: datetime, end: datetime) -> int:
     return int((end - start).total_seconds() * 1000)
 
 
-def tf_disable_interactive_logs():
-    try:
-        # This env variable must be set before importing from Keras
-        environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from tensorflow.keras.utils import disable_interactive_logging
-        # Enabled interactive logging throws an exception
-        # due to a call of sys.stdout.flush()
-        disable_interactive_logging()
-    except Exception:
-        # Nothing should be handled here if TF is not available
-        pass
-
 
 def generate_created_time() -> int:
     return int(datetime.utcnow().timestamp())

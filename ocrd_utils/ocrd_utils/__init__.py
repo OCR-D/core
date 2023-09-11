@@ -157,6 +157,7 @@ from .introspect import (
 )
 
 from .logging import (
+    tf_disable_interactive_logs,
     disableLogging,
     getLevelName,
     getLogger,
@@ -193,3 +194,5 @@ from .str import (
     parse_json_string_with_comments,
     remove_non_path_from_url,
     safe_filename)
+
+from .config import config

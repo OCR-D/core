@@ -36,13 +36,9 @@ from .rabbitmq_utils import (
 from .utils import (
     calculate_execution_time,
     post_to_callback_url,
-    tf_disable_interactive_logs,
     verify_database_uri,
     verify_and_parse_mq_uri
 )
-
-# TODO: Check this again when the logging is refactored
-tf_disable_interactive_logs()
 
 
 class ProcessingWorker:
