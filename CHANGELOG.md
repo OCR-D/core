@@ -17,6 +17,7 @@ Added:
 Changed:
 
   * Processors now have `worker` and `server` subcommands, with separate --help, for starting processing worker/processor server, #1087
+  * Move `tf_disable_interactive_logs` (to silence keras/tensorflow print statements) to `ocrd_utils.logging` and do not call on module-level, #1090, #1091
 
 ## [2.53.0] - 2023-08-21
 
