@@ -80,7 +80,7 @@ async def sync_db_get_workspace(workspace_id: str = None, workspace_mets_path: s
     return await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path)
 
 
-async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs):
+async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs) -> DBWorkspace:
     workspace = None
     if not workspace_id and not workspace_mets_path:
         raise ValueError(f'Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
@@ -122,11 +122,12 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
         else:
             raise ValueError(f'Field "{key}" is not updatable.')
     await workspace.save()
+    return workspace
 
 
 @call_sync
-async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs):
-    await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
+async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs) -> DBWorkspace:
+    return await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
 
 
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
@@ -142,7 +143,7 @@ async def sync_db_get_processing_job(job_id: str) -> DBProcessorJob:
     return await db_get_processing_job(job_id)
 
 
-async def db_update_processing_job(job_id: str, **kwargs):
+async def db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
     job = await DBProcessorJob.find_one(
         DBProcessorJob.job_id == job_id)
     if not job:
@@ -165,8 +166,9 @@ async def db_update_processing_job(job_id: str, **kwargs):
         else:
             raise ValueError(f'Field "{key}" is not updatable.')
     await job.save()
+    return job
 
 
 @call_sync
-async def sync_db_update_processing_job(job_id: str, **kwargs):
-    await db_update_processing_job(job_id=job_id, **kwargs)
+async def sync_db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
+    return await db_update_processing_job(job_id=job_id, **kwargs)
