@@ -1,5 +1,5 @@
 import click
-from click import option, Path
+from click import option, Path, group, command, argument
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
 from ocrd_network import (
@@ -39,8 +39,7 @@ def ocrd_cli_options(f):
         parameter_option,
         parameter_override_option,
         loglevel_option,
-        option('--type', 'agent_type', type=click.Choice(['worker', 'server'])),
-        option('--address', 'agent_address', type=ServerAddressParamType()),
+        option('--address', type=ServerAddressParamType()),
         option('--queue', type=QueueServerParamType()),
         option('--database', type=DatabaseParamType()),
         option('-C', '--show-resource'),
@@ -49,6 +48,12 @@ def ocrd_cli_options(f):
         option('-D', '--dump-module-dir', is_flag=True, default=False),
         option('-h', '--help', is_flag=True, default=False),
         option('-V', '--version', is_flag=True, default=False),
+        # Subcommand, only used for 'worker'/'server'. Cannot be handled in
+        # click because processors use the @command decorator and even if they
+        # were using `group`, you cannot combine have a command with
+        # subcommands. So we have to work around that by creating a
+        # pseudo-subcommand handled in ocrd_cli_wrap_processor
+        argument('subcommand', nargs=1, required=False, type=click.Choice(['worker', 'server'])),
     ]
     for param in params:
         param(f)
