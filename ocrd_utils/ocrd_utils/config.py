@@ -144,11 +144,11 @@ config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
         default=(True, ''))
 
 config.add("OCRD_NETWORK_SERVER_ADDR_WORKFLOW",
-        description="Default address of Workflow Server to connect to (for `ocrd network client processing`).",
+        description="Default address of Workflow Server to connect to (for `ocrd network client workflow`).",
         default=(True, ''))
 
 config.add("OCRD_NETWORK_SERVER_ADDR_WORKSPACE",
-        description="Default address of Workspace Server to connect to (for `ocrd network client processing`).",
+        description="Default address of Workspace Server to connect to (for `ocrd network client workspace`).",
         default=(True, ''))
 
 config.add("HOME",
