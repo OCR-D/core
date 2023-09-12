@@ -21,14 +21,17 @@ class LogCtx():
 pass_log = click.make_pass_decorator(LogCtx)
 
 @click.group("log")
-@click.option('-n', '--name', envvar='OCRD_TOOL_NAME', default='', metavar='LOGGER_NAME', help='Name of the logger', show_default=True)
+@click.option('-n', '--name', envvar='OCRD_TOOL_NAME', default='ocrd', metavar='LOGGER_NAME', help='Name of the logger', show_default=True)
 @click.pass_context
 def log_cli(ctx, name, *args, **kwargs):
     """
     Logging
+
+    Logger name will be ocrd.OCRD_TOOL_NAME where OCRD_TOOL_NAME is normally
+    (when using bashlib) the name of the processor.
     """
     initLogging()
-    ctx.obj = LogCtx(name)
+    ctx.obj = LogCtx('ocrd.' + name)
 
 def _bind_log_command(lvl):
     @click.argument('msgs', nargs=-1)

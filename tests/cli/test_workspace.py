@@ -362,12 +362,12 @@ class TestCli(TestCase):
             result = self.runner.invoke(workspace_cli, ['clone', join(src_dir, 'mets.xml'), shallowcloneddir])
             self.assertEqual(result.exit_code, 0)
 
-            result = self.runner.invoke(workspace_cli, ['clone', '-a', join(src_dir, 'mets.xml'), fullcloneddir])
+            result = self.runner.invoke(workspace_cli, ['clone', '--download', join(src_dir, 'mets.xml'), fullcloneddir])
             self.assertEqual(result.exit_code, 0)
 
             with copy_of_directory(src_dir, copieddir):
                 shallow_vs_copied = dircmp(shallowcloneddir, copieddir)
-                self.assertEqual(set(shallow_vs_copied.right_only), set(['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG']))
+                assert set(shallow_vs_copied.right_only) == set(['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG'])
 
                 full_vs_copied = dircmp(fullcloneddir, copieddir)
                 #  print(full_vs_copied)
