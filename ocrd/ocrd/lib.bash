@@ -86,9 +86,11 @@ ocrd__list_resources () {
 ## Print usage
 ##
 ocrd__usage () {
-
-    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" help $ocrd__subcommand
-
+    declare -a _args=(ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" help)
+    if [ -v ocrd__subcommand ];then
+        _args+=($ocrd__subcommand)
+    fi
+    ocrd ${_args[@]}
 }
 
 ## ### `ocrd__parse_argv`
