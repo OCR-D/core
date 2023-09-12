@@ -143,7 +143,7 @@ class ProcessingWorker:
             raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
 
         try:
-            self.log.info(f'Starting to process the received message: {processing_message}')
+            self.log.debug(f'Starting to process the received message: {processing_message.__dict__}')
             self.process_message(processing_message=processing_message)
         except Exception as e:
             self.log.error(f'Failed to process processing message with tag: {delivery_tag}')
