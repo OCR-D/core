@@ -20,11 +20,6 @@ from ocrd_models import OcrdMets, OcrdFile, ClientSideOcrdFile, OcrdAgent, Clien
 from ocrd_utils import initLogging, getLogger, deprecated_alias
 
 #
-# XXX HACKS TODO
-#
-initLogging()
-
-#
 # Models
 #
 
