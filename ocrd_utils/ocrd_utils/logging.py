@@ -46,6 +46,21 @@ __all__ = [
     'setOverrideLogLevel',
 ]
 
+LOGGING_DEFAULTS = {
+    'ocrd': logging.INFO,
+    'ocrd_models': logging.INFO,
+    'ocrd_utils': logging.INFO,
+    'ocrd_network': logging.INFO,
+    'ocrd_exif': logging.INFO,
+    # 'ocrd.resolver': logging.INFO,
+    # 'ocrd.resolver.download_to_directory': logging.INFO,
+    # 'ocrd.resolver.add_files_to_mets': logging.INFO,
+    # To cut back on the `Self-intersection at or near point` INFO messages
+    'shapely.geos': logging.ERROR,
+    'tensorflow': logging.ERROR,
+    'PIL': logging.INFO,
+}
+
 _initialized_flag = False
 
 _ocrdLevel2pythonLevel = {
@@ -84,7 +99,7 @@ def getLogger(*args, **kwargs):
     logger = logging.getLogger(*args, **kwargs)
     return logger
 
-def setOverrideLogLevel(lvl, silent=False):
+def setOverrideLogLevel(lvl, silent=True):
     """
     Override the output log level of the handlers attached to the ``ocrd`` logger.
 
@@ -102,10 +117,10 @@ def setOverrideLogLevel(lvl, silent=False):
         ocrd_logger.setLevel(logging.NOTSET)
     else:
         if not silent:
-            ocrd_logger.info('Overriding log level globally to %s', lvl)
+            ocrd_logger.info('Overriding ocrd log level to %s', lvl)
         ocrd_logger.setLevel(lvl)
 
-def initLogging(builtin_only=False, basic_config=True, force_reinit=False):
+def initLogging(builtin_only=False, force_reinit=False):
     """
     Reset ``ocrd`` logger, read logging configuration if exists, otherwise use basicConfig
 
@@ -116,9 +131,6 @@ def initLogging(builtin_only=False, basic_config=True, force_reinit=False):
     Other processes that use OCR-D/core as a library can, but do not have to, use this functionality.
 
     Keyword Args:
-        - basic_config (bool, False): Whether to attach the handler to the
-                                      root logger instead of just the ``ocrd`` logger
-                                      like ``logging.basicConfig`` does.
         - builtin_only (bool, False): Whether to search for logging configuration
                                       on-disk (``False``) or only use the
                                       hard-coded config (``True``). For testing
@@ -128,6 +140,7 @@ def initLogging(builtin_only=False, basic_config=True, force_reinit=False):
     global _initialized_flag
     if _initialized_flag and not force_reinit:
         return
+    # disableLogging()
 
     # https://docs.python.org/3/library/logging.html#logging.disable
     # If logging.disable(logging.NOTSET) is called, it effectively removes this
@@ -157,27 +170,22 @@ def initLogging(builtin_only=False, basic_config=True, force_reinit=False):
         # Default logging config
         ocrd_handler = logging.StreamHandler(stream=sys.stderr)
         ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
-        if basic_config:
-            logging.getLogger('').addHandler(ocrd_handler)
-        else:
-            logging.getLogger('ocrd').addHandler(ocrd_handler)
-        logging.getLogger('ocrd').setLevel('INFO')
-        #  logging.getLogger('ocrd.resolver').setLevel(logging.INFO)
-        #  logging.getLogger('ocrd.resolver.download_to_directory').setLevel(logging.INFO)
-        #  logging.getLogger('ocrd.resolver.add_files_to_mets').setLevel(logging.INFO)
-        logging.getLogger('PIL').setLevel(logging.INFO)
-        # To cut back on the `Self-intersection at or near point` INFO messages
-        logging.getLogger('shapely.geos').setLevel(logging.ERROR)
-        logging.getLogger('tensorflow').setLevel(logging.ERROR)
+        ocrd_handler.setLevel(logging.DEBUG)
+        logging.getLogger('ocrd').addHandler(ocrd_handler)
+        for logger_name, logger_level in LOGGING_DEFAULTS.items():
+            logging.getLogger(logger_name).setLevel(logger_level)
 
     _initialized_flag = True
 
-def disableLogging():
+def disableLogging(silent=True):
     """
     Disables all logging of the ``ocrd`` logger and descendants
+
+    Keyword Args:
+        silent (bool, True): Whether to log the call to disableLogging
     """
     global _initialized_flag # pylint: disable=global-statement
-    if _initialized_flag:
+    if _initialized_flag and not silent:
         logging.getLogger('ocrd.logging').debug("Disabling logging")
     _initialized_flag = False
     # logging.basicConfig(level=logging.CRITICAL)
@@ -185,6 +193,8 @@ def disableLogging():
     # remove all handlers for the ocrd logger
     for handler in logging.getLogger('ocrd').handlers[:]:
         logging.getLogger('ocrd').removeHandler(handler)
+    for logger_name in LOGGING_DEFAULTS:
+        logging.getLogger(logger_name).setLevel(logging.NOTSET)
 
 # Initializing stream handlers at module level
 # would cause message output in all runtime contexts,
