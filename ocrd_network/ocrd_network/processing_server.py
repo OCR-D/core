@@ -486,7 +486,7 @@ class ProcessingServer(FastAPI):
 
             return PYJobOutput(
                 job_id=data.job_id,
-                processor_name=processor_name,
+                processor_name=data.processor_name,
                 workspace_id=data.workspace_id,
                 workspace_path=data.path_to_mets,
                 state=StateEnum.cached
@@ -516,15 +516,15 @@ class ProcessingServer(FastAPI):
 
         job_output = None
         if data.agent_type == 'worker':
-            ocrd_tool = await self.get_processor_info(processor_name)
-            validate_job_input(self.log, processor_name, ocrd_tool, data)
+            ocrd_tool = await self.get_processor_info(data.processor_name)
+            validate_job_input(self.log, data.processor_name, ocrd_tool, data)
             processing_message = self.create_processing_message(job)
-            await self.push_to_processing_queue(processor_name, processing_message)
+            await self.push_to_processing_queue(data.processor_name, processing_message)
             job_output = job.to_job_output()
         if data.agent_type == 'server':
-            ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
-            validate_job_input(self.log, processor_name, ocrd_tool, data)
-            job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
+            ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(data.processor_name)
+            validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+            job_output = await self.push_to_processor_server(data.processor_name, processor_server_url, data)
         if not job_output:
             self.log.exception('Failed to create job output')
             raise HTTPException(
@@ -667,9 +667,8 @@ class ProcessingServer(FastAPI):
             return
 
         for data in consumed_requests:
-            processor_name = data.processor_name
-            self.log.debug(f"Changing the job status of: {job_id} from {StateEnum.cached} to {StateEnum.queued}")
-            job_db = await db_update_processing_job(job_id=job_id, state=StateEnum.queued)
+            self.log.debug(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
+            job_db = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
 
             # Read DB workspace entry
             workspace_db = await db_get_workspace(
@@ -698,15 +697,15 @@ class ProcessingServer(FastAPI):
 
             job_output = None
             if data.agent_type == 'worker':
-                ocrd_tool = await self.get_processor_info(processor_name)
-                validate_job_input(self.log, processor_name, ocrd_tool, data)
+                ocrd_tool = await self.get_processor_info(data.processor_name)
+                validate_job_input(self.log, data.processor_name, ocrd_tool, data)
                 processing_message = self.create_processing_message(job_db)
-                await self.push_to_processing_queue(processor_name, processing_message)
+                await self.push_to_processing_queue(data.processor_name, processing_message)
                 job_output = job_db.to_job_output()
             if data.agent_type == 'server':
-                ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
-                validate_job_input(self.log, processor_name, ocrd_tool, data)
-                job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
+                ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(data.processor_name)
+                validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+                job_output = await self.push_to_processor_server(data.processor_name, processor_server_url, data)
             if not job_output:
                 self.log.exception(f'Failed to create job output for job input data: {data}')
 
