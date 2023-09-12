@@ -171,6 +171,7 @@ def run_cli(
         output_file_grp=None,
         parameter=None,
         working_dir=None,
+        mets_server_url=None,
 ):
     """
     Open a workspace and run a processor on the command line.
@@ -206,6 +207,8 @@ def run_cli(
         args += ['--parameter', parameter]
     if overwrite:
         args += ['--overwrite']
+    if mets_server_url:
+        args += ['--mets-server-url', mets_server_url]
     log = getLogger('ocrd.processor.helpers.run_cli')
     log.debug("Running subprocess '%s'", ' '.join(args))
     result = run(args, check=False)
