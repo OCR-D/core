@@ -81,10 +81,7 @@ class ProcessingWorker:
         # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
         self.rmq_publisher = None
         # Always create a queue (idempotent)
-        self.create_queue(
-            connection_attempts=config.OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS,
-            retry_delay=2
-        )
+        self.create_queue()
 
     def connect_consumer(self) -> None:
         self.log.info(f'Connecting RMQConsumer to RabbitMQ server: '
@@ -267,7 +264,10 @@ class ProcessingWorker:
             message=encoded_result_message
         )
 
-    def create_queue(self, connection_attempts: int = 1, retry_delay: int = 1):
+    def create_queue(
+            self,
+            connection_attempts: int = config.OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS,
+            retry_delay: int = 3) -> None:
         """Create the queue for this worker
 
         Originally only the processing-server created the queues for the workers according to the
