@@ -13,7 +13,8 @@ __all__ = [
     'create_docker_client',
     'create_ssh_client',
     'DeployType',
-    'wait_for_rabbitmq_availability'
+    'verify_mongodb_available',
+    'verify_rabbitmq_available'
 ]
 
 

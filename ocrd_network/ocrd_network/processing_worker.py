@@ -146,7 +146,7 @@ class ProcessingWorker:
             raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
 
         try:
-            self.log.debug(f'Starting to process the received message: {processing_message.__dict__}')
+            self.log.info(f'Starting to process the received message: {processing_message.__dict__}')
             self.process_message(processing_message=processing_message)
         except Exception as e:
             self.log.error(f'Failed to process processing message with tag: {delivery_tag}')
@@ -194,8 +194,13 @@ class ProcessingWorker:
         internal_callback_url = processing_message.internal_callback_url if 'internal_callback_url' in pm_keys else None
         parameters = processing_message.parameters if processing_message.parameters else {}
 
+        mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
         if not path_to_mets and workspace_id:
             path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
+            mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url
+
+        if not mets_server_url:
+            self.log.debug(f'METS SERVER URL IS NOT SET')
 
         execution_failed = False
         self.log.debug(f'Invoking processor: {self.processor_name}')
@@ -214,7 +219,8 @@ class ProcessingWorker:
                 input_file_grps=input_file_grps,
                 output_file_grps=output_file_grps,
                 page_id=page_id,
-                parameters=processing_message.parameters
+                parameters=processing_message.parameters,
+                mets_server_url=mets_server_url
             )
         except Exception as error:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {path_to_mets}, "
@@ -238,7 +244,7 @@ class ProcessingWorker:
             # May not be always available
             workspace_id=workspace_id
         )
-        self.log.info(f'Result message: {str(result_message)}')
+        self.log.info(f'Result message: {result_message.__dict__}')
         # If the result_queue field is set, send the result message to a result queue
         if result_queue_name:
             self.publish_to_result_queue(result_queue_name, result_message)

@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Optional
 
 from ocrd import Resolver
 from ocrd.processor.helpers import run_cli, run_processor
@@ -14,11 +14,13 @@ def invoke_processor(
         output_file_grps: List[str],
         page_id: str,
         parameters: dict,
+        mets_server_url: Optional[str]
 ) -> None:
     if not (processor_class or executable):
         raise ValueError(f'Missing processor class and executable')
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
+
     workspace = Resolver().workspace_from_url(abs_path_to_mets)
     if processor_class:
         try:
@@ -29,11 +31,13 @@ def invoke_processor(
                 output_file_grp=output_file_grps_str,
                 page_id=page_id,
                 parameter=parameters,
-                instance_caching=True
+                instance_caching=True,
+                mets_server_url=mets_server_url
             )
         except Exception as e:
             raise RuntimeError(f"Python executable '{executable}' exited with: {e}")
     else:
+        # TODO: Add the mets_server_url parameter after merging master to workflow-endpoint
         return_code = run_cli(
             executable=executable,
             workspace=workspace,

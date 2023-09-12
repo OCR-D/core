@@ -22,7 +22,8 @@ from .database import (
     db_create_workspace,
     db_get_processing_job,
     db_get_workspace,
-    db_update_processing_job
+    db_update_processing_job,
+    db_update_workspace
 )
 from .deployer import Deployer
 from .models import (
@@ -433,7 +434,7 @@ class ProcessingServer(FastAPI):
 
         # Since the path is not resolved yet,
         # the return value is not important for the Processing Server
-        await validate_and_return_mets_path(self.log, data)
+        request_mets_path = await validate_and_return_mets_path(self.log, data)
 
         page_ids = expand_page_ids(data.page_id)
 
@@ -483,6 +484,16 @@ class ProcessingServer(FastAPI):
             db_workspace=db_workspace,
             output_file_grps=data.output_file_grps,
             page_ids=page_ids
+        )
+
+        # Start a Mets Server with the current workspace
+        mets_server_url = self.deployer.start_native_mets_server(mets_path=request_mets_path)
+
+        # Assign the mets server url in the database
+        await db_update_workspace(
+            workspace_id=data.workspace_id,
+            workspace_mets_path=data.path_to_mets,
+            mets_server_url=mets_server_url
         )
 
         # Create a queued job DB entry

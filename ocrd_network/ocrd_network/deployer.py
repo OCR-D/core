@@ -10,9 +10,12 @@ from __future__ import annotations
 from typing import Dict, List, Union
 from re import search as re_search
 from os import getpid
+from pathlib import Path
+import shlex
+import subprocess
 from time import sleep
 
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, safe_filename
 
 from .deployment_utils import (
     create_docker_client,
@@ -42,6 +45,7 @@ class Deployer:
         self.internal_callback_url = config.get('internal_callback_url', None)
         for config_host in config['hosts']:
             self.data_hosts.append(DataHost(config_host))
+        self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
 
     # TODO: Reconsider this.
     def find_matching_processors(
@@ -515,3 +519,37 @@ class Deployer:
         stdout.close()
         stdin.close()
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
+
+    def start_native_mets_server(self, mets_path: str) -> str:
+        mets_server_url = f'/tmp/{safe_filename(mets_path)}'
+        if Path.exists(Path(mets_server_url)):
+            self.log.exception(f"The mets server is already started: {mets_server_url}")
+            return mets_server_url
+        cwd = Path(mets_path).parent
+        self.log.info(f'Starting native mets server: {mets_server_url}')
+        log_path = f'{mets_server_url}.log'
+        # cmd = f'nohup ocrd workspace --mets-server-url {mets_server_url} -d {cwd} server start &> {log_path} &'
+        sub_process = subprocess.Popen(
+            args=['nohup', 'ocrd', 'workspace', '--mets-server-url', f'{mets_server_url}',
+                  '-d', f'{cwd}', 'server', 'start'],
+            shell=False,
+            stdout=open(log_path, 'w'),
+            stderr=open(log_path, 'a'),
+            cwd=cwd,
+            universal_newlines=True
+        )
+        self.mets_servers[mets_server_url] = sub_process.pid
+        return mets_server_url
+
+    def stop_native_mets_server(self, mets_server_url: str) -> None:
+        self.log.info(f'Stopping native mets server: {mets_server_url}')
+        if mets_server_url in self.mets_servers:
+            mets_server_pid = self.mets_servers[mets_server_url]
+        else:
+            raise Exception(f"Mets server not found: {mets_server_url}")
+
+        subprocess.run(
+            args=['kill', '-s', 'SIGINT', f'{mets_server_pid}'],
+            shell=False,
+            universal_newlines=True
+        )
