@@ -22,8 +22,7 @@ from .database import (
     db_create_workspace,
     db_get_processing_job,
     db_get_workspace,
-    db_update_processing_job,
-    db_update_workspace,
+    db_update_processing_job
 )
 from .deployer import Deployer
 from .models import (
@@ -238,14 +237,6 @@ class ProcessingServer(FastAPI):
     def create_message_queues(self) -> None:
         """ Create the message queues based on the occurrence of
         `workers.name` in the config file.
-        """
-
-        # TODO: Remove
-        """
-        queue_names = set([])
-        for data_host in self.deployer.data_hosts:
-            for data_worker in data_host.data_workers:
-                queue_names.add(data_worker.processor_name)
         """
 
         # The abstract version of the above lines
