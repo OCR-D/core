@@ -26,9 +26,12 @@ pass_log = click.make_pass_decorator(LogCtx)
 def log_cli(ctx, name, *args, **kwargs):
     """
     Logging
+
+    Logger name will be ocrd.OCRD_TOOL_NAME where OCRD_TOOL_NAME is normally
+    (when using bashlib) the name of the processor.
     """
     initLogging()
-    ctx.obj = LogCtx(name)
+    ctx.obj = LogCtx('ocrd.' + name)
 
 def _bind_log_command(lvl):
     @click.argument('msgs', nargs=-1)
