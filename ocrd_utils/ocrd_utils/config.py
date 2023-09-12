@@ -151,6 +151,11 @@ config.add("OCRD_NETWORK_SERVER_ADDR_WORKSPACE",
         description="Default address of Workspace Server to connect to (for `ocrd network client workspace`).",
         default=(True, ''))
 
+config.add("OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS",
+    description="Number of attempts for a worker to create its queue. Helpfull if the rabbitmq-server needs time to be fully started",
+    parser=int,
+    default=(True, 1))
+
 config.add("HOME",
     description="Directory to look for `ocrd_logging.conf`, fallback for unset XDG variables.",
     # description="HOME directory, cf. https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html",
