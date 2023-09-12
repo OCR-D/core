@@ -112,6 +112,7 @@ Some parts of the software are configured via environement variables:
 * `OCRD_NETWORK_SERVER_ADDR_PROCESSING`: Default address of Processing Server to connect to (for `ocrd network client processing`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKFLOW`: Default address of Workflow Server to connect to (for `ocrd network client workflow`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKSPACE`: Default address of Workspace Server to connect to (for `ocrd network client workspace`).
+* `OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS`: Number of attempts for a worker to create its queue. Helpfull if the rabbitmq-server needs time to be fully started.
 
 
 ## Packages
@@ -283,9 +284,9 @@ To be used in a **loop over all selected pages**:
         local in_pageId=($(ocrd__input_file $n pageId))
         local out_id=$(ocrd__input_file $n outputFileId)
         local out_fpath="${ocrd__argv[output_file_grp]}/${out_id}.xml
-        
+
         # process $in_fpath to $out_fpath ...
-        
+
         declare -a options
         if [ -n "$in_pageId" ]; then
             options=( -g $in_pageId )
@@ -303,11 +304,11 @@ To be used in a **loop over all selected pages**:
 > **Note**: If the `--input-file-grp` is **multi-valued** (N fileGrps separated by commas),
 > then usage is similar:
 > * The function `ocrd__input_file` can be used, but
->   its results will be **lists** (delimited by whitespace and surrounded by single quotes), 
+>   its results will be **lists** (delimited by whitespace and surrounded by single quotes),
 >   e.g. `[url]='file1.xml file2.xml' [ID]='id_file1 id_file2' [mimetype]='application/vnd.prima.page+xml image/tiff' ...`.
 > * Therefore its results should be encapsulated in a (non-associative) **array variable**
 >   and without extra quotes, e.g. `in_file=($(ocrd__input_file 3 url))`, or as shown above.
-> * This will yield the first fileGrp's results on index 0, 
+> * This will yield the first fileGrp's results on index 0,
 >   which in bash will always be the same as if you referenced the array without index
 >   (so code does not need to be changed much), e.g. `test -f $in_file` which equals `test -f ${in_file[0]}`.
 > * Additional fileGrps will have to be fetched from higher indexes, e.g. `test -f ${in_file[1]}`.
