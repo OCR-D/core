@@ -5,6 +5,7 @@ Utility functions for strings, paths and URL.
 import re
 import json
 from .constants import REGEX_FILE_ID
+from .deprecate import deprecation_warning
 
 __all__ = [
     'assert_file_grp_cardinality',
@@ -119,7 +120,7 @@ def get_local_filename(url, start=None):
         start (string): Base path to remove from filename. Raise an exception if not a prefix of url
     """
     if url.startswith('https://') or url.startswith('http:'):
-        raise Exception("Can't determine local filename of http(s) URL")
+        raise ValueError("Can't determine local filename of http(s) URL")
     if url.startswith('file://'):
         url = url[len('file://'):]
     # Goobi/Kitodo produces those, they are always absolute
@@ -127,7 +128,7 @@ def get_local_filename(url, start=None):
         url = url[len('file:'):]
     if start:
         if not url.startswith(start):
-            raise Exception("Cannot remove prefix %s from url %s" % (start, url))
+            raise ValueError("Cannot remove prefix %s from url %s" % (start, url))
         if not start.endswith('/'):
             start += '/'
         url = url[len(start):]
@@ -137,6 +138,7 @@ def is_local_filename(url):
     """
     Whether a url is a local filename.
     """
+    # deprecation_warning("Deprecated so we spot inconsistent URL/file handling")
     return url.startswith('file://') or not('://' in url)
 
 def is_string(val):

@@ -1,6 +1,7 @@
 import json
-from os import environ
 import requests
+
+from ocrd_utils import config
 
 
 # TODO: This is just a conceptual implementation and first try to
@@ -8,9 +9,9 @@ import requests
 class Client:
     def __init__(
             self,
-            server_addr_processing: str = environ.get('OCRD_NETWORK_SERVER_ADDR_PROCESSING', ''),
-            server_addr_workflow: str = environ.get('OCRD_NETWORK_SERVER_ADDR_WORKFLOW', ''),
-            server_addr_workspace: str = environ.get('OCRD_NETWORK_SERVER_ADDR_WORKSPACE', ''),
+            server_addr_processing: str = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING,
+            server_addr_workflow: str = config.OCRD_NETWORK_SERVER_ADDR_WORKFLOW,
+            server_addr_workspace: str = config.OCRD_NETWORK_SERVER_ADDR_WORKSPACE,
     ):
         self.server_addr_processing = server_addr_processing
         self.server_addr_workflow = server_addr_workflow

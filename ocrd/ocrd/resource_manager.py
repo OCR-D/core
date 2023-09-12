@@ -20,7 +20,7 @@ yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp
     yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment, guess_media_type
+from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment, guess_media_type, config
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -49,27 +49,19 @@ class OcrdResourceManager():
     @property
     def userdir(self):
         if not self._userdir:
-            self._userdir = path.expanduser('~')
-            if 'HOME' in environ and environ['HOME'] != path.expanduser('~'):
-                self._userdir = environ['HOME']
+            self._userdir = config.HOME
         return self._userdir
 
     @property
     def xdg_data_home(self):
         if not self._xdg_data_home:
-            if 'XDG_DATA_HOME' in environ:
-                self._xdg_data_home = environ['XDG_DATA_HOME']
-            else:
-                self._xdg_data_home = join(self.userdir, '.local', 'share')
+            self._xdg_data_home = config.XDG_DATA_HOME
         return self._xdg_data_home
 
     @property
     def xdg_config_home(self):
         if not self._xdg_config_home:
-            if 'XDG_CONFIG_HOME' in environ:
-                self._xdg_config_home = environ['XDG_CONFIG_HOME']
-            else:
-                self._xdg_config_home = join(self.userdir, '.config')
+            self._xdg_config_home = config.XDG_CONFIG_HOME
         return self._xdg_config_home
 
     def save_user_list(self, database=None):

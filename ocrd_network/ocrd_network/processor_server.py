@@ -33,12 +33,7 @@ from .utils import (
     calculate_execution_time,
     post_to_callback_url,
     generate_id,
-    tf_disable_interactive_logs
 )
-
-# TODO: Check this again when the logging is refactored
-tf_disable_interactive_logs()
-
 
 class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):

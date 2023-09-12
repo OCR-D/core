@@ -41,6 +41,20 @@ _ocrdLevel2pythonLevel = {
     'FATAL': 'ERROR',
 }
 
+def tf_disable_interactive_logs():
+    try:
+        from os import environ
+        # This env variable must be set before importing from Keras
+        environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        from tensorflow.keras.utils import disable_interactive_logging
+        # Enabled interactive logging throws an exception
+        # due to a call of sys.stdout.flush()
+        disable_interactive_logging()
+    except ImportError:
+        # Nothing should be handled here if TF is not available
+        pass
+
+
 class PropagationShyLogger(logging.Logger):
 
     def addHandler(self, hdlr):

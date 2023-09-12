@@ -43,9 +43,9 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
 def test_resources_manager_from_environment(tmp_path, monkeypatch):
 
     # arrange
-    monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path))
-    monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path))
-    monkeypatch.setenv('HOME', str(tmp_path))
+    monkeypatch.setenv('XDG_CONFIG_HOME', tmp_path)
+    monkeypatch.setenv('XDG_DATA_HOME', tmp_path)
+    monkeypatch.setenv('HOME', tmp_path)
 
     # act
     mgr = OcrdResourceManager()
@@ -60,7 +60,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
-    assert mgr.userdir == str(tmp_path)
+    assert mgr.userdir == tmp_path
 
 
 def test_resources_manager_config_explicite(tmp_path):

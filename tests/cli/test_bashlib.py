@@ -88,7 +88,7 @@ class TestBashlibCli(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 _, out, err = self.invoke_cli(bashlib_cli, ['input-files', '-I', 'OCR-D-IMG'])
-                assert ("[url]='OCR-D-IMG/INPUT_0017.tif' [ID]='INPUT_0017' [mimetype]='image/tiff' "
+                assert ("[url]='' [local_filename]='OCR-D-IMG/INPUT_0017.tif' [ID]='INPUT_0017' [mimetype]='image/tiff' "
                         "[pageId]='PHYS_0017' [outputFileId]='OUTPUT_PHYS_0017'") in out
 
     def test_bashlib_defs(self):
@@ -147,7 +147,7 @@ class TestBashlibCli(TestCase):
         cd "${ocrd__argv[working_dir]}"
         mets=$(basename ${ocrd__argv[mets_file]})
         for ((n=0; n<${#ocrd__files[*]}; n++)); do
-            in_fpath=($(ocrd__input_file $n url))
+            in_fpath=($(ocrd__input_file $n local_filename))
             in_id=($(ocrd__input_file $n ID))
             in_mimetype=($(ocrd__input_file $n mimetype))
             in_pageId=($(ocrd__input_file $n pageId))

@@ -7,7 +7,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
-  - METS Server: providing concurrent additional access to the METS file for parallel processing, #966
+  * METS Server: providing concurrent additional access to the METS file for parallel processing, #966
+  * Web API: Cache jobs in the processing server with an optional callback once processed, #1069
+  * Web API: Lock pages output file groups of a workspace to prevent simultaneous non-additive access to workspaces, #1069
+  * Web API: Support job dependency for caching complete fully-deterministic workflows, #1069
+  * Web API: Processing server will start all ready requests, not just the first one, #1069
+  * `ocrd_utils.config` to collect all configuration based on environment variables in one place, #1081
+  * Processor CLI: Warn if a given page ID cannot be found in METS, #1088, #1089
+
+Changed:
+
+  * Processors now have `worker` and `server` subcommands, with separate --help, for starting processing worker/processor server, #1087
+  * Move `tf_disable_interactive_logs` (to silence keras/tensorflow print statements) to `ocrd_utils.logging` and do not call on module-level, #1090, #1091
+  * :fire: We do now properly distinguish between original and local-file FLocat, original URL will not be changed for downloads anymore, #323, #1079
 
 ## [2.53.0] - 2023-08-21
 

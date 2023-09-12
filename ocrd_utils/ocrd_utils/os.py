@@ -30,7 +30,8 @@ from filetype import guess as filetype_guess
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
-from .constants import XDG_DATA_HOME, EXT_TO_MIME
+from .constants import EXT_TO_MIME
+from .config import config
 from .logging import getLogger
 
 def abspath(url):
@@ -103,7 +104,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_
     """
     candidates = []
     candidates.append(join(cwd, fname))
-    xdg_data_home = XDG_DATA_HOME if not xdg_data_home else xdg_data_home
+    xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
@@ -125,7 +126,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
         # processor we're looking for ressource_locations of is not installed.
         # Assume the default
         resource_locations = ['data', 'cwd', 'system', 'module']
-    xdg_data_home = XDG_DATA_HOME if not xdg_data_home else xdg_data_home
+    xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     # XXX cwd would list too many false positives
     # if 'cwd' in resource_locations:
     #     cwd_candidate = join(getcwd(), 'ocrd-resources', executable)

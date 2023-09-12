@@ -5,6 +5,7 @@ import re
 from os import environ, _exit
 from io import BytesIO
 from typing import Any, Dict, Optional, Union, List, Tuple
+from pathlib import Path
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, File, Form, Response
@@ -31,13 +32,13 @@ class OcrdFileModel(BaseModel):
     file_grp : str = Field()
     file_id : str = Field()
     mimetype : str = Field()
-    page_id : Union[str, None] = Field()
-    url : Union[str, None] = Field()
-    local_filename : Union[str, None] = Field()
+    page_id : Optional[str] = Field()
+    url : Optional[str] = Field()
+    local_filename : Optional[str] = Field()
 
     @staticmethod
-    def create(file_grp : str, file_id : str, page_id : Union[str, None], url : str, local_filename : str, mimetype : str):
-        return OcrdFileModel(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url, local_filename=local_filename)
+    def create(file_grp : str, file_id : str, page_id : Optional[str], url : Optional[str], local_filename : Optional[Union[str, Path]], mimetype : str):
+        return OcrdFileModel(file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url, local_filename=str(local_filename))
 
 class OcrdAgentModel(BaseModel):
     name : str = Field()
@@ -57,9 +58,16 @@ class OcrdFileListModel(BaseModel):
 
     @staticmethod
     def create(files : List[OcrdFile]):
-        return OcrdFileListModel(
-            files=[OcrdFileModel.create(file_grp=f.fileGrp, file_id=f.ID, mimetype=f.mimetype, page_id=f.pageId, url=f.url, local_filename=f.local_filename) for f in files]
-        )
+        ret = OcrdFileListModel(
+            files=[OcrdFileModel.create(
+                file_grp=f.fileGrp,
+                file_id=f.ID,
+                mimetype=f.mimetype,
+                page_id=f.pageId,
+                url=f.url,
+                local_filename=f.local_filename
+            ) for f in files])
+        return ret
 
 class OcrdFileGroupListModel(BaseModel):
     file_groups : List[str] = Field()
@@ -144,17 +152,14 @@ class ClientSideOcrdMets():
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
     def add_file(self, file_grp, content=None, file_id=None, url=None, local_filename=None, mimetype=None, page_id=None, **kwargs):
-        self.session.request(
-            'POST',
-            f'{self.url}/file',
-            data=OcrdFileModel.create(
-                file_id=file_id,
-                file_grp=file_grp,
-                page_id=page_id,
-                mimetype=mimetype,
-                url=url,
-                local_filename=local_filename).dict(),
-        )
+        data = OcrdFileModel.create(
+            file_id=file_id,
+            file_grp=file_grp,
+            page_id=page_id,
+            mimetype=mimetype,
+            url=url,
+            local_filename=local_filename)
+        r = self.session.request('POST', f'{self.url}/file', data=data.dict())
         return ClientSideOcrdFile(
                 None,
                 ID=file_id,
@@ -208,10 +213,10 @@ class OcrdMetsServer():
 
         @app.get("/file", response_model=OcrdFileListModel)
         async def find_files(
-            file_grp : Union[str, None] = None,
-            file_id : Union[str, None] = None,
-            page_id : Union[str, None] = None,
-            mimetype : Union[str, None] = None,
+            file_grp : Optional[str] = None,
+            file_id : Optional[str] = None,
+            page_id : Optional[str] = None,
+            mimetype : Optional[str] = None,
         ):
             """
             Find files in the mets
@@ -227,10 +232,10 @@ class OcrdMetsServer():
         async def add_file(
             file_grp : str = Form(),
             file_id : str = Form(),
-            page_id : Union[str, None] = Form(),
+            page_id : Optional[str] = Form(),
             mimetype : str = Form(),
-            url : Union[str, None] = Form(),
-            local_filename : Union[str, None] = Form(),
+            url : Optional[str] = Form(None),
+            local_filename : Optional[str] = Form(None),
         ):
             """
             Add a file
