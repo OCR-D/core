@@ -37,7 +37,6 @@ def invoke_processor(
         except Exception as e:
             raise RuntimeError(f"Python executable '{executable}' exited with: {e}")
     else:
-        # TODO: Add the mets_server_url parameter after merging master to workflow-endpoint
         return_code = run_cli(
             executable=executable,
             workspace=workspace,
@@ -45,7 +44,8 @@ def invoke_processor(
             input_file_grp=input_file_grps_str,
             output_file_grp=output_file_grps_str,
             page_id=page_id,
-            parameter=json.dumps(parameters)
+            parameter=json.dumps(parameters),
+            mets_server_url=mets_server_url
         )
         if return_code != 0:
             raise RuntimeError(f"CLI executable '{executable}' exited with: {return_code}")
