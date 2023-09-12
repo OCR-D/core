@@ -5,7 +5,7 @@ PYTHON ?= python
 PIP ?= pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
-TESTDIR = tests
+TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
 
 SPHINX_APIDOC =
@@ -198,10 +198,9 @@ assets: repo/assets
 test: assets
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) --durations=10\
-		--ignore=$(TESTDIR)/test_logging_conf.py \
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		$(TESTDIR)
-	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py

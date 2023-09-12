@@ -24,8 +24,7 @@ TIMEFMT_RE = r'\d\d:\d\d:\d\d\.(\d+)? '
 class TestLogging(TestCase):
 
     def setUp(self):
-        super().setUp()
-        disableLogging()
+        pass # do not chdir
 
     def test_loglevel_inheritance(self):
         initLogging(builtin_only=True)
@@ -179,7 +178,7 @@ class TestLogging(TestCase):
             # so the defaults from the import-time initLogging should be invalided
             initLogging()
             # ensure log level is set from temporary config file
-            self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.ERROR)
+            self.assertEqual(logging.getLogger('ocrd').getEffectiveLevel(), logging.ERROR)
 
 if __name__ == '__main__':
     main(__file__)
