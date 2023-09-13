@@ -696,11 +696,6 @@ class ProcessingServer(FastAPI):
         )
         return processor_names_list
 
-    # TODO: think about providing arguments in another way
-    # TODO: this function "just" writes to the queue and returns. A network-client functionality
-    #       should be available to react to every processors callback. With this feedback
-    #       a blocking mechanism could be provided to inform about starting the cain and waiting for
-    #       the processors to finish and printing when responses are received from the processors
     async def run_workflow(
             self,
             workflow: UploadFile,
