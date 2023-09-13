@@ -6,10 +6,10 @@ from multiprocessing import Process, Pool, set_start_method
 # necessary for macos
 set_start_method("fork")
 from shutil import rmtree, copytree
-from os import remove
+from os import remove, stat as os_stat
 from os.path import exists
 from time import sleep
-
+import stat
 
 from ocrd import Resolver, OcrdMetsServer, Workspace
 from ocrd_utils import pushd_popd, MIMETYPE_PAGE
@@ -134,3 +134,16 @@ def test_mets_server_different_workspaces(start_mets_server):
 def test_mets_test_unique_identifier(start_mets_server):
     _, workspace_server = start_mets_server
     assert workspace_server.mets.unique_identifier == 'http://kant_aufklaerung_1784'
+
+def test_mets_server_socket_permissions(start_mets_server):
+    mets_server_url, _ = start_mets_server
+    if mets_server_url == TRANSPORTS[1]:
+        assert True, 'No permissions to test for TCP server'
+    else:
+        socket_perm = os_stat(mets_server_url).st_mode
+        assert socket_perm & stat.S_IRUSR
+        assert socket_perm & stat.S_IWUSR
+        assert socket_perm & stat.S_IRGRP
+        assert socket_perm & stat.S_IWGRP
+        assert socket_perm & stat.S_IROTH
+        assert socket_perm & stat.S_IWOTH

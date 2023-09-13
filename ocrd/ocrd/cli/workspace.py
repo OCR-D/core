@@ -719,7 +719,7 @@ def workspace_backup_undo(ctx):
 
 
 # ----------------------------------------------------------------------
-# ocrd workspace serve
+# ocrd workspace server
 # ----------------------------------------------------------------------
 
 @workspace_cli.group('server')
