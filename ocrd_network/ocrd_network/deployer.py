@@ -523,7 +523,7 @@ class Deployer:
     def start_unix_mets_server(self, mets_path: str) -> str:
         mets_server_url = f'/tmp/{safe_filename(mets_path)}'
         if Path.exists(Path(mets_server_url)):
-            self.log.exception(f"The mets server is already started: {mets_server_url}")
+            self.log.info(f"The mets server is already started: {mets_server_url}")
             return mets_server_url
         cwd = Path(mets_path).parent
         self.log.info(f'Starting native mets server: {mets_server_url}')
