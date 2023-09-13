@@ -638,6 +638,9 @@ class ProcessingServer(FastAPI):
                 del self.processing_requests_cache[workspace_key]
             except KeyError:
                 self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
+
+            # Shut down the Mets Server for the workspace_key
+            self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
             return
 
         consumed_requests = await self.find_next_requests_from_internal_queue(
