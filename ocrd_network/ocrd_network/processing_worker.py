@@ -51,6 +51,8 @@ class ProcessingWorker:
         file_handler.setFormatter(logging.Formatter(logging_format))
         file_handler.setLevel(logging.DEBUG)
         self.log.addHandler(file_handler)
+        # TODO: remove this when refactoring the logging
+        self.log.setLevel(logging.DEBUG)
 
         try:
             verify_database_uri(mongodb_addr)
@@ -194,13 +196,14 @@ class ProcessingWorker:
         internal_callback_url = processing_message.internal_callback_url if 'internal_callback_url' in pm_keys else None
         parameters = processing_message.parameters if processing_message.parameters else {}
 
-        mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
+        if not path_to_mets and not workspace_id:
+            raise ValueError(f'`path_to_mets` nor `workspace_id` was set in the ocrd processing message')
+
+        if path_to_mets:
+            mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
         if not path_to_mets and workspace_id:
             path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
             mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url
-
-        if not mets_server_url:
-            self.log.debug(f'METS SERVER URL IS NOT SET')
 
         execution_failed = False
         self.log.debug(f'Invoking processor: {self.processor_name}')
@@ -213,6 +216,7 @@ class ProcessingWorker:
         )
         try:
             invoke_processor(
+                logger=self.log,
                 processor_class=self.processor_class,
                 executable=self.processor_name,
                 abs_path_to_mets=path_to_mets,

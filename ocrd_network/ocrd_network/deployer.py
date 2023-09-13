@@ -9,9 +9,8 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from typing import Dict, List, Union
 from re import search as re_search
-from os import getpid
+from os import getpid, chmod
 from pathlib import Path
-import shlex
 import subprocess
 from time import sleep
 
@@ -520,7 +519,8 @@ class Deployer:
         stdin.close()
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
 
-    def start_native_mets_server(self, mets_path: str) -> str:
+    # TODO: No support for TCP version yet
+    def start_unix_mets_server(self, mets_path: str) -> str:
         mets_server_url = f'/tmp/{safe_filename(mets_path)}'
         if Path.exists(Path(mets_server_url)):
             self.log.exception(f"The mets server is already started: {mets_server_url}")
@@ -538,10 +538,16 @@ class Deployer:
             cwd=cwd,
             universal_newlines=True
         )
+
+        # TODO: Remove chmod when the default permissions of the socket files are changed in core
+        from time import sleep
+        sleep(3)
+        chmod(mets_server_url, 0o0777)
+
         self.mets_servers[mets_server_url] = sub_process.pid
         return mets_server_url
 
-    def stop_native_mets_server(self, mets_server_url: str) -> None:
+    def stop_unix_mets_server(self, mets_server_url: str) -> None:
         self.log.info(f'Stopping native mets server: {mets_server_url}')
         if mets_server_url in self.mets_servers:
             mets_server_pid = self.mets_servers[mets_server_url]

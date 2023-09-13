@@ -7,6 +7,7 @@ from ocrd.processor.helpers import run_cli, run_processor
 
 # A wrapper for run_processor() and run_cli()
 def invoke_processor(
+        logger,
         processor_class,
         executable: str,
         abs_path_to_mets: str,
@@ -21,7 +22,13 @@ def invoke_processor(
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
 
-    workspace = Resolver().workspace_from_url(abs_path_to_mets)
+    # TODO: Passing the `mets_server_url` is a must here.
+    #  Seems like just passing it inside `run_processor` is not enough.
+    #  Potentially a bug to be resolved in core.
+    workspace = Resolver().workspace_from_url(
+        mets_url=abs_path_to_mets,
+        mets_server_url=mets_server_url
+    )
     if processor_class:
         try:
             run_processor(

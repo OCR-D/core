@@ -13,6 +13,7 @@ from ocrd_utils import (
 )
 from .database import (
     DBProcessorJob,
+    db_get_workspace,
     db_update_processing_job,
     initiate_database
 )
@@ -149,15 +150,19 @@ class ProcessorServer(FastAPI):
             state=StateEnum.running,
             start_time=start_time
         )
+
+        mets_server_url = await db_get_workspace(workspace_mets_path=job.path_to_mets).mets_server_url
         try:
             invoke_processor(
+                logger=self.log,
                 processor_class=self.processor_class,
                 executable=self.processor_name,
                 abs_path_to_mets=job.path_to_mets,
                 input_file_grps=job.input_file_grps,
                 output_file_grps=job.output_file_grps,
                 page_id=job.page_id,
-                parameters=job.parameters
+                parameters=job.parameters,
+                mets_server_url=mets_server_url
             )
         except Exception as error:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {job.path_to_mets}, "

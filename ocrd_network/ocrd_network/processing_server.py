@@ -3,6 +3,7 @@ import requests
 import httpx
 from typing import Dict, List
 import uvicorn
+import logging
 
 from fastapi import (
     FastAPI,
@@ -67,6 +68,8 @@ class ProcessingServer(FastAPI):
                          title='OCR-D Processing Server',
                          description='OCR-D processing and processors')
         self.log = getLogger(__name__)
+        # TODO: remove this when refactoring the logging
+        self.log.setLevel(logging.DEBUG)
         self.log.info(f"Downloading ocrd all tool json")
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(
             ocrd_all_url="https://ocr-d.de/js/ocrd-all-tool.json"
@@ -487,7 +490,7 @@ class ProcessingServer(FastAPI):
         )
 
         # Start a Mets Server with the current workspace
-        mets_server_url = self.deployer.start_native_mets_server(mets_path=request_mets_path)
+        mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
 
         # Assign the mets server url in the database
         await db_update_workspace(
