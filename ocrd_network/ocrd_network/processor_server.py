@@ -36,6 +36,7 @@ from .utils import (
     generate_id,
 )
 
+
 class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
@@ -154,7 +155,6 @@ class ProcessorServer(FastAPI):
         mets_server_url = await db_get_workspace(workspace_mets_path=job.path_to_mets).mets_server_url
         try:
             invoke_processor(
-                logger=self.log,
                 processor_class=self.processor_class,
                 executable=self.processor_name,
                 abs_path_to_mets=job.path_to_mets,

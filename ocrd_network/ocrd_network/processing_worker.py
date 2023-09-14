@@ -216,7 +216,6 @@ class ProcessingWorker:
         )
         try:
             invoke_processor(
-                logger=self.log,
                 processor_class=self.processor_class,
                 executable=self.processor_name,
                 abs_path_to_mets=path_to_mets,
