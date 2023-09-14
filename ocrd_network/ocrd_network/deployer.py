@@ -9,7 +9,7 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from typing import Dict, List, Union
 from re import search as re_search
-from os import getpid, chmod
+from os import getpid
 from pathlib import Path
 import subprocess
 from time import sleep
@@ -528,7 +528,6 @@ class Deployer:
         cwd = Path(mets_path).parent
         self.log.info(f'Starting native mets server: {mets_server_url}')
         log_path = f'{mets_server_url}.log'
-        # cmd = f'nohup ocrd workspace --mets-server-url {mets_server_url} -d {cwd} server start &> {log_path} &'
         sub_process = subprocess.Popen(
             args=['nohup', 'ocrd', 'workspace', '--mets-server-url', f'{mets_server_url}',
                   '-d', f'{cwd}', 'server', 'start'],
@@ -538,12 +537,8 @@ class Deployer:
             cwd=cwd,
             universal_newlines=True
         )
-
-        # TODO: Remove chmod when the default permissions of the socket files are changed in core
-        from time import sleep
-        sleep(3)
-        chmod(mets_server_url, 0o0777)
-
+        # Wait for the mets server to start
+        sleep(2)
         self.mets_servers[mets_server_url] = sub_process.pid
         return mets_server_url
 
