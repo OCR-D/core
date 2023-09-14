@@ -2,11 +2,12 @@
 # METS server functionality
 """
 import re
-from os import environ, _exit
+from os import environ, _exit, chmod
 from io import BytesIO
 from typing import Any, Dict, Optional, Union, List, Tuple
 from pathlib import Path
 from urllib.parse import urlparse
+import socket
 
 from fastapi import FastAPI, Request, File, Form, Response
 from fastapi.responses import JSONResponse
@@ -99,6 +100,13 @@ class ClientSideOcrdMets():
     def __init__(self, url):
         protocol = 'tcp' if url.startswith('http://') else 'uds'
         self.log = getLogger(f'ocrd.mets_client.{protocol}')
+        # Create socket and change to world-readable and -writable to avoid
+        # permsission errors
+        if protocol == 'uds':
+            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server.connect(url)  # creates the socket file
+            server.close()
+            chmod(url, 0o666)
         self.url = url if protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
         self.session = requests_session() if protocol == 'tcp' else requests_unixsocket_session()
 

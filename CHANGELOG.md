@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * METS Server: Make sockets world-readable and -writable, #1098
+
 ## [2.54.0] - 2023-09-12
 
 Added:
