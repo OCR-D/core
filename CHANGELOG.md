@@ -7,7 +7,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Changed:
 
-  * METS Server: Make sockets world-readable and -writable, #1098
+  * METS Server: Make sockets world-readable and -writable, #1098, #1099
+  * METS Server: Implement find_files support for `local_filename` and `url`, #1100
 
 ## [2.54.0] - 2023-09-12
 
