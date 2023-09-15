@@ -100,7 +100,7 @@ class ClientSideOcrdMets():
 
     def __init__(self, url):
         protocol = 'tcp' if url.startswith('http://') else 'uds'
-        self.log = getLogger(f'ocrd.mets_client.{protocol}')
+        self.log = getLogger(f'ocrd.mets_client[{url}]')
         self.url = url if protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
         self.session = requests_session() if protocol == 'tcp' else requests_unixsocket_session()
 
@@ -118,6 +118,7 @@ class ClientSideOcrdMets():
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")
     def find_files(self, **kwargs):
+        self.log.debug('find_files(%s)', kwargs)
         if 'pageId' in kwargs:
             kwargs['page_id'] = kwargs.pop('pageId')
         if 'ID' in kwargs:
@@ -187,15 +188,17 @@ class OcrdMetsServer():
         self.workspace = workspace
         self.url = url
         self.is_uds = not (url.startswith('http://') or url.startswith('https://'))
-        self.log = getLogger('ocrd.workspace_client')
+        self.log = getLogger(f'ocrd.mets_server[{self.url}]')
 
     def shutdown(self):
+        self.log.info("Shutting down METS server")
         if self.is_uds:
             Path(self.url).unlink()
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)
 
     def startup(self):
+        self.log.info("Starting down METS server")
 
         workspace = self.workspace
 
@@ -290,6 +293,7 @@ class OcrdMetsServer():
         if self.is_uds:
             # Create socket and change to world-readable and -writable to avoid
             # permsission errors
+            self.log.debug(f"chmod 0o677 {self.url}")
             server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             server.bind(self.url)  # creates the socket file
             server.close()
@@ -299,4 +303,5 @@ class OcrdMetsServer():
             parsed = urlparse(self.url)
             uvicorn_kwargs = {'host': parsed.hostname, 'port': parsed.port}
 
+        self.log.debug("Starting uvicorn")
         uvicorn.run(app, **uvicorn_kwargs)
