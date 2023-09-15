@@ -94,8 +94,6 @@ def getLogger(*args, **kwargs):
     Wrapper around ``logging.getLogger`` that alls :py:func:`initLogging` if
     that wasn't explicitly called before.
     """
-    if not _initialized_flag:
-        initLogging()
     logger = logging.getLogger(*args, **kwargs)
     return logger
 
