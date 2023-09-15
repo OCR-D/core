@@ -12,6 +12,7 @@ import socket
 from fastapi import FastAPI, Request, File, Form, Response
 from fastapi.responses import JSONResponse
 from requests import request, Session as requests_session
+from requests.exceptions import ConnectionError
 from requests_unixsocket import Session as requests_unixsocket_session
 from pydantic import BaseModel, Field, ValidationError
 
@@ -100,13 +101,6 @@ class ClientSideOcrdMets():
     def __init__(self, url):
         protocol = 'tcp' if url.startswith('http://') else 'uds'
         self.log = getLogger(f'ocrd.mets_client.{protocol}')
-        # Create socket and change to world-readable and -writable to avoid
-        # permsission errors
-        if protocol == 'uds':
-            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            server.connect(url)  # creates the socket file
-            server.close()
-            chmod(url, 0o666)
         self.url = url if protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
         self.session = requests_session() if protocol == 'tcp' else requests_unixsocket_session()
 
@@ -177,7 +171,11 @@ class ClientSideOcrdMets():
         self.session.request('PUT', self.url)
 
     def stop(self):
-        self.session.request('DELETE', self.url)
+        try:
+            self.session.request('DELETE', self.url)
+        except ConnectionError:
+            # Expected because we exit the process without returning
+            pass
 
 #
 # Server
@@ -188,6 +186,7 @@ class OcrdMetsServer():
     def __init__(self, workspace, url):
         self.workspace = workspace
         self.url = url
+        self.is_uds = not (url.startswith('http://') or url.startswith('https://'))
         self.log = getLogger('ocrd.workspace_client')
 
     def shutdown(self):
@@ -282,7 +281,17 @@ class OcrdMetsServer():
             # os._exit because uvicorn catches SystemExit raised by sys.exit
             _exit(0)
 
-        if self.url.startswith('http'):
+        # ------------- #
+
+        if self.is_uds:
+            # Create socket and change to world-readable and -writable to avoid
+            # permsission errors
+            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server.bind(self.url)  # creates the socket file
+            server.close()
+            chmod(self.url, 0o666)
+            uvicorn_kwargs = {'uds': self.url}
+        else:
             parsed = urlparse(self.url)
             uvicorn_kwargs = {'host': parsed.hostname, 'port': parsed.port}
         else:
