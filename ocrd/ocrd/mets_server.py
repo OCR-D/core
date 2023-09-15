@@ -222,11 +222,13 @@ class OcrdMetsServer():
             file_id : Optional[str] = None,
             page_id : Optional[str] = None,
             mimetype : Optional[str] = None,
+            local_filename : Optional[str] = None,
+            url : Optional[str] = None,
         ):
             """
             Find files in the mets
             """
-            found = workspace.mets.find_all_files(fileGrp=file_grp, ID=file_id, pageId=page_id, mimetype=mimetype)
+            found = workspace.mets.find_all_files(fileGrp=file_grp, ID=file_id, pageId=page_id, mimetype=mimetype, local_filename=local_filename, url=url)
             return OcrdFileListModel.create(found)
 
         @app.put('/')
