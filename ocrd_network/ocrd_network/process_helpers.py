@@ -15,16 +15,17 @@ def invoke_processor(
         output_file_grps: List[str],
         page_id: str,
         parameters: dict,
-        mets_server_url: Optional[str]
+        mets_server_url: Optional[str] = None
 ) -> None:
     if not (processor_class or executable):
         raise ValueError(f'Missing processor class and executable')
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
 
-    if not mets_server_url.startswith('http://'):
-        if not Path.exists(Path(mets_server_url)):
-            raise RuntimeError(f'Socket file does not exist: {mets_server_url}')
+    if mets_server_url:
+        if not mets_server_url.startswith('http://'):
+            if not Path.exists(Path(mets_server_url)):
+                raise RuntimeError(f'Socket file does not exist: {mets_server_url}')
 
     workspace = Resolver().workspace_from_url(
         mets_url=abs_path_to_mets,

@@ -489,6 +489,8 @@ class ProcessingServer(FastAPI):
             page_ids=page_ids
         )
 
+        # TODO: Utilize the mets server once it is fixed
+        '''
         # Start a Mets Server with the current workspace
         mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
 
@@ -498,6 +500,7 @@ class ProcessingServer(FastAPI):
             workspace_mets_path=data.path_to_mets,
             mets_server_url=mets_server_url
         )
+        '''
 
         # Create a queued job DB entry
         db_queued_job = DBProcessorJob(
@@ -639,8 +642,9 @@ class ProcessingServer(FastAPI):
             except KeyError:
                 self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
 
+            # TODO: Utilize the mets server once it is fixed
             # Shut down the Mets Server for the workspace_key
-            self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
+            # self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
             return
 
         consumed_requests = await self.find_next_requests_from_internal_queue(
@@ -708,8 +712,12 @@ class ProcessingServer(FastAPI):
             mets_path: str,
             agent_type: str = 'worker',
             page_id: str = None,
+            page_wise: bool = False,
             callback_url: str = None
     ) -> List:
+        if page_wise and not page_id:
+            raise ValueError(f'page_wise set without providing a page_id range')
+
         # core cannot create workspaces by api, but processing-server needs the workspace in the
         # database. Here the workspace is created if the path available and not existing in db:
         # from pudb import set_trace; set_trace()
@@ -727,20 +735,41 @@ class ProcessingServer(FastAPI):
                                 detail=f"Error parsing tasks: {e}")
 
         responses = []
-        last_job_id = ""
-        for task in tasks:
-            data = PYJobInput(
-                processor_name=task.executable,
-                path_to_mets=mets_path,
-                input_file_grps=task.input_file_grps,
-                output_file_grps=task.output_file_grps,
-                page_id=page_id,
-                parameters=task.parameters,
-                callback_url=callback_url,
-                agent_type=agent_type,
-                depends_on=[last_job_id] if last_job_id else [],
-            )
-            response = await self.push_processor_job(data.processor_name, data)
-            responses.append(response)
-            last_job_id = response.job_id
+        if not page_wise:
+            last_job_id = ""
+            for task in tasks:
+                data = PYJobInput(
+                    processor_name=task.executable,
+                    path_to_mets=mets_path,
+                    input_file_grps=task.input_file_grps,
+                    output_file_grps=task.output_file_grps,
+                    page_id=page_id,
+                    parameters=task.parameters,
+                    callback_url=callback_url,
+                    agent_type=agent_type,
+                    depends_on=[last_job_id] if last_job_id else [],
+                )
+                response = await self.push_processor_job(data.processor_name, data)
+                responses.append(response)
+                last_job_id = response.job_id
+            return responses
+
+        page_ids = expand_page_ids(page_id)
+        for page in page_ids:
+            last_job_id = ""
+            for task in tasks:
+                data = PYJobInput(
+                    processor_name=task.executable,
+                    path_to_mets=mets_path,
+                    input_file_grps=task.input_file_grps,
+                    output_file_grps=task.output_file_grps,
+                    page_id=page,
+                    parameters=task.parameters,
+                    callback_url=callback_url,
+                    agent_type=agent_type,
+                    depends_on=[last_job_id] if last_job_id else [],
+                )
+                response = await self.push_processor_job(data.processor_name, data)
+                responses.append(response)
+                last_job_id = response.job_id
         return responses

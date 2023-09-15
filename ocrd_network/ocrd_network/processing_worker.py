@@ -199,11 +199,12 @@ class ProcessingWorker:
         if not path_to_mets and not workspace_id:
             raise ValueError(f'`path_to_mets` nor `workspace_id` was set in the ocrd processing message')
 
-        if path_to_mets:
-            mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
+        # TODO: Utilize the mets server once it is fixed
+        # if path_to_mets:
+        #    mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
         if not path_to_mets and workspace_id:
             path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
-            mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url
+            # mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url
 
         execution_failed = False
         self.log.debug(f'Invoking processor: {self.processor_name}')
@@ -215,6 +216,8 @@ class ProcessingWorker:
             start_time=start_time
         )
         try:
+            # TODO: Utilize the mets server once it is fixed
+            #  pass mets_server_url
             invoke_processor(
                 processor_class=self.processor_class,
                 executable=self.processor_name,
@@ -222,8 +225,7 @@ class ProcessingWorker:
                 input_file_grps=input_file_grps,
                 output_file_grps=output_file_grps,
                 page_id=page_id,
-                parameters=processing_message.parameters,
-                mets_server_url=mets_server_url
+                parameters=processing_message.parameters
             )
         except Exception as error:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {path_to_mets}, "
