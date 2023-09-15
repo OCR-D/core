@@ -63,6 +63,9 @@ class PYJobOutput(BaseModel):
     state: StateEnum
     workspace_path: Optional[str]
     workspace_id: Optional[str]
+    input_file_grps: List[str]
+    output_file_grps: Optional[List[str]]
+    page_id: Optional[str] = None
 
 
 class DBProcessorJob(Document):
@@ -96,4 +99,7 @@ class DBProcessorJob(Document):
             state=self.state,
             workspace_path=self.path_to_mets if not self.workspace_id else None,
             workspace_id=self.workspace_id,
+            input_file_grps=self.input_file_grps,
+            output_file_grps=self.output_file_grps,
+            page_id=self.page_id
         )
