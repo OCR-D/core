@@ -2,14 +2,18 @@ from pytest import fixture, raises
 from tests.base import assets
 
 from itertools import repeat
-from multiprocessing import Process, Pool, set_start_method
+from multiprocessing import Process, Pool, Pipe, set_start_method
 # necessary for macos
 set_start_method("fork")
 from shutil import rmtree, copytree
 from os import remove, stat as os_stat
 from os.path import exists
 from time import sleep
+from pathlib import Path
 import stat
+from uuid import uuid4
+
+from requests.exceptions import ConnectionError
 
 from ocrd import Resolver, OcrdMetsServer, Workspace
 from ocrd_utils import pushd_popd, MIMETYPE_PAGE
@@ -36,7 +40,7 @@ def fixture_start_mets_server(request):
     workspace = Workspace(Resolver(), WORKSPACE_DIR)
     p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': request.param})
     p.start()
-    sleep(2)  # sleep to start up server
+    sleep(1)  # sleep to start up server
     yield mets_server_url, Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
     p.terminate()
     rmtree(WORKSPACE_DIR, ignore_errors=True)
@@ -147,3 +151,16 @@ def test_mets_server_socket_permissions(start_mets_server):
         assert socket_perm & stat.S_IWGRP
         assert socket_perm & stat.S_IROTH
         assert socket_perm & stat.S_IWOTH
+
+def test_mets_server_socket_stop(start_mets_server):
+    mets_server_url, workspace_server = start_mets_server
+    if mets_server_url == TRANSPORTS[1]:
+        assert True, 'No stop conditions to test for TCP server'
+    else:
+        assert Path(mets_server_url).exists()
+        assert workspace_server.mets.workspace_path == WORKSPACE_DIR
+        workspace_server.mets.stop()
+        with raises(ConnectionError):
+            workspace_server.mets.workspace_path
+        # make sure the socket file was deleted on shutdown
+        assert not Path(mets_server_url).exists()

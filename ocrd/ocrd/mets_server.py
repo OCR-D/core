@@ -190,6 +190,9 @@ class OcrdMetsServer():
         self.log = getLogger('ocrd.workspace_client')
 
     def shutdown(self):
+        if self.is_uds:
+            Path(self.url).unlink()
+        # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)
 
     def startup(self):
@@ -278,8 +281,7 @@ class OcrdMetsServer():
             """
             getLogger('ocrd_models.ocrd_mets').info('Shutting down')
             workspace.save_mets()
-            # os._exit because uvicorn catches SystemExit raised by sys.exit
-            _exit(0)
+            self.shutdown()
 
         # ------------- #
 
@@ -294,6 +296,5 @@ class OcrdMetsServer():
         else:
             parsed = urlparse(self.url)
             uvicorn_kwargs = {'host': parsed.hostname, 'port': parsed.port}
-        else:
-            uvicorn_kwargs = {'uds': self.url}
+
         uvicorn.run(app, **uvicorn_kwargs)
