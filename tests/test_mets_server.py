@@ -36,7 +36,7 @@ def fixture_start_mets_server(request):
     workspace = Workspace(Resolver(), WORKSPACE_DIR)
     p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': request.param})
     p.start()
-    sleep(.1)  # sleep to start up server
+    sleep(1)  # sleep to start up server
     yield mets_server_url, Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
     p.terminate()
     rmtree(WORKSPACE_DIR, ignore_errors=True)
