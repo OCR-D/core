@@ -17,7 +17,7 @@ from ocrd_utils import pushd_popd, MIMETYPE_PAGE
 WORKSPACE_DIR = '/tmp/ocrd-mets-server'
 TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://127.0.0.1:12345']
 
-@fixture(scope='session', name='start_mets_server', params=TRANSPORTS)
+@fixture(scope='function', name='start_mets_server', params=TRANSPORTS)
 def fixture_start_mets_server(request):
     def _start_mets_server(*args, **kwargs):
         mets_server = OcrdMetsServer(*args, **kwargs)
@@ -32,11 +32,11 @@ def fixture_start_mets_server(request):
     if exists(WORKSPACE_DIR):
         rmtree(WORKSPACE_DIR, ignore_errors=True)
 
-    copytree(assets.path_to('kant_aufklaerung_1784/data'), WORKSPACE_DIR)
+    copytree(assets.path_to('SBB0000F29300010000/data'), WORKSPACE_DIR)
     workspace = Workspace(Resolver(), WORKSPACE_DIR)
     p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': request.param})
     p.start()
-    sleep(2)  # sleep to start up server
+    sleep(.1)  # sleep to start up server
     yield mets_server_url, Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
     p.terminate()
     rmtree(WORKSPACE_DIR, ignore_errors=True)
@@ -74,7 +74,26 @@ def test_mets_server_add_file(start_mets_server):
     with Pool() as pool:
         pool.map(add_file_server, zip(repeat(mets_server_url), range(NO_FILES)))
 
-    assert set(workspace_server.mets.file_groups) == set( ['OCR-D-IMG', 'OCR-D-GT-PAGE', 'OCR-D-GT-ALTO', 'FOO'])
+    assert set(workspace_server.mets.file_groups) == set( [
+        'OCR-D-IMG',
+        'OCR-D-GT-PAGE',
+        'OCR-D-GT-ALTO',
+        'OCR-D-SEG-PAGE',
+        'OCR-D-SEG-DOC',
+        'OCR-D-OCR-ANY',
+        'OCR-D-IMG-DESKEW',
+        'OCR-D-SEG-LINE',
+        'OCR-D-OCR-TESS',
+        'OCR-D-SEG-CLASS',
+        'OCR-D-COR-CIS',
+        'OCR-D-IMG-BIN',
+        'OCR-D-IMG-DEWARP',
+        'OCR-D-IMG-DESPECK',
+        'OCR-D-COR-ASV',
+        'OCR-D-IMG-CROP',
+        'OCR-D-SEG-REGION',
+        'FOO'
+    ])
     assert len(workspace_server.mets.find_all_files(fileGrp='FOO')) == NO_FILES
     assert len(workspace_server.mets.find_all_files(file_grp='FOO')) == NO_FILES
 
@@ -116,7 +135,7 @@ def test_mets_server_str(start_mets_server):
     mets_server_url, workspace_server = start_mets_server
     workspace_server = Workspace(Resolver(), WORKSPACE_DIR, mets_server_url=mets_server_url)
     f = next(workspace_server.find_files())
-    assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=INPUT_0017, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/INPUT_0017.tif]/>'
+    assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=FILE_0001_IMAGE, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/FILE_0001_IMAGE.tif]/>'
     a = workspace_server.mets.agents[0]
     assert str(a) == '<ClientSideOcrdAgent [type=---, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
     assert str(workspace_server.mets) == '<ClientSideOcrdMets[url=%s]>' % ('http+unix://%2Ftmp%2Focrd-mets-server.sock' if mets_server_url == TRANSPORTS[0] else TRANSPORTS[1])
@@ -133,7 +152,7 @@ def test_mets_server_different_workspaces(start_mets_server):
 
 def test_mets_test_unique_identifier(start_mets_server):
     _, workspace_server = start_mets_server
-    assert workspace_server.mets.unique_identifier == 'http://kant_aufklaerung_1784'
+    assert workspace_server.mets.unique_identifier == 'http://resolver.staatsbibliothek-berlin.de/SBB0000F29300010000'
 
 def test_mets_server_socket_permissions(start_mets_server):
     mets_server_url, _ = start_mets_server
@@ -147,3 +166,22 @@ def test_mets_server_socket_permissions(start_mets_server):
         assert socket_perm & stat.S_IWGRP
         assert socket_perm & stat.S_IROTH
         assert socket_perm & stat.S_IWOTH
+
+def test_find_all_files(start_mets_server):
+    _, workspace_server = start_mets_server
+    assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'
+    assert len(workspace_server.mets.find_all_files(fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
+    assert len(workspace_server.mets.find_all_files(fileGrp='//OCR-D-I.*')) == 13, '13 files in "//OCR-D-I.*"'
+    assert len(workspace_server.mets.find_all_files(ID="FILE_0001_IMAGE")) == 1, '1 files with ID "FILE_0001_IMAGE"'
+    assert len(workspace_server.mets.find_all_files(ID="//FILE_0005_.*")) == 1, '1 files with ID "//FILE_0005_.*"'
+    assert len(workspace_server.mets.find_all_files(pageId='PHYS_0001')) == 17, '17 files for page "PHYS_0001"'
+    assert len(workspace_server.mets.find_all_files(pageId='PHYS_0001-NOTEXIST')) == 0, '0 pages for "PHYS_0001-NOTEXIST"'
+    assert len(workspace_server.mets.find_all_files(mimetype='image/tiff')) == 13, '13 image/tiff'
+    assert len(workspace_server.mets.find_all_files(mimetype='//application/.*')) == 22, '22 application/.*'
+    assert len(workspace_server.mets.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
+    assert len(workspace_server.mets.find_all_files(local_filename='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 FILE xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
+    assert len(workspace_server.mets.find_all_files(url='https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif')) == 1, '1 URL xlink:href="https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif"'
+    assert len(workspace_server.mets.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
+    assert len(workspace_server.mets.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
+    assert len(workspace_server.mets.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
+    assert len(workspace_server.mets.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
