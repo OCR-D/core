@@ -151,9 +151,6 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
         if not queue:
             raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
 
-    import logging
-    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
-
     processor = ProcessorClass(workspace=None, dump_json=True)
     if subcommand == 'worker':
         # TODO: Passing processor_name and ocrd_tool is reduntant
