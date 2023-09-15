@@ -706,6 +706,41 @@ class ProcessingServer(FastAPI):
         )
         return processor_names_list
 
+    async def task_sequence_to_processing_jobs(
+            self,
+            tasks: List[ProcessorTask],
+            mets_path: str,
+            page_id: str,
+            agent_type: str = 'worker',
+    ) -> List[PYJobOutput]:
+        responses = []
+        for task in tasks:
+            dependent_jobs = []
+            # For the current task find dependencies in the previous tasks
+            for previous_response in responses:
+                for input_file_grp in task.input_file_grps:
+                    if input_file_grp in previous_response.output_file_grps:
+                        dependent_jobs.append(previous_response.job_id)
+
+            # NOTE: The `task.mets_path` and `task.page_id` is not utilized in low level
+            # Thus, setting these two flags in the ocrd process workflow file has no effect
+            job_input_data = PYJobInput(
+                processor_name=task.executable,
+                path_to_mets=mets_path,
+                input_file_grps=task.input_file_grps,
+                output_file_grps=task.output_file_grps,
+                page_id=page_id,
+                parameters=task.parameters,
+                agent_type=agent_type,
+                depends_on=dependent_jobs,
+            )
+            response = await self.push_processor_job(
+                processor_name=job_input_data.processor_name,
+                data=job_input_data
+            )
+            responses.append(response)
+        return responses
+
     async def run_workflow(
             self,
             workflow: UploadFile,
@@ -713,7 +748,7 @@ class ProcessingServer(FastAPI):
             agent_type: str = 'worker',
             page_id: str = None,
             page_wise: bool = False,
-            callback_url: str = None
+            workflow_callback_url: str = None
     ) -> List:
         if page_wise and not page_id:
             raise ValueError(f'page_wise set without providing a page_id range')
@@ -734,42 +769,23 @@ class ProcessingServer(FastAPI):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
 
-        responses = []
         if not page_wise:
-            last_job_id = ""
-            for task in tasks:
-                data = PYJobInput(
-                    processor_name=task.executable,
-                    path_to_mets=mets_path,
-                    input_file_grps=task.input_file_grps,
-                    output_file_grps=task.output_file_grps,
-                    page_id=page_id,
-                    parameters=task.parameters,
-                    callback_url=callback_url,
-                    agent_type=agent_type,
-                    depends_on=[last_job_id] if last_job_id else [],
-                )
-                response = await self.push_processor_job(data.processor_name, data)
-                responses.append(response)
-                last_job_id = response.job_id
+            responses = await self.task_sequence_to_processing_jobs(
+                tasks=tasks,
+                mets_path=mets_path,
+                page_id=page_id,
+                agent_type=agent_type
+            )
             return responses
 
-        page_ids = expand_page_ids(page_id)
-        for page in page_ids:
-            last_job_id = ""
-            for task in tasks:
-                data = PYJobInput(
-                    processor_name=task.executable,
-                    path_to_mets=mets_path,
-                    input_file_grps=task.input_file_grps,
-                    output_file_grps=task.output_file_grps,
-                    page_id=page,
-                    parameters=task.parameters,
-                    callback_url=callback_url,
-                    agent_type=agent_type,
-                    depends_on=[last_job_id] if last_job_id else [],
-                )
-                response = await self.push_processor_job(data.processor_name, data)
-                responses.append(response)
-                last_job_id = response.job_id
-        return responses
+        all_pages_responses = []
+        page_range = expand_page_ids(page_id)
+        for current_page in page_range:
+            current_page_responses = await self.task_sequence_to_processing_jobs(
+                tasks=tasks,
+                mets_path=mets_path,
+                page_id=current_page,
+                agent_type=agent_type
+            )
+            all_pages_responses.extend(current_page_responses)
+        return all_pages_responses
