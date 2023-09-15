@@ -20,7 +20,9 @@ class TestLogCli(TestCase):
     def _get_log_output(self, *args):
         disableLogging()
         code, out, err = self.invoke_cli(mock_ocrd_cli, args)
-        print({'code': code, 'out': out, 'err': err})
+        # print({'code': code, 'out': out, 'err': err})
+        print('out', out)
+        print('err', err)
         return err
 
     def tearDown(self):
@@ -28,21 +30,21 @@ class TestLogCli(TestCase):
             del(ENV['OCRD_TOOL_NAME'])
 
     def test_loglevel(self):
-        assert 'DEBUG ocrd - foo' not in self._get_log_output('log', 'debug', 'foo')
-        assert 'DEBUG ocrd - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
+        assert 'DEBUG ocrd.log_cli - foo' not in self._get_log_output('log', 'debug', 'foo')
+        assert 'DEBUG ocrd.log_cli - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
 
     def test_log_basic(self):
-        assert 'INFO ocrd - foo bar' in self._get_log_output('log', 'info', 'foo bar')
+        assert 'INFO ocrd.log_cli - foo bar' in self._get_log_output('log', 'info', 'foo bar')
 
     def test_log_name_param(self):
-        assert 'INFO ocrd.boo.far - foo bar' in self._get_log_output('log', '--name', 'ocrd.boo.far', 'info', 'foo bar')
+        assert 'INFO ocrd.boo.far - foo bar' in self._get_log_output('log', '--name', 'boo.far', 'info', 'foo bar')
 
     def test_log_name_envvar(self):
-        ENV['OCRD_TOOL_NAME'] = 'ocrd.boo.far'
+        ENV['OCRD_TOOL_NAME'] = 'boo.far'
         assert 'INFO ocrd.boo.far - foo bar' in self._get_log_output('log', 'info', 'foo bar')
 
     def test_log_name_levels(self):
-        ENV['OCRD_TOOL_NAME'] = 'ocrd.foo'
+        ENV['OCRD_TOOL_NAME'] = 'foo'
         assert 'DEBUG ocrd.foo - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
         assert 'DEBUG ocrd.foo - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'trace', 'foo')
         assert 'INFO ocrd.foo - foo' in  self._get_log_output('log', 'info', 'foo')
