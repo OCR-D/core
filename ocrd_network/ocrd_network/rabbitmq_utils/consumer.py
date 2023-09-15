@@ -11,7 +11,6 @@ from pika import PlainCredentials
 
 from .constants import (
     DEFAULT_QUEUE,
-    LOG_LEVEL,
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
     RABBIT_MQ_VHOST as VHOST
@@ -25,9 +24,6 @@ class RMQConsumer(RMQConnector):
         if not logger_name:
             logger_name = __name__
         logger = logging.getLogger(logger_name)
-        logging.getLogger(logger_name).setLevel(LOG_LEVEL)
-        # This may mess up the global logger
-        logging.basicConfig(level=logging.WARNING)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
         self.consumer_tag = None

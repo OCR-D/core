@@ -44,7 +44,7 @@ from ocrd_utils import config
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
-        self.log = getLogger(__name__)
+        self.log = getLogger('ocrd_network.processing_worker')
         # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
         file_handler = logging.FileHandler(f'/tmp/worker_{processor_name}_{getpid()}.log', mode='a')
         logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
