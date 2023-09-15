@@ -281,7 +281,7 @@ class OcrdMetsServer():
             """
             Stop the server
             """
-            getLogger('ocrd_models.ocrd_mets').info('Shutting down')
+            getLogger('ocrd.models.ocrd_mets').info('Shutting down')
             workspace.save_mets()
             self.shutdown()
 

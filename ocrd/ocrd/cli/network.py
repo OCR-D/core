@@ -25,7 +25,7 @@ def network_cli():
     initLogging()
     # TODO: Remove after the logging fix in core
     logging.getLogger('paramiko.transport').setLevel(logging.INFO)
-    logging.getLogger('ocrd_network').setLevel(logging.DEBUG)
+    logging.getLogger('ocrd.network').setLevel(logging.DEBUG)
 
 
 network_cli.add_command(client_cli)

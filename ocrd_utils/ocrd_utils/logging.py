@@ -48,10 +48,7 @@ __all__ = [
 
 LOGGING_DEFAULTS = {
     'ocrd': logging.INFO,
-    'ocrd_models': logging.INFO,
-    'ocrd_utils': logging.INFO,
     'ocrd_network': logging.INFO,
-    'ocrd_exif': logging.INFO,
     # 'ocrd.resolver': logging.INFO,
     # 'ocrd.resolver.download_to_directory': logging.INFO,
     # 'ocrd.resolver.add_files_to_mets': logging.INFO,

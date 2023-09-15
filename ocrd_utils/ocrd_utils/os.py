@@ -82,7 +82,7 @@ def get_ocrd_tool_json(executable):
     try:
         ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
     except (JSONDecodeError, OSError) as e:
-        getLogger('ocrd_utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
+        getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
         ocrd_tool = {}
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
@@ -94,7 +94,7 @@ def get_moduledir(executable):
     try:
         moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout.rstrip('\n')
     except (JSONDecodeError, OSError) as e:
-        getLogger('ocrd_utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
+        getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
 
 def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):

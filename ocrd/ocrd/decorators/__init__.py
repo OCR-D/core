@@ -67,7 +67,7 @@ def ocrd_cli_wrap_processor(
 
     initLogging()
 
-    LOG = getLogger('ocrd_cli_wrap_processor')
+    LOG = getLogger('ocrd.cli_wrap_processor')
     # LOG.info('kwargs=%s' % kwargs)
     # Merge parameter overrides and parameters
     if 'parameter_override' in kwargs:

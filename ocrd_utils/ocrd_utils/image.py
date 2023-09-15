@@ -212,7 +212,7 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     
     Return a numpy array of the resulting affine transformation matrix.
     """
-    LOG = getLogger('ocrd_utils.coords.rotate_coordinates')
+    LOG = getLogger('ocrd.utils.coords.rotate_coordinates')
     rad = np.deg2rad(angle)
     cos = np.cos(rad)
     sin = np.sin(rad)
@@ -254,7 +254,7 @@ def rotate_image(image, angle, fill='background', transparency=False):
 
     Return a new PIL.Image.
     """
-    LOG = getLogger('ocrd_utils.rotate_image')
+    LOG = getLogger('ocrd.utils.rotate_image')
     LOG.debug('rotating image by %.2f°', angle)
     if transparency and image.mode in ['RGB', 'L']:
         # ensure no information is lost by adding transparency channel
@@ -298,7 +298,7 @@ def shift_coordinates(transform, offset):
     
     Return a numpy array of the resulting affine transformation matrix.
     """
-    LOG = getLogger('ocrd_utils.coords.shift_coordinates')
+    LOG = getLogger('ocrd.utils.coords.shift_coordinates')
     LOG.debug('shifting coordinates by %s', str(offset))
     shift = np.eye(3)
     shift[0, 2] = offset[0]
@@ -315,7 +315,7 @@ def scale_coordinates(transform, factors):
     
     Return a numpy array of the resulting affine transformation matrix.
     """
-    LOG = getLogger('ocrd_utils.coords.scale_coordinates')
+    LOG = getLogger('ocrd.utils.coords.scale_coordinates')
     LOG.debug('scaling coordinates by %s', str(factors))
     scale = np.eye(3)
     scale[0, 0] = factors[0]
@@ -374,7 +374,7 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
 
     Return a numpy array of the resulting affine transformation matrix.
     """
-    LOG = getLogger('ocrd_utils.coords.transpose_coordinates')
+    LOG = getLogger('ocrd.utils.coords.transpose_coordinates')
     LOG.debug('transposing coordinates with %s around %s', membername(Image, method), str(orig))
     # get rotation matrix for passive rotation/reflection:
     rot90 = np.array([[0, 1, 0],
@@ -441,7 +441,7 @@ def transpose_image(image, method):
     
     Return a new PIL.Image.
     """
-    LOG = getLogger('ocrd_utils.transpose_image')
+    LOG = getLogger('ocrd.utils.transpose_image')
     LOG.debug('transposing image with %s', membername(Image, method))
     return image.transpose(method)
 
@@ -459,7 +459,7 @@ def crop_image(image, box=None):
 
     Return a new PIL.Image.
     """
-    LOG = getLogger('ocrd_utils.crop_image')
+    LOG = getLogger('ocrd.utils.crop_image')
     if not box:
         box = (0, 0, image.width, image.height)
     elif box[0] < 0 or box[1] < 0 or box[2] > image.width or box[3] > image.height:
