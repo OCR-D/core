@@ -1,9 +1,10 @@
 import json
 from typing import List, Optional
-from pathlib import Path
 
 from ocrd import Resolver
 from ocrd.processor.helpers import run_cli, run_processor
+
+from .utils import is_mets_server_running
 
 
 # A wrapper for run_processor() and run_cli()
@@ -22,10 +23,8 @@ def invoke_processor(
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
 
-    if mets_server_url:
-        if not mets_server_url.startswith('http://'):
-            if not Path.exists(Path(mets_server_url)):
-                raise RuntimeError(f'Socket file does not exist: {mets_server_url}')
+    if not is_mets_server_running(mets_server_url=mets_server_url):
+        raise RuntimeError(f'The mets server is not running: {mets_server_url}')
 
     workspace = Resolver().workspace_from_url(
         mets_url=abs_path_to_mets,

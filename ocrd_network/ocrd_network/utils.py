@@ -1,10 +1,10 @@
 from datetime import datetime
 from functools import wraps
-from os import environ
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
 import requests
+import requests_unixsocket
 from typing import Dict
 from uuid import uuid4
 from yaml import safe_load
@@ -110,3 +110,33 @@ def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMe
     }
     response = requests.post(url=callback_url, headers=headers, json=json_data)
     logger.info(f'Response from callback_url "{response}"')
+
+
+def is_mets_server_running(mets_server_url: str) -> bool:
+    if mets_server_url.startswith('http://') or mets_server_url.startswith('https://'):
+        headers = {"Content-Type": "application/json"}
+        response = requests.get(url=f'{mets_server_url}/workspace_path', headers=headers)
+    else:
+        unix_url = f'http+unix://{mets_server_url.replace("/", "%2F")}'
+        try:
+            response = requests_unixsocket.Session().get(url=f'{unix_url}/workspace_path')
+        except Exception:
+            return False
+    if response.status_code == 200:
+        return True
+    return False
+
+
+def stop_mets_server(mets_server_url: str) -> bool:
+    if mets_server_url.startswith('http://') or mets_server_url.startswith('https://'):
+        headers = {"Content-Type": "application/json"}
+        response = requests.delete(url=f'{mets_server_url}/', headers=headers)
+    else:
+        unix_url = f'http+unix://{mets_server_url.replace("/", "%2F")}'
+        try:
+            response = requests_unixsocket.Session().delete(f'{unix_url}/')
+        except Exception:
+            return False
+    if response.status_code == 200:
+        return True
+    return False

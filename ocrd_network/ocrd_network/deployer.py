@@ -30,7 +30,11 @@ from .runtime_data import (
     DataProcessorServer,
     DataRabbitMQ
 )
-from .utils import validate_and_load_config
+from .utils import (
+    is_mets_server_running,
+    stop_mets_server,
+    validate_and_load_config
+)
 
 
 class Deployer:
@@ -521,13 +525,16 @@ class Deployer:
 
     # TODO: No support for TCP version yet
     def start_unix_mets_server(self, mets_path: str) -> str:
-        mets_server_url = f'/tmp/{safe_filename(mets_path)}'
-        if Path.exists(Path(mets_server_url)):
+        socket_file = f'{safe_filename(mets_path)}.sock'
+        log_path = f'/tmp/{safe_filename(mets_path)}.log'
+        mets_server_url = f'/tmp/{socket_file}'
+
+        if is_mets_server_running(mets_server_url=mets_server_url):
             self.log.info(f"The mets server is already started: {mets_server_url}")
             return mets_server_url
+
         cwd = Path(mets_path).parent
-        self.log.info(f'Starting native mets server: {mets_server_url}')
-        log_path = f'{mets_server_url}.log'
+        self.log.info(f'Starting UDS mets server: {mets_server_url}')
         sub_process = subprocess.Popen(
             args=['nohup', 'ocrd', 'workspace', '--mets-server-url', f'{mets_server_url}',
                   '-d', f'{cwd}', 'server', 'start'],
@@ -543,14 +550,18 @@ class Deployer:
         return mets_server_url
 
     def stop_unix_mets_server(self, mets_server_url: str) -> None:
-        self.log.info(f'Stopping native mets server: {mets_server_url}')
+        self.log.info(f'Stopping UDS mets server: {mets_server_url}')
         if mets_server_url in self.mets_servers:
             mets_server_pid = self.mets_servers[mets_server_url]
         else:
             raise Exception(f"Mets server not found: {mets_server_url}")
 
+        '''
         subprocess.run(
             args=['kill', '-s', 'SIGINT', f'{mets_server_pid}'],
             shell=False,
             universal_newlines=True
         )
+        '''
+
+        stop_mets_server(mets_server_url=mets_server_url)

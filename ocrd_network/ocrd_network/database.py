@@ -41,7 +41,7 @@ async def db_create_workspace(mets_path: str) -> DBWorkspace:
     """ Create a workspace-database entry only from a mets-path
     """
     if not Path(mets_path).exists():
-        raise ValueError(f'Cannot create DB workspace entry, `{mets_path}` does not exist!')
+        raise FileNotFoundError(f'Cannot create DB workspace entry, `{mets_path}` does not exist!')
     try:
         return await db_get_workspace(workspace_mets_path=mets_path)
     except ValueError:
