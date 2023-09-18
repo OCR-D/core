@@ -34,6 +34,7 @@ import logging
 import logging.config
 from pathlib import Path
 import sys
+from warnings import warn
 
 from .constants import LOG_FORMAT, LOG_TIMEFMT
 
@@ -155,11 +156,13 @@ def initLogging(builtin_only=False, force_reinit=False):
             Path.home(),
             Path('/etc'),
         ]
-        config_file = next((f for f \
+        config_file = [f for f \
                 in [p / 'ocrd_logging.conf' for p in CONFIG_PATHS] \
-                if f.exists()),
-                None)
+                if f.exists()]
     if config_file:
+        if len(config_file) > 1:
+            warn(f"Multiple logging configuration files found at {config_file}")
+        config_file = config_file[0]
         logging.config.fileConfig(config_file)
         logging.getLogger('ocrd.logging').debug("Picked up logging config at %s", config_file)
     else:
