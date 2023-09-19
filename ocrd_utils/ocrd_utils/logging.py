@@ -90,8 +90,7 @@ def getLevelName(lvl):
 
 def getLogger(*args, **kwargs):
     """
-    Wrapper around ``logging.getLogger`` that alls :py:func:`initLogging` if
-    that wasn't explicitly called before.
+    Delegates to ``logging.getLogger``. Retained for backwards-compatibility.
     """
     logger = logging.getLogger(*args, **kwargs)
     return logger
@@ -117,7 +116,7 @@ def setOverrideLogLevel(lvl, silent=True):
             ocrd_logger.info('Overriding ocrd log level to %s', lvl)
         ocrd_logger.setLevel(lvl)
 
-def initLogging(builtin_only=False, force_reinit=False):
+def initLogging(builtin_only=False, config_file_only=False, force_reinit=False):
     """
     Reset ``ocrd`` logger, read logging configuration if exists, otherwise use basicConfig
 
@@ -137,7 +136,6 @@ def initLogging(builtin_only=False, force_reinit=False):
     global _initialized_flag
     if _initialized_flag and not force_reinit:
         return
-    # disableLogging()
 
     # https://docs.python.org/3/library/logging.html#logging.disable
     # If logging.disable(logging.NOTSET) is called, it effectively removes this
@@ -163,17 +161,22 @@ def initLogging(builtin_only=False, force_reinit=False):
         if len(config_file) > 1:
             warn(f"Multiple logging configuration files found at {config_file}")
         config_file = config_file[0]
+    if not config_file and config_file_only:
+        raise ValueError("logging.initLogging received config_file_only=True but no config file was found")
+    if config_file and not builtin_only:
         logging.config.fileConfig(config_file)
         logging.getLogger('ocrd.logging').debug("Picked up logging config at %s", config_file)
-    else:
-        # Default logging config
-        ocrd_handler = logging.StreamHandler(stream=sys.stderr)
-        ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
-        ocrd_handler.setLevel(logging.DEBUG)
-        logging.getLogger('ocrd').addHandler(ocrd_handler)
-        for logger_name, logger_level in LOGGING_DEFAULTS.items():
-            logging.getLogger(logger_name).setLevel(logger_level)
+        _initialized_flag = True
+        return
 
+    # Default logging config
+    ocrd_handler = logging.StreamHandler(stream=sys.stderr)
+    ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
+    ocrd_handler.setLevel(logging.DEBUG)
+    ocrd_handler.propagate = False
+    logging.getLogger('ocrd').addHandler(ocrd_handler)
+    for logger_name, logger_level in LOGGING_DEFAULTS.items():
+        logging.getLogger(logger_name).setLevel(logger_level)
     _initialized_flag = True
 
 def disableLogging(silent=True):

@@ -6,7 +6,8 @@ OCR-D CLI: Logging
     :nested: full
 """
 import click
-from ocrd_utils import initLogging, getLogger, getLevelName
+from ocrd_utils import initLogging, getLogger, getLevelName, logging
+import ocrd_utils.logging
 import logging
 
 class LogCtx():
