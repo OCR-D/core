@@ -13,6 +13,7 @@ from ocrd_utils import getLogger, initLogging, disableLogging
 from ocrd_models import OcrdMets
 
 from tests.assets import assets, copy_of_directory
+from click.testing import CliRunner
 
 
 sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
@@ -20,13 +21,13 @@ sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
 @contextmanager
 def ocrd_logging_enabled(**kwargs):
     disableLogging()
-    for handler in logging.getLogger('').handlers:
-        logging.getLogger('').removeHandler(handler)
+    # for handler in logging.getLogger('').handlers:
+    #     logging.getLogger('').removeHandler(handler)
     initLogging(force_reinit=True, **kwargs)
     yield
     disableLogging()
-    for handler in logging.getLogger('').handlers:
-        logging.getLogger('').removeHandler(handler)
+    # for handler in logging.getLogger('').handlers:
+    #     logging.getLogger('').removeHandler(handler)
 
 def main(fn=None):
     if fn:
@@ -39,35 +40,24 @@ class TestCase(VanillaTestCase):
 
     def setUp(self):
         chdir(dirname(realpath(__file__)) + '/..')
-        disableLogging()
-        initLogging()
 
-class CapturingTestCase(TestCase):
+@pytest.fixture(name="invoke_cli")
+def _invoke_cli(capfd):
     """
-    A TestCase that needs to capture stderr/stdout and invoke click CLI.
+    Substitution for click.CliRunner.invooke that works together nicely
+    with unittests/pytest capturing stdout/stderr.
     """
-
-    @pytest.fixture(autouse=True)
-    def _setup_pytest_capfd(self, capfd):
-        self.capfd = capfd
-
-    def invoke_cli(self, cli, args):
-        """
-        Substitution for click.CliRunner.invooke that works together nicely
-        with unittests/pytest capturing stdout/stderr.
-        """
-        self.capture_out_err()  # XXX snapshot just before executing the CLI
-        code = 0
-        sys.argv[1:] = args # XXX necessary because sys.argv reflects pytest args not cli args
+    def _invoke_cli_inner(cli, cli_args):
+        code, out, err = None, None, None
         try:
-            cli.main(args=args)
+            sys.argv[1:] = cli_args # XXX necessary because sys.argv reflects pytest args not cli args
+            capfd.readouterr()
+            cli.main(args=cli_args)
         except SystemExit as e:
             code = e.code
-        out, err = self.capture_out_err()
+        out, err = capfd.readouterr()
         return code, out, err
-
-    def capture_out_err(self):
-        return self.capfd.readouterr()
+    return _invoke_cli_inner
 
 def create_ocrd_file_with_defaults(**kwargs):
     print('create_ocrd_file_with_defaults kwargs', kwargs)
@@ -117,6 +107,7 @@ def capture_log(loggerName):
         yield log_capture_string
     finally:
         log_capture_string.close()
+    getLogger(loggerName).removeHandler(ch)
 
 @contextmanager
 def temp_env_var(k, v):

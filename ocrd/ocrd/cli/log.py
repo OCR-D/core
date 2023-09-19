@@ -16,7 +16,7 @@ class LogCtx():
         self.name = name
 
     def log(self, lvl, *args, **kwargs):
-        logger = getLogger(self.name)
+        logger = logging.getLogger(self.name)
         logger.log(getLevelName(lvl), *args, **kwargs)
 
 pass_log = click.make_pass_decorator(LogCtx)
@@ -31,13 +31,14 @@ def log_cli(ctx, name, *args, **kwargs):
     Logger name will be ocrd.OCRD_TOOL_NAME where OCRD_TOOL_NAME is normally
     (when using bashlib) the name of the processor.
     """
-    initLogging()
     ctx.obj = LogCtx('ocrd.' + name)
 
 def _bind_log_command(lvl):
     @click.argument('msgs', nargs=-1)
     @pass_log
     def _log_wrapper(ctx, msgs):
+        # print('yo')
+        # print(ctx, lvl, msgs)
         if not msgs:
             ctx.log(lvl.upper(), '')
         elif len(msgs) == 1 and msgs[0] == '-':
@@ -45,6 +46,7 @@ def _bind_log_command(lvl):
                 ctx.log(lvl.upper(), stdin_line.rstrip('\n'))
         else:
             msg = list(msgs) if '%s' in msgs[0] else ' '.join([x.replace('%', '%%') for x in msgs])
+            # print('this', msg)
             ctx.log(lvl.upper(), msg)
     return _log_wrapper
 

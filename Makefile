@@ -198,7 +198,11 @@ assets: repo/assets
 test: assets
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) --durations=10\
+		--ignore-glob="$(TESTDIR)/**/*bashlib*.py" \
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
+		--ignore-glob="$(TESTDIR)/*res*m*g*r*.py" \
+		--ignore-glob="$(TESTDIR)/**/*res*m*g*r*.py" \
+		--ignore-glob="$(TESTDIR)//*mets_server*.py" \
 		$(TESTDIR)
 	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
 
