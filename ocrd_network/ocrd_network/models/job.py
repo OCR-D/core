@@ -112,7 +112,7 @@ class PYWorkflowJobOutput(BaseModel):
     page_id: str
     page_wise: bool = False
     # A dictionary where each entry has:
-    # key: page_id, `all_pages` value is used when no page_id is specified
+    # key: page_id
     # value: List of and processing job ids sorted in dependency order
     processing_job_ids: Dict
     path_to_mets: Optional[str]
@@ -127,7 +127,7 @@ class DBWorkflowJob(Document):
     page_id: str
     page_wise: bool = False
     # A dictionary where each entry has:
-    # key: page_id, `all_pages` value is used when no page_id is specified
+    # key: page_id
     # value: List of and processing job ids sorted in dependency order
     processing_job_ids: Dict
     path_to_mets: Optional[str]

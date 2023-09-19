@@ -774,6 +774,7 @@ class ProcessingServer(FastAPI):
         if page_id:
             page_range = expand_page_ids(page_id)
         else:
+            # If no page_id is specified, all physical pages are assigned as page range
             page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
         compact_page_range = f'{page_range[0]}..{page_range[-1]}'
 
