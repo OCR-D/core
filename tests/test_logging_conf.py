@@ -18,7 +18,7 @@ import pytest
 
 from tests.base import main
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../ocrd')
+# sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../ocrd')
 TEST_ROOT = pathlib.Path(os.path.dirname(os.path.abspath(__file__))).parent
 
 def resetLogging():
