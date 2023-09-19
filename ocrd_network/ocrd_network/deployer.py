@@ -564,4 +564,9 @@ class Deployer:
         )
         '''
 
+        # TODO: Reconsider this again
+        #  Not having this sleep here causes connection errors
+        #  on the last request processed by the processing worker.
+        #  Sometimes 3 seconds is enough, sometimes not.
+        sleep(5)
         stop_mets_server(mets_server_url=mets_server_url)
