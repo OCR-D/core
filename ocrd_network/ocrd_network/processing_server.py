@@ -50,7 +50,8 @@ from .server_utils import (
 from .utils import (
     download_ocrd_all_tool_json,
     generate_created_time,
-    generate_id
+    generate_id,
+    get_ocrd_workspace_physical_pages
 )
 
 
@@ -642,7 +643,10 @@ class ProcessingServer(FastAPI):
                 self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
 
             # Shut down the Mets Server for the workspace_key
-            self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
+            # TODO: This is problematic.
+            #  Even when the request cache is empty,
+            #  there are still processing workers communicating with the METS Server
+            # self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
             return
 
         consumed_requests = await self.find_next_requests_from_internal_queue(
@@ -750,9 +754,6 @@ class ProcessingServer(FastAPI):
             page_wise: bool = False,
             workflow_callback_url: str = None
     ) -> PYWorkflowJobOutput:
-        if page_wise and not page_id:
-            raise ValueError(f'page_wise set without providing a page_id range')
-
         # core cannot create workspaces by api, but processing-server needs the workspace in the
         # database. Here the workspace is created if the path available and not existing in db:
         # from pudb import set_trace; set_trace()
@@ -770,18 +771,24 @@ class ProcessingServer(FastAPI):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
 
+        if page_id:
+            page_range = expand_page_ids(page_id)
+        else:
+            page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
+        compact_page_range = f'{page_range[0]}..{page_range[-1]}'
+
         if not page_wise:
             processing_job_ids = await self.task_sequence_to_processing_jobs(
                 tasks=tasks,
                 mets_path=mets_path,
-                page_id=page_id,
+                page_id=compact_page_range,
                 agent_type=agent_type
             )
             db_workflow_job = DBWorkflowJob(
                 job_id=generate_id(),
-                page_id=page_id if page_id else "all_pages",
+                page_id=compact_page_range,
                 page_wise=page_wise,
-                processing_job_ids={page_id: processing_job_ids},
+                processing_job_ids={compact_page_range: processing_job_ids},
                 path_to_mets=mets_path,
                 workflow_callback_url=workflow_callback_url
             )
@@ -789,7 +796,6 @@ class ProcessingServer(FastAPI):
             return db_workflow_job.to_job_output()
 
         all_pages_job_ids = {}
-        page_range = expand_page_ids(page_id)
         for current_page in page_range:
             processing_job_ids = await self.task_sequence_to_processing_jobs(
                 tasks=tasks,
@@ -800,7 +806,7 @@ class ProcessingServer(FastAPI):
             all_pages_job_ids[current_page] = processing_job_ids
         db_workflow_job = DBWorkflowJob(
             job_id=generate_id(),
-            page_id=page_id if page_id else "all_pages",
+            page_id=compact_page_range,
             page_wise=page_wise,
             processing_job_ids=all_pages_job_ids,
             path_to_mets=mets_path,

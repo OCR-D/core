@@ -5,10 +5,11 @@ from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
 import requests
 import requests_unixsocket
-from typing import Dict
+from typing import Dict, List
 from uuid import uuid4
 from yaml import safe_load
 
+from ocrd import Resolver, Workspace
 from ocrd_validators import ProcessingServerConfigValidator
 from .rabbitmq_utils import OcrdResultMessage
 
@@ -110,6 +111,32 @@ def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMe
     }
     response = requests.post(url=callback_url, headers=headers, json=json_data)
     logger.info(f'Response from callback_url "{response}"')
+
+
+def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> Workspace:
+    if mets_server_url:
+        if not is_mets_server_running(mets_server_url=mets_server_url):
+            raise RuntimeError(f'The mets server is not running: {mets_server_url}')
+
+    workspace = Resolver().workspace_from_url(
+        mets_url=mets_path,
+        mets_server_url=mets_server_url
+    )
+    return workspace
+
+
+def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = None) -> List[str]:
+    physical_pages = get_ocrd_workspace_instance(
+        mets_path=mets_path,
+        mets_server_url=mets_server_url
+    ).mets.physical_pages
+
+    # This conversion is required since
+    # the type of physical pages is not str
+    str_physical_pages = []
+    for physical_page in physical_pages:
+        str_physical_pages.append(f'{physical_page}')
+    return str_physical_pages
 
 
 def is_mets_server_running(mets_server_url: str) -> bool:
