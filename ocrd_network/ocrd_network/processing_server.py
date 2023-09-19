@@ -715,15 +715,14 @@ class ProcessingServer(FastAPI):
             page_id: str,
             agent_type: str = 'worker',
     ) -> List[PYJobOutput]:
+        file_group_cache = {}
         responses = []
         for task in tasks:
+            # Find dependent jobs of the current task
             dependent_jobs = []
-            # For the current task find dependencies in the previous tasks
-            for previous_response in responses:
-                for input_file_grp in task.input_file_grps:
-                    if input_file_grp in previous_response.output_file_grps:
-                        dependent_jobs.append(previous_response.job_id)
-
+            for input_file_grp in task.input_file_grps:
+                if input_file_grp in file_group_cache:
+                    dependent_jobs.append(file_group_cache[input_file_grp])
             # NOTE: The `task.mets_path` and `task.page_id` is not utilized in low level
             # Thus, setting these two flags in the ocrd process workflow file has no effect
             job_input_data = PYJobInput(
@@ -740,6 +739,8 @@ class ProcessingServer(FastAPI):
                 processor_name=job_input_data.processor_name,
                 data=job_input_data
             )
+            for file_group in task.output_file_grps:
+                file_group_cache[file_group] = response.job_id
             responses.append(response)
         return responses
 
