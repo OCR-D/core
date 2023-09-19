@@ -298,9 +298,7 @@ class ProcessingServer(FastAPI):
             page_ids: List[str]
     ) -> bool:
         for output_fileGrp in output_file_grps:
-            self.log.debug(f"Checking output file group: {output_fileGrp}")
             if output_fileGrp in locked_ws_pages:
-                self.log.debug(f"Locked workspace pages has entry for output file group: {output_fileGrp}")
                 if "all_pages" in locked_ws_pages[output_fileGrp]:
                     self.log.debug(f"Caching the received request due to locked output file grp pages")
                     return True
@@ -308,6 +306,7 @@ class ProcessingServer(FastAPI):
                 if not set(locked_ws_pages[output_fileGrp]).isdisjoint(page_ids):
                     self.log.debug(f"Caching the received request due to locked output file grp pages")
                     return True
+        return False
 
     async def lock_pages(self, db_workspace: DBWorkspace, output_file_grps: List[str], page_ids: List[str]):
         for output_fileGrp in output_file_grps:
@@ -348,9 +347,7 @@ class ProcessingServer(FastAPI):
                 dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
             except ValueError:
                 # job_id not (yet) in db. Dependency not met
-                self.log.debug(f"dependency_job_id: {dependency_job_id}, state: State not in the DB yet")
                 return False
-            self.log.debug(f"dependency_job_id: {dependency_job_id}, state: {dependency_job_state}")
             # Found a dependent job whose state is not success
             if dependency_job_state != StateEnum.success:
                 return False
@@ -362,12 +359,11 @@ class ProcessingServer(FastAPI):
             # Request has other job dependencies
             if current_element.depends_on:
                 satisfied_dependencies = await self.check_if_job_dependencies_met(current_element.depends_on)
-                self.log.debug(f"current element: {current_element}, satisfied dependencies: {satisfied_dependencies}")
                 if not satisfied_dependencies:
                     continue
             # Consume the request from the internal queue
             found_request = internal_queue.pop(i)
-            self.log.debug(f"found cached request to be processed: {found_request}")
+            self.log.debug(f"Found cached request to be processed: {found_request}")
             found_requests.append(found_request)
         return found_requests
 
@@ -451,9 +447,7 @@ class ProcessingServer(FastAPI):
 
         # Check if there are any dependencies of the current request
         if data.depends_on:
-            self.log.debug(f"Checking job dependencies of {data.processor_name}")
             if not await self.check_if_job_dependencies_met(data.depends_on):
-                self.log.debug(f"Caching the received request due to job dependencies")
                 cache_current_request = True
 
         # No need for further check of locked pages dependency
@@ -600,7 +594,7 @@ class ProcessingServer(FastAPI):
         path_to_mets = result_message.path_to_mets
         workspace_id = result_message.workspace_id
 
-        self.log.debug(f"Received result for job with id: {result_job_id} has state: {result_job_state}")
+        self.log.debug(f"Result job_id: {result_job_id}, state: {result_job_state}")
 
         # Read DB workspace entry
         db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
@@ -615,6 +609,7 @@ class ProcessingServer(FastAPI):
 
         if result_job_state == StateEnum.failed:
             if len(self.processing_requests_cache[workspace_key]):
+                self.log.debug(f"Cancelling jobs dependent to job_id: {result_job_id}")
                 await self.cancel_dependent_jobs(
                     job_id=result_job_id,
                     internal_queue=self.processing_requests_cache[workspace_key]
