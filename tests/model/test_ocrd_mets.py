@@ -15,9 +15,6 @@ from tests.base import (
 )
 
 from ocrd_utils import (
-    initLogging,
-    disableLogging,
-    getLogger,
     VERSION,
     MIMETYPE_PAGE
 )

@@ -516,8 +516,6 @@ def test_image_feature_selectoro(workspace_sample_features):
     assert info['features'] == 'cropped,dewarped,despeckled'
 
 def test_deskewing(plain_workspace):
-    #from ocrd_utils import initLogging, setOverrideLogLevel
-    #setOverrideLogLevel('DEBUG')
     size = (3000, 4000)
     poly = [[1403, 2573], [1560, 2573], [1560, 2598], [2311, 2598], [2311, 2757],
             [2220, 2757], [2220, 2798], [2311, 2798], [2311, 2908], [1403, 2908]]

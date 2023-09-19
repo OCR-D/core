@@ -5,11 +5,11 @@ from logging import StreamHandler, Formatter
 from os.path import join, dirname
 
 from requests import Session
-from tests.base import main, FIFOIO
+from tests.base import main, FIFOIO, ocrd_logging_enabled
 
 from ocrd.resolver import Resolver
 from ocrd_models.utils import extract_mets_from_oai_content
-from ocrd_utils import getLogger, initLogging, LOG_FORMAT
+from ocrd_utils import getLogger, LOG_FORMAT
 
 
 @fixture(name="response_dir")
@@ -59,7 +59,6 @@ def test_handle_response_mets(plain_xml_response_content):
 @patch.object(Session, "get")
 def test_handle_common_oai_response(mock_get, response_dir, oai_response_content):
     """Base use case with valid OAI Response data"""
-    initLogging()
 
     # arrange
     url = 'http://digital.bibliothek.uni-halle.de/hd/oai/?verb=GetRecord&metadataPrefix=mets&mode=xml&identifier=9049'
@@ -88,22 +87,22 @@ def test_handle_response_for_invalid_content(mock_get, response_dir):
     headers = {'Content-Type': 'text/plain'}
     mock_get.return_value.headers = headers
     resolver = Resolver()
-    initLogging()
+    with ocrd_logging_enabled():
+        # capture log
+        log = getLogger('ocrd.models.utils.handle_oai_response')
+        log.setLevel('DEBUG')
+        capt = FIFOIO(256)
+        sh = StreamHandler(capt)
+        sh.setFormatter(Formatter(LOG_FORMAT))
+        log.addHandler(sh)
 
-    # capture log
-    log = getLogger('ocrd.models.utils.handle_oai_response')
-    capt = FIFOIO(256)
-    sh = StreamHandler(capt)
-    sh.setFormatter(Formatter(LOG_FORMAT))
-    log.addHandler(sh)
+        # act
+        resolver.download_to_directory(response_dir, url)
 
-    # act
-    resolver.download_to_directory(response_dir, url)
-
-    # assert
-    mock_get.assert_called_once_with(url, timeout=None)
-    log_output = capt.getvalue()
-    assert 'WARNING ocrd.models.utils.handle_oai_response' in log_output
+        # assert
+        mock_get.assert_called_once_with(url, timeout=None)
+        log_output = capt.getvalue()
+        assert 'WARNING ocrd.models.utils.handle_oai_response' in log_output
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ from click.testing import CliRunner
 from pytest import fixture
 from tempfile import TemporaryDirectory
 
-from ocrd_utils import disableLogging, directory_size
+from ocrd_utils import  directory_size
 from ocrd.cli.resmgr import resmgr_cli
 from ocrd.resource_manager import OcrdResourceManager
 

@@ -5,7 +5,7 @@ from os.path import join
 from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
 
-from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
+from ocrd_utils import MIMETYPE_PAGE, pushd_popd
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
 

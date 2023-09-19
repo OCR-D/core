@@ -5,7 +5,7 @@ from click.testing import CliRunner
 from tempfile import TemporaryDirectory
 from os.path import join, exists
 
-from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
+from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory, ocrd_logging_enabled
 from tests.data import DummyProcessor
 
 from ocrd import Processor, Resolver
@@ -14,7 +14,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION
 
 @click.command()
 @ocrd_cli_options
@@ -40,10 +40,6 @@ DEFAULT_IN_OUT = ('-I', 'OCR-D-IMG', '-O', 'OUTPUT')
 
 class TestDecorators(TestCase):
 
-    def setUp(self):
-        super().setUp()
-        disableLogging()
-
     def test_minimal(self):
         exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
         print(out, err)
@@ -60,13 +56,15 @@ class TestDecorators(TestCase):
 
     def test_loglevel_override(self):
         import logging
-        disableLogging()
+        with ocrd_logging_enabled():
+            # only called for the side effect of disableLogging after yield
+            pass
         assert logging.getLogger('ocrd').getEffectiveLevel() == logging.WARNING
-        initLogging()
-        assert logging.getLogger('ocrd').getEffectiveLevel() == logging.INFO
-        code, _, _ = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'DEBUG'])
-        assert not code
-        assert logging.getLogger('ocrd').getEffectiveLevel() == logging.DEBUG
+        with ocrd_logging_enabled():
+            assert logging.getLogger('ocrd').getEffectiveLevel() == logging.INFO
+            code, _, _ = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'DEBUG'])
+            assert not code
+            assert logging.getLogger('ocrd').getEffectiveLevel() == logging.DEBUG
 
     def test_processor_no_mets(self):
         """

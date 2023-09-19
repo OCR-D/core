@@ -9,21 +9,15 @@ import sys
 
 from ocrd_utils import pushd_popd
 from ocrd_utils.logging import (
-    initLogging,
     getLogger,
-    disableLogging,
 )
 
 import pytest
 
-from tests.base import main
+from tests.base import main, ocrd_logging_enabled
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../ocrd')
 TEST_ROOT = pathlib.Path(os.path.dirname(os.path.abspath(__file__))).parent
-
-def resetLogging():
-    disableLogging()
-    initLogging()
 
 
 @pytest.fixture(name="logging_conf")
@@ -40,9 +34,8 @@ def test_configured_dateformat(logging_conf, capsys):
     """Ensure example ocrd_logging.conf is valid and produces desired record format"""
 
     # arrange
-    with pushd_popd(logging_conf):
-        resetLogging()
-        test_logger = getLogger('')
+    with pushd_popd(logging_conf), ocrd_logging_enabled():
+        test_logger = getLogger('ocrd')
 
         # act
         test_logger.info("test logger initialized")
@@ -58,38 +51,35 @@ def test_configured_tensorflow_logger_present(logging_conf, capsys):
     """Ensure example ocrd_logging.conf is valid and contains logger tensorflow"""
 
     # arrange
-    os.chdir(logging_conf)
-    resetLogging()
-    logger_under_test = getLogger('tensorflow')
+    with pushd_popd(logging_conf), ocrd_logging_enabled():
+        logger_under_test = getLogger('tensorflow')
 
-    # act info
-    logger_under_test.info("tensorflow logger initialized")
-    log_info_output = capsys.readouterr().err
-    assert not log_info_output
+        # act info
+        logger_under_test.info("tensorflow logger initialized")
+        log_info_output = capsys.readouterr().err
+        assert not log_info_output
 
-    # act error
-    logger_under_test.error("tensorflow has error")
-    log_error_output = capsys.readouterr().err
-    assert log_error_output
-
+        # act error
+        logger_under_test.error("tensorflow has error")
+        log_error_output = capsys.readouterr().err
+        assert log_error_output
 
 def test_configured_shapely_logger_present(logging_conf, capsys):
     """Ensure example ocrd_logging.conf is valid and contains logger shapely.geos"""
 
     # arrange
-    os.chdir(logging_conf)
-    resetLogging()
-    logger_under_test = getLogger('shapely.geos')
+    with pushd_popd(logging_conf), ocrd_logging_enabled():
+        logger_under_test = getLogger('shapely.geos')
 
-    # act info
-    logger_under_test.info("shapely.geos logger initialized")
-    log_info_output = capsys.readouterr().err
-    assert not log_info_output
+        # act info
+        logger_under_test.info("shapely.geos logger initialized")
+        log_info_output = capsys.readouterr().err
+        assert not log_info_output
 
-    # act error
-    logger_under_test.error("shapely alert")
-    log_error_output = capsys.readouterr().err
-    assert log_error_output
+        # act error
+        logger_under_test.error("shapely alert")
+        log_error_output = capsys.readouterr().err
+        assert log_error_output
 
 if __name__ == '__main__':
     main(__file__)

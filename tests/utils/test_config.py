@@ -5,15 +5,7 @@ from pytest import raises
 
 from ocrd_utils.config import config, OcrdEnvConfig
 
-@contextmanager
-def temp_env_var(k, v):
-    v_before = environ.get(k, None)
-    environ[k] = v
-    yield
-    if v_before is not None:
-        environ[k] = v_before
-    else:
-        environ.pop(k)
+from tests.base import temp_env_var
 
 def test_str():
     c = OcrdEnvConfig()
