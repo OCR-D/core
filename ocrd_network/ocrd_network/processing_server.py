@@ -714,9 +714,8 @@ class ProcessingServer(FastAPI):
             mets_path: str,
             page_id: str,
             agent_type: str = 'worker',
-    ) -> List[str]:
+    ) -> List[PYJobOutput]:
         responses = []
-        processing_job_ids: List[str] = []
         for task in tasks:
             dependent_jobs = []
             # For the current task find dependencies in the previous tasks
@@ -741,9 +740,8 @@ class ProcessingServer(FastAPI):
                 processor_name=job_input_data.processor_name,
                 data=job_input_data
             )
-            processing_job_ids.append(response.job_id)
             responses.append(response)
-        return processing_job_ids
+        return responses
 
     async def run_workflow(
             self,
@@ -779,12 +777,15 @@ class ProcessingServer(FastAPI):
         compact_page_range = f'{page_range[0]}..{page_range[-1]}'
 
         if not page_wise:
-            processing_job_ids = await self.task_sequence_to_processing_jobs(
+            responses = await self.task_sequence_to_processing_jobs(
                 tasks=tasks,
                 mets_path=mets_path,
                 page_id=compact_page_range,
                 agent_type=agent_type
             )
+            processing_job_ids = []
+            for response in responses:
+                processing_job_ids.append(response.job_id)
             db_workflow_job = DBWorkflowJob(
                 job_id=generate_id(),
                 page_id=compact_page_range,
@@ -798,12 +799,15 @@ class ProcessingServer(FastAPI):
 
         all_pages_job_ids = {}
         for current_page in page_range:
-            processing_job_ids = await self.task_sequence_to_processing_jobs(
+            responses = await self.task_sequence_to_processing_jobs(
                 tasks=tasks,
                 mets_path=mets_path,
                 page_id=current_page,
                 agent_type=agent_type
             )
+            processing_job_ids = []
+            for response in responses:
+                processing_job_ids.append(response.job_id)
             all_pages_job_ids[current_page] = processing_job_ids
         db_workflow_job = DBWorkflowJob(
             job_id=generate_id(),
