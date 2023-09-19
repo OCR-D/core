@@ -1,7 +1,7 @@
 # pylint: disable=unused-import
 
 from os.path import dirname, realpath
-from os import chdir
+from os import chdir, environ
 from contextlib import contextmanager
 import sys
 import logging
@@ -9,11 +9,24 @@ import io
 import collections
 from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
-from ocrd_utils import disableLogging, initLogging, getLogger
+from ocrd_utils import getLogger, initLogging, disableLogging
 from ocrd_models import OcrdMets
 
 from tests.assets import assets, copy_of_directory
 
+
+sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
+
+@contextmanager
+def ocrd_logging_enabled(**kwargs):
+    disableLogging()
+    for handler in logging.getLogger('').handlers:
+        logging.getLogger('').removeHandler(handler)
+    initLogging(force_reinit=True, **kwargs)
+    yield
+    disableLogging()
+    for handler in logging.getLogger('').handlers:
+        logging.getLogger('').removeHandler(handler)
 
 def main(fn=None):
     if fn:
@@ -96,8 +109,6 @@ class FIFOIO(io.TextIOBase):
 
 @contextmanager
 def capture_log(loggerName):
-    disableLogging()
-    initLogging()
     log_capture_string = FIFOIO(1024)
     ch = logging.StreamHandler(log_capture_string)
     getLogger(loggerName).addHandler(ch)
@@ -107,4 +118,13 @@ def capture_log(loggerName):
     finally:
         log_capture_string.close()
 
-sys.path.append(dirname(realpath(__file__)) + '/../ocrd')
+@contextmanager
+def temp_env_var(k, v):
+    v_before = environ.get(k, None)
+    environ[k] = v
+    yield
+    if v_before is not None:
+        environ[k] = v_before
+    else:
+        environ.pop(k)
+
