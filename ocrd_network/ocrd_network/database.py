@@ -19,6 +19,7 @@ from pathlib import Path
 
 from .models import (
     DBProcessorJob,
+    DBWorkflowJob,
     DBWorkspace
 )
 from .utils import call_sync
@@ -28,7 +29,7 @@ async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
         database=client.get_default_database(default='ocrd'),
-        document_models=[DBProcessorJob, DBWorkspace]
+        document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace]
     )
 
 

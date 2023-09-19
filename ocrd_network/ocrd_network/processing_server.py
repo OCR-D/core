@@ -29,10 +29,12 @@ from .database import (
 from .deployer import Deployer
 from .models import (
     DBProcessorJob,
+    DBWorkflowJob,
     DBWorkspace,
     PYJobInput,
     PYJobOutput,
     PYResultMessage,
+    PYWorkflowJobOutput,
     StateEnum
 )
 from .rabbitmq_utils import (
@@ -708,8 +710,9 @@ class ProcessingServer(FastAPI):
             mets_path: str,
             page_id: str,
             agent_type: str = 'worker',
-    ) -> List[PYJobOutput]:
+    ) -> List[str]:
         responses = []
+        processing_job_ids: List[str] = []
         for task in tasks:
             dependent_jobs = []
             # For the current task find dependencies in the previous tasks
@@ -734,8 +737,9 @@ class ProcessingServer(FastAPI):
                 processor_name=job_input_data.processor_name,
                 data=job_input_data
             )
+            processing_job_ids.append(response.job_id)
             responses.append(response)
-        return responses
+        return processing_job_ids
 
     async def run_workflow(
             self,
@@ -745,14 +749,15 @@ class ProcessingServer(FastAPI):
             page_id: str = None,
             page_wise: bool = False,
             workflow_callback_url: str = None
-    ) -> List:
+    ) -> PYWorkflowJobOutput:
         if page_wise and not page_id:
             raise ValueError(f'page_wise set without providing a page_id range')
 
         # core cannot create workspaces by api, but processing-server needs the workspace in the
         # database. Here the workspace is created if the path available and not existing in db:
         # from pudb import set_trace; set_trace()
-        if not await db_create_workspace(mets_path):
+        db_workspace = await db_create_workspace(mets_path)
+        if not db_workspace:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f"Mets file not existing: {mets_path}")
 
@@ -766,22 +771,40 @@ class ProcessingServer(FastAPI):
                                 detail=f"Error parsing tasks: {e}")
 
         if not page_wise:
-            responses = await self.task_sequence_to_processing_jobs(
+            processing_job_ids = await self.task_sequence_to_processing_jobs(
                 tasks=tasks,
                 mets_path=mets_path,
                 page_id=page_id,
                 agent_type=agent_type
             )
-            return responses
+            db_workflow_job = DBWorkflowJob(
+                job_id=generate_id(),
+                page_id=page_id if page_id else "all_pages",
+                page_wise=page_wise,
+                processing_job_ids={page_id: processing_job_ids},
+                path_to_mets=mets_path,
+                workflow_callback_url=workflow_callback_url
+            )
+            await db_workflow_job.insert()
+            return db_workflow_job.to_job_output()
 
-        all_pages_responses = []
+        all_pages_job_ids = {}
         page_range = expand_page_ids(page_id)
         for current_page in page_range:
-            current_page_responses = await self.task_sequence_to_processing_jobs(
+            processing_job_ids = await self.task_sequence_to_processing_jobs(
                 tasks=tasks,
                 mets_path=mets_path,
                 page_id=current_page,
                 agent_type=agent_type
             )
-            all_pages_responses.extend(current_page_responses)
-        return all_pages_responses
+            all_pages_job_ids[current_page] = processing_job_ids
+        db_workflow_job = DBWorkflowJob(
+            job_id=generate_id(),
+            page_id=page_id if page_id else "all_pages",
+            page_wise=page_wise,
+            processing_job_ids=all_pages_job_ids,
+            path_to_mets=mets_path,
+            workflow_callback_url=workflow_callback_url
+        )
+        await db_workflow_job.insert()
+        return db_workflow_job.to_job_output()

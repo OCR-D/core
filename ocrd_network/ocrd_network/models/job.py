@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from beanie import Document
 from pydantic import BaseModel
@@ -61,7 +61,7 @@ class PYJobOutput(BaseModel):
     job_id: str
     processor_name: str
     state: StateEnum
-    workspace_path: Optional[str]
+    path_to_mets: Optional[str]
     workspace_id: Optional[str]
     input_file_grps: List[str]
     output_file_grps: Optional[List[str]]
@@ -97,9 +97,54 @@ class DBProcessorJob(Document):
             job_id=self.job_id,
             processor_name=self.processor_name,
             state=self.state,
-            workspace_path=self.path_to_mets if not self.workspace_id else None,
+            path_to_mets=self.path_to_mets,
             workspace_id=self.workspace_id,
             input_file_grps=self.input_file_grps,
             output_file_grps=self.output_file_grps,
             page_id=self.page_id
+        )
+
+
+class PYWorkflowJobOutput(BaseModel):
+    """ Wraps output information for a workflow job-response
+    """
+    job_id: str
+    page_id: str
+    page_wise: bool = False
+    # A dictionary where each entry has:
+    # key: page_id, `all_pages` value is used when no page_id is specified
+    # value: List of and processing job ids sorted in dependency order
+    processing_job_ids: Dict
+    path_to_mets: Optional[str]
+    workspace_id: Optional[str]
+    description: Optional[str]
+
+
+class DBWorkflowJob(Document):
+    """ Workflow job representation in the database
+    """
+    job_id: str
+    page_id: str
+    page_wise: bool = False
+    # A dictionary where each entry has:
+    # key: page_id, `all_pages` value is used when no page_id is specified
+    # value: List of and processing job ids sorted in dependency order
+    processing_job_ids: Dict
+    path_to_mets: Optional[str]
+    workspace_id: Optional[str]
+    description: Optional[str]
+    workflow_callback_url: Optional[str]
+
+    class Settings:
+        use_enum_values = True
+
+    def to_job_output(self) -> PYWorkflowJobOutput:
+        return PYWorkflowJobOutput(
+            job_id=self.job_id,
+            page_id=self.page_id,
+            page_wise=self.page_wise,
+            processing_job_ids=self.processing_job_ids,
+            path_to_mets=self.path_to_mets,
+            workspace_id=self.workspace_id,
+            workflow_callback_url=self.workflow_callback_url
         )
