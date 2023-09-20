@@ -94,20 +94,24 @@ class ProcessingServer(FastAPI):
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
 
+        # TODO: The key is just `path_to_mets`, add back `workspace_id`
+        #  TODO2: Add the proper typing of self.processing_requests_cache
+        #  TODO3: Create data class for better management of the 3 internals below
+
         # Used for buffering/caching processing requests in the Processing Server
-        # Key: `workspace_id` or `path_to_mets` depending on which is provided
+        # Key: path_to_mets
         # Value: Queue that holds PYInputJob elements
         self.processing_requests_cache = {}
 
         # Used for tracking of active processing jobs for a workspace to decide
         # when the shutdown a METS Server instance for that workspace
-        # Key: `workspace_id` or `path_to_mets` depending on which is provided
+        # Key: path_to_mets
         # Value: integer which holds the amount of jobs pushed to the RabbitMQ
         # but no internal callback was yet invoked
-        self.processing_counter_cache = {}
+        self.processing_counter_cache: Dict[str, int] = {}
 
         # Used for keeping track of locked pages for a workspace
-        # Key: `workspace_id` or `path_to_mets` depending on which is provided
+        # Key: path_to_mets
         # Value: A dictionary where each dictionary key is the output file group,
         # and the values are list of strings representing the locked pages
         self.locked_pages_cache: Dict[str, Dict[str, List[str]]] = {}
@@ -365,9 +369,7 @@ class ProcessingServer(FastAPI):
             self,
             workspace_key: str,
             output_file_grps: List[str],
-            page_ids: List[str],
-            workspace_id: str = None,
-            path_to_mets: str = None
+            page_ids: List[str]
     ):
         if not self.locked_pages_cache.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
@@ -642,7 +644,6 @@ class ProcessingServer(FastAPI):
         result_job_state = result_message.state
         path_to_mets = result_message.path_to_mets
         workspace_id = result_message.workspace_id
-
         self.log.debug(f"Result job_id: {result_job_id}, state: {result_job_state}")
 
         # Read DB workspace entry
@@ -694,6 +695,7 @@ class ProcessingServer(FastAPI):
                 except KeyError:
                     self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
 
+                # For debugging purposes it is good to see if any locked pages are left
                 self.log.debug(f"Contents of the locked pages cache for: {workspace_key}")
                 for output_fileGrp in self.locked_pages_cache[workspace_key]:
                     self.log.debug(f"{output_fileGrp}: {self.locked_pages_cache[workspace_key][output_fileGrp]}")
