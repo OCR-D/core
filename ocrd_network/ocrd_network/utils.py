@@ -159,7 +159,7 @@ def stop_mets_server(mets_server_url: str) -> bool:
     session = Session_TCP() if protocol == 'tcp' else Session_UDS()
     mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
     try:
-        response = session.get(url=f'{mets_server_url}/')
+        response = session.delete(url=f'{mets_server_url}/')
     except Exception:
         return False
     if response.status_code == 200:
