@@ -125,6 +125,9 @@ def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> 
 
 
 def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = None) -> List[str]:
+    # TODO: Return the physical pages directly when #1102 is merged
+    # return get_ocrd_workspace_instance(mets_path=mets_path,mets_server_url=mets_server_url).mets.physical_pages
+    
     physical_pages = get_ocrd_workspace_instance(
         mets_path=mets_path,
         mets_server_url=mets_server_url
