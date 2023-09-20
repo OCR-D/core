@@ -99,6 +99,13 @@ class ProcessingServer(FastAPI):
         # Value: Queue that holds PYInputJob elements
         self.processing_requests_cache = {}
 
+        # Used for tracking of active processing jobs for a workspace to decide
+        # when the shutdown a METS Server instance for that workspace
+        # Key: `workspace_id` or `path_to_mets` depending on which is provided
+        # Value: integer which holds the amount of jobs pushed to RabbitMQ
+        # but no internal callback was yet invoked
+        self.processing_counter_cache = {}
+
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
@@ -433,6 +440,7 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
             )
+        workspace_key = db_workspace.workspace_id if db_workspace.workspace_id else db_workspace.workspace_mets_path
 
         # Since the path is not resolved yet,
         # the return value is not important for the Processing Server
@@ -504,6 +512,7 @@ class ProcessingServer(FastAPI):
         )
         await db_queued_job.insert()
 
+        self.processing_counter_cache[workspace_key] = self.processing_counter_cache[workspace_key] + 1
         job_output = None
         if data.agent_type == 'worker':
             ocrd_tool = await self.get_processor_info(data.processor_name)
@@ -607,6 +616,12 @@ class ProcessingServer(FastAPI):
             self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
             return
 
+        self.processing_counter_cache[workspace_key] = self.processing_counter_cache[workspace_key] - 1
+        if self.processing_counter_cache[workspace_key] <= 0:
+            # Shut down the Mets Server for the workspace_key since no
+            # more internal callbacks are expected for that workspace
+            self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
+
         if result_job_state == StateEnum.failed:
             if len(self.processing_requests_cache[workspace_key]):
                 self.log.debug(f"Cancelling jobs dependent to job_id: {result_job_id}")
@@ -636,12 +651,6 @@ class ProcessingServer(FastAPI):
                 del self.processing_requests_cache[workspace_key]
             except KeyError:
                 self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
-
-            # Shut down the Mets Server for the workspace_key
-            # TODO: This is problematic.
-            #  Even when the request cache is empty,
-            #  there are still processing workers communicating with the METS Server
-            # self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
             return
 
         consumed_requests = await self.find_next_requests_from_internal_queue(
@@ -663,6 +672,7 @@ class ProcessingServer(FastAPI):
                 page_ids=expand_page_ids(data.page_id)
             )
 
+            self.processing_counter_cache[workspace_key] = self.processing_counter_cache[workspace_key] + 1
             job_output = None
             if data.agent_type == 'worker':
                 ocrd_tool = await self.get_processor_info(data.processor_name)
