@@ -118,8 +118,6 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
             workspace.bag_info_adds = value
         elif key == 'deleted':
             workspace.deleted = value
-        elif key == 'pages_locked':
-            workspace.pages_locked = value
         elif key == 'mets_server_url':
             workspace.mets_server_url = value
         else:

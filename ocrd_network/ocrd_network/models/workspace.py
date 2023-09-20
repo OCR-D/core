@@ -1,5 +1,5 @@
 from beanie import Document
-from typing import Dict, Optional
+from typing import Optional
 
 
 class DBWorkspace(Document):
@@ -28,12 +28,8 @@ class DBWorkspace(Document):
     ocrd_base_version_checksum: Optional[str]
     ocrd_mets: Optional[str]
     bag_info_adds: Optional[dict]
-    deleted: bool = False
-    # Dictionary structure:
-    # Key: fileGrp
-    # Value: Set of `page_id`s
-    pages_locked: Optional[Dict] = {}
     mets_server_url: Optional[str]
+    deleted: bool = False
 
     class Settings:
         name = "workspace"

@@ -106,6 +106,12 @@ class ProcessingServer(FastAPI):
         # but no internal callback was yet invoked
         self.processing_counter_cache = {}
 
+        # Used for keeping track of locked pages for a workspace
+        # Key: `workspace_id` or `path_to_mets` depending on which is provided
+        # Value: A dictionary where each dictionary key is the output file group,
+        # and the values are list of strings representing the locked pages
+        self.locked_pages_cache: Dict[str, Dict[str, List[str]]] = {}
+
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
@@ -298,28 +304,27 @@ class ProcessingServer(FastAPI):
                 detail=f"Process queue with id '{processor_name}' not existing"
             )
 
-    async def check_if_locked_pages_for_output_file_grps(
+    def check_if_locked_pages_for_output_file_grps(
             self,
+            workspace_key: str,
             output_file_grps: List[str],
-            page_ids: List[str],
-            workspace_id: str = None,
-            path_to_mets: str = None
+            page_ids: List[str]
     ) -> bool:
-        db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
-        if not db_workspace:
-            self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+        if not self.locked_pages_cache.get(workspace_key, None):
+            self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
+            return False
         for output_fileGrp in output_file_grps:
-            if output_fileGrp in db_workspace.pages_locked:
-                if "all_pages" in db_workspace.pages_locked[output_fileGrp]:
+            if output_fileGrp in self.locked_pages_cache[workspace_key]:
+                if "all_pages" in self.locked_pages_cache[workspace_key][output_fileGrp]:
                     self.log.debug(f"Caching the received request due to locked output file grp pages")
                     return True
                 # If there are request page ids that are already locked
-                if not set(db_workspace.pages_locked[output_fileGrp]).isdisjoint(page_ids):
+                if not set(self.locked_pages_cache[workspace_key][output_fileGrp]).isdisjoint(page_ids):
                     self.log.debug(f"Caching the received request due to locked output file grp pages")
                     return True
         return False
 
-    async def update_request_counter(self, workspace_key, by_value) -> int:
+    def update_request_counter(self, workspace_key, by_value) -> int:
         """
         A method used to increase/decrease the internal counter of some workspace_key by `by_value`.
         Returns the value of the updated counter.
@@ -332,54 +337,54 @@ class ProcessingServer(FastAPI):
         self.processing_counter_cache[workspace_key] = self.processing_counter_cache[workspace_key] + by_value
         return self.processing_counter_cache[workspace_key]
 
-    async def lock_pages(
+    def lock_pages(
             self,
+            workspace_key: str,
             output_file_grps: List[str],
-            page_ids: List[str],
-            workspace_id: str = None,
-            path_to_mets: str = None
+            page_ids: List[str]
     ):
-        db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
-        if not db_workspace:
-            self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+        if not self.locked_pages_cache.get(workspace_key, None):
+            self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
+            self.log.debug(f"Creating an entry in the locked pages cache for workspace key: {workspace_key}")
+            self.locked_pages_cache[workspace_key] = {}
+
         for output_fileGrp in output_file_grps:
-            if output_fileGrp not in db_workspace.pages_locked:
+            if output_fileGrp not in self.locked_pages_cache[workspace_key]:
                 self.log.debug(f"Creating an empty list for output file grp: {output_fileGrp}")
-                db_workspace.pages_locked[output_fileGrp] = []
+                self.locked_pages_cache[workspace_key][output_fileGrp] = []
             # The page id list is not empty - only some pages are in the request
             if page_ids:
                 self.log.debug(f"Locking pages for `{output_fileGrp}`: {page_ids}")
-                db_workspace.pages_locked[output_fileGrp].extend(page_ids)
+                self.locked_pages_cache[workspace_key][output_fileGrp].extend(page_ids)
             else:
                 # Lock all pages with a single value
                 self.log.debug(f"Locking all pages for `{output_fileGrp}`")
-                db_workspace.pages_locked[output_fileGrp].append("all_pages")
-        await db_workspace.save()
+                (self.locked_pages_cache[workspace_key])[output_fileGrp].append("all_pages")
 
-    async def unlock_pages(
+    def unlock_pages(
             self,
+            workspace_key: str,
             output_file_grps: List[str],
             page_ids: List[str],
             workspace_id: str = None,
             path_to_mets: str = None
     ):
-        db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
-        if not db_workspace:
-            self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+        if not self.locked_pages_cache.get(workspace_key, None):
+            self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
+            return
         for output_fileGrp in output_file_grps:
-            if output_fileGrp in db_workspace.pages_locked:
+            if output_fileGrp in self.locked_pages_cache[workspace_key]:
                 if page_ids:
                     # Unlock the previously locked pages
                     self.log.debug(f"Unlocking pages of `{output_fileGrp}`: {page_ids}")
-                    db_workspace.pages_locked[output_fileGrp] = [x for x in db_workspace.pages_locked[output_fileGrp] if
-                                                                 x not in page_ids]
+                    self.locked_pages_cache[workspace_key][output_fileGrp] = \
+                        [x for x in self.locked_pages_cache[workspace_key][output_fileGrp] if x not in page_ids]
                     self.log.debug(f"Remaining locked pages of `{output_fileGrp}`: "
-                                   f"{db_workspace.pages_locked[output_fileGrp]}")
+                                   f"{self.locked_pages_cache[workspace_key][output_fileGrp]}")
                 else:
                     # Remove the single variable used to indicate all pages are locked
                     self.log.debug(f"Unlocking all pages for: {output_fileGrp}")
-                    db_workspace.pages_locked[output_fileGrp].remove("all_pages")
-        await db_workspace.save()
+                    self.locked_pages_cache[workspace_key][output_fileGrp].remove("all_pages")
 
     # Returns true if all dependent jobs' states are success, else false
     async def check_if_job_dependencies_met(self, dependencies: List[str]) -> bool:
@@ -475,9 +480,9 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
             )
-        workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
-        # initialize the request counter
-        await self.update_request_counter(workspace_key=workspace_key, by_value=0)
+        workspace_key = data.path_to_mets
+        # initialize the request counter for the workspace_key
+        self.update_request_counter(workspace_key=workspace_key, by_value=0)
 
         # Since the path is not resolved yet,
         # the return value is not important for the Processing Server
@@ -499,9 +504,8 @@ class ProcessingServer(FastAPI):
         # if the request should be already cached
         if not cache_current_request:
             # Check if there are any locked pages for the current request
-            cache_current_request = await self.check_if_locked_pages_for_output_file_grps(
-                workspace_id=data.workspace_id,
-                path_to_mets=data.path_to_mets,
+            cache_current_request = self.check_if_locked_pages_for_output_file_grps(
+                workspace_key=workspace_key,
                 output_file_grps=data.output_file_grps,
                 page_ids=page_ids
             )
@@ -525,9 +529,8 @@ class ProcessingServer(FastAPI):
             return db_cached_job.to_job_output()
 
         # Lock the pages in the request
-        await self.lock_pages(
-            workspace_id=data.workspace_id,
-            path_to_mets=data.path_to_mets,
+        self.lock_pages(
+            workspace_key=workspace_key,
             output_file_grps=data.output_file_grps,
             page_ids=page_ids
         )
@@ -549,7 +552,7 @@ class ProcessingServer(FastAPI):
             state=StateEnum.queued
         )
         await db_queued_job.insert()
-        await self.update_request_counter(workspace_key=workspace_key, by_value=1)
+        self.update_request_counter(workspace_key=workspace_key, by_value=1)
         job_output = None
         if data.agent_type == 'worker':
             ocrd_tool = await self.get_processor_info(data.processor_name)
@@ -646,7 +649,7 @@ class ProcessingServer(FastAPI):
         db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
         if not db_workspace:
             self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
-        workspace_key = workspace_id if workspace_id else path_to_mets
+        workspace_key = path_to_mets
 
         if result_job_state == StateEnum.failed:
             if len(self.processing_requests_cache[workspace_key]):
@@ -665,9 +668,8 @@ class ProcessingServer(FastAPI):
             self.log.exception(f"Processing job with id: {result_job_id} not found in DB")
 
         # Unlock the output file group pages for the result processing request
-        await self.unlock_pages(
-            workspace_id=workspace_id,
-            path_to_mets=path_to_mets,
+        self.unlock_pages(
+            workspace_key=workspace_key,
             output_file_grps=db_result_job.output_file_grps,
             page_ids=expand_page_ids(db_result_job.page_id)
         )
@@ -678,7 +680,7 @@ class ProcessingServer(FastAPI):
             return
 
         # decrease the internal counter by 1
-        request_counter = await self.update_request_counter(workspace_key=workspace_key, by_value=-1)
+        request_counter = self.update_request_counter(workspace_key=workspace_key, by_value=-1)
         self.log.debug(f"Internal processing counter value: {request_counter}")
         if not len(self.processing_requests_cache[workspace_key]):
             if request_counter <= 0:
@@ -691,6 +693,10 @@ class ProcessingServer(FastAPI):
                     del self.processing_requests_cache[workspace_key]
                 except KeyError:
                     self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
+
+                self.log.debug(f"Contents of the locked pages cache for: {workspace_key}")
+                for output_fileGrp in self.locked_pages_cache[workspace_key]:
+                    self.log.debug(f"{output_fileGrp}: {self.locked_pages_cache[workspace_key][output_fileGrp]}")
             else:
                 self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
             return
@@ -706,15 +712,15 @@ class ProcessingServer(FastAPI):
         for data in consumed_requests:
             self.log.debug(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
             db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
+            workspace_key = data.path_to_mets
 
             # Lock the output file group pages for the current request
-            await self.lock_pages(
-                workspace_id=data.workspace_id,
-                path_to_mets=data.path_to_mets,
+            self.lock_pages(
+                workspace_key=workspace_key,
                 output_file_grps=data.output_file_grps,
                 page_ids=expand_page_ids(data.page_id)
             )
-            await self.update_request_counter(workspace_key=workspace_key, by_value=1)
+            self.update_request_counter(workspace_key=workspace_key, by_value=1)
             job_output = None
             if data.agent_type == 'worker':
                 ocrd_tool = await self.get_processor_info(data.processor_name)
