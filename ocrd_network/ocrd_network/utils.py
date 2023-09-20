@@ -3,8 +3,8 @@ from functools import wraps
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
-import requests
-import requests_unixsocket
+from requests import Session as Session_TCP
+from requests_unixsocket import Session as Session_UDS
 from typing import Dict, List
 from uuid import uuid4
 from yaml import safe_load
@@ -33,7 +33,6 @@ def calculate_execution_time(start: datetime, end: datetime) -> int:
     Returns the result in milliseconds
     """
     return int((end - start).total_seconds() * 1000)
-
 
 
 def generate_created_time() -> int:
@@ -94,7 +93,7 @@ def download_ocrd_all_tool_json(ocrd_all_url: str):
     if not ocrd_all_url:
         raise ValueError(f'The URL of ocrd all tool json is empty')
     headers = {'Accept': 'application/json'}
-    response = requests.get(ocrd_all_url, headers=headers)
+    response = Session_TCP().get(ocrd_all_url, headers=headers)
     if not response.status_code == 200:
         raise ValueError(f"Failed to download ocrd all tool json from: '{ocrd_all_url}'")
     return response.json()
@@ -109,7 +108,7 @@ def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMe
         "path_to_mets": result_message.path_to_mets,
         "workspace_id": result_message.workspace_id
     }
-    response = requests.post(url=callback_url, headers=headers, json=json_data)
+    response = Session_TCP().post(url=callback_url, headers=headers, json=json_data)
     logger.info(f'Response from callback_url "{response}"')
 
 
@@ -140,30 +139,26 @@ def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = Non
 
 
 def is_mets_server_running(mets_server_url: str) -> bool:
-    if mets_server_url.startswith('http://') or mets_server_url.startswith('https://'):
-        headers = {"Content-Type": "application/json"}
-        response = requests.get(url=f'{mets_server_url}/workspace_path', headers=headers)
-    else:
-        unix_url = f'http+unix://{mets_server_url.replace("/", "%2F")}'
-        try:
-            response = requests_unixsocket.Session().get(url=f'{unix_url}/workspace_path')
-        except Exception:
-            return False
+    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
+    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
+    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
+    try:
+        response = session.get(url=f'{mets_server_url}/workspace_path')
+    except Exception:
+        return False
     if response.status_code == 200:
         return True
     return False
 
 
 def stop_mets_server(mets_server_url: str) -> bool:
-    if mets_server_url.startswith('http://') or mets_server_url.startswith('https://'):
-        headers = {"Content-Type": "application/json"}
-        response = requests.delete(url=f'{mets_server_url}/', headers=headers)
-    else:
-        unix_url = f'http+unix://{mets_server_url.replace("/", "%2F")}'
-        try:
-            response = requests_unixsocket.Session().delete(f'{unix_url}/')
-        except Exception:
-            return False
+    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
+    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
+    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
+    try:
+        response = session.get(url=f'{mets_server_url}/')
+    except Exception:
+        return False
     if response.status_code == 200:
         return True
     return False
