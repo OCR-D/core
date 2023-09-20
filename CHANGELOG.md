@@ -9,6 +9,8 @@ Changed:
 
   * METS Server: Make sockets world-readable and -writable, #1098, #1099
   * METS Server: Implement find_files support for `local_filename` and `url`, #1100
+  * Logging: consistent logger names derived from `ocrd.`, #1101
+  * Logging: consistent logging across the packages, including `ocrd_network`, #1101
 
 ## [2.54.0] - 2023-09-12
 
