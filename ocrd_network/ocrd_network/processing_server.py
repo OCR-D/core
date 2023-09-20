@@ -681,19 +681,18 @@ class ProcessingServer(FastAPI):
         request_counter = await self.update_request_counter(workspace_key=workspace_key, by_value=-1)
         self.log.debug(f"Internal processing counter value: {request_counter}")
         if not len(self.processing_requests_cache[workspace_key]):
-            # The queue is empty - delete it
-            try:
-                del self.processing_requests_cache[workspace_key]
-            except KeyError:
-                self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
-
             if request_counter <= 0:
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {db_workspace.mets_server_url}")
                 self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
+                # The queue is empty - delete it
+                try:
+                    del self.processing_requests_cache[workspace_key]
+                except KeyError:
+                    self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
             else:
-                self.log.debug(f"Still waiting for {request_counter} requests to finish.")
+                self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
             return
 
         consumed_requests = await self.find_next_requests_from_internal_queue(
