@@ -42,7 +42,8 @@ from .rabbitmq_utils import (
     OcrdProcessingMessage
 )
 from .server_cache import (
-    CacheLockedPages
+    CacheLockedPages,
+    CacheProcessingRequests
 )
 from .server_utils import (
     _get_processor_job,
@@ -102,14 +103,16 @@ class ProcessingServer(FastAPI):
         # Used for buffering/caching processing requests in the Processing Server
         # Key: `path_to_mets` if already resolved else `workspace_id`
         # Value: Queue that holds PYInputJob elements
-        self.processing_requests_cache: Dict[str, List[PYJobInput]] = {}
+        # self.processing_requests_cache: Dict[str, List[PYJobInput]] = {}
 
         # Used for tracking of active processing jobs for a workspace to decide
         # when the shutdown a METS Server instance for that workspace
         # Key: `path_to_mets` if already resolved else `workspace_id`
         # Value: integer which holds the amount of jobs pushed to the RabbitMQ
         # but no internal callback was yet invoked
-        self.processing_counter_cache: Dict[str, int] = {}
+        # self.processing_counter_cache: Dict[str, int] = {}
+
+        self.cache_processing_requests = CacheProcessingRequests()
 
         # Used for keeping track of locked/unlocked pages of a workspace
         self.cache_locked_pages = CacheLockedPages()
@@ -306,65 +309,6 @@ class ProcessingServer(FastAPI):
                 detail=f"Process queue with id '{processor_name}' not existing"
             )
 
-    def update_request_counter(self, workspace_key, by_value) -> int:
-        """
-        A method used to increase/decrease the internal counter of some workspace_key by `by_value`.
-        Returns the value of the updated counter.
-        """
-        # If a record counter of this workspace key does not exist
-        # in the requests counter cache yet, create one and assign 0
-        if not self.processing_counter_cache.get(workspace_key, None):
-            self.log.debug(f"Creating an internal request counter for workspace_key: {workspace_key}")
-            self.processing_counter_cache[workspace_key] = 0
-        self.processing_counter_cache[workspace_key] = self.processing_counter_cache[workspace_key] + by_value
-        return self.processing_counter_cache[workspace_key]
-
-    # Returns true if all dependent jobs' states are success, else false
-    async def check_if_job_dependencies_met(self, dependencies: List[str]) -> bool:
-        # Check the states of all dependent jobs
-        for dependency_job_id in dependencies:
-            try:
-                dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
-            except ValueError:
-                # job_id not (yet) in db. Dependency not met
-                return False
-            # Found a dependent job whose state is not success
-            if dependency_job_state != StateEnum.success:
-                return False
-        return True
-
-    async def find_next_requests_from_internal_queue(self, internal_queue: List[PYJobInput]) -> List[PYJobInput]:
-        found_requests = []
-        for i, current_element in enumerate(internal_queue):
-            # Request has other job dependencies
-            if current_element.depends_on:
-                satisfied_dependencies = await self.check_if_job_dependencies_met(current_element.depends_on)
-                if not satisfied_dependencies:
-                    continue
-            # Consume the request from the internal queue
-            found_request = internal_queue.pop(i)
-            self.log.debug(f"Found cached request to be processed: {found_request}")
-            found_requests.append(found_request)
-        return found_requests
-
-    async def cancel_dependent_jobs(self, job_id: str, internal_queue: List[PYJobInput]) -> List[PYJobInput]:
-        cancelled_jobs = []
-        for i, current_element in enumerate(internal_queue):
-            if job_id in current_element.depends_on:
-                found_request = internal_queue.pop(i)
-                self.log.debug(f"For job id: `{job_id}`, "
-                               f"found cached dependent request to be cancelled: {found_request.job_id}")
-                cancelled_jobs.append(found_request)
-                await db_update_processing_job(job_id=job_id, state=StateEnum.cancelled)
-                # Recursively cancel dependent jobs for the cancelled job
-                recursively_cancelled = await self.cancel_dependent_jobs(
-                    job_id=found_request.job_id,
-                    internal_queue=internal_queue
-                )
-                # Add the recursively cancelled jobs to the main list of cancelled jobs
-                cancelled_jobs.extend(recursively_cancelled)
-        return cancelled_jobs
-
     def query_ocrd_tool_json_from_server(self, processor_name):
         processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
         if not processor_server_url:
@@ -415,7 +359,7 @@ class ProcessingServer(FastAPI):
             )
         workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
-        self.update_request_counter(workspace_key=workspace_key, by_value=0)
+        self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
 
         # Since the path is not resolved yet,
         # the return value is not important for the Processing Server
@@ -430,8 +374,7 @@ class ProcessingServer(FastAPI):
 
         # Check if there are any dependencies of the current request
         if data.depends_on:
-            if not await self.check_if_job_dependencies_met(data.depends_on):
-                cache_current_request = True
+            cache_current_request = await self.cache_processing_requests.is_caching_required(data.depends_on)
 
         # No need for further check of locked pages dependency
         # if the request should be already cached
@@ -444,13 +387,8 @@ class ProcessingServer(FastAPI):
             )
 
         if cache_current_request:
-            # If a record queue of this workspace key does not exist in the requests cache
-            if not self.processing_requests_cache.get(workspace_key, None):
-                self.log.debug(f"Creating an internal request queue for workspace_key: {workspace_key}")
-                self.processing_requests_cache[workspace_key] = []
-            self.log.debug(f"Caching the processing request: {data}")
-            # Add the processing request to the end of the internal queue
-            self.processing_requests_cache[workspace_key].append(data)
+            # Cache the received request
+            self.cache_processing_requests.cache_request(workspace_key, data)
 
             # Create a cached job DB entry
             db_cached_job = DBProcessorJob(
@@ -485,7 +423,7 @@ class ProcessingServer(FastAPI):
             state=StateEnum.queued
         )
         await db_queued_job.insert()
-        self.update_request_counter(workspace_key=workspace_key, by_value=1)
+        self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
         job_output = None
         if data.agent_type == 'worker':
             ocrd_tool = await self.get_processor_info(data.processor_name)
@@ -581,15 +519,14 @@ class ProcessingServer(FastAPI):
         db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
         if not db_workspace:
             self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+        mets_server_url = db_workspace.mets_server_url
         workspace_key = path_to_mets if path_to_mets else workspace_id
 
         if result_job_state == StateEnum.failed:
-            if len(self.processing_requests_cache[workspace_key]):
-                self.log.debug(f"Cancelling jobs dependent to job_id: {result_job_id}")
-                await self.cancel_dependent_jobs(
-                    job_id=result_job_id,
-                    internal_queue=self.processing_requests_cache[workspace_key]
-                )
+            await self.cache_processing_requests.cancel_dependent_jobs(
+                workspace_key=workspace_key,
+                processing_job_id=result_job_id
+            )
 
         if result_job_state != StateEnum.success:
             # TODO: Handle other potential error cases
@@ -607,22 +544,22 @@ class ProcessingServer(FastAPI):
         )
 
         # Take the next request from the cache (if any available)
-        if workspace_key not in self.processing_requests_cache:
+        if workspace_key not in self.cache_processing_requests.processing_requests:
             self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
             return
 
         # decrease the internal counter by 1
-        request_counter = self.update_request_counter(workspace_key=workspace_key, by_value=-1)
+        request_counter = self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=-1)
         self.log.debug(f"Internal processing counter value: {request_counter}")
-        if not len(self.processing_requests_cache[workspace_key]):
+        if not len(self.cache_processing_requests.processing_requests[workspace_key]):
             if request_counter <= 0:
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
-                self.log.debug(f"Stopping the mets server: {db_workspace.mets_server_url}")
-                self.deployer.stop_unix_mets_server(mets_server_url=db_workspace.mets_server_url)
+                self.log.debug(f"Stopping the mets server: {mets_server_url}")
+                self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
                 # The queue is empty - delete it
                 try:
-                    del self.processing_requests_cache[workspace_key]
+                    del self.cache_processing_requests.processing_requests[workspace_key]
                 except KeyError:
                     self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
 
@@ -635,12 +572,10 @@ class ProcessingServer(FastAPI):
                 self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
             return
 
-        consumed_requests = await self.find_next_requests_from_internal_queue(
-            internal_queue=self.processing_requests_cache[workspace_key]
-        )
+        consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
 
         if not len(consumed_requests):
-            self.log.debug("No data was consumed from the internal queue")
+            self.log.debug("No processing jobs were consumed from the requests cache")
             return
 
         for data in consumed_requests:
@@ -654,7 +589,7 @@ class ProcessingServer(FastAPI):
                 output_file_grps=data.output_file_grps,
                 page_ids=expand_page_ids(data.page_id)
             )
-            self.update_request_counter(workspace_key=workspace_key, by_value=1)
+            self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
             job_output = None
             if data.agent_type == 'worker':
                 ocrd_tool = await self.get_processor_info(data.processor_name)

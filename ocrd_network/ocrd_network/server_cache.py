@@ -2,6 +2,9 @@ from __future__ import annotations
 from typing import Dict, List
 from logging import DEBUG, getLogger
 
+from .database import db_get_processing_job, db_update_processing_job
+from .models import PYJobInput, StateEnum
+
 __all__ = [
     'CacheLockedPages',
     'CacheProcessingRequests'
@@ -100,4 +103,118 @@ class CacheLockedPages:
 
 class CacheProcessingRequests:
     def __init__(self) -> None:
-        pass
+        self.log = getLogger(__name__)
+        # TODO: remove this when refactoring the logging
+        self.log.setLevel(DEBUG)
+
+        # Used for buffering/caching processing requests in the Processing Server
+        # Key: `path_to_mets` if already resolved else `workspace_id`
+        # Value: Queue that holds PYInputJob elements
+        self.processing_requests: Dict[str, List[PYJobInput]] = {}
+
+        # Used for tracking of active processing jobs for a workspace to decide
+        # when the shutdown a METS Server instance for that workspace
+        # Key: `path_to_mets` if already resolved else `workspace_id`
+        # Value: integer which holds the amount of jobs pushed to the RabbitMQ
+        # but no internal callback was yet invoked
+        self.__processing_counter: Dict[str, int] = {}
+
+    @staticmethod
+    async def __check_if_job_deps_met(dependencies: List[str]) -> bool:
+        # Check the states of all dependent jobs
+        for dependency_job_id in dependencies:
+            try:
+                dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
+            except ValueError:
+                # job_id not (yet) in db. Dependency not met
+                return False
+            # Found a dependent job whose state is not success
+            if dependency_job_state != StateEnum.success:
+                return False
+        return True
+
+    async def consume_cached_requests(self, workspace_key: str) -> List[PYJobInput]:
+        if not self.has_workspace_cached_requests(workspace_key=workspace_key):
+            self.log.debug(f"No jobs to be consumed for workspace key: {workspace_key}")
+            return []
+
+        internal_queue = self.processing_requests[workspace_key]
+        found_requests = []
+        for i, current_element in enumerate(internal_queue):
+            # Request has other job dependencies
+            if current_element.depends_on:
+                satisfied_dependencies = await self.__check_if_job_deps_met(
+                    current_element.depends_on
+                )
+                if not satisfied_dependencies:
+                    continue
+            # Consume the request from the internal queue
+            found_request = internal_queue.pop(i)
+            self.log.debug(f"Found cached request to be processed: {found_request}")
+            found_requests.append(found_request)
+        return found_requests
+
+    def update_request_counter(self, workspace_key: str, by_value: int) -> int:
+        """
+        A method used to increase/decrease the internal counter of some workspace_key by `by_value`.
+        Returns the value of the updated counter.
+        """
+        # If a record counter of this workspace key does not exist
+        # in the requests counter cache yet, create one and assign 0
+        if not self.__processing_counter.get(workspace_key, None):
+            self.log.debug(f"Creating an internal request counter for workspace key: {workspace_key}")
+            self.__processing_counter[workspace_key] = 0
+        self.__processing_counter[workspace_key] = self.__processing_counter[workspace_key] + by_value
+        return self.__processing_counter[workspace_key]
+
+    def cache_request(self, workspace_key: str, data: PYJobInput):
+        # If a record queue of this workspace key does not exist in the requests cache
+        if not self.processing_requests.get(workspace_key, None):
+            self.log.debug(f"Creating an internal request queue for workspace_key: {workspace_key}")
+            self.processing_requests[workspace_key] = []
+        self.log.debug(f"Caching the processing request: {data}")
+        # Add the processing request to the end of the internal queue
+        self.processing_requests[workspace_key].append(data)
+
+    async def cancel_dependent_jobs(self, workspace_key: str, processing_job_id: str) -> List[PYJobInput]:
+        if not self.has_workspace_cached_requests(workspace_key=workspace_key):
+            self.log.debug(f"No jobs to be cancelled for workspace key: {workspace_key}")
+            return []
+
+        internal_queue = self.processing_requests[workspace_key]
+        self.log.debug(f"Cancelling jobs dependent on job id: {processing_job_id}")
+        cancelled_jobs = []
+        for i, current_element in enumerate(internal_queue):
+            if processing_job_id in current_element.depends_on:
+                found_request = internal_queue.pop(i)
+                self.log.debug(f"For job id: `{processing_job_id}`, "
+                               f"found cached dependent request to be cancelled: {found_request.job_id}")
+                cancelled_jobs.append(found_request)
+                await db_update_processing_job(job_id=processing_job_id, state=StateEnum.cancelled)
+                # Recursively cancel dependent jobs for the cancelled job
+                recursively_cancelled = await self.cancel_dependent_jobs(
+                    workspace_key=workspace_key,
+                    processing_job_id=found_request.job_id
+                )
+                # Add the recursively cancelled jobs to the main list of cancelled jobs
+                cancelled_jobs.extend(recursively_cancelled)
+        return cancelled_jobs
+
+    async def is_caching_required(self, job_dependencies: List[str]) -> bool:
+        if not len(job_dependencies):
+            # no dependencies found
+            return False
+        if await self.__check_if_job_deps_met(job_dependencies):
+            # all dependencies are met
+            return False
+        return True
+
+    def has_workspace_cached_requests(self, workspace_key: str) -> bool:
+        internal_queue = self.processing_requests.get(workspace_key, None)
+        if not internal_queue:
+            self.log.debug(f"In processing requests cache, no workspace key found: {workspace_key}")
+            return False
+        if not len(internal_queue):
+            self.log.debug(f"The processing requests cache is empty for workspace key: {workspace_key}")
+            return False
+        return True
