@@ -50,6 +50,7 @@ class RMQConsumer(RMQConnector):
             credentials=credentials,
         )
         self._channel = RMQConnector.open_blocking_channel(self._connection)
+        RMQConnector.set_qos(self._channel)
 
     def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
