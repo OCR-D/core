@@ -154,7 +154,7 @@ class CacheProcessingRequests:
                     continue
             found_request_indices.append(i)
         found_requests = []
-        for found_index in found_requests:
+        for found_index in found_request_indices:
             # Consume the request from the internal queue
             found_request = (self.processing_requests[workspace_key]).pop(found_index)
             # self.log.debug(f"Found cached request to be processed: {found_request}")
