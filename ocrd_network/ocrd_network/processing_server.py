@@ -433,11 +433,13 @@ class ProcessingServer(FastAPI):
             ocrd_tool = await self.get_processor_info(data.processor_name)
             validate_job_input(self.log, data.processor_name, ocrd_tool, data)
             processing_message = self.create_processing_message(db_queued_job)
+            self.log.debug(f"Pushing to processing worker: {data.processor_name}, {data.page_id}, {data.job_id}")
             await self.push_to_processing_queue(data.processor_name, processing_message)
             job_output = db_queued_job.to_job_output()
         if data.agent_type == 'server':
             ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(data.processor_name)
             validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+            self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
             job_output = await self.push_to_processor_server(data.processor_name, processor_server_url, data)
         if not job_output:
             self.log.exception('Failed to create job output')
@@ -599,11 +601,15 @@ class ProcessingServer(FastAPI):
                 ocrd_tool = await self.get_processor_info(data.processor_name)
                 validate_job_input(self.log, data.processor_name, ocrd_tool, data)
                 processing_message = self.create_processing_message(db_consumed_job)
+                self.log.debug(f"Pushing cached to processing worker: "
+                               f"{data.processor_name}, {data.page_id}, {data.job_id}")
                 await self.push_to_processing_queue(data.processor_name, processing_message)
                 job_output = db_consumed_job.to_job_output()
             if data.agent_type == 'server':
                 ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(data.processor_name)
                 validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+                self.log.debug(f"Pushing cached to processor server: "
+                               f"{data.processor_name}, {data.page_id}, {data.job_id}")
                 job_output = await self.push_to_processor_server(data.processor_name, processor_server_url, data)
             if not job_output:
                 self.log.exception(f'Failed to create job output for job input data: {data}')

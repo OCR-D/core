@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List
+from typing import Dict, List, Union
 from logging import DEBUG, getLogger, FileHandler
 
 from .database import db_get_processing_job, db_update_processing_job
@@ -13,7 +13,7 @@ __all__ = [
 
 class CacheLockedPages:
     def __init__(self) -> None:
-        self.log = getLogger(__name__)
+        self.log = getLogger("ocrd_network.server_cache.locked_pages")
         # TODO: remove this when refactoring the logging
         self.log.setLevel(DEBUG)
         log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_locked_pages.log')
@@ -75,6 +75,8 @@ class CacheLockedPages:
             if page_ids:
                 self.log.debug(f"Locking pages for `{output_fileGrp}`: {page_ids}")
                 self.locked_pages[workspace_key][output_fileGrp].extend(page_ids)
+                self.log.debug(f"Locked pages of `{output_fileGrp}`: "
+                               f"{self.locked_pages[workspace_key][output_fileGrp]}")
             else:
                 # Lock all pages with a single value
                 self.log.debug(f"Locking pages for `{output_fileGrp}`: {self.placeholder_all_pages}")
@@ -106,7 +108,7 @@ class CacheLockedPages:
 
 class CacheProcessingRequests:
     def __init__(self) -> None:
-        self.log = getLogger(__name__)
+        self.log = getLogger("ocrd_network.server_cache.processing_requests")
         # TODO: remove this when refactoring the logging
         self.log.setLevel(DEBUG)
         log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_processing_requests.log')
@@ -144,9 +146,8 @@ class CacheProcessingRequests:
             self.log.debug(f"No jobs to be consumed for workspace key: {workspace_key}")
             return []
 
-        internal_queue = self.processing_requests[workspace_key]
         found_requests = []
-        for i, current_element in enumerate(internal_queue):
+        for i, current_element in enumerate(self.processing_requests[workspace_key]):
             # Request has other job dependencies
             if current_element.depends_on:
                 satisfied_dependencies = await self.__check_if_job_deps_met(
@@ -155,8 +156,10 @@ class CacheProcessingRequests:
                 if not satisfied_dependencies:
                     continue
             # Consume the request from the internal queue
-            found_request = internal_queue.pop(i)
-            self.log.debug(f"Found cached request to be processed: {found_request}")
+            found_request = (self.processing_requests[workspace_key]).pop(i)
+            # self.log.debug(f"Found cached request to be processed: {found_request}")
+            self.log.debug(f"Found cached request: {found_request.processor_name}, {found_request.page_id}, "
+                           f"{found_request.job_id}, depends_on: {found_request.depends_on}")
             found_requests.append(found_request)
         return found_requests
 
@@ -178,7 +181,8 @@ class CacheProcessingRequests:
         if not self.processing_requests.get(workspace_key, None):
             self.log.debug(f"Creating an internal request queue for workspace_key: {workspace_key}")
             self.processing_requests[workspace_key] = []
-        self.log.debug(f"Caching the processing request: {data}")
+        self.log.debug(f"Caching request: {data.processor_name}, {data.page_id}, "
+                       f"{data.job_id}, depends_on: {data.depends_on}")
         # Add the processing request to the end of the internal queue
         self.processing_requests[workspace_key].append(data)
 
@@ -194,7 +198,7 @@ class CacheProcessingRequests:
             if processing_job_id in current_element.depends_on:
                 found_request = internal_queue.pop(i)
                 self.log.debug(f"For job id: `{processing_job_id}`, "
-                               f"found cached dependent request to be cancelled: {found_request.job_id}")
+                               f"cancelling: {found_request.job_id}")
                 cancelled_jobs.append(found_request)
                 await db_update_processing_job(job_id=processing_job_id, state=StateEnum.cancelled)
                 # Recursively cancel dependent jobs for the cancelled job
@@ -216,11 +220,10 @@ class CacheProcessingRequests:
         return True
 
     def has_workspace_cached_requests(self, workspace_key: str) -> bool:
-        internal_queue = self.processing_requests.get(workspace_key, None)
-        if not internal_queue:
+        if not self.processing_requests.get(workspace_key, None):
             self.log.debug(f"In processing requests cache, no workspace key found: {workspace_key}")
             return False
-        if not len(internal_queue):
+        if not len(self.processing_requests[workspace_key]):
             self.log.debug(f"The processing requests cache is empty for workspace key: {workspace_key}")
             return False
         return True
