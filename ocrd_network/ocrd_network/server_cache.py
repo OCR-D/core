@@ -191,12 +191,11 @@ class CacheProcessingRequests:
             self.log.debug(f"No jobs to be cancelled for workspace key: {workspace_key}")
             return []
 
-        internal_queue = self.processing_requests[workspace_key]
         self.log.debug(f"Cancelling jobs dependent on job id: {processing_job_id}")
         cancelled_jobs = []
-        for i, current_element in enumerate(internal_queue):
+        for i, current_element in enumerate(self.processing_requests[workspace_key]):
             if processing_job_id in current_element.depends_on:
-                found_request = internal_queue.pop(i)
+                found_request = (self.processing_requests[workspace_key]).pop(i)
                 self.log.debug(f"For job id: `{processing_job_id}`, "
                                f"cancelling: {found_request.job_id}")
                 cancelled_jobs.append(found_request)
