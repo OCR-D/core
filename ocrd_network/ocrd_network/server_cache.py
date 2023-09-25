@@ -3,7 +3,8 @@ from typing import Dict, List
 from logging import DEBUG, getLogger
 
 __all__ = [
-    'CacheLockedPages'
+    'CacheLockedPages',
+    'CacheProcessingRequests'
 ]
 
 
@@ -94,4 +95,9 @@ class CacheLockedPages:
                 else:
                     # Remove the single variable used to indicate all pages are locked
                     self.log.debug(f"Unlocking all pages for: {output_fileGrp}")
-                    self.locked_pages[workspace_key][output_fileGrp].remove("all_pages")
+                    self.locked_pages[workspace_key][output_fileGrp].remove(self.placeholder_all_pages)
+
+
+class CacheProcessingRequests:
+    def __init__(self) -> None:
+        pass
