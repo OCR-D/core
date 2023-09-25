@@ -116,29 +116,11 @@ def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> 
     if mets_server_url:
         if not is_mets_server_running(mets_server_url=mets_server_url):
             raise RuntimeError(f'The mets server is not running: {mets_server_url}')
-
-    workspace = Resolver().workspace_from_url(
-        mets_url=mets_path,
-        mets_server_url=mets_server_url
-    )
-    return workspace
+    return Resolver().workspace_from_url(mets_url=mets_path, mets_server_url=mets_server_url)
 
 
 def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = None) -> List[str]:
-    # TODO: Return the physical pages directly when #1102 is merged
-    # return get_ocrd_workspace_instance(mets_path=mets_path,mets_server_url=mets_server_url).mets.physical_pages
-    
-    physical_pages = get_ocrd_workspace_instance(
-        mets_path=mets_path,
-        mets_server_url=mets_server_url
-    ).mets.physical_pages
-
-    # This conversion is required since
-    # the type of physical pages is not str
-    str_physical_pages = []
-    for physical_page in physical_pages:
-        str_physical_pages.append(f'{physical_page}')
-    return str_physical_pages
+    return get_ocrd_workspace_instance(mets_path=mets_path, mets_server_url=mets_server_url).mets.physical_pages
 
 
 def is_mets_server_running(mets_server_url: str) -> bool:
