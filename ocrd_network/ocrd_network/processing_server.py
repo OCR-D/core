@@ -94,24 +94,22 @@ class ProcessingServer(FastAPI):
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
 
-        # TODO: The key is just `path_to_mets`, add back `workspace_id`
-        #  TODO2: Add the proper typing of self.processing_requests_cache
-        #  TODO3: Create data class for better management of the 3 internals below
+        # TODO: Create data class for better management of the 3 internals below
 
         # Used for buffering/caching processing requests in the Processing Server
-        # Key: path_to_mets
+        # Key: `path_to_mets` if already resolved else `workspace_id`
         # Value: Queue that holds PYInputJob elements
-        self.processing_requests_cache = {}
+        self.processing_requests_cache: Dict[str, List[PYJobInput]] = {}
 
         # Used for tracking of active processing jobs for a workspace to decide
         # when the shutdown a METS Server instance for that workspace
-        # Key: path_to_mets
+        # Key: `path_to_mets` if already resolved else `workspace_id`
         # Value: integer which holds the amount of jobs pushed to the RabbitMQ
         # but no internal callback was yet invoked
         self.processing_counter_cache: Dict[str, int] = {}
 
         # Used for keeping track of locked pages for a workspace
-        # Key: path_to_mets
+        # Key: `path_to_mets` if already resolved else `workspace_id`
         # Value: A dictionary where each dictionary key is the output file group,
         # and the values are list of strings representing the locked pages
         self.locked_pages_cache: Dict[str, Dict[str, List[str]]] = {}
@@ -482,7 +480,7 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
             )
-        workspace_key = data.path_to_mets
+        workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
         self.update_request_counter(workspace_key=workspace_key, by_value=0)
 
@@ -650,7 +648,7 @@ class ProcessingServer(FastAPI):
         db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
         if not db_workspace:
             self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
-        workspace_key = path_to_mets
+        workspace_key = path_to_mets if path_to_mets else workspace_id
 
         if result_job_state == StateEnum.failed:
             if len(self.processing_requests_cache[workspace_key]):
@@ -714,7 +712,7 @@ class ProcessingServer(FastAPI):
         for data in consumed_requests:
             self.log.debug(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
             db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
-            workspace_key = data.path_to_mets
+            workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
 
             # Lock the output file group pages for the current request
             self.lock_pages(
