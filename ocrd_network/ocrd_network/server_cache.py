@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Dict, List
-from logging import DEBUG, getLogger
+from logging import DEBUG, getLogger, FileHandler
 
 from .database import db_get_processing_job, db_update_processing_job
 from .models import PYJobInput, StateEnum
@@ -16,6 +16,9 @@ class CacheLockedPages:
         self.log = getLogger(__name__)
         # TODO: remove this when refactoring the logging
         self.log.setLevel(DEBUG)
+        log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_locked_pages.log')
+        log_fh.setLevel(DEBUG)
+        self.log.addHandler(log_fh)
 
         # Used for keeping track of locked pages for a workspace
         # Key: `path_to_mets` if already resolved else `workspace_id`
@@ -106,6 +109,9 @@ class CacheProcessingRequests:
         self.log = getLogger(__name__)
         # TODO: remove this when refactoring the logging
         self.log.setLevel(DEBUG)
+        log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_processing_requests.log')
+        log_fh.setLevel(DEBUG)
+        self.log.addHandler(log_fh)
 
         # Used for buffering/caching processing requests in the Processing Server
         # Key: `path_to_mets` if already resolved else `workspace_id`

@@ -77,6 +77,10 @@ class ProcessingServer(FastAPI):
         self.log = getLogger(__name__)
         # TODO: remove this when refactoring the logging
         self.log.setLevel(logging.DEBUG)
+        log_fh = logging.FileHandler(f'/tmp/ocrd_processing_server.log')
+        log_fh.setLevel(logging.DEBUG)
+        self.log.addHandler(log_fh)
+
         self.log.info(f"Downloading ocrd all tool json")
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(
             ocrd_all_url="https://ocr-d.de/js/ocrd-all-tool.json"
