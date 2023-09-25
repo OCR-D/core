@@ -145,18 +145,18 @@ class CacheProcessingRequests:
         if not self.has_workspace_cached_requests(workspace_key=workspace_key):
             self.log.debug(f"No jobs to be consumed for workspace key: {workspace_key}")
             return []
-
-        found_requests = []
+        found_request_indices = []
         for i, current_element in enumerate(self.processing_requests[workspace_key]):
             # Request has other job dependencies
             if current_element.depends_on:
-                satisfied_dependencies = await self.__check_if_job_deps_met(
-                    current_element.depends_on
-                )
+                satisfied_dependencies = await self.__check_if_job_deps_met(current_element.depends_on)
                 if not satisfied_dependencies:
                     continue
+            found_request_indices.append(i)
+        found_requests = []
+        for found_index in found_requests:
             # Consume the request from the internal queue
-            found_request = (self.processing_requests[workspace_key]).pop(i)
+            found_request = (self.processing_requests[workspace_key]).pop(found_index)
             # self.log.debug(f"Found cached request to be processed: {found_request}")
             self.log.debug(f"Found cached request: {found_request.processor_name}, {found_request.page_id}, "
                            f"{found_request.job_id}, depends_on: {found_request.depends_on}")
@@ -190,23 +190,25 @@ class CacheProcessingRequests:
         if not self.has_workspace_cached_requests(workspace_key=workspace_key):
             self.log.debug(f"No jobs to be cancelled for workspace key: {workspace_key}")
             return []
-
         self.log.debug(f"Cancelling jobs dependent on job id: {processing_job_id}")
-        cancelled_jobs = []
+        found_request_indices = []
         for i, current_element in enumerate(self.processing_requests[workspace_key]):
             if processing_job_id in current_element.depends_on:
-                found_request = (self.processing_requests[workspace_key]).pop(i)
-                self.log.debug(f"For job id: `{processing_job_id}`, "
-                               f"cancelling: {found_request.job_id}")
-                cancelled_jobs.append(found_request)
-                await db_update_processing_job(job_id=processing_job_id, state=StateEnum.cancelled)
-                # Recursively cancel dependent jobs for the cancelled job
-                recursively_cancelled = await self.cancel_dependent_jobs(
-                    workspace_key=workspace_key,
-                    processing_job_id=found_request.job_id
-                )
-                # Add the recursively cancelled jobs to the main list of cancelled jobs
-                cancelled_jobs.extend(recursively_cancelled)
+                found_request_indices.append(i)
+        cancelled_jobs = []
+        for cancel_index in found_request_indices:
+            found_request = (self.processing_requests[workspace_key]).pop(cancel_index)
+            self.log.debug(f"For job id: `{processing_job_id}`, "
+                           f"cancelling: {found_request.job_id}")
+            cancelled_jobs.append(found_request)
+            await db_update_processing_job(job_id=processing_job_id, state=StateEnum.cancelled)
+            # Recursively cancel dependent jobs for the cancelled job
+            recursively_cancelled = await self.cancel_dependent_jobs(
+                workspace_key=workspace_key,
+                processing_job_id=found_request.job_id
+            )
+            # Add the recursively cancelled jobs to the main list of cancelled jobs
+            cancelled_jobs.extend(recursively_cancelled)
         return cancelled_jobs
 
     async def is_caching_required(self, job_dependencies: List[str]) -> bool:
