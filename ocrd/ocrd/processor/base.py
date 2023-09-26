@@ -354,6 +354,9 @@ class Processor():
             # might be because of invalid page_id (range)
             if self.page_id and not files_:
                 LOG.warning(f"Could not find any files for --page-id {self.page_id} - compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
+                if on_error == 'abort':
+                    raise ValueError(f"Could not find any files for --page-id {self.page_id} - compare "
+                                     f"'{self.page_id}' with the output of 'orcd workspace list-page'.")
             for file_ in files_:
                 if not file_.pageId:
                     continue
