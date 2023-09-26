@@ -11,7 +11,7 @@ from typing import List, Type
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger, pushd_popd, config
+from ocrd_utils import freeze_args, getLogger, pushd_popd, config, setOverrideLogLevel
 
 
 __all__ = [
@@ -36,7 +36,7 @@ def run_processor(
         resolver=None,
         workspace=None,
         page_id=None,
-        log_level=None,         # TODO actually use this!
+        log_level=None,
         input_file_grp=None,
         output_file_grp=None,
         show_resource=None,
@@ -71,6 +71,8 @@ def run_processor(
     Args:
         processorClass (object): Python class of the module processor.
     """
+    if log_level:
+        setOverrideLogLevel(log_level)
     workspace = _get_workspace(
         workspace,
         resolver,

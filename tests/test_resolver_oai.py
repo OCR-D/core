@@ -91,7 +91,7 @@ def test_handle_response_for_invalid_content(mock_get, response_dir):
     initLogging()
 
     # capture log
-    log = getLogger('ocrd_models.utils.handle_oai_response')
+    log = getLogger('ocrd.models.utils.handle_oai_response')
     capt = FIFOIO(256)
     sh = StreamHandler(capt)
     sh.setFormatter(Formatter(LOG_FORMAT))
@@ -103,7 +103,7 @@ def test_handle_response_for_invalid_content(mock_get, response_dir):
     # assert
     mock_get.assert_called_once_with(url, timeout=None)
     log_output = capt.getvalue()
-    assert 'WARNING ocrd_models.utils.handle_oai_response' in log_output
+    assert 'WARNING ocrd.models.utils.handle_oai_response' in log_output
 
 
 if __name__ == '__main__':

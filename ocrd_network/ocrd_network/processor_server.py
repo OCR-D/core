@@ -41,7 +41,7 @@ class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
             raise ValueError('Either "processor_name" or "processor_class" must be provided')
-        self.log = getLogger(__name__)
+        self.log = getLogger('ocrd_network.processor_server')
 
         self.db_url = mongodb_addr
         self.processor_name = processor_name

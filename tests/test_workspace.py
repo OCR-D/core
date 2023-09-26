@@ -568,7 +568,7 @@ def test_deskewing(plain_workspace):
     logger_capture = FIFOIO(256)
     logger_handler = logging.StreamHandler(logger_capture)
     #logger_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
-    logger = logging.getLogger('ocrd_utils.crop_image')
+    logger = logging.getLogger('ocrd.utils.crop_image')
     logger.addHandler(logger_handler)
     reg_image2, reg_coords2 = plain_workspace.image_from_segment(region, page_image, page_coords, fill=0)
     #reg_image2.show(title='reg_image2')

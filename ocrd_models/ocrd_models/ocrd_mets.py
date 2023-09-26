@@ -65,7 +65,7 @@ class OcrdMets(OcrdXmlDocument):
         # then enable caching, if "false", disable caching, overriding the
         # kwarg to the constructor
         if config.is_set('OCRD_METS_CACHING'):
-            getLogger('ocrd_models.ocrd_mets').debug('METS Caching %s because OCRD_METS_CACHING is %s',
+            getLogger('ocrd.models.ocrd_mets').debug('METS Caching %s because OCRD_METS_CACHING is %s',
                     'enabled' if config.OCRD_METS_CACHING else 'disabled', config.raw_value('OCRD_METS_CACHING'))
             self._cache_flag = config.OCRD_METS_CACHING
 
@@ -98,7 +98,7 @@ class OcrdMets(OcrdXmlDocument):
         if el_fileSec is None:
             return
 
-        log = getLogger('ocrd_models.ocrd_mets._fill_caches-files')
+        log = getLogger('ocrd.models.ocrd_mets._fill_caches-files')
 
         for el_fileGrp in el_fileSec.findall('mets:fileGrp', NS):
             fileGrp_use = el_fileGrp.get('USE')
@@ -115,7 +115,7 @@ class OcrdMets(OcrdXmlDocument):
         el_div_list = tree_root.findall(".//mets:div[@TYPE='page']", NS)
         if len(el_div_list) == 0:
             return
-        log = getLogger('ocrd_models.ocrd_mets._fill_caches-pages')
+        log = getLogger('ocrd.models.ocrd_mets._fill_caches-pages')
 
         for el_div in el_div_list:
             div_id = el_div.get('ID')
@@ -401,7 +401,7 @@ class OcrdMets(OcrdXmlDocument):
             recursive (boolean): Whether to recursively delete each ``mets:file`` in the group
             force (boolean): Do not raise an exception if ``mets:fileGrp`` does not exist
         """
-        log = getLogger('ocrd_models.ocrd_mets.remove_file_group')
+        log = getLogger('ocrd.models.ocrd_mets.remove_file_group')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             raise Exception("No fileSec!")
@@ -466,7 +466,7 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
-        log = getLogger('ocrd_models.ocrd_mets.add_file')
+        log = getLogger('ocrd.models.ocrd_mets.add_file')
 
         el_fileGrp = self.add_file_group(fileGrp)
         if not ignore:
@@ -521,7 +521,7 @@ class OcrdMets(OcrdXmlDocument):
         Returns:
             The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
-        log = getLogger('ocrd_models.ocrd_mets.remove_one_file')
+        log = getLogger('ocrd.models.ocrd_mets.remove_one_file')
         log.debug("remove_one_file(%s %s)" % (ID, fileGrp))
         if isinstance(ID, OcrdFile):
             ocrd_file = ID

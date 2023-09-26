@@ -39,7 +39,7 @@ from .utils import (
 
 class Deployer:
     def __init__(self, config_path: str) -> None:
-        self.log = getLogger(__name__)
+        self.log = getLogger('ocrd_network.deployer')
         config = validate_and_load_config(config_path)
 
         self.data_mongo: DataMongoDB = DataMongoDB(config['database'])
