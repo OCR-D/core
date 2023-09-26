@@ -123,7 +123,6 @@ class Workspace():
         """
         def after_add_cb(f):
             """callback to run on merged OcrdFile instances in the destination"""
-            print(f)
             if not f.local_filename:
                 # OcrdFile has no local_filename, so nothing to be copied
                 return
@@ -177,7 +176,6 @@ class Workspace():
         """
         log = getLogger('ocrd.workspace.download_file')
         with pushd_popd(self.directory):
-            print(f)
             if f.local_filename:
                 file_path = Path(f.local_filename).absolute()
                 if file_path.exists():
