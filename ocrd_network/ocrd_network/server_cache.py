@@ -206,7 +206,7 @@ class CacheProcessingRequests:
                 self.log.debug(f"For job id: `{processing_job_id}`, "
                                f"cancelling: {cancel_element.job_id}")
                 cancelled_jobs.append(cancel_element)
-                await db_update_processing_job(job_id=processing_job_id, state=StateEnum.cancelled)
+                await db_update_processing_job(job_id=cancel_element.job_id, state=StateEnum.cancelled)
                 # Recursively cancel dependent jobs for the cancelled job
                 recursively_cancelled = await self.cancel_dependent_jobs(
                     workspace_key=workspace_key,
