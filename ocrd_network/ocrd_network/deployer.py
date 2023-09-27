@@ -513,6 +513,7 @@ class Deployer:
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         cmd = f'{processor_name} server --address {agent_address} --database {database_url}'
         stdin.write(f"echo starting processor server with '{cmd}'\n")
+        stdin.write(f'{cmd} &\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
