@@ -45,7 +45,6 @@ from ocrd_utils import config
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
         initLogging()
-        self.test_logging()
         logging_suffix = f'{processor_name}.{getpid()}'
         self.log = getLogger(f'ocrd_network.processing_worker')
         file_handler = logging.FileHandler(f'/tmp/ocrd_worker_{logging_suffix}.log', mode='a')
@@ -294,17 +293,3 @@ class ProcessingWorker:
 
         # the following function is idempotent
         self.rmq_publisher.create_queue(queue_name=self.processor_name)
-
-    @staticmethod
-    def test_logging():
-        log_path = "/home/mm/Desktop/my_test.log"
-        log_test = logging.getLogger(f'my_test_to_file')
-        log_test.setLevel(logging.DEBUG)
-        test_file_hdlr = logging.FileHandler(log_path, mode="w")
-        test_file_hdlr.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        test_file_hdlr.setLevel(logging.DEBUG)
-        log_test.addHandler(test_file_hdlr)
-
-        for name in logging.root.manager.loggerDict.keys():
-            log_test.debug(f"Name: {name}")
-            log_test.debug(f"{logging.getLogger(name).__dict__}")
