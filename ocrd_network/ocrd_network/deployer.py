@@ -512,11 +512,7 @@ class Deployer:
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         cmd = f'{processor_name} server --address {agent_address} --database {database_url}'
-        port = agent_address.split(':')[1]
-        log_path = f'/tmp/server_{processor_name}_{port}_{getpid()}.log'
-        # TODO: This entire stdin/stdout thing is broken with servers!
-        stdin.write(f"echo starting processor server with '{cmd}' >> '{log_path}'\n")
-        stdin.write(f'{cmd} >> {log_path} 2>&1 &\n')
+        stdin.write(f"echo starting processor server with '{cmd}'\n")
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
