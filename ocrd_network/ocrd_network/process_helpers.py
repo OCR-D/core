@@ -1,5 +1,6 @@
 import json
 from typing import List, Optional
+import logging
 
 from ocrd.processor.helpers import run_cli, run_processor
 from .utils import get_ocrd_workspace_instance
@@ -36,7 +37,8 @@ def invoke_processor(
                 page_id=page_id,
                 parameter=parameters,
                 instance_caching=True,
-                mets_server_url=mets_server_url
+                mets_server_url=mets_server_url,
+                log_level=logging.DEBUG
             )
         except Exception as e:
             raise RuntimeError(f"Python executable '{processor_class.__dict__}' exited with: {e}")
@@ -49,7 +51,8 @@ def invoke_processor(
             output_file_grp=output_file_grps_str,
             page_id=page_id,
             parameter=json.dumps(parameters),
-            mets_server_url=mets_server_url
+            mets_server_url=mets_server_url,
+            log_level=logging.DEBUG
         )
         if return_code != 0:
             raise RuntimeError(f"CLI executable '{executable}' exited with: {return_code}")
