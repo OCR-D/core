@@ -239,12 +239,6 @@ class ProcessorServer(FastAPI):
         return version_str
 
     def run_server(self, host, port, access_log=False):
-        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
-        file_handler = logging.FileHandler(f'/tmp/server_{self.processor_name}_{port}_{getpid()}.log', mode='a')
-        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        file_handler.setFormatter(logging.Formatter(logging_format))
-        file_handler.setLevel(logging.DEBUG)
-        self.log.addHandler(file_handler)
         uvicorn.run(self, host=host, port=port, access_log=access_log)
 
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
