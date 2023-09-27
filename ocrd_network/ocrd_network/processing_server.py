@@ -70,9 +70,12 @@ class ProcessingServer(FastAPI):
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
         initLogging()
-        super().__init__(on_startup=[self.on_startup], on_shutdown=[self.on_shutdown],
-                         title='OCR-D Processing Server',
-                         description='OCR-D processing and processors')
+        super().__init__(
+            on_startup=[self.on_startup],
+            on_shutdown=[self.on_shutdown],
+            title='OCR-D Processing Server',
+            description='OCR-D Processing Server'
+        )
         self.log = getLogger('ocrd_network.processing_server')
         self.log.info(f"Downloading ocrd all tool json")
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(

@@ -43,6 +43,12 @@ class ProcessorServer(FastAPI):
         if not (processor_name or processor_class):
             raise ValueError('Either "processor_name" or "processor_class" must be provided')
         initLogging()
+        super().__init__(
+            on_startup=[self.on_startup],
+            on_shutdown=[self.on_shutdown],
+            title=f'OCR-D Processor Server',
+            description='OCR-D Processor Server'
+        )
         logging_suffix = f'{processor_name}.{getpid()}'
         self.log = getLogger('ocrd_network.processor_server')
         file_handler = logging.FileHandler(f'/tmp/ocrd_server_{logging_suffix}.log', mode='a')
@@ -63,21 +69,6 @@ class ProcessorServer(FastAPI):
 
         if not self.processor_name:
             self.processor_name = self.ocrd_tool['executable']
-
-        tags_metadata = [
-            {
-                'name': 'Processing',
-                'description': 'OCR-D Processor Server'
-            }
-        ]
-
-        super().__init__(
-            title=self.processor_name,
-            description=self.ocrd_tool['description'],
-            version=self.version,
-            openapi_tags=tags_metadata,
-            on_startup=[self.startup]
-        )
 
         # Create routes
         self.router.add_api_route(
@@ -116,9 +107,14 @@ class ProcessorServer(FastAPI):
             response_model_exclude_none=True
         )
 
-    async def startup(self):
+    async def on_startup(self):
         await initiate_database(db_url=self.db_url)
-        DBProcessorJob.Settings.name = self.processor_name
+
+    async def on_shutdown(self) -> None:
+        """
+        TODO: Perform graceful shutdown operations here
+        """
+        pass
 
     async def get_processor_info(self):
         if not self.ocrd_tool:
@@ -238,8 +234,8 @@ class ProcessorServer(FastAPI):
         ).stdout
         return version_str
 
-    def run_server(self, host, port, access_log=False):
-        uvicorn.run(self, host=host, port=port, access_log=access_log)
+    def run_server(self, host, port):
+        uvicorn.run(self, host=host, port=port)
 
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, processor_name, job_id)
