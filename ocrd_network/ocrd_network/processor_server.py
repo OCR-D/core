@@ -7,6 +7,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, status
 
 from ocrd_utils import (
+    initLogging,
     get_ocrd_tool_json,
     getLogger,
     parse_json_string_with_comments,
@@ -41,7 +42,12 @@ class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
             raise ValueError('Either "processor_name" or "processor_class" must be provided')
+        initLogging()
+        logging_suffix = f'{processor_name}.{getpid()}'
         self.log = getLogger('ocrd_network.processor_server')
+        file_handler = logging.FileHandler(f'/tmp/ocrd_server_{logging_suffix}.log', mode='a')
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        self.log.addHandler(file_handler)
 
         self.db_url = mongodb_addr
         self.processor_name = processor_name

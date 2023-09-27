@@ -3,7 +3,6 @@ import requests
 import httpx
 from typing import Dict, List
 import uvicorn
-import logging
 
 from fastapi import (
     FastAPI,
@@ -17,7 +16,7 @@ from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
-from ocrd_utils import getLogger
+from ocrd_utils import initLogging, getLogger
 from .database import (
     initiate_database,
     db_create_workspace,
@@ -30,7 +29,6 @@ from .deployer import Deployer
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
-    DBWorkspace,
     PYJobInput,
     PYJobOutput,
     PYResultMessage,
@@ -71,6 +69,7 @@ class ProcessingServer(FastAPI):
     """
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
+        initLogging()
         super().__init__(on_startup=[self.on_startup], on_shutdown=[self.on_shutdown],
                          title='OCR-D Processing Server',
                          description='OCR-D processing and processors')
@@ -96,20 +95,7 @@ class ProcessingServer(FastAPI):
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
 
-        # TODO: Create data class for better management of the 3 internals below
-
-        # Used for buffering/caching processing requests in the Processing Server
-        # Key: `path_to_mets` if already resolved else `workspace_id`
-        # Value: Queue that holds PYInputJob elements
-        # self.processing_requests_cache: Dict[str, List[PYJobInput]] = {}
-
-        # Used for tracking of active processing jobs for a workspace to decide
-        # when the shutdown a METS Server instance for that workspace
-        # Key: `path_to_mets` if already resolved else `workspace_id`
-        # Value: integer which holds the amount of jobs pushed to the RabbitMQ
-        # but no internal callback was yet invoked
-        # self.processing_counter_cache: Dict[str, int] = {}
-
+        # Used for keeping track of cached processing requests
         self.cache_processing_requests = CacheProcessingRequests()
 
         # Used for keeping track of locked/unlocked pages of a workspace
