@@ -62,7 +62,10 @@ LOGGING_DEFAULTS = {
     'shapely.geos': logging.ERROR,
     'tensorflow': logging.ERROR,
     'PIL': logging.INFO,
-    'paramiko.transport': logging.INFO
+    'paramiko.transport': logging.INFO,
+    'uvicorn.access': logging.DEBUG,
+    'uvicorn.error': logging.DEBUG,
+    'uvicorn': logging.INFO
 }
 
 _initialized_flag = False
