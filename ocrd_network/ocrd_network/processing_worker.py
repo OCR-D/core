@@ -44,14 +44,13 @@ from ocrd_utils import config
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
-        self.log = getLogger('ocrd_network.processing_worker')
-        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
-        file_handler = logging.FileHandler(f'/tmp/worker_{processor_name}_{getpid()}.log', mode='a')
-        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        file_handler.setFormatter(logging.Formatter(logging_format))
+        logging_suffix = f'{processor_name}.{getpid()}'
+        self.log = getLogger(f'ocrd_network.processing_worker')
+        file_handler = logging.FileHandler(f'/tmp/worker_{logging_suffix}.log', mode='a')
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         file_handler.setLevel(logging.DEBUG)
         self.log.addHandler(file_handler)
-        # TODO: remove this when refactoring the logging
+        # TODO: removing this line still leads to empty output
         self.log.setLevel(logging.DEBUG)
 
         try:
