@@ -6,6 +6,7 @@ import re
 import json
 from .constants import REGEX_FILE_ID
 from .deprecate import deprecation_warning
+from warnings import warn
 
 __all__ = [
     'assert_file_grp_cardinality',
@@ -202,7 +203,7 @@ def generate_range(start, end):
     except IndexError:
         raise ValueError("Range '%s..%s': could not find numeric part" % (start, end))
     if start_num == end_num:
-        raise ValueError("Range '%s..%s': evaluates to the same number")
+        warn("Range '%s..%s': evaluates to the same number")
     for i in range(int(start_num), int(end_num) + 1):
         ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
     return ret
