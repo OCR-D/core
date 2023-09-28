@@ -318,7 +318,7 @@ class TestUtils(TestCase):
         with self.assertRaisesRegex(ValueError, 'could not find numeric part'):
             generate_range('NONUMBER', 'ALSO_NONUMBER')
         with warns(UserWarning, match='same number'):
-            generate_range('PHYS_0001_123', 'PHYS_0010_123')
+            generate_range('PHYS_0001_123', 'PHYS_0010_123') == 'PHYS_0001_123'
 
     def test_safe_filename(self):
         assert safe_filename('Hello world,!') == 'Hello_world_'
