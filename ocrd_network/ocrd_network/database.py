@@ -13,9 +13,11 @@ XXX: Currently the information is not preserved after the processing-server shut
 database (runs in docker) currently has no volume set.
 """
 from beanie import init_beanie
+from beanie.operators import In
 from motor.motor_asyncio import AsyncIOMotorClient
 from uuid import uuid4
 from pathlib import Path
+from typing import List
 
 from .models import (
     DBProcessorJob,
@@ -173,3 +175,25 @@ async def db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
 @call_sync
 async def sync_db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
     return await db_update_processing_job(job_id=job_id, **kwargs)
+
+
+async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
+    job = await DBWorkflowJob.find_one(DBWorkflowJob.job_id == job_id)
+    if not job:
+        raise ValueError(f'Workflow job with id "{job_id}" not in the DB.')
+    return job
+
+
+@call_sync
+async def sync_db_get_workflow_job(job_id: str) -> DBWorkflowJob:
+    return await db_get_workflow_job(job_id)
+
+
+async def db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+    jobs = await DBProcessorJob.find(In(DBProcessorJob.job_id, job_ids)).to_list()
+    return jobs
+
+
+@call_sync
+async def sync_db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+    return await db_get_processing_jobs(job_ids)

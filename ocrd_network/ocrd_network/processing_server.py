@@ -21,6 +21,8 @@ from .database import (
     initiate_database,
     db_create_workspace,
     db_get_processing_job,
+    db_get_processing_jobs,
+    db_get_workflow_job,
     db_get_workspace,
     db_update_processing_job,
     db_update_workspace
@@ -55,6 +57,7 @@ from .utils import (
     generate_id,
     get_ocrd_workspace_physical_pages
 )
+import time
 
 
 class ProcessingServer(FastAPI):
@@ -178,6 +181,15 @@ class ProcessingServer(FastAPI):
             tags=['workflow', 'processing'],
             status_code=status.HTTP_200_OK,
             summary='Run a workflow',
+        )
+
+        self.router.add_api_route(
+            path='/workflow/{workflow_job_id}',
+            endpoint=self.get_workflow_info,
+            methods=['GET'],
+            tags=['workflow', 'processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get information about a workflow run',
         )
 
         @self.exception_handler(RequestValidationError)
@@ -670,7 +682,6 @@ class ProcessingServer(FastAPI):
     ) -> PYWorkflowJobOutput:
         # core cannot create workspaces by api, but processing-server needs the workspace in the
         # database. Here the workspace is created if the path available and not existing in db:
-        # from pudb import set_trace; set_trace()
         db_workspace = await db_create_workspace(mets_path)
         if not db_workspace:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -735,3 +746,21 @@ class ProcessingServer(FastAPI):
         )
         await db_workflow_job.insert()
         return db_workflow_job.to_job_output()
+
+    async def get_workflow_info(self, workflow_job_id) -> Dict:
+        """ Return list of a workflow's processor jobs
+        """
+        try:
+            workflow_job = await db_get_workflow_job(workflow_job_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Workflow-Job with id: {workflow_job_id} not found")
+        job_ids: List[str] = [id for lst in workflow_job.processing_job_ids.values() for id in lst]
+        jobs = await db_get_processing_jobs(job_ids)
+        res = {}
+        for job in jobs:
+            res.setdefault(job.processor_name, {})
+            res[job.processor_name].setdefault(job.state.value, 0)
+            state_count = res[job.processor_name][job.state.value]
+            res[job.processor_name][job.state.value] = state_count + 1
+        return res
