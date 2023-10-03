@@ -17,6 +17,8 @@ from fastapi.responses import JSONResponse
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger
+from ocrd import Resolver, Workspace
+from pathlib import Path
 from .database import (
     initiate_database,
     db_create_workspace,
@@ -680,10 +682,11 @@ class ProcessingServer(FastAPI):
             page_wise: bool = False,
             workflow_callback_url: str = None
     ) -> PYWorkflowJobOutput:
-        # core cannot create workspaces by api, but processing-server needs the workspace in the
-        # database. Here the workspace is created if the path available and not existing in db:
-        db_workspace = await db_create_workspace(mets_path)
-        if not db_workspace:
+        try:
+            # core cannot create workspaces by api, but processing-server needs the workspace in the
+            # database. Here the workspace is created if the path available and not existing in db:
+            await db_create_workspace(mets_path)
+        except FileNotFoundError:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f"Mets file not existing: {mets_path}")
 
@@ -692,16 +695,26 @@ class ProcessingServer(FastAPI):
             tasks_list = workflow.splitlines()
             tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
         except BaseException as e:
-            print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
 
-        if page_id:
-            page_range = expand_page_ids(page_id)
-        else:
-            # If no page_id is specified, all physical pages are assigned as page range
-            page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
-        compact_page_range = f'{page_range[0]}..{page_range[-1]}'
+        available_groups = Workspace(Resolver(), Path(mets_path).parents[0]).mets.file_groups
+        for grp in tasks[0].input_file_grps:
+            if grp not in available_groups:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Input file grps of 1st processor not found: {tasks[0].input_file_grps}"
+                )
+        try:
+            if page_id:
+                page_range = expand_page_ids(page_id)
+            else:
+                # If no page_id is specified, all physical pages are assigned as page range
+                page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
+            compact_page_range = f'{page_range[0]}..{page_range[-1]}'
+        except BaseException as e:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=f"Error determining page-range: {e}")
 
         if not page_wise:
             responses = await self.task_sequence_to_processing_jobs(
