@@ -786,5 +786,8 @@ class ProcessingServer(FastAPI):
                 if failed_tasks_key not in res:
                     res[failed_tasks_key] = failed_tasks
                 failed_tasks.setdefault(job.processor_name, [])
-                failed_tasks[job.processor_name].append(job.job_id)
+                failed_tasks[job.processor_name].append({
+                    "job_id": job.job_id,
+                    "page_id": job.page_id,
+                })
         return res
