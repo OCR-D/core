@@ -773,9 +773,13 @@ class ProcessingServer(FastAPI):
         job_ids: List[str] = [id for lst in workflow_job.processing_job_ids.values() for id in lst]
         jobs = await db_get_processing_jobs(job_ids)
         res = {}
+        failed_tasks = {}
         for job in jobs:
             res.setdefault(job.processor_name, {})
             res[job.processor_name].setdefault(job.state.value, 0)
             state_count = res[job.processor_name][job.state.value]
+            if job.state == "FAILED":
+                failed_tasks[job.id] = job
             res[job.processor_name][job.state.value] = state_count + 1
+        res[failed_tasks] = failed_tasks
         return res
