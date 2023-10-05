@@ -758,6 +758,8 @@ class ProcessingServer(FastAPI):
             workflow_callback_url=workflow_callback_url
         )
         await db_workflow_job.insert()
+        # Do not return the processing_job_ids to the user
+        db_workflow_job[processing_job_ids] = {}
         return db_workflow_job.to_job_output()
 
     async def get_workflow_info(self, workflow_job_id) -> Dict:
