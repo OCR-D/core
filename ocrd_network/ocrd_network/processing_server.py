@@ -183,6 +183,11 @@ class ProcessingServer(FastAPI):
             tags=['workflow', 'processing'],
             status_code=status.HTTP_200_OK,
             summary='Run a workflow',
+            response_model=PYWorkflowJobOutput,
+            response_model_exclude=["processing_job_ids"],
+            response_model_exclude_defaults=True,
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True
         )
 
         self.router.add_api_route(
@@ -758,8 +763,6 @@ class ProcessingServer(FastAPI):
             workflow_callback_url=workflow_callback_url
         )
         await db_workflow_job.insert()
-        # Do not return the processing_job_ids to the user
-        db_workflow_job[processing_job_ids] = {}
         return db_workflow_job.to_job_output()
 
     async def get_workflow_info(self, workflow_job_id) -> Dict:
@@ -774,12 +777,14 @@ class ProcessingServer(FastAPI):
         jobs = await db_get_processing_jobs(job_ids)
         res = {}
         failed_tasks = {}
+        failed_tasks_key = "failed-processor-tasks"
         for job in jobs:
             res.setdefault(job.processor_name, {})
             res[job.processor_name].setdefault(job.state.value, 0)
-            state_count = res[job.processor_name][job.state.value]
+            res[job.processor_name][job.state.value] += 1
             if job.state == "FAILED":
-                failed_tasks[job.id] = job
-            res[job.processor_name][job.state.value] = state_count + 1
-        res[failed_tasks] = failed_tasks
+                if failed_tasks_key not in res:
+                    res[failed_tasks_key] = failed_tasks
+                failed_tasks.setdefault(job.processor_name, [])
+                failed_tasks[job.processor_name].append(job.job_id)
         return res
