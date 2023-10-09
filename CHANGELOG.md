@@ -11,6 +11,7 @@ Changed:
   * METS Server: Implement find_files support for `local_filename` and `url`, #1100
   * Logging: consistent logger names derived from `ocrd.`, #1101
   * Logging: consistent logging across the packages, including `ocrd_network`, #1101
+  * `..` page range operator: allow single-page ranges, #1106, #1107
 
 ## [2.54.0] - 2023-09-12
 
