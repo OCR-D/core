@@ -182,6 +182,7 @@ from .os import (
     atomic_write,
     pushd_popd,
     unzip_file_to_dir,
+    redirect_stderr_and_stdout_to_file,
     )
 
 from .str import (

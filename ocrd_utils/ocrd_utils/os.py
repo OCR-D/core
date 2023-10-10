@@ -12,11 +12,12 @@ __all__ = [
     'pushd_popd',
     'unzip_file_to_dir',
     'atomic_write',
+    'redirect_stderr_and_stdout_to_file',
 ]
 
 from tempfile import TemporaryDirectory, gettempdir
 from functools import lru_cache
-import contextlib
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from distutils.spawn import find_executable as which
 from json import loads
 from json.decoder import JSONDecodeError
@@ -44,7 +45,7 @@ def abspath(url):
         url = url[len('file://'):]
     return abspath_(url)
 
-@contextlib.contextmanager
+@contextmanager
 def pushd_popd(newcwd=None, tempdir=False):
     if newcwd and tempdir:
         raise Exception("pushd_popd can accept either newcwd or tempdir, not both")
@@ -201,7 +202,7 @@ class AtomicWriterPerms(AtomicWriter):
         chmod(fd, mode)
         return f
 
-@contextlib.contextmanager
+@contextmanager
 def atomic_write(fpath):
     with atomic_write_(fpath, writer_cls=AtomicWriterPerms, overwrite=True) as f:
         yield f
@@ -249,3 +250,9 @@ def guess_media_type(input_file : str, fallback : str = None, application_xml : 
     if mimetype == 'application/xml':
         mimetype = application_xml
     return mimetype
+
+@contextmanager
+def redirect_stderr_and_stdout_to_file(filename):
+    with open(filename, 'at', encoding='utf-8') as f:
+        with redirect_stderr(f), redirect_stdout(f):
+            yield
