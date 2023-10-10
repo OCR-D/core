@@ -16,7 +16,7 @@ import pika.spec
 import pika.adapters.blocking_connection
 from pika.exceptions import AMQPConnectionError
 
-from ocrd_utils import initLogging, getLogger
+from ocrd_utils import getLogger
 
 from time import sleep
 
@@ -44,7 +44,6 @@ from ocrd_utils import config
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None, log_filename:str=None) -> None:
-        initLogging()
         self.log = getLogger(f'ocrd_network.processing_worker')
         if not log_filename:
             log_filename = f'/tmp/ocrd_worker_{processor_name}.{getpid()}.log'
