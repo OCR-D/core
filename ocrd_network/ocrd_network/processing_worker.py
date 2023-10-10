@@ -10,7 +10,7 @@ is a single OCR-D Processor instance.
 
 from datetime import datetime
 import logging
-from os import getpid
+from os import getpid, makedirs
 
 import pika.spec
 import pika.adapters.blocking_connection
@@ -49,9 +49,10 @@ class ProcessingWorker:
         if not log_filename:
             log_filename = f'/tmp/ocrd_worker_{processor_name}.{getpid()}.log'
         self.log_filename = log_filename
-        file_handler = logging.FileHandler(log_filename, mode='a')
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        self.log.addHandler(file_handler)
+        # TODO: Use that handler once the separate job logs is resolved
+        # file_handler = logging.FileHandler(log_filename, mode='a')
+        # file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        # self.log.addHandler(file_handler)
 
         try:
             verify_database_uri(mongodb_addr)
@@ -214,6 +215,9 @@ class ProcessingWorker:
             start_time=start_time
         )
         try:
+            # TODO: Refactor the root logging dir for jobs
+            # makedirs(name='/tmp/ocrd_processing_jobs_logs', exist_ok=True)
+            # log_filename = f'/tmp/ocrd_processing_jobs_logs/{job_id}.log'
             invoke_processor(
                 processor_class=self.processor_class,
                 executable=self.processor_name,
