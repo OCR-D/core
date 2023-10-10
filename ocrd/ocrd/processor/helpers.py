@@ -251,6 +251,8 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
   --database                      The MongoDB server address in format
                                   "mongodb://{host}:{port}"
                                   [mongodb://localhost:27018]
+  --log-filename                  Filename to redirect STDOUT/STDERR to,
+                                  if specified.
 '''
 
     processing_server_options = '''\

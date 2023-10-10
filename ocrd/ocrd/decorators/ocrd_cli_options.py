@@ -48,6 +48,7 @@ def ocrd_cli_options(f):
         option('-D', '--dump-module-dir', is_flag=True, default=False),
         option('-h', '--help', is_flag=True, default=False),
         option('-V', '--version', is_flag=True, default=False),
+        option('--log-filename', default=None),
         # Subcommand, only used for 'worker'/'server'. Cannot be handled in
         # click because processors use the @command decorator and even if they
         # were using `group`, you cannot combine have a command with

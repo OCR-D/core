@@ -43,11 +43,13 @@ from ocrd_utils import config
 
 
 class ProcessingWorker:
-    def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
+    def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None, log_filename:str=None) -> None:
         initLogging()
-        logging_suffix = f'{processor_name}.{getpid()}'
         self.log = getLogger(f'ocrd_network.processing_worker')
-        file_handler = logging.FileHandler(f'/tmp/ocrd_worker_{logging_suffix}.log', mode='a')
+        if not log_filename:
+            log_filename = f'/tmp/ocrd_worker_{processor_name}.{getpid()}.log'
+        self.log_filename = log_filename
+        file_handler = logging.FileHandler(log_filename, mode='a')
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         self.log.addHandler(file_handler)
 
@@ -219,6 +221,7 @@ class ProcessingWorker:
                 input_file_grps=input_file_grps,
                 output_file_grps=output_file_grps,
                 page_id=page_id,
+                log_filename=self.log_filename,
                 parameters=processing_message.parameters,
                 mets_server_url=mets_server_url
             )

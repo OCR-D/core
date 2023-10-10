@@ -39,6 +39,7 @@ def ocrd_cli_wrap_processor(
     subcommand=None,
     address=None,
     queue=None,
+    log_filename=None,
     database=None,
     # ocrd_network params end #
     **kwargs
