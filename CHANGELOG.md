@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.55.0] - 2023-10-11
+
 Added:
 
   * `/workflow` endpoint that can handle `ocrd process` workflows and distribute jobs page-wise across workers, #1083, #1105, #1108, #1109
@@ -1827,6 +1829,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.55.0]: ../../compare/v2.55.0..v2.54.0
 [2.54.0]: ../../compare/v2.54.0..v2.53.0
 [2.53.0]: ../../compare/v2.53.0..v2.52.0
 [2.52.0]: ../../compare/v2.52.0..v2.51.0
