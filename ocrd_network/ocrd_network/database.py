@@ -13,10 +13,15 @@ XXX: Currently the information is not preserved after the processing-server shut
 database (runs in docker) currently has no volume set.
 """
 from beanie import init_beanie
+from beanie.operators import In
 from motor.motor_asyncio import AsyncIOMotorClient
+from uuid import uuid4
+from pathlib import Path
+from typing import List
 
 from .models import (
     DBProcessorJob,
+    DBWorkflowJob,
     DBWorkspace
 )
 from .utils import call_sync
@@ -26,13 +31,32 @@ async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
         database=client.get_default_database(default='ocrd'),
-        document_models=[DBProcessorJob, DBWorkspace]
+        document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace]
     )
 
 
 @call_sync
 async def sync_initiate_database(db_url: str):
     await initiate_database(db_url)
+
+
+async def db_create_workspace(mets_path: str) -> DBWorkspace:
+    """ Create a workspace-database entry only from a mets-path
+    """
+    if not Path(mets_path).exists():
+        raise FileNotFoundError(f'Cannot create DB workspace entry, `{mets_path}` does not exist!')
+    try:
+        return await db_get_workspace(workspace_mets_path=mets_path)
+    except ValueError:
+        workspace_db = DBWorkspace(
+            workspace_id=str(uuid4()),
+            workspace_path=Path(mets_path).parent,
+            workspace_mets_path=mets_path,
+            ocrd_identifier="",
+            bagit_profile_identifier="",
+        )
+        await workspace_db.save()
+        return workspace_db
 
 
 async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = None) -> DBWorkspace:
@@ -59,7 +83,7 @@ async def sync_db_get_workspace(workspace_id: str = None, workspace_mets_path: s
     return await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path)
 
 
-async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs):
+async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs) -> DBWorkspace:
     workspace = None
     if not workspace_id and not workspace_mets_path:
         raise ValueError(f'Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
@@ -96,16 +120,17 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
             workspace.bag_info_adds = value
         elif key == 'deleted':
             workspace.deleted = value
-        elif key == 'pages_locked':
-            workspace.pages_locked = value
+        elif key == 'mets_server_url':
+            workspace.mets_server_url = value
         else:
             raise ValueError(f'Field "{key}" is not updatable.')
     await workspace.save()
+    return workspace
 
 
 @call_sync
-async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs):
-    await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
+async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs) -> DBWorkspace:
+    return await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
 
 
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
@@ -121,7 +146,7 @@ async def sync_db_get_processing_job(job_id: str) -> DBProcessorJob:
     return await db_get_processing_job(job_id)
 
 
-async def db_update_processing_job(job_id: str, **kwargs):
+async def db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
     job = await DBProcessorJob.find_one(
         DBProcessorJob.job_id == job_id)
     if not job:
@@ -144,8 +169,31 @@ async def db_update_processing_job(job_id: str, **kwargs):
         else:
             raise ValueError(f'Field "{key}" is not updatable.')
     await job.save()
+    return job
 
 
 @call_sync
-async def sync_db_update_processing_job(job_id: str, **kwargs):
-    await db_update_processing_job(job_id=job_id, **kwargs)
+async def sync_db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
+    return await db_update_processing_job(job_id=job_id, **kwargs)
+
+
+async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
+    job = await DBWorkflowJob.find_one(DBWorkflowJob.job_id == job_id)
+    if not job:
+        raise ValueError(f'Workflow job with id "{job_id}" not in the DB.')
+    return job
+
+
+@call_sync
+async def sync_db_get_workflow_job(job_id: str) -> DBWorkflowJob:
+    return await db_get_workflow_job(job_id)
+
+
+async def db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+    jobs = await DBProcessorJob.find(In(DBProcessorJob.job_id, job_ids)).to_list()
+    return jobs
+
+
+@call_sync
+async def sync_db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+    return await db_get_processing_jobs(job_ids)

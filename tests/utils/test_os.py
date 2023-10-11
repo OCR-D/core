@@ -4,9 +4,11 @@ from shutil import rmtree
 from pathlib import Path
 from os import environ as ENV, getcwd
 from os.path import expanduser, join
+import sys
 
 from ocrd_utils.os import (
     list_resource_candidates,
+    redirect_stderr_and_stdout_to_file,
     guess_media_type,
 )
 
@@ -45,6 +47,17 @@ class TestOsUtils(TestCase):
         assert guess_media_type(testdata / 'mets-with-metsDocumentID.xml') == 'application/xml'
         assert guess_media_type(testdata / 'mets-with-metsDocumentID.xml', application_xml='text/x-mets') == 'text/x-mets'
 
+    def test_redirect_stderr_and_stdout_to_file(self):
+        # TODO test logging is redirected properly without running into
+        # pytest's capturing intricacies
+        fname = '/tmp/test-redirect.txt'
+        Path(fname).write_bytes(b'')
+        with redirect_stderr_and_stdout_to_file(fname):
+            print('one')
+            sys.stdout.write('two\n')
+            sys.stderr.write('three\n')
+            print('four', file=sys.stderr)
+        assert Path(fname).read_text(encoding='utf-8') == 'one\ntwo\nthree\nfour\n'
 
 if __name__ == '__main__':
     main(__file__)

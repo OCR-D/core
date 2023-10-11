@@ -198,7 +198,7 @@ class OcrdMetsServer():
         _exit(0)
 
     def startup(self):
-        self.log.info("Starting down METS server")
+        self.log.info("Starting up METS server")
 
         workspace = self.workspace
 

@@ -3,15 +3,9 @@ The source code in this file is adapted by reusing
 some part of the source code from the official
 RabbitMQ documentation.
 """
-
-import logging
 from typing import Optional
-
-from pika import (
-    BasicProperties,
-    PlainCredentials
-)
-
+from pika import BasicProperties, PlainCredentials
+from ocrd_utils import getLogger
 from .constants import (
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_ROUTER,
@@ -23,13 +17,9 @@ from .connector import RMQConnector
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST,
-                 logger_name: str = None) -> None:
-        if logger_name is None:
-            logger_name = __name__
-        logger = logging.getLogger(logger_name)
-        super().__init__(logger=logger, host=host, port=port, vhost=vhost)
-
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
+        self.log = getLogger('ocrd_network.rabbitmq_utils.publisher')
+        super().__init__(host=host, port=port, vhost=vhost)
         self.message_counter = 0
         self.deliveries = {}
         self.acked_counter = 0
@@ -93,9 +83,9 @@ class RMQPublisher(RMQConnector):
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if properties is None:
-            headers = {'OCR-D WebApi Header': 'OCR-D WebApi Value'}
+            headers = {'ocrd_network default header': 'ocrd_network default header value'}
             properties = BasicProperties(
-                app_id='webapi-processing-server',
+                app_id='ocrd_network default app id',
                 content_type='application/json',
                 headers=headers
             )
@@ -114,8 +104,8 @@ class RMQPublisher(RMQConnector):
 
         self.message_counter += 1
         self.deliveries[self.message_counter] = True
-        self._logger.info(f'Published message #{self.message_counter}')
+        self.log.debug(f'Published message #{self.message_counter}')
 
     def enable_delivery_confirmations(self) -> None:
-        self._logger.debug('Enabling delivery confirmations (Confirm.Select RPC)')
+        self.log.debug('Enabling delivery confirmations (Confirm.Select RPC)')
         RMQConnector.confirm_delivery(channel=self._channel)

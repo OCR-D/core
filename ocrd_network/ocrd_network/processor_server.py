@@ -7,12 +7,14 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, status
 
 from ocrd_utils import (
+    initLogging,
     get_ocrd_tool_json,
     getLogger,
     parse_json_string_with_comments,
 )
 from .database import (
     DBProcessorJob,
+    db_get_workspace,
     db_update_processing_job,
     initiate_database
 )
@@ -35,11 +37,23 @@ from .utils import (
     generate_id,
 )
 
+
 class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
             raise ValueError('Either "processor_name" or "processor_class" must be provided')
+        initLogging()
+        super().__init__(
+            on_startup=[self.on_startup],
+            on_shutdown=[self.on_shutdown],
+            title=f'OCR-D Processor Server',
+            description='OCR-D Processor Server'
+        )
+        logging_suffix = f'{processor_name}.{getpid()}'
         self.log = getLogger('ocrd_network.processor_server')
+        file_handler = logging.FileHandler(f'/tmp/ocrd_server_{logging_suffix}.log', mode='a')
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        self.log.addHandler(file_handler)
 
         self.db_url = mongodb_addr
         self.processor_name = processor_name
@@ -55,21 +69,6 @@ class ProcessorServer(FastAPI):
 
         if not self.processor_name:
             self.processor_name = self.ocrd_tool['executable']
-
-        tags_metadata = [
-            {
-                'name': 'Processing',
-                'description': 'OCR-D Processor Server'
-            }
-        ]
-
-        super().__init__(
-            title=self.processor_name,
-            description=self.ocrd_tool['description'],
-            version=self.version,
-            openapi_tags=tags_metadata,
-            on_startup=[self.startup]
-        )
 
         # Create routes
         self.router.add_api_route(
@@ -108,9 +107,14 @@ class ProcessorServer(FastAPI):
             response_model_exclude_none=True
         )
 
-    async def startup(self):
+    async def on_startup(self):
         await initiate_database(db_url=self.db_url)
-        DBProcessorJob.Settings.name = self.processor_name
+
+    async def on_shutdown(self) -> None:
+        """
+        TODO: Perform graceful shutdown operations here
+        """
+        pass
 
     async def get_processor_info(self):
         if not self.ocrd_tool:
@@ -149,6 +153,8 @@ class ProcessorServer(FastAPI):
             state=StateEnum.running,
             start_time=start_time
         )
+
+        mets_server_url = await db_get_workspace(workspace_mets_path=job.path_to_mets).mets_server_url
         try:
             invoke_processor(
                 processor_class=self.processor_class,
@@ -157,7 +163,8 @@ class ProcessorServer(FastAPI):
                 input_file_grps=job.input_file_grps,
                 output_file_grps=job.output_file_grps,
                 page_id=job.page_id,
-                parameters=job.parameters
+                parameters=job.parameters,
+                mets_server_url=mets_server_url
             )
         except Exception as error:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {job.path_to_mets}, "
@@ -227,14 +234,8 @@ class ProcessorServer(FastAPI):
         ).stdout
         return version_str
 
-    def run_server(self, host, port, access_log=False):
-        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
-        file_handler = logging.FileHandler(f'/tmp/server_{self.processor_name}_{port}_{getpid()}.log', mode='a')
-        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        file_handler.setFormatter(logging.Formatter(logging_format))
-        file_handler.setLevel(logging.DEBUG)
-        self.log.addHandler(file_handler)
-        uvicorn.run(self, host=host, port=port, access_log=access_log)
+    def run_server(self, host, port):
+        uvicorn.run(self, host=host, port=port)
 
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, processor_name, job_id)

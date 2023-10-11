@@ -577,9 +577,9 @@ class OcrdMets(OcrdXmlDocument):
         if self._cache_flag:
             return list(self._page_cache.keys())
             
-        return self._tree.getroot().xpath(
+        return [str(x) for x in self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
-            namespaces=NS)
+            namespaces=NS)]
 
     def get_physical_pages(self, for_fileIds=None):
         """

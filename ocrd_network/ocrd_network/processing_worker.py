@@ -10,7 +10,7 @@ is a single OCR-D Processor instance.
 
 from datetime import datetime
 import logging
-from os import getpid
+from os import getpid, makedirs
 
 import pika.spec
 import pika.adapters.blocking_connection
@@ -43,14 +43,15 @@ from ocrd_utils import config
 
 
 class ProcessingWorker:
-    def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
-        self.log = getLogger('ocrd_network.processing_worker')
-        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
-        file_handler = logging.FileHandler(f'/tmp/worker_{processor_name}_{getpid()}.log', mode='a')
-        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        file_handler.setFormatter(logging.Formatter(logging_format))
-        file_handler.setLevel(logging.DEBUG)
-        self.log.addHandler(file_handler)
+    def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None, log_filename:str=None) -> None:
+        self.log = getLogger(f'ocrd_network.processing_worker')
+        if not log_filename:
+            log_filename = f'/tmp/ocrd_worker_{processor_name}.{getpid()}.log'
+        self.log_filename = log_filename
+        # TODO: Use that handler once the separate job logs is resolved
+        # file_handler = logging.FileHandler(log_filename, mode='a')
+        # file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        # self.log.addHandler(file_handler)
 
         try:
             verify_database_uri(mongodb_addr)
@@ -146,7 +147,7 @@ class ProcessingWorker:
             raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
 
         try:
-            self.log.info(f'Starting to process the received message: {processing_message}')
+            self.log.info(f'Starting to process the received message: {processing_message.__dict__}')
             self.process_message(processing_message=processing_message)
         except Exception as e:
             self.log.error(f'Failed to process processing message with tag: {delivery_tag}')
@@ -194,8 +195,14 @@ class ProcessingWorker:
         internal_callback_url = processing_message.internal_callback_url if 'internal_callback_url' in pm_keys else None
         parameters = processing_message.parameters if processing_message.parameters else {}
 
+        if not path_to_mets and not workspace_id:
+            raise ValueError(f'`path_to_mets` nor `workspace_id` was set in the ocrd processing message')
+
+        if path_to_mets:
+            mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
         if not path_to_mets and workspace_id:
             path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
+            mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url
 
         execution_failed = False
         self.log.debug(f'Invoking processor: {self.processor_name}')
@@ -207,6 +214,9 @@ class ProcessingWorker:
             start_time=start_time
         )
         try:
+            # TODO: Refactor the root logging dir for jobs
+            # makedirs(name='/tmp/ocrd_processing_jobs_logs', exist_ok=True)
+            # log_filename = f'/tmp/ocrd_processing_jobs_logs/{job_id}.log'
             invoke_processor(
                 processor_class=self.processor_class,
                 executable=self.processor_name,
@@ -214,7 +224,9 @@ class ProcessingWorker:
                 input_file_grps=input_file_grps,
                 output_file_grps=output_file_grps,
                 page_id=page_id,
-                parameters=processing_message.parameters
+                log_filename=self.log_filename,
+                parameters=processing_message.parameters,
+                mets_server_url=mets_server_url
             )
         except Exception as error:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {path_to_mets}, "
@@ -238,7 +250,7 @@ class ProcessingWorker:
             # May not be always available
             workspace_id=workspace_id
         )
-        self.log.info(f'Result message: {str(result_message)}')
+        self.log.info(f'Result message: {result_message.__dict__}')
         # If the result_queue field is set, send the result message to a result queue
         if result_queue_name:
             self.publish_to_result_queue(result_queue_name, result_message)

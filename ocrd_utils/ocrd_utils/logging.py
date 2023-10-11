@@ -46,6 +46,12 @@ __all__ = [
     'setOverrideLogLevel',
 ]
 
+# These are the loggers we add handlers to
+ROOT_OCRD_LOGGERS = [
+    'ocrd',
+    'ocrd_network'
+]
+
 LOGGING_DEFAULTS = {
     'ocrd': logging.INFO,
     'ocrd_network': logging.DEBUG,
@@ -56,7 +62,10 @@ LOGGING_DEFAULTS = {
     'shapely.geos': logging.ERROR,
     'tensorflow': logging.ERROR,
     'PIL': logging.INFO,
-    'paramiko.transport': logging.INFO
+    'paramiko.transport': logging.INFO,
+    'uvicorn.access': logging.DEBUG,
+    'uvicorn.error': logging.DEBUG,
+    'uvicorn': logging.INFO
 }
 
 _initialized_flag = False
@@ -144,9 +153,10 @@ def initLogging(builtin_only=False, force_reinit=False):
     # levels of individual loggers.
     logging.disable(logging.NOTSET)
 
-    # remove all handlers for the ocrd logger
-    for handler in logging.getLogger('ocrd').handlers[:]:
-        logging.getLogger('ocrd').removeHandler(handler)
+    # remove all handlers for the ocrd root loggers
+    for logger_name in ROOT_OCRD_LOGGERS:
+        for handler in logging.getLogger(logger_name).handlers[:]:
+            logging.getLogger(logger_name).removeHandler(handler)
 
     config_file = None
     if not builtin_only:
@@ -167,7 +177,8 @@ def initLogging(builtin_only=False, force_reinit=False):
         ocrd_handler = logging.StreamHandler(stream=sys.stderr)
         ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
         ocrd_handler.setLevel(logging.DEBUG)
-        logging.getLogger('ocrd').addHandler(ocrd_handler)
+        for logger_name in ROOT_OCRD_LOGGERS:
+            logging.getLogger(logger_name).addHandler(ocrd_handler)
         for logger_name, logger_level in LOGGING_DEFAULTS.items():
             logging.getLogger(logger_name).setLevel(logger_level)
 
@@ -187,8 +198,9 @@ def disableLogging(silent=True):
     # logging.basicConfig(level=logging.CRITICAL)
     # logging.disable(logging.ERROR)
     # remove all handlers for the ocrd logger
-    for handler in logging.getLogger('ocrd').handlers[:]:
-        logging.getLogger('ocrd').removeHandler(handler)
+    for logger_name in ROOT_OCRD_LOGGERS:
+        for handler in logging.getLogger(logger_name).handlers[:]:
+            logging.getLogger(logger_name).removeHandler(handler)
     for logger_name in LOGGING_DEFAULTS:
         logging.getLogger(logger_name).setLevel(logging.NOTSET)
 

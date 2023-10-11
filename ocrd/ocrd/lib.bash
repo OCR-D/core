@@ -145,6 +145,7 @@ ocrd__parse_argv () {
             -I|--input-file-grp) ocrd__argv[input_file_grp]=$2 ; shift ;;
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
+            --log-filename) ocrd__argv[log_filename]="$2" ; shift ;;
             --mets-server-url) ocrd_argv[mets_server_url]="$2" ; shift ;;
             --overwrite) ocrd__argv[overwrite]=true ;;
             --profile) ocrd__argv[profile]=true ;;
@@ -168,7 +169,7 @@ ocrd__parse_argv () {
             if ! [ -v ocrd__worker_queue ]; then
                 ocrd__raise "For the Processing Worker --queue is required"
             fi
-            ocrd network processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
+            ocrd network processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}" --log-filename "${ocrd__argv[log_filename]}"
         elif [ ${ocrd__subcommand} = "server" ]; then
             if ! [ -v ocrd__worker_address ]; then
                 ocrd__raise "For the Processor Server --address is required"

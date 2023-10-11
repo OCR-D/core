@@ -7,6 +7,7 @@ from os import environ
 from contextlib import contextmanager
 import shutil
 from logging import StreamHandler
+import lxml
 
 from tests.base import (
     main,
@@ -101,6 +102,7 @@ def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
     assert isinstance(sbb_sample_01.physical_pages, list)
     assert isinstance(sbb_sample_01.physical_pages[0], str)
+    assert not isinstance(sbb_sample_01.physical_pages[0], lxml.etree._ElementUnicodeResult)
 
 def test_physical_pages_from_empty_mets():
     mets = OcrdMets(content="<mets></mets>")

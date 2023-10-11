@@ -10,9 +10,11 @@ from __future__ import annotations
 from typing import Dict, List, Union
 from re import search as re_search
 from os import getpid
+from pathlib import Path
+import subprocess
 from time import sleep
 
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, safe_filename
 
 from .deployment_utils import (
     create_docker_client,
@@ -28,7 +30,11 @@ from .runtime_data import (
     DataProcessorServer,
     DataRabbitMQ
 )
-from .utils import validate_and_load_config
+from .utils import (
+    is_mets_server_running,
+    stop_mets_server,
+    validate_and_load_config
+)
 
 
 class Deployer:
@@ -42,6 +48,7 @@ class Deployer:
         self.internal_callback_url = config.get('internal_callback_url', None)
         for config_host in config['hosts']:
             self.data_hosts.append(DataHost(config_host))
+        self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
 
     # TODO: Reconsider this.
     def find_matching_processors(
@@ -467,9 +474,12 @@ class Deployer:
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
         # `xyz` before and after the code to easily be able to filter out the pid via regex when
         # returning from the function
-        log_path = '/tmp/ocrd-processing-server-startup.log'
-        stdin.write(f"echo starting processing worker with '{cmd}' >> '{log_path}'\n")
-        stdin.write(f'{cmd} >> {log_path} 2>&1 &\n')
+
+        # TODO: Check here again
+        # log_path = f'/tmp/deployed_{processor_name}.log'
+        # stdin.write(f"echo starting processing worker with '{cmd}' >> '{log_path}'\n")
+        # stdin.write(f'{cmd} >> {log_path} 2>&1 &\n')
+        stdin.write(f'{cmd} &\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
@@ -505,13 +515,58 @@ class Deployer:
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
         cmd = f'{processor_name} server --address {agent_address} --database {database_url}'
-        port = agent_address.split(':')[1]
-        log_path = f'/tmp/server_{processor_name}_{port}_{getpid()}.log'
-        # TODO: This entire stdin/stdout thing is broken with servers!
-        stdin.write(f"echo starting processor server with '{cmd}' >> '{log_path}'\n")
-        stdin.write(f'{cmd} >> {log_path} 2>&1 &\n')
+        stdin.write(f"echo starting processor server with '{cmd}'\n")
+        stdin.write(f'{cmd} &\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
         stdin.close()
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
+
+    # TODO: No support for TCP version yet
+    def start_unix_mets_server(self, mets_path: str) -> str:
+        socket_file = f'{safe_filename(mets_path)}.sock'
+        log_path = f'/tmp/{safe_filename(mets_path)}.log'
+        mets_server_url = f'/tmp/{socket_file}'
+
+        if is_mets_server_running(mets_server_url=mets_server_url):
+            self.log.info(f"The mets server is already started: {mets_server_url}")
+            return mets_server_url
+
+        cwd = Path(mets_path).parent
+        self.log.info(f'Starting UDS mets server: {mets_server_url}')
+        sub_process = subprocess.Popen(
+            args=['nohup', 'ocrd', 'workspace', '--mets-server-url', f'{mets_server_url}',
+                  '-d', f'{cwd}', 'server', 'start'],
+            shell=False,
+            stdout=open(log_path, 'w'),
+            stderr=open(log_path, 'a'),
+            cwd=cwd,
+            universal_newlines=True
+        )
+        # Wait for the mets server to start
+        sleep(2)
+        self.mets_servers[mets_server_url] = sub_process.pid
+        return mets_server_url
+
+    def stop_unix_mets_server(self, mets_server_url: str) -> None:
+        self.log.info(f'Stopping UDS mets server: {mets_server_url}')
+        if mets_server_url in self.mets_servers:
+            mets_server_pid = self.mets_servers[mets_server_url]
+        else:
+            raise Exception(f"Mets server not found: {mets_server_url}")
+
+        '''
+        subprocess.run(
+            args=['kill', '-s', 'SIGINT', f'{mets_server_pid}'],
+            shell=False,
+            universal_newlines=True
+        )
+        '''
+
+        # TODO: Reconsider this again
+        #  Not having this sleep here causes connection errors
+        #  on the last request processed by the processing worker.
+        #  Sometimes 3 seconds is enough, sometimes not.
+        sleep(5)
+        stop_mets_server(mets_server_url=mets_server_url)

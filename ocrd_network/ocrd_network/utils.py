@@ -1,14 +1,15 @@
 from datetime import datetime
 from functools import wraps
-from os import environ
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
-import requests
-from typing import Dict
+from requests import Session as Session_TCP
+from requests_unixsocket import Session as Session_UDS
+from typing import Dict, List
 from uuid import uuid4
 from yaml import safe_load
 
+from ocrd import Resolver, Workspace
 from ocrd_validators import ProcessingServerConfigValidator
 from .rabbitmq_utils import OcrdResultMessage
 
@@ -32,7 +33,6 @@ def calculate_execution_time(start: datetime, end: datetime) -> int:
     Returns the result in milliseconds
     """
     return int((end - start).total_seconds() * 1000)
-
 
 
 def generate_created_time() -> int:
@@ -93,7 +93,7 @@ def download_ocrd_all_tool_json(ocrd_all_url: str):
     if not ocrd_all_url:
         raise ValueError(f'The URL of ocrd all tool json is empty')
     headers = {'Accept': 'application/json'}
-    response = requests.get(ocrd_all_url, headers=headers)
+    response = Session_TCP().get(ocrd_all_url, headers=headers)
     if not response.status_code == 200:
         raise ValueError(f"Failed to download ocrd all tool json from: '{ocrd_all_url}'")
     return response.json()
@@ -108,5 +108,42 @@ def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMe
         "path_to_mets": result_message.path_to_mets,
         "workspace_id": result_message.workspace_id
     }
-    response = requests.post(url=callback_url, headers=headers, json=json_data)
+    response = Session_TCP().post(url=callback_url, headers=headers, json=json_data)
     logger.info(f'Response from callback_url "{response}"')
+
+
+def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> Workspace:
+    if mets_server_url:
+        if not is_mets_server_running(mets_server_url=mets_server_url):
+            raise RuntimeError(f'The mets server is not running: {mets_server_url}')
+    return Resolver().workspace_from_url(mets_url=mets_path, mets_server_url=mets_server_url)
+
+
+def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = None) -> List[str]:
+    return get_ocrd_workspace_instance(mets_path=mets_path, mets_server_url=mets_server_url).mets.physical_pages
+
+
+def is_mets_server_running(mets_server_url: str) -> bool:
+    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
+    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
+    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
+    try:
+        response = session.get(url=f'{mets_server_url}/workspace_path')
+    except Exception:
+        return False
+    if response.status_code == 200:
+        return True
+    return False
+
+
+def stop_mets_server(mets_server_url: str) -> bool:
+    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
+    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
+    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
+    try:
+        response = session.delete(url=f'{mets_server_url}/')
+    except Exception:
+        return False
+    if response.status_code == 200:
+        return True
+    return False

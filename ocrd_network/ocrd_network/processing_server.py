@@ -4,41 +4,62 @@ import httpx
 from typing import Dict, List
 import uvicorn
 
-from fastapi import FastAPI, status, Request, HTTPException
+from fastapi import (
+    FastAPI,
+    status,
+    Request,
+    HTTPException,
+    UploadFile
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
-from ocrd_utils import getLogger
+from ocrd.task_sequence import ProcessorTask
+from ocrd_utils import initLogging, getLogger
+from ocrd import Resolver, Workspace
+from pathlib import Path
 from .database import (
     initiate_database,
+    db_create_workspace,
     db_get_processing_job,
+    db_get_processing_jobs,
+    db_get_workflow_job,
     db_get_workspace,
-    db_update_workspace,
+    db_update_processing_job,
+    db_update_workspace
 )
 from .deployer import Deployer
 from .models import (
     DBProcessorJob,
+    DBWorkflowJob,
     PYJobInput,
     PYJobOutput,
     PYResultMessage,
+    PYWorkflowJobOutput,
     StateEnum
 )
 from .rabbitmq_utils import (
     RMQPublisher,
     OcrdProcessingMessage
 )
+from .server_cache import (
+    CacheLockedPages,
+    CacheProcessingRequests
+)
 from .server_utils import (
     _get_processor_job,
     expand_page_ids,
     validate_and_return_mets_path,
-    validate_job_input,
+    validate_job_input
 )
 from .utils import (
     download_ocrd_all_tool_json,
     generate_created_time,
-    generate_id
+    generate_id,
+    get_ocrd_workspace_physical_pages
 )
+import time
 
 
 class ProcessingServer(FastAPI):
@@ -53,9 +74,13 @@ class ProcessingServer(FastAPI):
     """
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
-        super().__init__(on_startup=[self.on_startup], on_shutdown=[self.on_shutdown],
-                         title='OCR-D Processing Server',
-                         description='OCR-D processing and processors')
+        initLogging()
+        super().__init__(
+            on_startup=[self.on_startup],
+            on_shutdown=[self.on_shutdown],
+            title='OCR-D Processing Server',
+            description='OCR-D Processing Server'
+        )
         self.log = getLogger('ocrd_network.processing_server')
         self.log.info(f"Downloading ocrd all tool json")
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(
@@ -78,10 +103,11 @@ class ProcessingServer(FastAPI):
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
 
-        # Used for buffering/caching processing requests in the Processing Server
-        # Key: `workspace_id` or `path_to_mets` depending on which is provided
-        # Value: Queue that holds PYInputJob elements
-        self.processing_requests_cache = {}
+        # Used for keeping track of cached processing requests
+        self.cache_processing_requests = CacheProcessingRequests()
+
+        # Used for keeping track of locked/unlocked pages of a workspace
+        self.cache_locked_pages = CacheLockedPages()
 
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
@@ -148,6 +174,29 @@ class ProcessingServer(FastAPI):
             tags=['processing', 'discovery'],
             status_code=status.HTTP_200_OK,
             summary='Get a list of all available processors',
+        )
+
+        self.router.add_api_route(
+            path='/workflow',
+            endpoint=self.run_workflow,
+            methods=['POST'],
+            tags=['workflow', 'processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Run a workflow',
+            response_model=PYWorkflowJobOutput,
+            response_model_exclude=["processing_job_ids"],
+            response_model_exclude_defaults=True,
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/workflow/{workflow_job_id}',
+            endpoint=self.get_workflow_info,
+            methods=['GET'],
+            tags=['workflow', 'processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get information about a workflow run',
         )
 
         @self.exception_handler(RequestValidationError)
@@ -221,14 +270,6 @@ class ProcessingServer(FastAPI):
         `workers.name` in the config file.
         """
 
-        # TODO: Remove
-        """
-        queue_names = set([])
-        for data_host in self.deployer.data_hosts:
-            for data_worker in data_host.data_workers:
-                queue_names.add(data_worker.processor_name)
-        """
-
         # The abstract version of the above lines
         queue_names = self.deployer.find_matching_processors(
             worker_only=True,
@@ -274,85 +315,6 @@ class ProcessingServer(FastAPI):
                 detail=f"Process queue with id '{processor_name}' not existing"
             )
 
-    def check_if_locked_pages_for_output_file_grps(
-            self,
-            locked_ws_pages: Dict,
-            output_file_grps: List[str],
-            page_ids: List[str]
-    ) -> bool:
-        for output_fileGrp in output_file_grps:
-            self.log.debug(f"Checking output file group: {output_fileGrp}")
-            if output_fileGrp in locked_ws_pages:
-                self.log.debug(f"Locked workspace pages has entry for output file group: {output_fileGrp}")
-                if "all_pages" in locked_ws_pages[output_fileGrp]:
-                    self.log.debug(f"Caching the received request due to locked output file grp pages")
-                    return True
-                # If there are request page ids that are already locked
-                if not set(locked_ws_pages[output_fileGrp]).isdisjoint(page_ids):
-                    self.log.debug(f"Caching the received request due to locked output file grp pages")
-                    return True
-
-    def lock_pages(self, locked_ws_pages: Dict, output_file_grps: List[str], page_ids: List[str]):
-        for output_fileGrp in output_file_grps:
-            if output_fileGrp not in locked_ws_pages:
-                self.log.debug(f"Creating an empty list for output file grp: {output_fileGrp}")
-                locked_ws_pages[output_fileGrp] = []
-            # The page id list is not empty - only some pages are in the request
-            if page_ids:
-                self.log.debug(f"Locking pages for `{output_fileGrp}`: {page_ids}")
-                locked_ws_pages[output_fileGrp].extend(page_ids)
-            else:
-                # Lock all pages with a single value
-                self.log.debug(f"Locking all pages for `{output_fileGrp}`")
-                locked_ws_pages[output_fileGrp].append("all_pages")
-
-    def unlock_pages(self, locked_ws_pages: Dict, output_file_grps: List[str], page_ids: List[str]):
-        for output_fileGrp in output_file_grps:
-            if output_fileGrp in locked_ws_pages:
-                if page_ids:
-                    # Unlock the previously locked pages
-                    self.log.debug(f"Unlocking pages of `{output_fileGrp}`: {page_ids}")
-                    locked_ws_pages[output_fileGrp] = [x for x in locked_ws_pages[output_fileGrp] if
-                                                       x not in page_ids]
-                    self.log.debug(f"Remaining locked pages of `{output_fileGrp}`: {locked_ws_pages[output_fileGrp]}")
-                else:
-                    # Remove the single variable used to indicate all pages are locked
-                    self.log.debug(f"Unlocking all pages for: {output_fileGrp}")
-                    locked_ws_pages[output_fileGrp].remove("all_pages")
-
-    # Returns true if all dependent jobs' states are success, else false
-    async def check_if_job_dependencies_met(self, dependencies: List[str]) -> bool:
-        # Check the states of all dependent jobs
-        for dependency_job_id in dependencies:
-            self.log.debug(f"dependency_job_id: {dependency_job_id}")
-            try:
-                dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
-            except ValueError:
-                # job_id not (yet) in db. Dependency not met
-                return False
-            self.log.debug(f"dependency_job_state: {dependency_job_state}")
-            # Found a dependent job whose state is not success
-            if dependency_job_state != StateEnum.success:
-                return False
-        return True
-
-    async def find_next_requests_from_internal_queue(self, internal_queue: List[PYJobInput]) -> List[PYJobInput]:
-        found_requests = []
-        for i, current_element in enumerate(internal_queue):
-            # Request has other job dependencies
-            if current_element.depends_on:
-                self.log.debug(f"current_element: {current_element}")
-                self.log.debug(f"job dependencies: {current_element.depends_on}")
-                satisfied_dependencies = await self.check_if_job_dependencies_met(current_element.depends_on)
-                self.log.debug(f"satisfied dependencies: {satisfied_dependencies}")
-                if not satisfied_dependencies:
-                    continue
-            # Consume the request from the internal queue
-            found_request = internal_queue.pop(i)
-            self.log.debug(f"found cached request to be processed: {found_request}")
-            found_requests.append(found_request)
-        return found_requests
-
     def query_ocrd_tool_json_from_server(self, processor_name):
         processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
         if not processor_server_url:
@@ -392,19 +354,22 @@ class ProcessingServer(FastAPI):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Unknown network agent with value: {data.agent_type}"
             )
-        workspace_db = await db_get_workspace(
+        db_workspace = await db_get_workspace(
             workspace_id=data.workspace_id,
             workspace_mets_path=data.path_to_mets
         )
-        if not workspace_db:
+        if not db_workspace:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
             )
+        workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
+        # initialize the request counter for the workspace_key
+        self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
 
         # Since the path is not resolved yet,
         # the return value is not important for the Processing Server
-        await validate_and_return_mets_path(self.log, data)
+        request_mets_path = await validate_and_return_mets_path(self.log, data)
 
         page_ids = expand_page_ids(data.page_id)
 
@@ -415,73 +380,69 @@ class ProcessingServer(FastAPI):
 
         # Check if there are any dependencies of the current request
         if data.depends_on:
-            if not await self.check_if_job_dependencies_met(data.depends_on):
-                self.log.debug(f"Caching the received request due to job dependencies")
-                cache_current_request = True
-
-        locked_ws_pages = workspace_db.pages_locked
+            cache_current_request = await self.cache_processing_requests.is_caching_required(data.depends_on)
 
         # No need for further check of locked pages dependency
         # if the request should be already cached
         if not cache_current_request:
             # Check if there are any locked pages for the current request
-            cache_current_request = self.check_if_locked_pages_for_output_file_grps(
-                locked_ws_pages=locked_ws_pages,
+            cache_current_request = self.cache_locked_pages.check_if_locked_pages_for_output_file_grps(
+                workspace_key=workspace_key,
                 output_file_grps=data.output_file_grps,
                 page_ids=page_ids
             )
 
         if cache_current_request:
-            workspace_key = data.workspace_id if data.workspace_id else data.path_to_mets
-            # If a record queue of this workspace_id does not exist in the requests cache
-            if not self.processing_requests_cache.get(workspace_key, None):
-                self.log.debug(f"Creating an internal queue for workspace_key: {workspace_key}")
-                self.processing_requests_cache[workspace_key] = []
-            self.log.debug(f"Caching the processing request: {data}")
-            # Add the processing request to the end of the internal queue
-            self.processing_requests_cache[workspace_key].append(data)
+            # Cache the received request
+            self.cache_processing_requests.cache_request(workspace_key, data)
 
-            return PYJobOutput(
-                job_id=data.job_id,
-                processor_name=processor_name,
-                workspace_id=data.workspace_id,
-                workspace_path=data.path_to_mets,
+            # Create a cached job DB entry
+            db_cached_job = DBProcessorJob(
+                **data.dict(exclude_unset=True, exclude_none=True),
+                internal_callback_url=self.internal_job_callback_url,
                 state=StateEnum.cached
             )
-        else:
-            # Update locked pages by locking the pages in the request
-            self.lock_pages(
-                locked_ws_pages=locked_ws_pages,
-                output_file_grps=data.output_file_grps,
-                page_ids=page_ids
-            )
+            await db_cached_job.insert()
+            return db_cached_job.to_job_output()
 
-            # Update the locked pages dictionary in the database
-            await db_update_workspace(
-                workspace_id=data.workspace_id,
-                workspace_mets_path=data.path_to_mets,
-                pages_locked=locked_ws_pages
-            )
+        # Lock the pages in the request
+        self.cache_locked_pages.lock_pages(
+            workspace_key=workspace_key,
+            output_file_grps=data.output_file_grps,
+            page_ids=page_ids
+        )
 
-        # Create a DB entry
-        job = DBProcessorJob(
+        # Start a Mets Server with the current workspace
+        mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
+
+        # Assign the mets server url in the database
+        await db_update_workspace(
+            workspace_id=data.workspace_id,
+            workspace_mets_path=data.path_to_mets,
+            mets_server_url=mets_server_url
+        )
+
+        # Create a queued job DB entry
+        db_queued_job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
             internal_callback_url=self.internal_job_callback_url,
             state=StateEnum.queued
         )
-        await job.insert()
-
+        await db_queued_job.insert()
+        self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
         job_output = None
         if data.agent_type == 'worker':
-            ocrd_tool = await self.get_processor_info(processor_name)
-            validate_job_input(self.log, processor_name, ocrd_tool, data)
-            processing_message = self.create_processing_message(job)
-            await self.push_to_processing_queue(processor_name, processing_message)
-            job_output = job.to_job_output()
+            ocrd_tool = await self.get_processor_info(data.processor_name)
+            validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+            processing_message = self.create_processing_message(db_queued_job)
+            self.log.debug(f"Pushing to processing worker: {data.processor_name}, {data.page_id}, {data.job_id}")
+            await self.push_to_processing_queue(data.processor_name, processing_message)
+            job_output = db_queued_job.to_job_output()
         if data.agent_type == 'server':
-            ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
-            validate_job_input(self.log, processor_name, ocrd_tool, data)
-            job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
+            ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(data.processor_name)
+            validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+            self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
+            job_output = await self.push_to_processor_server(data.processor_name, processor_server_url, data)
         if not job_output:
             self.log.exception('Failed to create job output')
             raise HTTPException(
@@ -502,9 +463,11 @@ class ProcessingServer(FastAPI):
         if processor_name not in deployed_processors:
             self.check_if_queue_exists(processor_name)
 
-        encoded_processing_message = OcrdProcessingMessage.encode_yml(processing_message)
         try:
-            self.rmq_publisher.publish_to_queue(processor_name, encoded_processing_message)
+            self.rmq_publisher.publish_to_queue(
+                queue_name=processor_name,
+                message=OcrdProcessingMessage.encode_yml(processing_message)
+            )
         except Exception as error:
             self.log.exception(f'RMQPublisher has failed: {error}')
             raise HTTPException(
@@ -554,94 +517,102 @@ class ProcessingServer(FastAPI):
         return await _get_processor_job(self.log, processor_name, job_id)
 
     async def remove_from_request_cache(self, result_message: PYResultMessage):
-        job_id = result_message.job_id
-        state = result_message.state
+        result_job_id = result_message.job_id
+        result_job_state = result_message.state
         path_to_mets = result_message.path_to_mets
         workspace_id = result_message.workspace_id
+        self.log.debug(f"Result job_id: {result_job_id}, state: {result_job_state}")
 
-        self.log.debug(f"Received result for job with id: {job_id} has state: {state}")
+        # Read DB workspace entry
+        db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
+        if not db_workspace:
+            self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+        mets_server_url = db_workspace.mets_server_url
+        workspace_key = path_to_mets if path_to_mets else workspace_id
 
-        if state == StateEnum.failed:
-            # TODO: Call the callback to the Workflow server if the current processing step has failed
-            pass
+        if result_job_state == StateEnum.failed:
+            await self.cache_processing_requests.cancel_dependent_jobs(
+                workspace_key=workspace_key,
+                processing_job_id=result_job_id
+            )
 
-        if state != StateEnum.success:
+        if result_job_state != StateEnum.success:
             # TODO: Handle other potential error cases
             pass
 
-        job_db = await db_get_processing_job(job_id)
-        if not job_db:
-            self.log.exception(f"Processing job with id: {job_id} not found in DB")
-        job_output_file_grps = job_db.output_file_grps
-        job_page_ids = expand_page_ids(job_db.page_id)
+        db_result_job = await db_get_processing_job(result_job_id)
+        if not db_result_job:
+            self.log.exception(f"Processing job with id: {result_job_id} not found in DB")
 
-        # Read DB workspace entry
-        workspace_db = await db_get_workspace(
-            workspace_id=workspace_id,
-            workspace_mets_path=path_to_mets
-        )
-        if not workspace_db:
-            self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
-
-        locked_ws_pages = workspace_db.pages_locked
-        # Update locked pages by unlocking the pages in the request
-        self.unlock_pages(
-            locked_ws_pages=locked_ws_pages,
-            output_file_grps=job_output_file_grps,
-            page_ids=job_page_ids
-        )
-
-        # Update the locked pages dictionary in the database
-        await db_update_workspace(
-            workspace_id=workspace_id,
-            workspace_mets_path=path_to_mets,
-            pages_locked=locked_ws_pages
+        # Unlock the output file group pages for the result processing request
+        self.cache_locked_pages.unlock_pages(
+            workspace_key=workspace_key,
+            output_file_grps=db_result_job.output_file_grps,
+            page_ids=expand_page_ids(db_result_job.page_id)
         )
 
         # Take the next request from the cache (if any available)
-        workspace_key = workspace_id if workspace_id else path_to_mets
-
-        if workspace_key not in self.processing_requests_cache:
+        if workspace_key not in self.cache_processing_requests.processing_requests:
             self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
             return
 
-        if not len(self.processing_requests_cache[workspace_key]):
-            # The queue is empty - delete it
-            try:
-                del self.processing_requests_cache[workspace_key]
-            except KeyError:
-                self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
+        # decrease the internal counter by 1
+        request_counter = self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=-1)
+        self.log.debug(f"Internal processing counter value: {request_counter}")
+        if not len(self.cache_processing_requests.processing_requests[workspace_key]):
+            if request_counter <= 0:
+                # Shut down the Mets Server for the workspace_key since no
+                # more internal callbacks are expected for that workspace
+                self.log.debug(f"Stopping the mets server: {mets_server_url}")
+                self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
+                # The queue is empty - delete it
+                try:
+                    del self.cache_processing_requests.processing_requests[workspace_key]
+                except KeyError:
+                    self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
+
+                # For debugging purposes it is good to see if any locked pages are left
+                self.log.debug(f"Contents of the locked pages cache for: {workspace_key}")
+                locked_pages = self.cache_locked_pages.get_locked_pages(workspace_key=workspace_key)
+                for output_fileGrp in locked_pages:
+                    self.log.debug(f"{output_fileGrp}: {locked_pages[output_fileGrp]}")
+            else:
+                self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
             return
 
-        consumed_requests = await self.find_next_requests_from_internal_queue(
-            internal_queue=self.processing_requests_cache[workspace_key]
-        )
+        consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
 
         if not len(consumed_requests):
-            self.log.debug("No data was consumed from the internal queue")
+            self.log.debug("No processing jobs were consumed from the requests cache")
             return
 
         for data in consumed_requests:
-            processor_name = data.processor_name
-            # Create a DB entry
-            job = DBProcessorJob(
-                **data.dict(exclude_unset=True, exclude_none=True),
-                internal_callback_url=self.internal_job_callback_url,
-                state=StateEnum.queued
-            )
-            await job.insert()
+            self.log.debug(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
+            db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
+            workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
 
+            # Lock the output file group pages for the current request
+            self.cache_locked_pages.lock_pages(
+                workspace_key=workspace_key,
+                output_file_grps=data.output_file_grps,
+                page_ids=expand_page_ids(data.page_id)
+            )
+            self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
             job_output = None
             if data.agent_type == 'worker':
-                ocrd_tool = await self.get_processor_info(processor_name)
-                validate_job_input(self.log, processor_name, ocrd_tool, data)
-                processing_message = self.create_processing_message(job)
-                await self.push_to_processing_queue(processor_name, processing_message)
-                job_output = job.to_job_output()
+                ocrd_tool = await self.get_processor_info(data.processor_name)
+                validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+                processing_message = self.create_processing_message(db_consumed_job)
+                self.log.debug(f"Pushing cached to processing worker: "
+                               f"{data.processor_name}, {data.page_id}, {data.job_id}")
+                await self.push_to_processing_queue(data.processor_name, processing_message)
+                job_output = db_consumed_job.to_job_output()
             if data.agent_type == 'server':
-                ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(processor_name)
-                validate_job_input(self.log, processor_name, ocrd_tool, data)
-                job_output = await self.push_to_processor_server(processor_name, processor_server_url, data)
+                ocrd_tool, processor_server_url = self.query_ocrd_tool_json_from_server(data.processor_name)
+                validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+                self.log.debug(f"Pushing cached to processor server: "
+                               f"{data.processor_name}, {data.page_id}, {data.job_id}")
+                job_output = await self.push_to_processor_server(data.processor_name, processor_server_url, data)
             if not job_output:
                 self.log.exception(f'Failed to create job output for job input data: {data}')
 
@@ -670,3 +641,153 @@ class ProcessingServer(FastAPI):
             unique_only=True
         )
         return processor_names_list
+
+    async def task_sequence_to_processing_jobs(
+            self,
+            tasks: List[ProcessorTask],
+            mets_path: str,
+            page_id: str,
+            agent_type: str = 'worker',
+    ) -> List[PYJobOutput]:
+        file_group_cache = {}
+        responses = []
+        for task in tasks:
+            # Find dependent jobs of the current task
+            dependent_jobs = []
+            for input_file_grp in task.input_file_grps:
+                if input_file_grp in file_group_cache:
+                    dependent_jobs.append(file_group_cache[input_file_grp])
+            # NOTE: The `task.mets_path` and `task.page_id` is not utilized in low level
+            # Thus, setting these two flags in the ocrd process workflow file has no effect
+            job_input_data = PYJobInput(
+                processor_name=task.executable,
+                path_to_mets=mets_path,
+                input_file_grps=task.input_file_grps,
+                output_file_grps=task.output_file_grps,
+                page_id=page_id,
+                parameters=task.parameters,
+                agent_type=agent_type,
+                depends_on=dependent_jobs,
+            )
+            response = await self.push_processor_job(
+                processor_name=job_input_data.processor_name,
+                data=job_input_data
+            )
+            for file_group in task.output_file_grps:
+                file_group_cache[file_group] = response.job_id
+            responses.append(response)
+        return responses
+
+    async def run_workflow(
+            self,
+            workflow: UploadFile,
+            mets_path: str,
+            agent_type: str = 'worker',
+            page_id: str = None,
+            page_wise: bool = False,
+            workflow_callback_url: str = None
+    ) -> PYWorkflowJobOutput:
+        try:
+            # core cannot create workspaces by api, but processing-server needs the workspace in the
+            # database. Here the workspace is created if the path available and not existing in db:
+            await db_create_workspace(mets_path)
+        except FileNotFoundError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Mets file not existing: {mets_path}")
+
+        workflow = (await workflow.read()).decode("utf-8")
+        try:
+            tasks_list = workflow.splitlines()
+            tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
+        except BaseException as e:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=f"Error parsing tasks: {e}")
+
+        available_groups = Workspace(Resolver(), Path(mets_path).parents[0]).mets.file_groups
+        for grp in tasks[0].input_file_grps:
+            if grp not in available_groups:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Input file grps of 1st processor not found: {tasks[0].input_file_grps}"
+                )
+        try:
+            if page_id:
+                page_range = expand_page_ids(page_id)
+            else:
+                # If no page_id is specified, all physical pages are assigned as page range
+                page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
+            compact_page_range = f'{page_range[0]}..{page_range[-1]}'
+        except BaseException as e:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=f"Error determining page-range: {e}")
+
+        if not page_wise:
+            responses = await self.task_sequence_to_processing_jobs(
+                tasks=tasks,
+                mets_path=mets_path,
+                page_id=compact_page_range,
+                agent_type=agent_type
+            )
+            processing_job_ids = []
+            for response in responses:
+                processing_job_ids.append(response.job_id)
+            db_workflow_job = DBWorkflowJob(
+                job_id=generate_id(),
+                page_id=compact_page_range,
+                page_wise=page_wise,
+                processing_job_ids={compact_page_range: processing_job_ids},
+                path_to_mets=mets_path,
+                workflow_callback_url=workflow_callback_url
+            )
+            await db_workflow_job.insert()
+            return db_workflow_job.to_job_output()
+
+        all_pages_job_ids = {}
+        for current_page in page_range:
+            responses = await self.task_sequence_to_processing_jobs(
+                tasks=tasks,
+                mets_path=mets_path,
+                page_id=current_page,
+                agent_type=agent_type
+            )
+            processing_job_ids = []
+            for response in responses:
+                processing_job_ids.append(response.job_id)
+            all_pages_job_ids[current_page] = processing_job_ids
+        db_workflow_job = DBWorkflowJob(
+            job_id=generate_id(),
+            page_id=compact_page_range,
+            page_wise=page_wise,
+            processing_job_ids=all_pages_job_ids,
+            path_to_mets=mets_path,
+            workflow_callback_url=workflow_callback_url
+        )
+        await db_workflow_job.insert()
+        return db_workflow_job.to_job_output()
+
+    async def get_workflow_info(self, workflow_job_id) -> Dict:
+        """ Return list of a workflow's processor jobs
+        """
+        try:
+            workflow_job = await db_get_workflow_job(workflow_job_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Workflow-Job with id: {workflow_job_id} not found")
+        job_ids: List[str] = [id for lst in workflow_job.processing_job_ids.values() for id in lst]
+        jobs = await db_get_processing_jobs(job_ids)
+        res = {}
+        failed_tasks = {}
+        failed_tasks_key = "failed-processor-tasks"
+        for job in jobs:
+            res.setdefault(job.processor_name, {})
+            res[job.processor_name].setdefault(job.state.value, 0)
+            res[job.processor_name][job.state.value] += 1
+            if job.state == "FAILED":
+                if failed_tasks_key not in res:
+                    res[failed_tasks_key] = failed_tasks
+                failed_tasks.setdefault(job.processor_name, [])
+                failed_tasks[job.processor_name].append({
+                    "job_id": job.job_id,
+                    "page_id": job.page_id,
+                })
+        return res

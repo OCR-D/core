@@ -1,6 +1,6 @@
 import re
 from fastapi import HTTPException, status
-from typing import Dict, List
+from typing import List
 from ocrd_validators import ParameterValidator
 from ocrd_utils import (
     generate_range,
@@ -78,7 +78,7 @@ def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: 
         logger.exception(f'Failed to validate processing job against the ocrd_tool: {e}')
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f'Failed to validate processing job against the ocrd_tool'
+            detail='Failed to validate processing job against the ocrd_tool'
         )
     else:
         if not report.is_valid:
