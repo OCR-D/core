@@ -12,6 +12,7 @@ from re import search as re_search
 from pathlib import Path
 import subprocess
 from time import sleep
+from tempfile import gettempdir
 
 from ocrd_utils import getLogger, safe_filename
 
@@ -522,7 +523,7 @@ class Deployer:
     # TODO: No support for TCP version yet
     def start_unix_mets_server(self, mets_path: str) -> str:
         log_file = get_mets_server_logging_file_path(mets_path=mets_path)
-        mets_server_url = f'/tmp/{safe_filename(mets_path)}.sock'
+        mets_server_url = f'{gettempdir()}/{safe_filename(mets_path)}.sock'
 
         if is_mets_server_running(mets_server_url=mets_server_url):
             self.log.info(f"The mets server is already started: {mets_server_url}")
