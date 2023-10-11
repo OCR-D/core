@@ -66,6 +66,7 @@ class PYJobOutput(BaseModel):
     input_file_grps: List[str]
     output_file_grps: Optional[List[str]]
     page_id: Optional[str] = None
+    log_file_path: Optional[str]
 
 
 class DBProcessorJob(Document):
@@ -88,6 +89,7 @@ class DBProcessorJob(Document):
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     exec_time: Optional[str]
+    log_file_path: Optional[str]
 
     class Settings:
         use_enum_values = True
@@ -101,7 +103,8 @@ class DBProcessorJob(Document):
             workspace_id=self.workspace_id,
             input_file_grps=self.input_file_grps,
             output_file_grps=self.output_file_grps,
-            page_id=self.page_id
+            page_id=self.page_id,
+            log_file_path=self.log_file_path
         )
 
 

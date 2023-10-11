@@ -204,14 +204,15 @@ class ProcessingWorker:
         execution_failed = False
         self.log.debug(f'Invoking processor: {self.processor_name}')
         start_time = datetime.now()
+        job_log_file = get_processing_job_logging_file_path(job_id=job_id)
         sync_db_update_processing_job(
             job_id=job_id,
             state=StateEnum.running,
             path_to_mets=path_to_mets,
-            start_time=start_time
+            start_time=start_time,
+            log_file_path=job_log_file
         )
         try:
-            job_log_file = get_processing_job_logging_file_path(job_id=job_id)
             invoke_processor(
                 processor_class=self.processor_class,
                 executable=self.processor_name,
