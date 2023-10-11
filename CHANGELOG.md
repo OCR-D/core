@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `/workflow` endpoint that can handle `ocrd process` workflows and distribute jobs page-wise across workers, #1083, #1105, #1108, #1109
+
 Changed:
 
   * METS Server: Make sockets world-readable and -writable, #1098, #1099
