@@ -27,7 +27,7 @@ def invoke_processor(
 
     ctx_mgr = redirect_stderr_and_stdout_to_file(log_filename) if log_filename else nullcontext()
     with ctx_mgr:
-        initLogging()
+        initLogging(force_reinit=True)
         workspace = get_ocrd_workspace_instance(
             mets_path=abs_path_to_mets,
             mets_server_url=mets_server_url
