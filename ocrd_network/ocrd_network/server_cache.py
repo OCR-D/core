@@ -1,8 +1,13 @@
 from __future__ import annotations
 from typing import Dict, List
 from logging import DEBUG, getLogger, FileHandler
+from os import makedirs
 
 from .database import db_get_processing_job, db_update_processing_job
+from .logging import (
+    get_cache_locked_pages_logging_file_path,
+    get_cache_processing_requests_logging_file_path
+)
 from .models import PYJobInput, StateEnum
 
 __all__ = [
@@ -16,7 +21,8 @@ class CacheLockedPages:
         self.log = getLogger("ocrd_network.server_cache.locked_pages")
         # TODO: remove this when refactoring the logging
         self.log.setLevel(DEBUG)
-        log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_locked_pages.log')
+        log_file = get_cache_locked_pages_logging_file_path()
+        log_fh = FileHandler(filename=log_file, mode='a')
         log_fh.setLevel(DEBUG)
         self.log.addHandler(log_fh)
 
@@ -111,7 +117,8 @@ class CacheProcessingRequests:
         self.log = getLogger("ocrd_network.server_cache.processing_requests")
         # TODO: remove this when refactoring the logging
         self.log.setLevel(DEBUG)
-        log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_processing_requests.log')
+        log_file = get_cache_processing_requests_logging_file_path()
+        log_fh = FileHandler(filename=log_file, mode='a')
         log_fh.setLevel(DEBUG)
         self.log.addHandler(log_fh)
 

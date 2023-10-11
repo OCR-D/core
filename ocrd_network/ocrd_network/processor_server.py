@@ -18,6 +18,7 @@ from .database import (
     db_update_processing_job,
     initiate_database
 )
+from .logging import get_processor_server_logging_file_path
 from .models import (
     PYJobInput,
     PYJobOutput,
@@ -49,9 +50,9 @@ class ProcessorServer(FastAPI):
             title=f'OCR-D Processor Server',
             description='OCR-D Processor Server'
         )
-        logging_suffix = f'{processor_name}.{getpid()}'
         self.log = getLogger('ocrd_network.processor_server')
-        file_handler = logging.FileHandler(f'/tmp/ocrd_server_{logging_suffix}.log', mode='a')
+        log_file = get_processor_server_logging_file_path(processor_name=processor_name, pid=getpid())
+        file_handler = logging.FileHandler(filename=log_file, mode='a')
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         self.log.addHandler(file_handler)
 

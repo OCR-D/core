@@ -1,6 +1,8 @@
 import json
+import logging
 import requests
 import httpx
+from os import getpid
 from typing import Dict, List
 import uvicorn
 
@@ -30,6 +32,7 @@ from .database import (
     db_update_workspace
 )
 from .deployer import Deployer
+from .logging import get_processing_server_logging_file_path
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
@@ -82,6 +85,11 @@ class ProcessingServer(FastAPI):
             description='OCR-D Processing Server'
         )
         self.log = getLogger('ocrd_network.processing_server')
+        log_file = get_processing_server_logging_file_path(pid=getpid())
+        file_handler = logging.FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        self.log.addHandler(file_handler)
+
         self.log.info(f"Downloading ocrd all tool json")
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(
             ocrd_all_url="https://ocr-d.de/js/ocrd-all-tool.json"

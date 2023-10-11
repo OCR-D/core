@@ -9,7 +9,6 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from typing import Dict, List, Union
 from re import search as re_search
-from os import getpid
 from pathlib import Path
 import subprocess
 from time import sleep
@@ -22,7 +21,7 @@ from .deployment_utils import (
     verify_mongodb_available,
     verify_rabbitmq_available,
 )
-
+from .logging import get_mets_server_logging_file_path
 from .runtime_data import (
     DataHost,
     DataMongoDB,
@@ -468,18 +467,15 @@ class Deployer:
         self.log.info(f'Starting native processing worker: {processor_name}')
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} worker --database {database_url} --queue {queue_url}'
+        cmd = f'{processor_name} worker --database {database_url} --queue {queue_url} &'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
         # `xyz` before and after the code to easily be able to filter out the pid via regex when
         # returning from the function
 
-        # TODO: Check here again
-        # log_path = f'/tmp/deployed_{processor_name}.log'
-        # stdin.write(f"echo starting processing worker with '{cmd}' >> '{log_path}'\n")
-        # stdin.write(f'{cmd} >> {log_path} 2>&1 &\n')
-        stdin.write(f'{cmd} &\n')
+        self.log.debug(f'About to execute command: {cmd}')
+        stdin.write(f'{cmd}\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
@@ -514,9 +510,9 @@ class Deployer:
         self.log.info(f"Starting native processor server: {processor_name} on {agent_address}")
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} server --address {agent_address} --database {database_url}'
-        stdin.write(f"echo starting processor server with '{cmd}'\n")
-        stdin.write(f'{cmd} &\n')
+        cmd = f'{processor_name} server --address {agent_address} --database {database_url} &'
+        self.log.debug(f'About to execute command: {cmd}')
+        stdin.write(f'{cmd}\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
@@ -525,9 +521,8 @@ class Deployer:
 
     # TODO: No support for TCP version yet
     def start_unix_mets_server(self, mets_path: str) -> str:
-        socket_file = f'{safe_filename(mets_path)}.sock'
-        log_path = f'/tmp/{safe_filename(mets_path)}.log'
-        mets_server_url = f'/tmp/{socket_file}'
+        log_file = get_mets_server_logging_file_path(mets_path=mets_path)
+        mets_server_url = f'/tmp/{safe_filename(mets_path)}.sock'
 
         if is_mets_server_running(mets_server_url=mets_server_url):
             self.log.info(f"The mets server is already started: {mets_server_url}")
@@ -539,8 +534,8 @@ class Deployer:
             args=['nohup', 'ocrd', 'workspace', '--mets-server-url', f'{mets_server_url}',
                   '-d', f'{cwd}', 'server', 'start'],
             shell=False,
-            stdout=open(log_path, 'w'),
-            stderr=open(log_path, 'a'),
+            stdout=open(file=log_file, mode='w'),
+            stderr=open(file=log_file, mode='w'),
             cwd=cwd,
             universal_newlines=True
         )
