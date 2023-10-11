@@ -1,5 +1,5 @@
 import json
-import logging
+from logging import FileHandler, Formatter
 import requests
 import httpx
 from os import getpid
@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
-from ocrd_utils import initLogging, getLogger
+from ocrd_utils import initLogging, getLogger, LOG_FORMAT
 from ocrd import Resolver, Workspace
 from pathlib import Path
 from .database import (
@@ -86,8 +86,8 @@ class ProcessingServer(FastAPI):
         )
         self.log = getLogger('ocrd_network.processing_server')
         log_file = get_processing_server_logging_file_path(pid=getpid())
-        file_handler = logging.FileHandler(filename=log_file, mode='a')
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        file_handler = FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(file_handler)
 
         self.log.info(f"Downloading ocrd all tool json")

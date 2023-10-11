@@ -9,14 +9,14 @@ is a single OCR-D Processor instance.
 """
 
 from datetime import datetime
-import logging
+from logging import FileHandler, Formatter
 from os import getpid
 from time import sleep
 import pika.spec
 import pika.adapters.blocking_connection
 from pika.exceptions import AMQPConnectionError
 
-from ocrd_utils import config, getLogger
+from ocrd_utils import config, getLogger, LOG_FORMAT
 from .database import (
     sync_initiate_database,
     sync_db_get_workspace,
@@ -46,8 +46,8 @@ class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
         self.log = getLogger(f'ocrd_network.processing_worker')
         log_file = get_processing_worker_logging_file_path(processor_name=processor_name, pid=getpid())
-        file_handler = logging.FileHandler(filename=log_file, mode='a')
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        file_handler = FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(file_handler)
 
         try:

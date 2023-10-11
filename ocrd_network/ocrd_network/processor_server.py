@@ -1,5 +1,5 @@
 from datetime import datetime
-import logging
+from logging import FileHandler, Formatter
 from os import getpid
 from subprocess import run, PIPE
 import uvicorn
@@ -10,7 +10,8 @@ from ocrd_utils import (
     initLogging,
     get_ocrd_tool_json,
     getLogger,
-    parse_json_string_with_comments,
+    LOG_FORMAT,
+    parse_json_string_with_comments
 )
 from .database import (
     DBProcessorJob,
@@ -52,8 +53,8 @@ class ProcessorServer(FastAPI):
         )
         self.log = getLogger('ocrd_network.processor_server')
         log_file = get_processor_server_logging_file_path(processor_name=processor_name, pid=getpid())
-        file_handler = logging.FileHandler(filename=log_file, mode='a')
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        file_handler = FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(file_handler)
 
         self.db_url = mongodb_addr
