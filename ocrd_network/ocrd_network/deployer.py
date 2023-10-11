@@ -535,7 +535,7 @@ class Deployer:
                   '-d', f'{cwd}', 'server', 'start'],
             shell=False,
             stdout=open(file=log_file, mode='w'),
-            stderr=open(file=log_file, mode='w'),
+            stderr=open(file=log_file, mode='a'),
             cwd=cwd,
             universal_newlines=True
         )
