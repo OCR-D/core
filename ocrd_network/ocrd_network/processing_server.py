@@ -17,10 +17,14 @@ from fastapi.responses import JSONResponse
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger
+from ocrd import Resolver, Workspace
+from pathlib import Path
 from .database import (
     initiate_database,
     db_create_workspace,
     db_get_processing_job,
+    db_get_processing_jobs,
+    db_get_workflow_job,
     db_get_workspace,
     db_update_processing_job,
     db_update_workspace
@@ -55,6 +59,7 @@ from .utils import (
     generate_id,
     get_ocrd_workspace_physical_pages
 )
+import time
 
 
 class ProcessingServer(FastAPI):
@@ -178,6 +183,20 @@ class ProcessingServer(FastAPI):
             tags=['workflow', 'processing'],
             status_code=status.HTTP_200_OK,
             summary='Run a workflow',
+            response_model=PYWorkflowJobOutput,
+            response_model_exclude=["processing_job_ids"],
+            response_model_exclude_defaults=True,
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/workflow/{workflow_job_id}',
+            endpoint=self.get_workflow_info,
+            methods=['GET'],
+            tags=['workflow', 'processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get information about a workflow run',
         )
 
         @self.exception_handler(RequestValidationError)
@@ -668,11 +687,11 @@ class ProcessingServer(FastAPI):
             page_wise: bool = False,
             workflow_callback_url: str = None
     ) -> PYWorkflowJobOutput:
-        # core cannot create workspaces by api, but processing-server needs the workspace in the
-        # database. Here the workspace is created if the path available and not existing in db:
-        # from pudb import set_trace; set_trace()
-        db_workspace = await db_create_workspace(mets_path)
-        if not db_workspace:
+        try:
+            # core cannot create workspaces by api, but processing-server needs the workspace in the
+            # database. Here the workspace is created if the path available and not existing in db:
+            await db_create_workspace(mets_path)
+        except FileNotFoundError:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f"Mets file not existing: {mets_path}")
 
@@ -681,16 +700,26 @@ class ProcessingServer(FastAPI):
             tasks_list = workflow.splitlines()
             tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
         except BaseException as e:
-            print(e)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
 
-        if page_id:
-            page_range = expand_page_ids(page_id)
-        else:
-            # If no page_id is specified, all physical pages are assigned as page range
-            page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
-        compact_page_range = f'{page_range[0]}..{page_range[-1]}'
+        available_groups = Workspace(Resolver(), Path(mets_path).parents[0]).mets.file_groups
+        for grp in tasks[0].input_file_grps:
+            if grp not in available_groups:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Input file grps of 1st processor not found: {tasks[0].input_file_grps}"
+                )
+        try:
+            if page_id:
+                page_range = expand_page_ids(page_id)
+            else:
+                # If no page_id is specified, all physical pages are assigned as page range
+                page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
+            compact_page_range = f'{page_range[0]}..{page_range[-1]}'
+        except BaseException as e:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail=f"Error determining page-range: {e}")
 
         if not page_wise:
             responses = await self.task_sequence_to_processing_jobs(
@@ -735,3 +764,30 @@ class ProcessingServer(FastAPI):
         )
         await db_workflow_job.insert()
         return db_workflow_job.to_job_output()
+
+    async def get_workflow_info(self, workflow_job_id) -> Dict:
+        """ Return list of a workflow's processor jobs
+        """
+        try:
+            workflow_job = await db_get_workflow_job(workflow_job_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Workflow-Job with id: {workflow_job_id} not found")
+        job_ids: List[str] = [id for lst in workflow_job.processing_job_ids.values() for id in lst]
+        jobs = await db_get_processing_jobs(job_ids)
+        res = {}
+        failed_tasks = {}
+        failed_tasks_key = "failed-processor-tasks"
+        for job in jobs:
+            res.setdefault(job.processor_name, {})
+            res[job.processor_name].setdefault(job.state.value, 0)
+            res[job.processor_name][job.state.value] += 1
+            if job.state == "FAILED":
+                if failed_tasks_key not in res:
+                    res[failed_tasks_key] = failed_tasks
+                failed_tasks.setdefault(job.processor_name, [])
+                failed_tasks[job.processor_name].append({
+                    "job_id": job.job_id,
+                    "page_id": job.page_id,
+                })
+        return res
