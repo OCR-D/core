@@ -1,8 +1,13 @@
 from __future__ import annotations
 from typing import Dict, List
-from logging import DEBUG, getLogger, FileHandler
+from logging import FileHandler, Formatter
 
+from ocrd_utils import getLogger, LOG_FORMAT
 from .database import db_get_processing_job, db_update_processing_job
+from .logging import (
+    get_cache_locked_pages_logging_file_path,
+    get_cache_processing_requests_logging_file_path
+)
 from .models import PYJobInput, StateEnum
 
 __all__ = [
@@ -14,10 +19,9 @@ __all__ = [
 class CacheLockedPages:
     def __init__(self) -> None:
         self.log = getLogger("ocrd_network.server_cache.locked_pages")
-        # TODO: remove this when refactoring the logging
-        self.log.setLevel(DEBUG)
-        log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_locked_pages.log')
-        log_fh.setLevel(DEBUG)
+        log_file = get_cache_locked_pages_logging_file_path()
+        log_fh = FileHandler(filename=log_file, mode='a')
+        log_fh.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(log_fh)
 
         # Used for keeping track of locked pages for a workspace
@@ -109,10 +113,9 @@ class CacheLockedPages:
 class CacheProcessingRequests:
     def __init__(self) -> None:
         self.log = getLogger("ocrd_network.server_cache.processing_requests")
-        # TODO: remove this when refactoring the logging
-        self.log.setLevel(DEBUG)
-        log_fh = FileHandler(f'/tmp/ocrd_processing_server_cache_processing_requests.log')
-        log_fh.setLevel(DEBUG)
+        log_file = get_cache_processing_requests_logging_file_path()
+        log_fh = FileHandler(filename=log_file, mode='a')
+        log_fh.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(log_fh)
 
         # Used for buffering/caching processing requests in the Processing Server

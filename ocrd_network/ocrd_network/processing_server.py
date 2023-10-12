@@ -1,6 +1,8 @@
 import json
+from logging import FileHandler, Formatter
 import requests
 import httpx
+from os import getpid
 from typing import Dict, List
 import uvicorn
 
@@ -12,11 +14,11 @@ from fastapi import (
     UploadFile
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
-from ocrd_utils import initLogging, getLogger
+from ocrd_utils import initLogging, getLogger, LOG_FORMAT
 from ocrd import Resolver, Workspace
 from pathlib import Path
 from .database import (
@@ -30,6 +32,7 @@ from .database import (
     db_update_workspace
 )
 from .deployer import Deployer
+from .logging import get_processing_server_logging_file_path
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
@@ -49,6 +52,7 @@ from .server_cache import (
 )
 from .server_utils import (
     _get_processor_job,
+    _get_processor_job_log,
     expand_page_ids,
     validate_and_return_mets_path,
     validate_job_input
@@ -82,6 +86,11 @@ class ProcessingServer(FastAPI):
             description='OCR-D Processing Server'
         )
         self.log = getLogger('ocrd_network.processing_server')
+        log_file = get_processing_server_logging_file_path(pid=getpid())
+        file_handler = FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(Formatter(LOG_FORMAT))
+        self.log.addHandler(file_handler)
+
         self.log.info(f"Downloading ocrd all tool json")
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(
             ocrd_all_url="https://ocr-d.de/js/ocrd-all-tool.json"
@@ -147,6 +156,15 @@ class ProcessingServer(FastAPI):
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/processor/{processor_name}/{job_id}/log',
+            endpoint=self.get_processor_job_log,
+            methods=['GET'],
+            tags=['processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get the log file of a job id'
         )
 
         self.router.add_api_route(
@@ -515,6 +533,9 @@ class ProcessingServer(FastAPI):
 
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, processor_name, job_id)
+
+    async def get_processor_job_log(self, processor_name: str, job_id: str) -> FileResponse:
+        return await _get_processor_job_log(self.log, processor_name, job_id)
 
     async def remove_from_request_cache(self, result_message: PYResultMessage):
         result_job_id = result_message.job_id

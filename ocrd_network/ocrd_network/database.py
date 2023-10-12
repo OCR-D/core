@@ -166,6 +166,8 @@ async def db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
             job.path_to_mets = value
         elif key == 'exec_time':
             job.exec_time = value
+        elif key == 'log_file_path':
+            job.log_file_path = value
         else:
             raise ValueError(f'Field "{key}" is not updatable.')
     await job.save()

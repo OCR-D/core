@@ -1,16 +1,18 @@
 from datetime import datetime
-import logging
+from logging import FileHandler, Formatter
 from os import getpid
 from subprocess import run, PIPE
 import uvicorn
 
 from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import FileResponse
 
 from ocrd_utils import (
     initLogging,
     get_ocrd_tool_json,
     getLogger,
-    parse_json_string_with_comments,
+    LOG_FORMAT,
+    parse_json_string_with_comments
 )
 from .database import (
     DBProcessorJob,
@@ -18,6 +20,7 @@ from .database import (
     db_update_processing_job,
     initiate_database
 )
+from .logging import get_processor_server_logging_file_path
 from .models import (
     PYJobInput,
     PYJobOutput,
@@ -28,6 +31,7 @@ from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdResultMessage
 from .server_utils import (
     _get_processor_job,
+    _get_processor_job_log,
     validate_and_return_mets_path,
     validate_job_input
 )
@@ -49,10 +53,10 @@ class ProcessorServer(FastAPI):
             title=f'OCR-D Processor Server',
             description='OCR-D Processor Server'
         )
-        logging_suffix = f'{processor_name}.{getpid()}'
         self.log = getLogger('ocrd_network.processor_server')
-        file_handler = logging.FileHandler(f'/tmp/ocrd_server_{logging_suffix}.log', mode='a')
-        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        log_file = get_processor_server_logging_file_path(processor_name=processor_name, pid=getpid())
+        file_handler = FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(file_handler)
 
         self.db_url = mongodb_addr
@@ -105,6 +109,15 @@ class ProcessorServer(FastAPI):
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/{job_id}/log',
+            endpoint=self.get_processor_job_log,
+            methods=['GET'],
+            tags=['processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get the log file of a job id'
         )
 
     async def on_startup(self):
@@ -237,5 +250,8 @@ class ProcessorServer(FastAPI):
     def run_server(self, host, port):
         uvicorn.run(self, host=host, port=port)
 
-    async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
-        return await _get_processor_job(self.log, processor_name, job_id)
+    async def get_processor_job(self, job_id: str) -> PYJobOutput:
+        return await _get_processor_job(self.log, self.processor_name, job_id)
+
+    async def get_processor_job_log(self, job_id: str) -> FileResponse:
+        return await _get_processor_job_log(self.log, self.processor_name, job_id)

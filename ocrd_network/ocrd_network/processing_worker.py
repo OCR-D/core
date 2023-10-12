@@ -9,21 +9,22 @@ is a single OCR-D Processor instance.
 """
 
 from datetime import datetime
-import logging
-from os import getpid, makedirs
-
+from logging import FileHandler, Formatter
+from os import getpid
+from time import sleep
 import pika.spec
 import pika.adapters.blocking_connection
 from pika.exceptions import AMQPConnectionError
 
-from ocrd_utils import getLogger
-
-from time import sleep
-
+from ocrd_utils import config, getLogger, LOG_FORMAT
 from .database import (
     sync_initiate_database,
     sync_db_get_workspace,
     sync_db_update_processing_job,
+)
+from .logging import (
+    get_processing_job_logging_file_path,
+    get_processing_worker_logging_file_path
 )
 from .models import StateEnum
 from .process_helpers import invoke_processor
@@ -39,19 +40,15 @@ from .utils import (
     verify_database_uri,
     verify_and_parse_mq_uri
 )
-from ocrd_utils import config
 
 
 class ProcessingWorker:
-    def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None, log_filename:str=None) -> None:
+    def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
         self.log = getLogger(f'ocrd_network.processing_worker')
-        if not log_filename:
-            log_filename = f'/tmp/ocrd_worker_{processor_name}.{getpid()}.log'
-        self.log_filename = log_filename
-        # TODO: Use that handler once the separate job logs is resolved
-        # file_handler = logging.FileHandler(log_filename, mode='a')
-        # file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        # self.log.addHandler(file_handler)
+        log_file = get_processing_worker_logging_file_path(processor_name=processor_name, pid=getpid())
+        file_handler = FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(Formatter(LOG_FORMAT))
+        self.log.addHandler(file_handler)
 
         try:
             verify_database_uri(mongodb_addr)
@@ -207,16 +204,15 @@ class ProcessingWorker:
         execution_failed = False
         self.log.debug(f'Invoking processor: {self.processor_name}')
         start_time = datetime.now()
+        job_log_file = get_processing_job_logging_file_path(job_id=job_id)
         sync_db_update_processing_job(
             job_id=job_id,
             state=StateEnum.running,
             path_to_mets=path_to_mets,
-            start_time=start_time
+            start_time=start_time,
+            log_file_path=job_log_file
         )
         try:
-            # TODO: Refactor the root logging dir for jobs
-            # makedirs(name='/tmp/ocrd_processing_jobs_logs', exist_ok=True)
-            # log_filename = f'/tmp/ocrd_processing_jobs_logs/{job_id}.log'
             invoke_processor(
                 processor_class=self.processor_class,
                 executable=self.processor_name,
@@ -224,7 +220,7 @@ class ProcessingWorker:
                 input_file_grps=input_file_grps,
                 output_file_grps=output_file_grps,
                 page_id=page_id,
-                log_filename=self.log_filename,
+                log_filename=job_log_file,
                 parameters=processing_message.parameters,
                 mets_server_url=mets_server_url
             )
