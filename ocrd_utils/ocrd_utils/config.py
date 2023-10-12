@@ -9,7 +9,9 @@ in the `ocrd` package for the actual values
 
 from os import environ
 from pathlib import Path
+from tempfile import gettempdir
 from textwrap import fill, indent
+
 
 class OcrdEnvVariable():
 
@@ -155,6 +157,18 @@ config.add("OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS",
     description="Number of attempts for a worker to create its queue. Helpfull if the rabbitmq-server needs time to be fully started",
     parser=int,
     default=(True, 3))
+
+config.add(name="OCRD_NETWORK_SOCKETS_ROOT_DIR",
+           description="The root directory where all mets server related socket files are created",
+           parser=lambda val: Path(val),
+           default=(True, Path(gettempdir(), "ocrd_network_sockets")))
+config.OCRD_NETWORK_SOCKETS_ROOT_DIR.mkdir(parents=True, exist_ok=True)
+
+config.add(name="OCRD_NETWORK_LOGS_ROOT_DIR",
+           description="The root directory where all ocrd_network related file logs are stored",
+           parser=lambda val: Path(val),
+           default=(True, Path(gettempdir(), "ocrd_network_logs")))
+config.OCRD_NETWORK_LOGS_ROOT_DIR.mkdir(parents=True, exist_ok=True)
 
 config.add("HOME",
     description="Directory to look for `ocrd_logging.conf`, fallback for unset XDG variables.",

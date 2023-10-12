@@ -1,5 +1,5 @@
 from pathlib import Path
-from ocrd_utils import safe_filename
+from ocrd_utils import safe_filename, config
 
 
 OCRD_NETWORK_MODULES = [
@@ -14,8 +14,7 @@ OCRD_NETWORK_MODULES = [
 def get_root_logging_dir(module_name: str) -> Path:
     if module_name not in OCRD_NETWORK_MODULES:
         raise ValueError(f"Invalid module name: {module_name}, should be one of: {OCRD_NETWORK_MODULES}")
-    # TODO: Utilize env variable to set the root
-    module_log_dir = Path("/tmp", "ocrd_network_logs", module_name)
+    module_log_dir = Path(config.OCRD_NETWORK_LOGS_ROOT_DIR, module_name)
     module_log_dir.mkdir(parents=True, exist_ok=True)
     return module_log_dir
 

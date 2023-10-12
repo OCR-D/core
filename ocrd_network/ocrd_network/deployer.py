@@ -12,9 +12,8 @@ from re import search as re_search
 from pathlib import Path
 import subprocess
 from time import sleep
-from tempfile import gettempdir
 
-from ocrd_utils import getLogger, safe_filename
+from ocrd_utils import config, getLogger, safe_filename
 
 from .deployment_utils import (
     create_docker_client,
@@ -521,11 +520,11 @@ class Deployer:
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
 
     # TODO: No support for TCP version yet
-    def start_unix_mets_server(self, mets_path: str) -> str:
+    def start_unix_mets_server(self, mets_path: str) -> Path:
         log_file = get_mets_server_logging_file_path(mets_path=mets_path)
-        mets_server_url = f'{gettempdir()}/{safe_filename(mets_path)}.sock'
+        mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(mets_path)}.sock")
 
-        if is_mets_server_running(mets_server_url=mets_server_url):
+        if is_mets_server_running(mets_server_url=str(mets_server_url)):
             self.log.info(f"The mets server is already started: {mets_server_url}")
             return mets_server_url
 
