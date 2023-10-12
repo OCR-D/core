@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.55.1] - 2023-10-12
+
 Changed:
 
   * `ocrd workspace bulk-add` distinguishes between `url` and `local_filename`, supporting both, #1086, #1079, #1113
@@ -1833,6 +1835,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.55.1]: ../../compare/v2.55.1..v2.55.0
 [2.55.0]: ../../compare/v2.55.0..v2.54.0
 [2.54.0]: ../../compare/v2.54.0..v2.53.0
 [2.53.0]: ../../compare/v2.53.0..v2.52.0
