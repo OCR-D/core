@@ -14,7 +14,7 @@ from fastapi import (
     UploadFile
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
@@ -52,6 +52,7 @@ from .server_cache import (
 )
 from .server_utils import (
     _get_processor_job,
+    _get_processor_job_log,
     expand_page_ids,
     validate_and_return_mets_path,
     validate_job_input
@@ -155,6 +156,15 @@ class ProcessingServer(FastAPI):
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
+        )
+
+        self.router.add_api_route(
+            path='/processor/{processor_name}/{job_id}/log',
+            endpoint=self.get_processor_job_log,
+            methods=['GET'],
+            tags=['processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get the log file of a job id'
         )
 
         self.router.add_api_route(
@@ -523,6 +533,9 @@ class ProcessingServer(FastAPI):
 
     async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, processor_name, job_id)
+
+    async def get_processor_job_log(self, processor_name: str, job_id: str) -> FileResponse:
+        return await _get_processor_job_log(self.log, processor_name, job_id)
 
     async def remove_from_request_cache(self, result_message: PYResultMessage):
         result_job_id = result_message.job_id

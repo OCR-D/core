@@ -1,5 +1,7 @@
 import re
 from fastapi import HTTPException, status
+from fastapi.responses import FileResponse
+from pathlib import Path
 from typing import List
 from ocrd_validators import ParameterValidator
 from ocrd_utils import (
@@ -26,6 +28,12 @@ async def _get_processor_job(logger, processor_name: str, job_id: str) -> PYJobO
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
         )
+
+
+async def _get_processor_job_log(logger, processor_name: str, job_id: str) -> FileResponse:
+    db_job = await _get_processor_job(logger, processor_name, job_id)
+    log_file_path = Path(db_job.log_file_path)
+    return FileResponse(path=log_file_path, filename=log_file_path.name)
 
 
 async def validate_and_return_mets_path(logger, job_input: PYJobInput) -> str:
