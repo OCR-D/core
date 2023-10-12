@@ -48,6 +48,10 @@ Variables:
 {config.describe('OCRD_PROFILE_FILE')}
 \b
 {config.describe('OCRD_PROFILE', wrap_text=False)}
+\b
+{config.describe('OCRD_NETWORK_SOCKETS_ROOT_DIR')}
+\b
+{config.describe('OCRD_NETWORK_LOGS_ROOT_DIR')}
 """
 
 def command_with_replaced_help(*replacements):
