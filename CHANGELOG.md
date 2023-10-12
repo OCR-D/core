@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * `ocrd workspace bulk-add` distinguishes between `url` and `local_filename`, supporting both, #1086, #1079, #1113
+
 ## [2.55.0] - 2023-10-11
 
 Added:
