@@ -439,30 +439,29 @@ class TestCli(TestCase):
                 Path(srcdir, "OCR-D-IMG", "page_%04d.tif" % i).write_text('')
             for i in range(NO_FILES):
                 Path(srcdir, "OCR-D-PAGE", "page_%04d.xml" % i).write_text('')
-            with TemporaryDirectory() as wsdir:
-                with pushd_popd(wsdir):
-                    ws = self.resolver.workspace_from_nothing(directory=wsdir)
-                    exit_code, out, err = self.invoke_cli(workspace_cli, [
-                        'bulk-add',
-                        '--ignore',
-                        '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$',
-                        '--url', '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}',
-                        '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',
-                        '--page-id', 'PHYS_{{ pageid }}',
-                        '--file-grp', '{{ fileGrp }}',
-                        '%s/*/*' % srcdir
-                    ])
-                    # print('exit_code', exit_code)
-                    # print('out', out)
-                    # print('err', err)
-                    ws.reload_mets()
-                    self.assertEqual(len(ws.mets.file_groups), 2)
-                    self.assertEqual(len(ws.mets.find_all_files()), 2 * NO_FILES)
-                    self.assertEqual(len(ws.mets.find_all_files(mimetype='image/tiff')), NO_FILES)
-                    self.assertEqual(len(ws.mets.find_all_files(ID='//FILE_OCR-D-IMG_000.*')), 10)
-                    self.assertEqual(len(ws.mets.find_all_files(ID='//FILE_.*_000.*')), 20)
-                    self.assertEqual(len(ws.mets.find_all_files(pageId='PHYS_0001')), 2)
-                    self.assertEqual(ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].url, 'OCR-D-PAGE/FILE_0001.xml')
+            with pushd_popd(tempdir=True) as wsdir:
+                ws = self.resolver.workspace_from_nothing(directory=wsdir)
+                exit_code, out, err = self.invoke_cli(workspace_cli, [
+                    'bulk-add',
+                    '--ignore',
+                    '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$',
+                    '--local-filename', '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}',
+                    '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',
+                    '--page-id', 'PHYS_{{ pageid }}',
+                    '--file-grp', '{{ fileGrp }}',
+                    '%s/*/*' % srcdir
+                ])
+                # print('exit_code', exit_code)
+                # print('out', out)
+                # print('err', err)
+                ws.reload_mets()
+                assert len(ws.mets.file_groups) == 2
+                assert len(ws.mets.find_all_files()) == 2 * NO_FILES
+                assert len(ws.mets.find_all_files(mimetype='image/tiff')) == NO_FILES
+                assert len(ws.mets.find_all_files(ID='//FILE_OCR-D-IMG_000.*')) == 10
+                assert len(ws.mets.find_all_files(ID='//FILE_.*_000.*')) == 20
+                assert len(ws.mets.find_all_files(pageId='PHYS_0001')) == 2
+                assert ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].local_filename == Path('OCR-D-PAGE/FILE_0001.xml')
 
     def test_bulk_add_missing_param(self):
         with pushd_popd(tempdir=True) as wsdir:
@@ -487,20 +486,22 @@ class TestCli(TestCase):
             Path(wsdir, 'c.ext').write_text('')
             _, out, err = self.invoke_cli(workspace_cli, [
                 'bulk-add',
-                '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',
+                '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*) (?P<local_filename>.*) (?P<mimetype>.*)',
                 '-G', '{{ filegrp }}',
                 '-g', '{{ pageid }}',
                 '-S', '{{ src }}',
                 # '-i', '{{ fileid }}',  # XXX skip --file-id
                 '-m', '{{ mimetype }}',
-                '-u', "{{ url }}",
+                '-l', "{{ local_filename }}",
+                '-u', "https://host/{{ filegrp }}/{{ local_filename }}",
                 'a b c.ext d e'])
             ws.reload_mets()
             print(out)
             assert next(ws.mets.find_files()).ID == 'b_c'
-            assert next(ws.mets.find_files()).url == 'd'
+            assert next(ws.mets.find_files()).local_filename == Path('d')
+            assert next(ws.mets.find_files()).url == 'https://host/b/d'
 
-    def test_bulk_add_derive_url(self):
+    def test_bulk_add_derive_local_filename(self):
         with pushd_popd(tempdir=True) as wsdir:
             ws = self.resolver.workspace_from_nothing(directory=wsdir)
             Path(wsdir, 'srcdir').mkdir()
@@ -511,22 +512,22 @@ class TestCli(TestCase):
                 '-G', '{{ filegrp }}',
                 '-g', '{{ pageid }}',
                 '-S', '{{ src }}',
-                # '-u', "{{ url }}", # XXX skip --url
+                # '-l', "{{ local_filename }}", # XXX skip --local-filename
                 'p0001 SEG srcdir/src.xml'])
             # print('out', out)
             # print('err', err)
             ws.reload_mets()
-            assert next(ws.mets.find_files()).url == 'srcdir/src.xml'
+            assert next(ws.mets.find_files()).local_filename == Path('srcdir/src.xml')
 
     def test_bulk_add_stdin(self):
         resolver = Resolver()
         with pushd_popd(tempdir=True) as wsdir:
             ws = resolver.workspace_from_nothing(directory=wsdir)
             Path(wsdir, 'BIN').mkdir()
-            Path(wsdir, 'BIN/FILE_0001_BIN.IMG-wolf.png').write_text('')
-            Path(wsdir, 'BIN/FILE_0002_BIN.IMG-wolf.png').write_text('')
-            Path(wsdir, 'BIN/FILE_0001_BIN.xml').write_text('')
-            Path(wsdir, 'BIN/FILE_0002_BIN.xml').write_text('')
+            Path(wsdir, 'BIN/FILE_0001_BIN.IMG-wolf.png').write_text('', encoding='UTF-8')
+            Path(wsdir, 'BIN/FILE_0002_BIN.IMG-wolf.png').write_text('', encoding='UTF-8')
+            Path(wsdir, 'BIN/FILE_0001_BIN.xml').write_text('', encoding='UTF-8')
+            Path(wsdir, 'BIN/FILE_0002_BIN.xml').write_text('', encoding='UTF-8')
             with mock_stdin(
                     'PHYS_0001 BIN FILE_0001_BIN.IMG-wolf BIN/FILE_0001_BIN.IMG-wolf.png BIN/FILE_0001_BIN.IMG-wolf.png image/png\n'
                     'PHYS_0002 BIN FILE_0002_BIN.IMG-wolf BIN/FILE_0002_BIN.IMG-wolf.png BIN/FILE_0002_BIN.IMG-wolf.png image/png\n'
@@ -540,7 +541,8 @@ class TestCli(TestCase):
                     '-g', '{{ pageid }}',
                     '-i', '{{ fileid }}',
                     '-m', '{{ mimetype }}',
-                    '-u', "{{ dest }}",
+                    '-l', "{{ dest }}",
+                    '-u', "https://host/{{ fileid }}/{{ dest }}",
                     '-'])
                 ws.reload_mets()
                 assert len(ws.mets.file_groups) == 1
@@ -548,7 +550,8 @@ class TestCli(TestCase):
                 f = next(ws.mets.find_files())
                 assert f.mimetype == 'image/png'
                 assert f.ID == 'FILE_0001_BIN.IMG-wolf'
-                assert f.url == 'BIN/FILE_0001_BIN.IMG-wolf.png'
+                assert f.local_filename == Path('BIN/FILE_0001_BIN.IMG-wolf.png')
+                assert f.url == 'https://host/FILE_0001_BIN.IMG-wolf/BIN/FILE_0001_BIN.IMG-wolf.png'
 
 if __name__ == '__main__':
     main(__file__)

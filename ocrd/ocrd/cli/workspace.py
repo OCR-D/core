@@ -251,7 +251,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
 @click.option('-g', '--page-id', help="physical page ID of the file", required=False)
 @click.option('-i', '--file-id', help="ID of the file. If not provided, derive from fileGrp and filename", required=False)
-@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=False)
+@click.option('-u', '--url', help="Remote URL of the file", required=False)
+@click.option('-l', '--local-filename', help="Local filesystem path in the workspace directory (copied from source file if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
 @click.option('-S', '--source-path', 'src_path_option', help="File path to copy from (if different from FILE_GLOB values)", required=False)
@@ -260,7 +261,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, src_path_option, ignore, force, skip):
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_filename, file_grp, dry_run, file_glob, src_path_option, ignore, force, skip):
     """
     Add files in bulk to an OCR-D workspace.
 
@@ -289,7 +290,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
                 --page-id 'PHYS_{{ pageid }}' \\
                 --file-grp "{{ fileGrp }}" \\
-                --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
+                --local-filename '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
                 -
 
         \b
@@ -297,8 +298,8 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
           echo PHYS_0001 BIN FILE_0001_BIN BIN/FILE_0001_BIN.xml; \\
           echo PHYS_0002 BIN FILE_0002_BIN.IMG-wolf BIN/FILE_0002_BIN.IMG-wolf.png; \\
           echo PHYS_0002 BIN FILE_0002_BIN BIN/FILE_0002_BIN.xml; \\
-        } | ocrd workspace bulk-add -r '(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<url>.*)' \\
-          -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ url }}' -
+        } | ocrd workspace bulk-add -r '(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<local_filename>.*)' \\
+          -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ local_filename }}' -
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
@@ -334,20 +335,23 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         group_dict = m.groupdict()
 
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id, 'page_id': page_id, 'file_grp': file_grp}
+        file_dict = {'local_filename': local_filename, 'url': url, 'mimetype': mimetype, 'file_id': file_id, 'page_id': page_id, 'file_grp': file_grp}
 
-        # Flag to track whether 'url' should be 'src'
-        url_is_src = False
+        # Flag to track whether 'local_filename' should be 'src'
+        local_filename_is_src = False
 
         # expand templates
         for param_name in file_dict:
             if not file_dict[param_name]:
-                if param_name == 'url':
-                    url_is_src = True
+                if param_name == 'local_filename':
+                    local_filename_is_src = True
                     continue
                 elif param_name in ['mimetype', 'file_id']:
                     # auto-filled below once the other
                     # replacements have happened
+                    continue
+                elif param_name == 'url':
+                    # Remote URL is not required
                     continue
                 raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
@@ -373,10 +377,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 log.error("Cannot guess MIME type from extension '%s' for '%s'. Set --mimetype explicitly" % (srcpath.suffix, srcpath))
 
         # copy files if src != url
-        if url_is_src:
-            file_dict['url'] = str(srcpath)
+        if local_filename_is_src:
+            file_dict['local_filename'] = srcpath
         else:
-            destpath = Path(workspace.directory, file_dict['url'])
+            destpath = Path(workspace.directory, file_dict['local_filename'])
             if srcpath != destpath and not destpath.exists():
                 log.info("cp '%s' '%s'", srcpath, destpath)
                 if not dry_run:
