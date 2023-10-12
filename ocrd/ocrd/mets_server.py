@@ -39,7 +39,7 @@ class OcrdFileModel(BaseModel):
 
 class OcrdAgentModel(BaseModel):
     name : str = Field()
-    _type : str = Field()
+    type : str = Field()
     role : str = Field()
     otherrole : Optional[str] = Field()
     othertype : str = Field()
@@ -47,7 +47,7 @@ class OcrdAgentModel(BaseModel):
 
     @staticmethod
     def create(name : str, _type : str, role : str, otherrole : str, othertype : str, notes : List[Tuple[Dict[str, str], Optional[str]]]):
-        return OcrdAgentModel(name=name, _type=_type, role=role, otherrole=otherrole, othertype=othertype, notes=notes)
+        return OcrdAgentModel(name=name, type=_type, role=role, otherrole=otherrole, othertype=othertype, notes=notes)
 
 
 class OcrdFileListModel(BaseModel):
@@ -79,7 +79,7 @@ class OcrdAgentListModel(BaseModel):
     @staticmethod
     def create(agents : List[OcrdAgent]):
         return OcrdAgentListModel(
-            agents=[OcrdAgentModel(name=a.name, _type=a.type, role=a.role, otherrole=a.otherrole, othertype=a.othertype, notes=a.notes) for a in agents]
+            agents=[OcrdAgentModel.create(name=a.name, _type=a.type, role=a.role, otherrole=a.otherrole, othertype=a.othertype, notes=a.notes) for a in agents]
         )
 
 #
@@ -137,7 +137,10 @@ class ClientSideOcrdMets():
 
     @property
     def agents(self):
-        return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in self.session.request('GET', f'{self.url}/agent').json()['agents']]
+        agent_dicts = self.session.request('GET', f'{self.url}/agent').json()['agents']
+        for agent_dict in agent_dicts:
+            agent_dict['_type'] = agent_dict.pop('type')
+        return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in agent_dicts]
 
     @property
     def unique_identifier(self):
@@ -264,6 +267,7 @@ class OcrdMetsServer():
         @app.post('/agent', response_model=OcrdAgentModel)
         async def add_agent(agent : OcrdAgentModel):
             kwargs = agent.dict()
+            kwargs['_type'] = kwargs.pop('type')
             workspace.mets.add_agent(**kwargs)
             return agent
 
