@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `OcrdAgentModel`: `_type` must be `type`, pydantic/pydantic#6797, #1114
+
 ## [2.55.1] - 2023-10-12
 
 Changed:
