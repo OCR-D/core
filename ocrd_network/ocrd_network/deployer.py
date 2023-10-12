@@ -546,9 +546,8 @@ class Deployer:
 
     def stop_unix_mets_server(self, mets_server_url: str) -> None:
         self.log.info(f'Stopping UDS mets server: {mets_server_url}')
-        mets_server_url = Path(mets_server_url)
-        if mets_server_url in self.mets_servers:
-            mets_server_pid = self.mets_servers[mets_server_url]
+        if Path(mets_server_url) in self.mets_servers:
+            mets_server_pid = self.mets_servers[Path(mets_server_url)]
         else:
             raise Exception(f"Mets server not found: {mets_server_url}")
 
