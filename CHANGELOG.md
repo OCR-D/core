@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.55.2] - 2023-10-12
+
 Fixed:
 
   * `OcrdAgentModel`: `_type` must be `type`, pydantic/pydantic#6797, #1114
@@ -1839,6 +1841,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.55.2]: ../../compare/v2.55.2..v2.55.1
 [2.55.1]: ../../compare/v2.55.1..v2.55.0
 [2.55.0]: ../../compare/v2.55.0..v2.54.0
 [2.54.0]: ../../compare/v2.54.0..v2.53.0
