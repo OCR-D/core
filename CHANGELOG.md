@@ -5,6 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * A separate logging dir tree structure for the modules (processing servers, processing workers, processor servers, mets servers, processing jobs). Configurable with env variable `OCRD_NETWORK_LOGS_ROOT_DIR`, #1111
+    * Processing job-level logging - each job is logged into a separate file with format `{job_id}.log`
+    * Processing job-level logging file paths are added to the Job models and preserved in the database.
+    * The `ocrd_network` logging is based on the format provided in `ocrd_utils`
+  * Support env variable `OCRD_NETWORK_SOCKETS_ROOT_DIR`  for setting the root directory for METS server sockets, #1111
+  * An endpoint `/job/{id}/log` for getting the log file of a processing job of a processor, #1111
+
 ## [2.55.2] - 2023-10-12
 
 Fixed:
