@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.56.0] - 2023-10-13
+
 Changed:
 
   * A separate logging dir tree structure for the modules (processing servers, processing workers, processor servers, mets servers, processing jobs). Configurable with env variable `OCRD_NETWORK_LOGS_ROOT_DIR`, #1111
@@ -1850,6 +1852,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.56.0]: ../../compare/v2.56.0..v2.55.2
 [2.55.2]: ../../compare/v2.55.2..v2.55.1
 [2.55.1]: ../../compare/v2.55.1..v2.55.0
 [2.55.0]: ../../compare/v2.55.0..v2.54.0
