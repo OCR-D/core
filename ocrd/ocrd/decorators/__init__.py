@@ -154,7 +154,6 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
 
     processor = ProcessorClass(workspace=None)
     if subcommand == 'worker':
-        # TODO: Passing processor_name and ocrd_tool is redundant
         processing_worker = ProcessingWorker(
             rabbitmq_addr=queue,
             mongodb_addr=database,
