@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.57.2] - 2023-10-18
+
 Fixed:
 
   * bashlib: remove vestigial `--log-filename` option from #1105, #1120
@@ -1872,6 +1874,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.57.2]: ../../compare/v2.57.2..v2.57.1
 [2.57.1]: ../../compare/v2.57.1..v2.57.0
 [2.57.0]: ../../compare/v2.57.0..v2.56.0
 [2.56.0]: ../../compare/v2.56.0..v2.55.2
