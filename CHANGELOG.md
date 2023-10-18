@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.57.1] - 2023-10-18
+
+Fixed:
+
+  * Docker deployment process, no functional change
+
 ## [2.57.0] - 2023-10-18
 
 Fixed:
@@ -1862,6 +1868,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.57.1]: ../../compare/v2.57.1..v2.57.0
 [2.57.0]: ../../compare/v2.57.0..v2.56.0
 [2.56.0]: ../../compare/v2.56.0..v2.55.2
 [2.55.2]: ../../compare/v2.55.2..v2.55.1

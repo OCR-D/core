@@ -87,10 +87,10 @@ jobs:
       - run:
           name: Login to Docker Hub
           command: echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
-      - run: docker tag ocrd/core ocrd/core:$(git describe --tags)
-      - run: docker tag ocrd/core-cuda ocrd/core-cuda:$(git describe --tags)
-      - run: docker push ocrd/core:$(git describe --tags)
-      - run: docker push ocrd/core-cuda:$(git describe --tags)
+      - run: docker tag ocrd/core ocrd/core:$(git describe --tags --abbrev=0)
+      - run: docker tag ocrd/core-cuda ocrd/core-cuda:$(git describe --tags --abbrev=0)
+      - run: docker push ocrd/core:$(git describe --tags --abbrev=0)
+      - run: docker push ocrd/core-cuda:$(git describe --tags --abbrev=0)
 
 workflows:
   version: 2
@@ -101,7 +101,7 @@ workflows:
             branches:
               only: master
             tags:
-              only: /^v\d.\d\d.\d$/
+              only: /^v\d\.\d\d\.\d$/
   test-pull-request:
     jobs:
       - test-python37
