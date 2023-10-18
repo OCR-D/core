@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * bashlib: remove vestigial `--log-filename` option from #1105, #1120
+
 ## [2.57.1] - 2023-10-18
 
 Fixed:
