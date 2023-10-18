@@ -67,7 +67,8 @@ LOGGING_DEFAULTS = {
     'paramiko.transport': logging.INFO,
     'uvicorn.access': logging.DEBUG,
     'uvicorn.error': logging.DEBUG,
-    'uvicorn': logging.INFO
+    'uvicorn': logging.INFO,
+    'multipart': logging.INFO,
 }
 
 _initialized_flag = False
