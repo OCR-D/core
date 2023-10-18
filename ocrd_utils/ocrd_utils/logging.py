@@ -36,6 +36,8 @@ from pathlib import Path
 import sys
 
 from .constants import LOG_FORMAT, LOG_TIMEFMT
+from .config import config
+
 
 __all__ = [
     'disableLogging',
@@ -65,7 +67,8 @@ LOGGING_DEFAULTS = {
     'paramiko.transport': logging.INFO,
     'uvicorn.access': logging.DEBUG,
     'uvicorn.error': logging.DEBUG,
-    'uvicorn': logging.INFO
+    'uvicorn': logging.INFO,
+    'multipart': logging.INFO,
 }
 
 _initialized_flag = False
@@ -104,7 +107,7 @@ def getLogger(*args, **kwargs):
     logger = logging.getLogger(*args, **kwargs)
     return logger
 
-def setOverrideLogLevel(lvl, silent=True):
+def setOverrideLogLevel(lvl, silent=not config.OCRD_LOGGING_DEBUG):
     """
     Override the output log level of the handlers attached to the ``ocrd`` logger.
 
@@ -113,19 +116,19 @@ def setOverrideLogLevel(lvl, silent=True):
         silent (boolean): Whether to log the override call
     """
     if not _initialized_flag:
-        initLogging()
+        initLogging(silent=silent)
     ocrd_logger = logging.getLogger('ocrd')
 
     if lvl is None:
         if not silent:
-            ocrd_logger.info('Reset log level override')
+            print('[LOGGING] Reset log level override', file=sys.stderr)
         ocrd_logger.setLevel(logging.NOTSET)
     else:
         if not silent:
-            ocrd_logger.info('Overriding ocrd log level to %s', lvl)
+            print(f'[LOGGING] Overriding ocrd log level to {lvl}', file=sys.stderr)
         ocrd_logger.setLevel(lvl)
 
-def initLogging(builtin_only=False, force_reinit=False):
+def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_LOGGING_DEBUG):
     """
     Reset ``ocrd`` logger, read logging configuration if exists, otherwise use basicConfig
 
@@ -141,6 +144,7 @@ def initLogging(builtin_only=False, force_reinit=False):
                                       hard-coded config (``True``). For testing
         - force_reinit (bool, False): Whether to ignore the module-level
                                       ``_initialized_flag``. For testing only.
+        - silent (bool, True): Whether to log logging behavior by printing to stderr
     """
     global _initialized_flag
     if _initialized_flag and not force_reinit:
@@ -165,14 +169,19 @@ def initLogging(builtin_only=False, force_reinit=False):
             Path.home(),
             Path('/etc'),
         ]
-        config_file = next((f for f \
+        config_file = [f for f \
                 in [p / 'ocrd_logging.conf' for p in CONFIG_PATHS] \
-                if f.exists()),
-                None)
+                if f.exists()]
     if config_file:
+        if len(config_file) > 1 and not silent:
+            print(f"[LOGGING] Multiple logging configuration files found at {config_file}, using first one", file=sys.stderr)
+        config_file = config_file[0]
+        if not silent:
+            print(f"[LOGGING] Picked up logging config at {config_file}", file=sys.stderr)
         logging.config.fileConfig(config_file)
-        logging.getLogger('ocrd.logging').debug("Picked up logging config at %s", config_file)
     else:
+        if not silent:
+            print("[LOGGING] Initializing logging with built-in defaults", file=sys.stderr)
         # Default logging config
         ocrd_handler = logging.StreamHandler(stream=sys.stderr)
         ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
@@ -181,19 +190,18 @@ def initLogging(builtin_only=False, force_reinit=False):
             logging.getLogger(logger_name).addHandler(ocrd_handler)
         for logger_name, logger_level in LOGGING_DEFAULTS.items():
             logging.getLogger(logger_name).setLevel(logger_level)
-
     _initialized_flag = True
 
-def disableLogging(silent=True):
+def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     """
     Disables all logging of the ``ocrd`` logger and descendants
 
     Keyword Args:
-        silent (bool, True): Whether to log the call to disableLogging
+        - silent (bool, True): Whether to log logging behavior by printing to stderr
     """
     global _initialized_flag # pylint: disable=global-statement
     if _initialized_flag and not silent:
-        logging.getLogger('ocrd.logging').debug("Disabling logging")
+        print("[LOGGING] Disabling logging", file=sys.stderr)
     _initialized_flag = False
     # logging.basicConfig(level=logging.CRITICAL)
     # logging.disable(logging.ERROR)

@@ -184,3 +184,9 @@ config.add("XDG_DATA_HOME",
 config.add("XDG_CONFIG_HOME",
     description="Directory to look for `./ocrd-resources/*` (i.e. `ocrd resmgr` data location)",
     default=(True, lambda: Path(config.HOME, '.config')))
+
+config.add("OCRD_LOGGING_DEBUG",
+    description="Print information about the logging setup to STDERR",
+    default=(True, False),
+    validator=lambda val: isinstance(val, bool) or val in ('true', 'false', '0', '1'),
+    parser=lambda val:  val in ('true', '1'))

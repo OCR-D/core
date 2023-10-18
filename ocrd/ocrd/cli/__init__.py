@@ -52,6 +52,8 @@ Variables:
 {config.describe('OCRD_NETWORK_SOCKETS_ROOT_DIR')}
 \b
 {config.describe('OCRD_NETWORK_LOGS_ROOT_DIR')}
+\b
+{config.describe('OCRD_LOGGING_DEBUG')}
 """
 
 def command_with_replaced_help(*replacements):
