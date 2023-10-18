@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.57.0] - 2023-10-18
+
 Fixed:
 
   * running a processor as a worker no longer dumps `ocrd-tool.json` and messed up logging, #1116
@@ -1860,6 +1862,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.57.0]: ../../compare/v2.57.0..v2.56.0
 [2.56.0]: ../../compare/v2.56.0..v2.55.2
 [2.55.2]: ../../compare/v2.55.2..v2.55.1
 [2.55.1]: ../../compare/v2.55.1..v2.55.0
