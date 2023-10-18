@@ -200,7 +200,7 @@ test: assets
 		-m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		$(TESTDIR)
-	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
