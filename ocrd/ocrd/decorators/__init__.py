@@ -152,9 +152,8 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
         if not queue:
             raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
 
-    processor = ProcessorClass(workspace=None, dump_json=True)
+    processor = ProcessorClass(workspace=None)
     if subcommand == 'worker':
-        # TODO: Passing processor_name and ocrd_tool is reduntant
         processing_worker = ProcessingWorker(
             rabbitmq_addr=queue,
             mongodb_addr=database,
