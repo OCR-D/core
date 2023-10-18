@@ -9,6 +9,10 @@ Fixed:
 
   * running a processor as a worker no longer dumps `ocrd-tool.json` and messed up logging, #1116
 
+Changed:
+
+  * logging: With `ocrd_logging.conf` (e.g. in Docker), log all messages `DEBUG` and up and log to `ocrd.log`, #1117
+
 ## [2.56.0] - 2023-10-13
 
 Changed:

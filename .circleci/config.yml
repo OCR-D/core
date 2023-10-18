@@ -98,8 +98,10 @@ workflows:
     jobs:
       - deploy:
           filters:
+            branch:
+              only: master
             tags:
-              only: /^v.*/
+              only: /^v\d.\d\d.\d$/
   test-pull-request:
     jobs:
       - test-python37
