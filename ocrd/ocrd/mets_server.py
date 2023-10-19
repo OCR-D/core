@@ -114,6 +114,9 @@ class ClientSideOcrdMets():
     def workspace_path(self):
         return self.session.request('GET', f'{self.url}/workspace_path').text
 
+    def reload(self):
+        return self.session.request('POST', f'{self.url}/reload').text
+
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")
@@ -282,6 +285,11 @@ class OcrdMetsServer():
         @app.get('/workspace_path', response_model=str)
         async def workspace_path():
             return Response(content=workspace.directory, media_type="text/plain")
+
+        @app.post('/reload')
+        async def workspace_reload_mets():
+            workspace.reload_mets()
+            return Response(content=f'Reloaded from {workspace.directory}', media_type="text/plain")
 
         @app.delete('/')
         async def stop():
