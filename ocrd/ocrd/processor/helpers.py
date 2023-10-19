@@ -11,8 +11,7 @@ from typing import List
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel
-from logging import getLevelName
+from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel, getLevelName
 
 
 __all__ = [
@@ -200,7 +199,7 @@ def run_cli(
     args = [executable, '--working-dir', workspace.directory]
     args += ['--mets', mets_url]
     if log_level:
-        args += ['--log-level', getLevelName(log_level)]
+        args += ['--log-level', log_level if isinstance(log_level, str) else getLevelName(log_level)]
     if page_id:
         args += ['--page-id', page_id]
     if input_file_grp:
