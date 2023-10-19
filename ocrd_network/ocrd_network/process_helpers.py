@@ -1,6 +1,5 @@
 import json
 from typing import List, Optional
-import logging
 from contextlib import nullcontext
 
 from ocrd.processor.helpers import run_cli, run_processor
@@ -44,7 +43,7 @@ def invoke_processor(
                     parameter=parameters,
                     instance_caching=True,
                     mets_server_url=mets_server_url,
-                    log_level=logging.DEBUG
+                    log_level='DEBUG'
                 )
             except Exception as e:
                 raise RuntimeError(f"Python executable '{processor_class.__dict__}' exited with: {e}")
@@ -58,7 +57,7 @@ def invoke_processor(
             page_id=page_id,
             parameter=json.dumps(parameters),
             mets_server_url=mets_server_url,
-            log_level=logging.DEBUG,
+            log_level='DEBUG',
             log_filename=log_filename
         )
         if return_code != 0:
