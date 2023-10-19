@@ -10,6 +10,8 @@ Fixed:
   * `helpers.run_cli`: Handle both `int` and `str` log levels, #1121
   * bashlib: typo `ocrd_argv` -> `ocrd__argv`, #1122, #1123
   * processing workers: pass log level as string and `initLogging` at the right time, #1123
+  * `ocrd workspace bulk-add` now supports `-U/--mets-server-url`, #1126
+  * bashlib: Support `-U` as alias for `--mets-server-url`, #1126
 
 Added:
 
