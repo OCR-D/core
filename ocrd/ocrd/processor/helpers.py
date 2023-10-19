@@ -199,10 +199,7 @@ def run_cli(
     args = [executable, '--working-dir', workspace.directory]
     args += ['--mets', mets_url]
     if log_level:
-        if isinstance(log_level, str):
-            args += ['--log-level', log_level]
-        else:
-            args += ['--log-level', getLevelName(log_level)]
+        args += ['--log-level', log_level if isinstance(log_level, str) else getLevelName(log_level)]
     if page_id:
         args += ['--page-id', page_id]
     if input_file_grp:
