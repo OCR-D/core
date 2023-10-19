@@ -145,7 +145,7 @@ ocrd__parse_argv () {
             -I|--input-file-grp) ocrd__argv[input_file_grp]=$2 ; shift ;;
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
-            --mets-server-url) ocrd_argv[mets_server_url]="$2" ; shift ;;
+            --mets-server-url) ocrd__argv[mets_server_url]="$2" ; shift ;;
             --overwrite) ocrd__argv[overwrite]=true ;;
             --profile) ocrd__argv[profile]=true ;;
             --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;

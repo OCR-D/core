@@ -170,6 +170,7 @@ def run_cli(
         page_id=None,
         overwrite=None,
         log_level=None,
+        log_filename=None,
         input_file_grp=None,
         output_file_grp=None,
         parameter=None,
@@ -214,8 +215,13 @@ def run_cli(
         args += ['--mets-server-url', mets_server_url]
     log = getLogger('ocrd.processor.helpers.run_cli')
     log.debug("Running subprocess '%s'", ' '.join(args))
-    result = run(args, check=False)
+    if not log_filename:
+        result = run(args, check=False)
+    else:
+        with open(log_filename, 'a') as file_desc:
+            result = run(args, check=False, stdout=file_desc, stderr=file_desc)
     return result.returncode
+
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.
