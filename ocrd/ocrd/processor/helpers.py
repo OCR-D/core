@@ -216,9 +216,6 @@ def run_cli(
     if mets_server_url:
         args += ['--mets-server-url', mets_server_url]
     log = getLogger('ocrd.processor.helpers.run_cli')
-    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-    print(args)
-    print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     log.debug("Running subprocess '%s'", ' '.join(args))
     result = run(args, check=False)
     return result.returncode
