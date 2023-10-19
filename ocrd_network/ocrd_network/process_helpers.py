@@ -1,6 +1,5 @@
 import json
 from typing import List, Optional
-import logging
 from contextlib import nullcontext
 
 from ocrd.processor.helpers import run_cli, run_processor
@@ -27,13 +26,12 @@ def invoke_processor(
 
     ctx_mgr = redirect_stderr_and_stdout_to_file(log_filename) if log_filename else nullcontext()
     with ctx_mgr:
-        initLogging(force_reinit=True)
         workspace = get_ocrd_workspace_instance(
             mets_path=abs_path_to_mets,
             mets_server_url=mets_server_url
         )
-
         if processor_class:
+            initLogging(force_reinit=True)
             try:
                 run_processor(
                     processorClass=processor_class,
@@ -44,7 +42,7 @@ def invoke_processor(
                     parameter=parameters,
                     instance_caching=True,
                     mets_server_url=mets_server_url,
-                    log_level=logging.DEBUG
+                    log_level='DEBUG'
                 )
             except Exception as e:
                 raise RuntimeError(f"Python executable '{processor_class.__dict__}' exited with: {e}")
@@ -58,7 +56,7 @@ def invoke_processor(
                 page_id=page_id,
                 parameter=json.dumps(parameters),
                 mets_server_url=mets_server_url,
-                log_level=logging.DEBUG
+                log_level='DEBUG'
             )
             if return_code != 0:
                 raise RuntimeError(f"CLI executable '{executable}' exited with: {return_code}")

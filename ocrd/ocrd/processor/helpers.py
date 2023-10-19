@@ -216,6 +216,7 @@ def run_cli(
     result = run(args, check=False)
     return result.returncode
 
+
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.
 
