@@ -202,3 +202,18 @@ def test_find_all_files(start_mets_server):
     assert len(workspace_server.mets.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
     assert len(workspace_server.mets.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
     assert len(workspace_server.mets.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+
+def test_reload(start_mets_server):
+    _, workspace_server = start_mets_server
+    workspace_server_copy = Workspace(Resolver(), workspace_server.directory)
+    assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'
+    assert len(workspace_server_copy.mets.find_all_files()) == 35, '35 files total'
+
+    workspace_server_copy.add_file('FOO', ID='foo', mimetype='foo/bar', local_filename='mets.xml', pageId='foo')
+    assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'
+    assert len(workspace_server_copy.mets.find_all_files()) == 36, '36 files total'
+
+    workspace_server_copy.save_mets()
+    print(workspace_server.mets.reload())
+    assert len(workspace_server.mets.find_all_files()) == 36, '36 files total'
+
