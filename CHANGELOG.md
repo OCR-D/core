@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `helpers.run_cli`: Handle both `int` and `str` log levels, #1121
+
 ## [2.57.2] - 2023-10-18
 
 Fixed:
