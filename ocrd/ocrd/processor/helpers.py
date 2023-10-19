@@ -11,8 +11,7 @@ from typing import List
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel
-from logging import getLevelName
+from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel, getLevelName
 
 
 __all__ = [
