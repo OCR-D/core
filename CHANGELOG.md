@@ -9,6 +9,10 @@ Fixed:
 
   * `helpers.run_cli`: Handle both `int` and `str` log levels, #1121
 
+Added:
+
+  * METS server: `POST /reload` to reload METS from disk, #1123, #1124
+
 ## [2.57.2] - 2023-10-18
 
 Fixed:
