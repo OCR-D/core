@@ -302,7 +302,13 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
           -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ local_filename }}' -
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        automatic_backup=ctx.automatic_backup,
+        mets_server_url=ctx.mets_server_url,
+    )
 
     try:
         pat = re.compile(regex)
