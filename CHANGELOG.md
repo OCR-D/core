@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * bashlib: regression introduced in v2.58.0 breaking non-mets-server calls, #1128
+
 ## [2.58.0] - 2023-10-20
 
 Fixed:
