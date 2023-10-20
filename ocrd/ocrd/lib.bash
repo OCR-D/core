@@ -121,6 +121,7 @@ ocrd__parse_argv () {
     ocrd__argv[overwrite]=false
     ocrd__argv[profile]=false
     ocrd__argv[profile_file]=
+    ocrd__argv[mets_server_url]=
     ocrd__argv[mets_file]="$PWD/mets.xml"
 
     local __parameters=()
