@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.58.0] - 2023-10-20
+
 Fixed:
 
   * `helpers.run_cli`: Handle both `int` and `str` log levels, #1121
@@ -1886,6 +1888,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.58.0]: ../../compare/v2.58.0..v2.57.2
 [2.57.2]: ../../compare/v2.57.2..v2.57.1
 [2.57.1]: ../../compare/v2.57.1..v2.57.0
 [2.57.0]: ../../compare/v2.57.0..v2.56.0
