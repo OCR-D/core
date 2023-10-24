@@ -773,6 +773,40 @@ def find_attr_value_(attr_name, node):
             value = attrs.get('{%s}%s' % (namespace, name, ))
     return value
 
+def find_attr_value_ancestors_(attr_name, node):
+    for parent in node.iterancestors():
+        value = find_attr_value_(attr_name, parent)
+        if value is not None:
+            return value
+    return None
+
+def find_elem_(elem_name, node):
+    value = node.find(elem_name)
+    if value is not None:
+        return value
+    elem_parts = elem_name.split(':')
+    if len(elem_parts) == 1:
+        prefix = node.prefix
+        name = elem_name
+    elif len(elem_parts) == 2:
+        prefix, name = elem_parts
+    namespace = node.nsmap.get(prefix)
+    if namespace is not None:
+        value = node.find('{%s}%s' % (namespace, name))
+    return value
+
+def find_elem_ancestors_(elem_name, node):
+    for parent in node.iterancestors():
+        value = find_elem_(elem_name, parent)
+        if value is not None:
+            return value
+    return None
+
+def prepend_(iterable, elem):
+    if elem is not None:
+        yield elem
+    for elem in iterable:
+        yield elem
 
 def encode_str_2_3(instr):
     return instr
@@ -3889,7 +3923,7 @@ class TextLineType(GeneratedsSuper):
         already_processed = set()
         self.ns_prefix_ = node.prefix
         self.buildAttributes(node, node.attrib, already_processed)
-        for child in node:
+        for child in prepend_(node, find_elem_ancestors_('TextStyle', node)):
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
             self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
@@ -3898,27 +3932,27 @@ class TextLineType(GeneratedsSuper):
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
             self.id = value
-        value = find_attr_value_('primaryLanguage', node)
+        value = find_attr_value_('primaryLanguage', node) or find_attr_value_ancestors_('primaryLanguage', node)
         if value is not None and 'primaryLanguage' not in already_processed:
             already_processed.add('primaryLanguage')
             self.primaryLanguage = value
             self.validate_LanguageSimpleType(self.primaryLanguage)    # validate type LanguageSimpleType
-        value = find_attr_value_('primaryScript', node)
+        value = find_attr_value_('primaryScript', node) or find_attr_value_ancestors_('primaryScript', node)
         if value is not None and 'primaryScript' not in already_processed:
             already_processed.add('primaryScript')
             self.primaryScript = value
             self.validate_ScriptSimpleType(self.primaryScript)    # validate type ScriptSimpleType
-        value = find_attr_value_('secondaryScript', node)
+        value = find_attr_value_('secondaryScript', node) or find_attr_value_ancestors_('secondaryScript', node)
         if value is not None and 'secondaryScript' not in already_processed:
             already_processed.add('secondaryScript')
             self.secondaryScript = value
             self.validate_ScriptSimpleType(self.secondaryScript)    # validate type ScriptSimpleType
-        value = find_attr_value_('readingDirection', node)
+        value = find_attr_value_('readingDirection', node) or find_attr_value_ancestors_('readingDirection', node)
         if value is not None and 'readingDirection' not in already_processed:
             already_processed.add('readingDirection')
             self.readingDirection = value
             self.validate_ReadingDirectionSimpleType(self.readingDirection)    # validate type ReadingDirectionSimpleType
-        value = find_attr_value_('production', node)
+        value = find_attr_value_('production', node) or find_attr_value_ancestors_('production', node)
         if value is not None and 'production' not in already_processed:
             already_processed.add('production')
             self.production = value
@@ -4390,7 +4424,7 @@ class WordType(GeneratedsSuper):
         already_processed = set()
         self.ns_prefix_ = node.prefix
         self.buildAttributes(node, node.attrib, already_processed)
-        for child in node:
+        for child in prepend_(node, find_elem_ancestors_('TextStyle', node)):
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
             self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
@@ -4399,27 +4433,27 @@ class WordType(GeneratedsSuper):
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
             self.id = value
-        value = find_attr_value_('language', node)
+        value = find_attr_value_('language', node) or find_attr_value_ancestors_('primaryLanguage', node)
         if value is not None and 'language' not in already_processed:
             already_processed.add('language')
             self.language = value
             self.validate_LanguageSimpleType(self.language)    # validate type LanguageSimpleType
-        value = find_attr_value_('primaryScript', node)
+        value = find_attr_value_('primaryScript', node) or find_attr_value_ancestors_('primaryScript', node)
         if value is not None and 'primaryScript' not in already_processed:
             already_processed.add('primaryScript')
             self.primaryScript = value
             self.validate_ScriptSimpleType(self.primaryScript)    # validate type ScriptSimpleType
-        value = find_attr_value_('secondaryScript', node)
+        value = find_attr_value_('secondaryScript', node) or find_attr_value_ancestors_('secondaryScript', node)
         if value is not None and 'secondaryScript' not in already_processed:
             already_processed.add('secondaryScript')
             self.secondaryScript = value
             self.validate_ScriptSimpleType(self.secondaryScript)    # validate type ScriptSimpleType
-        value = find_attr_value_('readingDirection', node)
+        value = find_attr_value_('readingDirection', node) or find_attr_value_ancestors_('readingDirection', node)
         if value is not None and 'readingDirection' not in already_processed:
             already_processed.add('readingDirection')
             self.readingDirection = value
             self.validate_ReadingDirectionSimpleType(self.readingDirection)    # validate type ReadingDirectionSimpleType
-        value = find_attr_value_('production', node)
+        value = find_attr_value_('production', node) or find_attr_value_ancestors_('production', node)
         if value is not None and 'production' not in already_processed:
             already_processed.add('production')
             self.production = value
@@ -4831,7 +4865,7 @@ class GlyphType(GeneratedsSuper):
         already_processed = set()
         self.ns_prefix_ = node.prefix
         self.buildAttributes(node, node.attrib, already_processed)
-        for child in node:
+        for child in prepend_(node, find_elem_ancestors_('TextStyle', node)):
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
             self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
@@ -4858,12 +4892,12 @@ class GlyphType(GeneratedsSuper):
                 self.symbol = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-        value = find_attr_value_('script', node)
+        value = find_attr_value_('script', node) or find_attr_value_ancestors_('primaryScript', node)
         if value is not None and 'script' not in already_processed:
             already_processed.add('script')
             self.script = value
             self.validate_ScriptSimpleType(self.script)    # validate type ScriptSimpleType
-        value = find_attr_value_('production', node)
+        value = find_attr_value_('production', node) or find_attr_value_ancestors_('production', node)
         if value is not None and 'production' not in already_processed:
             already_processed.add('production')
             self.production = value
@@ -13915,7 +13949,7 @@ class TextRegionType(RegionType):
         already_processed = set()
         self.ns_prefix_ = node.prefix
         self.buildAttributes(node, node.attrib, already_processed)
-        for child in node:
+        for child in prepend_(node, find_elem_ancestors_('TextStyle', node)):
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
             self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
@@ -13934,12 +13968,12 @@ class TextRegionType(RegionType):
         if value is not None and 'leading' not in already_processed:
             already_processed.add('leading')
             self.leading = self.gds_parse_integer(value, node, 'leading')
-        value = find_attr_value_('readingDirection', node)
+        value = find_attr_value_('readingDirection', node) or find_attr_value_ancestors_('readingDirection', node)
         if value is not None and 'readingDirection' not in already_processed:
             already_processed.add('readingDirection')
             self.readingDirection = value
             self.validate_ReadingDirectionSimpleType(self.readingDirection)    # validate type ReadingDirectionSimpleType
-        value = find_attr_value_('textLineOrder', node)
+        value = find_attr_value_('textLineOrder', node) or find_attr_value_ancestors_('textLineOrder', node)
         if value is not None and 'textLineOrder' not in already_processed:
             already_processed.add('textLineOrder')
             self.textLineOrder = value
@@ -13963,22 +13997,22 @@ class TextRegionType(RegionType):
             already_processed.add('align')
             self.align = value
             self.validate_AlignSimpleType(self.align)    # validate type AlignSimpleType
-        value = find_attr_value_('primaryLanguage', node)
+        value = find_attr_value_('primaryLanguage', node) or find_attr_value_ancestors_('primaryLanguage', node)
         if value is not None and 'primaryLanguage' not in already_processed:
             already_processed.add('primaryLanguage')
             self.primaryLanguage = value
             self.validate_LanguageSimpleType(self.primaryLanguage)    # validate type LanguageSimpleType
-        value = find_attr_value_('secondaryLanguage', node)
+        value = find_attr_value_('secondaryLanguage', node) or find_attr_value_ancestors_('secondaryLanguage', node)
         if value is not None and 'secondaryLanguage' not in already_processed:
             already_processed.add('secondaryLanguage')
             self.secondaryLanguage = value
             self.validate_LanguageSimpleType(self.secondaryLanguage)    # validate type LanguageSimpleType
-        value = find_attr_value_('primaryScript', node)
+        value = find_attr_value_('primaryScript', node) or find_attr_value_ancestors_('primaryScript', node)
         if value is not None and 'primaryScript' not in already_processed:
             already_processed.add('primaryScript')
             self.primaryScript = value
             self.validate_ScriptSimpleType(self.primaryScript)    # validate type ScriptSimpleType
-        value = find_attr_value_('secondaryScript', node)
+        value = find_attr_value_('secondaryScript', node) or find_attr_value_ancestors_('secondaryScript', node)
         if value is not None and 'secondaryScript' not in already_processed:
             already_processed.add('secondaryScript')
             self.secondaryScript = value
