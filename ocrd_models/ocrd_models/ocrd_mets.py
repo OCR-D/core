@@ -73,7 +73,10 @@ class OcrdMets(OcrdXmlDocument):
         if self._cache_flag:
             self.refresh_caches()
 
-    def __exit__(self):
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
         """
 
         """
