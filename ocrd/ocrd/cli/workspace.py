@@ -629,6 +629,20 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
     workspace.mets.unique_identifier = id
     workspace.save_mets()
 
+@workspace_cli.command('update-page')
+@click.option('--order', help="@ORDER attribute for this mets:div", metavar='ORDER')
+@click.option('--orderlabel', help="@ORDERLABEL attribute for this mets:div", metavar='ORDERLABEL')
+@click.option('--contentids', help="@CONTENTIDS attribute for this mets:div", metavar='ORDERLABEL')
+@click.argument('PAGE_ID')
+@pass_workspace
+def update_page(ctx, order, orderlabel, contentids, page_id):
+    """
+    Update the @ORDER, @ORDERLABEL o @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace.mets.update_physical_page_attributes(page_id, order=order, orderlabel=orderlabel, contentids=contentids)
+    workspace.save_mets()
+
 # ----------------------------------------------------------------------
 # ocrd workspace merge
 # ----------------------------------------------------------------------

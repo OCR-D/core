@@ -6,6 +6,7 @@ import re
 import typing
 from lxml import etree as ET
 from copy import deepcopy
+from warnings import warn
 
 from ocrd_utils import (
     getLogger,
@@ -664,6 +665,22 @@ class OcrdMets(OcrdXmlDocument):
         if self._cache_flag:
             # Assign the ocrd fileID to the pageId in the cache
             self._fptr_cache[el_pagediv.get('ID')].update({ocrd_file.ID : el_fptr})
+
+    def update_physical_page_attributes(self, page_id, **kwargs):
+        mets_div = None
+        if self._cache_flag:
+            if page_id in self._page_cache.keys():
+                mets_div = [self._page_cache[page_id]]
+        else:
+            mets_div = self._tree.getroot().xpath(
+                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % page_id,
+                namespaces=NS)
+        if mets_div:
+            for attr_name, attr_value in kwargs.items():
+                if attr_value:
+                    mets_div[0].set(attr_name.upper(), attr_value)
+        else:
+            warn("Could not find mets:div[@ID={page_id}]")
 
     def get_physical_page_for_file(self, ocrd_file):
         """
