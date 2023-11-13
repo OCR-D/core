@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Update apidocs to include `ocrd_network`, #1131
+
+Removed:
+
+  * `OcrdMets`: remove Unused `__exit__` method,.#1130 #1132
+
 ## [2.58.1] - 2023-10-20
 
 Fixed:
