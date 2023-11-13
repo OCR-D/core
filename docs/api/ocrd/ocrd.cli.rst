@@ -14,6 +14,7 @@ Submodules
 
    ocrd.cli.bashlib
    ocrd.cli.log
+   ocrd.cli.network
    ocrd.cli.ocrd_tool
    ocrd.cli.process
    ocrd.cli.resmgr
