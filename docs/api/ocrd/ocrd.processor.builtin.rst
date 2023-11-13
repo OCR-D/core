@@ -6,6 +6,14 @@ ocrd.processor.builtin package
    :undoc-members:
    :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   ocrd.processor.builtin.dummy
+
 Submodules
 ----------
 
