@@ -73,13 +73,6 @@ class OcrdMets(OcrdXmlDocument):
         if self._cache_flag:
             self.refresh_caches()
 
-    def __exit__(self):
-        """
-
-        """
-        if self._cache_flag:
-            self._clear_caches()
-
     def __str__(self):
         """
         String representation
