@@ -379,5 +379,21 @@ def test_envvar():
         assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
         assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
 
+def test_update_physical_page_attributes(sbb_directory_ocrd_mets):
+    m = sbb_directory_ocrd_mets
+    m.remove_file()
+    assert len(m.physical_pages) == 0
+    m.add_file('FOO', pageId='new page', ID='foo1', mimetype='foo/bar')
+    m.add_file('FOO', pageId='new page', ID='foo2', mimetype='foo/bar')
+    m.add_file('FOO', pageId='new page', ID='foo3', mimetype='foo/bar')
+    m.add_file('FOO', pageId='new page', ID='foo4', mimetype='foo/bar')
+    assert len(m.physical_pages) == 1
+    assert b'ORDER' not in m.to_xml()
+    assert b'ORDERLABEL' not in m.to_xml()
+    m.update_physical_page_attributes('new page', order='foo', orderlabel='bar')
+    assert b'ORDER' in m.to_xml()
+    assert b'ORDERLABEL' in m.to_xml()
+
+
 if __name__ == '__main__':
     main(__file__)
