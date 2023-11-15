@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd workspace update-page` to set attributes on the `mets:div` of a page, #1133, #1134
+
 Changed:
 
   * Update apidocs to include `ocrd_network`, #1131
