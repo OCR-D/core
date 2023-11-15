@@ -2,6 +2,7 @@ from os import makedirs
 from os.path import join, abspath, exists
 from shutil import copytree, rmtree, move, make_archive
 from tempfile import mkdtemp
+from pathlib import Path
 from bagit import _load_tag_file, Bag
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
@@ -197,6 +198,19 @@ def test_recreate_checksums_zipped(bagger_fixture):
     unzip_file_to_dir(zipped_bag_dest, bag_dest)
     assert Bag(bag_dest).is_valid(), "recreate_checksums zipped failed"
 
+def test_basename_conflict(tmpdir):
+    """
+    Ensure that when downloading during bagging, there are no filename
+    conflicts, i.e. all files are downloaded, none are overwritten.
+    """
+    bagger = WorkspaceBagger(Resolver())
+    workspace = Workspace(Resolver(), directory=str(Path(__file__).parent.parent / 'data/bagger-conflict-workspace'))
+    bagger.bag(workspace, 'bagger-conflict-test', skip_zip=True, dest=str(tmpdir / 'bag'))
+    assert len(workspace.mets.find_all_files()) == 3
+    assert len(list(Path(tmpdir, 'bag/data/A').iterdir())) == 3
+    # import os
+    # os.system(f'find {tmpdir}')
+    # assert 0
 
 if __name__ == '__main__':
     main(__name__)

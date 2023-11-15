@@ -1,6 +1,6 @@
 from datetime import datetime
 from os import makedirs, chdir, walk
-from os.path import join, isdir, basename, exists, relpath
+from os.path import join, isdir, basename as os_path_basename, exists, relpath
 from pathlib import Path
 from shutil import make_archive, rmtree, copyfile, move
 from tempfile import mkdtemp, TemporaryDirectory
@@ -62,6 +62,7 @@ class WorkspaceBagger():
 
         log = getLogger('ocrd.workspace_bagger')
         # TODO allow filtering by fileGrp@USE and such
+
         with pushd_popd(workspace.directory):
             # local_filenames of the files before changing
             for f in mets.find_files():
@@ -71,14 +72,11 @@ class WorkspaceBagger():
                 if not file_grp_dir.is_dir():
                     file_grp_dir.mkdir()
 
-                if f.local_filename:
-                    _relpath = join(f.fileGrp, f.basename)
-                    self.resolver.download_to_directory(file_grp_dir, f.local_filename, basename=f.basename)
-                    changed_local_filenames[str(f.local_filename)] = _relpath
-                else:
-                    _relpath = join(f.fileGrp, f"{f.ID}{MIME_TO_EXT[f.mimetype]}")
-                    self.resolver.download_to_directory(file_grp_dir, f.url, basename=f.basename)
-                    changed_local_filenames[f.url] = _relpath
+                attr = 'local_filename' if f.local_filename else 'url'
+                basename = f.basename if f.basename else f"{f.ID}{MIME_TO_EXT.get(f.mimetype, '.xml')}"
+                _relpath = join(f.fileGrp, basename)
+                self.resolver.download_to_directory(file_grp_dir, getattr(f, attr), basename=basename)
+                changed_local_filenames[str(getattr(f, attr))] = _relpath
                 f.local_filename = _relpath
 
             # save mets.xml
@@ -179,7 +177,7 @@ class WorkspaceBagger():
         self._set_bag_info(bag, total_bytes, total_files, ocrd_identifier, ocrd_base_version_checksum, ocrd_mets=ocrd_mets)
 
         for tag_file in tag_files:
-            copyfile(tag_file, join(bagdir, basename(tag_file)))
+            copyfile(tag_file, join(bagdir, os_path_basename(tag_file)))
 
         # save bag
         bag.save()
@@ -207,7 +205,7 @@ class WorkspaceBagger():
 
         # If dest is an existing directory, try to derive its name from src
         if isdir(dest):
-            workspace_name = re.sub(r'(\.ocrd)?\.zip$', '', basename(src))
+            workspace_name = re.sub(r'(\.ocrd)?\.zip$', '', os_path_basename(src))
             new_dest = join(dest, workspace_name)
             if exists(new_dest):
                 raise Exception("Directory exists: %s" % new_dest)
