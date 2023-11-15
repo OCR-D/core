@@ -1,0 +1,34 @@
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="info:lc/xmlns/premis-v2 http://www.loc.gov/standards/premis/v2/premis-v2-0.xsd http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-6.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd http://www.loc.gov/mix/v10 http://www.loc.gov/standards/mix/mix10/mix10.xsd">
+  <mets:metsHdr CREATEDATE="2023-11-15T18:27:08.929901">
+    <mets:agent TYPE="OTHER" OTHERTYPE="SOFTWARE" ROLE="CREATOR">
+      <mets:name>ocrd/core v2.58.1</mets:name>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="DMDLOG_0001">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+                </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="AMD">
+    </mets:amdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="A">
+      <mets:file ID="file1" MIMETYPE="foo/bar">
+          <mets:FLocat xlink:href="../bagger-conflict-source/A/name.ext" LOCTYPE="URL"/>
+      <mets:FLocat xlink:href="A/file1xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/></mets:file>
+      <mets:file ID="file2" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="../bagger-conflict-source/B/name.ext" LOCTYPE="URL"/>
+      <mets:FLocat xlink:href="A/file2xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/></mets:file>
+      <mets:file ID="file3" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="../bagger-conflict-source/C/name.ext" LOCTYPE="URL"/>
+      <mets:FLocat xlink:href="A/file3xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/></mets:file>
+    </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div TYPE="physSequence">
+        </mets:div>
+  </mets:structMap>
+</mets:mets>

@@ -1,0 +1,5 @@
+Bag-Software-Agent: ocrd/core 2.58.1 (bagit.py 1.8.1, bagit_profile 1.3.1) [cmdline: "/home/kba/monorepo/ocrd_all/venv/bin/ocrd zip bag -Z -i bar"]
+BagIt-Profile-Identifier: https://ocr-d.github.io/bagit-profile.json
+Bagging-Date: 2023-11-15 18:33:55.670559
+Ocrd-Identifier: bar
+Payload-Oxum: 1842.2
