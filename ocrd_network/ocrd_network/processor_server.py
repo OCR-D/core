@@ -18,9 +18,13 @@ from .database import (
     DBProcessorJob,
     db_get_workspace,
     db_update_processing_job,
+    db_get_processing_job,
     initiate_database
 )
-from .logging import get_processor_server_logging_file_path
+from .logging import (
+    get_processor_server_logging_file_path,
+    get_processing_job_logging_file_path,
+)
 from .models import (
     PYJobInput,
     PYJobOutput,
@@ -76,7 +80,7 @@ class ProcessorServer(FastAPI):
 
         # Create routes
         self.router.add_api_route(
-            path='/',
+            path='/info',
             endpoint=self.get_processor_info,
             methods=['GET'],
             tags=['Processing'],
@@ -88,7 +92,7 @@ class ProcessorServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/',
+            path='/run',
             endpoint=self.create_processor_task,
             methods=['POST'],
             tags=['Processing'],
@@ -100,7 +104,7 @@ class ProcessorServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/{job_id}',
+            path='/job/{job_id}',
             endpoint=self.get_processor_job,
             methods=['GET'],
             tags=['Processing'],
@@ -112,7 +116,7 @@ class ProcessorServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/{job_id}/log',
+            path='/log/{job_id}',
             endpoint=self.get_processor_job_log,
             methods=['GET'],
             tags=['processing'],
@@ -143,7 +147,6 @@ class ProcessorServer(FastAPI):
         validate_job_input(self.log, self.processor_name, self.ocrd_tool, job_input)
         job_input.path_to_mets = await validate_and_return_mets_path(self.log, job_input)
 
-        job = None
         # The request is not forwarded from the Processing Server, assign a job_id
         if not job_input.job_id:
             job_id = generate_id()
@@ -155,19 +158,23 @@ class ProcessorServer(FastAPI):
                 state=StateEnum.queued
             )
             await job.insert()
+        else:
+            job = await db_get_processing_job(job_input.job_id)
         await self.run_processor_task(job=job)
         return job.to_job_output()
 
     async def run_processor_task(self, job: DBProcessorJob):
         execution_failed = False
         start_time = datetime.now()
+        job_log_file = get_processing_job_logging_file_path(job_id=job.job_id)
         await db_update_processing_job(
             job_id=job.job_id,
             state=StateEnum.running,
-            start_time=start_time
+            start_time=start_time,
+            log_file_path=job_log_file
         )
 
-        mets_server_url = await db_get_workspace(workspace_mets_path=job.path_to_mets).mets_server_url
+        mets_server_url = (await db_get_workspace(workspace_mets_path=job.path_to_mets)).mets_server_url
         try:
             invoke_processor(
                 processor_class=self.processor_class,
@@ -177,7 +184,8 @@ class ProcessorServer(FastAPI):
                 output_file_grps=job.output_file_grps,
                 page_id=job.page_id,
                 parameters=job.parameters,
-                mets_server_url=mets_server_url
+                mets_server_url=mets_server_url,
+                log_filename=job_log_file,
             )
         except Exception as error:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {job.path_to_mets}, "
@@ -233,7 +241,7 @@ class ProcessorServer(FastAPI):
         if self.version:
             return self.version
 
-        """ 
+        """
         if self.processor_class:
             # The way of accessing the version like in the line below may be problematic
             # version_str = self.processor_class(workspace=None, version=True).version

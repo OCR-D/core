@@ -63,7 +63,7 @@ from .utils import (
     generate_id,
     get_ocrd_workspace_physical_pages
 )
-import time
+from urllib.parse import urljoin
 
 
 class ProcessingServer(FastAPI):
@@ -343,7 +343,7 @@ class ProcessingServer(FastAPI):
             )
         # Request the tool json from the Processor Server
         response = requests.get(
-            processor_server_url,
+            urljoin(processor_server_url, 'info'),
             headers={'Content-Type': 'application/json'}
         )
         if not response.status_code == 200:
@@ -522,7 +522,7 @@ class ProcessingServer(FastAPI):
         timeout = httpx.Timeout(timeout=request_timeout, connect=30.0)
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
-                processor_server_url,
+                urljoin(processor_server_url, 'run'),
                 headers={'Content-Type': 'application/json'},
                 json=json.loads(json_data)
             )
@@ -648,7 +648,7 @@ class ProcessingServer(FastAPI):
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Ocrd tool JSON of '{processor_name}' not available!"
             )
 
