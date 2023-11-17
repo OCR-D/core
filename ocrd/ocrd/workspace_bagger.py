@@ -15,7 +15,6 @@ from ocrd_utils import (
     pushd_popd,
     getLogger,
     MIME_TO_EXT,
-    is_local_filename,
     unzip_file_to_dir,
 
     MIMETYPE_PAGE,
@@ -56,7 +55,15 @@ class WorkspaceBagger():
         else:
             log.info(msg)
 
-    def _bag_mets_files(self, workspace, bagdir, ocrd_mets, processes):
+    def _bag_mets_files(
+        self,
+        workspace,
+        bagdir,
+        ocrd_mets,
+        processes,
+        include_file_grps=[],
+        exclude_file_grps=[],
+    ):
         mets = workspace.mets
         changed_local_filenames = {}
 
@@ -66,7 +73,13 @@ class WorkspaceBagger():
         with pushd_popd(workspace.directory):
             # local_filenames of the files before changing
             for f in mets.find_files():
-                log.info("Handling OcrdFile %s", f)
+                if include_file_grps and f.fileGrp not in include_file_grps:
+                    log.info(f"Skipping {f} because it is not in include_file_grps {include_file_grps}")
+                    continue
+                if exclude_file_grps and f.fileGrp in exclude_file_grps:
+                    log.info(f"Skipping {f} because it is in exclude_file_grps {exclude_file_grps}")
+                    continue
+                log.info("Bagging OcrdFile %s", f)
 
                 file_grp_dir = Path(bagdir, 'data', f.fileGrp)
                 if not file_grp_dir.is_dir():
@@ -130,7 +143,9 @@ class WorkspaceBagger():
             ocrd_base_version_checksum=None,
             processes=1,
             skip_zip=False,
-            tag_files=None
+            tag_files=None,
+            include_file_grps=[],
+            exclude_file_grps=[],
            ):
         """
         Bag a workspace
@@ -170,7 +185,7 @@ class WorkspaceBagger():
             f.write(BAGIT_TXT.encode('utf-8'))
 
         # create manifests
-        total_bytes, total_files = self._bag_mets_files(workspace, bagdir, ocrd_mets, processes)
+        total_bytes, total_files = self._bag_mets_files(workspace, bagdir, ocrd_mets, processes, include_file_grps, exclude_file_grps)
 
         # create bag-info.txt
         bag = Bag(bagdir)

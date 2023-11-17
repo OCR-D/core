@@ -10,7 +10,7 @@ from tests.base import TestCase, main, assets # pylint: disable=import-error,no-
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger, BACKUPDIR
 from ocrd.resolver import Resolver
-from ocrd_utils import unzip_file_to_dir
+from ocrd_utils import unzip_file_to_dir, pushd_popd, initLogging
 
 from pytest import fixture, raises
 
@@ -208,9 +208,41 @@ def test_basename_conflict(tmpdir):
     bagger.bag(workspace, 'bagger-conflict-test', skip_zip=True, dest=str(tmpdir / 'bag'))
     assert len(workspace.mets.find_all_files()) == 3
     assert len(list(Path(tmpdir, 'bag/data/A').iterdir())) == 3
-    # import os
-    # os.system(f'find {tmpdir}')
-    # assert 0
+
+def test_filter(tmpdir):
+    # initLogging()
+    bagger = WorkspaceBagger(Resolver())
+    fgs = ['A', 'B', 'C', 'D', 'E']
+    with pushd_popd(tmpdir):
+        Path('workspace').mkdir()
+        workspace = Resolver().workspace_from_nothing(tmpdir / 'workspace')
+        for fg in fgs:
+            Path(fg).mkdir()
+            for i in range(3):
+                workspace.add_file(fg, mimetype='foo/bar', file_id=f'{fg}_{i}', page_id=f'page{i}', local_filename=f'{fg}/file{i}.ext', content='')
+        # print([str(x) for x in workspace.mets.find_all_files()])
+
+        # test w/o filter
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag1'))
+        for fg in fgs:
+            assert len(list(Path(f'bag1/data/{fg}').iterdir())) == 3
+
+        # test include
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag2'), include_file_grps=['A'])
+        assert len(list(Path(f'bag2/data/A').iterdir())) == 3
+        for fg in ['B', 'C', 'D', 'E']:
+            assert not Path(f'bag2/data/{fg}').exists()
+
+        # test exclude
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag3'), exclude_file_grps=['A'])
+        assert not Path(f'bag3/data/A').exists()
+        for fg in ['B', 'C', 'D', 'E']:
+            assert len(list(Path(f'bag3/data/{fg}').iterdir())) == 3
+
+        # test include + exclude
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag4'), exclude_file_grps=['A'], include_file_grps=['A'])
+        for fg in fgs:
+            assert not Path(f'bag4/data/{fg}').exists()
 
 if __name__ == '__main__':
     main(__name__)
