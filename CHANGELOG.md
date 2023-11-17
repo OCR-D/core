@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * WorkspaceBagger: do not overwrite files in case of filename conflict, #1129, #1137
+
 Added:
 
   * `ocrd workspace update-page` to set attributes on the `mets:div` of a page, #1133, #1134
