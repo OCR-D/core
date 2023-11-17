@@ -195,7 +195,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/workflow',
+            path='/workflow/run',
             endpoint=self.run_workflow,
             methods=['POST'],
             tags=['workflow', 'processing'],
@@ -209,7 +209,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/workflow/{workflow_job_id}',
+            path='/workflow/job/{workflow_job_id}',
             endpoint=self.get_workflow_info,
             methods=['GET'],
             tags=['workflow', 'processing'],
