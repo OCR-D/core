@@ -860,7 +860,7 @@ class ProcessingServer(FastAPI):
                 })
         return res
 
-    async def upload_workflow(self, workflow: UploadFile) -> str:
+    async def upload_workflow(self, workflow: UploadFile) -> Dict:
         """ Store a script for a workflow in the database
         """
         workflow_id = generate_id()
@@ -874,7 +874,7 @@ class ProcessingServer(FastAPI):
             content=content,
         )
         await db_workflow_script.insert()
-        return workflow_id
+        return {"workflow_id": workflow_id}
 
     async def replace_workflow(self, workflow_id, workflow: UploadFile) -> str:
         """ Update a workflow script file in the database
