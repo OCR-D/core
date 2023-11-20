@@ -24,7 +24,7 @@ def create_ssh_client(address: str, username: str, password: str = "", keypath: 
     try:
         client.connect(hostname=address, username=username, password=password, key_filename=keypath)
     except Exception as error:
-        raise Exception(f"Error creating SSHClient of host '{address}', reason:") from error
+        raise Exception(f"Error creating SSHClient of host '{address}', reason: {error}") from error
     return client
 
 
