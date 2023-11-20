@@ -39,7 +39,7 @@ def zip_cli():
               help='Basename of the METS file.',
               show_default=True)
 @click.option('-q', '--include-file-grps', 'include_fileGrp', help="fileGrps to include", default=[], multiple=True)
-@click.option('-Q', '--exclude-file-grps', 'exclude_fileGrp', help="fileGrps to include", default=[], multiple=True)
+@click.option('-Q', '--exclude-file-grps', 'exclude_fileGrp', help="fileGrps to exclude", default=[], multiple=True)
 @click.option('-i', '--identifier', '--id', help="Ocrd-Identifier", required=True)
 @click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
