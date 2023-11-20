@@ -606,15 +606,16 @@ def list_pages(ctx, output_format, chunk_number, chunk_index, page_id_range, num
     if numeric_range:
         start, end = map(int, numeric_range.split('..'))
         ids = ids[start:end]
-    chunks = np.array_split(ids, chunk_number)
-    if chunk_index:
+    chunks = list(np.array_split(ids, chunk_number))
+    if chunk_index > -1:
         chunks = [chunks[chunk_index]]
+    chunks = [list(x) for x in chunks]
     if output_format == 'one-per-line':
         print("\n".join(["\n".join(chunk) for chunk in chunks]))
     elif output_format == 'comma-separated':
         print("\n".join([",".join(chunk) for chunk in chunks]))
     elif output_format == 'json':
-        print(json.dumps(chunks))
+        print(dumps(chunks))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
