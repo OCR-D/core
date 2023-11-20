@@ -3,7 +3,7 @@ from logging import FileHandler, Formatter
 import requests
 import httpx
 from os import getpid
-from typing import Dict, List
+from typing import Dict, List, Union
 import uvicorn
 
 from fastapi import (
@@ -11,7 +11,8 @@ from fastapi import (
     status,
     Request,
     HTTPException,
-    UploadFile
+    UploadFile,
+    File,
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
@@ -734,8 +735,9 @@ class ProcessingServer(FastAPI):
 
     async def run_workflow(
             self,
-            workflow: UploadFile,
             mets_path: str,
+            workflow: Union[UploadFile, None] = File(None),
+            workflow_id: str = None,
             agent_type: str = 'worker',
             page_id: str = None,
             page_wise: bool = False,
@@ -749,7 +751,19 @@ class ProcessingServer(FastAPI):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f"Mets file not existing: {mets_path}")
 
-        workflow = (await workflow.read()).decode("utf-8")
+        if not workflow:
+            if not workflow_id:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                    detail="Either workflow or workflow_id must be provided")
+            try:
+                workflow = await db_get_workflow_script(workflow_id)
+            except ValueError:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail=f"Workflow with id '{workflow_id}' not found")
+            workflow = workflow.content
+        else:
+            workflow = (await workflow.read()).decode("utf-8")
+
         try:
             tasks_list = workflow.splitlines()
             tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
