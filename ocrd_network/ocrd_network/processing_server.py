@@ -63,7 +63,8 @@ from .utils import (
     download_ocrd_all_tool_json,
     generate_created_time,
     generate_id,
-    get_ocrd_workspace_physical_pages
+    get_ocrd_workspace_physical_pages,
+    validate_workflow,
 )
 from urllib.parse import urljoin
 
@@ -850,6 +851,9 @@ class ProcessingServer(FastAPI):
         """
         workflow_id = generate_id()
         content = (await workflow.read()).decode("utf-8")
+        if not validate_workflow(content):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail="Provided workflow script is invalid")
 
         db_workflow_script = DBWorkflowScript(
             workflow_id=workflow_id,
@@ -858,22 +862,24 @@ class ProcessingServer(FastAPI):
         await db_workflow_script.insert()
         return workflow_id
 
-    async def replace_workflow(self, workflow_id, workflow: UploadFile) -> None:
+    async def replace_workflow(self, workflow_id, workflow: UploadFile) -> str:
         """ Update a workflow script file in the database
         """
+        content = (await workflow.read()).decode("utf-8")
+        if not validate_workflow(content):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail="Provided workflow script is invalid")
         try:
-            # Currently only replace is supported, not creating with put
             db_workflow_script = await db_get_workflow_script(workflow_id)
-            content = (await workflow.read()).decode("utf-8")
             db_workflow_script.content = content
-            await db_workflow_script.save()
-            return db_workflow_script.workflow_id
         except ValueError as e:
             self.log.exception(f"Workflow with id '{workflow_id}' not existing, error: {e}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Workflow-script with id '{workflow_id}' not existing"
             )
+        await db_workflow_script.save()
+        return db_workflow_script.workflow_id
 
     async def download_workflow(self, workflow_id) -> PlainTextResponse:
         """ Load workflow-script from the database
