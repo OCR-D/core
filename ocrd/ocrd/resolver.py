@@ -158,6 +158,7 @@ class Resolver():
         download=False,
         src_baseurl=None,
         mets_server_url=None,
+        **kwargs
     ):
         """
         Create a workspace from a METS by URL (i.e. clone if :py:attr:`mets_url` is remote or :py:attr:`dst_dir` is given).
@@ -172,6 +173,7 @@ class Resolver():
                 By default existing ``mets.xml`` will raise an exception.
             download (boolean, False): Whether to also download all the files referenced by the METS
             src_baseurl (string, None): Base URL for resolving relative file locations
+            **kwargs (): Passed on to ``OcrdMets.find_files`` if download == True
 
         Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless 
         the former is already local and the latter is ``none`` or already identical to its directory name.
@@ -217,7 +219,7 @@ class Resolver():
         workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl, mets_server_url=mets_server_url)
 
         if download:
-            for f in workspace.mets.find_files():
+            for f in workspace.mets.find_files(**kwargs):
                 workspace.download_file(f)
 
         return workspace

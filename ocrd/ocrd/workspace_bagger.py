@@ -61,8 +61,8 @@ class WorkspaceBagger():
         bagdir,
         ocrd_mets,
         processes,
-        include_file_grps=[],
-        exclude_file_grps=[],
+        include_fileGrp=None,
+        exclude_fileGrp=None,
     ):
         mets = workspace.mets
         changed_local_filenames = {}
@@ -72,13 +72,7 @@ class WorkspaceBagger():
 
         with pushd_popd(workspace.directory):
             # local_filenames of the files before changing
-            for f in mets.find_files():
-                if include_file_grps and f.fileGrp not in include_file_grps:
-                    log.info(f"Skipping {f} because it is not in include_file_grps {include_file_grps}")
-                    continue
-                if exclude_file_grps and f.fileGrp in exclude_file_grps:
-                    log.info(f"Skipping {f} because it is in exclude_file_grps {exclude_file_grps}")
-                    continue
+            for f in mets.find_files(include_fileGrp=include_fileGrp, exclude_fileGrp=exclude_fileGrp):
                 log.info("Bagging OcrdFile %s", f)
 
                 file_grp_dir = Path(bagdir, 'data', f.fileGrp)
@@ -144,8 +138,8 @@ class WorkspaceBagger():
             processes=1,
             skip_zip=False,
             tag_files=None,
-            include_file_grps=[],
-            exclude_file_grps=[],
+            include_fileGrp=None,
+            exclude_fileGrp=None,
            ):
         """
         Bag a workspace
@@ -185,7 +179,7 @@ class WorkspaceBagger():
             f.write(BAGIT_TXT.encode('utf-8'))
 
         # create manifests
-        total_bytes, total_files = self._bag_mets_files(workspace, bagdir, ocrd_mets, processes, include_file_grps, exclude_file_grps)
+        total_bytes, total_files = self._bag_mets_files(workspace, bagdir, ocrd_mets, processes, include_fileGrp, exclude_fileGrp)
 
         # create bag-info.txt
         bag = Bag(bagdir)

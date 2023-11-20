@@ -228,19 +228,19 @@ def test_filter(tmpdir):
             assert len(list(Path(f'bag1/data/{fg}').iterdir())) == 3
 
         # test include
-        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag2'), include_file_grps=['A'])
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag2'), include_fileGrp=['A'])
         assert len(list(Path(f'bag2/data/A').iterdir())) == 3
         for fg in ['B', 'C', 'D', 'E']:
             assert not Path(f'bag2/data/{fg}').exists()
 
         # test exclude
-        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag3'), exclude_file_grps=['A'])
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag3'), exclude_fileGrp=['A'])
         assert not Path(f'bag3/data/A').exists()
         for fg in ['B', 'C', 'D', 'E']:
             assert len(list(Path(f'bag3/data/{fg}').iterdir())) == 3
 
         # test include + exclude
-        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag4'), exclude_file_grps=['A'], include_file_grps=['A'])
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag4'), exclude_fileGrp=['A'], include_fileGrp=['A'])
         for fg in fgs:
             assert not Path(f'bag4/data/{fg}').exists()
 
