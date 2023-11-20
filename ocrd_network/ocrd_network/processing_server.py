@@ -14,7 +14,7 @@ from fastapi import (
     UploadFile
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
@@ -29,13 +29,15 @@ from .database import (
     db_get_workflow_job,
     db_get_workspace,
     db_update_processing_job,
-    db_update_workspace
+    db_update_workspace,
+    db_get_workflow_script,
 )
 from .deployer import Deployer
 from .logging import get_processing_server_logging_file_path
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
+    DBWorkflowScript,
     PYJobInput,
     PYJobOutput,
     PYResultMessage,
@@ -215,6 +217,31 @@ class ProcessingServer(FastAPI):
             tags=['workflow', 'processing'],
             status_code=status.HTTP_200_OK,
             summary='Get information about a workflow run',
+        )
+
+        self.router.add_api_route(
+            path='/workflow',
+            endpoint=self.upload_workflow,
+            methods=['POST'],
+            tags=['workflow'],
+            status_code=status.HTTP_200_OK,
+            summary='Upload/Register a new workflow script',
+        )
+        self.router.add_api_route(
+            path='/workflow/{workflow_id}',
+            endpoint=self.replace_workflow,
+            methods=['PUT'],
+            tags=['workflow'],
+            status_code=status.HTTP_200_OK,
+            summary='Update/Replace a workflow script',
+        )
+        self.router.add_api_route(
+            path='/workflow/{workflow_id}',
+            endpoint=self.download_workflow,
+            methods=['GET'],
+            tags=['workflow'],
+            status_code=status.HTTP_200_OK,
+            summary='Download a workflow script',
         )
 
         @self.exception_handler(RequestValidationError)
@@ -817,3 +844,46 @@ class ProcessingServer(FastAPI):
                     "page_id": job.page_id,
                 })
         return res
+
+    async def upload_workflow(self, workflow: UploadFile) -> str:
+        """ Store a script for a workflow in the database
+        """
+        workflow_id = generate_id()
+        content = (await workflow.read()).decode("utf-8")
+
+        db_workflow_script = DBWorkflowScript(
+            workflow_id=workflow_id,
+            content=content,
+        )
+        await db_workflow_script.insert()
+        return workflow_id
+
+    async def replace_workflow(self, workflow_id, workflow: UploadFile) -> None:
+        """ Update a workflow script file in the database
+        """
+        try:
+            # Currently only replace is supported, not creating with put
+            db_workflow_script = await db_get_workflow_script(workflow_id)
+            content = (await workflow.read()).decode("utf-8")
+            db_workflow_script.content = content
+            await db_workflow_script.save()
+            return db_workflow_script.workflow_id
+        except ValueError as e:
+            self.log.exception(f"Workflow with id '{workflow_id}' not existing, error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Workflow-script with id '{workflow_id}' not existing"
+            )
+
+    async def download_workflow(self, workflow_id) -> PlainTextResponse:
+        """ Load workflow-script from the database
+        """
+        try:
+            workflow = await db_get_workflow_script(workflow_id)
+            return PlainTextResponse(workflow.content)
+        except ValueError as e:
+            self.log.exception(f"Workflow with id '{workflow_id}' not existing, error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Workflow-script with id '{workflow_id}' not existing"
+            )
