@@ -153,10 +153,10 @@ def stop_mets_server(mets_server_url: str) -> bool:
 def validate_workflow(workflow: str, logger=None) -> bool:
     """ Check that workflow is not empty and parseable to a lists of ProcessorTask
     """
-    if workflow.strip() == "":
+    if not workflow.strip():
         if logger:
             logger.info("Workflow is invalid (empty string)")
-        return
+        return False
     try:
         tasks_list = workflow.splitlines()
         [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
