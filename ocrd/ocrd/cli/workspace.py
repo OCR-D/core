@@ -20,7 +20,7 @@ import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd.mets_server import OcrdMetsServer
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
@@ -590,7 +590,7 @@ def list_groups(ctx):
 @workspace_cli.command('list-page')
 @click.option('-f', '--output-format', help="Output format", type=click.Choice(['one-per-line', 'comma-separated', 'json']), default='one-per-line')
 @click.option('-D', '--chunk-number', help="Partition the return value into n roughly equally sized chunks", default=1, type=int)
-@click.option('-C', '--chunk-index', help="Output the nth chunk of results, -1 for all of them.", default=-1, type=int)
+@click.option('-C', '--chunk-index', help="Output the nth chunk of results, -1 for all of them.", default=None, type=int)
 @click.option('-r', '--page-id-range', help="Restrict the pages to those matching the provided range, based on the @ID attribute. Separate start/end with ..")
 @click.option('-R', '--numeric-range', help="Restrict the pages to those in the range, in numerical document order. Separate start/end with ..")
 @pass_workspace
@@ -602,14 +602,11 @@ def list_pages(ctx, output_format, chunk_number, chunk_index, page_id_range, num
     find_kwargs = {}
     if page_id_range:
         find_kwargs['pageId'] = page_id_range
-    ids = sorted(list(set([x.pageId for x in workspace.mets.find_files(**find_kwargs)])))
+    ids = sorted({x.pageId for x in workspace.mets.find_files(**find_kwargs)})
     if numeric_range:
         start, end = map(int, numeric_range.split('..'))
         ids = ids[start-1:end]
-    chunks = list(np.array_split(ids, chunk_number))
-    if chunk_index > -1:
-        chunks = [chunks[chunk_index]]
-    chunks = [list(x) for x in chunks]
+    chunks = partition_list(ids, chunk_number, chunk_index)
     if output_format == 'one-per-line':
         print("\n".join(["\n".join(chunk) for chunk in chunks]))
     elif output_format == 'comma-separated':

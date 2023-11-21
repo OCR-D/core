@@ -29,6 +29,8 @@ from ocrd_utils import (
     parse_json_string_or_file,
     set_json_key_value_overrides,
 
+    partition_list,
+
     points_from_bbox,
     points_from_x0y0x1y1,
     points_from_xywh,
@@ -301,6 +303,17 @@ def test_safe_filename():
     assert safe_filename('Hello world,!') == 'Hello_world_'
     assert safe_filename(' Καλημέρα κόσμε,') == '_Καλημέρα_κόσμε_'
     assert safe_filename(':コンニチハ:') == '_コンニチハ_'
+
+def test_partition_list():
+    lst_10 = list(range(1, 11))
+    assert partition_list(None, 1) == []
+    assert partition_list([], 1) == []
+    assert partition_list(lst_10, 1) == [lst_10]
+    assert partition_list(lst_10, 3) == [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10]]
+    assert partition_list(lst_10, 3, 1) == [[5, 6, 7, 8]]
+    assert partition_list(lst_10, 3, 0) == [[1, 2, 3, 4]]
+    with raises(IndexError):
+        partition_list(lst_10, 5, 5)
 
 if __name__ == '__main__':
     main(__file__)
