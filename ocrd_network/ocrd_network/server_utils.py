@@ -15,23 +15,22 @@ from .database import (
 from .models import PYJobInput, PYJobOutput
 
 
-async def _get_processor_job(logger, processor_name: str, job_id: str) -> PYJobOutput:
+async def _get_processor_job(logger, job_id: str) -> PYJobOutput:
     """ Return processing job-information from the database
     """
     try:
         job = await db_get_processing_job(job_id)
         return job.to_job_output()
     except ValueError as e:
-        logger.exception(f"Processing job with id '{job_id}' of processor type "
-                         f"'{processor_name}' not existing, error: {e}")
+        logger.exception(f"Processing job with id '{job_id}' not existing, error: {e}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Processing job with id '{job_id}' of processor type '{processor_name}' not existing"
+            detail=f"Processing job with id '{job_id}' not existing"
         )
 
 
-async def _get_processor_job_log(logger, processor_name: str, job_id: str) -> FileResponse:
-    db_job = await _get_processor_job(logger, processor_name, job_id)
+async def _get_processor_job_log(logger, job_id: str) -> FileResponse:
+    db_job = await _get_processor_job(logger, job_id)
     log_file_path = Path(db_job.log_file_path)
     return FileResponse(path=log_file_path, filename=log_file_path.name)
 
