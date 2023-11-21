@@ -16,7 +16,11 @@ if sys.version_info >= (3, 12):
 else:
     def batched(iterable, chunk_size):
         iterator = iter(iterable)
-        while chunk := tuple(islice(iterator, chunk_size)):
+        chunk = None
+        while True:
+            chunk = tuple(islice(iterator, chunk_size))
+            if not chunk:
+                break
             yield chunk
 
 __all__ = [
