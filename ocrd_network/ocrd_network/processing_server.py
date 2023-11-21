@@ -63,7 +63,7 @@ from .utils import (
     generate_id,
     get_ocrd_workspace_physical_pages
 )
-import time
+from urllib.parse import urljoin
 
 
 class ProcessingServer(FastAPI):
@@ -135,7 +135,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/{processor_name}',
+            path='/processor/run/{processor_name}',
             endpoint=self.push_processor_job,
             methods=['POST'],
             tags=['processing'],
@@ -147,7 +147,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/{processor_name}/{job_id}',
+            path='/processor/job/{job_id}',
             endpoint=self.get_processor_job,
             methods=['GET'],
             tags=['processing'],
@@ -159,7 +159,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/{processor_name}/{job_id}/log',
+            path='/processor/log/{job_id}',
             endpoint=self.get_processor_job_log,
             methods=['GET'],
             tags=['processing'],
@@ -177,7 +177,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/processor/{processor_name}',
+            path='/processor/info/{processor_name}',
             endpoint=self.get_processor_info,
             methods=['GET'],
             tags=['processing', 'discovery'],
@@ -343,7 +343,7 @@ class ProcessingServer(FastAPI):
             )
         # Request the tool json from the Processor Server
         response = requests.get(
-            processor_server_url,
+            urljoin(processor_server_url, 'info'),
             headers={'Content-Type': 'application/json'}
         )
         if not response.status_code == 200:
@@ -360,6 +360,11 @@ class ProcessingServer(FastAPI):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Job id field is set but must not be: {data.job_id}"
+            )
+        if not data.workspace_id and not data.path_to_mets:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="either 'path_to_mets' or 'workspace_id' must be provided"
             )
         # Generate processing job id
         data.job_id = generate_id()
@@ -517,7 +522,7 @@ class ProcessingServer(FastAPI):
         timeout = httpx.Timeout(timeout=request_timeout, connect=30.0)
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
-                processor_server_url,
+                urljoin(processor_server_url, 'run'),
                 headers={'Content-Type': 'application/json'},
                 json=json.loads(json_data)
             )
@@ -531,11 +536,11 @@ class ProcessingServer(FastAPI):
         job_output = response.json()
         return job_output
 
-    async def get_processor_job(self, processor_name: str, job_id: str) -> PYJobOutput:
-        return await _get_processor_job(self.log, processor_name, job_id)
+    async def get_processor_job(self, job_id: str) -> PYJobOutput:
+        return await _get_processor_job(self.log, job_id)
 
-    async def get_processor_job_log(self, processor_name: str, job_id: str) -> FileResponse:
-        return await _get_processor_job_log(self.log, processor_name, job_id)
+    async def get_processor_job_log(self, job_id: str) -> FileResponse:
+        return await _get_processor_job_log(self.log, job_id)
 
     async def remove_from_request_cache(self, result_message: PYResultMessage):
         result_job_id = result_message.job_id
@@ -643,7 +648,7 @@ class ProcessingServer(FastAPI):
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Ocrd tool JSON of '{processor_name}' not available!"
             )
 
