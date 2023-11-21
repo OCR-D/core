@@ -226,7 +226,7 @@ class ProcessingServer(FastAPI):
             endpoint=self.upload_workflow,
             methods=['POST'],
             tags=['workflow'],
-            status_code=status.HTTP_200_OK,
+            status_code=status.HTTP_201_CREATED,
             summary='Upload/Register a new workflow script',
         )
         self.router.add_api_route(
