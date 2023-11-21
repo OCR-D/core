@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Change web API paths to avoid any potential URL segment clashes, #1136, OCR-D/spec#250
+    * `GET /` -> `GET /info`
+    * `POST /` -> `POST /run`
+    * `/{job-id}` -> `/job/{job-id}`
+    * `/{job-id}/log` -> `/log/{job-id}`
+
 Fixed:
 
   * WorkspaceBagger: do not overwrite files in case of filename conflict, #1129, #1137
