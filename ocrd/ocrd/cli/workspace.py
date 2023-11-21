@@ -605,7 +605,7 @@ def list_pages(ctx, output_format, chunk_number, chunk_index, page_id_range, num
     ids = sorted(list(set([x.pageId for x in workspace.mets.find_files(**find_kwargs)])))
     if numeric_range:
         start, end = map(int, numeric_range.split('..'))
-        ids = ids[start:end]
+        ids = ids[start-1:end]
     chunks = list(np.array_split(ids, chunk_number))
     if chunk_index > -1:
         chunks = [chunks[chunk_index]]
