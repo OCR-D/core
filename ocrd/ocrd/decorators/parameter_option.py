@@ -5,6 +5,7 @@ __all__ = ['parameter_option', 'parameter_override_option']
 
 
 def _handle_param_option(ctx, param, value):
+    # FIXME: use resolve_resource for preset file names
     return parse_json_string_or_file(*list(value))
 
 parameter_option = option('-p', '--parameter',
