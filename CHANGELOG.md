@@ -20,6 +20,7 @@ Fixed:
 Added:
 
   * `ocrd workspace update-page` to set attributes on the `mets:div` of a page, #1133, #1134
+  * `ocrd workspace list-page` now has configurable output format and optional partitioning of the page list, #1140, #1141
 
 Changed:
 
