@@ -767,7 +767,7 @@ class ProcessingServer(FastAPI):
         try:
             tasks_list = workflow.splitlines()
             tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
-        except BaseException as e:
+        except ValueError as e:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
 

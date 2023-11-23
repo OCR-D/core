@@ -160,7 +160,7 @@ def validate_workflow(workflow: str, logger=None) -> bool:
     try:
         tasks_list = workflow.splitlines()
         [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
-    except BaseException as e:
+    except ValueError as e:
         if logger:
             logger.info(f"Workflow is invalid, parsing to ProcessorTasks failed: {e}")
         return False
