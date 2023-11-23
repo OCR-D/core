@@ -21,6 +21,7 @@ Added:
 
   * `ocrd workspace update-page` to set attributes on the `mets:div` of a page, #1133, #1134
   * `ocrd workspace list-page` now has configurable output format and optional partitioning of the page list, #1140, #1141
+  * `ocrd zip bag`, `ocrd workspace merge`, `ocrd workspace clone` now support whitelisting/blacklisting file groups, #356, #383, #506, #582, #1138, #1139
 
 Changed:
 
