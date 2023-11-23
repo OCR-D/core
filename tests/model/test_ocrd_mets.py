@@ -78,7 +78,9 @@ def test_file_groups(sbb_sample_01):
 def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files()) == 35, '35 files total'
     assert len(sbb_sample_01.find_all_files(fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
+    assert len(sbb_sample_01.find_all_files(include_fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
     assert len(sbb_sample_01.find_all_files(fileGrp='//OCR-D-I.*')) == 13, '13 files in "//OCR-D-I.*"'
+    assert len(sbb_sample_01.find_all_files(fileGrp='//OCR-D-I.*', exclude_fileGrp=['OCR-D-IMG'])) == 10, '10 files in "//OCR-D-I.*" sans OCR-D-IMG'
     assert len(sbb_sample_01.find_all_files(ID="FILE_0001_IMAGE")) == 1, '1 files with ID "FILE_0001_IMAGE"'
     assert len(sbb_sample_01.find_all_files(ID="//FILE_0005_.*")) == 1, '1 files with ID "//FILE_0005_.*"'
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001')) == 17, '17 files for page "PHYS_0001"'

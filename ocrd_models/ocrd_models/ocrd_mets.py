@@ -236,7 +236,18 @@ class OcrdMets(OcrdXmlDocument):
         return list(self.find_files(*args, **kwargs))
 
     # pylint: disable=multiple-statements
-    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_filename=None, local_only=False):
+    def find_files(
+        self,
+        ID=None,
+        fileGrp=None,
+        pageId=None,
+        mimetype=None,
+        url=None,
+        local_filename=None,
+        local_only=False,
+        include_fileGrp=None,
+        exclude_fileGrp=None,
+    ):
         """
         Search ``mets:file`` entries in this METS document and yield results.
         The :py:attr:`ID`, :py:attr:`pageId`, :py:attr:`fileGrp`,
@@ -257,6 +268,8 @@ class OcrdMets(OcrdXmlDocument):
             local_filename (string) : ``@xlink:href`` local/cached filename of ``mets:Flocat`` of ``mets:file``
             mimetype (string) : ``@MIMETYPE`` of ``mets:file``
             local (boolean) : Whether to restrict results to local files in the filesystem
+            include_fileGrp (list[str]) : Whitelist of allowd file groups 
+            exclude_fileGrp (list[str]) : Blacklist of disallowd file groups 
         Yields:
             :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
         """
@@ -351,7 +364,15 @@ class OcrdMets(OcrdXmlDocument):
                 if is_local is None:
                     continue
 
-            yield OcrdFile(cand, mets=self)
+            ret = OcrdFile(cand, mets=self)
+
+            # XXX include_fileGrp is redundant to fileGrp but for completeness
+            if exclude_fileGrp and ret.fileGrp in exclude_fileGrp:
+                continue
+            if include_fileGrp and ret.fileGrp not in include_fileGrp:
+                continue
+
+            yield ret
 
     def add_file_group(self, fileGrp):
         """

@@ -62,7 +62,9 @@ class WorkspaceValidator():
         return report
 
     def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False,
-                 page_strictness='strict', page_coordinate_consistency='poly'):
+                 page_strictness='strict', page_coordinate_consistency='poly',
+                 include_fileGrp=None, exclude_fileGrp=None
+                 ):
         """
         Construct a new WorkspaceValidator.
 
@@ -80,6 +82,8 @@ class WorkspaceValidator():
                  * `"baseline"`: Baseline in TextLine
                  * `"both"`: both `poly` and `baseline` checks
                  * `"off"`: no coordinate checks
+            include_fileGrp (list[str]): filegrp whitelist
+            exclude_fileGrp (list[str]): filegrp blacklist
         """
         self.report = ValidationReport()
         self.skip = skip if skip else []
@@ -97,6 +101,7 @@ class WorkspaceValidator():
         if 'mets_fileid_page_pcgtsid' not in self.skip:
             self.page_checks.append('pcgtsid')
 
+        self.find_kwargs = dict(include_fileGrp=include_fileGrp, exclude_fileGrp=exclude_fileGrp)
         self.src_dir = src_dir
         self.workspace = None
         self.mets = None
@@ -184,14 +189,14 @@ class WorkspaceValidator():
         Validate that the imageFilename is correctly set to a filename relative to the workspace
         """
         self.log.debug('_validate_imagefilename')
-        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
             if not f.local_filename and not self.download:
                 self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
             page = page_from_file(f).get_Page()
             imageFilename = page.imageFilename
-            if not self.mets.find_files(url=imageFilename):
+            if not self.mets.find_files(url=imageFilename, **self.find_kwargs):
                 self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.local_filename, imageFilename))
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
                 self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.local_filename, imageFilename))
@@ -201,7 +206,7 @@ class WorkspaceValidator():
         Validate image height and PAGE imageHeight match
         """
         self.log.info('_validate_dimension')
-        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
             if not f.local_filename and not self.download:
                 self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
@@ -220,7 +225,7 @@ class WorkspaceValidator():
         See `spec <https://ocr-d.github.io/mets#no-multi-page-images>`_.
         """
         self.log.debug('_validate_multipage')
-        for f in self.mets.find_files(mimetype='//image/.*'):
+        for f in self.mets.find_files(mimetype='//image/.*', **self.find_kwargs):
             if not f.local_filename and not self.download:
                 self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
@@ -240,7 +245,7 @@ class WorkspaceValidator():
         See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
         """
         self.log.debug('_validate_pixel_density')
-        for f in self.mets.find_files(mimetype='//image/.*'):
+        for f in self.mets.find_files(mimetype='//image/.*', **self.find_kwargs):
             if not f.local_filename and not self.download:
                 self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
@@ -282,10 +287,10 @@ class WorkspaceValidator():
         """
         self.log.debug('_validate_mets_files')
         try:
-            next(self.mets.find_files())
+            next(self.mets.find_files(**self.find_kwargs))
         except StopIteration:
             self.report.add_error("No files")
-        for f in self.mets.find_files():
+        for f in self.mets.find_files(**self.find_kwargs):
             if f._el.get('GROUPID'): # pylint: disable=protected-access
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
             if not (f.url or f.local_filename):
@@ -303,7 +308,7 @@ class WorkspaceValidator():
         Run PageValidator on the PAGE-XML documents referenced in the METS.
         """
         self.log.debug('_validate_page')
-        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
             if not f.local_filename and not self.download:
                 self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
@@ -322,7 +327,7 @@ class WorkspaceValidator():
         Validate all PAGE-XML files against PAGE XSD schema
         """
         self.log.debug('_validate_page_xsd')
-        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
             if not f.local_filename and not self.download:
                 self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue

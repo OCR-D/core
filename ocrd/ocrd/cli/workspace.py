@@ -119,10 +119,11 @@ def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
+@mets_find_options
 # XXX deprecated
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
-def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
+def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mimetype, include_fileGrp, exclude_fileGrp, mets_url, workspace_dir):
     """
     Create a workspace from METS_URL and return the directory
 
@@ -141,6 +142,11 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
+        ID=file_id,
+        pageId=page_id,
+        mimetype=mimetype,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
     workspace.save_mets()
     print(workspace.directory)
@@ -432,7 +438,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
 @click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download, undo_download, wait):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, include_fileGrp, exclude_fileGrp, download, undo_download, wait):
     """
     Find files.
 
@@ -454,6 +460,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
             file_grp=file_grp,
             mimetype=mimetype,
             page_id=page_id,
+            include_fileGrp=include_fileGrp,
+            exclude_fileGrp=exclude_fileGrp,
         ):
         ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
         if download and not f.local_filename:
@@ -679,7 +687,7 @@ def _handle_json_option(ctx, param, value):
 @click.option('--pageId-mapping', help="JSON object mapping src to dest page ID", callback=_handle_json_option)
 @mets_find_options
 @pass_workspace
-def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, include_fileGrp, exclude_fileGrp, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
 
@@ -706,7 +714,9 @@ def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pa
         file_grp=file_grp,
         file_id=file_id,
         page_id=page_id,
-        mimetype=mimetype
+        mimetype=mimetype,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
     workspace.save_mets()
 
