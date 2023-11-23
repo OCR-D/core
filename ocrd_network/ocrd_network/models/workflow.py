@@ -6,3 +6,4 @@ class DBWorkflowScript(Document):
     """
     workflow_id: str
     content: str
+    content_hash: str

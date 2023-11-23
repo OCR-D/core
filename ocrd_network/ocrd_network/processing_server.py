@@ -32,6 +32,7 @@ from .database import (
     db_update_processing_job,
     db_update_workspace,
     db_get_workflow_script,
+    db_find_first_workflow_script_by_content
 )
 from .deployer import Deployer
 from .logging import get_processing_server_logging_file_path
@@ -68,6 +69,7 @@ from .utils import (
     validate_workflow,
 )
 from urllib.parse import urljoin
+from hashlib import md5
 
 
 class ProcessingServer(FastAPI):
@@ -869,9 +871,19 @@ class ProcessingServer(FastAPI):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail="Provided workflow script is invalid")
 
+        content_hash = md5(content.encode("utf-8")).hexdigest()
+        try:
+            db_workflow_script = await db_find_first_workflow_script_by_content(content_hash)
+            if db_workflow_script:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The same workflow"
+                                    f"-script exists with id '{db_workflow_script.workflow_id}'")
+        except ValueError:
+            pass
+
         db_workflow_script = DBWorkflowScript(
             workflow_id=workflow_id,
             content=content,
+            content_hash=content_hash,
         )
         await db_workflow_script.insert()
         return {"workflow_id": workflow_id}
@@ -886,6 +898,8 @@ class ProcessingServer(FastAPI):
         try:
             db_workflow_script = await db_get_workflow_script(workflow_id)
             db_workflow_script.content = content
+            content_hash = md5(content.encode("utf-8")).hexdigest()
+            db_workflow_script.content_hash = content_hash
         except ValueError as e:
             self.log.exception(f"Workflow with id '{workflow_id}' not existing, error: {e}")
             raise HTTPException(

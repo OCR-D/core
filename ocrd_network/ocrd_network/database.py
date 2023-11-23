@@ -212,3 +212,15 @@ async def db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
 @call_sync
 async def sync_db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
     return await db_get_workflow_script(workflow_id)
+
+
+async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkflowScript:
+    workflow = await DBWorkflowScript.find_one(DBWorkflowScript.content_hash == content_hash)
+    if not workflow:
+        raise ValueError(f'Workflow-script with content_hash "{content_hash}" not in the DB.')
+    return workflow
+
+
+@call_sync
+async def sync_db_find_first_workflow_script_by_content(workflow_id: str) -> DBWorkflowScript:
+    return await db_get_workflow_script(workflow_id)
