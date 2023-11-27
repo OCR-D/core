@@ -12,6 +12,7 @@ from yaml import safe_load
 from ocrd import Resolver, Workspace
 from ocrd_validators import ProcessingServerConfigValidator
 from .rabbitmq_utils import OcrdResultMessage
+from ocrd.task_sequence import ProcessorTask
 
 
 # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
@@ -147,3 +148,20 @@ def stop_mets_server(mets_server_url: str) -> bool:
     if response.status_code == 200:
         return True
     return False
+
+
+def validate_workflow(workflow: str, logger=None) -> bool:
+    """ Check that workflow is not empty and parseable to a lists of ProcessorTask
+    """
+    if not workflow.strip():
+        if logger:
+            logger.info("Workflow is invalid (empty string)")
+        return False
+    try:
+        tasks_list = workflow.splitlines()
+        [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
+    except ValueError as e:
+        if logger:
+            logger.info(f"Workflow is invalid, parsing to ProcessorTasks failed: {e}")
+        return False
+    return True
