@@ -16,16 +16,14 @@ Changed:
 Fixed:
 
   * WorkspaceBagger: do not overwrite files in case of filename conflict, #1129, #1137
+  * Update apidocs to include `ocrd_network`, #1131
 
 Added:
 
   * `ocrd workspace update-page` to set attributes on the `mets:div` of a page, #1133, #1134
   * `ocrd workspace list-page` now has configurable output format and optional partitioning of the page list, #1140, #1141
   * `ocrd zip bag`, `ocrd workspace merge`, `ocrd workspace clone` now support whitelisting/blacklisting file groups, #356, #383, #506, #582, #1138, #1139
-
-Changed:
-
-  * Update apidocs to include `ocrd_network`, #1131
+  * workflow endpoint supports storing and deduplicating workflows, #1143
 
 Removed:
 
