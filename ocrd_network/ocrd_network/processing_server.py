@@ -784,6 +784,7 @@ class ProcessingServer(FastAPI):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
 
+        # Validate the input file groups of the first task in the workflow
         available_groups = Workspace(Resolver(), Path(mets_path).parents[0]).mets.file_groups
         for grp in tasks[0].input_file_grps:
             if grp not in available_groups:
@@ -791,6 +792,21 @@ class ProcessingServer(FastAPI):
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Input file grps of 1st processor not found: {tasks[0].input_file_grps}"
                 )
+
+        # Validate existence of agents (processing workers/processor servers)
+        # for the ocr-d processors referenced inside tasks
+        missing_agents = []
+        for task in tasks:
+            if not self.processing_agent_exists(processor_name=task.executable, agent_type=agent_type):
+                missing_agents.append({task.executable, agent_type})
+        if missing_agents:
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail=f"Workflow validation has failed. Processing agents not found: {missing_agents}. "
+                       f"Make sure the desired processors are deployed either as a processing "
+                       f"worker or processor server"
+            )
+
         try:
             if page_id:
                 page_range = expand_page_ids(page_id)
