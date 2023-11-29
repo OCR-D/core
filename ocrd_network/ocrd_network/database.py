@@ -22,7 +22,8 @@ from typing import List
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
-    DBWorkspace
+    DBWorkspace,
+    DBWorkflowScript,
 )
 from .utils import call_sync
 
@@ -31,7 +32,7 @@ async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
         database=client.get_default_database(default='ocrd'),
-        document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace]
+        document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript]
     )
 
 
@@ -199,3 +200,27 @@ async def db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
 @call_sync
 async def sync_db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
     return await db_get_processing_jobs(job_ids)
+
+
+async def db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
+    workflow = await DBWorkflowScript.find_one(DBWorkflowScript.workflow_id == workflow_id)
+    if not workflow:
+        raise ValueError(f'Workflow-script with id "{workflow_id}" not in the DB.')
+    return workflow
+
+
+@call_sync
+async def sync_db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
+    return await db_get_workflow_script(workflow_id)
+
+
+async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkflowScript:
+    workflow = await DBWorkflowScript.find_one(DBWorkflowScript.content_hash == content_hash)
+    if not workflow:
+        raise ValueError(f'Workflow-script with content_hash "{content_hash}" not in the DB.')
+    return workflow
+
+
+@call_sync
+async def sync_db_find_first_workflow_script_by_content(workflow_id: str) -> DBWorkflowScript:
+    return await db_get_workflow_script(workflow_id)

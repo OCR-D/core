@@ -194,6 +194,7 @@ from .str import (
     is_string,
     make_file_id,
     nth_url_segment,
+    partition_list,
     parse_json_string_or_file,
     parse_json_string_with_comments,
     remove_non_path_from_url,

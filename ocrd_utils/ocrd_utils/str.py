@@ -7,12 +7,28 @@ import json
 from .constants import REGEX_FILE_ID
 from .deprecate import deprecation_warning
 from warnings import warn
+from math import ceil
+import sys
+from itertools import islice
+
+if sys.version_info >= (3, 12):
+    from itertools import batched
+else:
+    def batched(iterable, chunk_size):
+        iterator = iter(iterable)
+        chunk = None
+        while True:
+            chunk = tuple(islice(iterator, chunk_size))
+            if not chunk:
+                break
+            yield chunk
 
 __all__ = [
     'assert_file_grp_cardinality',
     'concat_padded',
     'get_local_filename',
     'is_local_filename',
+    'partition_list',
     'is_string',
     'make_file_id',
     'nth_url_segment',
@@ -206,4 +222,26 @@ def generate_range(start, end):
         warn("Range '%s..%s': evaluates to the same number")
     for i in range(int(start_num), int(end_num) + 1):
         ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
+    return ret
+
+def partition_list(lst, chunks, chunk_index=None):
+    """
+    Partition a list into roughly equally-sized chunks
+
+    Args:
+        lst (list): list to partition
+        chunks (int): number of chunks to generate (not per chunk!)
+
+    Keyword Args:
+        chunk_index (None|int): If provided, return only a list consisting of this chunk
+
+    Returns:
+        list(list())
+    """
+    if not lst:
+        return []
+    items_per_chunk = ceil(len(lst) / chunks)
+    ret = list(map(list, batched(lst, items_per_chunk)))
+    if chunk_index is not None:
+        return [ret[chunk_index]]
     return ret

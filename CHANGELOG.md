@@ -5,17 +5,27 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.59.0] - 2023-11-27
+
+Changed:
+
+  * Change web API paths to avoid any potential URL segment clashes, #1136, OCR-D/spec#250
+    * `GET /` -> `GET /info`
+    * `POST /` -> `POST /run`
+    * `/{job-id}` -> `/job/{job-id}`
+    * `/{job-id}/log` -> `/log/{job-id}`
+
 Fixed:
 
   * WorkspaceBagger: do not overwrite files in case of filename conflict, #1129, #1137
+  * Update apidocs to include `ocrd_network`, #1131
 
 Added:
 
   * `ocrd workspace update-page` to set attributes on the `mets:div` of a page, #1133, #1134
-
-Changed:
-
-  * Update apidocs to include `ocrd_network`, #1131
+  * `ocrd workspace list-page` now has configurable output format and optional partitioning of the page list, #1140, #1141
+  * `ocrd zip bag`, `ocrd workspace merge`, `ocrd workspace clone` now support whitelisting/blacklisting file groups, #356, #383, #506, #582, #1138, #1139
+  * workflow endpoint supports storing and deduplicating workflows, #1143
 
 Removed:
 
@@ -1910,6 +1920,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.59.0]: ../../compare/v2.59.0..v2.58.1
+[2.58.0]: ../../compare/v2.58.1..v2.58.0
 [2.58.0]: ../../compare/v2.58.0..v2.57.2
 [2.57.2]: ../../compare/v2.57.2..v2.57.1
 [2.57.1]: ../../compare/v2.57.1..v2.57.0

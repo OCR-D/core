@@ -9,17 +9,18 @@ import os
 from os import getcwd
 from os.path import relpath, exists, join, isabs
 from pathlib import Path
-from json import loads
+from json import loads, dumps
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
 import time
+import numpy as np
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd.mets_server import OcrdMetsServer
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
@@ -118,10 +119,11 @@ def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
+@mets_find_options
 # XXX deprecated
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
-def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
+def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mimetype, include_fileGrp, exclude_fileGrp, mets_url, workspace_dir):
     """
     Create a workspace from METS_URL and return the directory
 
@@ -140,6 +142,11 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
+        ID=file_id,
+        pageId=page_id,
+        mimetype=mimetype,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
     workspace.save_mets()
     print(workspace.directory)
@@ -431,7 +438,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
 @click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download, undo_download, wait):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, include_fileGrp, exclude_fileGrp, download, undo_download, wait):
     """
     Find files.
 
@@ -453,6 +460,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
             file_grp=file_grp,
             mimetype=mimetype,
             page_id=page_id,
+            include_fileGrp=include_fileGrp,
+            exclude_fileGrp=exclude_fileGrp,
         ):
         ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
         if download and not f.local_filename:
@@ -583,17 +592,35 @@ def list_groups(ctx):
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
-# ocrd workspace list-pages
+# ocrd workspace list-page
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('list-page')
+@click.option('-f', '--output-format', help="Output format", type=click.Choice(['one-per-line', 'comma-separated', 'json']), default='one-per-line')
+@click.option('-D', '--chunk-number', help="Partition the return value into n roughly equally sized chunks", default=1, type=int)
+@click.option('-C', '--chunk-index', help="Output the nth chunk of results, -1 for all of them.", default=None, type=int)
+@click.option('-r', '--page-id-range', help="Restrict the pages to those matching the provided range, based on the @ID attribute. Separate start/end with ..")
+@click.option('-R', '--numeric-range', help="Restrict the pages to those in the range, in numerical document order. Separate start/end with ..")
 @pass_workspace
-def list_pages(ctx):
+def list_pages(ctx, output_format, chunk_number, chunk_index, page_id_range, numeric_range):
     """
     List physical page IDs
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
-    print("\n".join(workspace.mets.physical_pages))
+    find_kwargs = {}
+    if page_id_range:
+        find_kwargs['pageId'] = page_id_range
+    ids = sorted({x.pageId for x in workspace.mets.find_files(**find_kwargs)})
+    if numeric_range:
+        start, end = map(int, numeric_range.split('..'))
+        ids = ids[start-1:end]
+    chunks = partition_list(ids, chunk_number, chunk_index)
+    if output_format == 'one-per-line':
+        print("\n".join(["\n".join(chunk) for chunk in chunks]))
+    elif output_format == 'comma-separated':
+        print("\n".join([",".join(chunk) for chunk in chunks]))
+    elif output_format == 'json':
+        print(dumps(chunks))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
@@ -660,7 +687,7 @@ def _handle_json_option(ctx, param, value):
 @click.option('--pageId-mapping', help="JSON object mapping src to dest page ID", callback=_handle_json_option)
 @mets_find_options
 @pass_workspace
-def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, include_fileGrp, exclude_fileGrp, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
 
@@ -687,7 +714,9 @@ def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pa
         file_grp=file_grp,
         file_id=file_id,
         page_id=page_id,
-        mimetype=mimetype
+        mimetype=mimetype,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
     workspace.save_mets()
 

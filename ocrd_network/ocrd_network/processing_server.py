@@ -3,7 +3,7 @@ from logging import FileHandler, Formatter
 import requests
 import httpx
 from os import getpid
-from typing import Dict, List
+from typing import Dict, List, Union
 import uvicorn
 
 from fastapi import (
@@ -11,10 +11,11 @@ from fastapi import (
     status,
     Request,
     HTTPException,
-    UploadFile
+    UploadFile,
+    File,
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
 from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
@@ -29,13 +30,16 @@ from .database import (
     db_get_workflow_job,
     db_get_workspace,
     db_update_processing_job,
-    db_update_workspace
+    db_update_workspace,
+    db_get_workflow_script,
+    db_find_first_workflow_script_by_content
 )
 from .deployer import Deployer
 from .logging import get_processing_server_logging_file_path
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
+    DBWorkflowScript,
     PYJobInput,
     PYJobOutput,
     PYResultMessage,
@@ -61,9 +65,11 @@ from .utils import (
     download_ocrd_all_tool_json,
     generate_created_time,
     generate_id,
-    get_ocrd_workspace_physical_pages
+    get_ocrd_workspace_physical_pages,
+    validate_workflow,
 )
 from urllib.parse import urljoin
+from hashlib import md5
 
 AGENT_TYPES = ['worker', 'server']
 
@@ -197,7 +203,7 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/workflow',
+            path='/workflow/run',
             endpoint=self.run_workflow,
             methods=['POST'],
             tags=['workflow', 'processing'],
@@ -211,12 +217,37 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/workflow/{workflow_job_id}',
+            path='/workflow/job/{workflow_job_id}',
             endpoint=self.get_workflow_info,
             methods=['GET'],
             tags=['workflow', 'processing'],
             status_code=status.HTTP_200_OK,
             summary='Get information about a workflow run',
+        )
+
+        self.router.add_api_route(
+            path='/workflow',
+            endpoint=self.upload_workflow,
+            methods=['POST'],
+            tags=['workflow'],
+            status_code=status.HTTP_201_CREATED,
+            summary='Upload/Register a new workflow script',
+        )
+        self.router.add_api_route(
+            path='/workflow/{workflow_id}',
+            endpoint=self.replace_workflow,
+            methods=['PUT'],
+            tags=['workflow'],
+            status_code=status.HTTP_200_OK,
+            summary='Update/Replace a workflow script',
+        )
+        self.router.add_api_route(
+            path='/workflow/{workflow_id}',
+            endpoint=self.download_workflow,
+            methods=['GET'],
+            tags=['workflow'],
+            status_code=status.HTTP_200_OK,
+            summary='Download a workflow script',
         )
 
         @self.exception_handler(RequestValidationError)
@@ -717,8 +748,9 @@ class ProcessingServer(FastAPI):
 
     async def run_workflow(
             self,
-            workflow: UploadFile,
             mets_path: str,
+            workflow: Union[UploadFile, None] = File(None),
+            workflow_id: str = None,
             agent_type: str = 'worker',
             page_id: str = None,
             page_wise: bool = False,
@@ -732,11 +764,23 @@ class ProcessingServer(FastAPI):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f"Mets file not existing: {mets_path}")
 
-        workflow = (await workflow.read()).decode("utf-8")
+        if not workflow:
+            if not workflow_id:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                    detail="Either workflow or workflow_id must be provided")
+            try:
+                workflow = await db_get_workflow_script(workflow_id)
+            except ValueError:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail=f"Workflow with id '{workflow_id}' not found")
+            workflow = workflow.content
+        else:
+            workflow = (await workflow.read()).decode("utf-8")
+
         try:
             tasks_list = workflow.splitlines()
             tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
-        except BaseException as e:
+        except ValueError as e:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                                 detail=f"Error parsing tasks: {e}")
 
@@ -828,3 +872,63 @@ class ProcessingServer(FastAPI):
                     "page_id": job.page_id,
                 })
         return res
+
+    async def upload_workflow(self, workflow: UploadFile) -> Dict:
+        """ Store a script for a workflow in the database
+        """
+        workflow_id = generate_id()
+        content = (await workflow.read()).decode("utf-8")
+        if not validate_workflow(content):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail="Provided workflow script is invalid")
+
+        content_hash = md5(content.encode("utf-8")).hexdigest()
+        try:
+            db_workflow_script = await db_find_first_workflow_script_by_content(content_hash)
+            if db_workflow_script:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The same workflow"
+                                    f"-script exists with id '{db_workflow_script.workflow_id}'")
+        except ValueError:
+            pass
+
+        db_workflow_script = DBWorkflowScript(
+            workflow_id=workflow_id,
+            content=content,
+            content_hash=content_hash,
+        )
+        await db_workflow_script.insert()
+        return {"workflow_id": workflow_id}
+
+    async def replace_workflow(self, workflow_id, workflow: UploadFile) -> str:
+        """ Update a workflow script file in the database
+        """
+        content = (await workflow.read()).decode("utf-8")
+        if not validate_workflow(content):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                detail="Provided workflow script is invalid")
+        try:
+            db_workflow_script = await db_get_workflow_script(workflow_id)
+            db_workflow_script.content = content
+            content_hash = md5(content.encode("utf-8")).hexdigest()
+            db_workflow_script.content_hash = content_hash
+        except ValueError as e:
+            self.log.exception(f"Workflow with id '{workflow_id}' not existing, error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Workflow-script with id '{workflow_id}' not existing"
+            )
+        await db_workflow_script.save()
+        return db_workflow_script.workflow_id
+
+    async def download_workflow(self, workflow_id) -> PlainTextResponse:
+        """ Load workflow-script from the database
+        """
+        try:
+            workflow = await db_get_workflow_script(workflow_id)
+            return PlainTextResponse(workflow.content)
+        except ValueError as e:
+            self.log.exception(f"Workflow with id '{workflow_id}' not existing, error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Workflow-script with id '{workflow_id}' not existing"
+            )

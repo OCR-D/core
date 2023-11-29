@@ -18,13 +18,13 @@
   <mets:fileSec>
     <mets:fileGrp USE="A">
       <mets:file ID="file1" MIMETYPE="foo/bar">
-          <mets:FLocat xlink:href="../bagger-conflict-source/A/name.ext" LOCTYPE="URL"/>
+          <mets:FLocat xlink:href="../bagger-conflict-source/A/name.xml" LOCTYPE="URL"/>
       </mets:file>
       <mets:file ID="file2" MIMETYPE="foo/bar">
-        <mets:FLocat xlink:href="../bagger-conflict-source/B/name.ext" LOCTYPE="URL"/>
+        <mets:FLocat xlink:href="../bagger-conflict-source/B/name.xml" LOCTYPE="URL"/>
       </mets:file>
       <mets:file ID="file3" MIMETYPE="foo/bar">
-        <mets:FLocat xlink:href="../bagger-conflict-source/C/name.ext" LOCTYPE="URL"/>
+        <mets:FLocat xlink:href="../bagger-conflict-source/C/name.xml" LOCTYPE="URL"/>
       </mets:file>
     </mets:fileGrp>
   </mets:fileSec>
