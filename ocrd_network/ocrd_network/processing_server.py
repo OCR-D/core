@@ -1,9 +1,12 @@
+from hashlib import md5
+import httpx
 import json
 from logging import FileHandler, Formatter
-import requests
-import httpx
 from os import getpid
+from pathlib import Path
+import requests
 from typing import Dict, List, Union
+from urllib.parse import urljoin
 import uvicorn
 
 from fastapi import (
@@ -16,12 +19,13 @@ from fastapi import (
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
-
 from pika.exceptions import ChannelClosedByBroker
+
+from ocrd import Resolver, Workspace
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
-from ocrd import Resolver, Workspace
-from pathlib import Path
+
+from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 from .database import (
     initiate_database,
     db_create_workspace,
@@ -46,14 +50,8 @@ from .models import (
     PYWorkflowJobOutput,
     StateEnum
 )
-from .rabbitmq_utils import (
-    RMQPublisher,
-    OcrdProcessingMessage
-)
-from .server_cache import (
-    CacheLockedPages,
-    CacheProcessingRequests
-)
+from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
+from .server_cache import CacheLockedPages, CacheProcessingRequests
 from .server_utils import (
     _get_processor_job,
     _get_processor_job_log,
@@ -68,10 +66,6 @@ from .utils import (
     get_ocrd_workspace_physical_pages,
     validate_workflow,
 )
-from urllib.parse import urljoin
-from hashlib import md5
-
-AGENT_TYPES = ['worker', 'server']
 
 
 class ProcessingServer(FastAPI):
@@ -381,12 +375,12 @@ class ProcessingServer(FastAPI):
         return ocrd_tool
 
     def processing_agent_exists(self, processor_name: str, agent_type: str) -> bool:
-        if agent_type not in AGENT_TYPES:
+        if agent_type not in [NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER]:
             return False
-        if agent_type == 'worker':
+        if agent_type == NETWORK_AGENT_WORKER:
             if not self.check_if_queue_exists(processor_name):
                 return False
-        if agent_type == 'server':
+        if agent_type == NETWORK_AGENT_SERVER:
             processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
             if not processor_server_url:
                 return False
@@ -394,9 +388,9 @@ class ProcessingServer(FastAPI):
 
     async def get_processing_agent_ocrd_tool(self, processor_name: str, agent_type: str) -> dict:
         ocrd_tool = {}
-        if agent_type == 'worker':
+        if agent_type == NETWORK_AGENT_WORKER:
             ocrd_tool = await self.get_processor_info(processor_name)
-        if agent_type == 'server':
+        if agent_type == NETWORK_AGENT_SERVER:
             processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
             ocrd_tool = self.query_ocrd_tool_json_from_server(processor_server_url)
         return ocrd_tool
@@ -520,12 +514,12 @@ class ProcessingServer(FastAPI):
         return job_output
 
     async def push_to_processing_agent(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
-        if data.agent_type == 'worker':
+        if data.agent_type == NETWORK_AGENT_WORKER:
             processing_message = self.create_processing_message(db_job)
             self.log.debug(f"Pushing to processing worker: {data.processor_name}, {data.page_id}, {data.job_id}")
             await self.push_to_processing_queue(data.processor_name, processing_message)
             job_output = db_job.to_job_output()
-        else:  # data.agent_type == 'server'
+        else:  # data.agent_type == NETWORK_AGENT_SERVER
             self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
             job_output = await self.push_to_processor_server(data.processor_name, data)
         if not job_output:
@@ -715,7 +709,7 @@ class ProcessingServer(FastAPI):
             tasks: List[ProcessorTask],
             mets_path: str,
             page_id: str,
-            agent_type: str = 'worker',
+            agent_type: NETWORK_AGENT_WORKER,
     ) -> List[PYJobOutput]:
         file_group_cache = {}
         responses = []
@@ -751,7 +745,7 @@ class ProcessingServer(FastAPI):
             mets_path: str,
             workflow: Union[UploadFile, None] = File(None),
             workflow_id: str = None,
-            agent_type: str = 'worker',
+            agent_type: str = NETWORK_AGENT_WORKER,
             page_id: str = None,
             page_wise: bool = False,
             workflow_callback_url: str = None

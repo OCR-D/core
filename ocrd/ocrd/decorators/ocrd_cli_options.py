@@ -1,5 +1,6 @@
 import click
 from click import option, Path, group, command, argument
+from ocrd_network import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
 from ocrd_network import (
@@ -54,7 +55,8 @@ def ocrd_cli_options(f):
         # were using `group`, you cannot combine have a command with
         # subcommands. So we have to work around that by creating a
         # pseudo-subcommand handled in ocrd_cli_wrap_processor
-        argument('subcommand', nargs=1, required=False, type=click.Choice(['worker', 'server'])),
+        argument('subcommand', nargs=1, required=False,
+                 type=click.Choice([NETWORK_AGENT_WORKER, NETWORK_AGENT_SERVER])),
     ]
     for param in params:
         param(f)
