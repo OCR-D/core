@@ -7,21 +7,7 @@ import json
 from .constants import REGEX_FILE_ID
 from .deprecate import deprecation_warning
 from warnings import warn
-from math import ceil
-import sys
-from itertools import islice
-
-if sys.version_info >= (3, 12):
-    from itertools import batched
-else:
-    def batched(iterable, chunk_size):
-        iterator = iter(iterable)
-        chunk = None
-        while True:
-            chunk = tuple(islice(iterator, chunk_size))
-            if not chunk:
-                break
-            yield chunk
+from numpy import array_split
 
 __all__ = [
     'assert_file_grp_cardinality',
@@ -224,6 +210,7 @@ def generate_range(start, end):
         ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
     return ret
 
+
 def partition_list(lst, chunks, chunk_index=None):
     """
     Partition a list into roughly equally-sized chunks
@@ -240,8 +227,11 @@ def partition_list(lst, chunks, chunk_index=None):
     """
     if not lst:
         return []
-    items_per_chunk = ceil(len(lst) / chunks)
-    ret = list(map(list, batched(lst, items_per_chunk)))
+    # Catch potential empty ranges returned by numpy.array_split
+    #  which are problematic in the ocr-d scope
+    if chunks > len(lst):
+        raise ValueError("Amount of chunks bigger than list size")
+    ret = [x.tolist() for x in array_split(lst, chunks)]
     if chunk_index is not None:
         return [ret[chunk_index]]
     return ret

@@ -309,11 +309,22 @@ def test_partition_list():
     assert partition_list(None, 1) == []
     assert partition_list([], 1) == []
     assert partition_list(lst_10, 1) == [lst_10]
-    assert partition_list(lst_10, 3) == [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10]]
-    assert partition_list(lst_10, 3, 1) == [[5, 6, 7, 8]]
+    assert partition_list(lst_10, 3) == [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]
+    assert partition_list(lst_10, 3, 1) == [[5, 6, 7]]
     assert partition_list(lst_10, 3, 0) == [[1, 2, 3, 4]]
     with raises(IndexError):
-        partition_list(lst_10, 5, 5)
+        partition_list(lst_10, chunks=4, chunk_index=5)
+        partition_list(lst_10, chunks=5, chunk_index=5)
+        partition_list(lst_10, chunks=5, chunk_index=6)
+    with raises(ValueError):
+        partition_list(lst_10, chunks=11)
+    # odd prime number tests
+    lst_13 = list(range(1, 14))
+    assert partition_list(lst_13, chunks=2) == [[1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13]]
+    assert partition_list(lst_13, chunks=3) == [[1, 2, 3, 4, 5], [6, 7, 8, 9], [10, 11, 12, 13]]
+    assert partition_list(lst_13, chunks=4) == [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10], [11, 12, 13]]
+    assert partition_list(lst_13, chunks=4, chunk_index=1) == [[5, 6, 7]]
+
 
 if __name__ == '__main__':
     main(__file__)
