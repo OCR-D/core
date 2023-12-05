@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.59.1] - 2023-12-05
+
 Fixed:
 
   * Chunking algorithm for `ocrd workspace list-page` now handles edge cases properly, #1145
@@ -1925,6 +1927,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.59.1]: ../../compare/v2.59.1..v2.59.0
 [2.59.0]: ../../compare/v2.59.0..v2.58.1
 [2.58.0]: ../../compare/v2.58.1..v2.58.0
 [2.58.0]: ../../compare/v2.58.0..v2.57.2
