@@ -1,5 +1,3 @@
-import logging
-
 __all__ = [
     'DEFAULT_EXCHANGER_NAME',
     'DEFAULT_EXCHANGER_TYPE',

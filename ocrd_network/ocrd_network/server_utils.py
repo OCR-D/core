@@ -89,6 +89,6 @@ def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: 
         )
     else:
         if not report.is_valid:
-            logger.exception(f'Failed to validate processing job '
-                             f'against the ocrd_tool, errors: {report.errors}')
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=report.errors)
+            log_msg = f'Failed to validate processing job against the ocrd_tool, errors: {report.errors}'
+            logger.exception(log_msg)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=log_msg)

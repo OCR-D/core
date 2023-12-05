@@ -15,6 +15,7 @@ from time import sleep
 
 from ocrd_utils import config, getLogger, safe_filename
 
+from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 from .deployment_utils import (
     create_docker_client,
     DeployType,
@@ -467,7 +468,7 @@ class Deployer:
         self.log.info(f'Starting native processing worker: {processor_name}')
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} worker --database {database_url} --queue {queue_url} &'
+        cmd = f'{processor_name} {NETWORK_AGENT_WORKER} --database {database_url} --queue {queue_url} &'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
@@ -510,7 +511,7 @@ class Deployer:
         self.log.info(f"Starting native processor server: {processor_name} on {agent_address}")
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} server --address {agent_address} --database {database_url} &'
+        cmd = f'{processor_name} {NETWORK_AGENT_SERVER} --address {agent_address} --database {database_url} &'
         self.log.debug(f'About to execute command: {cmd}')
         stdin.write(f'{cmd}\n')
         stdin.write('echo xyz$!xyz \n exit \n')

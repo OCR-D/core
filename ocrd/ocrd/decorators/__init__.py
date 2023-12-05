@@ -1,15 +1,16 @@
 import sys
 
 from ocrd_utils import (
+    config,
+    initLogging,
     is_local_filename,
     get_local_filename,
+    getLogger,
+    parse_json_string_with_comments,
     set_json_key_value_overrides,
 )
-
-from ocrd_utils import getLogger, initLogging, parse_json_string_with_comments, config
 from ocrd_validators import WorkspaceValidator
-
-from ocrd_network import ProcessingWorker, ProcessorServer
+from ocrd_network import ProcessingWorker, ProcessorServer, NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 
 from ..resolver import Resolver
 from ..processor.base import run_processor
@@ -19,7 +20,8 @@ from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
-SUBCOMMANDS = ['worker', 'server']
+SUBCOMMANDS = [NETWORK_AGENT_WORKER, NETWORK_AGENT_SERVER]
+
 
 def ocrd_cli_wrap_processor(
     processorClass,
@@ -63,8 +65,7 @@ def ocrd_cli_wrap_processor(
         # Used for checking/starting network agents for the WebAPI architecture
         check_and_run_network_agent(processorClass, subcommand, address, database, queue)
     elif address or queue or database:
-        raise ValueError(f"Subcommand options --adress --queue and --database are only valid for subcommands 'worker' or 'server'")
-
+        raise ValueError(f"Subcommand options --address --queue and --database are only valid for subcommands: {SUBCOMMANDS}")
 
     initLogging()
 
@@ -141,19 +142,19 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
     if not database:
         raise ValueError(f"Option '--database' is invalid for subcommand {subcommand}")
 
-    if subcommand == 'server':
+    if subcommand == NETWORK_AGENT_SERVER:
         if not address:
             raise ValueError(f"Option '--address' required for subcommand {subcommand}")
         if queue:
             raise ValueError(f"Option '--queue' invalid for subcommand {subcommand}")
-    if subcommand == 'worker':
+    if subcommand == NETWORK_AGENT_WORKER:
         if address:
             raise ValueError(f"Option '--address' invalid for subcommand {subcommand}")
         if not queue:
             raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
 
     processor = ProcessorClass(workspace=None)
-    if subcommand == 'worker':
+    if subcommand == NETWORK_AGENT_WORKER:
         processing_worker = ProcessingWorker(
             rabbitmq_addr=queue,
             mongodb_addr=database,
@@ -165,7 +166,7 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
         processing_worker.connect_consumer()
         # Start consuming from the queue with name `processor_name`
         processing_worker.start_consuming()
-    elif subcommand == 'server':
+    elif subcommand == NETWORK_AGENT_SERVER:
         # TODO: Better validate that inside the ProcessorServer itself
         host, port = address.split(':')
         processor_server = ProcessorServer(
