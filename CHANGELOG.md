@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * Chunking algorithm for `ocrd workspace list-page` now handles edge cases properly, #1145
+  * Avoid deadlocks in `ocrd_network` if procesing workers not deployed, #1125, #1142
 
 ## [2.59.0] - 2023-11-27
 
