@@ -530,7 +530,6 @@ class ProcessingServer(FastAPI):
             )
         return job_output
 
-    # TODO: Revisit and remove duplications between push_to_* methods
     async def push_to_processing_queue(self, processor_name: str, processing_message: OcrdProcessingMessage):
         if not self.rmq_publisher:
             raise Exception('RMQPublisher is not connected')
