@@ -44,7 +44,7 @@ class Processor():
     for run-time data processing. That is, it executes a single workflow step,
     or a combination of workflow steps, on the workspace (represented by local METS).
     It reads input files for all or requested physical pages of the input fileGrp(s),
-    and writes output files for them into the output fileGrp(s). It may take 
+    and writes output files for them into the output fileGrp(s). It may take
     a number of optional or mandatory parameters.
     """
 
@@ -166,12 +166,12 @@ class Processor():
 
     def process(self):
         """
-        Process the :py:attr:`workspace` 
+        Process the :py:attr:`workspace`
         from the given :py:attr:`input_file_grp`
         to the given :py:attr:`output_file_grp`
         for the given :py:attr:`page_id`
         under the given :py:attr:`parameter`.
-        
+
         (This contains the main functionality and needs to be overridden by subclasses.)
         """
         raise Exception("Must be implemented")
@@ -282,7 +282,7 @@ class Processor():
         - Otherwise raise an error (complaining that only PAGE-XML warrants
           having multiple images for a single page)
         Algorithm <https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593>_
-        
+
         Returns:
             A list of :py:class:`ocrd_models.ocrd_file.OcrdFile` objects.
         """

@@ -38,4 +38,3 @@ jobs:
       run: |
         docker push ${{ env.DOCKER_TAG }}:latest
         docker push ${{ env.DOCKER_TAG }}-cuda:latest
-    

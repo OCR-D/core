@@ -164,7 +164,7 @@ def test_add_file_id_already_exists(sbb_sample_01):
     assert len(list(sbb_sample_01.find_files(ID='best-id-ever'))) == 1 if sbb_sample_01._cache_flag else 2
 
     if sbb_sample_01._cache_flag:
-        # Does not work with caching 
+        # Does not work with caching
         with pytest.raises(FileExistsError) as val_err:
              sbb_sample_01.add_file('OUTPUT', ID='best-id-ever', mimetype="beep/boop", force=True)
     else:

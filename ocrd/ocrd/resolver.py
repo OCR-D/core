@@ -175,7 +175,7 @@ class Resolver():
             src_baseurl (string, None): Base URL for resolving relative file locations
             **kwargs (): Passed on to ``OcrdMets.find_files`` if download == True
 
-        Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless 
+        Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless
         the former is already local and the latter is ``none`` or already identical to its directory name.
 
         Returns:

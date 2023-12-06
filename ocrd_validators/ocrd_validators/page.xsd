@@ -545,7 +545,7 @@
 		<attribute name="secondaryScript" type="pc:ScriptSimpleType">
 			<annotation>
 				<documentation>
-				The secondary script used in the text line 
+				The secondary script used in the text line
 				</documentation>
 			</annotation>
 		</attribute>
@@ -629,7 +629,7 @@
 		<attribute name="secondaryScript" type="pc:ScriptSimpleType">
 			<annotation>
 				<documentation>
-				The secondary script used in the word 
+				The secondary script used in the word
 				</documentation>
 			</annotation>
 		</attribute>

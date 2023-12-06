@@ -264,7 +264,7 @@ pyclean:
 .PHONY: docker docker-cuda
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
+DOCKER_ARGS =
 
 # Build docker image
 docker: DOCKER_BASE_IMAGE = ubuntu:20.04
@@ -277,7 +277,7 @@ docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
 docker-cuda: docker
 
-docker docker-cuda: 
+docker docker-cuda:
 	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them

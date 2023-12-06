@@ -1294,7 +1294,7 @@ Added:
   * Workspace validation will check cardinality of images per file is 1, #243, OCR-D/spec#132
 
 Changed:
-  
+
   * bashlib will no longer warn about "non-conformant" file group names, #365
   * Invalid `file:/` URL will now raise exceptions, #373
   * image_from_*: increase tolerance for size mismatch after rotation to 2px, #371

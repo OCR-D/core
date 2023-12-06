@@ -41,12 +41,12 @@ __all__ = [
 
 def adjust_canvas_to_rotation(size, angle):
     """Calculate the enlarged image size after rotation.
-    
+
     Given a numpy array ``size`` of an original canvas (width and height),
     and a rotation angle in degrees counter-clockwise ``angle``,
     calculate the new size which is necessary to encompass the full
     image after rotation.
-    
+
     Return a numpy array of the enlarged width and height.
     """
     angle = np.deg2rad(angle)
@@ -58,11 +58,11 @@ def adjust_canvas_to_rotation(size, angle):
 
 def adjust_canvas_to_transposition(size, method):
     """Calculate the flipped image size after transposition.
-    
+
     Given a numpy array ``size`` of an original canvas (width and height),
     and a transposition mode ``method`` (see ``transpose_image``),
     calculate the new size after transposition.
-    
+
     Return a numpy array of the enlarged width and height.
     """
     if method in [Image.ROTATE_90,
@@ -159,7 +159,7 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
     - ``parent_coords``, its corresponding affine transformation,
 
     ...calculate the absolute coordinates within the page.
-    
+
     That is, apply the given transform inversely to ``polygon``
     The transform encodes (recursively):
 
@@ -209,7 +209,7 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     by pure rotation, and subsequent translation back. However, since
     rotation necessarily increases the bounding box, and thus image size,
     do not translate back the same amount, but to the enlarged offset.)
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG = getLogger('ocrd.utils.coords.rotate_coordinates')
@@ -295,7 +295,7 @@ def shift_coordinates(transform, offset):
     ``offset`` of the translation vector, calculate the affine
     coordinate transform corresponding to the composition of both
     transformations.
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG = getLogger('ocrd.utils.coords.shift_coordinates')
@@ -312,7 +312,7 @@ def scale_coordinates(transform, factors):
     ``factors`` of the scaling factors, calculate the affine
     coordinate transform corresponding to the composition of both
     transformations.
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG = getLogger('ocrd.utils.coords.scale_coordinates')
@@ -438,7 +438,7 @@ def transpose_image(image, method):
       columns become rows (but counted from the bottom),
       i.e. all pixels get mirrored at the opposite diagonal;
       width becomes height and vice versa
-    
+
     Return a new PIL.Image.
     """
     LOG = getLogger('ocrd.utils.transpose_image')
@@ -497,7 +497,7 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     Images which already have an alpha channel will have it shrunk
     from the polygon mask (i.e. everything outside the polygon will
     be transparent, in addition to existing transparent pixels).
-    
+
     Return a new PIL.Image.
     """
     if fill == 'none' or fill is None:

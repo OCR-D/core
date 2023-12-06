@@ -27,7 +27,7 @@ jobs:
     steps:
       - checkout
       - run: sudo apt-get -y update
-      - run: sudo make deps-ubuntu 
+      - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
 

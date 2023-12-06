@@ -158,9 +158,9 @@ class OcrdResourceManager():
                     resdict = resdict_list[0]
                 elif str(res_filename.parent) == moduledir:
                     resdict = {
-                        'name': res_name, 
-                        'url': str(res_filename), 
-                        'description': 'Found at module', 
+                        'name': res_name,
+                        'url': str(res_filename),
+                        'description': 'Found at module',
                         'type': res_type,
                         'size': res_size
                     }

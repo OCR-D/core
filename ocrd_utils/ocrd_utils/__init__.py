@@ -8,11 +8,11 @@ Utility functions and constants usable in various circumstances.
     levels below page (i.e. region, line, word, glyph) between relative coordinates
     w.r.t. a corresponding image and absolute coordinates w.r.t. the top-level image.
     This includes rotation and offset correction, based on affine transformations.
-    (Used by :py:class:`ocrd.workspace.Workspace` methods 
-    :py:meth:`ocrd.workspace.Workspace.image_from_page` and 
+    (Used by :py:class:`ocrd.workspace.Workspace` methods
+    :py:meth:`ocrd.workspace.Workspace.image_from_page` and
     :py:meth:`ocrd.workspace.Workspace.image_from_segment`.)
 
-* :py:func:`rotate_coordinates`, 
+* :py:func:`rotate_coordinates`,
   :py:func:`shift_coordinates`,
   :py:func:`transpose_coordinates`,
   :py:func:`transform_coordinates`
@@ -22,7 +22,7 @@ Utility functions and constants usable in various circumstances.
     used to pass down the coordinate system along with images (both invariably sharing
     the same operations context) when traversing the element hierarchy top to bottom.
     (Used by :py:class:`ocrd.workspace.Workspace` methods
-    :py:meth:`ocrd.workspace.Workspace.image_from_page` and 
+    :py:meth:`ocrd.workspace.Workspace.image_from_page` and
     :py:meth:`ocrd.workspace.Workspace.image_from_segment`.)
 
 * :py:func:`rotate_image`,

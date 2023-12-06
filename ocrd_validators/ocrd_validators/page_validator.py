@@ -178,7 +178,7 @@ def compare_without_whitespace(a, b):
 
 def page_get_reading_order(ro, rogroup):
     """Add all elements from the given reading order group to the given dictionary.
-    
+
     Given a dict ``ro`` from layout element IDs to ReadingOrder element objects,
     and an object ``rogroup`` with additional ReadingOrder element objects,
     add all references to the dict, traversing the group recursively.

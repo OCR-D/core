@@ -36,7 +36,7 @@ Let's say you want to add a method `get_FirstTextRegion` on the `pc:Page` elemen
 
     Would add the method `exportChildren` from a file `exportChildren_PageType.py`.
 
-    > **Note**: 
+    > **Note**:
     > The method name in the file must match the method name passed to
     > `_add_method`. This is *not* checked automatically, so double-check manually!
 

@@ -115,10 +115,10 @@ class WorkspaceValidator():
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
-            skip (list): Validation checks to omit. One or more of 
-                'mets_unique_identifier', 'mets_file_group_names', 
+            skip (list): Validation checks to omit. One or more of
+                'mets_unique_identifier', 'mets_file_group_names',
                 'mets_files', 'pixel_density', 'dimension', 'url',
-                'multipage', 'page', 'page_xsd', 'mets_xsd', 
+                'multipage', 'page', 'page_xsd', 'mets_xsd',
                 'mets_fileid_page_pcgtsid'
             download (boolean): Whether to download remote file references
                 temporarily during validation (like a processor would)

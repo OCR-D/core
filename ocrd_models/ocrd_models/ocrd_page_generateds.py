@@ -1234,14 +1234,14 @@ class PcGtsType(GeneratedsSuper):
     def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
         Get all the ``pc:AlternativeImage/@filename`` paths referenced in the PAGE-XML document.
-    
+
         Arguments:
             page (boolean): Get images on ``pc:Page`` level
             region (boolean): Get images on ``pc:*Region`` level
             line (boolean): Get images on ``pc:TextLine`` level
             word (boolean): Get images on ``pc:Word`` level
             glyph (boolean): Get images on ``pc:Glyph`` level
-    
+
         Returns:
             a list of image filename strings
         """
@@ -1278,7 +1278,7 @@ class PcGtsType(GeneratedsSuper):
                 ret += doc.xpath('//page:Word/page:AlternativeImage/@filename', namespaces=NAMESPACES)
             if glyph:
                 ret += doc.xpath('//page:Glyph/page:AlternativeImage/@filename', namespaces=NAMESPACES)
-    
+
         return ret
     def prune_ReadingOrder(self):
         """
@@ -3120,7 +3120,7 @@ class PageType(GeneratedsSuper):
     # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
     def _region_class(self, x): # pylint: disable=unused-argument
         return x.__class__.__name__.replace('RegionType', '')
-    
+
     def _get_recursive_regions(self, regions, level, classes=None):
         from .constants import PAGE_REGION_TYPES  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
         if level == 1:
@@ -3146,7 +3146,7 @@ class PageType(GeneratedsSuper):
             ret.append(r)
             ret += self._get_recursive_regions(more, level - 1 if level else 0, classes)
         return self._get_recursive_regions(ret, 1, classes)
-    
+
     def _get_recursive_reading_order(self, rogroup):
         if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)): # pylint: disable=undefined-variable
             elements = rogroup.get_AllIndexed()
@@ -3158,12 +3158,12 @@ class PageType(GeneratedsSuper):
             if not isinstance(elem, (RegionRefType, RegionRefIndexedType)): # pylint: disable=undefined-variable
                 regionrefs.extend(self._get_recursive_reading_order(elem))
         return regionrefs
-    
+
     def get_AllRegions(self, classes=None, order='document', depth=0):
         """
         Get all the ``*Region`` elements, or only those provided by `classes`.
         Return in document order, unless `order` is ``reading-order``.
-    
+
         Arguments:
             classes (list): Classes of regions that shall be returned, \
                 e.g. ``['Text', 'Image']``
@@ -3174,7 +3174,7 @@ class PageType(GeneratedsSuper):
                 omitted (``reading-order-only``)
             depth (int): Recursive depth to look for regions at, set to `0` for \
                 all regions at any depth. Default: 0
-    
+
         Returns:
             a list of :py:class:`TextRegionType`, :py:class:`ImageRegionType`, \
                 :py:class:`LineDrawingRegionType`, :py:class:`GraphicRegionType`, \
@@ -3184,7 +3184,7 @@ class PageType(GeneratedsSuper):
                 :py:class:`MusicRegionType`, :py:class:`AdvertRegionType`, \
                 :py:class:`NoiseRegionType`, :py:class:`UnknownRegionType`, \
                 and/or :py:class:`CustomRegionType`
-    
+
         For example, to get all text anywhere on the page in reading order, use:
         ::
             '\\n'.join(line.get_TextEquiv()[0].Unicode
@@ -3218,14 +3218,14 @@ class PageType(GeneratedsSuper):
     def get_AllAlternativeImages(self, page=True, region=True, line=True, word=True, glyph=True):
         """
         Get all the ``pc:AlternativeImage`` in a document
-    
+
         Arguments:
             page (boolean): Get images on ``pc:Page`` level
             region (boolean): Get images on ``pc:*Region`` level
             line (boolean): Get images on ``pc:TextLine`` level
             word (boolean): Get images on ``pc:Word`` level
             glyph (boolean): Get images on ``pc:Glyph`` level
-    
+
         Returns:
             a list of :py:class:`AlternativeImageType`
         """
@@ -3245,11 +3245,11 @@ class PageType(GeneratedsSuper):
                         if glyph:
                             ret += this_glyph.get_AlternativeImage()
         return ret
-    
+
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
-    
+
         If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
@@ -3289,7 +3289,7 @@ class PageType(GeneratedsSuper):
     def get_AllTextLines(self, region_order='document', respect_textline_order=True):
         """
         Return all the TextLine in the document
-    
+
         Arguments:
             region_order ("document"|"reading-order"|"reading-order-only"): Whether to \
                 return regions sorted by document order (``document``, default) or by \
@@ -3297,7 +3297,7 @@ class PageType(GeneratedsSuper):
                 returned list (``reading-order``) or regions not in the reading order \
                 omitted (``reading-order-only``)
             respect_textline_order (boolean): Whether to respect `@textLineOrder` attribute
-    
+
         Returns:
             a list of :py:class:`TextLineType`
         """
@@ -3311,7 +3311,7 @@ class PageType(GeneratedsSuper):
                 lo = reg.get_textLineOrder() or self.get_textLineOrder() or 'top-to-bottom'
                 ret += lines if lo in ['top-to-bottom', 'left-to-right'] else list(reversed(lines))
         return ret
-    
+
     def set_orientation(self, orientation):
         """
         Set deskewing angle to given `orientation` number.
@@ -3981,7 +3981,7 @@ class TextLineType(GeneratedsSuper):
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
-    
+
         If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
@@ -4473,7 +4473,7 @@ class WordType(GeneratedsSuper):
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
-    
+
         If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
@@ -4917,7 +4917,7 @@ class GlyphType(GeneratedsSuper):
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
-    
+
         If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """
@@ -6234,12 +6234,12 @@ class OrderedGroupIndexedType(GeneratedsSuper):
     def get_AllIndexed(self, classes=None, index_sort=True):
         """
         Get all indexed children sorted by their ``@index``.
-    
+
         Arguments:
             classes (list): Type of children (sans ``Indexed``) to return. \
                 Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
             index_sort (boolean): Whether to sort by ``@index``
-    
+
         Returns:
             a list of :py:class:`RegionRefIndexedType`, \
                 :py:class:`OrderedGroupIndexedType`, and \
@@ -6259,13 +6259,13 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         self.set_OrderedGroupIndexed([])
         self.set_UnorderedGroupIndexed([])
         return ret
-    
+
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
         Add all elements in list `elements`, respecting ``@index`` order.
         With `validate_continuity`, check that all new elements come after all old elements
-        (or raise an exception). 
+        (or raise an exception).
         Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
         if not isinstance(elements, list):
@@ -6304,7 +6304,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_UnorderedGroupIndexed(element)
         return self.get_AllIndexed()
-    
+
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
         namespaceprefix_ = 'pc:'
@@ -6706,7 +6706,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         """
         # TODO: should not change order
         return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
-    
+
 # end class UnorderedGroupIndexedType
 
 
@@ -7166,12 +7166,12 @@ class OrderedGroupType(GeneratedsSuper):
     def get_AllIndexed(self, classes=None, index_sort=True):
         """
         Get all indexed children sorted by their ``@index``.
-    
+
         Arguments:
             classes (list): Type of children (sans ``Indexed``) to return. \
                 Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
             index_sort (boolean): Whether to sort by ``@index``
-    
+
         Returns:
             a list of :py:class:`RegionRefIndexedType`, \
                 :py:class:`OrderedGroupIndexedType`, and \
@@ -7191,13 +7191,13 @@ class OrderedGroupType(GeneratedsSuper):
         self.set_OrderedGroupIndexed([])
         self.set_UnorderedGroupIndexed([])
         return ret
-    
+
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring
     def extend_AllIndexed(self, elements, validate_continuity=False):
         """
         Add all elements in list `elements`, respecting ``@index`` order.
         With `validate_continuity`, check that all new elements come after all old elements
-        (or raise an exception). 
+        (or raise an exception).
         Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
         """
         if not isinstance(elements, list):
@@ -7236,7 +7236,7 @@ class OrderedGroupType(GeneratedsSuper):
             elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
                 self.add_UnorderedGroupIndexed(element)
         return self.get_AllIndexed()
-    
+
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
     def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
         namespaceprefix_ = 'pc:'
@@ -7620,7 +7620,7 @@ class UnorderedGroupType(GeneratedsSuper):
         """
         # TODO: should not change order
         return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
-    
+
 # end class UnorderedGroupType
 
 
@@ -9710,7 +9710,7 @@ class RegionType(GeneratedsSuper):
     def invalidate_AlternativeImage(self, feature_selector=None):
         """
         Remove derived images from this segment (due to changed coordinates).
-    
+
         If `feature_selector` is not none, remove only images with
         matching ``@comments``, e.g. ``feature_selector=cropped,deskewed``.
         """

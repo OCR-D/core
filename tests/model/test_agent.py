@@ -35,7 +35,7 @@ def test_init_othertype():
 def test_set_name():
     ag = OcrdAgent(name='foobar')
     assert ag.name == 'foobar'
-    ag.name = 'barfoo' 
+    ag.name = 'barfoo'
     assert ag.name == 'barfoo'
 
 
