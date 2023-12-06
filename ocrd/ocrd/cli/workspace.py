@@ -56,7 +56,7 @@ def workspace_cli(ctx, directory, mets, mets_basename, mets_server_url, backup):
 
     A workspace comprises a METS file and a directory as point of reference.
 
-    Operates on the file system directly or via a METS server 
+    Operates on the file system directly or via a METS server
     (already running via some prior `server start` subcommand).
     """
     initLogging()

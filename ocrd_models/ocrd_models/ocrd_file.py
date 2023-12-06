@@ -235,7 +235,7 @@ class ClientSideOcrdFile:
             mimetype (string): ``@MIMETYPE`` of this ``mets:file``
             pageId (string): ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
             loctype (string): ``@LOCTYPE`` of this ``mets:file``
-            url (string): ignored XXX the remote/original file once we have proper mets:FLocat bookkeeping 
+            url (string): ignored XXX the remote/original file once we have proper mets:FLocat bookkeeping
             local_filename (): ``@xlink:href`` of this ``mets:file`` - XXX the local file once we have proper mets:FLocat bookkeeping
             ID (string): ``@ID`` of this ``mets:file``
         """
