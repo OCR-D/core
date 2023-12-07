@@ -13,7 +13,8 @@ __all__ = [
     'create_docker_client',
     'create_ssh_client',
     'DeployType',
-    'wait_for_rabbitmq_availability'
+    'verify_mongodb_available',
+    'verify_rabbitmq_available'
 ]
 
 
@@ -23,7 +24,7 @@ def create_ssh_client(address: str, username: str, password: str = "", keypath: 
     try:
         client.connect(hostname=address, username=username, password=password, key_filename=keypath)
     except Exception as error:
-        raise Exception(f"Error creating SSHClient of host '{address}', reason:") from error
+        raise Exception(f"Error creating SSHClient of host '{address}', reason: {error}") from error
     return client
 
 

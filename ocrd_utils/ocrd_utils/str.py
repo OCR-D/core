@@ -5,12 +5,16 @@ Utility functions for strings, paths and URL.
 import re
 import json
 from .constants import REGEX_FILE_ID
+from .deprecate import deprecation_warning
+from warnings import warn
+from numpy import array_split
 
 __all__ = [
     'assert_file_grp_cardinality',
     'concat_padded',
     'get_local_filename',
     'is_local_filename',
+    'partition_list',
     'is_string',
     'make_file_id',
     'nth_url_segment',
@@ -119,7 +123,7 @@ def get_local_filename(url, start=None):
         start (string): Base path to remove from filename. Raise an exception if not a prefix of url
     """
     if url.startswith('https://') or url.startswith('http:'):
-        raise Exception("Can't determine local filename of http(s) URL")
+        raise ValueError("Can't determine local filename of http(s) URL")
     if url.startswith('file://'):
         url = url[len('file://'):]
     # Goobi/Kitodo produces those, they are always absolute
@@ -127,7 +131,7 @@ def get_local_filename(url, start=None):
         url = url[len('file:'):]
     if start:
         if not url.startswith(start):
-            raise Exception("Cannot remove prefix %s from url %s" % (start, url))
+            raise ValueError("Cannot remove prefix %s from url %s" % (start, url))
         if not start.endswith('/'):
             start += '/'
         url = url[len(start):]
@@ -137,6 +141,7 @@ def is_local_filename(url):
     """
     Whether a url is a local filename.
     """
+    # deprecation_warning("Deprecated so we spot inconsistent URL/file handling")
     return url.startswith('file://') or not('://' in url)
 
 def is_string(val):
@@ -200,7 +205,33 @@ def generate_range(start, end):
     except IndexError:
         raise ValueError("Range '%s..%s': could not find numeric part" % (start, end))
     if start_num == end_num:
-        raise ValueError("Range '%s..%s': evaluates to the same number")
+        warn("Range '%s..%s': evaluates to the same number")
     for i in range(int(start_num), int(end_num) + 1):
         ret.append(start.replace(start_num, str(i).zfill(len(start_num))))
+    return ret
+
+
+def partition_list(lst, chunks, chunk_index=None):
+    """
+    Partition a list into roughly equally-sized chunks
+
+    Args:
+        lst (list): list to partition
+        chunks (int): number of chunks to generate (not per chunk!)
+
+    Keyword Args:
+        chunk_index (None|int): If provided, return only a list consisting of this chunk
+
+    Returns:
+        list(list())
+    """
+    if not lst:
+        return []
+    # Catch potential empty ranges returned by numpy.array_split
+    #  which are problematic in the ocr-d scope
+    if chunks > len(lst):
+        raise ValueError("Amount of chunks bigger than list size")
+    ret = [x.tolist() for x in array_split(lst, chunks)]
+    if chunk_index is not None:
+        return [ret[chunk_index]]
     return ret

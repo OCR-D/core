@@ -41,7 +41,7 @@ class OcrdExif():
         if which('identify'):
             self.run_identify(img)
         else:
-            getLogger('ocrd_exif').warning("ImageMagick 'identify' not available, Consider installing ImageMagick for more robust pixel density estimation")
+            getLogger('ocrd.exif').warning("ImageMagick 'identify' not available, Consider installing ImageMagick for more robust pixel density estimation")
             self.run_pil(img)
 
     def run_identify(self, img):
@@ -56,9 +56,9 @@ class OcrdExif():
         if ret.returncode:
             stderr = ret.stderr.decode('utf-8')
             if 'no decode delegate for this image format' in stderr:
-                getLogger('ocrd_exif').warning("ImageMagick does not support the '%s' image format. ", img.format)
+                getLogger('ocrd.exif').warning("ImageMagick does not support the '%s' image format. ", img.format)
             else:
-                getLogger('ocrd_exif').error("identify exited with non-zero %s: %s", ret.returncode, stderr)
+                getLogger('ocrd.exif').error("identify exited with non-zero %s: %s", ret.returncode, stderr)
             self.xResolution = self.yResolution = 1
             self.resolutionUnit = 'inches'
         else:

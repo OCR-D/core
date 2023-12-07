@@ -21,3 +21,4 @@ from ocrd_validators import *
 from ocrd.workspace import Workspace
 from ocrd.workspace_backup import WorkspaceBackupManager
 from ocrd.resource_manager import OcrdResourceManager
+from ocrd.mets_server import OcrdMetsServer

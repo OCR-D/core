@@ -8,7 +8,53 @@ OCR-D Command-line interface
 import re
 import click
 
+from ocrd_utils import config
+
 __all__ = ['cli']
+
+_epilog = f"""
+
+\b
+Variables:
+\b
+  PATH
+    Search path for processor executables
+    (affects `ocrd process` and `ocrd resmgr`)
+\b
+{config.describe('HOME')}
+\b
+{config.describe('XDG_CONFIG_HOME')}
+\b
+{config.describe('XDG_DATA_HOME')}
+\b
+{config.describe('OCRD_DOWNLOAD_RETRIES')}
+\b
+{config.describe('OCRD_DOWNLOAD_TIMEOUT')}
+\b
+{config.describe('OCRD_METS_CACHING')}
+\b
+{config.describe('OCRD_DOWNLOAD_TIMEOUT')}
+\b
+{config.describe('OCRD_MAX_PROCESSOR_CACHE')}
+\b
+{config.describe('OCRD_NETWORK_SERVER_ADDR_PROCESSING')}
+\b
+{config.describe('OCRD_NETWORK_SERVER_ADDR_WORKFLOW')}
+\b
+{config.describe('OCRD_NETWORK_SERVER_ADDR_WORKSPACE')}
+\b
+{config.describe('OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS')}
+\b
+{config.describe('OCRD_PROFILE_FILE')}
+\b
+{config.describe('OCRD_PROFILE', wrap_text=False)}
+\b
+{config.describe('OCRD_NETWORK_SOCKETS_ROOT_DIR')}
+\b
+{config.describe('OCRD_NETWORK_LOGS_ROOT_DIR')}
+\b
+{config.describe('OCRD_LOGGING_DEBUG')}
+"""
 
 def command_with_replaced_help(*replacements):
 
@@ -34,7 +80,7 @@ from .log import log_cli
 from .network import network_cli
 
 
-@click.group()
+@click.group(epilog=_epilog)
 @click.version_option()
 @ocrd_loglevel
 def cli(**kwargs): # pylint: disable=unused-argument

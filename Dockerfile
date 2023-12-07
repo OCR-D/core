@@ -35,7 +35,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && make deps-ubuntu \
     && python3 -m venv /usr/local \
     && hash -r \
-    && pip install --upgrade pip setuptools \
+    && pip install --upgrade pip setuptools wheel \
     && make install \
     && eval $FIXUP \
     && rm -rf /build-ocrd

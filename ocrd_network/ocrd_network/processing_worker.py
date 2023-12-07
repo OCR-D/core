@@ -9,19 +9,22 @@ is a single OCR-D Processor instance.
 """
 
 from datetime import datetime
-import logging
+from logging import FileHandler, Formatter
 from os import getpid
-import requests
-
+from time import sleep
 import pika.spec
 import pika.adapters.blocking_connection
+from pika.exceptions import AMQPConnectionError
 
-from ocrd_utils import getLogger
-
+from ocrd_utils import config, getLogger, LOG_FORMAT
 from .database import (
     sync_initiate_database,
     sync_db_get_workspace,
     sync_db_update_processing_job,
+)
+from .logging import (
+    get_processing_job_logging_file_path,
+    get_processing_worker_logging_file_path
 )
 from .models import StateEnum
 from .process_helpers import invoke_processor
@@ -33,23 +36,18 @@ from .rabbitmq_utils import (
 )
 from .utils import (
     calculate_execution_time,
-    tf_disable_interactive_logs,
+    post_to_callback_url,
     verify_database_uri,
     verify_and_parse_mq_uri
 )
 
-# TODO: Check this again when the logging is refactored
-tf_disable_interactive_logs()
-
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
-        self.log = getLogger(__name__)
-        # TODO: Provide more flexibility for configuring file logging (i.e. via ENV variables)
-        file_handler = logging.FileHandler(f'/tmp/worker_{processor_name}_{getpid()}.log', mode='a')
-        logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        file_handler.setFormatter(logging.Formatter(logging_format))
-        file_handler.setLevel(logging.DEBUG)
+        self.log = getLogger(f'ocrd_network.processing_worker')
+        log_file = get_processing_worker_logging_file_path(processor_name=processor_name, pid=getpid())
+        file_handler = FileHandler(filename=log_file, mode='a')
+        file_handler.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(file_handler)
 
         try:
@@ -80,6 +78,8 @@ class ProcessingWorker:
         # The publisher is connected when the `result_queue` field of the OcrdProcessingMessage is set for first time
         # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
         self.rmq_publisher = None
+        # Always create a queue (idempotent)
+        self.create_queue()
 
     def connect_consumer(self) -> None:
         self.log.info(f'Connecting RMQConsumer to RabbitMQ server: '
@@ -144,7 +144,7 @@ class ProcessingWorker:
             raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
 
         try:
-            self.log.info(f'Starting to process the received message: {processing_message}')
+            self.log.info(f'Starting to process the received message: {processing_message.__dict__}')
             self.process_message(processing_message=processing_message)
         except Exception as e:
             self.log.error(f'Failed to process processing message with tag: {delivery_tag}')
@@ -189,19 +189,28 @@ class ProcessingWorker:
         page_id = processing_message.page_id if 'page_id' in pm_keys else None
         result_queue_name = processing_message.result_queue_name if 'result_queue_name' in pm_keys else None
         callback_url = processing_message.callback_url if 'callback_url' in pm_keys else None
+        internal_callback_url = processing_message.internal_callback_url if 'internal_callback_url' in pm_keys else None
         parameters = processing_message.parameters if processing_message.parameters else {}
 
+        if not path_to_mets and not workspace_id:
+            raise ValueError(f'`path_to_mets` nor `workspace_id` was set in the ocrd processing message')
+
+        if path_to_mets:
+            mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
         if not path_to_mets and workspace_id:
             path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
+            mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url
 
         execution_failed = False
         self.log.debug(f'Invoking processor: {self.processor_name}')
         start_time = datetime.now()
+        job_log_file = get_processing_job_logging_file_path(job_id=job_id)
         sync_db_update_processing_job(
             job_id=job_id,
             state=StateEnum.running,
             path_to_mets=path_to_mets,
-            start_time=start_time
+            start_time=start_time,
+            log_file_path=job_log_file
         )
         try:
             invoke_processor(
@@ -211,7 +220,9 @@ class ProcessingWorker:
                 input_file_grps=input_file_grps,
                 output_file_grps=output_file_grps,
                 page_id=page_id,
-                parameters=processing_message.parameters
+                log_filename=job_log_file,
+                parameters=processing_message.parameters,
+                mets_server_url=mets_server_url
             )
         except Exception as error:
             self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {path_to_mets}, "
@@ -228,22 +239,25 @@ class ProcessingWorker:
             end_time=end_time,
             exec_time=f'{exec_duration} ms'
         )
-
-        if result_queue_name or callback_url:
-            result_message = OcrdResultMessage(
-                job_id=job_id,
-                state=job_state.value,
-                path_to_mets=path_to_mets,
-                # May not be always available
-                workspace_id=workspace_id
-            )
-            self.log.info(f'Result message: {result_message}')
-            # If the result_queue field is set, send the result message to a result queue
-            if result_queue_name:
-                self.publish_to_result_queue(result_queue_name, result_message)
-            # If the callback_url field is set, post the result message to a callback url
-            if callback_url:
-                self.post_to_callback_url(callback_url, result_message)
+        result_message = OcrdResultMessage(
+            job_id=job_id,
+            state=job_state.value,
+            path_to_mets=path_to_mets,
+            # May not be always available
+            workspace_id=workspace_id
+        )
+        self.log.info(f'Result message: {result_message.__dict__}')
+        # If the result_queue field is set, send the result message to a result queue
+        if result_queue_name:
+            self.publish_to_result_queue(result_queue_name, result_message)
+        if callback_url:
+            # If the callback_url field is set,
+            # post the result message (callback to a user defined endpoint)
+            post_to_callback_url(self.log, callback_url, result_message)
+        if internal_callback_url:
+            # If the internal callback_url field is set,
+            # post the result message (callback to Processing Server endpoint)
+            post_to_callback_url(self.log, internal_callback_url, result_message)
 
     def publish_to_result_queue(self, result_queue: str, result_message: OcrdResultMessage):
         if self.rmq_publisher is None:
@@ -258,14 +272,26 @@ class ProcessingWorker:
             message=encoded_result_message
         )
 
-    def post_to_callback_url(self, callback_url: str, result_message: OcrdResultMessage):
-        self.log.info(f'Posting result message to callback_url "{callback_url}"')
-        headers = {"Content-Type": "application/json"}
-        json_data = {
-            "job_id": result_message.job_id,
-            "state": result_message.state,
-            "path_to_mets": result_message.path_to_mets,
-            "workspace_id": result_message.workspace_id
-        }
-        response = requests.post(url=callback_url, headers=headers, json=json_data)
-        self.log.info(f'Response from callback_url "{response}"')
+    def create_queue(
+            self,
+            connection_attempts: int = config.OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS,
+            retry_delay: int = 3) -> None:
+        """Create the queue for this worker
+
+        Originally only the processing-server created the queues for the workers according to the
+        configuration file. This is intended to make external deployment of workers possible.
+        """
+        if self.rmq_publisher is None:
+            attempts_left = connection_attempts if connection_attempts > 0 else 1
+            while attempts_left > 0:
+                try:
+                    self.connect_publisher()
+                    break
+                except AMQPConnectionError as e:
+                    if attempts_left <= 1:
+                        raise e
+                    attempts_left -= 1
+                    sleep(retry_delay)
+
+        # the following function is idempotent
+        self.rmq_publisher.create_queue(queue_name=self.processor_name)

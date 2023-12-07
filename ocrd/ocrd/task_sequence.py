@@ -35,7 +35,7 @@ class ProcessorTask():
                 set_json_key_value_overrides(parameters, tokens[1:3])
                 tokens = tokens[3:]
             else:
-                raise Exception("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
+                raise ValueError("Failed parsing task description '%s' with tokens remaining: '%s'" % (argstr, tokens))
         return cls(executable, input_file_grps, output_file_grps, parameters)
 
     def __init__(self, executable, input_file_grps, output_file_grps, parameters):
@@ -108,7 +108,7 @@ def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
         # TODO disable output_file_grps checks once CLI parameter 'overwrite' is implemented
         # XXX Thu Jan 16 20:14:17 CET 2020 still not sufficiently clever.
         #  if len(prev_output_file_grps) != len(set(prev_output_file_grps)):
-        #      report.add_error("Output file group specified multiple times: %s" % 
+        #      report.add_error("Output file group specified multiple times: %s" %
         #          [grp for grp, count in Counter(prev_output_file_grps).items() if count >= 2])
         prev_output_file_grps += task.output_file_grps
     if not report.is_valid:

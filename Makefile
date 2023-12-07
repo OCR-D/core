@@ -5,7 +5,7 @@ PYTHON ?= python
 PIP ?= pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
-TESTDIR = tests
+TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
 
 SPHINX_APIDOC =
@@ -204,16 +204,11 @@ assets: repo/assets
 .PHONY: test
 # Run all unit tests
 test: assets
-	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10\
-		--ignore=$(TESTDIR)/test_logging.py \
-		--ignore=$(TESTDIR)/test_logging_conf.py \
+	$(PYTHON) \
+		-m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		$(TESTDIR)
-	#$(MAKE) test-logging
-
-test-logging:
-	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py

@@ -11,7 +11,7 @@ from PIL import Image
 from lxml import etree as ET
 
 from ocrd_utils import VERSION, MIMETYPE_PAGE, guess_media_type
-from ocrd_models import OcrdExif, OcrdFile
+from ocrd_models import OcrdExif, OcrdFile, ClientSideOcrdFile
 from ocrd_models.ocrd_page import (
     PcGtsType, PageType, MetadataType,
     parse, parseEtree
@@ -67,7 +67,7 @@ def page_from_image(input_file, with_tree=False):
             imageWidth=exif.width,
             imageHeight=exif.height,
             # XXX brittle
-            imageFilename=input_file.url if input_file.url is not None else input_file.local_filename
+            imageFilename=str(input_file.local_filename) if input_file.local_filename else input_file.url
         ),
         pcGtsId=input_file.ID
     )
@@ -91,7 +91,7 @@ def page_from_file(input_file, with_tree=False):
         with_tree (boolean): whether to return XML node tree, element-node mapping \
             and reverse mapping, too (cf. :py:func:`ocrd_models.ocrd_page.parseEtree`)
     """
-    if not isinstance(input_file, OcrdFile):
+    if not isinstance(input_file, (OcrdFile, ClientSideOcrdFile)):
         mimetype = guess_media_type(input_file, application_xml=MIMETYPE_PAGE)
         input_file = OcrdFile(ET.Element("dummy"),
                               local_filename=input_file,

@@ -12,11 +12,12 @@ __all__ = [
     'pushd_popd',
     'unzip_file_to_dir',
     'atomic_write',
+    'redirect_stderr_and_stdout_to_file',
 ]
 
 from tempfile import TemporaryDirectory, gettempdir
 from functools import lru_cache
-import contextlib
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from distutils.spawn import find_executable as which
 from json import loads
 from json.decoder import JSONDecodeError
@@ -30,7 +31,8 @@ from filetype import guess as filetype_guess
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
-from .constants import XDG_DATA_HOME, EXT_TO_MIME
+from .constants import EXT_TO_MIME
+from .config import config
 from .logging import getLogger
 
 def abspath(url):
@@ -43,7 +45,7 @@ def abspath(url):
         url = url[len('file://'):]
     return abspath_(url)
 
-@contextlib.contextmanager
+@contextmanager
 def pushd_popd(newcwd=None, tempdir=False):
     if newcwd and tempdir:
         raise Exception("pushd_popd can accept either newcwd or tempdir, not both")
@@ -81,7 +83,7 @@ def get_ocrd_tool_json(executable):
     try:
         ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
     except (JSONDecodeError, OSError) as e:
-        getLogger('ocrd_utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
+        getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
         ocrd_tool = {}
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
@@ -93,7 +95,7 @@ def get_moduledir(executable):
     try:
         moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout.rstrip('\n')
     except (JSONDecodeError, OSError) as e:
-        getLogger('ocrd_utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
+        getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
 
 def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):
@@ -103,7 +105,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_
     """
     candidates = []
     candidates.append(join(cwd, fname))
-    xdg_data_home = XDG_DATA_HOME if not xdg_data_home else xdg_data_home
+    xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
@@ -125,7 +127,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
         # processor we're looking for ressource_locations of is not installed.
         # Assume the default
         resource_locations = ['data', 'cwd', 'system', 'module']
-    xdg_data_home = XDG_DATA_HOME if not xdg_data_home else xdg_data_home
+    xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     # XXX cwd would list too many false positives
     # if 'cwd' in resource_locations:
     #     cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
@@ -200,7 +202,7 @@ class AtomicWriterPerms(AtomicWriter):
         chmod(fd, mode)
         return f
 
-@contextlib.contextmanager
+@contextmanager
 def atomic_write(fpath):
     with atomic_write_(fpath, writer_cls=AtomicWriterPerms, overwrite=True) as f:
         yield f
@@ -248,3 +250,9 @@ def guess_media_type(input_file : str, fallback : str = None, application_xml : 
     if mimetype == 'application/xml':
         mimetype = application_xml
     return mimetype
+
+@contextmanager
+def redirect_stderr_and_stdout_to_file(filename):
+    with open(filename, 'at', encoding='utf-8') as f:
+        with redirect_stderr(f), redirect_stdout(f):
+            yield

@@ -9,18 +9,20 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from typing import Dict, List, Union
 from re import search as re_search
-from os import getpid
+from pathlib import Path
+import subprocess
 from time import sleep
 
-from ocrd_utils import getLogger
+from ocrd_utils import config, getLogger, safe_filename
 
+from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 from .deployment_utils import (
     create_docker_client,
     DeployType,
     verify_mongodb_available,
     verify_rabbitmq_available,
 )
-
+from .logging import get_mets_server_logging_file_path
 from .runtime_data import (
     DataHost,
     DataMongoDB,
@@ -28,19 +30,25 @@ from .runtime_data import (
     DataProcessorServer,
     DataRabbitMQ
 )
-from .utils import validate_and_load_config
+from .utils import (
+    is_mets_server_running,
+    stop_mets_server,
+    validate_and_load_config
+)
 
 
 class Deployer:
     def __init__(self, config_path: str) -> None:
-        self.log = getLogger(__name__)
+        self.log = getLogger('ocrd_network.deployer')
         config = validate_and_load_config(config_path)
 
         self.data_mongo: DataMongoDB = DataMongoDB(config['database'])
         self.data_queue: DataRabbitMQ = DataRabbitMQ(config['process_queue'])
         self.data_hosts: List[DataHost] = []
+        self.internal_callback_url = config.get('internal_callback_url', None)
         for config_host in config['hosts']:
             self.data_hosts.append(DataHost(config_host))
+        self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
 
     # TODO: Reconsider this.
     def find_matching_processors(
@@ -302,7 +310,7 @@ class Deployer:
     ) -> str:
         if self.data_mongo.skip_deployment:
             self.log.debug('MongoDB is externaly managed. Skipping deployment')
-            verify_mongodb_available(self.data_mongo.url);
+            verify_mongodb_available(self.data_mongo.url)
             return self.data_mongo.url
 
         self.log.debug(f"Trying to deploy '{image}', with modes: "
@@ -460,15 +468,15 @@ class Deployer:
         self.log.info(f'Starting native processing worker: {processor_name}')
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} --type worker --database {database_url} --queue {queue_url}'
+        cmd = f'{processor_name} {NETWORK_AGENT_WORKER} --database {database_url} --queue {queue_url} &'
         # the only way (I could find) to make it work to start a process in the background and
         # return early is this construction. The pid of the last started background process is
         # printed with `echo $!` but it is printed inbetween other output. Because of that I added
         # `xyz` before and after the code to easily be able to filter out the pid via regex when
         # returning from the function
-        log_path = '/tmp/ocrd-processing-server-startup.log'
-        stdin.write(f"echo starting processing worker with '{cmd}' >> '{log_path}'\n")
-        stdin.write(f'{cmd} >> {log_path} 2>&1 &\n')
+
+        self.log.debug(f'About to execute command: {cmd}')
+        stdin.write(f'{cmd}\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
@@ -503,14 +511,58 @@ class Deployer:
         self.log.info(f"Starting native processor server: {processor_name} on {agent_address}")
         channel = ssh_client.invoke_shell()
         stdin, stdout = channel.makefile('wb'), channel.makefile('rb')
-        cmd = f'{processor_name} --type server --address {agent_address} --database {database_url}'
-        port = agent_address.split(':')[1]
-        log_path = f'/tmp/server_{processor_name}_{port}_{getpid()}.log'
-        # TODO: This entire stdin/stdout thing is broken with servers!
-        stdin.write(f"echo starting processor server with '{cmd}' >> '{log_path}'\n")
-        stdin.write(f'{cmd} >> {log_path} 2>&1 &\n')
+        cmd = f'{processor_name} {NETWORK_AGENT_SERVER} --address {agent_address} --database {database_url} &'
+        self.log.debug(f'About to execute command: {cmd}')
+        stdin.write(f'{cmd}\n')
         stdin.write('echo xyz$!xyz \n exit \n')
         output = stdout.read().decode('utf-8')
         stdout.close()
         stdin.close()
         return re_search(r'xyz([0-9]+)xyz', output).group(1)  # type: ignore
+
+    # TODO: No support for TCP version yet
+    def start_unix_mets_server(self, mets_path: str) -> Path:
+        log_file = get_mets_server_logging_file_path(mets_path=mets_path)
+        mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(mets_path)}.sock")
+
+        if is_mets_server_running(mets_server_url=str(mets_server_url)):
+            self.log.info(f"The mets server is already started: {mets_server_url}")
+            return mets_server_url
+
+        cwd = Path(mets_path).parent
+        self.log.info(f'Starting UDS mets server: {mets_server_url}')
+        sub_process = subprocess.Popen(
+            args=['nohup', 'ocrd', 'workspace', '--mets-server-url', f'{mets_server_url}',
+                  '-d', f'{cwd}', 'server', 'start'],
+            shell=False,
+            stdout=open(file=log_file, mode='w'),
+            stderr=open(file=log_file, mode='a'),
+            cwd=cwd,
+            universal_newlines=True
+        )
+        # Wait for the mets server to start
+        sleep(2)
+        self.mets_servers[mets_server_url] = sub_process.pid
+        return mets_server_url
+
+    def stop_unix_mets_server(self, mets_server_url: str) -> None:
+        self.log.info(f'Stopping UDS mets server: {mets_server_url}')
+        if Path(mets_server_url) in self.mets_servers:
+            mets_server_pid = self.mets_servers[Path(mets_server_url)]
+        else:
+            raise Exception(f"Mets server not found: {mets_server_url}")
+
+        '''
+        subprocess.run(
+            args=['kill', '-s', 'SIGINT', f'{mets_server_pid}'],
+            shell=False,
+            universal_newlines=True
+        )
+        '''
+
+        # TODO: Reconsider this again
+        #  Not having this sleep here causes connection errors
+        #  on the last request processed by the processing worker.
+        #  Sometimes 3 seconds is enough, sometimes not.
+        sleep(5)
+        stop_mets_server(mets_server_url=mets_server_url)

@@ -9,29 +9,33 @@ import os
 from os import getcwd
 from os.path import relpath, exists, join, isabs
 from pathlib import Path
-from json import loads
+from json import loads, dumps
 import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
 import time
+import numpy as np
 
 import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file
+from ocrd.mets_server import OcrdMetsServer
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
 
 class WorkspaceCtx():
 
-    def __init__(self, directory, mets_url, mets_basename, automatic_backup):
+    def __init__(self, directory, mets_url, mets_basename, mets_server_url, automatic_backup):
         self.log = getLogger('ocrd.cli.workspace')
-        self.resolver = Resolver()
         if mets_basename:
             self.log.warning(DeprecationWarning('--mets-basename is deprecated. Use --mets/--directory instead.'))
-        self.directory, self.mets_url, self.mets_basename = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename)
+        self.resolver = Resolver()
+        self.directory, self.mets_url, self.mets_basename, self.mets_server_url \
+                = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename, mets_server_url)
         self.automatic_backup = automatic_backup
+
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
@@ -43,14 +47,26 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location [default: METS_URL directory or .]"')
 @click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
 @click.option('-m', '--mets', default=None, help='The path/URL of the METS file [default: WORKSPACE_DIR/mets.xml]', metavar="METS_URL")
+@click.option('-U', '--mets-server-url', 'mets_server_url', help="TCP host of METS server")
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
-def workspace_cli(ctx, directory, mets, mets_basename, backup):
+def workspace_cli(ctx, directory, mets, mets_basename, mets_server_url, backup):
     """
-    Working with workspace
+    Managing workspaces
+
+    A workspace comprises a METS file and a directory as point of reference.
+
+    Operates on the file system directly or via a METS server 
+    (already running via some prior `server start` subcommand).
     """
     initLogging()
-    ctx.obj = WorkspaceCtx(directory, mets_url=mets, mets_basename=mets_basename, automatic_backup=backup)
+    ctx.obj = WorkspaceCtx(
+        directory,
+        mets_url=mets,
+        mets_basename=mets_basename,
+        mets_server_url=mets_server_url,
+        automatic_backup=backup
+    )
 
 # ----------------------------------------------------------------------
 # ocrd workspace validate
@@ -60,7 +76,9 @@ def workspace_cli(ctx, directory, mets, mets_basename, backup):
     (r' \[METS_URL\]', ''))) # XXX deprecated argument
 @pass_workspace
 @click.option('-a', '--download', is_flag=True, help="Download all files")
-@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(['imagefilename', 'dimension', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page', 'page_xsd', 'mets_xsd', 'url']))
+@click.option('-s', '--skip', help="Tests to skip", default=[], multiple=True, type=click.Choice(
+    ['imagefilename', 'dimension', 'pixel_density', 'page', 'url', 'page_xsd', 'mets_fileid_page_pcgtsid',
+     'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'mets_xsd']))
 @click.option('--page-textequiv-consistency', '--page-strictness', help="How strict to check PAGE multi-level textequiv consistency", type=click.Choice(['strict', 'lax', 'fix', 'off']), default='strict')
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency", type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
 @click.argument('mets_url', default=None, required=False)
@@ -101,10 +119,11 @@ def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
 @click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
 @click.argument('mets_url')
+@mets_find_options
 # XXX deprecated
 @click.argument('workspace_dir', default=None, required=False)
 @pass_workspace
-def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
+def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mimetype, include_fileGrp, exclude_fileGrp, mets_url, workspace_dir):
     """
     Create a workspace from METS_URL and return the directory
 
@@ -123,6 +142,11 @@ def workspace_clone(ctx, clobber_mets, download, mets_url, workspace_dir):
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
+        ID=file_id,
+        pageId=page_id,
+        mimetype=mimetype,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
     workspace.save_mets()
     print(workspace.directory)
@@ -173,7 +197,13 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     Add a file or http(s) URL FNAME to METS in a workspace.
     If FNAME is not an http(s) URL and is not a workspace-local existing file, try to copy to workspace.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        automatic_backup=ctx.automatic_backup,
+        mets_server_url=ctx.mets_server_url,
+    )
 
     log = getLogger('ocrd.cli.workspace.add')
     if not mimetype:
@@ -206,7 +236,16 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 
     if not page_id:
         log.warning("You did not provide '--page-id/-g', so the file you added is not linked to a specific page.")
-    workspace.add_file(file_grp, file_id=file_id, mimetype=mimetype, page_id=page_id, force=force, ignore=ignore, local_filename=local_filename, url=fname)
+    kwargs = {
+        'file_id': file_id,
+        'mimetype': mimetype,
+        'page_id': page_id,
+        'force': force,
+        'ignore': ignore,
+        'local_filename': local_filename,
+        'url': fname
+    }
+    workspace.add_file(file_grp, **kwargs)
     workspace.save_mets()
 
 # ----------------------------------------------------------------------
@@ -219,7 +258,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-m', '--mimetype', help="Media type of the file. If not provided, guess from filename", required=False)
 @click.option('-g', '--page-id', help="physical page ID of the file", required=False)
 @click.option('-i', '--file-id', help="ID of the file. If not provided, derive from fileGrp and filename", required=False)
-@click.option('-u', '--url', help="local filesystem path in the workspace directory (copied from source file if different)", required=False)
+@click.option('-u', '--url', help="Remote URL of the file", required=False)
+@click.option('-l', '--local-filename', help="Local filesystem path in the workspace directory (copied from source file if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview", default=False, is_flag=True)
 @click.option('-S', '--source-path', 'src_path_option', help="File path to copy from (if different from FILE_GLOB values)", required=False)
@@ -228,7 +268,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-s', '--skip', help="Skip files not matching --regex (instead of failing)", default=False, is_flag=True)
 @click.argument('file_glob', nargs=-1, required=True)
 @pass_workspace
-def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp, dry_run, file_glob, src_path_option, ignore, force, skip):
+def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_filename, file_grp, dry_run, file_glob, src_path_option, ignore, force, skip):
     """
     Add files in bulk to an OCR-D workspace.
 
@@ -257,7 +297,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
                 --page-id 'PHYS_{{ pageid }}' \\
                 --file-grp "{{ fileGrp }}" \\
-                --url '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
+                --local-filename '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}' \\
                 -
 
         \b
@@ -265,11 +305,17 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
           echo PHYS_0001 BIN FILE_0001_BIN BIN/FILE_0001_BIN.xml; \\
           echo PHYS_0002 BIN FILE_0002_BIN.IMG-wolf BIN/FILE_0002_BIN.IMG-wolf.png; \\
           echo PHYS_0002 BIN FILE_0002_BIN BIN/FILE_0002_BIN.xml; \\
-        } | ocrd workspace bulk-add -r '(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<url>.*)' \\
-          -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ url }}' -
+        } | ocrd workspace bulk-add -r '(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<local_filename>.*)' \\
+          -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ local_filename }}' -
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        automatic_backup=ctx.automatic_backup,
+        mets_server_url=ctx.mets_server_url,
+    )
 
     try:
         pat = re.compile(regex)
@@ -302,20 +348,23 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
         group_dict = m.groupdict()
 
         # set up file info
-        file_dict = {'url': url, 'mimetype': mimetype, 'file_id': file_id, 'page_id': page_id, 'file_grp': file_grp}
+        file_dict = {'local_filename': local_filename, 'url': url, 'mimetype': mimetype, 'file_id': file_id, 'page_id': page_id, 'file_grp': file_grp}
 
-        # Flag to track whether 'url' should be 'src'
-        url_is_src = False
+        # Flag to track whether 'local_filename' should be 'src'
+        local_filename_is_src = False
 
         # expand templates
         for param_name in file_dict:
             if not file_dict[param_name]:
-                if param_name == 'url':
-                    url_is_src = True
+                if param_name == 'local_filename':
+                    local_filename_is_src = True
                     continue
                 elif param_name in ['mimetype', 'file_id']:
                     # auto-filled below once the other
                     # replacements have happened
+                    continue
+                elif param_name == 'url':
+                    # Remote URL is not required
                     continue
                 raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
@@ -341,10 +390,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
                 log.error("Cannot guess MIME type from extension '%s' for '%s'. Set --mimetype explicitly" % (srcpath.suffix, srcpath))
 
         # copy files if src != url
-        if url_is_src:
-            file_dict['url'] = str(srcpath)
+        if local_filename_is_src:
+            file_dict['local_filename'] = srcpath
         else:
-            destpath = Path(workspace.directory, file_dict['url'])
+            destpath = Path(workspace.directory, file_dict['local_filename'])
             if srcpath != destpath and not destpath.exists():
                 log.info("cp '%s' '%s'", srcpath, destpath)
                 if not dry_run:
@@ -370,7 +419,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
 @workspace_cli.command('find')
 @mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
-        default=['url'],
+        default=['local_filename'],
         multiple=True,
         type=click.Choice([
             'url',
@@ -386,9 +435,10 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, file_grp
             'local_filename',
         ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
+@click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, download, wait):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, include_fileGrp, exclude_fileGrp, download, undo_download, wait):
     """
     Find files.
 
@@ -399,20 +449,31 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, down
     output_field = [snake_to_camel.get(x, x) for x in output_field]
     modified_mets = False
     ret = list()
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        mets_server_url=ctx.mets_server_url,
+    )
     for f in workspace.find_files(
             file_id=file_id,
             file_grp=file_grp,
             mimetype=mimetype,
             page_id=page_id,
+            include_fileGrp=include_fileGrp,
+            exclude_fileGrp=exclude_fileGrp,
         ):
+        ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
         if download and not f.local_filename:
             workspace.download_file(f)
             modified_mets = True
             if wait:
                 time.sleep(wait)
-        ret.append([f.ID if field == 'pageId' else getattr(f, field) or ''
-                    for field in output_field])
+        if undo_download and f.local_filename:
+            ret_entry = [f'Removed local_filename {f.local_filename}']
+            f.local_filename = None
+            modified_mets = True
+        ret.append(ret_entry)
     if modified_mets:
         workspace.save_mets()
     if 'pageId' in output_field:
@@ -531,17 +592,35 @@ def list_groups(ctx):
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
-# ocrd workspace list-pages
+# ocrd workspace list-page
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('list-page')
+@click.option('-f', '--output-format', help="Output format", type=click.Choice(['one-per-line', 'comma-separated', 'json']), default='one-per-line')
+@click.option('-D', '--chunk-number', help="Partition the return value into n roughly equally sized chunks", default=1, type=int)
+@click.option('-C', '--chunk-index', help="Output the nth chunk of results, -1 for all of them.", default=None, type=int)
+@click.option('-r', '--page-id-range', help="Restrict the pages to those matching the provided range, based on the @ID attribute. Separate start/end with ..")
+@click.option('-R', '--numeric-range', help="Restrict the pages to those in the range, in numerical document order. Separate start/end with ..")
 @pass_workspace
-def list_pages(ctx):
+def list_pages(ctx, output_format, chunk_number, chunk_index, page_id_range, numeric_range):
     """
     List physical page IDs
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
-    print("\n".join(workspace.mets.physical_pages))
+    find_kwargs = {}
+    if page_id_range:
+        find_kwargs['pageId'] = page_id_range
+    ids = sorted({x.pageId for x in workspace.mets.find_files(**find_kwargs)})
+    if numeric_range:
+        start, end = map(int, numeric_range.split('..'))
+        ids = ids[start-1:end]
+    chunks = partition_list(ids, chunk_number, chunk_index)
+    if output_format == 'one-per-line':
+        print("\n".join(["\n".join(chunk) for chunk in chunks]))
+    elif output_format == 'comma-separated':
+        print("\n".join([",".join(chunk) for chunk in chunks]))
+    elif output_format == 'json':
+        print(dumps(chunks))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
@@ -577,6 +656,20 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
     workspace.mets.unique_identifier = id
     workspace.save_mets()
 
+@workspace_cli.command('update-page')
+@click.option('--order', help="@ORDER attribute for this mets:div", metavar='ORDER')
+@click.option('--orderlabel', help="@ORDERLABEL attribute for this mets:div", metavar='ORDERLABEL')
+@click.option('--contentids', help="@CONTENTIDS attribute for this mets:div", metavar='ORDERLABEL')
+@click.argument('PAGE_ID')
+@pass_workspace
+def update_page(ctx, order, orderlabel, contentids, page_id):
+    """
+    Update the @ORDER, @ORDERLABEL o @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
+    """
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace.mets.update_physical_page_attributes(page_id, order=order, orderlabel=orderlabel, contentids=contentids)
+    workspace.save_mets()
+
 # ----------------------------------------------------------------------
 # ocrd workspace merge
 # ----------------------------------------------------------------------
@@ -594,7 +687,7 @@ def _handle_json_option(ctx, param, value):
 @click.option('--pageId-mapping', help="JSON object mapping src to dest page ID", callback=_handle_json_option)
 @mets_find_options
 @pass_workspace
-def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, mets_path):   # pylint: disable=redefined-builtin
+def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pageid_mapping, file_grp, file_id, page_id, mimetype, include_fileGrp, exclude_fileGrp, mets_path):   # pylint: disable=redefined-builtin
     """
     Merges this workspace with the workspace that contains ``METS_PATH``
 
@@ -621,7 +714,9 @@ def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pa
         file_grp=file_grp,
         file_id=file_id,
         page_id=page_id,
-        mimetype=mimetype
+        mimetype=mimetype,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
     workspace.save_mets()
 
@@ -674,3 +769,39 @@ def workspace_backup_undo(ctx):
     """
     backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
     backup_manager.undo()
+
+
+# ----------------------------------------------------------------------
+# ocrd workspace server
+# ----------------------------------------------------------------------
+
+@workspace_cli.group('server')
+@pass_workspace
+def workspace_serve_cli(ctx): # pylint: disable=unused-argument
+    """Control a METS server for this workspace"""
+    assert ctx.mets_server_url, "For METS server commands, you must provide '-U/--mets-server-url'"
+
+@workspace_serve_cli.command('stop')
+@pass_workspace
+def workspace_serve_stop(ctx): # pylint: disable=unused-argument
+    """Stop the METS server"""
+    workspace = Workspace(
+        ctx.resolver,
+        directory=ctx.directory,
+        mets_basename=ctx.mets_basename,
+        mets_server_url=ctx.mets_server_url,
+    )
+    workspace.mets.stop()
+
+@workspace_serve_cli.command('start')
+@pass_workspace
+def workspace_serve_start(ctx): # pylint: disable=unused-argument
+    """
+    Start a METS server
+
+    (For TCP backend, pass a network interface to bind to as the '-U/--mets-server-url' parameter.)
+    """
+    OcrdMetsServer(
+        workspace=Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename),
+        url=ctx.mets_server_url,
+    ).startup()

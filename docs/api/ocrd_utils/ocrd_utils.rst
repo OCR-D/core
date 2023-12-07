@@ -12,6 +12,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   ocrd_utils.config
    ocrd_utils.constants
    ocrd_utils.deprecate
    ocrd_utils.image

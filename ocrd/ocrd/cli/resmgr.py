@@ -6,7 +6,6 @@ OCR-D CLI: management of processor resources
     :nested: full
 """
 import sys
-from os import environ
 from pathlib import Path
 from distutils.spawn import find_executable as which
 from yaml import safe_load, safe_dump
@@ -156,12 +155,12 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                     fpath = resmgr.download(
                         this_executable,
                         resdict['url'],
+                        basedir,
                         name=resdict['name'],
                         resource_type=resdict.get('type', resource_type),
                         path_in_archive=resdict.get('path_in_archive', path_in_archive),
                         overwrite=overwrite,
                         no_subdir=location in ['cwd', 'module'],
-                        basedir=basedir,
                         progress_cb=lambda delta: bar.update(delta)
                     )
                 if registered == 'unregistered':
