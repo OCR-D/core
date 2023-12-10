@@ -275,10 +275,12 @@ class Deployer:
             detach=detach,
             remove=remove,
             ports=ports_mapping,
-            # The default credentials to be used by the processing workers
             environment=[
+                # The default credentials to be used by the processing workers
                 f'RABBITMQ_DEFAULT_USER={self.data_queue.username}',
-                f'RABBITMQ_DEFAULT_PASS={self.data_queue.password}'
+                f'RABBITMQ_DEFAULT_PASS={self.data_queue.password}',
+                # These feature flags are required by default to use the newer version
+                f'RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version'
             ]
         )
         assert res and res.id, \
