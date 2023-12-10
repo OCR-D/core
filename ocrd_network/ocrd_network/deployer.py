@@ -15,7 +15,7 @@ from time import sleep
 
 from ocrd_utils import config, getLogger, safe_filename
 
-from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
+from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, DOCKER_RABBIT_MQ_FEATURES
 from .deployment_utils import (
     create_docker_client,
     DeployType,
@@ -280,7 +280,7 @@ class Deployer:
                 f'RABBITMQ_DEFAULT_USER={self.data_queue.username}',
                 f'RABBITMQ_DEFAULT_PASS={self.data_queue.password}',
                 # These feature flags are required by default to use the newer version
-                f'RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version'
+                f'RABBITMQ_FEATURE_FLAGS={DOCKER_RABBIT_MQ_FEATURES}'
             ]
         )
         assert res and res.id, \
