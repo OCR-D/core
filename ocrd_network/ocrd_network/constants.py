@@ -1,2 +1,4 @@
 NETWORK_AGENT_SERVER = 'server'
 NETWORK_AGENT_WORKER = 'worker'
+DOCKER_IMAGE_RABBIT_MQ = 'rabbitmq:3-management'
+DOCKER_IMAGE_MONGO_DB = 'mongo'

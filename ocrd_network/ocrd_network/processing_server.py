@@ -25,7 +25,7 @@ from ocrd import Resolver, Workspace
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
 
-from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
+from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ
 from .database import (
     initiate_database,
     db_create_workspace,
@@ -255,10 +255,10 @@ class ProcessingServer(FastAPI):
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
         try:
-            self.deployer.deploy_rabbitmq(image='rabbitmq:3-management', detach=True, remove=True)
+            self.deployer.deploy_rabbitmq(image=DOCKER_IMAGE_RABBIT_MQ, detach=True, remove=True)
             rabbitmq_url = self.deployer.data_queue.url
 
-            self.deployer.deploy_mongodb(image='mongo', detach=True, remove=True)
+            self.deployer.deploy_mongodb(image=DOCKER_IMAGE_MONGO_DB, detach=True, remove=True)
             self.mongodb_url = self.deployer.data_mongo.url
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
