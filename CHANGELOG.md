@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace list-page` now works in workspaces with non-page-specific files, #1148, #1151
+
 ## [2.59.1] - 2023-12-05
 
 Fixed:
