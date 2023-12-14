@@ -9,6 +9,10 @@ Fixed:
 
   * `ocrd workspace list-page` now works in workspaces with non-page-specific files, #1148, #1151
 
+Changed:
+
+  * `cli.workspace.WorkspaceCtx` and `Resolver.resolve_mets_arguments` now have defaults for `mets_server_url`, `mets_basename` and `automatic_backup`, slub/mets-mods2tei#68, #1156
+
 ## [2.59.1] - 2023-12-05
 
 Fixed:
