@@ -18,6 +18,7 @@ from ocrd_utils import (
     unzip_file_to_dir,
     DEFAULT_METS_BASENAME,
     MIMETYPE_PAGE,
+    safe_filename,
     VERSION,
 )
 from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
@@ -80,7 +81,10 @@ class WorkspaceBagger():
                     file_grp_dir.mkdir()
 
                 attr = 'local_filename' if f.local_filename else 'url'
-                basename = f.basename if f.basename else f"{f.ID}{MIME_TO_EXT.get(f.mimetype, '.xml')}"
+                if f.local_filename and f.basename:
+                    basename = f.basename
+                else:
+                    basename = safe_filename(f.contentids if f.contentids else f.ID) + MIME_TO_EXT.get(f.mimetype, '.xml')
                 _relpath = join(f.fileGrp, basename)
                 self.resolver.download_to_directory(file_grp_dir, getattr(f, attr), basename=basename)
                 changed_local_filenames[str(getattr(f, attr))] = _relpath
