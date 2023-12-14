@@ -5,7 +5,7 @@ import re
 from traceback import format_exc
 from pathlib import Path
 
-from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
+from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename, DEFAULT_METS_BASENAME
 from ocrd_models import ValidationReport
 from ocrd_modelfactory import page_from_file
 
@@ -91,7 +91,7 @@ class WorkspaceValidator():
         self.log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
         if mets_url is None and src_dir is not None:
-            mets_url = '%s/mets.xml' % src_dir
+            mets_url = f'{src_dir}/{DEFAULT_METS_BASENAME}'
         self.mets_url = mets_url
         self.download = download
         self.page_strictness = page_strictness

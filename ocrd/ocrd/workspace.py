@@ -35,6 +35,7 @@ from ocrd_utils import (
     pushd_popd,
     is_local_filename,
     deprecated_alias,
+    DEFAULT_METS_BASENAME,
     MIME_TO_EXT,
     MIME_TO_PIL,
     MIMETYPE_PAGE,
@@ -70,7 +71,7 @@ class Workspace():
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename='mets.xml', automatic_backup=False, baseurl=None, mets_server_url=None):
+    def __init__(self, resolver, directory, mets=None, mets_basename=DEFAULT_METS_BASENAME, automatic_backup=False, baseurl=None, mets_server_url=None):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))

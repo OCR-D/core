@@ -108,3 +108,5 @@ LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'
 LOG_TIMEFMT = r'%H:%M:%S'
 
 RESOURCE_LOCATIONS = ['data', 'cwd', 'system', 'module']
+
+DEFAULT_METS_BASENAME = 'mets.xml'

@@ -14,6 +14,7 @@ import click
 from ocrd.constants import BASHLIB_FILENAME
 import ocrd.constants
 import ocrd_utils.constants
+from ocrd_utils.constants import DEFAULT_METS_BASENAME
 import ocrd_models.constants
 import ocrd_validators.constants
 from ocrd.decorators import (
@@ -78,7 +79,7 @@ def bashlib_constants(name):
         print(val)
 
 @bashlib_cli.command('input-files')
-@click.option('-m', '--mets', help="METS to process", default="mets.xml")
+@click.option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME)
 @click.option('-w', '--working-dir', help="Working Directory")
 @click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT')
 @click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT')

@@ -106,6 +106,7 @@ Utility functions and constants usable in various circumstances.
 """
 
 from .constants import (
+    DEFAULT_METS_BASENAME,
     EXT_TO_MIME,
     MIMETYPE_PAGE,
     MIME_TO_EXT,

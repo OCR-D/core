@@ -1,6 +1,8 @@
 import click
 from typing import Optional
 
+from ocrd_utils import DEFAULT_METS_BASENAME
+
 from ocrd.decorators import (
     parameter_option,
     parameter_override_option
@@ -36,7 +38,7 @@ def processing_cli():
 @processing_cli.command('processor')
 @click.argument('processor_name', required=True, type=click.STRING)
 @click.option('--address')
-@click.option('-m', '--mets', required=True, default="mets.xml")
+@click.option('-m', '--mets', required=True, default=DEFAULT_METS_BASENAME)
 @click.option('-I', '--input-file-grp', default='OCR-D-INPUT')
 @click.option('-O', '--output-file-grp', default='OCR-D-OUTPUT')
 @click.option('-g', '--page-id')

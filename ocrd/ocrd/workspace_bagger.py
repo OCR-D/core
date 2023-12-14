@@ -16,7 +16,7 @@ from ocrd_utils import (
     getLogger,
     MIME_TO_EXT,
     unzip_file_to_dir,
-
+    DEFAULT_METS_BASENAME,
     MIMETYPE_PAGE,
     VERSION,
 )
@@ -113,7 +113,7 @@ class WorkspaceBagger():
             log.info("New vs. old: %s" % changed_local_filenames)
         return total_bytes, total_files
 
-    def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_base_version_checksum, ocrd_mets='mets.xml'):
+    def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_base_version_checksum, ocrd_mets=DEFAULT_METS_BASENAME):
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
         bag.info['Bag-Software-Agent'] = 'ocrd/core %s (bagit.py %s, bagit_profile %s) [cmdline: "%s"]' % (
             VERSION, # TODO
@@ -126,14 +126,14 @@ class WorkspaceBagger():
             bag.info['Ocrd-Base-Version-Checksum'] = ocrd_base_version_checksum
         bag.info['Bagging-Date'] = str(datetime.now())
         bag.info['Payload-Oxum'] = '%s.%s' % (total_bytes, total_files)
-        if ocrd_mets != 'mets.xml':
+        if ocrd_mets != DEFAULT_METS_BASENAME:
             bag.info['Ocrd-Mets'] = ocrd_mets
 
     def bag(self,
             workspace,
             ocrd_identifier,
             dest=None,
-            ocrd_mets='mets.xml',
+            ocrd_mets=DEFAULT_METS_BASENAME,
             ocrd_base_version_checksum=None,
             processes=1,
             skip_zip=False,
@@ -245,7 +245,7 @@ class WorkspaceBagger():
         rmtree(bagdir)
 
         # Create workspace
-        mets_basename = bag_info.get("Ocrd-Mets", "mets.xml")
+        mets_basename = bag_info.get("Ocrd-Mets", DEFAULT_METS_BASENAME)
         workspace = Workspace(self.resolver, directory=dest, mets_basename=mets_basename)
 
         # TODO validate workspace

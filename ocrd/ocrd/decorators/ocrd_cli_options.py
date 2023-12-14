@@ -1,5 +1,6 @@
 import click
 from click import option, Path, group, command, argument
+from ocrd_utils import DEFAULT_METS_BASENAME
 from ocrd_network import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
@@ -25,7 +26,7 @@ def ocrd_cli_options(f):
     """
     # XXX Note that the `--help` output is statically generate_processor_help
     params = [
-        option('-m', '--mets', help="METS to process", default="mets.xml"),
+        option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME),
         option('-w', '--working-dir', help="Working Directory"),
         option('-U', '--mets-server-url', help="METS server URL. Starts with http:// then TCP, otherwise unix socket path"),
         # TODO OCR-D/core#274

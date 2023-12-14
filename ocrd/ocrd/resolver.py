@@ -8,6 +8,7 @@ from requests.adapters import HTTPAdapter, Retry
 from ocrd.constants import TMP_PREFIX
 from ocrd_utils import (
     config,
+    DEFAULT_METS_BASENAME,
     getLogger,
     is_local_filename,
     get_local_filename,
@@ -224,7 +225,7 @@ class Resolver():
 
         return workspace
 
-    def workspace_from_nothing(self, directory, mets_basename='mets.xml', clobber_mets=False):
+    def workspace_from_nothing(self, directory, mets_basename=DEFAULT_METS_BASENAME, clobber_mets=False):
         """
         Create an empty workspace.
 
@@ -252,7 +253,7 @@ class Resolver():
 
         return Workspace(self, directory, mets, mets_basename=mets_basename)
 
-    def resolve_mets_arguments(self, directory, mets_url, mets_basename, mets_server_url):
+    def resolve_mets_arguments(self, directory, mets_url, mets_basename=DEFAULT_METS_BASENAME, mets_server_url=None):
         """
         Resolve the ``--mets``, ``--mets-basename``, `--directory``,
         ``--mets-server-url``, arguments into a coherent set of arguments
@@ -275,7 +276,7 @@ class Resolver():
         if not mets_basename and mets_url:
             mets_basename = Path(mets_url).name
         elif not mets_basename and not mets_url:
-            mets_basename = 'mets.xml'
+            mets_basename = DEFAULT_METS_BASENAME
         elif mets_basename and mets_url:
             raise ValueError("Use either --mets or --mets-basename, not both")
         else:

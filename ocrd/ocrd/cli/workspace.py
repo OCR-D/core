@@ -20,14 +20,14 @@ import click
 
 from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
 from ocrd.mets_server import OcrdMetsServer
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list
+from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list, DEFAULT_METS_BASENAME
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
 
 
 class WorkspaceCtx():
 
-    def __init__(self, directory, mets_url, mets_basename, mets_server_url, automatic_backup):
+    def __init__(self, directory, mets_url, mets_basename=DEFAULT_METS_BASENAME, mets_server_url=None, automatic_backup=False):
         self.log = getLogger('ocrd.cli.workspace')
         if mets_basename:
             self.log.warning(DeprecationWarning('--mets-basename is deprecated. Use --mets/--directory instead.'))
