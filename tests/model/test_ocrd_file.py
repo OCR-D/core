@@ -4,6 +4,7 @@ import pytest
 
 from tests.base import (
     main,
+    assets,
     create_ocrd_file,
     create_ocrd_file_with_defaults
 )
@@ -121,6 +122,10 @@ def test_fptr_changed_for_change_id():
     assert mets.get_physical_pages(for_fileIds=['FOO_1']) == [None]
     assert mets.get_physical_pages(for_fileIds=['BAZ_1']) == ['p0001']
 
+def test_get_contentids():
+    mets = OcrdMets(filename=assets.url_of('pembroke_werke_1766/data/mets.xml'))
+    ocrd_file = next(mets.find_files(pageId='PHYS_0009'))
+    assert ocrd_file.contentids == 'http://resolver.staatsbibliothek-berlin.de/SBB0001CA7900000009'
 
 if __name__ == '__main__':
     main(__file__)

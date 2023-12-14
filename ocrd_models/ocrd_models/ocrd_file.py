@@ -27,6 +27,7 @@ class OcrdFile():
             local_filename (Path): ``@xlink:href`` pointing to the locally cached version of the file in the workspace
             ID (string): ``@ID`` of this ``mets:file``
             loctype (string): DEPRECATED do not use
+            contentids (string): ``@CONTENTIDS`` of the ``mets:div`` in the ``mets:structMap[@TYPE="PHYSICAL]`` this file manifests
         """
         if el is None:
             raise ValueError("Must provide mets:file element this OcrdFile represents")
@@ -136,6 +137,15 @@ class OcrdFile():
         self.mets.set_physical_page_for_file(pageId, self)
 
     @property
+    def contentids(self):
+        """
+        Get the ``@CONTENTIDS`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``.
+        """
+        if self.mets is None:
+            raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
+        return self.mets.get_contentids_for_file(self)
+
+    @property
     def loctypes(self):
         """
         Get the ``@LOCTYPE``s of the ``mets:file``.
@@ -226,7 +236,7 @@ class ClientSideOcrdFile:
     this represents the response of the :py:class:`ocrd.mets_server.OcrdMetsServer`.
     """
 
-    def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None, fileGrp=None):
+    def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None, fileGrp=None, contentids=None):
         """
         Args:
             el (): ignored
@@ -238,6 +248,7 @@ class ClientSideOcrdFile:
             url (string): ignored XXX the remote/original file once we have proper mets:FLocat bookkeeping 
             local_filename (): ``@xlink:href`` of this ``mets:file`` - XXX the local file once we have proper mets:FLocat bookkeeping
             ID (string): ``@ID`` of this ``mets:file``
+            fileGrp (string): ``@USE`` of the ``mets:fileGrp`` this file belongs to
         """
         self.ID = ID
         self.mimetype = mimetype

@@ -396,6 +396,9 @@ def test_update_physical_page_attributes(sbb_directory_ocrd_mets):
     assert b'ORDER' in m.to_xml()
     assert b'ORDERLABEL' in m.to_xml()
 
+def test_get_contentids():
+    mets = OcrdMets(filename=assets.url_of('pembroke_werke_1766/data/mets.xml'))
+    assert mets.get_contentids_for_file(next(mets.find_files(pageId='PHYS_0009'))) == 'http://resolver.staatsbibliothek-berlin.de/SBB0001CA7900000009'
 
 if __name__ == '__main__':
     main(__file__)
