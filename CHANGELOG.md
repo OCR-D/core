@@ -12,6 +12,7 @@ Fixed:
 Changed:
 
   * `cli.workspace.WorkspaceCtx` and `Resolver.resolve_mets_arguments` now have defaults for `mets_server_url`, `mets_basename` and `automatic_backup`, slub/mets-mods2tei#68, #1156
+  * :fire: switch to `pyproject.toml`, derive version from git, separate build from install, #1065
 
 ## [2.59.1] - 2023-12-05
 
