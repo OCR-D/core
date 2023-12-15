@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.60.1] - 2023-12-15
+
+Fixed:
+
+  * Docker: copy `.git` during build, so `setuptools_scm` can determine version number, #1159
+
+## [2.60.0] - 2023-12-15
+
 Fixed:
 
   * `ocrd workspace list-page` now works in workspaces with non-page-specific files, #1148, #1151
@@ -1936,6 +1944,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.60.1]: ../../compare/v2.60.1..v2.59.1
+[2.60.0]: ../../compare/v2.60.0..v2.59.1
 [2.59.1]: ../../compare/v2.59.1..v2.59.0
 [2.59.0]: ../../compare/v2.59.0..v2.58.1
 [2.58.0]: ../../compare/v2.58.1..v2.58.0
