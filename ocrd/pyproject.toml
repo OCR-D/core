@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-         "setuptools>=42",
+         "setuptools>=61",
          "setuptools_scm[toml]",
          "wheel",
 ]  # PEP 508 specifications.
