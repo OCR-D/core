@@ -18,6 +18,7 @@ jobs:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
       - run: make install
+      - run: $PIP_INSTALL 'setuptools>=61'
       - run: PATH="/Users/distiller/Library/Python/3.9/bin:$PATH" make deps-test test benchmark
 
   test-python37:
