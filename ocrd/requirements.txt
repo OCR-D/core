@@ -16,3 +16,8 @@ fastapi
 python-multipart
 requests_unixsocket
 gdown
+ocrd_utils
+ocrd_models
+ocrd_modelfactory
+ocrd_validators
+ocrd_network

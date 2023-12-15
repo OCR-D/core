@@ -13,9 +13,6 @@ SPHINX_APIDOC =
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
 reverse = $(if $(wordlist 2,2,$(1)),$(call reverse,$(wordlist 2,$(words $(1)),$(1))) $(firstword $(1)),$(1))
 
-PEP_440_PATTERN := '([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?'
-OCRD_VERSION != fgrep version= ocrd_utils/setup.py | grep -Eo $(PEP_440_PATTERN)
-
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
 help:
@@ -25,9 +22,10 @@ help:
 	@echo "    deps-cuda      Dependencies for deployment with GPU support via Conda"
 	@echo "    deps-ubuntu    Dependencies for deployment in an Ubuntu/Debian Linux"
 	@echo "    deps-test      Install test python deps via pip"
-	@echo "    install        (Re)install the tool"
+	@echo "    build          (Re)build source and binary distributions of pkges"
+	@echo "    install        (Re)install the packages"
 	@echo "    install-dev    Install with pip install -e"
-	@echo "    uninstall      Uninstall the tool"
+	@echo "    uninstall      Uninstall the packages"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
@@ -51,6 +49,8 @@ help:
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL ?= $(PIP) install
+
+.PHONY: deps-cuda deps-ubuntu deps-test
 
 deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
 deps-cuda: export CONDA_PREFIX ?= /conda
@@ -115,16 +115,24 @@ deps-test:
 	$(PIP) install -U pip
 	$(PIP) install -r requirements_test.txt
 
+.PHONY: build install install-dev uninstall
+
+build:
+	$(PIP) install build setuptools_scm
+	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build ./$(MODULE) &&) echo done
+# or use -n ?
+
 # (Re)install the tool
-install:
-#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd$*(OCRD_VERSION)*.whl)
+install: #build
+#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*.whl)
 	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) &&) echo done
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
+install-dev: PIP_INSTALL = $(PIP) install -e
 install-dev: uninstall
-	$(MAKE) install PIP_INSTALL="$(PIP) install -e"
+	$(MAKE) install
 
 # Uninstall the tool
 uninstall:
@@ -281,7 +289,5 @@ docker docker-cuda:
 	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
-pypi: uninstall install
-	$(PIP) install build
-	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build -n ./$(MODULE) &&) echo done
-	twine upload ocrd*/dist/ocrd*$(OCRD_VERSION)*{tar.gz,whl}
+pypi: build
+	twine upload ocrd*/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*{tar.gz,whl}
