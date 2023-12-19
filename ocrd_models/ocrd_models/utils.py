@@ -49,7 +49,7 @@ def is_oai_content(data):
     log = getLogger('ocrd.models.utils.is_oai_content')
     xml_root = ET.fromstring(data)
     root_tag = xml_root.tag
-    log.info("response data root.tag: '%s'" % root_tag)
+    log.debug("response data root.tag: '%s'" % root_tag)
     return str(root_tag).endswith('OAI-PMH')
 
 
