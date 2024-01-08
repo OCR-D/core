@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Log level downgraded from DEBUG to INFO in loggin.conf, #1161
+  * log OAI check as `DEBUG` not `INFO`, #1160
+
 ## [2.60.1] - 2023-12-15
 
 Fixed:
