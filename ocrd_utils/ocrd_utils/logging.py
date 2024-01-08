@@ -56,7 +56,7 @@ ROOT_OCRD_LOGGERS = [
 
 LOGGING_DEFAULTS = {
     'ocrd': logging.INFO,
-    'ocrd_network': logging.DEBUG,
+    'ocrd_network': logging.INFO,
     # 'ocrd.resolver': logging.INFO,
     # 'ocrd.resolver.download_to_directory': logging.INFO,
     # 'ocrd.resolver.add_files_to_mets': logging.INFO,
