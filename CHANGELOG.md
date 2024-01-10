@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.60.3] - 2024-01-10
+
 Fixed:
 
   * `make install-dev` working with `setuptools>=64` again, #1163
@@ -1955,6 +1957,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.60.3]: ../../compare/v2.60.3..v2.60.2
 [2.60.2]: ../../compare/v2.60.2..v2.60.1
 [2.60.1]: ../../compare/v2.60.1..v2.60.0
 [2.60.0]: ../../compare/v2.60.0..v2.59.1
