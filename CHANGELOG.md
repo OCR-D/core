@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `make install-dev` working with `setuptools>=64` again, #1163
+
 ## [2.60.2] - 2024-01-09
 
 Fixed:
