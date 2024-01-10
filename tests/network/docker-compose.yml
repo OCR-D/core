@@ -4,8 +4,8 @@ services:
     ports:
       - "6701:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME="network_test"
-      - MONGO_INITDB_ROOT_PASSWORD="network_test"
+      - MONGO_INITDB_ROOT_USERNAME=network_test
+      - MONGO_INITDB_ROOT_PASSWORD=network_test
   ocrd_network_rabbit_mq:
     image: "rabbitmq:3.12-management"
     ports:
@@ -13,6 +13,6 @@ services:
       - "16672:15672"
       - "26672:25672"
     environment:
-      - RABBITMQ_DEFAULT_USER="network_test"
-      - RABBITMQ_DEFAULT_PASS="network_test"
+      - RABBITMQ_DEFAULT_USER=network_test
+      - RABBITMQ_DEFAULT_PASS=network_test
       - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version

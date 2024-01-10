@@ -41,7 +41,7 @@ def fixture_rabbit_mq(docker_ip, docker_services):
 
 
 @fixture(scope="package", name="rabbitmq_defaults")
-def fixture_rabbitmq_defaults():
+def fixture_rabbitmq_defaults(rabbit_mq):
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_username = rmq_data["username"]
     rmq_password = rmq_data["password"]
@@ -56,7 +56,12 @@ def fixture_rabbitmq_defaults():
         vhost=rmq_vhost
     )
     test_channel = RMQConnector.open_blocking_channel(test_connection)
-    RMQConnector.exchange_declare(channel=test_channel, exchange_name=DEFAULT_EXCHANGER_NAME, durable=False)
+    RMQConnector.exchange_declare(
+        channel=test_channel,
+        exchange_name=DEFAULT_EXCHANGER_NAME,
+        exchange_type='direct',
+        durable=False
+    )
     RMQConnector.queue_declare(channel=test_channel, queue_name=DEFAULT_QUEUE, durable=False)
     RMQConnector.queue_bind(
         channel=test_channel,
