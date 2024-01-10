@@ -30,6 +30,8 @@ jobs:
       - run: sudo make deps-ubuntu 
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python38:
     docker:
@@ -41,6 +43,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python39:
     docker:
@@ -52,6 +56,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python310:
     docker:
@@ -63,6 +69,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python311:
     docker:
@@ -74,6 +82,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   deploy:
     docker:
