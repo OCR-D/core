@@ -1,5 +1,5 @@
 from pytest import fixture
-from os.path import join
+from pathlib import Path
 
 pytest_plugins = [
     "tests.network.fixtures_mongodb",
@@ -9,4 +9,4 @@ pytest_plugins = [
 
 @fixture(scope="session")
 def docker_compose_file(pytestconfig):
-    return join(str(pytestconfig.rootdir), "docker-compose.yml")
+    return Path(str(pytestconfig.rootdir), "tests", "network", "docker-compose.yml")
