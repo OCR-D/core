@@ -3,7 +3,7 @@ from pika.credentials import PlainCredentials
 from pytest import fixture
 from re import match as re_match
 from ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
-from .constants import DEFAULT_EXCHANGER_NAME, DEFAULT_QUEUE
+from .constants import RABBITMQ_URL, DEFAULT_EXCHANGER_NAME, DEFAULT_QUEUE
 from .utils import is_url_responsive
 
 
@@ -32,19 +32,17 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
 @fixture(scope="package", name="rabbit_mq")
 def fixture_rabbit_mq(docker_ip, docker_services):
     port = docker_services.port_for("ocrd_network_rabbit_mq", 15672)
-    test_url = f"http://{docker_ip}:{port}"
+    rabbit_mq_management_url = f"http://{docker_ip}:{port}"
     docker_services.wait_until_responsive(
         timeout=10.0,
         pause=0.1,
-        check=lambda: is_url_responsive(test_url, retries=30)
+        check=lambda: is_url_responsive(rabbit_mq_management_url, retries=30)
     )
 
 
 @fixture(scope="package", name="rabbitmq_defaults")
-def fixture_rabbitmq_defaults(docker_ip, docker_services, rabbit_mq):
-    rabbitmq_port = docker_services.port_for("ocrd_network_rabbit_mq", 5672)
-    rabbitmq_url = f"amqp://network_test:network_test@{docker_ip}:{rabbitmq_port}/"
-    rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
+def fixture_rabbitmq_defaults(rabbit_mq):
+    rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_username = rmq_data["username"]
     rmq_password = rmq_data["password"]
     rmq_host = rmq_data["host"]
@@ -73,12 +71,11 @@ def fixture_rabbitmq_defaults(docker_ip, docker_services, rabbit_mq):
     )
     # Clean all messages inside if any from previous tests
     RMQConnector.queue_purge(channel=test_channel, queue_name=DEFAULT_QUEUE)
-    yield rabbitmq_url
 
 
 @fixture(scope="package", name="rabbitmq_publisher")
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
-    rmq_data = verify_and_parse_mq_uri(rabbitmq_defaults)
+    rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_publisher = RMQPublisher(
         host=rmq_data["host"],
         port=rmq_data["port"],
@@ -94,7 +91,7 @@ def fixture_rabbitmq_publisher(rabbitmq_defaults):
 
 @fixture(scope="package", name="rabbitmq_consumer")
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
-    rmq_data = verify_and_parse_mq_uri(rabbitmq_defaults)
+    rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_consumer = RMQConsumer(
         host=rmq_data["host"],
         port=rmq_data["port"],
