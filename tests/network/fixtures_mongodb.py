@@ -20,7 +20,7 @@ def fixture_mongo_db(docker_ip, docker_services):
     docker_services.wait_until_responsive(
         timeout=10.0,
         pause=0.1,
-        check=lambda: is_url_responsive(mongo_db_url, retries=10)
+        check=lambda: is_url_responsive(mongo_db_url, retries=30)
     )
 
 

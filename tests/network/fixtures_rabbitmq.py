@@ -36,7 +36,7 @@ def fixture_rabbit_mq(docker_ip, docker_services):
     docker_services.wait_until_responsive(
         timeout=10.0,
         pause=0.1,
-        check=lambda: is_url_responsive(rabbit_mq_management_url, retries=10)
+        check=lambda: is_url_responsive(rabbit_mq_management_url, retries=30)
     )
 
 
