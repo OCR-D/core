@@ -722,6 +722,25 @@ class OcrdMets(OcrdXmlDocument):
         if len(ret):
             return ret[0]
 
+    def get_contentids_for_file(self, ocrd_file):
+        """
+        Get the ``@CONTENTIDS` attribute of the physical page (``@CONTENTIDS`` of the ``mets:structMap[@TYPE="PHYSICAL"]//mets:div[@TYPE="PAGE"]`` entry)
+        corresponding to the ``mets:file`` :py:attr:`ocrd_file`.
+        """
+        ret = []
+        if self._cache_flag:
+            for pageId in self._fptr_cache.keys():
+                if ocrd_file.ID in self._fptr_cache[pageId].keys():
+                    ret.append(self._page_cache[pageId].get('CONTENTIDS'))
+        else:
+            ret = self._tree.getroot().xpath(
+                '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@CONTENTIDS' %
+                ocrd_file.ID, namespaces=NS)
+
+        # To get rid of the python's FutureWarning
+        if len(ret):
+            return ret[0]
+
     def remove_physical_page(self, ID):
         """
         Delete page (physical ``mets:structMap`` ``mets:div`` entry ``@ID``) :py:attr:`ID`.
