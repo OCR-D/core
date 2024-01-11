@@ -1,6 +1,15 @@
+networks:
+  ocrd_network_test:
+    name: ocrd_network_test
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
 services:
   ocrd_network_mongo_db:
     image: "mongo"
+    hostname: mongodb-docker-host
+    networks:
+      - ocrd_network_test
     ports:
       - "6701:27017"
     environment:
@@ -8,6 +17,9 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=network_test
   ocrd_network_rabbit_mq:
     image: "rabbitmq:3.12-management"
+    hostname: rabbitmq-docker-host
+    networks:
+      - ocrd_network_test
     ports:
       - "6672:5672"
       - "16672:15672"
