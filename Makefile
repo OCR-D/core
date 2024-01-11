@@ -49,6 +49,7 @@ help:
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL ?= $(PIP) install
+PIP_INSTALL_CONFIG_OPTION ?=
 
 .PHONY: deps-cuda deps-ubuntu deps-test
 
@@ -125,12 +126,13 @@ build:
 # (Re)install the tool
 install: #build
 #	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*.whl)
-	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) &&) echo done
+	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) $(PIP_INSTALL_CONFIG_OPTION) &&) echo done
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
-install-dev: PIP_INSTALL = $(PIP) install -e
+install-dev: PIP_INSTALL = $(PIP) install -e 
+install-dev: PIP_INSTALL_CONFIG_OPTION = --config-settings editable_mode=strict
 install-dev: uninstall
 	$(MAKE) install
 
