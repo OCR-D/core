@@ -41,6 +41,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - setup_remote_docker: # https://circleci.com/docs/2.0/building-docker-images/
+          docker_layer_caching: true
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
@@ -54,6 +56,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - setup_remote_docker: # https://circleci.com/docs/2.0/building-docker-images/
+          docker_layer_caching: true
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
@@ -67,6 +71,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - setup_remote_docker: # https://circleci.com/docs/2.0/building-docker-images/
+          docker_layer_caching: true
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
@@ -80,6 +86,8 @@ jobs:
     working_directory: ~/ocrd-core
     steps:
       - checkout
+      - setup_remote_docker: # https://circleci.com/docs/2.0/building-docker-images/
+          docker_layer_caching: true
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
