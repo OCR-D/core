@@ -18,8 +18,8 @@ def fixture_mongo_db(docker_ip, docker_services):
     port = docker_services.port_for("ocrd_network_mongo_db", 27017)
     mongo_db_url = f"http://{docker_ip}:{port}"
     docker_services.wait_until_responsive(
-        timeout=10.0,
-        pause=0.1,
+        timeout=120.0,
+        pause=1,
         check=lambda: is_url_responsive(mongo_db_url, retries=30)
     )
 
