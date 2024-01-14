@@ -18,7 +18,7 @@ jobs:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
       - run: make install
-      - run: PATH="/Users/distiller/Library/Python/3.9/bin:$PATH" make deps-test test benchmark
+      - run: PATH="/Users/distiller/Library/Python/3.9/bin:$PATH" make deps-test test benchmark integration-test
 
   test-python37:
     docker:
@@ -31,7 +31,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu 
       - run: make install deps-test
-      - run: make test benchmark
+      - run: make test benchmark integration-test
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -46,7 +46,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark
+      - run: make test benchmark integration-test
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -61,7 +61,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark
+      - run: make test benchmark integration-test
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -76,7 +76,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark
+      - run: make test benchmark integration-test
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -91,7 +91,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark
+      - run: make test benchmark integration-test
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
