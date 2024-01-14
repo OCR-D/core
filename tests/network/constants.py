@@ -9,10 +9,10 @@ __all__ = [
 
 # mongodb://localhost:6701/ocrd_network_test
 DB_NAME: str = "ocrd_network_test"
-DB_URL: str = "mongodb://localhost:6701"
+DB_URL: str = "mongodb://0.0.0.0:6701"
 
 DEFAULT_EXCHANGER_NAME: str = "ocrd-network-default"
 DEFAULT_QUEUE: str = "ocrd-network-default"
 
-PROCESSING_SERVER_URL: str = "http://localhost:8000"
-RABBITMQ_URL: str = "amqp://network_test:network_test@localhost:6672/"
+PROCESSING_SERVER_URL: str = "http://0.0.0.0:8000"
+RABBITMQ_URL: str = "amqp://network_test:network_test@0.0.0.0:6672/"

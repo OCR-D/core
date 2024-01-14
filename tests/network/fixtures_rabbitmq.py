@@ -64,7 +64,6 @@ def fixture_rabbitmq_defaults():
 
 @fixture(scope="package", name="rabbitmq_publisher")
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
-    assert rabbitmq_defaults
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_publisher = RMQPublisher(
         host=rmq_data["host"],
@@ -81,7 +80,6 @@ def fixture_rabbitmq_publisher(rabbitmq_defaults):
 
 @fixture(scope="package", name="rabbitmq_consumer")
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
-    assert rabbitmq_defaults
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_consumer = RMQConsumer(
         host=rmq_data["host"],
