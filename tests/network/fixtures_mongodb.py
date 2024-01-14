@@ -1,7 +1,6 @@
 from pymongo import MongoClient, uri_parser as mongo_uri_parser
 from pytest import fixture
 from .constants import DB_NAME, DB_URL
-from .utils import is_url_responsive
 
 
 def verify_database_uri(mongodb_address: str) -> str:
@@ -13,19 +12,8 @@ def verify_database_uri(mongodb_address: str) -> str:
     return mongodb_address
 
 
-@fixture(scope="package", name="mongo_db")
-def fixture_mongo_db(docker_ip, docker_services):
-    port = docker_services.port_for("ocrd_network_mongo_db", 27017)
-    mongo_db_url = f"http://{docker_ip}:{port}"
-    docker_services.wait_until_responsive(
-        timeout=120.0,
-        pause=1,
-        check=lambda: is_url_responsive(mongo_db_url, retries=30)
-    )
-
-
 @fixture(scope="package", name="mongo_client")
-def fixture_mongo_client(mongo_db):
+def fixture_mongo_client():
     mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 

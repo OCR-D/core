@@ -4,7 +4,6 @@ from pytest import fixture
 from re import match as re_match
 from ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
 from .constants import RABBITMQ_URL, DEFAULT_EXCHANGER_NAME, DEFAULT_QUEUE
-from .utils import is_url_responsive
 
 
 def verify_and_parse_mq_uri(rabbitmq_address: str):
@@ -29,19 +28,8 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
     return parsed_data
 
 
-@fixture(scope="package", name="rabbit_mq")
-def fixture_rabbit_mq(docker_ip, docker_services):
-    port = docker_services.port_for("ocrd_network_rabbit_mq", 15672)
-    rabbit_mq_management_url = f"http://{docker_ip}:{port}"
-    docker_services.wait_until_responsive(
-        timeout=120.0,
-        pause=1,
-        check=lambda: is_url_responsive(rabbit_mq_management_url, retries=30)
-    )
-
-
 @fixture(scope="package", name="rabbitmq_defaults")
-def fixture_rabbitmq_defaults(rabbit_mq):
+def fixture_rabbitmq_defaults():
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_username = rmq_data["username"]
     rmq_password = rmq_data["password"]
@@ -56,6 +44,7 @@ def fixture_rabbitmq_defaults(rabbit_mq):
         vhost=rmq_vhost
     )
     test_channel = RMQConnector.open_blocking_channel(test_connection)
+    assert(test_channel)
     RMQConnector.exchange_declare(
         channel=test_channel,
         exchange_name=DEFAULT_EXCHANGER_NAME,
@@ -75,6 +64,7 @@ def fixture_rabbitmq_defaults(rabbit_mq):
 
 @fixture(scope="package", name="rabbitmq_publisher")
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
+    assert rabbitmq_defaults
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_publisher = RMQPublisher(
         host=rmq_data["host"],
@@ -91,6 +81,7 @@ def fixture_rabbitmq_publisher(rabbitmq_defaults):
 
 @fixture(scope="package", name="rabbitmq_consumer")
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
+    assert rabbitmq_defaults
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_consumer = RMQConsumer(
         host=rmq_data["host"],

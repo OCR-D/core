@@ -209,8 +209,15 @@ test: assets
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
+		--ignore-glob="$(TESTDIR)/network/*.py" \
 		$(TESTDIR)
 	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
+
+integration-test:
+	docker compose -f tests/network/docker-compose.yml up -d
+	sleep 10
+	pytest -k 'test_consume or test_publish'
+	docker compose -f tests/network/docker-compose.yml down
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
