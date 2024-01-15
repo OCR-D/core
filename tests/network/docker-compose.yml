@@ -44,6 +44,6 @@ services:
       - ocrd_network_test
     environment:
       DB_NAME: ocrd_network_test
-      DB_URL: mongodb://network_test:network_test@mongodb-docker-host:27017
+      DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
       # PROCESSING_SERVER_URL : http://...
-      RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host:5672
+      RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
