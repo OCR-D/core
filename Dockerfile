@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-FROM $BASE_IMAGE
+FROM $BASE_IMAGE as ocrd_core_base
 ARG FIXUP=echo
 MAINTAINER OCR-D
 ENV DEBIAN_FRONTEND noninteractive
@@ -33,14 +33,24 @@ RUN apt-get update && apt-get -y install software-properties-common \
         curl \
         sudo \
         git \
-    && make deps-ubuntu \
-    && python3 -m venv /usr/local \
+    && make deps-ubuntu
+RUN python3 -m venv /usr/local \
     && hash -r \
     && pip install --upgrade pip setuptools wheel \
     && make install \
-    && eval $FIXUP \
-    && rm -rf /build-ocrd
+    && eval $FIXUP
 
 WORKDIR /data
 
 CMD ["/usr/local/bin/ocrd", "--help"]
+
+FROM ocrd_core_base as ocrd_core_test
+WORKDIR /build-ocrd
+COPY tests ./tests
+COPY .gitmodules .
+COPY Makefile .
+COPY requirements_test.txt .
+RUN pip install -r requirements_test.txt
+
+CMD ["yes"]
+# CMD ["make", "test", "integration-test"]
