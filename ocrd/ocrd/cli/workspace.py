@@ -23,6 +23,7 @@ from ocrd.mets_server import OcrdMetsServer
 from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list, DEFAULT_METS_BASENAME
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
+from ocrd_models.constants import METS_PAGE_DIV_ATTRIBUTES
 
 
 class WorkspaceCtx():
@@ -601,12 +602,7 @@ def list_groups(ctx):
               default=['ID'],
               show_default=True,
               multiple=True,
-              type=click.Choice([
-                  'ID',
-                  'ORDER',
-                  'ORDERLABEL',
-                  'LABEL',
-              ]))
+              type=click.Choice(METS_PAGE_DIV_ATTRIBUTES))
 @click.option('-f', '--output-format', help="Output format", type=click.Choice(['one-per-line', 'comma-separated', 'json']), default='one-per-line')
 @click.option('-D', '--chunk-number', help="Partition the return value into n roughly equally sized chunks", default=1, type=int)
 @click.option('-C', '--chunk-index', help="Output the nth chunk of results, -1 for all of them.", default=None, type=int)
@@ -692,18 +688,31 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
     workspace.save_mets()
 
 @workspace_cli.command('update-page')
-@click.option('--order', help="@ORDER attribute for this mets:div", metavar='ORDER')
-@click.option('--orderlabel', help="@ORDERLABEL attribute for this mets:div", metavar='ORDERLABEL')
-@click.option('--contentids', help="@CONTENTIDS attribute for this mets:div", metavar='ORDERLABEL')
+@click.option('--set', 'attr_value_pairs', help=f"set mets:div ATTR to VALUE. possible keys: {METS_PAGE_DIV_ATTRIBUTES}", metavar="ATTR VALUE", nargs=2, multiple=True)
+@click.option('--order', help="[DEPRECATED - use --set ATTR VALUE", metavar='ORDER')               
+@click.option('--orderlabel', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
+@click.option('--contentids', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
 @click.argument('PAGE_ID')
 @pass_workspace
-def update_page(ctx, order, orderlabel, contentids, page_id):
+def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     """
-    Update the @ORDER, @ORDERLABEL o @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
+    Update the @ORDER, @ORDERLABEL, @LABEL or @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
-    workspace.mets.update_physical_page_attributes(page_id, order=order, orderlabel=orderlabel, contentids=contentids)
-    workspace.save_mets()
+    update_kwargs = {k: v for k, v in attr_value_pairs}
+    if order:
+        update_kwargs['ORDER'] = order
+    if orderlabel:
+        update_kwargs['ORDERLABEL'] = orderlabel
+    if contentids:
+        update_kwargs['CONTENTIDS'] = contentids
+    print(update_kwargs)
+    try:
+        workspace.mets.update_physical_page_attributes(page_id, **update_kwargs)
+        workspace.save_mets()
+    except Exception as err:
+        print(f"Error: {err}")
+        sys.exit(1)
 
 # ----------------------------------------------------------------------
 # ocrd workspace merge

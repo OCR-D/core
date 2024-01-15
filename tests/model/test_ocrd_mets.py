@@ -388,7 +388,7 @@ def test_update_physical_page_attributes(sbb_directory_ocrd_mets):
     assert len(m.physical_pages) == 1
     assert b'ORDER' not in m.to_xml()
     assert b'ORDERLABEL' not in m.to_xml()
-    m.update_physical_page_attributes('new page', order='foo', orderlabel='bar')
+    m.update_physical_page_attributes('new page', ORDER='foo', ORDERLABEL='bar')
     assert b'ORDER' in m.to_xml()
     assert b'ORDERLABEL' in m.to_xml()
 

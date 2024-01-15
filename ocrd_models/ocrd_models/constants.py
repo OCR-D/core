@@ -71,3 +71,12 @@ PAGE_REGION_TYPES = [
     'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
     'Separator', 'Table', 'Text', 'Unknown'
 ]
+
+METS_PAGE_DIV_ATTRIBUTES = [
+    'ID',
+    'ORDER',
+    'ORDERLABEL',
+    'LABEL',
+    'CONTENTIDS'
+]
+
