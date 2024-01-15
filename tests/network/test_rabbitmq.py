@@ -6,7 +6,7 @@ DEFAULT_EXCHANGER_NAME = config.DEFAULT_EXCHANGER_NAME
 DEFAULT_QUEUE = config.DEFAULT_QUEUE
 
 
-def test_publish_2_messages_to_rabbitmq(rabbitmq_publisher):
+def test_rmq_publish_2_messages(rabbitmq_publisher):
     test_headers = {"Test Header": "Test Value"}
     test_properties = BasicProperties(
         app_id='webapi-processing-broker',
@@ -28,7 +28,7 @@ def test_publish_2_messages_to_rabbitmq(rabbitmq_publisher):
     assert rabbitmq_publisher.message_counter == 2
 
 
-def test_consume_2_messages_from_rabbitmq(rabbitmq_consumer):
+def test_rmq_consume_2_messages(rabbitmq_consumer):
     # Consume the 1st message
     method_frame, header_frame, message = rabbitmq_consumer.get_one_message(
         queue_name=DEFAULT_QUEUE,
@@ -56,7 +56,7 @@ def test_consume_2_messages_from_rabbitmq(rabbitmq_consumer):
     assert message.decode() == "RabbitMQ test 456"
 
 
-def test_publish_ocrd_message_to_rabbitmq(rabbitmq_publisher):
+def test_rmq_publish_ocrd_message(rabbitmq_publisher):
     ocrd_processing_message = {
         "job_id": "Test_job_id",
         "workflow_id": "Test_workflow_id",
@@ -71,7 +71,7 @@ def test_publish_ocrd_message_to_rabbitmq(rabbitmq_publisher):
     )
 
 
-def test_consume_ocrd_message_from_rabbitmq(rabbitmq_consumer):
+def test_rmq_consume_ocrd_message(rabbitmq_consumer):
     method_frame, header_frame, message = rabbitmq_consumer.get_one_message(
         queue_name=DEFAULT_QUEUE,
         auto_ack=True
