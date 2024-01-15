@@ -1,8 +1,12 @@
 from pymongo import MongoClient, uri_parser as mongo_uri_parser
 from pytest import fixture
 from ocrd_utils.config import config
+from ocrd_network.database import sync_initiate_database
+
 DB_NAME = config.DB_NAME
 DB_URL = config.DB_URL
+
+sync_initiate_database(DB_URL, DB_NAME)
 
 
 def verify_database_uri(mongodb_address: str) -> str:
