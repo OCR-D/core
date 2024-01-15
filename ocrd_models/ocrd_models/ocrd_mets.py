@@ -4,8 +4,7 @@ API to METS
 from datetime import datetime
 import re
 import typing
-from lxml import etree as ET
-from copy import deepcopy
+from typing import Dict, Optional
 from warnings import warn
 
 from ocrd_utils import (
@@ -34,7 +33,7 @@ from .constants import (
     METS_XML_EMPTY,
 )
 
-from .ocrd_xml_base import OcrdXmlDocument, ET
+from .ocrd_xml_base import OcrdXmlDocument, ET      # type: ignore
 from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
@@ -45,6 +44,23 @@ class OcrdMets(OcrdXmlDocument):
     """
     API to a single METS file
     """
+    _cache_flag : bool
+    # Cache for the pages (mets:div)
+    # The dictionary's Key: 'div.ID'
+    # The dictionary's Value: a 'div' object at some memory location
+    _page_cache : Optional[Dict[str, ET.Element]]
+    # Cache for the files (mets:file) - two nested dictionaries
+    # The outer dictionary's Key: 'fileGrp.USE'
+    # The outer dictionary's Value: Inner dictionary
+    # The inner dictionary's Key: 'file.ID'
+    # The inner dictionary's Value: a 'file' object at some memory location
+    _file_cache : Optional[Dict[str, Dict[str, ET.Element]]]
+    # Cache for the file pointers (mets:fptr) - two nested dictionaries
+    # The outer dictionary's Key: 'div.ID'
+    # The outer dictionary's Value: Inner dictionary
+    # The inner dictionary's Key: 'fptr.FILEID'
+    # The inner dictionary's Value: a 'fptr' object at some memory location
+    _fptr_cache : Optional[Dict[str, Dict[str, ET.Element]]]
 
     @staticmethod
     def empty_mets(now=None, cache_flag=False):
@@ -86,6 +102,10 @@ class OcrdMets(OcrdXmlDocument):
         """
         Fills the caches with fileGrps and FileIDs
         """
+
+        assert self._page_cache is not None
+        assert self._file_cache is not None
+        assert self._fptr_cache is not None
 
         tree_root = self._tree.getroot()
 
@@ -131,34 +151,11 @@ class OcrdMets(OcrdXmlDocument):
         # log.info("Len of page_cache: %s" % len(self._page_cache))
         # log.info("Len of fptr_cache: %s" % len(self._fptr_cache))
 
-    def _clear_caches(self):
-        """
-        Deallocates the caches
-        """
-
-        self._file_cache = None
-        self._page_cache = None
-        self._fptr_cache = None
-
     def refresh_caches(self):
         if self._cache_flag:
-            # Cache for the files (mets:file) - two nested dictionaries
-            # The outer dictionary's Key: 'fileGrp.USE'
-            # The outer dictionary's Value: Inner dictionary
-            # The inner dictionary's Key: 'file.ID'
-            # The inner dictionary's Value: a 'file' object at some memory location
+
             self._file_cache = {}
-
-            # Cache for the pages (mets:div)
-            # The dictionary's Key: 'div.ID'
-            # The dictionary's Value: a 'div' object at some memory location
             self._page_cache = {}
-
-            # Cache for the file pointers (mets:fptr) - two nested dictionaries
-            # The outer dictionary's Key: 'div.ID'
-            # The outer dictionary's Value: Inner dictionary
-            # The inner dictionary's Key: 'fptr.FILEID'
-            # The inner dictionary's Value: a 'fptr' object at some memory location
             self._fptr_cache = {}
 
             # Note, if the empty_mets() function is used to instantiate OcrdMets
