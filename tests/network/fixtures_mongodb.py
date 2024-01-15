@@ -18,7 +18,7 @@ def verify_database_uri(mongodb_address: str) -> str:
 
 @fixture(scope="package", name="mongo_client")
 def fixture_mongo_client():
-    sync_initiate_database(DB_URL, DB_NAME)
+    # sync_initiate_database(DB_URL, DB_NAME)
     mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 
