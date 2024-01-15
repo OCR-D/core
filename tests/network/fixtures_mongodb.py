@@ -18,13 +18,13 @@ def verify_database_uri(mongodb_address: str) -> str:
 
 @fixture(scope="package", name="mongo_client")
 def fixture_mongo_client():
+    sync_initiate_database(DB_URL, DB_NAME)
     mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 
 
 @fixture(scope="package", name="mongo_processor_jobs")
 def fixture_mongo_processor_jobs(mongo_client):
-    sync_initiate_database(DB_URL, DB_NAME)
     mydb = mongo_client[DB_NAME]
     processor_jobs_collection = mydb["DBProcessorJob"]
     yield processor_jobs_collection
