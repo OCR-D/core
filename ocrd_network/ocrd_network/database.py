@@ -28,17 +28,17 @@ from .models import (
 from .utils import call_sync
 
 
-async def initiate_database(db_url: str):
+async def initiate_database(db_url: str, db_name: str = 'ocrd'):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
-        database=client.get_default_database(default='ocrd'),
+        database=client.get_default_database(default=db_name),
         document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript]
     )
 
 
 @call_sync
-async def sync_initiate_database(db_url: str):
-    await initiate_database(db_url)
+async def sync_initiate_database(db_url: str, db_name: str = 'ocrd'):
+    await initiate_database(db_url, db_name)
 
 
 async def db_create_workspace(mets_path: str) -> DBWorkspace:
