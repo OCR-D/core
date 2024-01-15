@@ -86,9 +86,11 @@ ocrd__list_resources () {
 ## Print usage
 ##
 ocrd__usage () {
-
-    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" help
-
+    declare -a _args=(ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" help)
+    if [ -v ocrd__subcommand ];then
+        _args+=($ocrd__subcommand)
+    fi
+    ocrd ${_args[@]}
 }
 
 ## ### `ocrd__parse_argv`
@@ -119,10 +121,15 @@ ocrd__parse_argv () {
     ocrd__argv[overwrite]=false
     ocrd__argv[profile]=false
     ocrd__argv[profile_file]=
+    ocrd__argv[mets_server_url]=
     ocrd__argv[mets_file]="$PWD/mets.xml"
 
     local __parameters=()
     local __parameter_overrides=()
+
+    if [[ $1 == 'worker' || $1 == 'server' ]];then
+         ocrd__subcommand="$1" ; shift ;
+    fi
 
     while [[ "${1:-}" = -* ]];do
         case "$1" in
@@ -139,37 +146,37 @@ ocrd__parse_argv () {
             -I|--input-file-grp) ocrd__argv[input_file_grp]=$2 ; shift ;;
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
+            -U|--mets-server-url) ocrd__argv[mets_server_url]="$2" ; shift ;;
             --overwrite) ocrd__argv[overwrite]=true ;;
             --profile) ocrd__argv[profile]=true ;;
             --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
             --queue) ocrd__worker_queue="$2" ; shift ;;
             --database) ocrd__worker_database="$2" ; shift ;;
-            --type) ocrd__worker_type="$2" ; shift ;;
             --address) ocrd__worker_address="$2" ; shift ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
         shift
     done
 
-    if [ -v ocrd__worker_queue -o -v ocrd__worker_database -o -v ocrd__worker_type -o -v ocrd__worker_address ]; then
-        if ! [ -v ocrd__worker_type ] ; then
-            ocrd__raise "For Processing Worker / Processor Server --type is required"
+    if [ -v ocrd__worker_queue -o -v ocrd__worker_database -o -v ocrd__subcommand -o -v ocrd__worker_address ]; then
+        if ! [ -v ocrd__subcommand ] ; then
+            ocrd__raise "Provide subcommand 'worker' or 'server' for Processing Worker / Processor Server"
         elif ! [ -v ocrd__worker_database ]; then
             ocrd__raise "For the Processing Worker / Processor Server --database is required"
         fi
-        if [ ${ocrd__worker_type} = "worker" ]; then
+        if [ ${ocrd__subcommand} = "worker" ]; then
             if ! [ -v ocrd__worker_queue ]; then
                 ocrd__raise "For the Processing Worker --queue is required"
             fi
             ocrd network processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
-        elif [ ${ocrd__worker_type} = "server" ]; then
+        elif [ ${ocrd__subcommand} = "server" ]; then
             if ! [ -v ocrd__worker_address ]; then
                 ocrd__raise "For the Processor Server --address is required"
             fi
             ocrd network processor-server $OCRD_TOOL_NAME --database "${ocrd__worker_database}" --address "${ocrd__worker_address}"
         else
-            ocrd__raise "--type must be either 'worker' or 'server' not '${ocrd__worker_type}'"
+            ocrd__raise "subcommand must be either 'worker' or 'server' not '${ocrd__subcommand}'"
         fi
         exit
     fi

@@ -33,7 +33,7 @@ def processing_worker_cli(processor_name: str, queue: str, database: str):
 
     ocrd_tool = get_ocrd_tool_json(processor_name)
     if not ocrd_tool:
-        raise Exception(f"The ocrd_tool is empty or missing")
+        raise Exception("The ocrd_tool is empty or missing")
 
     try:
         processing_worker = ProcessingWorker(

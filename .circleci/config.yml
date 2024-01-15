@@ -13,13 +13,12 @@ jobs:
     environment:
       PIP: pip3
       PYTHON: python3
+      PIP_INSTALL: pip3 install --user
     steps:
       - checkout
       - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick geos bash
-      - run: which bash
-      - run: bash --version
       - run: make install
-      - run: make deps-test test benchmark
+      - run: PATH="/Users/distiller/Library/Python/3.9/bin:$PATH" make deps-test test benchmark
 
   test-python37:
     docker:
@@ -31,6 +30,8 @@ jobs:
       - run: sudo make deps-ubuntu 
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python38:
     docker:
@@ -42,6 +43,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python39:
     docker:
@@ -53,6 +56,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python310:
     docker:
@@ -64,6 +69,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   test-python311:
     docker:
@@ -75,6 +82,8 @@ jobs:
       - run: sudo make deps-ubuntu
       - run: make install deps-test
       - run: make test benchmark
+      # smoke test to ensure that --editable install works
+      - run: make install-dev; ocrd --version
 
   deploy:
     docker:
@@ -88,8 +97,12 @@ jobs:
       - run:
           name: Login to Docker Hub
           command: echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
-      - run: docker push ocrd/core
-      - run: docker push ocrd/core-cuda
+      - run: docker push ocrd/core:latest
+      - run: docker push ocrd/core-cuda:latest
+      - run: docker tag ocrd/core ocrd/core:$(git describe --tags --abbrev=0)
+      - run: docker tag ocrd/core-cuda ocrd/core-cuda:$(git describe --tags --abbrev=0)
+      - run: docker push ocrd/core:$(git describe --tags --abbrev=0)
+      - run: docker push ocrd/core-cuda:$(git describe --tags --abbrev=0)
 
 workflows:
   version: 2
@@ -99,6 +112,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /^v\d\.\d\d\.\d$/
   test-pull-request:
     jobs:
       - test-python37

@@ -9,7 +9,7 @@ import sys
 
 import click
 
-from ocrd_utils import initLogging
+from ocrd_utils import initLogging, DEFAULT_METS_BASENAME
 from ocrd_validators import OcrdZipValidator
 
 from ..resolver import Resolver
@@ -35,16 +35,18 @@ def zip_cli():
               help='Workspace folder location.',
               show_default=True)
 @click.option('-M', '--mets-basename',
-              default="mets.xml",
+              default=DEFAULT_METS_BASENAME,
               help='Basename of the METS file.',
               show_default=True)
+@click.option('-q', '--include-file-grps', 'include_fileGrp', help="fileGrps to include", default=[], multiple=True)
+@click.option('-Q', '--exclude-file-grps', 'exclude_fileGrp', help="fileGrps to exclude", default=[], multiple=True)
 @click.option('-i', '--identifier', '--id', help="Ocrd-Identifier", required=True)
-@click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default="mets.xml")
+@click.option('-m', '--mets', help="location of mets.xml in the bag's data dir", default=DEFAULT_METS_BASENAME)
 @click.option('-b', '--base-version-checksum', help="Ocrd-Base-Version-Checksum")
 @click.option('-t', '--tag-file', help="Add a non-payload file to bag", type=click.Path(file_okay=True, dir_okay=False, readable=True, resolve_path=True), multiple=True)
 @click.option('-Z', '--skip-zip', help="Create a directory but do not ZIP it", is_flag=True, default=False)
 @click.option('-j', '--processes', help="Number of parallel processes", type=int, default=1)
-def bag(directory, mets_basename, dest, identifier, mets, base_version_checksum, tag_file, skip_zip, processes):
+def bag(directory, mets_basename, dest, include_fileGrp, exclude_fileGrp, identifier, mets, base_version_checksum, tag_file, skip_zip, processes):
     """
     Bag workspace as OCRD-ZIP at DEST
     """
@@ -59,7 +61,9 @@ def bag(directory, mets_basename, dest, identifier, mets, base_version_checksum,
         ocrd_base_version_checksum=base_version_checksum,
         processes=processes,
         tag_files=tag_file,
-        skip_zip=skip_zip
+        skip_zip=skip_zip,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
 
 # ----------------------------------------------------------------------

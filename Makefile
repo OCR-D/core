@@ -5,14 +5,13 @@ PYTHON ?= python
 PIP ?= pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
-TESTDIR = tests
+TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
 
-SPHINX_APIDOC = 
+SPHINX_APIDOC =
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
-
-FIND_VERSION = grep version= ocrd_utils/setup.py|grep -Eo "([0-9ab]+\.?)+"
+reverse = $(if $(wordlist 2,2,$(1)),$(call reverse,$(wordlist 2,$(words $(1)),$(1))) $(firstword $(1)),$(1))
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -23,9 +22,10 @@ help:
 	@echo "    deps-cuda      Dependencies for deployment with GPU support via Conda"
 	@echo "    deps-ubuntu    Dependencies for deployment in an Ubuntu/Debian Linux"
 	@echo "    deps-test      Install test python deps via pip"
-	@echo "    install        (Re)install the tool"
+	@echo "    build          (Re)build source and binary distributions of pkges"
+	@echo "    install        (Re)install the packages"
 	@echo "    install-dev    Install with pip install -e"
-	@echo "    uninstall      Uninstall the tool"
+	@echo "    uninstall      Uninstall the packages"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
@@ -48,7 +48,10 @@ help:
 # END-EVAL
 
 # pip install command. Default: $(PIP_INSTALL)
-PIP_INSTALL = $(PIP) install
+PIP_INSTALL ?= $(PIP) install
+PIP_INSTALL_CONFIG_OPTION ?=
+
+.PHONY: deps-cuda deps-ubuntu deps-test
 
 deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
 deps-cuda: export CONDA_PREFIX ?= /conda
@@ -113,20 +116,29 @@ deps-test:
 	$(PIP) install -U pip
 	$(PIP) install -r requirements_test.txt
 
+.PHONY: build install install-dev uninstall
+
+build:
+	$(PIP) install build setuptools_scm
+	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build ./$(MODULE) &&) echo done
+# or use -n ?
+
 # (Re)install the tool
-install:
-	$(PIP) install -U pip wheel setuptools
-	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+install: #build
+#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*.whl)
+	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) $(PIP_INSTALL_CONFIG_OPTION) &&) echo done
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
+install-dev: PIP_INSTALL = $(PIP) install -e 
+install-dev: PIP_INSTALL_CONFIG_OPTION = --config-settings editable_mode=strict
 install-dev: uninstall
-	$(MAKE) install PIP_INSTALL="$(PIP) install -e"
+	$(MAKE) install
 
 # Uninstall the tool
 uninstall:
-	for mod in $(BUILD_ORDER);do $(PIP) uninstall -y $$mod;done
+	$(PIP) uninstall -y $(call reverse,$(BUILD_ORDER))
 
 # Regenerate python code from PAGE XSD
 generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
@@ -194,16 +206,11 @@ assets: repo/assets
 .PHONY: test
 # Run all unit tests
 test: assets
-	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10\
-		--ignore=$(TESTDIR)/test_logging.py \
-		--ignore=$(TESTDIR)/test_logging_conf.py \
+	$(PYTHON) \
+		-m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		$(TESTDIR)
-	#$(MAKE) test-logging
-
-test-logging:
-	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
@@ -284,6 +291,5 @@ docker docker-cuda:
 	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
-pypi: uninstall install
-	for mod in $(BUILD_ORDER);do (cd $$mod; $(PYTHON) setup.py sdist bdist_wheel);done
-	version=`$(FIND_VERSION)`; twine upload ocrd*/dist/ocrd*$$version*{tar.gz,whl}
+pypi: build
+	twine upload ocrd*/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*{tar.gz,whl}

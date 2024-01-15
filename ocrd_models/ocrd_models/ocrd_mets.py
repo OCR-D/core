@@ -4,18 +4,20 @@ API to METS
 from datetime import datetime
 import re
 import typing
-from os import environ
 from lxml import etree as ET
 from copy import deepcopy
+from warnings import warn
 
 from ocrd_utils import (
-    is_local_filename,
     getLogger,
+    deprecation_warning,
     generate_range,
     VERSION,
     REGEX_PREFIX,
     REGEX_FILE_ID
 )
+
+from ocrd_utils.config import config
 
 from .constants import (
     NAMESPACES as NS,
@@ -64,23 +66,14 @@ class OcrdMets(OcrdXmlDocument):
         # XXX If the environment variable OCRD_METS_CACHING is set to "true",
         # then enable caching, if "false", disable caching, overriding the
         # kwarg to the constructor
-        if 'OCRD_METS_CACHING' in environ:
-            cache_override = environ['OCRD_METS_CACHING'] in ('true', '1')
-            getLogger('ocrd_models.ocrd_mets').debug('METS Caching %s because OCRD_METS_CACHING is %s',
-                                                     'enabled' if cache_override else 'disabled',
-                                                     environ['OCRD_METS_CACHING'])
-            self._cache_flag = cache_override
+        if config.is_set('OCRD_METS_CACHING'):
+            getLogger('ocrd.models.ocrd_mets').debug('METS Caching %s because OCRD_METS_CACHING is %s',
+                    'enabled' if config.OCRD_METS_CACHING else 'disabled', config.raw_value('OCRD_METS_CACHING'))
+            self._cache_flag = config.OCRD_METS_CACHING
 
         # If cache is enabled
         if self._cache_flag:
             self.refresh_caches()
-
-    def __exit__(self):
-        """
-
-        """
-        if self._cache_flag:
-            self._clear_caches()
 
     def __str__(self):
         """
@@ -101,7 +94,7 @@ class OcrdMets(OcrdXmlDocument):
         if el_fileSec is None:
             return
 
-        log = getLogger('ocrd_models.ocrd_mets._fill_caches-files')
+        log = getLogger('ocrd.models.ocrd_mets._fill_caches-files')
 
         for el_fileGrp in el_fileSec.findall('mets:fileGrp', NS):
             fileGrp_use = el_fileGrp.get('USE')
@@ -118,7 +111,7 @@ class OcrdMets(OcrdXmlDocument):
         el_div_list = tree_root.findall(".//mets:div[@TYPE='page']", NS)
         if len(el_div_list) == 0:
             return
-        log = getLogger('ocrd_models.ocrd_mets._fill_caches-pages')
+        log = getLogger('ocrd.models.ocrd_mets._fill_caches-pages')
 
         for el_div in el_div_list:
             div_id = el_div.get('ID')
@@ -245,7 +238,18 @@ class OcrdMets(OcrdXmlDocument):
         return list(self.find_files(*args, **kwargs))
 
     # pylint: disable=multiple-statements
-    def find_files(self, ID=None, fileGrp=None, pageId=None, mimetype=None, url=None, local_only=False):
+    def find_files(
+        self,
+        ID=None,
+        fileGrp=None,
+        pageId=None,
+        mimetype=None,
+        url=None,
+        local_filename=None,
+        local_only=False,
+        include_fileGrp=None,
+        exclude_fileGrp=None,
+    ):
         """
         Search ``mets:file`` entries in this METS document and yield results.
         The :py:attr:`ID`, :py:attr:`pageId`, :py:attr:`fileGrp`,
@@ -262,9 +266,12 @@ class OcrdMets(OcrdXmlDocument):
             ID (string) : ``@ID`` of the ``mets:file``
             fileGrp (string) : ``@USE`` of the ``mets:fileGrp`` to list files of
             pageId (string) : ``@ID`` of the corresponding physical ``mets:structMap`` entry (physical page)
-            url (string) : ``@xlink:href`` (URL or path) of ``mets:Flocat`` of ``mets:file``
+            url (string) : ``@xlink:href`` remote/original URL of ``mets:Flocat`` of ``mets:file``
+            local_filename (string) : ``@xlink:href`` local/cached filename of ``mets:Flocat`` of ``mets:file``
             mimetype (string) : ``@MIMETYPE`` of ``mets:file``
             local (boolean) : Whether to restrict results to local files in the filesystem
+            include_fileGrp (list[str]) : Whitelist of allowd file groups 
+            exclude_fileGrp (list[str]) : Blacklist of disallowd file groups 
         Yields:
             :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
         """
@@ -323,7 +330,7 @@ class OcrdMets(OcrdXmlDocument):
                     if not mimetype.fullmatch(cand.get('MIMETYPE') or ''): continue
 
             if url:
-                cand_locat = cand.find('mets:FLocat', namespaces=NS)
+                cand_locat = cand.find('mets:FLocat[@LOCTYPE="URL"]', namespaces=NS)
                 if cand_locat is None:
                     continue
                 cand_url = cand_locat.get('{%s}href' % NS['xlink'])
@@ -332,14 +339,31 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     if not url.fullmatch(cand_url): continue
 
-            # Note: why we instantiate a class only to find out that the local_only is set afterwards
-            # Checking local_only and url before instantiation should be better?
-            f = OcrdFile(cand, mets=self, loctype=cand.get('LOCTYPE'))
+            if local_filename:
+                cand_locat = cand.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', namespaces=NS)
+                if cand_locat is None:
+                    continue
+                cand_local_filename = cand_locat.get('{%s}href' % NS['xlink'])
+                if isinstance(local_filename, str):
+                    if cand_local_filename != local_filename: continue
+                else:
+                    if not local_filename.fullmatch(cand_local_filename): continue
 
-            # If only local resources should be returned and f is not a file path: skip the file
-            if local_only and not is_local_filename(f.url):
+            if local_only:
+                # deprecation_warning("'local_only' is deprecated, use 'local_filename=\"//.+\"' instead")
+                is_local = cand.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"][@xlink:href]', namespaces=NS)
+                if is_local is None:
+                    continue
+
+            ret = OcrdFile(cand, mets=self)
+
+            # XXX include_fileGrp is redundant to fileGrp but for completeness
+            if exclude_fileGrp and ret.fileGrp in exclude_fileGrp:
                 continue
-            yield f
+            if include_fileGrp and ret.fileGrp not in include_fileGrp:
+                continue
+
+            yield ret
 
     def add_file_group(self, fileGrp):
         """
@@ -348,7 +372,7 @@ class OcrdMets(OcrdXmlDocument):
             fileGrp (string): ``@USE`` of the new ``mets:fileGrp``.
         """
         if ',' in fileGrp:
-            raise Exception('fileGrp must not contain commas')
+            raise ValueError('fileGrp must not contain commas')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             el_fileSec = ET.SubElement(self._tree.getroot(), TAG_METS_FILESEC)
@@ -383,7 +407,7 @@ class OcrdMets(OcrdXmlDocument):
             recursive (boolean): Whether to recursively delete each ``mets:file`` in the group
             force (boolean): Do not raise an exception if ``mets:fileGrp`` does not exist
         """
-        log = getLogger('ocrd_models.ocrd_mets.remove_file_group')
+        log = getLogger('ocrd.models.ocrd_mets.remove_file_group')
         el_fileSec = self._tree.getroot().find('mets:fileSec', NS)
         if el_fileSec is None:
             raise Exception("No fileSec!")
@@ -449,7 +473,7 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
-        log = getLogger('ocrd_models.ocrd_mets.add_file')
+        log = getLogger('ocrd.models.ocrd_mets.add_file')
 
         el_fileGrp = self.add_file_group(fileGrp)
         if not ignore:
@@ -507,7 +531,7 @@ class OcrdMets(OcrdXmlDocument):
         Returns:
             The old :py:class:`ocrd_models.ocrd_file.OcrdFile` reference.
         """
-        log = getLogger('ocrd_models.ocrd_mets.remove_one_file')
+        log = getLogger('ocrd.models.ocrd_mets.remove_one_file')
         log.debug("remove_one_file(%s %s)" % (ID, fileGrp))
         if isinstance(ID, OcrdFile):
             ocrd_file = ID
@@ -563,9 +587,9 @@ class OcrdMets(OcrdXmlDocument):
         if self._cache_flag:
             return list(self._page_cache.keys())
 
-        return self._tree.getroot().xpath(
+        return [str(x) for x in self._tree.getroot().xpath(
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
-            namespaces=NS)
+            namespaces=NS)]
 
     def get_physical_pages(self, for_fileIds=None, for_pageIds=None, return_divs=False):
         """
@@ -698,6 +722,22 @@ class OcrdMets(OcrdXmlDocument):
             # Assign the ocrd fileID to the pageId in the cache
             self._fptr_cache[el_pagediv.get('ID')].update({ocrd_file.ID: el_fptr})
 
+    def update_physical_page_attributes(self, page_id, **kwargs):
+        mets_div = None
+        if self._cache_flag:
+            if page_id in self._page_cache.keys():
+                mets_div = [self._page_cache[page_id]]
+        else:
+            mets_div = self._tree.getroot().xpath(
+                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][@ID="%s"]' % page_id,
+                namespaces=NS)
+        if mets_div:
+            for attr_name, attr_value in kwargs.items():
+                if attr_value:
+                    mets_div[0].set(attr_name.upper(), attr_value)
+        else:
+            warn("Could not find mets:div[@ID={page_id}]")
+
     def get_physical_page_for_file(self, ocrd_file):
         """
         Get the physical page ID (``@ID`` of the physical ``mets:structMap`` ``mets:div`` entry)
@@ -800,6 +840,7 @@ class OcrdMets(OcrdXmlDocument):
                 fileGrp_mapping.get(f_src.fileGrp, f_src.fileGrp),
                 mimetype=f_src.mimetype,
                 url=f_src.url,
+                local_filename=f_src.local_filename,
                 ID=fileId_mapping.get(f_src.ID, f_src.ID),
                 pageId=pageId_mapping.get(f_src.pageId, f_src.pageId),
                 force=force)

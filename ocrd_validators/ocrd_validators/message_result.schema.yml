@@ -20,8 +20,10 @@ properties:
     description: The current status of the job
     type: string
     enum:
-      - SUCCESS
+      - CACHED
+      - QUEUED
       - RUNNING
+      - SUCCESS
       - FAILED
   path_to_mets:
     description: Path to a METS file

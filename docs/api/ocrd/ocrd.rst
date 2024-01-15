@@ -23,6 +23,7 @@ Submodules
    :maxdepth: 4
 
    ocrd.constants
+   ocrd.mets_server
    ocrd.resolver
    ocrd.resource_manager
    ocrd.task_sequence

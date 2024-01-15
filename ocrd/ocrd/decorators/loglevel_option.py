@@ -4,6 +4,8 @@ from ocrd_utils.logging import setOverrideLogLevel
 __all__ = ['ocrd_loglevel']
 
 def _setOverrideLogLevel(ctx, param, value):    # pylint: disable=unused-argument
+    if value is None:   # Explicitly test for None because logging.DEBUG == 0
+        return
     setOverrideLogLevel(value)
     return value
 

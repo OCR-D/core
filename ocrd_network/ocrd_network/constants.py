@@ -1,0 +1,2 @@
+NETWORK_AGENT_SERVER = 'server'
+NETWORK_AGENT_WORKER = 'worker'

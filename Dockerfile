@@ -19,6 +19,7 @@ COPY ocrd_network/ ./ocrd_network
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
+COPY .git ./.git
 RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
 RUN apt-get update && apt-get -y install software-properties-common \
     && apt-get update && apt-get -y install \
@@ -35,7 +36,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && make deps-ubuntu \
     && python3 -m venv /usr/local \
     && hash -r \
-    && pip install --upgrade pip setuptools \
+    && pip install --upgrade pip setuptools wheel \
     && make install \
     && eval $FIXUP \
     && rm -rf /build-ocrd

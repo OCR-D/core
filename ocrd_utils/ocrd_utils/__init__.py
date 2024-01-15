@@ -99,11 +99,14 @@ Utility functions and constants usable in various circumstances.
     Exports of :py:mod:`ocrd_utils.logging`
 
 * :py:func:`deprecated_alias`
+* :py:func:`rename_kwargs`
+* :py:func:`deprecation_warning`
 
     Decorator to mark a kwarg as deprecated
 """
 
 from .constants import (
+    DEFAULT_METS_BASENAME,
     EXT_TO_MIME,
     MIMETYPE_PAGE,
     MIME_TO_EXT,
@@ -118,7 +121,9 @@ from .constants import (
     )
 
 from .deprecate import (
-    deprecated_alias)
+    deprecated_alias,
+    rename_kwargs,
+    deprecation_warning)
 
 from .image import (
     adjust_canvas_to_rotation,
@@ -157,11 +162,11 @@ from .introspect import (
 )
 
 from .logging import (
+    tf_disable_interactive_logs,
     disableLogging,
     getLevelName,
     getLogger,
     initLogging,
-    logging,
     setOverrideLogLevel,
     )
 
@@ -178,6 +183,7 @@ from .os import (
     atomic_write,
     pushd_popd,
     unzip_file_to_dir,
+    redirect_stderr_and_stdout_to_file,
     )
 
 from .str import (
@@ -189,7 +195,10 @@ from .str import (
     is_string,
     make_file_id,
     nth_url_segment,
+    partition_list,
     parse_json_string_or_file,
     parse_json_string_with_comments,
     remove_non_path_from_url,
     safe_filename)
+
+from .config import config

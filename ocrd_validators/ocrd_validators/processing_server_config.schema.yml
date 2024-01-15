@@ -6,6 +6,9 @@ additionalProperties: false
 required:
   - process_queue
 properties:
+  internal_callback_url:
+    description: optionally set the host for the internal_callback_url, for example "http://172.17.0.1:8080"
+    type: string
   process_queue:
     description: Information about the Message Queue
     type: object
@@ -55,7 +58,6 @@ properties:
   hosts:
     description: A list of hosts where Processing Servers will be deployed
     type: array
-    minItems: 1
     items:
       description: A host where one or many Processing Servers will be deployed
       type: object

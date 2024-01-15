@@ -4,3 +4,6 @@ click >=7
 jsonschema
 pyyaml
 shapely
+ocrd_utils
+ocrd_models
+ocrd_modelfactory

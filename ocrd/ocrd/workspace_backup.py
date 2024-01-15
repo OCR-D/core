@@ -6,7 +6,7 @@ from shutil import copy
 import hashlib
 
 from ocrd_models import OcrdMets
-from ocrd_utils import getLogger, atomic_write
+from ocrd_utils import getLogger, atomic_write, DEFAULT_METS_BASENAME
 
 from .constants import BACKUP_DIR
 
@@ -17,7 +17,7 @@ class WorkspaceBackup():
 
     @classmethod
     def from_path(cls, d):
-        mets_file = join(d, 'mets.xml')
+        mets_file = join(d, DEFAULT_METS_BASENAME)
         (chksum, lastmod) = basename(d).split('.', maxsplit=1)
         size = getsize(mets_file)
         mets_xml = OcrdMets(filename=mets_file)
@@ -61,7 +61,7 @@ class WorkspaceBackupManager():
         bak = candidates[0]
         self.add()
         log.info("Restoring from %s/mets.xml" % bak)
-        src = join(bak, 'mets.xml')
+        src = join(bak, DEFAULT_METS_BASENAME)
         dest = self.workspace.mets_target
         log.debug('cp "%s" "%s"', src, dest)
         copy(src, dest)
@@ -80,7 +80,7 @@ class WorkspaceBackupManager():
         else:
             timestamp = datetime.now().timestamp()
             d = join(self.backup_directory, '%s.%s' % (chksum, timestamp))
-            mets_file = join(d, 'mets.xml')
+            mets_file = join(d, DEFAULT_METS_BASENAME)
             log.info("Backing up to %s" % mets_file)
             makedirs(d)
             with atomic_write(mets_file) as f:

@@ -5,7 +5,7 @@ import re
 from traceback import format_exc
 from pathlib import Path
 
-from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename
+from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename, DEFAULT_METS_BASENAME
 from ocrd_models import ValidationReport
 from ocrd_modelfactory import page_from_file
 
@@ -20,7 +20,7 @@ from .xsd_mets_validator import XsdMetsValidator
 
 class WorkspaceValidator():
     """
-    Validates an OCR-D/METS workspace against the specs.
+    Validator for `OcrdMets <../ocrd_models/ocrd_models.ocrd_mets.html>`.
     """
 
     @staticmethod
@@ -62,7 +62,9 @@ class WorkspaceValidator():
         return report
 
     def __init__(self, resolver, mets_url, src_dir=None, skip=None, download=False,
-                 page_strictness='strict', page_coordinate_consistency='poly'):
+                 page_strictness='strict', page_coordinate_consistency='poly',
+                 include_fileGrp=None, exclude_fileGrp=None
+                 ):
         """
         Construct a new WorkspaceValidator.
 
@@ -72,8 +74,16 @@ class WorkspaceValidator():
             src_dir (string):
             skip (list):
             download (boolean):
-            page_strictness ("strict"|"lax"|"fix"|"off"):
-            page_coordinate_consistency ("poly"|"baseline"|"both"|"off"):
+            page_strictness ("strict"|"lax"|"fix"|"off"): how strict to check
+                multi-level TextEquiv consistency of PAGE XML files
+            page_coordinate_consistency ("poly"|"baseline"|"both"|"off"): check whether each
+                segment's coords are fully contained within its parent's:
+                 * `"poly"`: *Region/TextLine/Word/Glyph in Border/*Region/TextLine/Word
+                 * `"baseline"`: Baseline in TextLine
+                 * `"both"`: both `poly` and `baseline` checks
+                 * `"off"`: no coordinate checks
+            include_fileGrp (list[str]): filegrp whitelist
+            exclude_fileGrp (list[str]): filegrp blacklist
         """
         self.report = ValidationReport()
         self.skip = skip if skip else []
@@ -81,12 +91,17 @@ class WorkspaceValidator():
         self.log.debug('resolver=%s mets_url=%s src_dir=%s', resolver, mets_url, src_dir)
         self.resolver = resolver
         if mets_url is None and src_dir is not None:
-            mets_url = '%s/mets.xml' % src_dir
+            mets_url = f'{src_dir}/{DEFAULT_METS_BASENAME}'
         self.mets_url = mets_url
         self.download = download
         self.page_strictness = page_strictness
         self.page_coordinate_consistency = page_coordinate_consistency
+        self.page_checks = []
+        # there will be more options to come
+        if 'mets_fileid_page_pcgtsid' not in self.skip:
+            self.page_checks.append('pcgtsid')
 
+        self.find_kwargs = dict(include_fileGrp=include_fileGrp, exclude_fileGrp=exclude_fileGrp)
         self.src_dir = src_dir
         self.workspace = None
         self.mets = None
@@ -100,8 +115,13 @@ class WorkspaceValidator():
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
-            skip (list): Tests to skip. One or more of 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'dimension', 'url'
-            download (boolean): Whether to download files
+            skip (list): Validation checks to omit. One or more of 
+                'mets_unique_identifier', 'mets_file_group_names', 
+                'mets_files', 'pixel_density', 'dimension', 'url',
+                'multipage', 'page', 'page_xsd', 'mets_xsd', 
+                'mets_fileid_page_pcgtsid'
+            download (boolean): Whether to download remote file references
+                temporarily during validation (like a processor would)
 
         Returns:
             report (:class:`ValidationReport`) Report on the validity
@@ -151,7 +171,7 @@ class WorkspaceValidator():
         """
         self.log.debug('_resolve_workspace')
         if self.workspace is None:
-            self.workspace = self.resolver.workspace_from_url(self.mets_url, src_baseurl=self.src_dir, download=self.download)
+            self.workspace = self.resolver.workspace_from_url(self.mets_url, src_baseurl=self.src_dir)
             self.mets = self.workspace.mets
 
     def _validate_mets_unique_identifier(self):
@@ -169,27 +189,28 @@ class WorkspaceValidator():
         Validate that the imageFilename is correctly set to a filename relative to the workspace
         """
         self.log.debug('_validate_imagefilename')
-        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not is_local_filename(f.url) and not self.download:
-                self.report.add_notice("Won't download remote PAGE XML <%s>" % f.url)
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
             page = page_from_file(f).get_Page()
             imageFilename = page.imageFilename
-            if not self.mets.find_files(url=imageFilename):
-                self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
+            if not self.mets.find_files(url=imageFilename, **self.find_kwargs):
+                self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.local_filename, imageFilename))
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.url, imageFilename))
+                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.local_filename, imageFilename))
 
     def _validate_dimension(self):
         """
         Validate image height and PAGE imageHeight match
         """
         self.log.info('_validate_dimension')
-        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            if not is_local_filename(f.url) and not self.download:
-                self.report.add_notice("_validate_dimension: Not executed because --download wasn't set and PAGE might reference remote (Alternative)Images <%s>" % f.url)
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
+            self.workspace.download_file(f)
             page = page_from_file(f).get_Page()
             _, _, exif = self.workspace.image_from_page(page, f.pageId)
             if page.imageHeight != exif.height:
@@ -204,16 +225,17 @@ class WorkspaceValidator():
         See `spec <https://ocr-d.github.io/mets#no-multi-page-images>`_.
         """
         self.log.debug('_validate_multipage')
-        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
-            if not is_local_filename(f.url) and not self.download:
-                self.report.add_notice("Won't download remote image <%s>" % f.url)
+        for f in self.mets.find_files(mimetype='//image/.*', **self.find_kwargs):
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
+            self.workspace.download_file(f)
             try:
-                exif = self.workspace.resolve_image_exif(f.url)
+                exif = self.workspace.resolve_image_exif(f.local_filename)
                 if exif.n_frames > 1:
                     self.report.add_error("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
             except FileNotFoundError:
-                self.report.add_error("Image %s: Could not retrieve %s" % (f.ID, f.url))
+                self.report.add_error("Image %s: Could not retrieve %s (local_filename=%s, url=%s)" % (f.ID, f.local_filename, f.url))
                 return
 
     def _validate_pixel_density(self):
@@ -223,11 +245,12 @@ class WorkspaceValidator():
         See `spec <https://ocr-d.github.io/mets#pixel-density-of-images-must-be-explicit-and-high-enough>`_.
         """
         self.log.debug('_validate_pixel_density')
-        for f in [f for f in self.mets.find_files() if f.mimetype.startswith('image/')]:
-            if not is_local_filename(f.url) and not self.download:
-                self.report.add_notice("Won't download remote image <%s>" % f.url)
+        for f in self.mets.find_files(mimetype='//image/.*', **self.find_kwargs):
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
-            exif = self.workspace.resolve_image_exif(f.url)
+            self.workspace.download_file(f)
+            exif = self.workspace.resolve_image_exif(f.local_filename)
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)
                 if v is None or v <= 72:
@@ -264,16 +287,16 @@ class WorkspaceValidator():
         """
         self.log.debug('_validate_mets_files')
         try:
-            next(self.mets.find_files())
+            next(self.mets.find_files(**self.find_kwargs))
         except StopIteration:
             self.report.add_error("No files")
-        for f in self.mets.find_files():
+        for f in self.mets.find_files(**self.find_kwargs):
             if f._el.get('GROUPID'): # pylint: disable=protected-access
                 self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
-            if not f.url:
-                self.report.add_error("File '%s' has no mets:Flocat/@xlink:href" % f.ID)
+            if not (f.url or f.local_filename):
+                self.report.add_error("File '%s' has neither mets:Flocat[@LOCTYPE='URL']/@xlink:href nor mets:FLocat[@LOCTYPE='OTHER'][@OTHERLOCTYPE='FILE']/xlink:href" % f.ID)
                 continue
-            if 'url' not in self.skip and ':/' in f.url:
+            if f.url and 'url' not in self.skip:
                 if re.match(r'^file:/[^/]', f.url):
                     self.report.add_error("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
                 scheme = f.url[0:f.url.index(':')]
@@ -285,15 +308,18 @@ class WorkspaceValidator():
         Run PageValidator on the PAGE-XML documents referenced in the METS.
         """
         self.log.debug('_validate_page')
-        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            self.workspace.download_file(ocrd_file)
-            page_report = PageValidator.validate(ocrd_file=ocrd_file,
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
+                continue
+            self.workspace.download_file(f)
+            page_report = PageValidator.validate(ocrd_file=f,
                                                  page_textequiv_consistency=self.page_strictness,
                                                  check_coords=self.page_coordinate_consistency in ['poly', 'both'],
                                                  check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
-            pg = page_from_file(ocrd_file)
-            if pg.pcGtsId != ocrd_file.ID:
-                page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pg.pcGtsId or '', ocrd_file.ID or ''))
+            pg = page_from_file(f)
+            if 'pcgtsid' in self.page_checks and pg.pcGtsId != f.ID:
+                page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pg.pcGtsId or '', f.ID or ''))
             self.report.merge_report(page_report)
 
     def _validate_page_xsd(self):
@@ -301,11 +327,14 @@ class WorkspaceValidator():
         Validate all PAGE-XML files against PAGE XSD schema
         """
         self.log.debug('_validate_page_xsd')
-        for ocrd_file in self.mets.find_files(mimetype=MIMETYPE_PAGE):
-            self.workspace.download_file(ocrd_file)
-            for err in XsdPageValidator.validate(Path(ocrd_file.local_filename)).errors:
-                self.report.add_error("%s: %s" % (ocrd_file.ID, err))
-        self.log.debug("Finished alidating all PAGE-XML files against XSD")
+        for f in self.mets.find_files(mimetype=MIMETYPE_PAGE, **self.find_kwargs):
+            if not f.local_filename and not self.download:
+                self.log.warning("Not available locally and 'download' is not set: %s", f)
+                continue
+            self.workspace.download_file(f)
+            for err in XsdPageValidator.validate(Path(f.local_filename)).errors:
+                self.report.add_error("%s: %s" % (f.ID, err))
+        self.log.debug("Finished validating all PAGE-XML files against XSD")
 
     def _validate_mets_xsd(self):
         """

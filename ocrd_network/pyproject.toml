@@ -1,0 +1,37 @@
+[build-system]
+requires = [
+         "setuptools>=61",
+         "setuptools_scm[toml]",
+         "wheel",
+]  # PEP 508 specifications.
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ocrd_network"
+authors = [{name = "Mehmed Mustafa", email = "unixprog@gmail.com"}, {name = "Jonas Schrewe"}, {name = "Triet Doan"}]
+license = {text = "Apache License 2.0"}
+description = "OCR-D framework - network"
+requires-python = ">=3.7"
+dynamic = ["version", "dependencies"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[tool.setuptools.dynamic.dependencies]
+file = ["requirements.txt"]
+
+[project.urls]
+Homepage = "https://ocr-d.de"
+Documentation = "https://ocr-d.de/core"
+Repository = "https://github.com/OCR-D/core"
+Issues = "https://github.com/OCR-D/core/issues"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+namespaces = false
+
+[tool.setuptools_scm]
+root = ".."

@@ -1,20 +1,17 @@
 """
 Helper methods for running and documenting processors
 """
-from os import chdir, environ, getcwd
+from os import chdir, getcwd
 from time import perf_counter, process_time
 from functools import lru_cache
 import json
 import inspect
-from subprocess import run, PIPE
-from typing import List, Type
-
-from memory_profiler import memory_usage
-from sparklines import sparklines
+from subprocess import run
+from typing import List
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger, pushd_popd
+from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel, getLevelName
 
 
 __all__ = [
@@ -24,13 +21,13 @@ __all__ = [
 ]
 
 
-def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None):
+def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=None, mets_server_url=None):
     if workspace is None:
         if resolver is None:
             raise Exception("Need to pass a resolver to create a workspace")
         if mets_url is None:
             raise Exception("Need to pass mets_url to create a workspace")
-        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir)
+        workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir, mets_server_url=mets_server_url)
     return workspace
 
 def run_processor(
@@ -39,7 +36,7 @@ def run_processor(
         resolver=None,
         workspace=None,
         page_id=None,
-        log_level=None,         # TODO actually use this!
+        log_level=None,
         input_file_grp=None,
         output_file_grp=None,
         show_resource=None,
@@ -47,7 +44,8 @@ def run_processor(
         parameter=None,
         parameter_override=None,
         working_dir=None,
-        instance_caching=False  # TODO don't set this yet!
+        mets_server_url=None,
+        instance_caching=False
 ): # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
@@ -73,11 +71,14 @@ def run_processor(
     Args:
         processorClass (object): Python class of the module processor.
     """
+    if log_level:
+        setOverrideLogLevel(log_level)
     workspace = _get_workspace(
         workspace,
         resolver,
         mets_url,
-        working_dir
+        working_dir,
+        mets_server_url
     )
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
@@ -102,8 +103,10 @@ def run_processor(
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
     t0_cpu = process_time()
-    if any(x in environ.get('OCRD_PROFILE', '') for x in ['RSS', 'PSS']):
-        backend = 'psutil_pss' if 'PSS' in environ['OCRD_PROFILE'] else 'psutil'
+    if any(x in config.OCRD_PROFILE for x in ['RSS', 'PSS']):
+        backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
+        from memory_profiler import memory_usage
+        from sparklines import sparklines
         try:
             mem_usage = memory_usage(proc=processor.process,
                                      # only run process once
@@ -166,10 +169,12 @@ def run_cli(
         page_id=None,
         overwrite=None,
         log_level=None,
+        log_filename=None,
         input_file_grp=None,
         output_file_grp=None,
         parameter=None,
         working_dir=None,
+        mets_server_url=None,
 ):
     """
     Open a workspace and run a processor on the command line.
@@ -194,7 +199,7 @@ def run_cli(
     args = [executable, '--working-dir', workspace.directory]
     args += ['--mets', mets_url]
     if log_level:
-        args += ['--log-level', log_level]
+        args += ['--log-level', log_level if isinstance(log_level, str) else getLevelName(log_level)]
     if page_id:
         args += ['--page-id', page_id]
     if input_file_grp:
@@ -205,19 +210,95 @@ def run_cli(
         args += ['--parameter', parameter]
     if overwrite:
         args += ['--overwrite']
+    if mets_server_url:
+        args += ['--mets-server-url', mets_server_url]
     log = getLogger('ocrd.processor.helpers.run_cli')
     log.debug("Running subprocess '%s'", ' '.join(args))
-    result = run(args, check=False)
+    if not log_filename:
+        result = run(args, check=False)
+    else:
+        with open(log_filename, 'a') as file_desc:
+            result = run(args, check=False, stdout=file_desc, stderr=file_desc)
     return result.returncode
 
-def generate_processor_help(ocrd_tool, processor_instance=None):
+
+def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.
 
     Args:
          ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
          processor_instance (object, optional): the processor implementation
              (for adding any module/class/function docstrings)
+        subcommand (string): 'worker' or 'server'
     """
+    doc_help = ''
+    if processor_instance:
+        module = inspect.getmodule(processor_instance)
+        if module and module.__doc__:
+            doc_help += '\n' + inspect.cleandoc(module.__doc__) + '\n'
+        if processor_instance.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__) + '\n'
+        if processor_instance.process.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.process.__doc__) + '\n'
+        if doc_help:
+            doc_help = '\n\n' + wrap_text(doc_help, width=72,
+                                          initial_indent='  > ',
+                                          subsequent_indent='  > ',
+                                          preserve_paragraphs=True)
+    subcommands = '''\
+    worker      Start a processing worker rather than do local processing
+    server      Start a processor server rather than do local processing
+'''
+
+    processing_worker_options = '''\
+  --queue                         The RabbitMQ server address in format
+                                  "amqp://{user}:{pass}@{host}:{port}/{vhost}"
+                                  [amqp://admin:admin@localhost:5672]
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+  --log-filename                  Filename to redirect STDOUT/STDERR to,
+                                  if specified.
+'''
+
+    processing_server_options = '''\
+  --address                       The Processor server address in format
+                                  "{host}:{port}"
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+'''
+
+    processing_options = '''\
+  -m, --mets URL-PATH             URL or file path of METS to process [./mets.xml]
+  -w, --working-dir PATH          Working directory of local workspace [dirname(URL-PATH)]
+  -I, --input-file-grp USE        File group(s) used as input
+  -O, --output-file-grp USE       File group(s) used as output
+  -g, --page-id ID                Physical page ID(s) to process instead of full document []
+  --overwrite                     Remove existing output pages/images
+                                  (with "--page-id", remove only those)
+  --profile                       Enable profiling
+  --profile-file PROF-PATH        Write cProfile stats to PROF-PATH. Implies "--profile"
+  -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
+                                  or JSON file path
+  -P, --param-override KEY VAL    Override a single JSON object key-value pair,
+                                  taking precedence over --parameter
+  -U, --mets-server-url URL       URL of a METS Server for parallel incremental access to METS
+                                  If URL starts with http:// start an HTTP server there,
+                                  otherwise URL is a path to an on-demand-created unix socket
+  -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
+                                  Override log level globally [INFO]
+'''
+
+    information_options = '''\
+  -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
+  -L, --list-resources            List names of processor resources
+  -J, --dump-json                 Dump tool description as JSON
+  -D, --dump-module-dir           Show the 'module' resource location path for this processor
+  -h, --help                      Show this message
+  -V, --version                   Show version
+'''
+
     parameter_help = ''
     if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
         parameter_help = '  NONE\n'
@@ -236,73 +317,51 @@ def generate_processor_help(ocrd_tool, processor_instance=None):
             if 'enum' in param:
                 parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
             parameter_help += "\n"
-    doc_help = ''
-    if processor_instance:
-        module = inspect.getmodule(processor_instance)
-        if module and module.__doc__:
-            doc_help += '\n' + inspect.cleandoc(module.__doc__) + '\n'
-        if processor_instance.__doc__:
-            doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__) + '\n'
-        if processor_instance.process.__doc__:
-            doc_help += '\n' + inspect.cleandoc(processor_instance.process.__doc__) + '\n'
-        if doc_help:
-            doc_help = '\n\n' + wrap_text(doc_help, width=72,
-                                          initial_indent='  > ',
-                                          subsequent_indent='  > ',
-                                          preserve_paragraphs=True)
-    return '''
-Usage: %s [OPTIONS]
 
-  %s%s
+    if not subcommand:
+        return f'''\
+Usage: {ocrd_tool['executable']} [worker|server] [OPTIONS]
 
+  {ocrd_tool['description']}{doc_help}
+
+Subcommands:
+{subcommands}
 Options for processing:
-  -m, --mets URL-PATH             URL or file path of METS to process [./mets.xml]
-  -w, --working-dir PATH          Working directory of local workspace [dirname(URL-PATH)]
-  -I, --input-file-grp USE        File group(s) used as input
-  -O, --output-file-grp USE       File group(s) used as output
-  -g, --page-id ID                Physical page ID(s) to process instead of full document []
-  --overwrite                     Remove existing output pages/images
-                                  (with "--page-id", remove only those)
-  --profile                       Enable profiling
-  --profile-file PROF-PATH        Write cProfile stats to PROF-PATH. Implies "--profile"
-  -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
-                                  or JSON file path
-  -P, --param-override KEY VAL    Override a single JSON object key-value pair,
-                                  taking precedence over "--parameter"
-  -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
-                                  Override log level globally [INFO]
-
-Options for Processing Worker server:
-  --queue                         The RabbitMQ server address in format
-                                  "amqp://{user}:{pass}@{host}:{port}/{vhost}"
-                                  [amqp://admin:admin@localhost:5672]
-  --database                      The MongoDB server address in format
-                                  "mongodb://{host}:{port}"
-                                  [mongodb://localhost:27018]
-  --type                          type of processing: either "worker" or "server"
-
+{processing_options}
 Options for information:
-  -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
-  -L, --list-resources            List names of processor resources
-  -J, --dump-json                 Dump tool description as JSON
-  -D, --dump-module-dir           Show the 'module' resource location path for this processor
-  -h, --help                      Show this message
-  -V, --version                   Show version
-
+{information_options}
 Parameters:
-%s
+{parameter_help}
+'''
+    elif subcommand == 'worker':
+        return f'''\
+Usage: {ocrd_tool['executable']} worker [OPTIONS]
 
-''' % (
-    ocrd_tool['executable'],
-    ocrd_tool['description'],
-    doc_help,
-    parameter_help,
-)
+  Run {ocrd_tool['executable']} as a processing worker.
+
+  {ocrd_tool['description']}{doc_help}
+
+Options:
+{processing_worker_options}
+'''
+    elif subcommand == 'server':
+        return f'''\
+Usage: {ocrd_tool['executable']} server [OPTIONS]
+
+  Run {ocrd_tool['executable']} as a processor sever.
+
+  {ocrd_tool['description']}{doc_help}
+
+Options:
+{processing_server_options}
+'''
+    else:
+        pass
 
 
 # Taken from https://github.com/OCR-D/core/pull/884
 @freeze_args
-@lru_cache(maxsize=environ.get('OCRD_MAX_PROCESSOR_CACHE', 128))
+@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
 def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.

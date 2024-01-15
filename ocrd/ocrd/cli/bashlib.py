@@ -14,6 +14,7 @@ import click
 from ocrd.constants import BASHLIB_FILENAME
 import ocrd.constants
 import ocrd_utils.constants
+from ocrd_utils.constants import DEFAULT_METS_BASENAME
 import ocrd_models.constants
 import ocrd_validators.constants
 from ocrd.decorators import (
@@ -78,7 +79,7 @@ def bashlib_constants(name):
         print(val)
 
 @bashlib_cli.command('input-files')
-@click.option('-m', '--mets', help="METS to process", default="mets.xml")
+@click.option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME)
 @click.option('-w', '--working-dir', help="Working Directory")
 @click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT')
 @click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT')
@@ -104,7 +105,7 @@ def bashlib_input_files(**kwargs):
     working_dir = kwargs.pop('working_dir')
     if is_local_filename(mets) and not isfile(get_local_filename(mets)):
         msg = "File does not exist: %s" % mets
-        raise Exception(msg)
+        raise FileNotFoundError(msg)
     resolver = Resolver()
     workspace = resolver.workspace_from_url(mets, working_dir)
     processor = Processor(workspace,
@@ -113,11 +114,11 @@ def bashlib_input_files(**kwargs):
                           input_file_grp=kwargs['input_file_grp'],
                           output_file_grp=kwargs['output_file_grp'])
     for input_files in processor.zip_input_files(mimetype=None, on_error='abort'):
-        for field in ['url', 'ID', 'mimetype', 'pageId']:
+        for field in ['url', 'local_filename', 'ID', 'mimetype', 'pageId']:
             # make this bash-friendly (show initialization for associative array)
             if len(input_files) > 1:
                 # single quotes allow us to preserve the list value inside the alist
-                print("[%s]='%s'" % (field, ' '.join(getattr(res, field) for res in input_files)), end=' ')
+                print("[%s]='%s'" % (field, ' '.join(str(getattr(res, field)) for res in input_files)), end=' ')
             else:
-                print("[%s]='%s'" % (field, getattr(input_files[0], field)), end=' ')
+                print("[%s]='%s'" % (field, str(getattr(input_files[0], field))), end=' ')
         print("[outputFileId]='%s'" % make_file_id(input_files[0], kwargs['output_file_grp']))
