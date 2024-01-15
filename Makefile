@@ -213,10 +213,11 @@ test: assets
 		$(TESTDIR)
 	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
 
+INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 integration-test:
 	docker compose -f tests/network/docker-compose.yml up -d
 	sleep 10
-	pytest -k 'test_consume or test_publish'
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_consume or test_publish'
 	docker compose -f tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
@@ -295,7 +296,7 @@ docker-cuda: DOCKER_FILE = Dockerfile.cuda
 docker-cuda: docker
 
 docker docker-cuda: 
-	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build

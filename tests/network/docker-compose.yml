@@ -4,7 +4,9 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: 1450
+
 services:
+
   ocrd_network_mongo_db:
     image: "mongo"
     hostname: mongodb-docker-host
@@ -15,6 +17,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=network_test
       - MONGO_INITDB_ROOT_PASSWORD=network_test
+
   ocrd_network_rabbit_mq:
     image: "rabbitmq:3.12-management"
     hostname: rabbitmq-docker-host
@@ -28,3 +31,19 @@ services:
       - RABBITMQ_DEFAULT_USER=network_test
       - RABBITMQ_DEFAULT_PASS=network_test
       - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version
+
+  ocrd_network_core_test:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: 'ubuntu:20.04'
+      target: ocrd_core_test
+    container_name: core_test
+    networks:
+      - ocrd_network_test
+    environment:
+      DB_NAME: ocrd_network_test
+      DB_URL: mongodb://mongodb-docker-host:27017
+      # PROCESSING_SERVER_URL : http://...
+      RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672

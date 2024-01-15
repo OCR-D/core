@@ -3,7 +3,11 @@ from pika.credentials import PlainCredentials
 from pytest import fixture
 from re import match as re_match
 from ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
-from .constants import RABBITMQ_URL, DEFAULT_EXCHANGER_NAME, DEFAULT_QUEUE
+from ocrd_utils.config import config
+
+RABBITMQ_URL = config.RABBITMQ_URL
+DEFAULT_EXCHANGER_NAME = config.DEFAULT_EXCHANGER_NAME
+DEFAULT_QUEUE = config.DEFAULT_QUEUE
 
 
 def verify_and_parse_mq_uri(rabbitmq_address: str):
