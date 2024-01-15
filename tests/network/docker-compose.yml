@@ -4,6 +4,7 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: 1450
+    external: true
 services:
   ocrd_network_mongo_db:
     image: "mongo"

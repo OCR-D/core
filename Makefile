@@ -217,7 +217,7 @@ integration-test:
 	docker compose -f tests/network/docker-compose.yml up -d
 	sleep 10
 	pytest -k 'test_consume or test_publish'
-	docker compose -f tests/network/docker-compose.yml down
+	docker compose -f tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
