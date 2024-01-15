@@ -32,12 +32,11 @@ def test_db_read_processing_job(mongo_processor_jobs):
 
 def test_db_update_processing_job(mongo_processor_jobs):
     job_id = 'test_id_1234'
-    found_job = mongo_processor_jobs.find_one({"job_id": job_id})
-    assert found_job
-    found_job['state'] = StateEnum.running
-    assert found_job['job_id'] == job_id
-    assert found_job['processor_name'] == 'ocrd-dummy'
-    assert found_job['state'] == StateEnum.running
-    assert found_job['path_to_mets'] == '/ocrd/dummy/path'
-    assert found_job['input_file_grps'] == ['DEFAULT']
-    assert found_job['output_file_grps'] == ['OCR-D-DUMMY']
+    updated_job = mongo_processor_jobs.update_one(filter={"job_id": job_id}, update={"state": StateEnum.running})
+    assert updated_job
+    assert updated_job['job_id'] == job_id
+    assert updated_job['processor_name'] == 'ocrd-dummy'
+    assert updated_job['state'] == StateEnum.running
+    assert updated_job['path_to_mets'] == '/ocrd/dummy/path'
+    assert updated_job['input_file_grps'] == ['DEFAULT']
+    assert updated_job['output_file_grps'] == ['OCR-D-DUMMY']
