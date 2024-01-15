@@ -216,7 +216,7 @@ test: assets
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 integration-test:
 	docker compose -f tests/network/docker-compose.yml up -d
-	sleep 5
+	sleep 10
 	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_consume or test_publish'
 	docker compose -f tests/network/docker-compose.yml down
 
