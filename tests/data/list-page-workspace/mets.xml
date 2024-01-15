@@ -102,85 +102,85 @@
   </mets:fileSec>
   <mets:structMap TYPE="PHYSICAL">
     <mets:div TYPE="physSequence">
-      <mets:div TYPE="page" ID="PHYS_0001">
+      <mets:div TYPE="page" ID="PHYS_0001" ORDER="1">
         <mets:fptr FILEID="FOO_1"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0002">
+      <mets:div TYPE="page" ID="PHYS_0002" ORDER="2">
         <mets:fptr FILEID="FOO_2"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0003">
+      <mets:div TYPE="page" ID="PHYS_0003" ORDER="3">
         <mets:fptr FILEID="FOO_3"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0004">
+      <mets:div TYPE="page" ID="PHYS_0004" ORDER="4">
         <mets:fptr FILEID="FOO_4"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0005">
+      <mets:div TYPE="page" ID="PHYS_0005" ORDER="5">
         <mets:fptr FILEID="FOO_5"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0006">
+      <mets:div TYPE="page" ID="PHYS_0006" ORDER="6">
         <mets:fptr FILEID="FOO_6"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0008">
+      <mets:div TYPE="page" ID="PHYS_0008" ORDER="8">
         <mets:fptr FILEID="FOO_8"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0009">
+      <mets:div TYPE="page" ID="PHYS_0009" ORDER="9">
         <mets:fptr FILEID="FOO_9"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0010">
+      <mets:div TYPE="page" ID="PHYS_0010" ORDER="10">
         <mets:fptr FILEID="FOO_10"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0011">
+      <mets:div TYPE="page" ID="PHYS_0011" ORDER="11">
         <mets:fptr FILEID="FOO_11"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0012">
+      <mets:div TYPE="page" ID="PHYS_0012" ORDER="12">
         <mets:fptr FILEID="FOO_12"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0013">
+      <mets:div TYPE="page" ID="PHYS_0013" ORDER="13">
         <mets:fptr FILEID="FOO_13"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0014">
+      <mets:div TYPE="page" ID="PHYS_0014" ORDER="14">
         <mets:fptr FILEID="FOO_14"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0015">
+      <mets:div TYPE="page" ID="PHYS_0015" ORDER="15">
         <mets:fptr FILEID="FOO_15"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0016">
+      <mets:div TYPE="page" ID="PHYS_0016" ORDER="16">
         <mets:fptr FILEID="FOO_16"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0017">
+      <mets:div TYPE="page" ID="PHYS_0017" ORDER="17">
         <mets:fptr FILEID="FOO_17"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0018">
+      <mets:div TYPE="page" ID="PHYS_0018" ORDER="18">
         <mets:fptr FILEID="FOO_18"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0019">
+      <mets:div TYPE="page" ID="PHYS_0019" ORDER="19">
         <mets:fptr FILEID="FOO_19"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0020">
+      <mets:div TYPE="page" ID="PHYS_0020" ORDER="20">
         <mets:fptr FILEID="FOO_20"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0022">
+      <mets:div TYPE="page" ID="PHYS_0022" ORDER="22">
         <mets:fptr FILEID="FOO_22"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0023">
+      <mets:div TYPE="page" ID="PHYS_0023" ORDER="23">
         <mets:fptr FILEID="FOO_23"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0024">
+      <mets:div TYPE="page" ID="PHYS_0024" ORDER="24">
         <mets:fptr FILEID="FOO_24"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0025">
+      <mets:div TYPE="page" ID="PHYS_0025" ORDER="25">
         <mets:fptr FILEID="FOO_25"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0026">
+      <mets:div TYPE="page" ID="PHYS_0026" ORDER="26">
         <mets:fptr FILEID="FOO_26"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0027">
+      <mets:div TYPE="page" ID="PHYS_0027" ORDER="27">
         <mets:fptr FILEID="FOO_27"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0028">
+      <mets:div TYPE="page" ID="PHYS_0028" ORDER="28">
         <mets:fptr FILEID="FOO_28"/>
       </mets:div>
-      <mets:div TYPE="page" ID="PHYS_0029">
+      <mets:div TYPE="page" ID="PHYS_0029" ORDER="29">
         <mets:fptr FILEID="FOO_29"/>
       </mets:div>
     </mets:div>
