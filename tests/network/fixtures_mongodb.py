@@ -6,8 +6,6 @@ from ocrd_network.database import sync_initiate_database
 DB_NAME = config.DB_NAME
 DB_URL = config.DB_URL
 
-sync_initiate_database(DB_URL, DB_NAME)
-
 
 def verify_database_uri(mongodb_address: str) -> str:
     try:
@@ -26,6 +24,7 @@ def fixture_mongo_client():
 
 @fixture(scope="package", name="mongo_processor_jobs")
 def fixture_mongo_processor_jobs(mongo_client):
+    sync_initiate_database(DB_URL, DB_NAME)
     mydb = mongo_client[DB_NAME]
     processor_jobs_collection = mydb["DBProcessorJob"]
     yield processor_jobs_collection
