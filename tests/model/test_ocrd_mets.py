@@ -6,7 +6,6 @@ from os.path import join
 from os import environ
 from contextlib import contextmanager
 import shutil
-from logging import StreamHandler
 import lxml
 
 from tests.base import (
@@ -16,9 +15,6 @@ from tests.base import (
 )
 
 from ocrd_utils import (
-    initLogging,
-    disableLogging,
-    getLogger,
     VERSION,
     MIMETYPE_PAGE
 )
