@@ -2,7 +2,7 @@
 Constants for ocrd_models.
 """
 from pkg_resources import resource_string
-import re
+from enum import Enum, auto
 
 __all__ = [
     'IDENTIFIER_PRIORITY',
@@ -27,6 +27,7 @@ __all__ = [
     'TAG_PAGE_TEXTLINE',
     'TAG_PAGE_TEXTEQUIV',
     'TAG_PAGE_TEXTREGION',
+    'METS_PAGE_DIV_ATTRIBUTE',
 ]
 
 
@@ -72,11 +73,13 @@ PAGE_REGION_TYPES = [
     'Separator', 'Table', 'Text', 'Unknown'
 ]
 
-METS_PAGE_DIV_ATTRIBUTES = [
-    'ID',
-    'ORDER',
-    'ORDERLABEL',
-    'LABEL',
-    'CONTENTIDS'
-]
+class METS_PAGE_DIV_ATTRIBUTE(Enum):
+    ID = auto()
+    ORDER = auto()
+    ORDERLABEL = auto()
+    LABEL = auto()
+    CONTENTIDS = auto()
 
+    @classmethod
+    def names(cls):
+        return [x.name for x in cls]

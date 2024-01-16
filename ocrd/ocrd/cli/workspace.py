@@ -23,7 +23,7 @@ from ocrd.mets_server import OcrdMetsServer
 from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list, DEFAULT_METS_BASENAME
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
-from ocrd_models.constants import METS_PAGE_DIV_ATTRIBUTES
+from ocrd_models.constants import METS_PAGE_DIV_ATTRIBUTE
 
 
 class WorkspaceCtx():
@@ -602,7 +602,7 @@ def list_groups(ctx):
               default=['ID'],
               show_default=True,
               multiple=True,
-              type=click.Choice(METS_PAGE_DIV_ATTRIBUTES))
+              type=click.Choice(METS_PAGE_DIV_ATTRIBUTE.names()))
 @click.option('-f', '--output-format', help="Output format", type=click.Choice(['one-per-line', 'comma-separated', 'json']), default='one-per-line')
 @click.option('-D', '--chunk-number', help="Partition the return value into n roughly equally sized chunks", default=1, type=int)
 @click.option('-C', '--chunk-index', help="Output the nth chunk of results, -1 for all of them.", default=None, type=int)
@@ -688,7 +688,7 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
     workspace.save_mets()
 
 @workspace_cli.command('update-page')
-@click.option('--set', 'attr_value_pairs', help=f"set mets:div ATTR to VALUE. possible keys: {METS_PAGE_DIV_ATTRIBUTES}", metavar="ATTR VALUE", nargs=2, multiple=True)
+@click.option('--set', 'attr_value_pairs', help=f"set mets:div ATTR to VALUE. possible keys: {METS_PAGE_DIV_ATTRIBUTE.names()}", metavar="ATTR VALUE", nargs=2, multiple=True)
 @click.option('--order', help="[DEPRECATED - use --set ATTR VALUE", metavar='ORDER')               
 @click.option('--orderlabel', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
 @click.option('--contentids', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
@@ -706,7 +706,6 @@ def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
         update_kwargs['ORDERLABEL'] = orderlabel
     if contentids:
         update_kwargs['CONTENTIDS'] = contentids
-    print(update_kwargs)
     try:
         workspace.mets.update_physical_page_attributes(page_id, **update_kwargs)
         workspace.save_mets()
