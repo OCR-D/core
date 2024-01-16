@@ -60,6 +60,11 @@ async def db_create_workspace(mets_path: str) -> DBWorkspace:
         return workspace_db
 
 
+@call_sync
+async def sync_db_create_workspace(mets_path: str) -> DBWorkspace:
+    return await db_create_workspace(mets_path=mets_path)
+
+
 async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = None) -> DBWorkspace:
     workspace = None
     if not workspace_id and not workspace_mets_path:
