@@ -1,0 +1,1 @@
+dummy -I DEFAULT -O OCR-D-DUMMY

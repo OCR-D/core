@@ -194,6 +194,15 @@ async def sync_db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob
     return await db_update_processing_job(job_id=job_id, **kwargs)
 
 
+async def db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkflowJob:
+    return await db_workflow_job.insert()
+
+
+@call_sync
+async def sync_db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkflowJob:
+    return await db_create_workflow_job(db_workflow_job=db_workflow_job)
+
+
 async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     job = await DBWorkflowJob.find_one(DBWorkflowJob.job_id == job_id)
     if not job:
@@ -216,6 +225,15 @@ async def sync_db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
     return await db_get_processing_jobs(job_ids)
 
 
+async def db_create_workflow_script(db_workflow_script: DBWorkflowScript) -> DBWorkflowScript:
+    return await db_workflow_script.insert()
+
+
+@call_sync
+async def sync_db_create_workflow_script(db_workflow_script: DBWorkflowScript) -> DBWorkflowScript:
+    return await db_create_workflow_script(db_workflow_script=db_workflow_script)
+
+
 async def db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
     workflow = await DBWorkflowScript.find_one(DBWorkflowScript.workflow_id == workflow_id)
     if not workflow:
@@ -235,6 +253,7 @@ async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkf
     return workflow
 
 
+# TODO: Resolve the inconsistency between the async and sync versions of the same method
 @call_sync
 async def sync_db_find_first_workflow_script_by_content(workflow_id: str) -> DBWorkflowScript:
     return await db_get_workflow_script(workflow_id)

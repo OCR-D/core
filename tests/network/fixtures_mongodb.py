@@ -15,4 +15,5 @@ def verify_database_uri(mongodb_address: str) -> str:
 
 @fixture(scope="package", name="mongo_client")
 def fixture_mongo_client():
+    verify_database_uri(config.DB_URL)
     sync_initiate_database(config.DB_URL, config.DB_NAME)

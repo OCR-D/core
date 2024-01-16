@@ -1,18 +1,23 @@
+from hashlib import md5
+from pathlib import Path
 from pytest import raises
 from tests.base import assets
-from ocrd_network.models import DBProcessorJob, StateEnum
+from ocrd_network.models import DBProcessorJob, DBWorkflowScript, StateEnum
 from ocrd_network.database import (
     sync_db_create_processing_job,
     sync_db_get_processing_job,
     sync_db_update_processing_job,
     sync_db_create_workspace,
     sync_db_get_workspace,
-    sync_db_update_workspace
+    sync_db_update_workspace,
+    sync_db_create_workflow_script,
+    sync_db_get_workflow_script,
+    sync_db_find_first_workflow_script_by_content
 )
 
 
 def test_db_processing_job_create(mongo_client):
-    job_id = 'test_id_1234'
+    job_id = 'test_job_id_1'
     db_created_processing_job = sync_db_create_processing_job(
         db_processing_job=DBProcessorJob(
             job_id=job_id,
@@ -38,7 +43,7 @@ def test_db_processing_job_create(mongo_client):
 
 
 def test_db_processing_job_update(mongo_client):
-    job_id = 'test_id_12345'
+    job_id = 'test_job_id_2'
     db_created_processing_job = sync_db_create_processing_job(
         db_processing_job=DBProcessorJob(
             job_id=job_id,
@@ -104,3 +109,57 @@ def test_db_workspace_update(mongo_client):
     assert db_found_updated_workspace.workspace_mets_path == mets_path
     assert db_found_updated_workspace.mets_server_url == dummy_mets_server_url
     assert db_found_updated_workspace == db_updated_workspace
+
+
+# TODO: There is no db wrapper implemented due to direct access in the processing server...
+#   TODO2: Should be refactored with proper asset access
+def create_db_model_workflow_script(
+        workflow_id: str,
+        script_path: Path = Path(Path(__file__).parent, "dummy-workflow.txt")
+) -> DBWorkflowScript:
+    workflow_id = workflow_id
+    with open(script_path, 'rb') as fp:
+        content = (fp.read()).decode("utf-8")
+    content_hash = md5(content.encode("utf-8")).hexdigest()
+    return DBWorkflowScript(workflow_id=workflow_id, content=content, content_hash=content_hash)
+
+
+def test_db_workflow_script_create(mongo_client):
+    workflow_id = 'test_workflow_1'
+    db_model_workflow_script = create_db_model_workflow_script(workflow_id=workflow_id)
+    db_created_workflow_script = sync_db_create_workflow_script(
+        db_workflow_script=db_model_workflow_script
+    )
+    assert db_created_workflow_script
+    db_found_workflow_script = sync_db_get_workflow_script(workflow_id=workflow_id)
+    assert db_found_workflow_script
+    assert db_found_workflow_script == db_created_workflow_script
+
+    with raises(ValueError) as value_error:
+        sync_db_get_workflow_script(workflow_id='non-existing-id')
+
+
+def test_db_find_workflow_script_by_content(mongo_client):
+    workflow_id = 'test_workflow_2'
+    db_model_workflow_script = create_db_model_workflow_script(workflow_id=workflow_id)
+    db_created_workflow_script = sync_db_create_workflow_script(
+        db_workflow_script=db_model_workflow_script
+    )
+    assert db_created_workflow_script
+    db_found_workflow_script = sync_db_find_first_workflow_script_by_content(
+        workflow_id=db_model_workflow_script.workflow_id
+    )
+    assert db_found_workflow_script
+    assert db_found_workflow_script == db_created_workflow_script
+
+
+# TODO: hard to implement without some refactoring in the ocrd_network
+#  and providing proper db wrappers
+def test_db_workflow_job_create():
+    pass
+
+
+# TODO: hard to implement without some refactoring in the ocrd_network
+#  and providing proper db wrappers
+def test_db_workflow_job_update():
+    pass
