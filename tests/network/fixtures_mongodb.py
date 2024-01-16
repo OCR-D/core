@@ -18,7 +18,8 @@ def verify_database_uri(mongodb_address: str) -> str:
 
 @fixture(scope="package", name="mongo_client")
 def fixture_mongo_client():
-    # sync_initiate_database(DB_URL, DB_NAME)
+    # This extra initialization is needed to test the db wrapper methods
+    sync_initiate_database(DB_URL, DB_NAME)
     mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 
@@ -37,3 +38,11 @@ def fixture_mongo_workflow_jobs(mongo_client):
     workflow_jobs_collection = mydb["DBWorkflowJob"]
     yield workflow_jobs_collection
     workflow_jobs_collection.drop()
+
+
+@fixture(scope="package", name="mongo_workspaces")
+def fixture_mongo_workspaces(mongo_client):
+    mydb = mongo_client[DB_NAME]
+    workspaces_collection = mydb["DBWorkspace"]
+    yield workspaces_collection
+    workspaces_collection.drop()
