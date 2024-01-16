@@ -696,9 +696,8 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 @pass_workspace
 def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     """
-    Update the @ORDER, @ORDERLABEL, @LABEL or @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
+    Update the @ID, @ORDER, @ORDERLABEL, @LABEL or @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
     update_kwargs = {k: v for k, v in attr_value_pairs}
     if order:
         update_kwargs['ORDER'] = order
@@ -707,6 +706,7 @@ def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     if contentids:
         update_kwargs['CONTENTIDS'] = contentids
     try:
+        workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
         workspace.mets.update_physical_page_attributes(page_id, **update_kwargs)
         workspace.save_mets()
     except Exception as err:
