@@ -1,7 +1,8 @@
 from pytest import raises
 from tests.base import assets
-from ocrd_network.models import StateEnum
+from ocrd_network.models import DBProcessorJob, StateEnum
 from ocrd_network.database import (
+    sync_db_create_processing_job,
     sync_db_get_processing_job,
     sync_db_update_processing_job,
     sync_db_create_workspace,
@@ -10,19 +11,17 @@ from ocrd_network.database import (
 )
 
 
-def test_db_processing_job_create(mongo_processor_jobs):
+def test_db_processing_job_create(mongo_client):
     job_id = 'test_id_1234'
-    # TODO: There is no db wrapper to create processing job
-    #  Hence, for now, use a low level method to insert a job
-    db_created_processing_job = mongo_processor_jobs.insert_one(
-        document={
-            "job_id": job_id,
-            "processor_name": 'ocrd-dummy',
-            "state": StateEnum.cached,
-            "path_to_mets": '/ocrd/dummy/path',
-            "input_file_grps": ['DEFAULT'],
-            "output_file_grps": ['OCR-D-DUMMY']
-        }
+    db_created_processing_job = sync_db_create_processing_job(
+        db_processing_job=DBProcessorJob(
+            job_id=job_id,
+            processor_name='ocrd-dummy',
+            state=StateEnum.cached,
+            path_to_mets='/ocrd/dummy/path',
+            input_file_grps=['DEFAULT'],
+            output_file_grps=['OCR-D-DUMMY']
+        )
     )
     assert db_created_processing_job
     db_found_processing_job = sync_db_get_processing_job(job_id=job_id)
@@ -38,19 +37,17 @@ def test_db_processing_job_create(mongo_processor_jobs):
         sync_db_get_processing_job(job_id='non-existing-id')
 
 
-def test_db_processing_job_update(mongo_processor_jobs):
+def test_db_processing_job_update(mongo_client):
     job_id = 'test_id_12345'
-    # TODO: There is no db wrapper to create processing job
-    #  Hence, for now, use a low level method to insert a job
-    db_created_processing_job = mongo_processor_jobs.insert_one(
-        document={
-            "job_id": job_id,
-            "processor_name": 'ocrd-dummy',
-            "state": StateEnum.cached,
-            "path_to_mets": '/ocrd/dummy/path',
-            "input_file_grps": ['DEFAULT'],
-            "output_file_grps": ['OCR-D-DUMMY']
-        }
+    db_created_processing_job = sync_db_create_processing_job(
+        db_processing_job=DBProcessorJob(
+            job_id=job_id,
+            processor_name='ocrd-dummy',
+            state=StateEnum.cached,
+            path_to_mets='/ocrd/dummy/path',
+            input_file_grps=['DEFAULT'],
+            output_file_grps=['OCR-D-DUMMY']
+        )
     )
     assert db_created_processing_job
     db_found_processing_job = sync_db_get_processing_job(job_id=job_id)
@@ -68,7 +65,7 @@ def test_db_processing_job_update(mongo_processor_jobs):
         sync_db_update_processing_job(job_id=job_id, processor_name='non-updatable-field')
 
 
-def test_db_workspace_create():
+def test_db_workspace_create(mongo_client):
     mets_path = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
     db_created_workspace = sync_db_create_workspace(mets_path=mets_path)
     assert db_created_workspace
@@ -85,7 +82,7 @@ def test_db_workspace_create():
         sync_db_create_workspace(mets_path='non-existing-mets')
 
 
-def test_db_workspace_update():
+def test_db_workspace_update(mongo_client):
     mets_path = assets.path_to('kant_aufklaerung_1784-binarized/data/mets.xml')
     dummy_mets_server_url = '/tmp/dummy.sock'
 
