@@ -139,6 +139,15 @@ async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path
     return await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
 
 
+async def db_create_processing_job(db_processing_job: DBProcessorJob) -> DBProcessorJob:
+    return await db_processing_job.insert()
+
+
+@call_sync
+async def sync_db_create_processing_job(db_processing_job: DBProcessorJob) -> DBProcessorJob:
+    return await db_create_processing_job(db_processing_job=db_processing_job)
+
+
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
     job = await DBProcessorJob.find_one(
         DBProcessorJob.job_id == job_id)
