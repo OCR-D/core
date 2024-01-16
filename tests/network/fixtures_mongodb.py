@@ -30,19 +30,3 @@ def fixture_mongo_processor_jobs(mongo_client):
     processor_jobs_collection = mydb["DBProcessorJob"]
     yield processor_jobs_collection
     processor_jobs_collection.drop()
-
-
-@fixture(scope="package", name="mongo_workflow_jobs")
-def fixture_mongo_workflow_jobs(mongo_client):
-    mydb = mongo_client[DB_NAME]
-    workflow_jobs_collection = mydb["DBWorkflowJob"]
-    yield workflow_jobs_collection
-    workflow_jobs_collection.drop()
-
-
-@fixture(scope="package", name="mongo_workspaces")
-def fixture_mongo_workspaces(mongo_client):
-    mydb = mongo_client[DB_NAME]
-    workspaces_collection = mydb["DBWorkspace"]
-    yield workspaces_collection
-    workspaces_collection.drop()
