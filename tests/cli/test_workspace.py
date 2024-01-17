@@ -563,6 +563,7 @@ class TestCli(TestCase):
             assert _call(['-f', 'json']) == '[[["PHYS_0001"], ["PHYS_0002"], ["PHYS_0003"], ["PHYS_0004"], ["PHYS_0005"], ["PHYS_0006"], ["PHYS_0008"], ["PHYS_0009"], ["PHYS_0010"], ["PHYS_0011"], ["PHYS_0012"], ["PHYS_0013"], ["PHYS_0014"], ["PHYS_0015"], ["PHYS_0016"], ["PHYS_0017"], ["PHYS_0018"], ["PHYS_0019"], ["PHYS_0020"], ["PHYS_0022"], ["PHYS_0023"], ["PHYS_0024"], ["PHYS_0025"], ["PHYS_0026"], ["PHYS_0027"], ["PHYS_0028"], ["PHYS_0029"]]]'
             assert _call(['-f', 'comma-separated', '-R', '5..5']) == 'PHYS_0005'
             assert _call(['-f', 'comma-separated', '-R', '6..8']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
+            assert _call(['-f', 'comma-separated', '-r', '1..5']) == 'PHYS_0001,PHYS_0002,PHYS_0003,PHYS_0004,PHYS_0005'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0006..PHYS_0009']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3']) == 'PHYS_0001,PHYS_0002,PHYS_0003\nPHYS_0004,PHYS_0005,PHYS_0006\nPHYS_0008,PHYS_0009,PHYS_0010'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3', '-C', '2']) == 'PHYS_0008,PHYS_0009,PHYS_0010'

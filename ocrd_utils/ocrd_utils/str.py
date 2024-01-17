@@ -204,6 +204,8 @@ def generate_range(start, end):
         start_num, end_num = re.findall(r'\d+', start)[-1], re.findall(r'\d+', end)[-1]
     except IndexError:
         raise ValueError("Range '%s..%s': could not find numeric part" % (start, end))
+    if start[:-len(start_num)] != end[:-len(end_num)]:
+        raise ValueError(f"Range '{start}..{end}' differ in their non-numeric part: '{start[:-len(start_num)]}' != '{end[:-len(end_num)]}'")
     if start_num == end_num:
         warn("Range '%s..%s': evaluates to the same number")
     for i in range(int(start_num), int(end_num) + 1):
