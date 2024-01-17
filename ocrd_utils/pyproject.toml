@@ -1,18 +1,18 @@
 [build-system]
 requires = [
          "setuptools>=61",
+         "setuptools_scm[toml]",
          "wheel",
 ]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ocrd_utils"
-version = "1.2.3"
 authors = [{name = "Konstantin Baierer", email = "unixprog@gmail.com"}]
 license = {text = "Apache License 2.0"}
 description = "OCR-D framework - shared code, helpers, constants"
 requires-python = ">=3.7"
-dynamic = ["dependencies"]
+dynamic = ["version", "dependencies"]
 
 [project.readme]
 file = "README.md"
@@ -35,3 +35,6 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 namespaces = false
+
+[tool.setuptools_scm]
+root = ".."
