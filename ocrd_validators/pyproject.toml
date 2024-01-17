@@ -1,7 +1,6 @@
 [build-system]
 requires = [
-         "setuptools>=61",
-         "setuptools_scm[toml]",
+         "setuptools>=44",
          "wheel",
 ]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
@@ -21,6 +20,9 @@ content-type = "text/markdown"
 [tool.setuptools.dynamic.dependencies]
 file = ["requirements.txt"]
 
+[tool.setuptools.dynamic.version]
+file = ["VERSION"]
+
 [project.urls]
 Homepage = "https://ocr-d.de"
 Documentation = "https://ocr-d.de/core"
@@ -35,6 +37,3 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 namespaces = false
-
-[tool.setuptools_scm]
-root = ".."

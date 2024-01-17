@@ -7,6 +7,7 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
+VERSION = $(shell cat VERSION)
 
 SPHINX_APIDOC =
 
@@ -119,7 +120,7 @@ deps-test:
 .PHONY: build install install-dev uninstall
 
 build:
-	$(PIP) install build setuptools_scm
+	$(PIP) install build
 	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build ./$(MODULE) &&) echo done
 # or use -n ?
 
@@ -292,4 +293,4 @@ docker docker-cuda:
 
 # Build wheels and source dist and twine upload them
 pypi: build
-	twine upload ocrd*/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*{tar.gz,whl}
+	echo twine upload ocrd*/dist/ocrd*$(VERSION)*{tar.gz,whl}
