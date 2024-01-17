@@ -564,6 +564,8 @@ class TestCli(TestCase):
             assert _call(['-f', 'comma-separated', '-R', '5..5']) == 'PHYS_0005'
             assert _call(['-f', 'comma-separated', '-R', '6..8']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
             assert _call(['-f', 'comma-separated', '-r', '1..5']) == 'PHYS_0001,PHYS_0002,PHYS_0003,PHYS_0004,PHYS_0005'
+            assert _call(['-f', 'comma-separated', '-r', '2..3']) == 'PHYS_0002,PHYS_0003'
+            assert _call(['-f', 'comma-separated', '-r', 'page 2..page 3']) == 'PHYS_0002,PHYS_0003'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0006..PHYS_0009']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3']) == 'PHYS_0001,PHYS_0002,PHYS_0003\nPHYS_0004,PHYS_0005,PHYS_0006\nPHYS_0008,PHYS_0009,PHYS_0010'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3', '-C', '2']) == 'PHYS_0008,PHYS_0009,PHYS_0010'
