@@ -1,3 +1,4 @@
+from datetime import datetime
 from hashlib import md5
 import httpx
 import json
@@ -126,6 +127,14 @@ class ProcessingServer(FastAPI):
             self.internal_job_callback_url = f'{host.rstrip("/")}/result_callback'
         else:
             self.internal_job_callback_url = f'http://{host}:{port}/result_callback'
+
+        self.router.add_api_route(
+            path='/',
+            endpoint=self.home_page,
+            methods=['GET'],
+            status_code=status.HTTP_200_OK,
+            summary='Get information about the processing server'
+        )
 
         # Create routes
         self.router.add_api_route(
@@ -287,6 +296,14 @@ class ProcessingServer(FastAPI):
         - connect to hosts and kill pids
         """
         await self.stop_deployed_agents()
+
+    async def home_page(self):
+        message = f"The home page of the {self.title}"
+        json_message = {
+            "message": message,
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        return json_message
 
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()

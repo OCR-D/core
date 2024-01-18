@@ -10,6 +10,7 @@ services:
   ocrd_network_mongo_db:
     image: "mongo"
     hostname: mongodb-docker-host
+    container_name: ocrd_network_mongo_db
     networks:
       - ocrd_network_test
     ports:
@@ -17,10 +18,16 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=network_test
       - MONGO_INITDB_ROOT_PASSWORD=network_test
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 1s
+      timeout: 3s
+      retries: 30
 
   ocrd_network_rabbit_mq:
     image: "rabbitmq:3.12-management"
     hostname: rabbitmq-docker-host
+    container_name: ocrd_network_rabbit_mq
     networks:
       - ocrd_network_test
     ports:
@@ -31,6 +38,39 @@ services:
       - RABBITMQ_DEFAULT_USER=network_test
       - RABBITMQ_DEFAULT_PASS=network_test
       - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  ocrd_network_processing_server:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: 'ubuntu:20.04'
+    hostname: processing-server-host
+    container_name: ocrd_network_processing_server
+    depends_on:
+      ocrd_network_mongo_db:
+        condition: service_healthy
+      ocrd_network_rabbit_mq:
+        condition: service_healthy
+    networks:
+      - ocrd_network_test
+    ports:
+      - "8000:8000"
+    environment:
+      DB_NAME: ocrd_network_test
+      DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
+      RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
+    volumes:
+      - "./ps_config.yml:/ps_config.yml"
+      - "/home/mm/.ssh/cloud.key:/ssh_key"
+      - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
+      - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
+    command: ocrd network processing-server /ps_config.yml --address 0.0.0.0:8000
 
   ocrd_network_core_test:
     build:
@@ -40,10 +80,15 @@ services:
         BASE_IMAGE: 'ubuntu:20.04'
       target: ocrd_core_test
     container_name: core_test
+    depends_on:
+      ocrd_network_mongo_db:
+        condition: service_healthy
+      ocrd_network_rabbit_mq:
+        condition: service_healthy
     networks:
       - ocrd_network_test
     environment:
       DB_NAME: ocrd_network_test
       DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
-      # PROCESSING_SERVER_URL : http://...
+      PROCESSING_SERVER_URL: http://processing-server-host.ocrd_network_test:8000
       RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672

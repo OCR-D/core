@@ -217,7 +217,7 @@ INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 integration-test:
 	docker compose -f tests/network/docker-compose.yml up -d
 	sleep 20
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db'
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server'
 	docker compose -f tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
