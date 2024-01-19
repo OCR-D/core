@@ -140,8 +140,8 @@ uninstall:
 	$(PIP) uninstall --yes ocrd
 
 # Regenerate python code from PAGE XSD
-generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
-generate-page: GDS_PAGE_USER = ocrd_models/ocrd_page_user_methods.py
+generate-page: GDS_PAGE = src/ocrd_models/ocrd_page_generateds.py
+generate-page: GDS_PAGE_USER = src/ocrd_page_user_methods.py
 generate-page: repo/assets
 	generateDS \
 		-f \
@@ -151,7 +151,7 @@ generate-page: repo/assets
 		--export "write etree" \
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
-		ocrd_validators/ocrd_validators/page.xsd
+		src/ocrd_validators/page.xsd
 	# hack to prevent #451: enum keys will be strings
 	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
 	# hack to ensure output has pc: prefix
