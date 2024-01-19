@@ -119,14 +119,13 @@ deps-test:
 .PHONY: build install install-dev uninstall
 
 build:
-	$(PIP) install build setuptools_scm
-	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build ./$(MODULE) &&) echo done
+	$(PIP) install build
+	$(PYTHON) -m build .
 # or use -n ?
 
 # (Re)install the tool
 install: #build
-#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*.whl)
-	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) $(PIP_INSTALL_CONFIG_OPTION) &&) echo done
+	$(PIP_INSTALL) . $(PIP_INSTALL_CONFIG_OPTION)
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
 
@@ -138,7 +137,7 @@ install-dev: uninstall
 
 # Uninstall the tool
 uninstall:
-	$(PIP) uninstall -y $(call reverse,$(BUILD_ORDER))
+	$(PIP) uninstall .
 
 # Regenerate python code from PAGE XSD
 generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
