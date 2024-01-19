@@ -18,7 +18,7 @@ __all__ = [
     'VERSION',
 ]
 
-VERSION = get_distribution('ocrd_utils').version
+VERSION = get_distribution('ocrd').version
 
 MIMETYPE_PAGE = 'application/vnd.prima.page+xml'
 
