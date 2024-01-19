@@ -10,7 +10,7 @@ def test_processing_server_connectivity():
     assert response.status_code == 200, \
         f'Processing server is not reachable on: {test_url}, {response.status_code}'
     message = response.json()['message']
-    assert message.startsWith('The home page of'), \
+    assert message.startswith('The home page of'), \
         f'Processing server home page message is corrupted'
 
 
