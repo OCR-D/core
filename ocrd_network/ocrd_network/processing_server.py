@@ -342,8 +342,8 @@ class ProcessingServer(FastAPI):
         # TODO: Reconsider and refactor this.
         #  Added ocrd-dummy by default if not available for the integration tests.
         #  A proper Processing Worker / Processor Server registration endpoint is needed on the Processing Server side
-        if 'dummy' not in queue_names:
-            queue_names.append('dummy')
+        if 'ocrd-dummy' not in queue_names:
+            queue_names.append('ocrd-dummy')
 
         for queue_name in queue_names:
             # The existence/validity of the worker.name is not tested.
@@ -405,7 +405,7 @@ class ProcessingServer(FastAPI):
             #  Added ocrd-dummy by default if not available for the integration tests.
             #  A proper Processing Worker / Processor Server registration endpoint
             #  is needed on the Processing Server side
-            if processor_name == 'dummy':
+            if processor_name == 'ocrd-dummy':
                 return True
             if not self.check_if_queue_exists(processor_name):
                 return False
