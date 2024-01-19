@@ -39,7 +39,7 @@ class OcrdFile():
         self.pageId = pageId
 
         if local_filename:
-            self.local_filename = Path(local_filename)
+            self.local_filename = local_filename
         if url:
             self.url = url
 
