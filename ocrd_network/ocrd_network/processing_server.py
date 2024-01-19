@@ -339,6 +339,12 @@ class ProcessingServer(FastAPI):
             unique_only=True
         )
 
+        # TODO: Reconsider and refactor this.
+        #  Added ocrd-dummy by default if not available for the integration tests.
+        #  A proper Processing Worker / Processor Server registration endpoint is needed on the Processing Server side
+        if 'dummy' not in queue_names:
+            queue_names.append('dummy')
+
         for queue_name in queue_names:
             # The existence/validity of the worker.name is not tested.
             # Even if an ocr-d processor does not exist, the queue is created
@@ -395,6 +401,12 @@ class ProcessingServer(FastAPI):
         if agent_type not in [NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER]:
             return False
         if agent_type == NETWORK_AGENT_WORKER:
+            # TODO: Reconsider and refactor this.
+            #  Added ocrd-dummy by default if not available for the integration tests.
+            #  A proper Processing Worker / Processor Server registration endpoint
+            #  is needed on the Processing Server side
+            if processor_name == 'dummy':
+                return True
             if not self.check_if_queue_exists(processor_name):
                 return False
         if agent_type == NETWORK_AGENT_SERVER:

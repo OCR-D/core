@@ -1,5 +1,6 @@
-from requests import get
+from requests import get, post
 from ocrd_utils.config import config
+from ocrd_network import NETWORK_AGENT_WORKER
 
 PROCESSING_SERVER_URL = config.PROCESSING_SERVER_URL
 
@@ -23,3 +24,19 @@ def test_processing_server_deployed_processors():
     assert response.status_code == 200, \
         f'Processing server is not reachable on: {test_url}, {response.status_code}'
     assert processors == [], f'Mismatch in deployed processors'
+
+
+def test_processing_server_processing_request():
+    # Note: the path_to_mets is volume mapped
+    test_processing_job_input = {
+        "path_to_mets": "/tmp/assets/kant_aufklaerung_1784/data/mets.xml",
+        "input_file_grps": ['OCR-D-IMG'],
+        "output_file_grps": ['OCR-D-DUMMY'],
+        "agent_type": NETWORK_AGENT_WORKER,
+        "parameters": {}
+    }
+    test_processor = 'ocrd-dummy'
+    test_url = f'{PROCESSING_SERVER_URL}/processor/run/{test_processor}'
+    response = post(url=test_url, data=test_processing_job_input)
+    assert response.status_code == 200, \
+        f'Processing server is not reachable on: {test_url}, {response.status_code}'
