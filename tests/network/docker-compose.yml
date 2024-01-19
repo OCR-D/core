@@ -50,6 +50,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASE_IMAGE: 'ubuntu:20.04'
+      target: ocrd_core_test
     hostname: processing-server-host
     container_name: ocrd_network_processing_server
     depends_on:
@@ -66,11 +67,46 @@ services:
       DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
       RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
     volumes:
-      - "./ps_config.yml:/ps_config.yml"
-      - "/home/mm/.ssh/cloud.key:/ssh_key"
       - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
       - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
-    command: ocrd network processing-server /ps_config.yml --address 0.0.0.0:8000
+    command: |
+      /bin/bash -c "echo -e \"
+        internal_callback_url: http://processing-server-host.ocrd_network_test:8000
+        process_queue:
+          address: rabbitmq-docker-host.ocrd_network_test
+          port: 5672
+          skip_deployment: true
+          credentials:
+            username: network_test
+            password: network_test
+        database:
+          address: mongodb-docker-host.ocrd_network_test
+          port: 27017
+          skip_deployment: true
+          credentials:
+            username: network_test
+            password: network_test
+        hosts: []\" > ./ps_config.yaml && \
+        ocrd network processing-server -a 0.0.0.0:8000 ./ps_config.yaml"
+
+  ocrd_dummy_processing_worker:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: 'ubuntu:20.04'
+      target: ocrd_core_test
+    depends_on:
+      ocrd_network_mongo_db:
+        condition: service_healthy
+      ocrd_network_rabbit_mq:
+        condition: service_healthy
+    networks:
+      - ocrd_network_test
+    volumes:
+      - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
+      - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
+    command: ocrd-dummy worker --database mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017 --queue amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
 
   ocrd_network_core_test:
     build:
