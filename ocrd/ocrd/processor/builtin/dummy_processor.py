@@ -79,7 +79,7 @@ class DummyProcessor(Processor):
 
 
     def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = OCRD_TOOL
+        kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-dummy']
         kwargs['version'] = '0.0.3'
         super(DummyProcessor, self).__init__(*args, **kwargs)
 

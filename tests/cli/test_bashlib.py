@@ -1,6 +1,5 @@
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
-from pkg_resources import parse_version
 import os, sys
 import traceback
 import subprocess
@@ -103,8 +102,8 @@ class TestBashlibCli(TestCase):
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && ocrd__minversion 2.29.0")
         assert exit_code == 0
-        version = parse_version(VERSION)
-        version = "%d.%d.%d" % (version.major, version.minor+1, 0)
+        major, minor = map(int, VERSION.split('.')[0:2])
+        version = "%d.%d.%d" % (major, minor + 1, 0)
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && ocrd__minversion " + version)
         assert exit_code > 0
