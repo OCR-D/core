@@ -137,7 +137,7 @@ install-dev: uninstall
 
 # Uninstall the tool
 uninstall:
-	$(PIP) uninstall .
+	$(PIP) uninstall ocrd
 
 # Regenerate python code from PAGE XSD
 generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
