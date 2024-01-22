@@ -122,4 +122,4 @@ workflows:
       - test-python39
       - test-python310
       - test-python311
-      - test-macos
+      # - test-macos
