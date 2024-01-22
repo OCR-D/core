@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-import pdb
+# import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
 from ocrd_utils import config
