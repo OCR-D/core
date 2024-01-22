@@ -262,8 +262,12 @@ gh-pages:
 #
 
 pyclean:
+	rm -rf ./build
+	rm -rf ./dist
+	rm -rf htmlcov
+	rm -rf .benchmarks
 	rm -f **/*.pyc
-	find . -name '__pycache__' -exec rm -rf '{}' \;
+	-find . -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 #
@@ -292,3 +296,34 @@ docker docker-cuda:
 # Build wheels and source dist and twine upload them
 pypi: build
 	twine upload ocrd*/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*{tar.gz,whl}
+
+# Only in place until v3 so we don't break existing installations
+build-workaround:
+	cp pyproject.toml pyproject.toml.BAK
+	cp src/ocrd_utils/constants.py src/ocrd_utils/constants.py.BAK
+	cp src/ocrd/cli/__init__.py src/ocrd/cli/__init__.py.BAK
+	for dist in $(BUILD_ORDER);do \
+		cat pyproject.toml.BAK | sed "s,^name =.*,name = \"$$dist\"," > pyproject.toml; \
+		cat src/ocrd_utils/constants.py.BAK | sed "s,get_distribution('ocrd'),get_distribution('$$dist')," > src/ocrd_utils/constants.py; \
+		cat src/ocrd/cli/__init__.py.BAK | sed "s,package_name='ocrd',package_name='$$dist'," > src/ocrd/cli/__init__.py; \
+		$(MAKE) build; \
+	done
+	rm pyproject.toml.BAK
+	rm src/ocrd_utils/constants.py.BAK
+	rm src/ocrd/cli/__init__.py.BAK
+
+# test that the aliased packages work in isolation and combined
+test-workaround: build-workaround
+	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+	for dist in $(BUILD_ORDER);do \
+		pip install dist/$$dist-*.whl ;\
+		ocrd --version ;\
+		make test ;\
+		pip uninstall --yes $$dist ;\
+	done
+	for dist in $(BUILD_ORDER);do \
+		pip install dist/$$dist-*.whl ;\
+	done
+	ocrd --version ;\
+	make test ;\
+	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
