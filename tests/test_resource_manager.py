@@ -21,7 +21,7 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
 
     # arrange
     monkeypatch.setenv('HOME', str(tmp_path))
-    monkeypatch.delenv('XDG_CONFIG_HOME')
+    monkeypatch.delenv('XDG_CONFIG_HOME', raising=False)
 
     # act
     mgr = OcrdResourceManager()
