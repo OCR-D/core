@@ -7,6 +7,7 @@ LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
 TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
+VERSION = $(shell cat VERSION)
 
 SPHINX_APIDOC =
 
@@ -295,10 +296,13 @@ docker docker-cuda:
 
 # Build wheels and source dist and twine upload them
 pypi: build
-	twine upload ocrd*/dist/ocrd*`$(PYTHON) -m setuptools_scm 2>/dev/null`*{tar.gz,whl}
+	twine upload dist/ocrd-$(VERSION)*{tar.gz,whl}
+
+pypi-workaround: build-workaround
+	for dist in $(BUILD_ORDER);do twine upload dist/$$dist-$(VERSION)*{tar.gz,whl};done
 
 # Only in place until v3 so we don't break existing installations
-build-workaround:
+build-workaround: pyclean
 	cp pyproject.toml pyproject.toml.BAK
 	cp src/ocrd_utils/constants.py src/ocrd_utils/constants.py.BAK
 	cp src/ocrd/cli/__init__.py src/ocrd/cli/__init__.py.BAK
