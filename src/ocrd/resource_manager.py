@@ -36,7 +36,16 @@ class OcrdResourceManager():
         self._xdg_data_home = xdg_data_home
         self._xdg_config_home = xdg_config_home
         self._userdir = userdir
+        import os
+        # import traceback
+        # traceback.print_stack()
+        print('os.environ.HOME', os.environ['HOME'])
+        print('config.HOME', config.HOME)
+        print('config.XDG_CONFIG_HOME', config.XDG_CONFIG_HOME)
+        print('xdg_config_home', xdg_config_home)
+        print('self.xdg_config_home', self.xdg_config_home)
         self.user_list = Path(self.xdg_config_home, 'ocrd', 'resources.yml')
+        # print(self.user_list)
 
         if not skip_init:
             self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
@@ -60,9 +69,9 @@ class OcrdResourceManager():
 
     @property
     def xdg_config_home(self):
-        if not self._xdg_config_home:
-            self._xdg_config_home = config.XDG_CONFIG_HOME
-        return self._xdg_config_home
+        if self._xdg_config_home:
+            return self._xdg_config_home
+        return config.XDG_CONFIG_HOME
 
     def save_user_list(self, database=None):
         if not database:

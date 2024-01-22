@@ -3,6 +3,7 @@ from pathlib import Path
 import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
+from ocrd_utils import config
 from ocrd_utils.os import get_ocrd_tool_json
 
 from pytest import raises, fixture
@@ -20,17 +21,19 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
 
     # arrange
     monkeypatch.setenv('HOME', str(tmp_path))
+    monkeypatch.delenv('XDG_CONFIG_HOME')
 
     # act
     mgr = OcrdResourceManager()
-    mgr._xdg_config_home = None
 
     # assert
     default_config_dir = os.path.join(os.environ['HOME'], '.config', 'ocrd')
     f = Path(default_config_dir) / CONST_RESOURCE_YML
     assert os.environ['HOME'] == str(tmp_path)
-    assert f.exists()
+    assert config.HOME == tmp_path
+    assert Path.home() == tmp_path
     assert f == mgr.user_list
+    assert f.exists()
     assert mgr.add_to_user_database('ocrd-foo', f)
     # pdb.set_trace()
 
