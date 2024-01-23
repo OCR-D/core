@@ -13,6 +13,7 @@ COPY ocrd ./ocrd
 COPY ocrd_modelfactory ./ocrd_modelfactory/
 COPY ocrd_models ./ocrd_models
 COPY ocrd_utils ./ocrd_utils
+COPY VERSION ./VERSION
 RUN mv ./ocrd_utils/ocrd_logging.conf /etc
 COPY ocrd_validators/ ./ocrd_validators
 COPY ocrd_network/ ./ocrd_network
