@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * deps-cuda: add workaround for tf-keras#62, #1169
+  
+
 ## [2.61.0] - 2024-01-23
 
 Changed:
