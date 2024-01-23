@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: simplify the project layout and distribution policy, #1166
+    * In the future there will be only one distribution `ocrd`
+    * The previous separate distributions of the `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are all part of `ocrd` now
+    * Nothing needs to be changed in code using OCR-D/core, the package structure and API is the same as before
+    * Until the next major release, we will continue to provide distributions for `ocrd_utils` etc. that contain the same code as `ocrd`
+    * Using `ocrd_utils` etc. as distributions in `requirements.txt` or `install_requires` is now deprecated
+    * Once we release v3.0.0, these distributions will be depublished
+
 ## [2.60.3] - 2024-01-10
 
 Fixed:
