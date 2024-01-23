@@ -133,7 +133,7 @@ See [README for `ocrd_modelfactory`](./README_ocrd_modelfactory.md) for further 
 
 Schemas and routines for validating BagIt, `ocrd-tool.json`, workspaces, METS, page, CLI parameters etc.
 
-See [README for `ocrd_validators`](./ocrd_validators/README.md) for further information.
+See [README for `ocrd_validators`](./README_ocrd_validators.md) for further information.
 
 ### ocrd_network
 
