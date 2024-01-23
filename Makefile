@@ -62,6 +62,8 @@ deps-cuda:
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
+# workaround for tf-keras#62
+	echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$(CONDA_PREFIX)/' >> /etc/profile.d/98-conda.sh
 	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
 	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
 # Get CUDA toolkit, including compiler and libraries with dev,
