@@ -1,3 +1,0 @@
-lxml
-ocrd_utils
-ocrd_models

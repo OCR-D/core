@@ -1,0 +1,34 @@
+atomicwrites >= 1.3.0
+bagit >= 1.7.0
+bagit_profile >= 1.3.0
+beanie~=1.7
+click >=7
+Deprecated == 1.2.0
+docker
+fastapi
+fastapi>=0.78.0
+filetype
+Flask
+frozendict>=2.3.4
+gdown
+httpx>=0.22.0
+jsonschema
+lxml
+memory-profiler >= 0.58.0
+numpy
+opencv-python-headless
+paramiko
+pika>=1.2.0
+Pillow >= 7.2.0
+pydantic==1.*
+python-magic
+python-multipart
+pyyaml
+requests < 2.30
+requests_unixsocket
+shapely
+sparklines >= 0.4.2
+# tensorflow versions might require different versions
+uvicorn
+uvicorn>=0.17.6
+# XXX explicitly do not restrict the numpy version because different

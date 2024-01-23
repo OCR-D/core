@@ -15,4 +15,5 @@ Submodules
    ocrd_network.models.job
    ocrd_network.models.messages
    ocrd_network.models.ocrd_tool
+   ocrd_network.models.workflow
    ocrd_network.models.workspace
