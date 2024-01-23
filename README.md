@@ -122,19 +122,19 @@ Some parts of the software are configured via environement variables:
 
 Contains utilities and constants, e.g. for logging, path normalization, coordinate calculation etc.
 
-See [README for `ocrd_utils`](./ocrd_utils/README.md) for further information.
+See [README for `ocrd_utils`](./README_ocrd_utils.md) for further information.
 
 ### ocrd_models
 
 Contains file format wrappers for PAGE-XML, METS, EXIF metadata etc.
 
-See [README for `ocrd_models`](./ocrd_models/README.md) for further information.
+See [README for `ocrd_models`](./README_ocrd_models.md) for further information.
 
 ### ocrd_modelfactory
 
 Code to instantiate [models](#ocrd-models) from existing data.
 
-See [README for `ocrd_modelfactory`](./ocrd_modelfactory/README.md) for further information.
+See [README for `ocrd_modelfactory`](./README_ocrd_modelfactory.md) for further information.
 
 ### ocrd_validators
 
@@ -146,7 +146,7 @@ See [README for `ocrd_validators`](./ocrd_validators/README.md) for further info
 
 Components related to OCR-D Web API
 
-See [README for `ocrd_network`](./ocrd_network/README.md) for further information.
+See [README for `ocrd_network`](./README_ocrd_network.md) for further information.
 
 ### ocrd
 
@@ -154,7 +154,7 @@ Depends on all of the above, also contains decorators and classes for creating O
 
 Also contains the command line tool `ocrd`.
 
-See [README for `ocrd`](./ocrd/README.md) for further information.
+See [README for `ocrd`](./README_ocrd.md) for further information.
 
 ## bash library
 
