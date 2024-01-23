@@ -14,6 +14,17 @@ For example:
     echo ${MIMETYPES[.jpg]}
 
 
+<!-- BEGIN-MARKDOWN-TOC -->
+* [bashlib CLI](#bashlib-cli)
+* [bashlib API](#bashlib-api)
+* [`ocrd__raise`](#ocrd__raise)
+* [`ocrd__log`](#ocrd__log)
+* [`ocrd__minversion`](#ocrd__minversion)
+* [`ocrd__dumpjson`](#ocrd__dumpjson)
+* [`ocrd__usage`](#ocrd__usage)
+* [`ocrd__parse_argv`](#ocrd__parse_argv)
+<!-- END-MARKDOWN-TOC -->
+
 ## bashlib CLI
 
 See [CLI usage](https://ocr-d.de/core/api/ocrd/ocrd.cli.bashlib.html)
