@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.61.0] - 2024-01-23
+
 Changed:
 
   * :fire: simplify the project layout and distribution policy, #1166
@@ -1967,6 +1969,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.61.0]: ../../compare/v2.61.0..v2.60.3
 [2.60.3]: ../../compare/v2.60.3..v2.60.2
 [2.60.2]: ../../compare/v2.60.2..v2.60.1
 [2.60.1]: ../../compare/v2.60.1..v2.60.0
