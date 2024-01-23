@@ -8,7 +8,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * deps-cuda: add workaround for tf-keras#62, #1169
-  
+  * fix regression docker deployment, #1172
+
 
 ## [2.61.0] - 2024-01-23
 
