@@ -2,6 +2,7 @@
 !src*
 !pyproject.toml
 !Makefile
+!VERSION
 !LICENSE
 !README.md
 !.git

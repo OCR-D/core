@@ -12,12 +12,13 @@ WORKDIR /build-ocrd
 
 COPY src ./src
 COPY pyproject.toml .
+COPY VERSION ./VERSION
+RUN mv ./src/ocrd_utils/ocrd_logging.conf /etc
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
 COPY .git ./.git
 
-RUN mv ./src/ocrd_utils/ocrd_logging.conf /etc
 RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
 RUN apt-get update && apt-get -y install software-properties-common \
     && apt-get update && apt-get -y install \
