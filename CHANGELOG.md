@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * another regression to docker deployment (requirements.txt missing), #1173
+
 ## [2.61.1] - 2024-01-23
 
 Fixed:
