@@ -50,7 +50,7 @@ services:
       context: ../../
       dockerfile: Dockerfile
       args:
-        BASE_IMAGE: 'ubuntu:20.04'
+        BASE_IMAGE: 'ubuntu:22.04'
       target: ocrd_core_test
     hostname: processing-server-host
     container_name: ocrd_network_processing_server
@@ -75,7 +75,8 @@ services:
     volumes:
       - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
       - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
-      - "../assets:/tmp/assets"
+      - "../assets/kant_aufklaerung_1784:/tmp/assets/kant_aufklaerung_1784"
+      - "./dummy-workflow.txt:/tmp/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     command: |
       /bin/bash -c "echo -e \"
@@ -107,7 +108,8 @@ services:
     volumes:
       - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
       - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
-      - "../assets:/tmp/assets"
+      - "../assets/kant_aufklaerung_1784:/tmp/assets/kant_aufklaerung_1784"
+      - "./dummy-workflow.txt:/tmp/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     command: > 
       ocrd-dummy worker 
@@ -125,7 +127,8 @@ services:
     volumes:
       - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
       - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
-      - "../assets:/tmp/assets"
+      - "../assets/kant_aufklaerung_1784:/tmp/assets/kant_aufklaerung_1784"
+      - "./dummy-workflow.txt:/tmp/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     environment:
       DB_NAME: ocrd_network_test
