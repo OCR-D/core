@@ -1,4 +1,4 @@
-name: Test core installation and run ocrd network integration tests
+name: Run ocrd network integration tests
 
 on:
   push:
