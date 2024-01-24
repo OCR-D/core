@@ -13,6 +13,7 @@ WORKDIR /build-ocrd
 COPY src ./src
 COPY pyproject.toml .
 COPY VERSION ./VERSION
+COPY requirements.txt ./requirements.txt
 RUN mv ./src/ocrd_utils/ocrd_logging.conf /etc
 COPY Makefile .
 COPY README.md .
