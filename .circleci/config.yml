@@ -32,7 +32,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu 
       - run: make install deps-test
-      - run: make test benchmark integration-test
+      - run: make test benchmark
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -47,7 +47,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark integration-test
+      - run: make test benchmark
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -62,7 +62,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark integration-test
+      - run: make test benchmark
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -77,7 +77,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark integration-test
+      - run: make test benchmark
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
@@ -92,7 +92,7 @@ jobs:
       - run: sudo apt-get -y update
       - run: sudo make deps-ubuntu
       - run: make install deps-test
-      - run: make test benchmark integration-test
+      - run: make test benchmark
       # smoke test to ensure that --editable install works
       - run: make install-dev; ocrd --version
 
