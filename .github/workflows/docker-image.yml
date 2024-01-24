@@ -6,7 +6,8 @@ on:
   workflow_dispatch: # run manually
 
 env:
-  DOCKER_TAG: ghcr.io/ocr-d/core
+  GHCRIO_DOCKER_TAG: ghcr.io/ocr-d/core
+  DOCKERIO__DOCKER_TAG: docker.io/ocr-d/core
 
 jobs:
 
@@ -24,14 +25,14 @@ jobs:
       uses: docker/setup-buildx-action@v2
     - name: Build the Docker image
       # default tag uses docker.io, so override on command-line
-      run: make docker DOCKER_TAG=${{ env.DOCKER_TAG }}
+      run: make docker DOCKER_TAG=${{ env.GHCRIO_DOCKER_TAG }}
     - name: Build the Docker image with GPU support
       # default tag uses docker.io, so override on command-line
-      run: make docker-cuda DOCKER_TAG=${{ env.DOCKER_TAG }}-cuda DOCKER_BASE_IMAGE=${{ env.DOCKER_TAG }}
+      run: make docker-cuda DOCKER_TAG=${{ env.GHCRIO_DOCKER_TAG }}-cuda DOCKER_BASE_IMAGE=${{ env.GH_DOCKER_TAG }}
     - name: Smoke Test that ocrd --help works
       run: |
-        docker run --rm ${{ env.DOCKER_TAG }} ocrd --version
-        docker run --rm ${{ env.DOCKER_TAG }}-cuda ocrd --version
+        docker run --rm ${{ env.GHCRIO_DOCKER_TAG }} ocrd --version
+        docker run --rm ${{ env.GHCRIO_DOCKER_TAG }}-cuda ocrd --version
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v2
       with:
@@ -40,6 +41,23 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Push images to Github Container Registry
       run: |
-        docker push ${{ env.DOCKER_TAG }}:latest
-        docker push ${{ env.DOCKER_TAG }}-cuda:latest
+        docker push ${{ env.GHCRIO_DOCKER_TAG }}:latest
+        docker push ${{ env.GHCRIO_DOCKER_TAG }}-cuda:latest
+    - name: Log in to Docker Hub
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Push images to Docker Hub
+      run: |
+        docker tag ${{ GHCRIO_DOCKER_TAG }} ${{ DOCKERIO__DOCKER_TAG }}
+        docker tag ${{ GHCRIO_DOCKER_TAG }}-cuda ${{ DOCKERIO__DOCKER_TAG }}-cuda
+        docker push ${{ env.DOCKERIO__DOCKER_TAG }}:latest
+        docker push ${{ env.DOCKERIO__DOCKER_TAG }}-cuda:latest
+        docker push ${{ env.DOCKERIO__DOCKER_TAG }}:latest
+        docker push ${{ env.DOCKERIO__DOCKER_TAG }}-cuda:latest
+        docker tag ${{ env.DOCKERIO__DOCKER_TAG }} ${{ env.DOCKERIO__DOCKER_TAG }}:$(git describe --tags --abbrev=0)
+        docker tag ${{ env.DOCKERIO__DOCKER_TAG }}-cuda ${{ env.DOCKERIO__DOCKER_TAG }}-cuda:$(git describe --tags --abbrev=0)
+        docker push ${{ env.DOCKERIO__DOCKER_TAG }}:$(git describe --tags --abbrev=0)
+        docker push ${{ env.DOCKERIO__DOCKER_TAG }}-cuda:$(git describe --tags --abbrev=0)
     
