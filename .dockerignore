@@ -1,6 +1,7 @@
 *
 !src*
 !pyproject.toml
+!requirements.txt
 !Makefile
 !VERSION
 !LICENSE
