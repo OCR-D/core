@@ -22,7 +22,6 @@ jobs:
           - '3.11'
         os:
           - ubuntu-22.04
-          - ubuntu-20.04
           - macos-latest
 
     steps:
@@ -45,13 +44,6 @@ jobs:
             brew install imagemagick geos bash  # opencv
           fi
           make install deps-test
-      - name: Test with pytest
+      - name: Test network integration with pytest
         run: |
           make test integration-test
-      - name: Lint with flake8
-        run: |
-          python -m pip install flake8
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 src --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
