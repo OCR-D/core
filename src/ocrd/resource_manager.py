@@ -60,9 +60,9 @@ class OcrdResourceManager():
 
     @property
     def xdg_config_home(self):
-        if not self._xdg_config_home:
-            self._xdg_config_home = config.XDG_CONFIG_HOME
-        return self._xdg_config_home
+        if self._xdg_config_home:
+            return self._xdg_config_home
+        return config.XDG_CONFIG_HOME
 
     def save_user_list(self, database=None):
         if not database:

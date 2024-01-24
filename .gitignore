@@ -109,7 +109,6 @@ env2/
 
 ocrd.egg-info
 .pytest_cache
-/src
 /profile
 .~lock*
 .pynative
@@ -125,5 +124,5 @@ tests/assets/test.ocrd.zip
 /foo
 sanders*
 ws1
-*.doctree
+*.doctrees
 .vscode

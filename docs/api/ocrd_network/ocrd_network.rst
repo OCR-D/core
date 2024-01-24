@@ -23,6 +23,7 @@ Submodules
    :maxdepth: 4
 
    ocrd_network.client
+   ocrd_network.constants
    ocrd_network.database
    ocrd_network.deployer
    ocrd_network.deployment_utils
