@@ -9,17 +9,16 @@ ENV LANG=C.UTF-8
 ENV PIP=pip
 
 WORKDIR /build-ocrd
-COPY ocrd ./ocrd
-COPY ocrd_modelfactory ./ocrd_modelfactory/
-COPY ocrd_models ./ocrd_models
-COPY ocrd_utils ./ocrd_utils
-RUN mv ./ocrd_utils/ocrd_logging.conf /etc
-COPY ocrd_validators/ ./ocrd_validators
-COPY ocrd_network/ ./ocrd_network
+
+COPY src ./src
+COPY pyproject.toml .
+COPY VERSION ./VERSION
+RUN mv ./src/ocrd_utils/ocrd_logging.conf /etc
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
 COPY .git ./.git
+
 RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
 RUN apt-get update && apt-get -y install software-properties-common \
     && apt-get update && apt-get -y install \
@@ -36,7 +35,6 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && make deps-ubuntu
 RUN python3 -m venv /usr/local \
     && hash -r \
-    && pip install --upgrade pip setuptools wheel \
     && make install \
     && eval $FIXUP
 

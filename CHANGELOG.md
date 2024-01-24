@@ -5,6 +5,26 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.61.1] - 2024-01-23
+
+Fixed:
+
+  * deps-cuda: add workaround for tf-keras#62, #1169
+  * fix regression docker deployment, #1172
+
+
+## [2.61.0] - 2024-01-23
+
+Changed:
+
+  * :fire: simplify the project layout and distribution policy, #1166
+    * In the future there will be only one distribution `ocrd`
+    * The previous separate distributions of the `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are all part of `ocrd` now
+    * Nothing needs to be changed in code using OCR-D/core, the package structure and API is the same as before
+    * Until the next major release, we will continue to provide distributions for `ocrd_utils` etc. that contain the same code as `ocrd`
+    * Using `ocrd_utils` etc. as distributions in `requirements.txt` or `install_requires` is now deprecated
+    * Once we release v3.0.0, these distributions will be depublished
+
 ## [2.60.3] - 2024-01-10
 
 Fixed:
@@ -1957,6 +1977,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.61.1]: ../../compare/v2.61.1..v2.61.1
+[2.61.0]: ../../compare/v2.61.0..v2.60.3
 [2.60.3]: ../../compare/v2.60.3..v2.60.2
 [2.60.2]: ../../compare/v2.60.2..v2.60.1
 [2.60.1]: ../../compare/v2.60.1..v2.60.0
