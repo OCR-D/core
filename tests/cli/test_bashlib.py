@@ -1,6 +1,5 @@
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
-from pkg_resources import parse_version
 import os, sys
 import traceback
 import subprocess

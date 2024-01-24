@@ -129,7 +129,7 @@ build:
 # (Re)install the tool
 install: #build
 	# not stricttly necessary but a precaution against outdated python build tools, https://github.com/OCR-D/core/pull/1166
-	$(PIP) install -U pip wheel setuptools
+	$(PIP) install -U pip wheel
 	$(PIP_INSTALL) . $(PIP_INSTALL_CONFIG_OPTION)
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
@@ -271,6 +271,7 @@ pyclean:
 	rm -rf ./dist
 	rm -rf htmlcov
 	rm -rf .benchmarks
+	rm -rf **/*.egg-info
 	rm -f **/*.pyc
 	-find . -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache

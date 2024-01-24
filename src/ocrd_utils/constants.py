@@ -1,7 +1,7 @@
 """
 Constants for ocrd_utils.
 """
-from pkg_resources import get_distribution
+from .introspect import dist_version
 from re import compile as regex_compile
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
     'VERSION',
 ]
 
-VERSION = get_distribution('ocrd').version
+VERSION = dist_version('ocrd')
 
 MIMETYPE_PAGE = 'application/vnd.prima.page+xml'
 

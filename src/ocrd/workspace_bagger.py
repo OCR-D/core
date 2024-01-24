@@ -9,7 +9,6 @@ import tempfile
 import sys
 from bagit import Bag, make_manifests, _load_tag_file, _make_tag_file, _make_tagmanifest_file  # pylint: disable=no-name-in-module
 from distutils.dir_util import copy_tree
-from pkg_resources import get_distribution
 
 from ocrd_utils import (
     pushd_popd,
@@ -19,6 +18,7 @@ from ocrd_utils import (
     DEFAULT_METS_BASENAME,
     MIMETYPE_PAGE,
     VERSION,
+    dist_version,
 )
 from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
 from ocrd_modelfactory import page_from_file
@@ -117,8 +117,8 @@ class WorkspaceBagger():
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
         bag.info['Bag-Software-Agent'] = 'ocrd/core %s (bagit.py %s, bagit_profile %s) [cmdline: "%s"]' % (
             VERSION, # TODO
-            get_distribution('bagit').version,
-            get_distribution('bagit_profile').version,
+            dist_version('ocrd-fork-bagit'),
+            dist_version('ocrd-fork-bagit_profile'),
             ' '.join(sys.argv))
 
         bag.info['Ocrd-Identifier'] = ocrd_identifier

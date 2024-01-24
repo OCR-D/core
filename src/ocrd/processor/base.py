@@ -9,8 +9,6 @@ __all__ = [
     'run_processor'
 ]
 
-from warnings import warn
-from pkg_resources import resource_filename
 from os.path import exists
 from shutil import copyfileobj
 import json
@@ -30,7 +28,8 @@ from ocrd_utils import (
     list_resource_candidates,
     pushd_popd,
     list_all_resources,
-    get_processor_resource_types
+    get_processor_resource_types,
+    resource_filename,
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
@@ -266,7 +265,7 @@ class Processor():
         """
         The filesystem path of the module directory.
         """
-        return resource_filename(self.module, '')
+        return resource_filename(self.module, '.')
 
     @property
     def input_files(self):

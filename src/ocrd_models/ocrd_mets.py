@@ -52,7 +52,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         if not now:
             now = datetime.now().isoformat()
-        tpl = METS_XML_EMPTY.decode('utf-8')
+        tpl = METS_XML_EMPTY
         tpl = tpl.replace('{{ VERSION }}', VERSION)
         tpl = tpl.replace('{{ NOW }}', '%s' % now)
         return OcrdMets(content=tpl.encode('utf-8'), cache_flag=cache_flag)

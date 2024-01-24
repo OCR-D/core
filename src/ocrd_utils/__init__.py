@@ -158,7 +158,10 @@ from .image import (
 from .introspect import (
     freeze_args,
     set_json_key_value_overrides,
-    membername
+    membername,
+    resource_filename,
+    resource_string,
+    dist_version
 )
 
 from .logging import (

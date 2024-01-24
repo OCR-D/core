@@ -3,8 +3,25 @@ Utility functions to simplify access to data structures.
 """
 import json
 from functools import wraps
+from pathlib import Path
 from frozendict import frozendict
+import atexit
+from contextlib import ExitStack
 
+# cannot use importlib.resources until we move to 3.9+ forimportlib.resources.files
+import sys
+if sys.version_info < (3, 9):
+    import importlib_resources
+else:
+    import importlib.resources as importlib_resources
+
+if sys.version_info < (3, 8):
+    import importlib_metadata
+else:
+    import importlib.metadata as importlib_metadata
+
+file_manager = ExitStack()
+atexit.register(file_manager.close)
 
 # Taken from https://github.com/OCR-D/core/pull/884
 def freeze_args(func):
@@ -32,3 +49,14 @@ def set_json_key_value_overrides(obj, *kvpairs):
         except json.decoder.JSONDecodeError:
             obj[k] = v
     return obj
+
+def resource_filename(pkg : str, fname : str) -> Path:
+    ref = importlib_resources.files(pkg) / fname
+    return file_manager.enter_context(importlib_resources.as_file(ref))
+
+def resource_string(pkg : str, fname : str) -> str:
+    with open(resource_filename(pkg, fname), 'r', encoding='utf-8') as f:
+        return f.read()
+
+def dist_version(module : str) -> str:
+    return importlib_metadata.version(module)

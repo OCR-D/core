@@ -286,14 +286,14 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
     \b
     Examples:
         ocrd workspace bulk-add \\
-                --regex '(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.[^.]+' \\
+                --regex '(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\\.[^.]+' \\
                 --page-id 'PHYS_{{ pageid }}' \\
                 --file-grp "{{ fileGrp }}" \\
                 path/to/files/*/*.*
         \b
         echo "path/to/src/file.xml SEG/page_p0001.xml" \\
         | ocrd workspace bulk-add \\
-                --regex '(?P<src>.*?) (?P<fileGrp>.+?)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)' \\
+                --regex '(?P<src>.*?) (?P<fileGrp>.+?)/page_(?P<pageid>.*)\\.(?P<ext>[^\\.]*)' \\
                 --file-id 'FILE_{{ fileGrp }}_{{ pageid }}' \\
                 --page-id 'PHYS_{{ pageid }}' \\
                 --file-grp "{{ fileGrp }}" \\

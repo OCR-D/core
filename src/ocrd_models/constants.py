@@ -1,8 +1,7 @@
 """
 Constants for ocrd_models.
 """
-from pkg_resources import resource_string
-import re
+from ocrd_utils import resource_string
 
 __all__ = [
     'IDENTIFIER_PRIORITY',
@@ -32,7 +31,7 @@ __all__ = [
 
 IDENTIFIER_PRIORITY = ['purl', 'urn', 'doi', 'url']
 
-METS_XML_EMPTY = resource_string(__name__, 'mets-empty.xml')
+METS_XML_EMPTY = resource_string(__package__, 'mets-empty.xml')
 
 NAMESPACES = {
     'mets': "http://www.loc.gov/METS/",
