@@ -46,4 +46,4 @@ jobs:
           make install deps-test
       - name: Test network integration with pytest
         run: |
-          make integration-test
+          make test integration-test

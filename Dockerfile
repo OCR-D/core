@@ -45,10 +45,9 @@ CMD ["/usr/local/bin/ocrd", "--help"]
 
 FROM ocrd_core_base as ocrd_core_test
 WORKDIR /build-ocrd
-COPY Makefile .
-RUN make assets
 COPY tests ./tests
 COPY .gitmodules .
+COPY Makefile .
 COPY requirements_test.txt .
 RUN pip install -r requirements_test.txt
 
