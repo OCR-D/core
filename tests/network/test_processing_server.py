@@ -58,6 +58,7 @@ def test_processing_server_workflow_request():
     test_url = f"{PROCESSING_SERVER_URL}/workflow/run?mets_path={path_to_mets}&page_wise=True"
     response = post(
         url=test_url,
+        headers={"accept": "application/json"},
         files={"workflow": open(path_to_dummy_wf, 'rb')}
     )
     assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
