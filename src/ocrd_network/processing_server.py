@@ -229,6 +229,15 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
+            path='/workflow/job-simple/{workflow_job_id}',
+            endpoint=self.get_workflow_info_simple,
+            methods=['GET'],
+            tags=['workflow', 'processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get simplified overall job status',
+        )
+
+        self.router.add_api_route(
             path='/workflow',
             endpoint=self.upload_workflow,
             methods=['POST'],
@@ -910,6 +919,41 @@ class ProcessingServer(FastAPI):
                     "page_id": job.page_id,
                 })
         return res
+
+    """
+    Simplified version of the `get_workflow_info` that returns a single state for the entire workflow.
+    - If a single processing job fails, the entire workflow job status is set to FAILED.
+    - If there are any processing jobs running, regardless of other states, such as QUEUED and CACHED, 
+    the entire workflow job status is set to RUNNING.
+    - If all processing jobs has finished successfully, only then the workflow job status is set to SUCCESS
+    """
+    async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, StateEnum]:
+        """ Return list of a workflow's processor jobs
+        """
+        try:
+            workflow_job = await db_get_workflow_job(workflow_job_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Workflow-Job with id: {workflow_job_id} not found")
+        job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
+        jobs = await db_get_processing_jobs(job_ids)
+
+        workflow_job_state = "UNSET"
+        success_jobs = 0
+        for job in jobs:
+            if job.state == StateEnum.cached or job.state == StateEnum.queued:
+                continue
+            if job.state == StateEnum.failed or job.state == StateEnum.cancelled:
+                workflow_job_state = StateEnum.failed
+                break
+            if job.state == StateEnum.running:
+                workflow_job_state = StateEnum.running
+            if job.state == StateEnum.success:
+                success_jobs += 1
+        # if all jobs succeeded
+        if len(job_ids) == success_jobs:
+            workflow_job_state = StateEnum.success
+        return {"wf_job_state": workflow_job_state}
 
     async def upload_workflow(self, workflow: UploadFile) -> Dict:
         """ Store a script for a workflow in the database

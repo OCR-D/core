@@ -1,6 +1,8 @@
+from time import sleep
 from requests import get, post
 from ocrd_utils.config import config
 from ocrd_network import NETWORK_AGENT_WORKER
+from ocrd_network.models import StateEnum
 
 PROCESSING_SERVER_URL = config.PROCESSING_SERVER_URL
 
@@ -52,12 +54,28 @@ def test_processing_server_workflow_request():
     path_to_mets = "/tmp/assets/kant_aufklaerung_1784/data/mets.xml"
     path_to_dummy_wf = "/tmp/assets/dummy-workflow.txt"
 
-    test_url = f"{PROCESSING_SERVER_URL}/workflow?mets_path={path_to_mets}&page_wise=False"
+    # submit the workflow job
+    test_url = f"{PROCESSING_SERVER_URL}/workflow/run?mets_path={path_to_mets}&page_wise=False"
     response = post(
         url=test_url,
         files={"workflow": open(path_to_dummy_wf, 'rb')}
     )
-    assert response.status_code == 201, \
-        f'Processing server: {test_url}, {response.status_code}'
+    assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
 
-    # TODO: Check workflow status here
+    wf_job_id = response.json()["job_id"]
+    assert wf_job_id
+
+    # check simplified workflow status till timeout
+    tries = 50
+    wait_between_tries = 30
+    wf_job_state = None
+    test_url = f"{PROCESSING_SERVER_URL}/workflow/job-simple/{wf_job_id}"
+    while tries > 0:
+        sleep(wait_between_tries)
+        response = post(url=test_url)
+        assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
+        wf_job_state = response.json()["wf_job_state"]
+        if wf_job_state == StateEnum.success or wf_job_state == StateEnum.failed:
+            break
+        tries -= 1
+    assert wf_job_state == "SUCCESS"
