@@ -55,7 +55,7 @@ def test_processing_server_workflow_request():
     path_to_dummy_wf = "/tmp/assets/dummy-workflow.txt"
 
     # submit the workflow job
-    test_url = f"{PROCESSING_SERVER_URL}/workflow/run?mets_path={path_to_mets}&page_wise=False"
+    test_url = f"{PROCESSING_SERVER_URL}/workflow/run?mets_path={path_to_mets}&page_wise=True"
     response = post(
         url=test_url,
         files={"workflow": open(path_to_dummy_wf, 'rb')}
@@ -72,7 +72,7 @@ def test_processing_server_workflow_request():
     test_url = f"{PROCESSING_SERVER_URL}/workflow/job-simple/{wf_job_id}"
     while tries > 0:
         sleep(wait_between_tries)
-        response = post(url=test_url)
+        response = get(url=test_url)
         assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
         wf_job_state = response.json()["wf_job_state"]
         if wf_job_state == StateEnum.success or wf_job_state == StateEnum.failed:
