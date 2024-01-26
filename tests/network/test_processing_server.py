@@ -3,6 +3,7 @@ from requests import get, post
 from ocrd_utils.config import config
 from ocrd_network import NETWORK_AGENT_WORKER
 from ocrd_network.models import StateEnum
+from tests.base import assets
 
 PROCESSING_SERVER_URL = config.PROCESSING_SERVER_URL
 
@@ -30,9 +31,9 @@ def test_processing_server_deployed_processors():
 
 # TODO: Still failing test with internal error 500
 def _test_processing_server_processing_request():
-    # Note: the used path is volume mapped
+    path_to_mets = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
     test_processing_job_input = {
-        "path_to_mets": "/ocrd-data/assets/kant_aufklaerung_1784/data/mets.xml",
+        "path_to_mets": path_to_mets,
         "input_file_grps": ['OCR-D-IMG'],
         "output_file_grps": ['OCR-D-DUMMY'],
         "agent_type": NETWORK_AGENT_WORKER,
@@ -52,9 +53,9 @@ def _test_processing_server_processing_request():
 
 
 def test_processing_server_workflow_request():
-    # Note: the used paths are volume mapped
-    path_to_mets = "/ocrd-data/assets/kant_aufklaerung_1784/data/mets.xml"
+    # Note: the used workflow path is volume mapped
     path_to_dummy_wf = "/ocrd-data/assets/dummy-workflow.txt"
+    path_to_mets = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
 
     # submit the workflow job
     test_url = f"{PROCESSING_SERVER_URL}/workflow/run?mets_path={path_to_mets}&page_wise=True"

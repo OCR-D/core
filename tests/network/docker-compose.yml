@@ -77,7 +77,6 @@ services:
     volumes:
       - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
       - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
-      - "../assets/kant_aufklaerung_1784:/ocrd-data/assets/kant_aufklaerung_1784"
       - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     command: |
@@ -112,7 +111,6 @@ services:
     volumes:
       - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
       - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
-      - "../assets/kant_aufklaerung_1784:/ocrd-data/assets/kant_aufklaerung_1784"
       - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     command: > 
@@ -138,6 +136,5 @@ services:
     volumes:
       - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
       - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
-      - "../assets/kant_aufklaerung_1784:/ocrd-data/assets/kant_aufklaerung_1784"
       - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
