@@ -948,7 +948,7 @@ class ProcessingServer(FastAPI):
         job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
         jobs = await db_get_processing_jobs(job_ids)
 
-        workflow_job_state = "UNSET"
+        workflow_job_state = StateEnum.unset
         success_jobs = 0
         for job in jobs:
             if job.state == StateEnum.cached or job.state == StateEnum.queued:

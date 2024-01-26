@@ -9,6 +9,7 @@ PROCESSING_SERVER_URL = config.PROCESSING_SERVER_URL
 
 
 def poll_till_timeout_fail_or_success(test_url: str, tries: int, wait: int) -> StateEnum:
+    job_state = StateEnum.unset
     while tries > 0:
         sleep(wait)
         response = get(url=test_url)
@@ -71,23 +72,6 @@ def test_processing_server_processing_request():
     )
     assert job_state == StateEnum.success
 
-    """
-    # check processing job status till timeout
-    tries = 50
-    wait_between_tries = 30
-    processing_job_state = None
-    test_url = f"{PROCESSING_SERVER_URL}/processor/job/{processing_job_id}"
-    while tries > 0:
-        sleep(wait_between_tries)
-        response = get(url=test_url)
-        assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
-        processing_job_state = response.json()["state"]
-        if processing_job_state == StateEnum.success or processing_job_state == StateEnum.failed:
-            break
-        tries -= 1
-    assert processing_job_state == StateEnum.success
-    """
-
 
 def test_processing_server_workflow_request():
     # Note: the used workflow path is volume mapped
@@ -113,20 +97,3 @@ def test_processing_server_workflow_request():
         wait=10
     )
     assert job_state == StateEnum.success
-
-    """
-    # check simplified workflow status till timeout
-    tries = 50
-    wait_between_tries = 30
-    wf_job_state = None
-    test_url = f"{PROCESSING_SERVER_URL}/workflow/job-simple/{wf_job_id}"
-    while tries > 0:
-        sleep(wait_between_tries)
-        response = get(url=test_url)
-        assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
-        wf_job_state = response.json()["wf_job_state"]
-        if wf_job_state == StateEnum.success or wf_job_state == StateEnum.failed:
-            break
-        tries -= 1
-    assert wf_job_state == StateEnum.success
-    """
