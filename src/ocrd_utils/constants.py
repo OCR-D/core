@@ -110,3 +110,24 @@ LOG_TIMEFMT = r'%H:%M:%S'
 RESOURCE_LOCATIONS = ['data', 'cwd', 'system', 'module']
 
 DEFAULT_METS_BASENAME = 'mets.xml'
+
+
+#    2581 ▁ LOWER ONE EIGHTH BLOCK
+#    2582 ▂ LOWER ONE QUARTER BLOCK
+#    2583 ▃ LOWER THREE EIGHTHS BLOCK
+#    2584 ▄ LOWER HALF BLOCK
+#    2585 ▅ LOWER FIVE EIGHTHS BLOCK
+#    2586 ▆ LOWER THREE QUARTERS BLOCK
+#    2587 ▇ LOWER SEVEN EIGHTHS BLOCK
+#    2588 █ FULL BLOCK
+SPARKLINE_CHARS = [
+    ' ',
+    '\u2581',
+    '\u2582',
+    '\u2583',
+    '\u2584',
+    '\u2585',
+    '\u2586',
+    '\u2587',
+    '\u2588',
+]

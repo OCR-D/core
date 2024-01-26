@@ -27,7 +27,6 @@ pyyaml
 requests < 2.30
 requests_unixsocket
 shapely
-sparklines >= 0.4.2
 # tensorflow versions might require different versions
 uvicorn
 uvicorn>=0.17.6
