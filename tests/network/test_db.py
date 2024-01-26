@@ -1,3 +1,4 @@
+from datetime import datetime
 from hashlib import md5
 from pathlib import Path
 from pytest import raises
@@ -17,7 +18,7 @@ from ocrd_network.database import (
 
 
 def test_db_processing_job_create(mongo_client):
-    job_id = 'test_job_id_1'
+    job_id = f'test_job_id_{datetime.now()}'
     db_created_processing_job = sync_db_create_processing_job(
         db_processing_job=DBProcessorJob(
             job_id=job_id,
@@ -43,7 +44,7 @@ def test_db_processing_job_create(mongo_client):
 
 
 def test_db_processing_job_update(mongo_client):
-    job_id = 'test_job_id_2'
+    job_id = f'test_job_id_{datetime.now()}'
     db_created_processing_job = sync_db_create_processing_job(
         db_processing_job=DBProcessorJob(
             job_id=job_id,
@@ -125,7 +126,7 @@ def create_db_model_workflow_script(
 
 
 def test_db_workflow_script_create(mongo_client):
-    workflow_id = 'test_workflow_1'
+    workflow_id = f'test_workflow_{datetime.now()}'
     db_model_workflow_script = create_db_model_workflow_script(workflow_id=workflow_id)
     db_created_workflow_script = sync_db_create_workflow_script(
         db_workflow_script=db_model_workflow_script
@@ -140,7 +141,7 @@ def test_db_workflow_script_create(mongo_client):
 
 
 def test_db_find_workflow_script_by_content(mongo_client):
-    workflow_id = 'test_workflow_2'
+    workflow_id = f'test_workflow_{datetime.now()}'
     db_model_workflow_script = create_db_model_workflow_script(workflow_id=workflow_id)
     db_created_workflow_script = sync_db_create_workflow_script(
         db_workflow_script=db_model_workflow_script
