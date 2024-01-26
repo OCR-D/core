@@ -51,7 +51,7 @@ def _test_processing_server_processing_request():
         f'Processing server: {test_url}, {response.status_code}'
 
 
-def _test_processing_server_workflow_request():
+def test_processing_server_workflow_request():
     # Note: the used paths are volume mapped
     path_to_mets = "/ocrd-data/assets/kant_aufklaerung_1784/data/mets.xml"
     path_to_dummy_wf = "/ocrd-data/assets/dummy-workflow.txt"
