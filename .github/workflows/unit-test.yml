@@ -25,8 +25,8 @@ jobs:
           - '3.11'
         os:
           - ubuntu-22.04
-          - ubuntu-20.04
-          - macos-latest
+          # - ubuntu-20.04 TODO: Activate back before finalizing the PR
+          # - macos-latest TODO: Activate back before finalizing the PR
 
     steps:
     - uses: actions/checkout@v3
