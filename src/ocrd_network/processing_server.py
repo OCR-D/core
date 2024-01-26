@@ -472,15 +472,25 @@ class ProcessingServer(FastAPI):
 
         validate_job_input(self.log, data.processor_name, ocrd_tool, data)
 
-        db_workspace = await db_get_workspace(
-            workspace_id=data.workspace_id,
-            workspace_mets_path=data.path_to_mets
-        )
-        if not db_workspace:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
-            )
+        if data.workspace_id:
+            try:
+                db_workspace = await db_get_workspace(workspace_id=data.workspace_id)
+            except ValueError as error:
+                self.log.exception(error)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Workspace with id `{data.workspace_id}` not found in the DB."
+                )
+        else:  # data.path_to_mets provided instead
+            try:
+                # TODO: Reconsider and refactor this. Core cannot create workspaces by api, but processing-server needs
+                #  the workspace in the database. Here the workspace is created if the path is available locally and
+                #  not existing in the DB - since it has not been uploaded through the Workspace Server.
+                await db_create_workspace(data.path_to_mets)
+            except FileNotFoundError:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail=f"Mets file not existing: {data.path_to_mets}")
+
         workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
@@ -953,7 +963,7 @@ class ProcessingServer(FastAPI):
         # if all jobs succeeded
         if len(job_ids) == success_jobs:
             workflow_job_state = StateEnum.success
-        return {"wf_job_state": workflow_job_state}
+        return {"state": workflow_job_state}
 
     async def upload_workflow(self, workflow: UploadFile) -> Dict:
         """ Store a script for a workflow in the database
