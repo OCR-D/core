@@ -82,7 +82,7 @@ class Workspace():
                 mets = ClientSideOcrdMets(mets_server_url)
                 if mets.workspace_path != self.directory:
                     raise ValueError(f"METS server {mets_server_url} workspace directory {mets.workspace_path} differs "
-                            "from local workspace directory {self.directory}. These are not the same workspaces.")
+                            f"from local workspace directory {self.directory}. These are not the same workspaces.")
             else:
                 mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
