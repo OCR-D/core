@@ -32,7 +32,7 @@ def test_processing_server_deployed_processors():
 def _test_processing_server_processing_request():
     # Note: the used path is volume mapped
     test_processing_job_input = {
-        "path_to_mets": "/tmp/assets/kant_aufklaerung_1784/data/mets.xml",
+        "path_to_mets": "/ocrd-data/assets/kant_aufklaerung_1784/data/mets.xml",
         "input_file_grps": ['OCR-D-IMG'],
         "output_file_grps": ['OCR-D-DUMMY'],
         "agent_type": NETWORK_AGENT_WORKER,
@@ -45,14 +45,16 @@ def _test_processing_server_processing_request():
         headers={"accept": "application/json"},
         json=test_processing_job_input
     )
+    # TODO: Remove print before finalizing the PR
+    print(response.json())
     assert response.status_code == 200, \
         f'Processing server: {test_url}, {response.status_code}'
 
 
-def test_processing_server_workflow_request():
+def _test_processing_server_workflow_request():
     # Note: the used paths are volume mapped
-    path_to_mets = "/tmp/assets/kant_aufklaerung_1784/data/mets.xml"
-    path_to_dummy_wf = "/tmp/assets/dummy-workflow.txt"
+    path_to_mets = "/ocrd-data/assets/kant_aufklaerung_1784/data/mets.xml"
+    path_to_dummy_wf = "/ocrd-data/assets/dummy-workflow.txt"
 
     # submit the workflow job
     test_url = f"{PROCESSING_SERVER_URL}/workflow/run?mets_path={path_to_mets}&page_wise=True"
@@ -61,6 +63,9 @@ def test_processing_server_workflow_request():
         headers={"accept": "application/json"},
         files={"workflow": open(path_to_dummy_wf, 'rb')}
     )
+
+    # TODO: Remove print before finalizing the PR
+    print(response.json())
     assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
 
     wf_job_id = response.json()["job_id"]

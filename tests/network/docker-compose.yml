@@ -67,16 +67,18 @@ services:
       DB_NAME: ocrd_network_test
       DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
       RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
+      OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
+      OCRD_NETWORK_SOCKETS_ROOT_DIR: /ocrd-data/ocrd_network_sockets
     healthcheck:
       test: curl -f http://processing-server-host.ocrd_network_test:8000/
       interval: 1s
       timeout: 3s
       retries: 30
     volumes:
-      - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
-      - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
-      - "../assets/kant_aufklaerung_1784:/tmp/assets/kant_aufklaerung_1784"
-      - "./dummy-workflow.txt:/tmp/assets/dummy-workflow.txt"
+      - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
+      - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
+      - "../assets/kant_aufklaerung_1784:/ocrd-data/assets/kant_aufklaerung_1784"
+      - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     command: |
       /bin/bash -c "echo -e \"
@@ -105,11 +107,13 @@ services:
         condition: service_healthy
     networks:
       - ocrd_network_test
+    environment:
+      OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
     volumes:
-      - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
-      - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
-      - "../assets/kant_aufklaerung_1784:/tmp/assets/kant_aufklaerung_1784"
-      - "./dummy-workflow.txt:/tmp/assets/dummy-workflow.txt"
+      - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
+      - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
+      - "../assets/kant_aufklaerung_1784:/ocrd-data/assets/kant_aufklaerung_1784"
+      - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     command: > 
       ocrd-dummy worker 
@@ -124,14 +128,16 @@ services:
         condition: service_healthy
     networks:
       - ocrd_network_test
-    volumes:
-      - "/tmp/ocrd_network_logs:/tmp/ocrd_network_logs"
-      - "/tmp/ocrd_network_sockets:/tmp/ocrd_network_sockets"
-      - "../assets/kant_aufklaerung_1784:/tmp/assets/kant_aufklaerung_1784"
-      - "./dummy-workflow.txt:/tmp/assets/dummy-workflow.txt"
-      - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
     environment:
       DB_NAME: ocrd_network_test
       DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
       PROCESSING_SERVER_URL: http://processing-server-host.ocrd_network_test:8000
       RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
+      OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
+      OCRD_NETWORK_SOCKETS_ROOT_DIR: /ocrd-data/ocrd_network_sockets
+    volumes:
+      - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
+      - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
+      - "../assets/kant_aufklaerung_1784:/ocrd-data/assets/kant_aufklaerung_1784"
+      - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
+      - "./ocrd_logging.conf:/etc/ocrd_logging.conf"

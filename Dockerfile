@@ -51,6 +51,7 @@ COPY tests ./tests
 COPY .gitmodules .
 COPY requirements_test.txt .
 RUN pip install -r requirements_test.txt
+RUN mkdir /ocrd-data && chmod 777 /ocrd-data
 
 CMD ["yes"]
 # CMD ["make", "test", "integration-test"]
