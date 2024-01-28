@@ -1,8 +1,8 @@
 import json
 
-from tests.base import TestCase, main # pylint: disable=import-error,no-name-in-module
-
 from ocrd_validators import OcrdToolValidator
+from tests.base import (  # pylint: disable=import-error,no-name-in-module
+    TestCase, main)
 
 skeleton = '''
         {

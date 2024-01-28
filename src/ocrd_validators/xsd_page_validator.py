@@ -1,5 +1,6 @@
-from .xsd_validator import XsdValidator
 from .constants import XSD_PAGE_URL
+from .xsd_validator import XsdValidator
+
 
 class XsdPageValidator(XsdValidator):
     """

@@ -1,14 +1,18 @@
 import json
+from distutils.spawn import \
+    find_executable as which  # pylint: disable=import-error,no-name-in-module
 from shlex import split as shlex_split
-from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
-from subprocess import run, PIPE
+from subprocess import PIPE, run
 
-from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides, get_ocrd_tool_json
 # from collections import Counter
 from ocrd.processor.base import run_cli
 from ocrd.resolver import Resolver
-from ocrd_validators import ParameterValidator, WorkspaceValidator
 from ocrd_models import ValidationReport
+from ocrd_utils import (get_ocrd_tool_json, getLogger,
+                        parse_json_string_or_file,
+                        set_json_key_value_overrides)
+from ocrd_validators import ParameterValidator, WorkspaceValidator
+
 
 class ProcessorTask():
 

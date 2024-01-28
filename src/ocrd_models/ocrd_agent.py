@@ -2,8 +2,10 @@
 API to ``mets:agent``
 """
 #  import os
-from .constants import NAMESPACES as NS, TAG_METS_AGENT, TAG_METS_NAME, TAG_METS_NOTE
+from .constants import NAMESPACES as NS
+from .constants import TAG_METS_AGENT, TAG_METS_NAME, TAG_METS_NOTE
 from .ocrd_xml_base import ET
+
 
 class OcrdAgent():
     """

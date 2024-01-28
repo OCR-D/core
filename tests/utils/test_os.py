@@ -1,16 +1,15 @@
-from tempfile import mkdtemp
-from tests.base import TestCase, main, assets
-from shutil import rmtree
-from pathlib import Path
-from os import environ as ENV, getcwd
-from os.path import expanduser, join
 import sys
+from os import environ as ENV
+from os import getcwd
+from os.path import expanduser, join
+from pathlib import Path
+from shutil import rmtree
+from tempfile import mkdtemp
 
-from ocrd_utils.os import (
-    list_resource_candidates,
-    redirect_stderr_and_stdout_to_file,
-    guess_media_type,
-)
+from ocrd_utils.os import (guess_media_type, list_resource_candidates,
+                           redirect_stderr_and_stdout_to_file)
+from tests.base import TestCase, assets, main
+
 
 class TestOsUtils(TestCase):
 

@@ -7,29 +7,24 @@ OCR-D CLI: bash library
 
 """
 from __future__ import print_function
+
 import sys
 from os.path import isfile
+
 import click
 
-from ocrd.constants import BASHLIB_FILENAME
 import ocrd.constants
-import ocrd_utils.constants
-from ocrd_utils.constants import DEFAULT_METS_BASENAME
 import ocrd_models.constants
+import ocrd_utils.constants
 import ocrd_validators.constants
-from ocrd.decorators import (
-    parameter_option,
-    parameter_override_option,
-    ocrd_loglevel
-)
-from ocrd_utils import (
-    is_local_filename,
-    get_local_filename,
-    initLogging,
-    make_file_id
-)
-from ocrd.resolver import Resolver
+from ocrd.constants import BASHLIB_FILENAME
+from ocrd.decorators import (ocrd_loglevel, parameter_option,
+                             parameter_override_option)
 from ocrd.processor import Processor
+from ocrd.resolver import Resolver
+from ocrd_utils import (get_local_filename, initLogging, is_local_filename,
+                        make_file_id)
+from ocrd_utils.constants import DEFAULT_METS_BASENAME
 
 # ----------------------------------------------------------------------
 # ocrd bashlib

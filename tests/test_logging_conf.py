@@ -7,15 +7,10 @@ import re
 import shutil
 import sys
 
-from ocrd_utils import pushd_popd
-from ocrd_utils.logging import (
-    initLogging,
-    getLogger,
-    disableLogging,
-)
-
 import pytest
 
+from ocrd_utils import pushd_popd
+from ocrd_utils.logging import disableLogging, getLogger, initLogging
 from tests.base import main
 
 # sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../ocrd')

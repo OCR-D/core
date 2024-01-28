@@ -1,25 +1,19 @@
-from tempfile import mkdtemp
 from pathlib import Path
+from tempfile import mkdtemp
 from warnings import warn
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
 from ocrd.constants import TMP_PREFIX
-from ocrd_utils import (
-    config,
-    DEFAULT_METS_BASENAME,
-    getLogger,
-    is_local_filename,
-    get_local_filename,
-    remove_non_path_from_url,
-    is_file_in_directory,
-    nth_url_segment
-)
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
 from ocrd_models.constants import NAMESPACES as NS
 from ocrd_models.utils import handle_oai_response
+from ocrd_utils import (DEFAULT_METS_BASENAME, config, get_local_filename,
+                        getLogger, is_file_in_directory, is_local_filename,
+                        nth_url_segment, remove_non_path_from_url)
+
 
 class Resolver():
     """

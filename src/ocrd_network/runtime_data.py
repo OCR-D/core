@@ -1,11 +1,9 @@
 from __future__ import annotations
+
 from typing import Dict, List
 
-from .deployment_utils import (
-    create_docker_client,
-    create_ssh_client,
-    DeployType
-)
+from .deployment_utils import (DeployType, create_docker_client,
+                               create_ssh_client)
 
 __all__ = [
     'DataHost',

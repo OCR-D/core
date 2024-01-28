@@ -1,8 +1,9 @@
 """
 Constants for ocrd_utils.
 """
-from pkg_resources import get_distribution
 from re import compile as regex_compile
+
+from pkg_resources import get_distribution
 
 __all__ = [
     'EXT_TO_MIME',

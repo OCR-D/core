@@ -1,4 +1,5 @@
 import json
+
 import requests
 
 from ocrd_utils import config

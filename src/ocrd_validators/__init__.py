@@ -15,14 +15,14 @@ __all__ = [
     'OcrdNetworkMessageValidator'
 ]
 
-from .parameter_validator import ParameterValidator
-from .workspace_validator import WorkspaceValidator
-from .page_validator import PageValidator
+from .ocrd_network_message_validator import OcrdNetworkMessageValidator
 from .ocrd_tool_validator import OcrdToolValidator
-from .resource_list_validator import OcrdResourceListValidator
 from .ocrd_zip_validator import OcrdZipValidator
-from .xsd_validator import XsdValidator
+from .page_validator import PageValidator
+from .parameter_validator import ParameterValidator
+from .processing_server_config_validator import ProcessingServerConfigValidator
+from .resource_list_validator import OcrdResourceListValidator
+from .workspace_validator import WorkspaceValidator
 from .xsd_mets_validator import XsdMetsValidator
 from .xsd_page_validator import XsdPageValidator
-from .processing_server_config_validator import ProcessingServerConfigValidator
-from .ocrd_network_message_validator import OcrdNetworkMessageValidator
+from .xsd_validator import XsdValidator

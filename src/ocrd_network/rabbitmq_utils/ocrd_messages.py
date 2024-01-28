@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import Any, Dict, List, Optional
+
 import yaml
 
 from ocrd_validators import OcrdNetworkMessageValidator

@@ -4,16 +4,16 @@ some part of the source code from the official
 RabbitMQ documentation.
 """
 from typing import Optional
+
 from pika import BasicProperties, PlainCredentials
+
 from ocrd_utils import getLogger
-from .constants import (
-    DEFAULT_EXCHANGER_NAME,
-    DEFAULT_ROUTER,
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_VHOST as VHOST
-)
+
 from .connector import RMQConnector
+from .constants import DEFAULT_EXCHANGER_NAME, DEFAULT_ROUTER
+from .constants import RABBIT_MQ_HOST as HOST
+from .constants import RABBIT_MQ_PORT as PORT
+from .constants import RABBIT_MQ_VHOST as VHOST
 
 
 class RMQPublisher(RMQConnector):

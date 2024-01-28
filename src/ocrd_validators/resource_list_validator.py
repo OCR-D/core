@@ -4,7 +4,7 @@ Validating ``resource_list.yml``.
 See `specs <https://ocr-d.de/en/spec/cli#processor-resources>`_.
 """
 from .constants import RESOURCE_LIST_SCHEMA
-from .json_validator import JsonValidator, DefaultValidatingDraft6Validator
+from .json_validator import DefaultValidatingDraft6Validator, JsonValidator
 
 #
 # -------------------------------------------------

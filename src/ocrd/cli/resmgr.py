@@ -6,24 +6,19 @@ OCR-D CLI: management of processor resources
     :nested: full
 """
 import sys
-from pathlib import Path
 from distutils.spawn import find_executable as which
-from yaml import safe_load, safe_dump
+from pathlib import Path
 
-import requests
 import click
+import requests
+from yaml import safe_dump, safe_load
 
-from ocrd_utils import (
-    initLogging,
-    directory_size,
-    getLogger,
-    get_ocrd_tool_json,
-    get_moduledir,
-    RESOURCE_LOCATIONS,
-)
 from ocrd.constants import RESOURCE_USER_LIST_COMMENT
+from ocrd_utils import (RESOURCE_LOCATIONS, directory_size, get_moduledir,
+                        get_ocrd_tool_json, getLogger, initLogging)
 
 from ..resource_manager import OcrdResourceManager
+
 
 def print_resources(executable, reslist, resmgr):
     print('%s' % executable)

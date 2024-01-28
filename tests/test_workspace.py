@@ -1,37 +1,31 @@
 # -*- coding: utf-8 -*-
 
-from os import chdir, curdir, walk, stat, chmod, umask
-import shutil
 import logging
-from stat import filemode
-from os.path import join, exists, abspath, basename, dirname
-from shutil import copyfile, copytree as copytree_, rmtree
-from pathlib import Path
+import shutil
 from gzip import open as gzip_open
+from os import chdir, chmod, curdir, stat, umask, walk
+from os.path import abspath, basename, dirname, exists, join
+from pathlib import Path
+from shutil import copyfile
+from shutil import copytree as copytree_
+from shutil import rmtree
+from stat import filemode
 
-from PIL import Image
 import numpy as np
-
 import pytest
+from PIL import Image
 
-from tests.base import (
-    assets,
-    main,
-    FIFOIO
-)
-
-from ocrd_models import (
-    OcrdFile,
-    OcrdMets
-)
-from ocrd_models.ocrd_page import parseString
-from ocrd_models.ocrd_page import TextRegionType, CoordsType, AlternativeImageType
-from ocrd_utils import polygon_mask, xywh_from_polygon, bbox_from_polygon, points_from_polygon
-from ocrd_modelfactory import page_from_file
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_backup import WorkspaceBackupManager
+from ocrd_modelfactory import page_from_file
+from ocrd_models import OcrdFile, OcrdMets
+from ocrd_models.ocrd_page import (AlternativeImageType, CoordsType,
+                                   TextRegionType, parseString)
+from ocrd_utils import (bbox_from_polygon, points_from_polygon, polygon_mask,
+                        xywh_from_polygon)
 from ocrd_validators import WorkspaceValidator
+from tests.base import FIFOIO, assets, main
 
 TMP_FOLDER = '/tmp/test-core-workspace'
 SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')

@@ -2,16 +2,12 @@
 
 import sys
 
-from PIL import Image, __version__ as pil_version
-
 import pytest
-
-from tests.base import (
-    assets,
-    main
-)
+from PIL import Image
+from PIL import __version__ as pil_version
 
 from ocrd_models import OcrdExif
+from tests.base import assets, main
 
 
 @pytest.mark.parametrize("path,width,height,xResolution,yResolution,resolution,resolutionUnit,photometricInterpretation,compression", [

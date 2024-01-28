@@ -1,18 +1,18 @@
 from os import makedirs
-from os.path import join, abspath, exists
-from shutil import copytree, rmtree, move, make_archive
-from tempfile import mkdtemp
+from os.path import abspath, exists, join
 from pathlib import Path
-from bagit import _load_tag_file, Bag
+from shutil import copytree, make_archive, move, rmtree
+from tempfile import mkdtemp
 
-from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
-
-from ocrd.workspace import Workspace
-from ocrd.workspace_bagger import WorkspaceBagger, BACKUPDIR
-from ocrd.resolver import Resolver
-from ocrd_utils import unzip_file_to_dir, pushd_popd, initLogging
-
+from bagit import Bag, _load_tag_file
 from pytest import fixture, raises
+
+from ocrd.resolver import Resolver
+from ocrd.workspace import Workspace
+from ocrd.workspace_bagger import BACKUPDIR, WorkspaceBagger
+from ocrd_utils import initLogging, pushd_popd, unzip_file_to_dir
+from tests.base import (  # pylint: disable=import-error,no-name-in-module
+    TestCase, assets, main)
 
 README_FILE = abspath('README.md')
 

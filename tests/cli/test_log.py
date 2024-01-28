@@ -1,13 +1,15 @@
-import click
-from ocrd.cli import log_cli
+import logging as python_logging
 from os import environ as ENV
 
-# pylint: disable=import-error, no-name-in-module
-from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
+import click
 
+from ocrd.cli import log_cli
 from ocrd.decorators import ocrd_loglevel
-from ocrd_utils import setOverrideLogLevel, logging, disableLogging
-import logging as python_logging
+from ocrd_utils import disableLogging, logging, setOverrideLogLevel
+# pylint: disable=import-error, no-name-in-module
+from tests.base import CapturingTestCase as TestCase
+from tests.base import assets, copy_of_directory, main
+
 
 @click.group()
 @ocrd_loglevel

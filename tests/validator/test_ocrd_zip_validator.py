@@ -2,14 +2,15 @@ from os.path import join
 from shutil import copytree, rmtree
 from tempfile import mkdtemp
 
-from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
+from ocrd.resolver import Resolver
+from ocrd.workspace import Workspace
+from ocrd.workspace_bagger import WorkspaceBagger
+from ocrd_validators import OcrdZipValidator
+from tests.base import (  # pylint: disable=import-error,no-name-in-module
+    TestCase, assets, main)
 
 #  from bagit import BagValidationError # pylint: disable=no-name-in-module
 
-from ocrd_validators import OcrdZipValidator
-from ocrd.workspace import Workspace
-from ocrd.workspace_bagger import WorkspaceBagger
-from ocrd.resolver import Resolver
 
 class TestOcrdZipValidator(TestCase):
 

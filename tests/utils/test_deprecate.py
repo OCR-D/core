@@ -1,8 +1,9 @@
 import click
 
 from ocrd.cli import command_with_replaced_help
+from tests.base import CapturingTestCase as TestCase
+from tests.base import main
 
-from tests.base import CapturingTestCase as TestCase, main
 
 class TestDeprectateUtils(TestCase):
 

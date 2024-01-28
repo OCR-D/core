@@ -12,19 +12,16 @@ workspace_id. With the latter, the database is used to convert the workspace_id 
 XXX: Currently the information is not preserved after the processing-server shuts down as the
 database (runs in docker) currently has no volume set.
 """
+from pathlib import Path
+from typing import List
+from uuid import uuid4
+
 from beanie import init_beanie
 from beanie.operators import In
 from motor.motor_asyncio import AsyncIOMotorClient
-from uuid import uuid4
-from pathlib import Path
-from typing import List
 
-from .models import (
-    DBProcessorJob,
-    DBWorkflowJob,
-    DBWorkspace,
-    DBWorkflowScript,
-)
+from .models import (DBProcessorJob, DBWorkflowJob, DBWorkflowScript,
+                     DBWorkspace)
 from .utils import call_sync
 
 

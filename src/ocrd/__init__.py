@@ -14,11 +14,11 @@ Related (and dependent) packages:
 
 """
 
-from ocrd.processor.base import run_processor, run_cli, Processor
-from ocrd_models import OcrdMets, OcrdExif, OcrdFile, OcrdAgent
+from ocrd.mets_server import OcrdMetsServer
+from ocrd.processor.base import Processor, run_cli, run_processor
 from ocrd.resolver import Resolver
-from ocrd_validators import *
+from ocrd.resource_manager import OcrdResourceManager
 from ocrd.workspace import Workspace
 from ocrd.workspace_backup import WorkspaceBackupManager
-from ocrd.resource_manager import OcrdResourceManager
-from ocrd.mets_server import OcrdMetsServer
+from ocrd_models import OcrdAgent, OcrdExif, OcrdFile, OcrdMets
+from ocrd_validators import *

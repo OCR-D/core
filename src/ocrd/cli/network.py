@@ -6,15 +6,13 @@ OCR-D CLI: management of network components
     :nested: full
 """
 
-import click
 import logging
+
+import click
+
+from ocrd_network.cli import (client_cli, processing_server_cli,
+                              processing_worker_cli, processor_server_cli)
 from ocrd_utils import initLogging
-from ocrd_network.cli import (
-    client_cli,
-    processing_server_cli,
-    processing_worker_cli,
-    processor_server_cli,
-)
 
 
 @click.group("network")

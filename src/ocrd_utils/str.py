@@ -2,12 +2,14 @@
 Utility functions for strings, paths and URL.
 """
 
-import re
 import json
+import re
+from warnings import warn
+
+from numpy import array_split
+
 from .constants import REGEX_FILE_ID
 from .deprecate import deprecation_warning
-from warnings import warn
-from numpy import array_split
 
 __all__ = [
     'assert_file_grp_cardinality',

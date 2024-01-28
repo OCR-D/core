@@ -1,9 +1,10 @@
-from os import environ
 from contextlib import contextmanager
+from os import environ
 
 from pytest import raises
 
-from ocrd_utils.config import config, OcrdEnvConfig
+from ocrd_utils.config import OcrdEnvConfig, config
+
 
 @contextmanager
 def temp_env_var(k, v):

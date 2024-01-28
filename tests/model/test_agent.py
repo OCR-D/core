@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ocrd_models import (
-    OcrdAgent
-)
-from tests.base import (
-    main
-)
+from ocrd_models import OcrdAgent
+from tests.base import main
 
 
 def test_init_role_no_name():

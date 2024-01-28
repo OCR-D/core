@@ -6,21 +6,21 @@ OCR-D CLI: ocrd-tool.json management
     :nested: full
 
 """
+import codecs
+import os
+import sys
 from inspect import getmodule
 from json import dumps
-import codecs
-import sys
-import os
+
 import click
 
 from ocrd.decorators import parameter_option, parameter_override_option
 from ocrd.processor import Processor
-from ocrd_utils import (
-    set_json_key_value_overrides,
-    VERSION as OCRD_VERSION,
-    parse_json_string_with_comments as loads
-)
-from ocrd_validators import ParameterValidator, OcrdToolValidator
+from ocrd_utils import VERSION as OCRD_VERSION
+from ocrd_utils import parse_json_string_with_comments as loads
+from ocrd_utils import set_json_key_value_overrides
+from ocrd_validators import OcrdToolValidator, ParameterValidator
+
 
 class OcrdToolCtx():
 

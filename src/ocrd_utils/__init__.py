@@ -105,100 +105,33 @@ Utility functions and constants usable in various circumstances.
     Decorator to mark a kwarg as deprecated
 """
 
-from .constants import (
-    DEFAULT_METS_BASENAME,
-    EXT_TO_MIME,
-    MIMETYPE_PAGE,
-    MIME_TO_EXT,
-    MIME_TO_PIL,
-    PIL_TO_MIME,
-    REGEX_PREFIX,
-    REGEX_FILE_ID,
-    RESOURCE_LOCATIONS,
-    LOG_FORMAT,
-    LOG_TIMEFMT,
-    VERSION,
-    )
-
-from .deprecate import (
-    deprecated_alias,
-    rename_kwargs,
-    deprecation_warning)
-
-from .image import (
-    adjust_canvas_to_rotation,
-    adjust_canvas_to_transposition,
-    bbox_from_points,
-    bbox_from_polygon,
-    bbox_from_xywh,
-    coordinates_for_segment,
-    coordinates_of_segment,
-    crop_image,
-    image_from_polygon,
-    points_from_bbox,
-    points_from_polygon,
-    points_from_x0y0x1y1,
-    points_from_xywh,
-    points_from_y0x0y1x1,
-    polygon_from_bbox,
-    polygon_from_points,
-    polygon_from_x0y0x1y1,
-    polygon_from_xywh,
-    polygon_mask,
-    rotate_coordinates,
-    rotate_image,
-    shift_coordinates,
-    transform_coordinates,
-    transpose_coordinates,
-    transpose_image,
-    xywh_from_bbox,
-    xywh_from_points,
-    xywh_from_polygon)
-
-from .introspect import (
-    freeze_args,
-    set_json_key_value_overrides,
-    membername
-)
-
-from .logging import (
-    tf_disable_interactive_logs,
-    disableLogging,
-    getLevelName,
-    getLogger,
-    initLogging,
-    setOverrideLogLevel,
-    )
-
-from .os import (
-    abspath,
-    directory_size,
-    get_processor_resource_types,
-    get_ocrd_tool_json,
-    get_moduledir,
-    guess_media_type,
-    list_all_resources,
-    is_file_in_directory,
-    list_resource_candidates,
-    atomic_write,
-    pushd_popd,
-    unzip_file_to_dir,
-    redirect_stderr_and_stdout_to_file,
-    )
-
-from .str import (
-    assert_file_grp_cardinality,
-    concat_padded,
-    generate_range,
-    get_local_filename,
-    is_local_filename,
-    is_string,
-    make_file_id,
-    nth_url_segment,
-    partition_list,
-    parse_json_string_or_file,
-    parse_json_string_with_comments,
-    remove_non_path_from_url,
-    safe_filename)
-
 from .config import config
+from .constants import (DEFAULT_METS_BASENAME, EXT_TO_MIME, LOG_FORMAT,
+                        LOG_TIMEFMT, MIME_TO_EXT, MIME_TO_PIL, MIMETYPE_PAGE,
+                        PIL_TO_MIME, REGEX_FILE_ID, REGEX_PREFIX,
+                        RESOURCE_LOCATIONS, VERSION)
+from .deprecate import deprecated_alias, deprecation_warning, rename_kwargs
+from .image import (adjust_canvas_to_rotation, adjust_canvas_to_transposition,
+                    bbox_from_points, bbox_from_polygon, bbox_from_xywh,
+                    coordinates_for_segment, coordinates_of_segment,
+                    crop_image, image_from_polygon, points_from_bbox,
+                    points_from_polygon, points_from_x0y0x1y1,
+                    points_from_xywh, points_from_y0x0y1x1, polygon_from_bbox,
+                    polygon_from_points, polygon_from_x0y0x1y1,
+                    polygon_from_xywh, polygon_mask, rotate_coordinates,
+                    rotate_image, shift_coordinates, transform_coordinates,
+                    transpose_coordinates, transpose_image, xywh_from_bbox,
+                    xywh_from_points, xywh_from_polygon)
+from .introspect import freeze_args, membername, set_json_key_value_overrides
+from .logging import (disableLogging, getLevelName, getLogger, initLogging,
+                      setOverrideLogLevel, tf_disable_interactive_logs)
+from .os import (abspath, atomic_write, directory_size, get_moduledir,
+                 get_ocrd_tool_json, get_processor_resource_types,
+                 guess_media_type, is_file_in_directory, list_all_resources,
+                 list_resource_candidates, pushd_popd,
+                 redirect_stderr_and_stdout_to_file, unzip_file_to_dir)
+from .str import (assert_file_grp_cardinality, concat_padded, generate_range,
+                  get_local_filename, is_local_filename, is_string,
+                  make_file_id, nth_url_segment, parse_json_string_or_file,
+                  parse_json_string_with_comments, partition_list,
+                  remove_non_path_from_url, safe_filename)

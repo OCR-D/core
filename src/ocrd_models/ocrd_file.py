@@ -1,13 +1,15 @@
 """
 API to ``mets:file``
 """
-from os.path import splitext, basename
+from os.path import basename, splitext
 from pathlib import Path
 
 from ocrd_utils import deprecation_warning
 
+from .constants import NAMESPACES as NS
+from .constants import TAG_METS_FILE, TAG_METS_FLOCAT
 from .ocrd_xml_base import ET
-from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
+
 
 class OcrdFile():
     """

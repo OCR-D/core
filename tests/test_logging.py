@@ -1,22 +1,17 @@
-import pytest
 import logging
 from re import match
 from tempfile import TemporaryDirectory
 
-from tests.base import CapturingTestCase as TestCase, main, FIFOIO, assets
-from tests.data import DummyProcessor
-from ocrd import Resolver, run_processor
+import pytest
 
-from ocrd_utils import (
-    pushd_popd,
-    getLevelName,
-    setOverrideLogLevel,
-    disableLogging,
-    initLogging,
-    getLogger,
-    LOG_FORMAT,
-    LOG_TIMEFMT
-)
+from ocrd import Resolver, run_processor
+from ocrd_utils import (LOG_FORMAT, LOG_TIMEFMT, disableLogging, getLevelName,
+                        getLogger, initLogging, pushd_popd,
+                        setOverrideLogLevel)
+from tests.base import FIFOIO
+from tests.base import CapturingTestCase as TestCase
+from tests.base import assets, main
+from tests.data import DummyProcessor
 
 # "00:00:00.000 "
 TIMEFMT_RE = r'\d\d:\d\d:\d\d\.(\d+)? '

@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import pprint
 from contextlib import contextmanager
 from time import time
 
-from pytest import main, fixture, mark
+from pytest import fixture, main, mark
 
 from ocrd import Resolver
-from ocrd_utils import MIME_TO_EXT, getLogger
 from ocrd_models import OcrdMets
-
-import pprint
-
+from ocrd_utils import MIME_TO_EXT, getLogger
 
 # LOG = getLogger('ocrd.benchmark.mets')
 

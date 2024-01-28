@@ -3,6 +3,7 @@ Validating XML Schema
 """
 
 from pathlib import Path
+
 from lxml import etree as ET
 
 from ocrd_models import ValidationReport

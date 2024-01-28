@@ -2,9 +2,10 @@
 
 # source: https://bitbucket.org/dkuhlman/generateds/src/default/gends_user_methods.py
 
-import re
 import codecs
+import re
 from os.path import dirname, join
+
 
 #
 # You must include the following class definition at the top of

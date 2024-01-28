@@ -1,15 +1,20 @@
 import json
-
-from tempfile import TemporaryDirectory
 from os.path import join
-from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
-
-from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
-from ocrd.resolver import Resolver
-from ocrd.processor.base import Processor, run_processor, run_cli
+from tempfile import TemporaryDirectory
 
 import pytest
+
+from ocrd.processor.base import Processor, run_cli, run_processor
+from ocrd.resolver import Resolver
+from ocrd_utils import MIMETYPE_PAGE, disableLogging, initLogging, pushd_popd
+from tests.base import \
+    CapturingTestCase as \
+    TestCase  # pylint: disable=import-error, no-name-in-module
+from tests.base import assets, main
+from tests.data import (DummyProcessor, DummyProcessorWithOutput,
+                        DummyProcessorWithRequiredParameters,
+                        IncompleteProcessor)
+
 
 class TestProcessor(TestCase):
 

@@ -1,28 +1,25 @@
-from datetime import datetime
-from os import makedirs, chdir, walk
-from os.path import join, isdir, basename as os_path_basename, exists, relpath
-from pathlib import Path
-from shutil import make_archive, rmtree, copyfile, move
-from tempfile import mkdtemp, TemporaryDirectory
 import re
-import tempfile
 import sys
-from bagit import Bag, make_manifests, _load_tag_file, _make_tag_file, _make_tagmanifest_file  # pylint: disable=no-name-in-module
+import tempfile
+from datetime import datetime
 from distutils.dir_util import copy_tree
+from os import chdir, makedirs, walk
+from os.path import basename as os_path_basename
+from os.path import exists, isdir, join, relpath
+from pathlib import Path
+from shutil import copyfile, make_archive, move, rmtree
+from tempfile import TemporaryDirectory, mkdtemp
+
+from bagit import (Bag, _load_tag_file,  # pylint: disable=no-name-in-module
+                   _make_tag_file, _make_tagmanifest_file, make_manifests)
 from pkg_resources import get_distribution
 
-from ocrd_utils import (
-    pushd_popd,
-    getLogger,
-    MIME_TO_EXT,
-    unzip_file_to_dir,
-    DEFAULT_METS_BASENAME,
-    MIMETYPE_PAGE,
-    VERSION,
-)
-from ocrd_validators.constants import BAGIT_TXT, TMP_BAGIT_PREFIX, OCRD_BAGIT_PROFILE_URL
 from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import to_xml
+from ocrd_utils import (DEFAULT_METS_BASENAME, MIME_TO_EXT, MIMETYPE_PAGE,
+                        VERSION, getLogger, pushd_popd, unzip_file_to_dir)
+from ocrd_validators.constants import (BAGIT_TXT, OCRD_BAGIT_PROFILE_URL,
+                                       TMP_BAGIT_PREFIX)
 
 from .workspace import Workspace
 

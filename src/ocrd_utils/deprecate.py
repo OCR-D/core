@@ -1,6 +1,7 @@
 import functools
 import warnings
 
+
 def deprecation_warning(msg, stacklevel=2):
     warnings.warn(msg, DeprecationWarning, stacklevel)
 

@@ -1,9 +1,6 @@
 import click
-from .. import (
-    DatabaseParamType,
-    ProcessorServer,
-    ServerAddressParamType
-)
+
+from .. import DatabaseParamType, ProcessorServer, ServerAddressParamType
 
 
 @click.command('processor-server')

@@ -6,22 +6,26 @@ OCR-D CLI: workspace management
     :nested: full
 """
 import os
-from os import getcwd
-from os.path import relpath, exists, join, isabs
-from pathlib import Path
-from json import loads, dumps
-import sys
-from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
+import sys
 import time
-import numpy as np
+from glob import glob  # XXX pathlib.Path.glob does not support absolute globs
+from json import dumps, loads
+from os import getcwd
+from os.path import exists, isabs, join, relpath
+from pathlib import Path
 
 import click
+import numpy as np
 
-from ocrd import Resolver, Workspace, WorkspaceValidator, WorkspaceBackupManager
-from ocrd.mets_server import OcrdMetsServer
-from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list, DEFAULT_METS_BASENAME
+from ocrd import (Resolver, Workspace, WorkspaceBackupManager,
+                  WorkspaceValidator)
 from ocrd.decorators import mets_find_options
+from ocrd.mets_server import OcrdMetsServer
+from ocrd_utils import (DEFAULT_METS_BASENAME, EXT_TO_MIME, getLogger,
+                        initLogging, parse_json_string_or_file, partition_list,
+                        pushd_popd, safe_filename)
+
 from . import command_with_replaced_help
 
 

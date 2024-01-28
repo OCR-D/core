@@ -1,5 +1,6 @@
 from pathlib import Path
-from ocrd_utils import safe_filename, config
+
+from ocrd_utils import config, safe_filename
 
 from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 

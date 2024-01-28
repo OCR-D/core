@@ -2,15 +2,8 @@
 
 import pytest
 
-from tests.base import (
-    main,
-    create_ocrd_file,
-    create_ocrd_file_with_defaults
-)
-from ocrd_models import (
-    OcrdMets,
-    OcrdFile,
-)
+from ocrd_models import OcrdFile, OcrdMets
+from tests.base import create_ocrd_file, create_ocrd_file_with_defaults, main
 
 
 def test_ocrd_file_without_id():

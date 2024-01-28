@@ -1,10 +1,10 @@
 import sys
 
 import numpy as np
-from PIL import Image, ImageStat, ImageDraw, ImageChops
+from PIL import Image, ImageChops, ImageDraw, ImageStat
 
-from .logging import getLogger
 from .introspect import membername
+from .logging import getLogger
 
 # Allow processing of images with up to 1.6bn pixels
 # https://github.com/OCR-D/core/issues/735

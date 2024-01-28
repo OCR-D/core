@@ -1,17 +1,14 @@
 import re
-from fastapi import HTTPException, status
-from fastapi.responses import FileResponse
 from pathlib import Path
 from typing import List
+
+from fastapi import HTTPException, status
+from fastapi.responses import FileResponse
+
+from ocrd_utils import REGEX_PREFIX, generate_range
 from ocrd_validators import ParameterValidator
-from ocrd_utils import (
-    generate_range,
-    REGEX_PREFIX
-)
-from .database import (
-    db_get_processing_job,
-    db_get_workspace,
-)
+
+from .database import db_get_processing_job, db_get_workspace
 from .models import PYJobInput, PYJobOutput
 
 
