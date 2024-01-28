@@ -1,17 +1,15 @@
-from json import loads, dumps
+from json import dumps, loads
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from click.testing import CliRunner
 
-# pylint: disable=import-error, no-name-in-module
-from tests.base import main, assets
-from tests.data.wf_testcase import TestCase
-
-from ocrd_utils import pushd_popd
-from ocrd.resolver import Resolver
-
 from ocrd.cli.validate import validate_cli
+from ocrd.resolver import Resolver
+from ocrd_utils import pushd_popd
+# pylint: disable=import-error, no-name-in-module
+from tests.base import assets, main
+from tests.data.wf_testcase import TestCase
 
 OCRD_TOOL = '''
 {

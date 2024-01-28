@@ -1,53 +1,25 @@
 from os import getcwd
-from tempfile import TemporaryDirectory, gettempdir
 from pathlib import Path
+from tempfile import TemporaryDirectory, gettempdir
 
 from PIL import Image
-
-from tests.base import TestCase, main, assets, create_ocrd_file
 from pytest import raises, warns
-from ocrd_utils import (
-    abspath,
 
-    assert_file_grp_cardinality,
-    make_file_id,
-
-    bbox_from_points,
-    bbox_from_xywh,
-
-    concat_padded,
-    is_local_filename,
-    get_local_filename,
-    is_string,
-    membername,
-    generate_range,
-
-    nth_url_segment,
-    remove_non_path_from_url,
-    safe_filename,
-
-    parse_json_string_or_file,
-    set_json_key_value_overrides,
-
-    partition_list,
-
-    points_from_bbox,
-    points_from_x0y0x1y1,
-    points_from_xywh,
-    points_from_polygon,
-
-    polygon_from_points,
-    polygon_from_x0y0x1y1,
-
-    xywh_from_points,
-    xywh_from_polygon,
-    pushd_popd,
-
-    MIME_TO_EXT, EXT_TO_MIME,
-    MIME_TO_PIL, PIL_TO_MIME,
-)
-from ocrd_models.utils import xmllint_format
 from ocrd_models import OcrdMets
+from ocrd_models.utils import xmllint_format
+from ocrd_utils import (EXT_TO_MIME, MIME_TO_EXT, MIME_TO_PIL, PIL_TO_MIME,
+                        abspath, assert_file_grp_cardinality, bbox_from_points,
+                        bbox_from_xywh, concat_padded, generate_range,
+                        get_local_filename, is_local_filename, is_string,
+                        make_file_id, membername, nth_url_segment,
+                        parse_json_string_or_file, partition_list,
+                        points_from_bbox, points_from_polygon,
+                        points_from_x0y0x1y1, points_from_xywh,
+                        polygon_from_points, polygon_from_x0y0x1y1, pushd_popd,
+                        remove_non_path_from_url, safe_filename,
+                        set_json_key_value_overrides, xywh_from_points,
+                        xywh_from_polygon)
+from tests.base import TestCase, assets, create_ocrd_file, main
 
 
 def test_abspath():

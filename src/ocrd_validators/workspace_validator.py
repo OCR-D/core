@@ -2,17 +2,18 @@
 Validating a workspace.
 """
 import re
-from traceback import format_exc
 from pathlib import Path
+from traceback import format_exc
 
-from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename, DEFAULT_METS_BASENAME
-from ocrd_models import ValidationReport
 from ocrd_modelfactory import page_from_file
+from ocrd_models import ValidationReport
+from ocrd_utils import (DEFAULT_METS_BASENAME, MIMETYPE_PAGE, getLogger,
+                        is_local_filename, pushd_popd)
 
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
 from .page_validator import PageValidator
-from .xsd_page_validator import XsdPageValidator
 from .xsd_mets_validator import XsdMetsValidator
+from .xsd_page_validator import XsdPageValidator
 
 #
 # -------------------------------------------------

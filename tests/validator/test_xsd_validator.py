@@ -3,12 +3,13 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from tests.base import TestCase, main, assets
 from ocrd import Resolver
 from ocrd_models.constants import METS_XML_EMPTY
-from ocrd_validators import XsdValidator, XsdMetsValidator, XsdPageValidator
+from ocrd_validators import XsdMetsValidator, XsdPageValidator, XsdValidator
 from ocrd_validators.constants import XSD_METS_URL, XSD_PAGE_URL
+from tests.base import TestCase, assets, main
 from tests.model.test_ocrd_page import simple_page
+
 
 class TestXsdValidator(TestCase):
 

@@ -1,23 +1,24 @@
-from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
-
-from pkg_resources import parse_version
-import os, sys
-import traceback
-import subprocess
-import tempfile
-import pathlib
-import yaml
 import json
+import os
+import pathlib
+import subprocess
+import sys
+import tempfile
+import traceback
 from pathlib import Path
 
+import yaml
+from pkg_resources import parse_version
+
 from ocrd.cli.bashlib import bashlib_cli
-
 from ocrd.constants import BASHLIB_FILENAME
-from ocrd_utils.constants import VERSION, MIMETYPE_PAGE
-from ocrd_validators.constants import BAGIT_TXT
 from ocrd_models.constants import TAG_MODS_IDENTIFIER
-
 from ocrd_utils import pushd_popd
+from ocrd_utils.constants import MIMETYPE_PAGE, VERSION
+from ocrd_validators.constants import BAGIT_TXT
+from tests.base import CapturingTestCase as TestCase
+from tests.base import assets, copy_of_directory, main
+
 
 class TestBashlibCli(TestCase):
 

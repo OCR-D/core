@@ -15,25 +15,28 @@ __all__ = [
     'redirect_stderr_and_stdout_to_file',
 ]
 
-from tempfile import TemporaryDirectory, gettempdir
-from functools import lru_cache
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from distutils.spawn import find_executable as which
+from functools import lru_cache
 from json import loads
 from json.decoder import JSONDecodeError
-from os import getcwd, chdir, stat, chmod, umask, environ
-from pathlib import Path
-from os.path import exists, abspath as abspath_, join, isdir
-from zipfile import ZipFile
-from subprocess import run, PIPE
 from mimetypes import guess_type as mimetypes_guess
+from os import chdir, chmod, environ, getcwd, stat, umask
+from os.path import abspath as abspath_
+from os.path import exists, isdir, join
+from pathlib import Path
+from subprocess import PIPE, run
+from tempfile import TemporaryDirectory, gettempdir
+from zipfile import ZipFile
+
+from atomicwrites import AtomicWriter
+from atomicwrites import atomic_write as atomic_write_
 from filetype import guess as filetype_guess
 
-from atomicwrites import atomic_write as atomic_write_, AtomicWriter
-
-from .constants import EXT_TO_MIME
 from .config import config
+from .constants import EXT_TO_MIME
 from .logging import getLogger
+
 
 def abspath(url):
     """

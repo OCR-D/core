@@ -2,31 +2,17 @@
 
 import os
 import shutil
-
-from pathlib import (
-    Path
-)
-from requests import Session
-from unittest.mock import (
-    patch,
-    Mock
-)
-from PIL import (
-    Image
-)
-
-from ocrd_models.ocrd_page import OcrdPage
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
-
-from tests.base import (
-    assets,
-    main
-)
+from PIL import Image
+from requests import Session
 
 from ocrd.resolver import Resolver
+from ocrd_models.ocrd_page import OcrdPage
 from ocrd_utils import pushd_popd
-
+from tests.base import assets, main
 
 # set pylint once on module level
 # pylint: disable=protected-access

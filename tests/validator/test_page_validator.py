@@ -1,9 +1,10 @@
-from tests.base import TestCase, assets, main # pylint: disable=import-error,no-name-in-module
 from ocrd.resolver import Resolver
-from ocrd_validators import PageValidator
-from ocrd_validators.page_validator import get_text, set_text, ConsistencyError
-from ocrd_models.ocrd_page import parse, TextEquivType
+from ocrd_models.ocrd_page import TextEquivType, parse
 from ocrd_utils import pushd_popd
+from ocrd_validators import PageValidator
+from ocrd_validators.page_validator import ConsistencyError, get_text, set_text
+from tests.base import (  # pylint: disable=import-error,no-name-in-module
+    TestCase, assets, main)
 
 FAULTY_GLYPH_PAGE_FILENAME = assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml')
 

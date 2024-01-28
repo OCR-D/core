@@ -1,5 +1,7 @@
-from tests.base import TestCase, main # pylint: disable=import-error,no-name-in-module
 from ocrd_models import ValidationReport
+from tests.base import (  # pylint: disable=import-error,no-name-in-module
+    TestCase, main)
+
 
 class TestValidationReport(TestCase):
 

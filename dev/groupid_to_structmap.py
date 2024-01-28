@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from sys import argv
 from os.path import isfile
+from sys import argv
+
 from ocrd.model import OcrdMets
 
 fname = argv[1]

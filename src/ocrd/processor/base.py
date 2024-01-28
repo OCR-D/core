@@ -9,34 +9,31 @@ __all__ = [
     'run_processor'
 ]
 
-from warnings import warn
-from pkg_resources import resource_filename
-from os.path import exists
-from shutil import copyfileobj
+import io
 import json
 import os
-from os import getcwd
-from pathlib import Path
 import sys
 import tarfile
-import io
+from os import getcwd
+from os.path import exists
+from pathlib import Path
+from shutil import copyfileobj
+from warnings import warn
 
-from ocrd_utils import (
-    VERSION as OCRD_VERSION,
-    MIMETYPE_PAGE,
-    MIME_TO_EXT,
-    getLogger,
-    initLogging,
-    list_resource_candidates,
-    pushd_popd,
-    list_all_resources,
-    get_processor_resource_types
-)
+from pkg_resources import resource_filename
+
+from ocrd_models.ocrd_page import LabelsType, LabelType, MetadataItemType
+from ocrd_utils import MIME_TO_EXT, MIMETYPE_PAGE
+from ocrd_utils import VERSION as OCRD_VERSION
+from ocrd_utils import (get_processor_resource_types, getLogger, initLogging,
+                        list_all_resources, list_resource_candidates,
+                        pushd_popd)
 from ocrd_validators import ParameterValidator
-from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
 # XXX imports must remain for backwards-compatibilty
-from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
+from .helpers import (generate_processor_help,  # pylint: disable=unused-import
+                      run_cli, run_processor)
+
 
 class Processor():
     """

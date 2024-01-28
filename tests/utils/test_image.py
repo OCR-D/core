@@ -1,6 +1,8 @@
-from pytest import main
 from PIL import Image
+from pytest import main
+
 from ocrd_utils.image import rotate_image
+
 
 def test_32bit_fill():
     img = Image.new('F', (200, 100), 1)

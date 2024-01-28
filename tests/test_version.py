@@ -1,5 +1,6 @@
-from tests.base import TestCase, main
 from ocrd_utils import VERSION
+from tests.base import TestCase, main
+
 
 class TestVersion(TestCase):
 

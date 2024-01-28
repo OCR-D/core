@@ -1,49 +1,25 @@
 from datetime import datetime
 from logging import FileHandler, Formatter
 from os import getpid
-from subprocess import run, PIPE
-import uvicorn
+from subprocess import PIPE, run
 
+import uvicorn
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import FileResponse
 
-from ocrd_utils import (
-    initLogging,
-    get_ocrd_tool_json,
-    getLogger,
-    LOG_FORMAT,
-    parse_json_string_with_comments
-)
-from .database import (
-    DBProcessorJob,
-    db_get_workspace,
-    db_update_processing_job,
-    db_get_processing_job,
-    initiate_database
-)
-from .logging import (
-    get_processor_server_logging_file_path,
-    get_processing_job_logging_file_path,
-)
-from .models import (
-    PYJobInput,
-    PYJobOutput,
-    PYOcrdTool,
-    StateEnum
-)
+from ocrd_utils import (LOG_FORMAT, get_ocrd_tool_json, getLogger, initLogging,
+                        parse_json_string_with_comments)
+
+from .database import (DBProcessorJob, db_get_processing_job, db_get_workspace,
+                       db_update_processing_job, initiate_database)
+from .logging import (get_processing_job_logging_file_path,
+                      get_processor_server_logging_file_path)
+from .models import PYJobInput, PYJobOutput, PYOcrdTool, StateEnum
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdResultMessage
-from .server_utils import (
-    _get_processor_job,
-    _get_processor_job_log,
-    validate_and_return_mets_path,
-    validate_job_input
-)
-from .utils import (
-    calculate_execution_time,
-    post_to_callback_url,
-    generate_id,
-)
+from .server_utils import (_get_processor_job, _get_processor_job_log,
+                           validate_and_return_mets_path, validate_job_input)
+from .utils import calculate_execution_time, generate_id, post_to_callback_url
 
 
 class ProcessorServer(FastAPI):

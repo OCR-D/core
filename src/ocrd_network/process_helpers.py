@@ -1,9 +1,9 @@
-from contextlib import nullcontext
 import json
+from contextlib import nullcontext
 from typing import List, Optional
 
 from ocrd.processor.helpers import run_cli, run_processor
-from ocrd_utils import redirect_stderr_and_stdout_to_file, initLogging
+from ocrd_utils import initLogging, redirect_stderr_and_stdout_to_file
 
 from .utils import get_ocrd_workspace_instance
 

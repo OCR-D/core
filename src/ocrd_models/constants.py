@@ -1,8 +1,9 @@
 """
 Constants for ocrd_models.
 """
-from pkg_resources import resource_string
 import re
+
+from pkg_resources import resource_string
 
 __all__ = [
     'IDENTIFIER_PRIORITY',

@@ -1,22 +1,25 @@
+from itertools import repeat
+from multiprocessing import Pipe, Pool, Process, set_start_method
+
 from pytest import fixture, raises
+
 from tests.base import assets
 
-from itertools import repeat
-from multiprocessing import Process, Pool, Pipe, set_start_method
 # necessary for macos
 set_start_method("fork")
-from shutil import rmtree, copytree
-from os import remove, stat as os_stat
-from os.path import exists
-from time import sleep
-from pathlib import Path
 import stat
+from os import remove
+from os import stat as os_stat
+from os.path import exists
+from pathlib import Path
+from shutil import copytree, rmtree
+from time import sleep
 from uuid import uuid4
 
 from requests.exceptions import ConnectionError
 
-from ocrd import Resolver, OcrdMetsServer, Workspace
-from ocrd_utils import pushd_popd, MIMETYPE_PAGE
+from ocrd import OcrdMetsServer, Resolver, Workspace
+from ocrd_utils import MIMETYPE_PAGE, pushd_popd
 
 WORKSPACE_DIR = '/tmp/ocrd-mets-server'
 TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://127.0.0.1:12345']

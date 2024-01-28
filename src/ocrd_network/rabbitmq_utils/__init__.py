@@ -6,10 +6,7 @@ __all__ = [
   'OcrdResultMessage'
 ]
 
-from .consumer import RMQConsumer
 from .connector import RMQConnector
+from .consumer import RMQConsumer
+from .ocrd_messages import OcrdProcessingMessage, OcrdResultMessage
 from .publisher import RMQPublisher
-from .ocrd_messages import (
-  OcrdProcessingMessage,
-  OcrdResultMessage
-)

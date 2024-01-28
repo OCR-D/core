@@ -1,18 +1,20 @@
 # pylint: disable=missing-module-docstring,missing-function-docstring,missing-class-docstring
 # pylint: disable=invalid-name,line-too-long
 
-from io import BytesIO
 import os
+from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
 
-from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from ocrd import Resolver, Workspace
-from ocrd_utils import MIMETYPE_PAGE, pushd_popd
-from ocrd_modelfactory import page_from_file
 from ocrd.processor.base import run_processor
 from ocrd.processor.builtin.dummy_processor import DummyProcessor
+from ocrd_modelfactory import page_from_file
+from ocrd_utils import MIMETYPE_PAGE, pushd_popd
+from tests.base import (  # pylint: disable=import-error, no-name-in-module
+    TestCase, assets, copy_of_directory, main)
+
 
 class TestDummyProcessor(TestCase):
 

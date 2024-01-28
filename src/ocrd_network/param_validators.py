@@ -1,9 +1,6 @@
 from click import ParamType
 
-from .utils import (
-    verify_database_uri,
-    verify_and_parse_mq_uri
-)
+from .utils import verify_and_parse_mq_uri, verify_database_uri
 
 
 class ServerAddressParamType(ParamType):

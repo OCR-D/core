@@ -3,9 +3,11 @@ Validating JSON-Schema
 """
 import json
 
-from jsonschema import Draft6Validator, validators # pylint: disable=import-error
+from jsonschema import (Draft6Validator,  # pylint: disable=import-error
+                        validators)
 
 from ocrd_models import ValidationReport
+
 
 # http://python-jsonschema.readthedocs.io/en/latest/faq/
 def extend_with_default(validator_class):

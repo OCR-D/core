@@ -1,14 +1,15 @@
-from datetime import datetime
-from os import makedirs
-from os.path import join, basename, getsize, abspath
-from glob import glob
-from shutil import copy
 import hashlib
+from datetime import datetime
+from glob import glob
+from os import makedirs
+from os.path import abspath, basename, getsize, join
+from shutil import copy
 
 from ocrd_models import OcrdMets
-from ocrd_utils import getLogger, atomic_write, DEFAULT_METS_BASENAME
+from ocrd_utils import DEFAULT_METS_BASENAME, atomic_write, getLogger
 
 from .constants import BACKUP_DIR
+
 
 def _chksum(s):
     return hashlib.sha256(s).hexdigest()

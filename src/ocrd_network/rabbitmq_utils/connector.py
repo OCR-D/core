@@ -4,18 +4,16 @@ some part of the source code from the official
 RabbitMQ documentation.
 """
 from typing import Any, Optional, Union
-from pika import BasicProperties, BlockingConnection, ConnectionParameters, PlainCredentials
+
+from pika import (BasicProperties, BlockingConnection, ConnectionParameters,
+                  PlainCredentials)
 from pika.adapters.blocking_connection import BlockingChannel
-from .constants import (
-    DEFAULT_EXCHANGER_NAME,
-    DEFAULT_EXCHANGER_TYPE,
-    DEFAULT_QUEUE,
-    DEFAULT_ROUTER,
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_VHOST as VHOST,
-    PREFETCH_COUNT
-)
+
+from .constants import (DEFAULT_EXCHANGER_NAME, DEFAULT_EXCHANGER_TYPE,
+                        DEFAULT_QUEUE, DEFAULT_ROUTER, PREFETCH_COUNT)
+from .constants import RABBIT_MQ_HOST as HOST
+from .constants import RABBIT_MQ_PORT as PORT
+from .constants import RABBIT_MQ_VHOST as VHOST
 
 
 class RMQConnector:

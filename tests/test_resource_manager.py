@@ -1,13 +1,16 @@
 import os
 from pathlib import Path
-# import pdb
+
+from pytest import fixture, raises
 
 from ocrd.resource_manager import OcrdResourceManager
 from ocrd_utils import config
 from ocrd_utils.os import get_ocrd_tool_json
-
-from pytest import raises, fixture
 from tests.base import main
+
+# import pdb
+
+
 
 CONST_RESOURCE_YML = 'resources.yml'
 CONST_RESOURCE_URL_LAYOUT = 'https://github.com/tesseract-ocr/tessdata_best/raw/main/bos.traineddata'

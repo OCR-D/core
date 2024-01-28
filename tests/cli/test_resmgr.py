@@ -1,11 +1,12 @@
 from pathlib import Path
-from click.testing import CliRunner
-from pytest import fixture
 from tempfile import TemporaryDirectory
 
-from ocrd_utils import disableLogging, directory_size
+from click.testing import CliRunner
+from pytest import fixture
+
 from ocrd.cli.resmgr import resmgr_cli
 from ocrd.resource_manager import OcrdResourceManager
+from ocrd_utils import directory_size, disableLogging
 
 runner = CliRunner()
 executable = 'ocrd-dummy'

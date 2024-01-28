@@ -5,17 +5,15 @@ Factory methods to create models for data, files, URLs.
 """
 from datetime import datetime
 from pathlib import Path
-from yaml import safe_load, safe_dump
 
-from PIL import Image
 from lxml import etree as ET
+from PIL import Image
+from yaml import safe_dump, safe_load
 
-from ocrd_utils import VERSION, MIMETYPE_PAGE, guess_media_type
-from ocrd_models import OcrdExif, OcrdFile, ClientSideOcrdFile
-from ocrd_models.ocrd_page import (
-    PcGtsType, PageType, MetadataType,
-    parse, parseEtree
-)
+from ocrd_models import ClientSideOcrdFile, OcrdExif, OcrdFile
+from ocrd_models.ocrd_page import (MetadataType, PageType, PcGtsType, parse,
+                                   parseEtree)
+from ocrd_utils import MIMETYPE_PAGE, VERSION, guess_media_type
 
 __all__ = [
     'exif_from_filename',

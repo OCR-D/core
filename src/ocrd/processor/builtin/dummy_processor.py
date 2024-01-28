@@ -1,21 +1,16 @@
 # pylint: disable=missing-module-docstring,invalid-name
-from os.path import join, basename
-from pkg_resources import resource_string
+from os.path import basename, join
 
 import click
+from pkg_resources import resource_string
 
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
-from ocrd_models.ocrd_page import to_xml
-from ocrd_utils import (
-    getLogger,
-    assert_file_grp_cardinality,
-    make_file_id,
-    MIME_TO_EXT,
-    MIMETYPE_PAGE,
-    parse_json_string_with_comments
-)
 from ocrd_modelfactory import page_from_file
+from ocrd_models.ocrd_page import to_xml
+from ocrd_utils import (MIME_TO_EXT, MIMETYPE_PAGE,
+                        assert_file_grp_cardinality, getLogger, make_file_id,
+                        parse_json_string_with_comments)
 
 OCRD_TOOL = parse_json_string_with_comments(resource_string(__name__, 'dummy/ocrd-tool.json').decode('utf8'))
 

@@ -12,34 +12,23 @@ from datetime import datetime
 from logging import FileHandler, Formatter
 from os import getpid
 from time import sleep
-import pika.spec
+
 import pika.adapters.blocking_connection
+import pika.spec
 from pika.exceptions import AMQPConnectionError
 
-from ocrd_utils import config, getLogger, LOG_FORMAT
-from .database import (
-    sync_initiate_database,
-    sync_db_get_workspace,
-    sync_db_update_processing_job,
-)
-from .logging import (
-    get_processing_job_logging_file_path,
-    get_processing_worker_logging_file_path
-)
+from ocrd_utils import LOG_FORMAT, config, getLogger
+
+from .database import (sync_db_get_workspace, sync_db_update_processing_job,
+                       sync_initiate_database)
+from .logging import (get_processing_job_logging_file_path,
+                      get_processing_worker_logging_file_path)
 from .models import StateEnum
 from .process_helpers import invoke_processor
-from .rabbitmq_utils import (
-    OcrdProcessingMessage,
-    OcrdResultMessage,
-    RMQConsumer,
-    RMQPublisher
-)
-from .utils import (
-    calculate_execution_time,
-    post_to_callback_url,
-    verify_database_uri,
-    verify_and_parse_mq_uri
-)
+from .rabbitmq_utils import (OcrdProcessingMessage, OcrdResultMessage,
+                             RMQConsumer, RMQPublisher)
+from .utils import (calculate_execution_time, post_to_callback_url,
+                    verify_and_parse_mq_uri, verify_database_uri)
 
 
 class ProcessingWorker:

@@ -1,16 +1,18 @@
 import os
-from tempfile import TemporaryDirectory
-from pathlib import Path
 from os.path import join
+from pathlib import Path
 from shutil import copytree
+from tempfile import TemporaryDirectory
+
 import pytest
 
-from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
+from ocrd_utils import pushd_popd
 from ocrd_validators import WorkspaceValidator
 from ocrd_validators.page_validator import ConsistencyError
+from tests.base import (  # pylint: disable=import-error,no-name-in-module
+    TestCase, assets, copy_of_directory, main)
 
-from tests.base import TestCase, assets, main, copy_of_directory # pylint: disable=import-error,no-name-in-module
 
 class TestWorkspaceValidator(TestCase):
 

@@ -1,7 +1,8 @@
 from ocrd.cli import process_cli
-from ocrd_utils import pushd_popd, disableLogging
+from ocrd_utils import disableLogging, pushd_popd
+from tests.base import CapturingTestCase as TestCase
+from tests.base import assets, copy_of_directory, main
 
-from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 class TestLogCli(TestCase):
 

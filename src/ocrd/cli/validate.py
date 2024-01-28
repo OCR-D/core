@@ -5,23 +5,20 @@ OCR-D CLI: syntax validation
     :prog: ocrd validate
     :nested: full
 """
+import codecs
 import sys
+from json import loads
 
 import click
-from json import loads
-import codecs
 
 from ocrd import Resolver, Workspace
 from ocrd.task_sequence import ProcessorTask, validate_tasks
+from ocrd_utils import (DEFAULT_METS_BASENAME, initLogging,
+                        parse_json_string_or_file)
+from ocrd_validators import (OcrdToolValidator, OcrdZipValidator,
+                             PageValidator, ParameterValidator,
+                             WorkspaceValidator)
 
-from ocrd_utils import initLogging, parse_json_string_or_file, DEFAULT_METS_BASENAME
-from ocrd_validators import (
-    OcrdToolValidator,
-    OcrdZipValidator,
-    PageValidator,
-    ParameterValidator,
-    WorkspaceValidator,
-)
 
 def _inform_of_result(report):
     if not report.is_valid:

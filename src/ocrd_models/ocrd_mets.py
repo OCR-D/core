@@ -1,42 +1,27 @@
 """
 API to METS
 """
-from datetime import datetime
 import re
 import typing
-from lxml import etree as ET
 from copy import deepcopy
+from datetime import datetime
 from warnings import warn
 
-from ocrd_utils import (
-    getLogger,
-    deprecation_warning,
-    generate_range,
-    VERSION,
-    REGEX_PREFIX,
-    REGEX_FILE_ID
-)
+from lxml import etree as ET
 
+from ocrd_utils import (REGEX_FILE_ID, REGEX_PREFIX, VERSION,
+                        deprecation_warning, generate_range, getLogger)
 from ocrd_utils.config import config
 
-from .constants import (
-    NAMESPACES as NS,
-    TAG_METS_AGENT,
-    TAG_METS_DIV,
-    TAG_METS_FILE,
-    TAG_METS_FILEGRP,
-    TAG_METS_FILESEC,
-    TAG_METS_FPTR,
-    TAG_METS_METSHDR,
-    TAG_METS_STRUCTMAP,
-    IDENTIFIER_PRIORITY,
-    TAG_MODS_IDENTIFIER,
-    METS_XML_EMPTY,
-)
-
-from .ocrd_xml_base import OcrdXmlDocument, ET
-from .ocrd_file import OcrdFile
+from .constants import IDENTIFIER_PRIORITY, METS_XML_EMPTY
+from .constants import NAMESPACES as NS
+from .constants import (TAG_METS_AGENT, TAG_METS_DIV, TAG_METS_FILE,
+                        TAG_METS_FILEGRP, TAG_METS_FILESEC, TAG_METS_FPTR,
+                        TAG_METS_METSHDR, TAG_METS_STRUCTMAP,
+                        TAG_MODS_IDENTIFIER)
 from .ocrd_agent import OcrdAgent
+from .ocrd_file import OcrdFile
+from .ocrd_xml_base import ET, OcrdXmlDocument
 
 REGEX_PREFIX_LEN = len(REGEX_PREFIX)
 

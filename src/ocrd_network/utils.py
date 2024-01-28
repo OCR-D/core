@@ -1,18 +1,20 @@
 from datetime import datetime
 from functools import wraps
-from pika import URLParameters
-from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
-from requests import Session as Session_TCP
-from requests_unixsocket import Session as Session_UDS
 from typing import Dict, List
 from uuid import uuid4
+
+from pika import URLParameters
+from pymongo import uri_parser as mongo_uri_parser
+from requests import Session as Session_TCP
+from requests_unixsocket import Session as Session_UDS
 from yaml import safe_load
 
 from ocrd import Resolver, Workspace
-from ocrd_validators import ProcessingServerConfigValidator
-from .rabbitmq_utils import OcrdResultMessage
 from ocrd.task_sequence import ProcessorTask
+from ocrd_validators import ProcessingServerConfigValidator
+
+from .rabbitmq_utils import OcrdResultMessage
 
 
 # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec

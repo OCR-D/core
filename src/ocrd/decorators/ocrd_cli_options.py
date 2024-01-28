@@ -1,14 +1,13 @@
 import click
-from click import option, Path, group, command, argument
+from click import Path, argument, command, group, option
+
+from ocrd_network import (NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER,
+                          DatabaseParamType, QueueServerParamType,
+                          ServerAddressParamType)
 from ocrd_utils import DEFAULT_METS_BASENAME
-from ocrd_network import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
-from .parameter_option import parameter_option, parameter_override_option
+
 from .loglevel_option import loglevel_option
-from ocrd_network import (
-    DatabaseParamType,
-    ServerAddressParamType,
-    QueueServerParamType
-)
+from .parameter_option import parameter_option, parameter_override_option
 
 
 def ocrd_cli_options(f):

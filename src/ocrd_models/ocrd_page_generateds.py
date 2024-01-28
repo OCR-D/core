@@ -24,13 +24,14 @@
 #   core
 #
 
-from itertools import zip_longest
-import os
-import sys
-import re as re_
 import base64
 import datetime as datetime_
 import decimal as decimal_
+import os
+import re as re_
+import sys
+from itertools import zip_longest
+
 try:
     from lxml import etree as etree_
 except ImportError:
@@ -111,11 +112,13 @@ def parsexmlstring_(instring, parser=None, **kwargs):
 #
 
 try:
-    from generatedsnamespaces import GenerateDSNamespaceDefs as GenerateDSNamespaceDefs_
+    from generatedsnamespaces import \
+        GenerateDSNamespaceDefs as GenerateDSNamespaceDefs_
 except ImportError:
     GenerateDSNamespaceDefs_ = {}
 try:
-    from generatedsnamespaces import GenerateDSNamespaceTypePrefixes as GenerateDSNamespaceTypePrefixes_
+    from generatedsnamespaces import \
+        GenerateDSNamespaceTypePrefixes as GenerateDSNamespaceTypePrefixes_
 except ImportError:
     GenerateDSNamespaceTypePrefixes_ = {}
 
@@ -1245,8 +1248,10 @@ class PcGtsType(GeneratedsSuper):
         Returns:
             a list of image filename strings
         """
-        from .constants import NAMESPACES, PAGE_REGION_TYPES # pylint: disable=relative-beyond-top-level,import-outside-toplevel
         from io import StringIO  # pylint: disable=import-outside-toplevel
+
+        from .constants import (  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
+            NAMESPACES, PAGE_REGION_TYPES)
         ret = []
         # XXX Since we're only interested in the **paths** of the images,
         # export, parse and xpath are less convoluted than traversing
@@ -3122,7 +3127,8 @@ class PageType(GeneratedsSuper):
         return x.__class__.__name__.replace('RegionType', '')
     
     def _get_recursive_regions(self, regions, level, classes=None):
-        from .constants import PAGE_REGION_TYPES  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
+        from .constants import \
+            PAGE_REGION_TYPES  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
         if level == 1:
             # stop recursion, filter classes
             if classes:

@@ -1,5 +1,7 @@
+from ocrd_validators.json_validator import (DefaultValidatingDraft6Validator,
+                                            JsonValidator)
 from tests.base import TestCase, main
-from ocrd_validators.json_validator import JsonValidator, DefaultValidatingDraft6Validator
+
 
 class TestParameterValidator(TestCase):
 

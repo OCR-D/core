@@ -3,16 +3,18 @@ Validating OCRD-ZIP.
 
 See `spec <https://ocr-d.github.io/ocrd_zip>`_.
 """
-from tempfile import mkdtemp
 from shutil import rmtree
+from tempfile import mkdtemp
 
+from bagit import Bag, BagValidationError  # pylint: disable=no-name-in-module
+from bagit_profile import (Profile,  # pylint: disable=no-name-in-module
+                           ProfileValidationError)
+
+from ocrd_models import ValidationReport
 from ocrd_utils import getLogger, unzip_file_to_dir
 
-from bagit import Bag, BagValidationError # pylint: disable=no-name-in-module
-from bagit_profile import Profile, ProfileValidationError # pylint: disable=no-name-in-module
-
-from .constants import OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
-from ocrd_models import ValidationReport
+from .constants import (OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL,
+                        TMP_BAGIT_PREFIX)
 
 #
 # -------------------------------------------------

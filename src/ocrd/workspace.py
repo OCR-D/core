@@ -1,49 +1,32 @@
 import io
-from os import makedirs, unlink, listdir, path
-from pathlib import Path
-from shutil import move, copyfileobj
-from re import sub
-from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
+from os import listdir, makedirs, path, unlink
+from pathlib import Path
+from re import sub
+from shutil import copyfileobj, move
+from tempfile import NamedTemporaryFile
 
-from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
-from PIL import Image
 import numpy as np
-from deprecated.sphinx import deprecated
 import requests
+from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
+from deprecated.sphinx import deprecated
+from PIL import Image
 
-from ocrd_models import OcrdMets, OcrdFile
-from ocrd_models.ocrd_page import parse, BorderType, to_xml
 from ocrd_modelfactory import exif_from_filename, page_from_file
-from ocrd_utils import (
-    atomic_write,
-    getLogger,
-    image_from_polygon,
-    coordinates_of_segment,
-    adjust_canvas_to_rotation,
-    adjust_canvas_to_transposition,
-    shift_coordinates,
-    rotate_coordinates,
-    transform_coordinates,
-    transpose_coordinates,
-    crop_image,
-    rotate_image,
-    transpose_image,
-    bbox_from_polygon,
-    polygon_from_points,
-    xywh_from_bbox,
-    pushd_popd,
-    is_local_filename,
-    deprecated_alias,
-    DEFAULT_METS_BASENAME,
-    MIME_TO_EXT,
-    MIME_TO_PIL,
-    MIMETYPE_PAGE,
-    REGEX_PREFIX
-)
+from ocrd_models import OcrdFile, OcrdMets
+from ocrd_models.ocrd_page import BorderType, parse, to_xml
+from ocrd_utils import (DEFAULT_METS_BASENAME, MIME_TO_EXT, MIME_TO_PIL,
+                        MIMETYPE_PAGE, REGEX_PREFIX, adjust_canvas_to_rotation,
+                        adjust_canvas_to_transposition, atomic_write,
+                        bbox_from_polygon, coordinates_of_segment, crop_image,
+                        deprecated_alias, getLogger, image_from_polygon,
+                        is_local_filename, polygon_from_points, pushd_popd,
+                        rotate_coordinates, rotate_image, shift_coordinates,
+                        transform_coordinates, transpose_coordinates,
+                        transpose_image, xywh_from_bbox)
 
-from .workspace_backup import WorkspaceBackupManager
 from .mets_server import ClientSideOcrdMets
+from .workspace_backup import WorkspaceBackupManager
 
 __all__ = ['Workspace']
 

@@ -1,4 +1,5 @@
 from click import option
+
 from ocrd_utils import parse_json_string_or_file
 
 __all__ = ['parameter_option', 'parameter_override_option']

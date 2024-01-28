@@ -1,12 +1,9 @@
-from tests.base import TestCase, main, assets, create_ocrd_file, create_ocrd_file_with_defaults
-
-from ocrd_utils import MIMETYPE_PAGE
+from ocrd_modelfactory import (exif_from_filename, page_from_file,
+                               page_from_image)
 from ocrd_models import OcrdMets
-from ocrd_modelfactory import (
-    exif_from_filename,
-    page_from_image,
-    page_from_file
-)
+from ocrd_utils import MIMETYPE_PAGE
+from tests.base import (TestCase, assets, create_ocrd_file,
+                        create_ocrd_file_with_defaults, main)
 
 SAMPLE_IMG = assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')
 SAMPLE_PAGE = assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')

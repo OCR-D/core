@@ -1,32 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
-
-from os.path import join
-from os import environ
-from contextlib import contextmanager
 import shutil
+from contextlib import contextmanager
+from datetime import datetime
 from logging import StreamHandler
+from os import environ
+from os.path import join
+
 import lxml
-
-from tests.base import (
-    main,
-    capture_log,
-    assets,
-)
-
-from ocrd_utils import (
-    initLogging,
-    disableLogging,
-    getLogger,
-    VERSION,
-    MIMETYPE_PAGE
-)
-from ocrd_models import (
-    OcrdMets
-)
-
 import pytest
+
+from ocrd_models import OcrdMets
+from ocrd_utils import (MIMETYPE_PAGE, VERSION, disableLogging, getLogger,
+                        initLogging)
+from tests.base import assets, capture_log, main
 
 CACHING_ENABLED = [False, True]
 

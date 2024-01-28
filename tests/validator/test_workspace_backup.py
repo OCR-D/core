@@ -2,11 +2,12 @@ from os.path import join
 from shutil import copytree, rmtree
 from tempfile import mkdtemp
 
-from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
-
-from ocrd.workspace_backup import WorkspaceBackupManager
 from ocrd import Workspace
 from ocrd.resolver import Resolver
+from ocrd.workspace_backup import WorkspaceBackupManager
+from tests.base import (  # pylint: disable=import-error,no-name-in-module
+    TestCase, assets, main)
+
 
 class TestWorkspaceBackup(TestCase):
 

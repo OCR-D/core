@@ -2,35 +2,24 @@
 API for validating `OcrdPage <../ocrd_models/ocrd_models.ocrd_page.html>`_.
 """
 import re
-from shapely.geometry import Polygon, LineString
+
+from shapely.geometry import LineString, Polygon
 from shapely.validation import explain_validity
 
-from ocrd_utils import getLogger, polygon_from_points, deprecated_alias
-from ocrd_models.ocrd_page import parse
 from ocrd_modelfactory import page_from_file
-
-from ocrd_models.ocrd_page import (
-    PcGtsType,
-    PageType,
-    TextRegionType,
-    TextLineType,
-    WordType,
-    GlyphType,
-    TextEquivType
-)
-from ocrd_models.ocrd_page_generateds import (
-    RegionType,
-    ReadingDirectionSimpleType,
-    TextLineOrderSimpleType,
-    RegionRefType,
-    RegionRefIndexedType,
-    OrderedGroupType,
-    OrderedGroupIndexedType,
-    UnorderedGroupType,
-    UnorderedGroupIndexedType,
-)
 from ocrd_models import ValidationReport
-
+from ocrd_models.ocrd_page import (GlyphType, PageType, PcGtsType,
+                                   TextEquivType, TextLineType, TextRegionType,
+                                   WordType, parse)
+from ocrd_models.ocrd_page_generateds import (OrderedGroupIndexedType,
+                                              OrderedGroupType,
+                                              ReadingDirectionSimpleType,
+                                              RegionRefIndexedType,
+                                              RegionRefType, RegionType,
+                                              TextLineOrderSimpleType,
+                                              UnorderedGroupIndexedType,
+                                              UnorderedGroupType)
+from ocrd_utils import deprecated_alias, getLogger, polygon_from_points
 
 _HIERARCHY = [
     # page can contain different types of regions

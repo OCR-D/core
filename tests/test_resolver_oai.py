@@ -1,15 +1,15 @@
-from unittest.mock import patch
-from pytest import fixture
+from logging import Formatter, StreamHandler
+from os.path import dirname, join
 from shutil import copy
-from logging import StreamHandler, Formatter
-from os.path import join, dirname
+from unittest.mock import patch
 
+from pytest import fixture
 from requests import Session
-from tests.base import main, FIFOIO
 
 from ocrd.resolver import Resolver
 from ocrd_models.utils import extract_mets_from_oai_content
-from ocrd_utils import getLogger, initLogging, LOG_FORMAT
+from ocrd_utils import LOG_FORMAT, getLogger, initLogging
+from tests.base import FIFOIO, main
 
 
 @fixture(name="response_dir")

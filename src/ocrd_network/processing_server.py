@@ -1,71 +1,43 @@
-from hashlib import md5
-import httpx
 import json
+from hashlib import md5
 from logging import FileHandler, Formatter
 from os import getpid
 from pathlib import Path
-import requests
 from typing import Dict, List, Union
 from urllib.parse import urljoin
-import uvicorn
 
-from fastapi import (
-    FastAPI,
-    status,
-    Request,
-    HTTPException,
-    UploadFile,
-    File,
-)
+import httpx
+import requests
+import uvicorn
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from pika.exceptions import ChannelClosedByBroker
 
 from ocrd import Resolver, Workspace
 from ocrd.task_sequence import ProcessorTask
-from ocrd_utils import initLogging, getLogger, LOG_FORMAT
+from ocrd_utils import LOG_FORMAT, getLogger, initLogging
 
 from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
-from .database import (
-    initiate_database,
-    db_create_workspace,
-    db_get_processing_job,
-    db_get_processing_jobs,
-    db_get_workflow_job,
-    db_get_workspace,
-    db_update_processing_job,
-    db_update_workspace,
-    db_get_workflow_script,
-    db_find_first_workflow_script_by_content
-)
+from .database import (db_create_workspace,
+                       db_find_first_workflow_script_by_content,
+                       db_get_processing_job, db_get_processing_jobs,
+                       db_get_workflow_job, db_get_workflow_script,
+                       db_get_workspace, db_update_processing_job,
+                       db_update_workspace, initiate_database)
 from .deployer import Deployer
 from .logging import get_processing_server_logging_file_path
-from .models import (
-    DBProcessorJob,
-    DBWorkflowJob,
-    DBWorkflowScript,
-    PYJobInput,
-    PYJobOutput,
-    PYResultMessage,
-    PYWorkflowJobOutput,
-    StateEnum
-)
-from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
+from .models import (DBProcessorJob, DBWorkflowJob, DBWorkflowScript,
+                     PYJobInput, PYJobOutput, PYResultMessage,
+                     PYWorkflowJobOutput, StateEnum)
+from .rabbitmq_utils import OcrdProcessingMessage, RMQPublisher
 from .server_cache import CacheLockedPages, CacheProcessingRequests
-from .server_utils import (
-    _get_processor_job,
-    _get_processor_job_log,
-    expand_page_ids,
-    validate_and_return_mets_path,
-    validate_job_input
-)
-from .utils import (
-    download_ocrd_all_tool_json,
-    generate_created_time,
-    generate_id,
-    get_ocrd_workspace_physical_pages,
-    validate_workflow,
-)
+from .server_utils import (_get_processor_job, _get_processor_job_log,
+                           expand_page_ids, validate_and_return_mets_path,
+                           validate_job_input)
+from .utils import (download_ocrd_all_tool_json, generate_created_time,
+                    generate_id, get_ocrd_workspace_physical_pages,
+                    validate_workflow)
 
 
 class ProcessingServer(FastAPI):

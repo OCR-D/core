@@ -2,11 +2,13 @@
 Technical image metadata
 """
 
-from math import sqrt
-from io import BytesIO
-from subprocess import run, PIPE
 from distutils.spawn import find_executable as which
+from io import BytesIO
+from math import sqrt
+from subprocess import PIPE, run
+
 from ocrd_utils import getLogger
+
 
 class OcrdExif():
     """Represents technical image metadata.

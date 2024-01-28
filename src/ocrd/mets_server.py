@@ -2,24 +2,25 @@
 # METS server functionality
 """
 import re
-from os import environ, _exit, chmod
-from io import BytesIO
-from typing import Any, Dict, Optional, Union, List, Tuple
-from pathlib import Path
-from urllib.parse import urlparse
 import socket
-
-from fastapi import FastAPI, Request, File, Form, Response
-from fastapi.responses import JSONResponse
-from requests import request, Session as requests_session
-from requests.exceptions import ConnectionError
-from requests_unixsocket import Session as requests_unixsocket_session
-from pydantic import BaseModel, Field, ValidationError
+from io import BytesIO
+from os import _exit, chmod, environ
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 import uvicorn
+from fastapi import FastAPI, File, Form, Request, Response
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, ValidationError
+from requests import Session as requests_session
+from requests import request
+from requests.exceptions import ConnectionError
+from requests_unixsocket import Session as requests_unixsocket_session
 
-from ocrd_models import OcrdMets, OcrdFile, ClientSideOcrdFile, OcrdAgent, ClientSideOcrdAgent
-from ocrd_utils import initLogging, getLogger, deprecated_alias
+from ocrd_models import (ClientSideOcrdAgent, ClientSideOcrdFile, OcrdAgent,
+                         OcrdFile, OcrdMets)
+from ocrd_utils import deprecated_alias, getLogger, initLogging
 
 #
 # Models

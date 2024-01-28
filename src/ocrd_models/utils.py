@@ -4,6 +4,7 @@ Utilities for ocrd_models
 from lxml import etree as ET
 
 from ocrd_utils import getLogger
+
 from .constants import NAMESPACES as NS
 
 __all__ = [

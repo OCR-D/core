@@ -4,17 +4,11 @@ import os
 import shutil
 
 import lxml.etree as ET
-from tests.base import main
-
 import pytest
 
-from ocrd.resolver import (
-    Resolver
-)
-
-from ocrd.workspace import (
-    Workspace
-)
+from ocrd.resolver import Resolver
+from ocrd.workspace import Workspace
+from tests.base import main
 
 
 def test_workspace_init_missing_mets():

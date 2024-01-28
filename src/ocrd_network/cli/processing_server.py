@@ -1,8 +1,6 @@
 import click
-from .. import (
-    ProcessingServer,
-    ServerAddressParamType
-)
+
+from .. import ProcessingServer, ServerAddressParamType
 
 
 @click.command('processing-server')

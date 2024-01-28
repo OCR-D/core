@@ -3,7 +3,8 @@ def _region_class(self, x): # pylint: disable=unused-argument
     return x.__class__.__name__.replace('RegionType', '')
 
 def _get_recursive_regions(self, regions, level, classes=None):
-    from .constants import PAGE_REGION_TYPES  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
+    from .constants import \
+        PAGE_REGION_TYPES  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
     if level == 1:
         # stop recursion, filter classes
         if classes:

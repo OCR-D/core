@@ -3,6 +3,7 @@ Utility functions to simplify access to data structures.
 """
 import json
 from functools import wraps
+
 from frozendict import frozendict
 
 

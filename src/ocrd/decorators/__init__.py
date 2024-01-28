@@ -1,24 +1,18 @@
 import sys
 
-from ocrd_utils import (
-    config,
-    initLogging,
-    is_local_filename,
-    get_local_filename,
-    getLogger,
-    parse_json_string_with_comments,
-    set_json_key_value_overrides,
-)
+from ocrd_network import (NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER,
+                          ProcessingWorker, ProcessorServer)
+from ocrd_utils import (config, get_local_filename, getLogger, initLogging,
+                        is_local_filename, parse_json_string_with_comments,
+                        set_json_key_value_overrides)
 from ocrd_validators import WorkspaceValidator
-from ocrd_network import ProcessingWorker, ProcessorServer, NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 
-from ..resolver import Resolver
 from ..processor.base import run_processor
-
+from ..resolver import Resolver
 from .loglevel_option import ocrd_loglevel
-from .parameter_option import parameter_option, parameter_override_option
-from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
+from .ocrd_cli_options import ocrd_cli_options
+from .parameter_option import parameter_option, parameter_override_option
 
 SUBCOMMANDS = [NETWORK_AGENT_WORKER, NETWORK_AGENT_SERVER]
 
@@ -113,10 +107,10 @@ def ocrd_cli_wrap_processor(
     if not profile_file and config.is_set('OCRD_PROFILE_FILE'):
         profile_file = config.OCRD_PROFILE_FILE
     if profile or profile_file:
-        import cProfile
-        import pstats
-        import io
         import atexit
+        import cProfile
+        import io
+        import pstats
         print("Profiling...")
         pr = cProfile.Profile()
         pr.enable()

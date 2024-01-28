@@ -2,27 +2,15 @@
 
 import pytest
 
-from tests.base import main, assets, create_ocrd_file_with_defaults
-
 from ocrd_modelfactory import page_from_image
+from ocrd_models.ocrd_page import (AlternativeImageType, GlyphType,
+                                   OrderedGroupIndexedType, PageType,
+                                   PcGtsType, ReadingOrderType,
+                                   RegionRefIndexedType, TextLineType,
+                                   TextRegionType, UnorderedGroupIndexedType,
+                                   WordType, parse, parseString, to_xml)
 from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
-from ocrd_models.ocrd_page import (
-    AlternativeImageType,
-    PcGtsType,
-    PageType,
-    TextRegionType,
-    TextLineType,
-    OrderedGroupIndexedType,
-    UnorderedGroupIndexedType,
-    ReadingOrderType,
-    RegionRefIndexedType,
-    WordType,
-    GlyphType,
-
-    parseString,
-    parse,
-    to_xml
-)
+from tests.base import assets, create_ocrd_file_with_defaults, main
 
 simple_page = """\
 <PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15/pagecontent.xsd">

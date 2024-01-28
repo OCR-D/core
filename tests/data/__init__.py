@@ -1,5 +1,6 @@
 import json
 import os
+
 from ocrd import Processor
 from ocrd_utils import make_file_id
 

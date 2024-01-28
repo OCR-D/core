@@ -1,13 +1,15 @@
 from __future__ import annotations
+
+import re
 from enum import Enum
+from time import sleep
+
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
-from time import sleep
-import re
+from pymongo import MongoClient
 
 from .rabbitmq_utils import RMQPublisher
-from pymongo import MongoClient
 
 __all__ = [
     'create_docker_client',

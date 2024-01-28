@@ -1,9 +1,9 @@
-import os
 import json
-from tempfile import mkdtemp
+import os
 from os.path import join
-from shutil import rmtree
 from pathlib import Path
+from shutil import rmtree
+from tempfile import mkdtemp
 
 from tests.base import CapturingTestCase as BaseTestCase
 

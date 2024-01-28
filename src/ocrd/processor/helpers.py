@@ -1,18 +1,19 @@
 """
 Helper methods for running and documenting processors
 """
-from os import chdir, getcwd
-from time import perf_counter, process_time
-from functools import lru_cache
-import json
 import inspect
+import json
+from functools import lru_cache
+from os import chdir, getcwd
 from subprocess import run
+from time import perf_counter, process_time
 from typing import List
 
 from click import wrap_text
-from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel, getLevelName
 
+from ocrd.workspace import Workspace
+from ocrd_utils import (config, freeze_args, getLevelName, getLogger,
+                        setOverrideLogLevel)
 
 __all__ = [
     'generate_processor_help',

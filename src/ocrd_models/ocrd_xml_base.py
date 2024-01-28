@@ -2,11 +2,11 @@
 Base class for XML documents loaded from either content or filename.
 """
 from os.path import exists
+
 from lxml import etree as ET
 
 from .constants import NAMESPACES
 from .utils import xmllint_format
-
 
 for curie in NAMESPACES:
     ET.register_namespace(curie, NAMESPACES[curie])

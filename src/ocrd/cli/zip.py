@@ -9,12 +9,13 @@ import sys
 
 import click
 
-from ocrd_utils import initLogging, DEFAULT_METS_BASENAME
+from ocrd_utils import DEFAULT_METS_BASENAME, initLogging
 from ocrd_validators import OcrdZipValidator
 
 from ..resolver import Resolver
 from ..workspace import Workspace
 from ..workspace_bagger import WorkspaceBagger
+
 
 @click.group("zip")
 def zip_cli():

@@ -1,8 +1,9 @@
-from beanie import Document
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel
 from typing import Dict, List, Optional
+
+from beanie import Document
+from pydantic import BaseModel
 
 from ocrd_network import NETWORK_AGENT_WORKER
 

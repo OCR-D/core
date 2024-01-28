@@ -1,20 +1,22 @@
 import json
-import click
 from contextlib import contextmanager
-from click.testing import CliRunner
+from os.path import exists, join
 from tempfile import TemporaryDirectory
-from os.path import join, exists
 
-from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor
+import click
+from click.testing import CliRunner
 
 from ocrd import Processor, Resolver
-from ocrd.decorators import (
-    ocrd_cli_options,
-    ocrd_loglevel,
-    ocrd_cli_wrap_processor,
-)    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging
+from ocrd.decorators import (  # pylint: disable=protected-access
+    ocrd_cli_options, ocrd_cli_wrap_processor, ocrd_loglevel)
+from ocrd_utils import VERSION as OCRD_VERSION
+from ocrd_utils import disableLogging, initLogging, pushd_popd
+from tests.base import \
+    CapturingTestCase as \
+    TestCase  # pylint: disable=import-error, no-name-in-module
+from tests.base import assets, copy_of_directory, main
+from tests.data import DummyProcessor
+
 
 @click.command()
 @ocrd_cli_options

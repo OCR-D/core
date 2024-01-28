@@ -12,8 +12,10 @@ def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=T
     Returns:
         a list of image filename strings
     """
-    from .constants import NAMESPACES, PAGE_REGION_TYPES # pylint: disable=relative-beyond-top-level,import-outside-toplevel
     from io import StringIO  # pylint: disable=import-outside-toplevel
+
+    from .constants import (  # pylint: disable=relative-beyond-top-level,import-outside-toplevel
+        NAMESPACES, PAGE_REGION_TYPES)
     ret = []
     # XXX Since we're only interested in the **paths** of the images,
     # export, parse and xpath are less convoluted than traversing

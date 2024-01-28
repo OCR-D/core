@@ -8,10 +8,11 @@ OCR-D CLI: running task sequences (workflow processing)
 """
 import click
 
-from ocrd_utils import getLogger, initLogging, DEFAULT_METS_BASENAME
 from ocrd.task_sequence import run_tasks
+from ocrd_utils import DEFAULT_METS_BASENAME, getLogger, initLogging
 
 from ..decorators import ocrd_loglevel
+
 
 # ----------------------------------------------------------------------
 # ocrd process

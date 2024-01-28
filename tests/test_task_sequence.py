@@ -1,18 +1,14 @@
 import json
-from tempfile import TemporaryDirectory
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from tests.base import main, assets, copy_of_directory
-from tests.data.wf_testcase import (
-    TestCase,
-
-    SAMPLE_NAME_REQUIRED_PARAM,
-    PARAM_JSON,
-)
-
-from ocrd_utils import pushd_popd, MIMETYPE_PAGE, get_ocrd_tool_json
 from ocrd.resolver import Resolver
-from ocrd.task_sequence import run_tasks, validate_tasks, ProcessorTask
+from ocrd.task_sequence import ProcessorTask, run_tasks, validate_tasks
+from ocrd_utils import MIMETYPE_PAGE, get_ocrd_tool_json, pushd_popd
+from tests.base import assets, copy_of_directory, main
+from tests.data.wf_testcase import (PARAM_JSON, SAMPLE_NAME_REQUIRED_PARAM,
+                                    TestCase)
+
 
 class TestOcrdWfStep(TestCase):
 

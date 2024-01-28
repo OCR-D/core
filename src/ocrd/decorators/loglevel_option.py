@@ -1,4 +1,5 @@
 import click
+
 from ocrd_utils.logging import setOverrideLogLevel
 
 __all__ = ['ocrd_loglevel']

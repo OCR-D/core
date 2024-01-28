@@ -28,16 +28,14 @@ Changes as of 2023-08-20:
 
 from __future__ import absolute_import
 
-from traceback import format_stack
-
 import logging
 import logging.config
-from pathlib import Path
 import sys
+from pathlib import Path
+from traceback import format_stack
 
-from .constants import LOG_FORMAT, LOG_TIMEFMT
 from .config import config
-
+from .constants import LOG_FORMAT, LOG_TIMEFMT
 
 __all__ = [
     'disableLogging',
@@ -82,9 +80,11 @@ _ocrdLevel2pythonLevel = {
 def tf_disable_interactive_logs():
     try:
         from os import environ
+
         # This env variable must be set before importing from Keras
         environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         from tensorflow.keras.utils import disable_interactive_logging
+
         # Enabled interactive logging throws an exception
         # due to a call of sys.stdout.flush()
         disable_interactive_logging()

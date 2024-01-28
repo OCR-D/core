@@ -1,21 +1,23 @@
-from os.path import join, exists
-from pathlib import Path
+import sys
+from contextlib import contextmanager
 from filecmp import dircmp
+from io import StringIO
+from os.path import exists, join
+from pathlib import Path
 from shutil import copytree
 from tempfile import TemporaryDirectory
-from io import StringIO
-from contextlib import contextmanager
-import sys
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
-# pylint: disable=import-error, no-name-in-module
-from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory, main
-
-from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel, disableLogging
-from ocrd.cli.workspace import workspace_cli
 from ocrd import Resolver
+from ocrd.cli.workspace import workspace_cli
+from ocrd_utils import (disableLogging, initLogging, pushd_popd,
+                        setOverrideLogLevel)
+# pylint: disable=import-error, no-name-in-module
+from tests.base import CapturingTestCase as TestCase
+from tests.base import assets, copy_of_directory, main
+
 
 @contextmanager
 def mock_stdin(inp):
