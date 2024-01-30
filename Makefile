@@ -222,7 +222,6 @@ test: assets
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 integration-test:
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	sleep 20
 	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server' -v
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
