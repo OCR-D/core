@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Added:
 
   * Basic integration test for `ocrd_network`, #1164
+  * `ocrd-tool.json` for `ocrd-dummy` now in repo root, for ocrd_all's `make ocrd-all-tool.json`, #1168
 
 Fixed:
 
