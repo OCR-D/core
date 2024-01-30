@@ -1,35 +1,13 @@
-from pika import URLParameters
 from pika.credentials import PlainCredentials
 from pytest import fixture
-from re import match as re_match
 from ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
+from ocrd_network.utils import verify_and_parse_mq_uri
 from ocrd_utils.config import config
+
 
 RABBITMQ_URL = config.RABBITMQ_URL
 DEFAULT_EXCHANGER_NAME = config.DEFAULT_EXCHANGER_NAME
 DEFAULT_QUEUE = config.DEFAULT_QUEUE
-
-
-def verify_and_parse_mq_uri(rabbitmq_address: str):
-    """
-    Check the full list of available parameters in the docs here:
-    https://pika.readthedocs.io/en/stable/_modules/pika/connection.html#URLParameters
-    """
-
-    uri_pattern = r"^(?:([^:\/?#\s]+):\/{2})?(?:([^@\/?#\s]+)@)?([^\/?#\s]+)?(?:\/([^?#\s]*))?(?:[?]([^#\s]+))?\S*$"
-    match = re_match(pattern=uri_pattern, string=rabbitmq_address)
-    if not match:
-        raise ValueError(f"The RabbitMQ server address is in wrong format: '{rabbitmq_address}'")
-    url_params = URLParameters(rabbitmq_address)
-
-    parsed_data = {
-        "username": url_params.credentials.username,
-        "password": url_params.credentials.password,
-        "host": url_params.host,
-        "port": url_params.port,
-        "vhost": url_params.virtual_host
-    }
-    return parsed_data
 
 
 @fixture(scope="package", name="rabbitmq_defaults")

@@ -76,7 +76,7 @@ def verify_database_uri(mongodb_address: str) -> str:
         # perform validation check
         mongo_uri_parser.parse_uri(uri=mongodb_address, validate=True)
     except Exception as error:
-        raise ValueError(f"The database address '{mongodb_address}' is in wrong format, {error}")
+        raise ValueError(f"The MongoDB address '{mongodb_address}' is in wrong format, {error}")
     return mongodb_address
 
 
