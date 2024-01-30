@@ -11,7 +11,7 @@ from typing import List
 
 from click import wrap_text
 from ocrd.workspace import Workspace
-from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel, getLevelName
+from ocrd_utils import freeze_args, getLogger, config, setOverrideLogLevel, getLevelName, sparkline
 
 
 __all__ = [
@@ -106,7 +106,6 @@ def run_processor(
     if any(x in config.OCRD_PROFILE for x in ['RSS', 'PSS']):
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
         from memory_profiler import memory_usage
-        from sparklines import sparklines
         try:
             mem_usage = memory_usage(proc=processor.process,
                                      # only run process once
@@ -123,7 +122,7 @@ def run_processor(
             chdir(old_cwd)
         mem_usage_values = [mem for mem, _ in mem_usage]
         mem_output = 'memory consumption: '
-        mem_output += ''.join(sparklines(mem_usage_values))
+        mem_output += sparkline(mem_usage_values)
         mem_output += ' max: %.2f MiB min: %.2f MiB' % (max(mem_usage_values), min(mem_usage_values))
         logProfile.info(mem_output)
     else:
