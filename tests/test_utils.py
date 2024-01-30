@@ -21,6 +21,7 @@ from ocrd_utils import (
     is_string,
     membername,
     generate_range,
+    sparkline,
 
     nth_url_segment,
     remove_non_path_from_url,
@@ -324,6 +325,12 @@ def test_partition_list():
     assert partition_list(lst_13, chunks=3) == [[1, 2, 3, 4, 5], [6, 7, 8, 9], [10, 11, 12, 13]]
     assert partition_list(lst_13, chunks=4) == [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10], [11, 12, 13]]
     assert partition_list(lst_13, chunks=4, chunk_index=1) == [[5, 6, 7]]
+
+def test_sparkline():
+    assert sparkline([5, 2, 3]) == '█▃▄'
+    assert sparkline([1000, 1, 2222]) == '▃ █'
+    assert sparkline([8, 7, 6, 5, 4, 3, 2, 1, 0]) == '█▇▆▅▄▃▂▁ '
+    assert sparkline([-1, None, 'forty-two']) == ''
 
 
 if __name__ == '__main__':

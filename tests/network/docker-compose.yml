@@ -1,0 +1,120 @@
+networks:
+  ocrd_network_test:
+    name: ${DOCKER_OCRD_NETWORK_NAME}
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: ${DOCKER_OCRD_NETWORK_MTU}
+
+services:
+
+  ocrd_network_mongo_db:
+    image: "mongo"
+    hostname: ${MONGODB_HOST}
+    container_name: ocrd_network_mongo_db
+    networks:
+      - ${DOCKER_OCRD_NETWORK_NAME}
+    ports:
+      - ${MONGODB_PORT}:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  ocrd_network_rabbit_mq:
+    image: "rabbitmq:3.12-management"
+    hostname: ${RABBITMQ_HOST}
+    container_name: ocrd_network_rabbit_mq
+    networks:
+      - ${DOCKER_OCRD_NETWORK_NAME}
+    ports:
+      - ${RABBITMQ_PORT}:5672
+      - 15672:15672
+      - 25672:25672
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_FEATURE_FLAGS=${RABBITMQ_FEATURE_FLAGS}
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  ocrd_network_processing_server:
+    image: "ocrd_core_test"
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: 'ubuntu:22.04'
+      target: ocrd_core_test
+    hostname: ${OCRD_PS_HOST}
+    container_name: ocrd_network_processing_server
+    depends_on:
+      ocrd_network_mongo_db:
+        condition: service_healthy
+      ocrd_network_rabbit_mq:
+        condition: service_healthy
+    networks:
+      - ${DOCKER_OCRD_NETWORK_NAME}
+    ports:
+      - ${OCRD_PS_PORT}:8000
+    environment:
+      DB_NAME: ${MONGODB_NAME}
+      DB_URL: ${MONGODB_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
+      OCRD_NETWORK_SOCKETS_ROOT_DIR: /ocrd-data/ocrd_network_sockets
+    healthcheck:
+      test: curl -f ${OCRD_PS_URL}/
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - ${OCRD_NETWORK_LOGS_ROOT}:/ocrd-data/ocrd_network_logs
+      - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
+      - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
+      - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
+      - "./ps_config.yml:/ocrd-data/ps_config.yml"
+    command: ocrd network processing-server -a 0.0.0.0:8000 /ocrd-data/ps_config.yml
+
+  ocrd_dummy_processing_worker:
+    image: "ocrd_core_test"
+    depends_on:
+      ocrd_network_processing_server:
+        condition: service_healthy
+    networks:
+      - ${DOCKER_OCRD_NETWORK_NAME}
+    environment:
+      OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
+    volumes:
+      - ${OCRD_NETWORK_LOGS_ROOT}:/ocrd-data/ocrd_network_logs
+      - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
+      - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
+      - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
+    command: ocrd-dummy worker --database ${MONGODB_URL} --queue ${RABBITMQ_URL}
+
+  ocrd_network_core_test:
+    image: "ocrd_core_test"
+    container_name: core_test
+    depends_on:
+      ocrd_network_processing_server:
+        condition: service_healthy
+    networks:
+      - ${DOCKER_OCRD_NETWORK_NAME}
+    environment:
+      DB_NAME: ${MONGODB_NAME}
+      DB_URL: ${MONGODB_URL}
+      PROCESSING_SERVER_URL: ${OCRD_PS_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
+      OCRD_NETWORK_SOCKETS_ROOT_DIR: /ocrd-data/ocrd_network_sockets
+    volumes:
+      - ${OCRD_NETWORK_LOGS_ROOT}:/ocrd-data/ocrd_network_logs
+      - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
+      - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
+      - "./ocrd_logging.conf:/etc/ocrd_logging.conf"

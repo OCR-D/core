@@ -158,7 +158,10 @@ from .image import (
 from .introspect import (
     freeze_args,
     set_json_key_value_overrides,
-    membername
+    membername,
+    resource_filename,
+    resource_string,
+    dist_version
 )
 
 from .logging import (
@@ -198,6 +201,7 @@ from .str import (
     partition_list,
     parse_json_string_or_file,
     parse_json_string_with_comments,
+    sparkline,
     remove_non_path_from_url,
     safe_filename)
 

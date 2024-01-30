@@ -7,3 +7,6 @@
 !LICENSE
 !README.md
 !.git
+!tests
+!requirements_test.txt
+!.gitmodules

@@ -2,24 +2,24 @@
 # METS server functionality
 """
 import re
-from os import environ, _exit, chmod
-from io import BytesIO
-from typing import Any, Dict, Optional, Union, List, Tuple
+from os import _exit, chmod
+from typing import Dict, Optional, Union, List, Tuple
 from pathlib import Path
 from urllib.parse import urlparse
 import socket
+import atexit
 
-from fastapi import FastAPI, Request, File, Form, Response
+from fastapi import FastAPI, Request, Form, Response
 from fastapi.responses import JSONResponse
-from requests import request, Session as requests_session
+from requests import Session as requests_session
 from requests.exceptions import ConnectionError
 from requests_unixsocket import Session as requests_unixsocket_session
 from pydantic import BaseModel, Field, ValidationError
 
 import uvicorn
 
-from ocrd_models import OcrdMets, OcrdFile, ClientSideOcrdFile, OcrdAgent, ClientSideOcrdAgent
-from ocrd_utils import initLogging, getLogger, deprecated_alias
+from ocrd_models import OcrdFile, ClientSideOcrdFile, OcrdAgent, ClientSideOcrdAgent
+from ocrd_utils import getLogger, deprecated_alias
 
 #
 # Models
@@ -197,9 +197,10 @@ class OcrdMetsServer():
         self.log = getLogger(f'ocrd.mets_server[{self.url}]')
 
     def shutdown(self):
-        self.log.info("Shutting down METS server")
         if self.is_uds:
-            Path(self.url).unlink()
+            if Path(self.url).exists():
+                self.log.warning(f'UDS socket {self.url} still exists, removing it')
+                Path(self.url).unlink()
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)
 
@@ -296,7 +297,7 @@ class OcrdMetsServer():
             """
             Stop the server
             """
-            getLogger('ocrd.models.ocrd_mets').info('Shutting down')
+            getLogger('ocrd.models.ocrd_mets').info(f'Shutting down METS Server {self.url}')
             workspace.save_mets()
             self.shutdown()
 
@@ -308,6 +309,7 @@ class OcrdMetsServer():
             self.log.debug(f"chmod 0o677 {self.url}")
             server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             server.bind(self.url)  # creates the socket file
+            atexit.register(self.shutdown)
             server.close()
             chmod(self.url, 0o666)
             uvicorn_kwargs = {'uds': self.url}

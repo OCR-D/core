@@ -9,6 +9,8 @@ TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
 VERSION = $(shell cat VERSION)
 
+DOCKER_COMPOSE = docker compose
+
 SPHINX_APIDOC =
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
@@ -129,7 +131,7 @@ build:
 # (Re)install the tool
 install: #build
 	# not stricttly necessary but a precaution against outdated python build tools, https://github.com/OCR-D/core/pull/1166
-	$(PIP) install -U pip wheel setuptools
+	$(PIP) install -U pip wheel
 	$(PIP_INSTALL) . $(PIP_INSTALL_CONFIG_OPTION)
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
@@ -213,8 +215,15 @@ test: assets
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
+		--ignore-glob="$(TESTDIR)/network/*.py" \
 		$(TESTDIR)
 	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
+
+INTEGRATION_TEST_IN_DOCKER = docker exec core_test
+integration-test:
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server' -v
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
@@ -271,6 +280,7 @@ pyclean:
 	rm -rf ./dist
 	rm -rf htmlcov
 	rm -rf .benchmarks
+	rm -rf **/*.egg-info
 	rm -f **/*.pyc
 	-find . -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
@@ -296,7 +306,7 @@ docker-cuda: DOCKER_FILE = Dockerfile.cuda
 docker-cuda: docker
 
 docker docker-cuda: 
-	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build
