@@ -3,7 +3,7 @@ from functools import wraps
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
-from requests import Session as Session_TCP
+from requests import get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
 from typing import Dict, List
 from uuid import uuid4
@@ -47,6 +47,18 @@ def generate_id() -> str:
     WebAPI implementation are produced in the same manner
     """
     return str(uuid4())
+
+
+def is_url_responsive(url: str, retries: int = 0) -> bool:
+    while True:
+        try:
+            response = get(url)
+            if response.status_code == 200:
+                return True
+        except Exception:
+            if retries <= 0:
+                return False
+            retries -= 1
 
 
 def validate_and_load_config(config_path: str) -> Dict:
