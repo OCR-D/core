@@ -1,23 +1,23 @@
 networks:
   ocrd_network_test:
-    name: ocrd_network_test
+    name: ${DOCKER_OCRD_NETWORK_NAME}
     driver: bridge
     driver_opts:
-      com.docker.network.driver.mtu: 1450
+      com.docker.network.driver.mtu: ${DOCKER_OCRD_NETWORK_MTU}
 
 services:
 
   ocrd_network_mongo_db:
     image: "mongo"
-    hostname: mongodb-docker-host
+    hostname: ${MONGODB_HOST}
     container_name: ocrd_network_mongo_db
     networks:
-      - ocrd_network_test
+      - ${DOCKER_OCRD_NETWORK_NAME}
     ports:
-      - "6701:27017"
+      - ${MONGODB_PORT}:27017
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=network_test
-      - MONGO_INITDB_ROOT_PASSWORD=network_test
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 1s
@@ -26,18 +26,18 @@ services:
 
   ocrd_network_rabbit_mq:
     image: "rabbitmq:3.12-management"
-    hostname: rabbitmq-docker-host
+    hostname: ${RABBITMQ_HOST}
     container_name: ocrd_network_rabbit_mq
     networks:
-      - ocrd_network_test
+      - ${DOCKER_OCRD_NETWORK_NAME}
     ports:
-      - "6672:5672"
-      - "16672:15672"
-      - "26672:25672"
+      - ${RABBITMQ_PORT}:5672
+      - 15672:15672
+      - 25672:25672
     environment:
-      - RABBITMQ_DEFAULT_USER=network_test
-      - RABBITMQ_DEFAULT_PASS=network_test
-      - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_FEATURE_FLAGS=${RABBITMQ_FEATURE_FLAGS}
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1s
@@ -52,7 +52,7 @@ services:
       args:
         BASE_IMAGE: 'ubuntu:22.04'
       target: ocrd_core_test
-    hostname: processing-server-host
+    hostname: ${OCRD_PS_HOST}
     container_name: ocrd_network_processing_server
     depends_on:
       ocrd_network_mongo_db:
@@ -60,44 +60,27 @@ services:
       ocrd_network_rabbit_mq:
         condition: service_healthy
     networks:
-      - ocrd_network_test
+      - ${DOCKER_OCRD_NETWORK_NAME}
     ports:
-      - "8000:8000"
+      - ${OCRD_PS_PORT}:8000
     environment:
-      DB_NAME: ocrd_network_test
-      DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
-      RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
+      DB_NAME: ${MONGODB_NAME}
+      DB_URL: ${MONGODB_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
       OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
       OCRD_NETWORK_SOCKETS_ROOT_DIR: /ocrd-data/ocrd_network_sockets
     healthcheck:
-      test: curl -f http://processing-server-host.ocrd_network_test:8000/
+      test: curl -f ${OCRD_PS_URL}/
       interval: 1s
       timeout: 3s
       retries: 30
     volumes:
-      - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
-      - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
+      - ${OCRD_NETWORK_LOGS_ROOT}:/ocrd-data/ocrd_network_logs
+      - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
       - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
-    command: |
-      /bin/bash -c "echo -e \"
-        internal_callback_url: http://processing-server-host.ocrd_network_test:8000
-        process_queue:
-          address: rabbitmq-docker-host.ocrd_network_test
-          port: 5672
-          skip_deployment: true
-          credentials:
-            username: network_test
-            password: network_test
-        database:
-          address: mongodb-docker-host.ocrd_network_test
-          port: 27017
-          skip_deployment: true
-          credentials:
-            username: network_test
-            password: network_test
-        hosts: []\" > ./ps_config.yaml && \
-        ocrd network processing-server -a 0.0.0.0:8000 ./ps_config.yaml"
+      - "./ps_config.yml:/ocrd-data/ps_config.yml"
+    command: ocrd network processing-server -a 0.0.0.0:8000 /ocrd-data/ps_config.yml
 
   ocrd_dummy_processing_worker:
     image: "ocrd_core_test"
@@ -105,18 +88,15 @@ services:
       ocrd_network_processing_server:
         condition: service_healthy
     networks:
-      - ocrd_network_test
+      - ${DOCKER_OCRD_NETWORK_NAME}
     environment:
       OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
     volumes:
-      - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
-      - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
+      - ${OCRD_NETWORK_LOGS_ROOT}:/ocrd-data/ocrd_network_logs
+      - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
       - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
-    command: > 
-      ocrd-dummy worker 
-      --database mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017 
-      --queue amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
+    command: ocrd-dummy worker --database ${MONGODB_URL} --queue ${RABBITMQ_URL}
 
   ocrd_network_core_test:
     image: "ocrd_core_test"
@@ -125,16 +105,16 @@ services:
       ocrd_network_processing_server:
         condition: service_healthy
     networks:
-      - ocrd_network_test
+      - ${DOCKER_OCRD_NETWORK_NAME}
     environment:
-      DB_NAME: ocrd_network_test
-      DB_URL: mongodb://network_test:network_test@mongodb-docker-host.ocrd_network_test:27017
-      PROCESSING_SERVER_URL: http://processing-server-host.ocrd_network_test:8000
-      RABBITMQ_URL: amqp://network_test:network_test@rabbitmq-docker-host.ocrd_network_test:5672
+      DB_NAME: ${MONGODB_NAME}
+      DB_URL: ${MONGODB_URL}
+      PROCESSING_SERVER_URL: ${OCRD_PS_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
       OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
       OCRD_NETWORK_SOCKETS_ROOT_DIR: /ocrd-data/ocrd_network_sockets
     volumes:
-      - "/tmp/ocrd_network_logs:/ocrd-data/ocrd_network_logs"
-      - "/tmp/ocrd_network_sockets:/ocrd-data/ocrd_network_sockets"
+      - ${OCRD_NETWORK_LOGS_ROOT}:/ocrd-data/ocrd_network_logs
+      - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
       - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
