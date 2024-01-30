@@ -92,7 +92,7 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
     assert len(sbb_sample_01.find_all_files(pageId='1..10')) == 35, '35 files in @ORDER range 1..10'
-    with raises(ValueError, match='differ in their non-numeric part'):
+    with pytest.raises(ValueError, match='differ in their non-numeric part'):
         len(sbb_sample_01.find_all_files(pageId='1..PHYS_0002'))
 
 def test_find_all_files_local_only(sbb_sample_01):

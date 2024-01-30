@@ -611,45 +611,46 @@ class OcrdMets(OcrdXmlDocument):
                     page_attr_patterns += generate_range(*pageId_token.split('..', 1))
                 else:
                     page_attr_patterns += [pageId_token]
-            if page_attr_patterns:
-                if self._cache_flag:
-                    # determine attr to look for before iterating
+            if not page_attr_patterns:
+                return []
+            if self._cache_flag:
+                # determine attr to look for before iterating
+                try:
+                    attr = next(a for a in METS_PAGE_DIV_ATTRIBUTE if (
+                                any(p in self._page_cache[a] for p in page_attr_patterns) or \
+                                any([isinstance(p, typing.Pattern) and p.fullmatch(attr_val) \
+                                    for p in page_attr_patterns \
+                                    for attr_val in self._page_cache[a]]
+                                )))
+                    for attr_val in self._page_cache[attr].keys():
+                        if attr_val in page_attr_patterns or \
+                                any([isinstance(p, typing.Pattern) and p.fullmatch(attr_val) for p in page_attr_patterns]):
+                            if return_divs:
+                                ret.append(self._page_cache[attr][attr_val])
+                            else:
+                                ret.append(attr_val)
+                except StopIteration:
+                    log.debug(f"No pattern matches any keys of any of the _page_caches. patterns: {page_attr_patterns}")
+            else:
+                # determine attr during iterating
+                attr = None
+                for page in self._tree.getroot().xpath(
+                        'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                        namespaces=NS):
                     try:
-                        attr = next(a for a in METS_PAGE_DIV_ATTRIBUTE if (
-                                    any(p in self._page_cache[a] for p in page_attr_patterns) or \
-                                    any([isinstance(p, typing.Pattern) and p.fullmatch(attr_val) \
-                                        for p in page_attr_patterns \
-                                        for attr_val in self._page_cache[a]]
-                                    )))
-                        for attr_val in self._page_cache[attr].keys():
-                            if attr_val in page_attr_patterns or \
-                                    any([isinstance(p, typing.Pattern) and p.fullmatch(attr_val) for p in page_attr_patterns]):
-                                if return_divs:
-                                    ret.append(self._page_cache[attr][attr_val])
-                                else:
-                                    ret.append(attr_val)
+                        if not attr:
+                            attr = next(a for a in METS_PAGE_DIV_ATTRIBUTE if \
+                                page.get(a.name) in page_attr_patterns or \
+                                any([isinstance(p, typing.Pattern) and p.fullmatch(page.get(a.name)) for p in page_attr_patterns]))
+                        attr_val = page.get(attr.name)
+                        if attr_val in page_attr_patterns or \
+                                any([isinstance(p, typing.Pattern) and p.fullmatch(attr_val) for p in page_attr_patterns]):
+                            if return_divs:
+                                ret.append(page)
+                            else:
+                                ret.append(attr_val)
                     except StopIteration:
-                        log.debug(f"No pattern matches any keys of any of the _page_caches. patterns: {page_attr_patterns}")
-                else:
-                    # determine attr during iterating
-                    attr = None
-                    for page in self._tree.getroot().xpath(
-                            'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
-                            namespaces=NS):
-                        try:
-                            if not attr:
-                                attr = next(a for a in METS_PAGE_DIV_ATTRIBUTE if \
-                                    page.get(a.name) in page_attr_patterns or \
-                                    any([isinstance(p, typing.Pattern) and p.fullmatch(page.get(a.name)) for p in page_attr_patterns]))
-                            attr_val = page.get(attr.name)
-                            if attr_val in page_attr_patterns or \
-                                    any([isinstance(p, typing.Pattern) and p.fullmatch(attr_val) for p in page_attr_patterns]):
-                                if return_divs:
-                                    ret.append(page)
-                                else:
-                                    ret.append(attr_val)
-                        except StopIteration:
-                            log.debug(f"No pattern matches any mets:div attributes. patterns: {page_attr_patterns}")
+                        log.debug(f"No pattern matches any mets:div attributes. patterns: {page_attr_patterns}")
             return ret
 
         assert for_fileIds # at this point we know for_fileIds is set, assert to convince pyright
