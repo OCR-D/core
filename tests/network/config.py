@@ -1,4 +1,3 @@
-from glob import glob
 from pathlib import Path
 from tempfile import gettempdir
 from src.ocrd_utils.config import OcrdEnvConfig
@@ -90,10 +89,6 @@ test_config.add(
     default=(True, Path(gettempdir(), "ocrd_network_sockets"))
 )
 test_config.OCRD_NETWORK_SOCKETS_ROOT_DIR.mkdir(parents=True, exist_ok=True)
-# Remove socket files left from previous tests
-socket_files = glob(pathname="*.sock", root_dir=test_config.OCRD_NETWORK_SOCKETS_ROOT_DIR)
-for file in socket_files:
-    Path(test_config.OCRD_NETWORK_SOCKETS_ROOT_DIR, file).unlink()
 
 test_config.add(
     name="OCRD_NETWORK_LOGS_ROOT_DIR",

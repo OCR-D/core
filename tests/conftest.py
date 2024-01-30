@@ -1,5 +1,6 @@
+from pathlib import Path
+from pytest import fixture
 from tests.network.config import test_config
-
 
 pytest_plugins = [
     "tests.network.fixtures_mongodb",
@@ -14,3 +15,11 @@ test_config.add('DEFAULT_QUEUE', description="...", default=(True, 'ocrd-network
 
 test_config.add('PROCESSING_SERVER_URL', description="...", default=(True, "http://0.0.0.0:8000"))
 test_config.add('RABBITMQ_URL', description="...", default=(True, "amqp://network_test:network_test@0.0.0.0:5672/"))
+
+
+@fixture(scope="session", autouse=True)
+def do_before_tests():
+    # Remove socket files left from previous tests
+    for file in test_config.OCRD_NETWORK_SOCKETS_ROOT_DIR:
+        if file.endswith('.sock'):
+            Path(file).unlink()
