@@ -16,6 +16,7 @@ Fixed:
 Changed:
 
   * replace license-incompatible sparkline library with a simpler implementation, #1176
+  * remove all pkg_resources calls with modern alternatives, no more run-time setuptools dependency, #1174
 
 ## [2.61.2] - 2024-01-24
 
