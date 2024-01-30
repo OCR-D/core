@@ -13,6 +13,10 @@ Fixed:
 
   * METS Server: UDS sockets are removed on process exit, #117
 
+Changed:
+
+  * replace license-incompatible sparkline library with a simpler implementation, #1176
+
 ## [2.61.2] - 2024-01-24
 
 Fixed:
