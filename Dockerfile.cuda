@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-FROM $BASE_IMAGE
+FROM $BASE_IMAGE AS ocrd_core_base
 
 ENV MAMBA_EXE=/usr/local/bin/conda
 ENV MAMBA_ROOT_PREFIX=/conda
