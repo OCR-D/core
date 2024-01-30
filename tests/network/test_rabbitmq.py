@@ -1,9 +1,9 @@
 from pika import BasicProperties
 from pickle import dumps, loads
-from src.ocrd_utils.config import config
+from tests.network.config import test_config
 
-DEFAULT_EXCHANGER_NAME = config.DEFAULT_EXCHANGER_NAME
-DEFAULT_QUEUE = config.DEFAULT_QUEUE
+DEFAULT_EXCHANGER_NAME = test_config.DEFAULT_EXCHANGER_NAME
+DEFAULT_QUEUE = test_config.DEFAULT_QUEUE
 
 
 def test_rmq_publish_2_messages(rabbitmq_publisher):

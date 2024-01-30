@@ -2,12 +2,12 @@ from pika.credentials import PlainCredentials
 from pytest import fixture
 from src.ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
 from src.ocrd_network.utils import verify_and_parse_mq_uri
-from src.ocrd_utils.config import config
+from tests.network.config import test_config
 
 
-RABBITMQ_URL = config.RABBITMQ_URL
-DEFAULT_EXCHANGER_NAME = config.DEFAULT_EXCHANGER_NAME
-DEFAULT_QUEUE = config.DEFAULT_QUEUE
+RABBITMQ_URL = test_config.RABBITMQ_URL
+DEFAULT_EXCHANGER_NAME = test_config.DEFAULT_EXCHANGER_NAME
+DEFAULT_QUEUE = test_config.DEFAULT_QUEUE
 
 
 @fixture(scope="package", name="rabbitmq_defaults")

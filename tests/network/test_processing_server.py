@@ -1,11 +1,11 @@
 from time import sleep
 from requests import get, post
-from src.ocrd_utils.config import config
 from src.ocrd_network import NETWORK_AGENT_WORKER
 from src.ocrd_network.models import StateEnum
 from tests.base import assets
+from tests.network.config import test_config
 
-PROCESSING_SERVER_URL = config.PROCESSING_SERVER_URL
+PROCESSING_SERVER_URL = test_config.PROCESSING_SERVER_URL
 
 
 def poll_till_timeout_fail_or_success(test_url: str, tries: int, wait: int) -> StateEnum:
