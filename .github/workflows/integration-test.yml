@@ -47,8 +47,12 @@ jobs:
       - name: Install Docker on macOS
         if: runner.os == 'macos'
         run: |
-          brew install docker
+          brew install docker docker-compose
           colima start
       - name: Test network integration with pytest
         run: |
-          make integration-test
+          if [[ "${{ matrix.os }}" == "macos"* ]];then
+            make integration-test DOCKER_COMPOSE=docker-compose
+          else
+            make integration-test
+          fi
