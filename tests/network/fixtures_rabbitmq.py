@@ -1,8 +1,8 @@
 from pika.credentials import PlainCredentials
 from pytest import fixture
-from ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
-from ocrd_network.utils import verify_and_parse_mq_uri
-from ocrd_utils.config import config
+from src.ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
+from src.ocrd_network.utils import verify_and_parse_mq_uri
+from src.ocrd_utils.config import config
 
 
 RABBITMQ_URL = config.RABBITMQ_URL

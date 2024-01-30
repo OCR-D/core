@@ -1,6 +1,6 @@
 from pika import BasicProperties
 from pickle import dumps, loads
-from ocrd_utils.config import config
+from src.ocrd_utils.config import config
 
 DEFAULT_EXCHANGER_NAME = config.DEFAULT_EXCHANGER_NAME
 DEFAULT_QUEUE = config.DEFAULT_QUEUE

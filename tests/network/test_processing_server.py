@@ -1,8 +1,8 @@
 from time import sleep
 from requests import get, post
-from ocrd_utils.config import config
-from ocrd_network import NETWORK_AGENT_WORKER
-from ocrd_network.models import StateEnum
+from src.ocrd_utils.config import config
+from src.ocrd_network import NETWORK_AGENT_WORKER
+from src.ocrd_network.models import StateEnum
 from tests.base import assets
 
 PROCESSING_SERVER_URL = config.PROCESSING_SERVER_URL

@@ -3,8 +3,8 @@ from hashlib import md5
 from pathlib import Path
 from pytest import raises
 from tests.base import assets
-from ocrd_network.models import DBProcessorJob, DBWorkflowScript, StateEnum
-from ocrd_network.database import (
+from src.ocrd_network.models import DBProcessorJob, DBWorkflowScript, StateEnum
+from src.ocrd_network.database import (
     sync_db_create_processing_job,
     sync_db_get_processing_job,
     sync_db_update_processing_job,
