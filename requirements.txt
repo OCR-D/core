@@ -30,7 +30,6 @@ pyyaml
 requests < 2.30
 requests_unixsocket
 shapely
-sparklines >= 0.4.2
 uvicorn
 uvicorn>=0.17.6
 

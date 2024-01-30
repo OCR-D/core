@@ -4,7 +4,8 @@ Utility functions for strings, paths and URL.
 
 import re
 import json
-from .constants import REGEX_FILE_ID
+from typing import List, Union
+from .constants import REGEX_FILE_ID, SPARKLINE_CHARS
 from .deprecate import deprecation_warning
 from warnings import warn
 from numpy import array_split
@@ -235,3 +236,18 @@ def partition_list(lst, chunks, chunk_index=None):
     if chunk_index is not None:
         return [ret[chunk_index]]
     return ret
+
+def sparkline(values : List[int]) -> str:
+    """
+    Render a list of points with block characters
+    """
+    if any(x is None or not isinstance(x, (int, float)) or x < 0 for x in values):
+        # return an empty string on non-positive-int values, better not to
+        # output a sparkline than to cancel execution due to problematic input
+        return ''
+    max_value = max(values)
+    max_mapping = len(SPARKLINE_CHARS) - 1
+    # normalize to 0..1 and convert to index in SPARKLINE_CHARS
+    mapped = [int(x / max_value * max_mapping) for x in values]
+    return ''.join(SPARKLINE_CHARS[x] for x in mapped)
+

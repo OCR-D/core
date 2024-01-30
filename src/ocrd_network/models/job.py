@@ -20,6 +20,8 @@ class StateEnum(str, Enum):
     success = 'SUCCESS'
     # Processing job failed
     failed = 'FAILED'
+    # Processing job has not been assigned yet
+    unset = 'UNSET'
 
 
 class PYJobInput(BaseModel):
