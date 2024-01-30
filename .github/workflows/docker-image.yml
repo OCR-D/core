@@ -39,15 +39,15 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Push images to Github Container Registry
-      run: |
-        docker push ${{ env.GHCRIO_DOCKER_TAG }}:latest
-        docker push ${{ env.GHCRIO_DOCKER_TAG }}-cuda:latest
     - name: Log in to Docker Hub
       uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
       with:
         username: ${{ env.DOCKERIO_USERNAME }}
         password: ${{ secrets.DOCKERIO_PASSWORD }}
+    - name: Push images to Github Container Registry
+      run: |
+        docker push ${{ env.GHCRIO_DOCKER_TAG }}:latest
+        docker push ${{ env.GHCRIO_DOCKER_TAG }}-cuda:latest
     - name: Push images to Docker Hub
       run: |
         docker tag ${{ env.GHCRIO_DOCKER_TAG }} ${{ env.DOCKERIO_DOCKER_TAG }}
