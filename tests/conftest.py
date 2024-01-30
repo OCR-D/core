@@ -1,4 +1,4 @@
-from ocrd_utils.config import config
+from src.ocrd_utils.config import config
 
 
 pytest_plugins = [
