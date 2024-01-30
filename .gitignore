@@ -126,3 +126,4 @@ sanders*
 ws1
 *.doctrees
 .vscode
+*.BAK

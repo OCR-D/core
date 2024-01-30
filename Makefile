@@ -322,7 +322,7 @@ build-workaround: pyclean
 	cp src/ocrd/cli/__init__.py src/ocrd/cli/__init__.py.BAK
 	for dist in $(BUILD_ORDER);do \
 		cat pyproject.toml.BAK | sed "s,^name =.*,name = \"$$dist\"," > pyproject.toml; \
-		cat src/ocrd_utils/constants.py.BAK | sed "s,get_distribution('ocrd'),get_distribution('$$dist')," > src/ocrd_utils/constants.py; \
+		cat src/ocrd_utils/constants.py.BAK | sed "s,dist_version('ocrd'),dist_version('$$dist')," > src/ocrd_utils/constants.py; \
 		cat src/ocrd/cli/__init__.py.BAK | sed "s,package_name='ocrd',package_name='$$dist'," > src/ocrd/cli/__init__.py; \
 		$(MAKE) build; \
 	done
