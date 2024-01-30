@@ -7,7 +7,7 @@ on:
 
 env:
   GHCRIO_DOCKER_TAG: ghcr.io/ocr-d/core
-  DOCKERIO_DOCKER_TAG: docker.io/ocr-d/core
+  DOCKERIO_DOCKER_TAG: docker.io/ocrd/core
 
 jobs:
 
