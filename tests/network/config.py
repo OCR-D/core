@@ -89,6 +89,10 @@ test_config.add(
     default=(True, Path(gettempdir(), "ocrd_network_sockets"))
 )
 test_config.OCRD_NETWORK_SOCKETS_ROOT_DIR.mkdir(parents=True, exist_ok=True)
+# Remove socket files left from previous integration tests
+for path in test_config.OCRD_NETWORK_SOCKETS_ROOT_DIR.iterdir():
+    if path.is_socket() and path.suffix == '.sock':
+        path.unlink()
 
 test_config.add(
     name="OCRD_NETWORK_LOGS_ROOT_DIR",
