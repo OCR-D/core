@@ -1,0 +1,63 @@
+name: Test core installation and run tests
+
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
+          - '3.11'
+        os:
+          - ubuntu-22.04
+          - ubuntu-20.04
+          - macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        if [[ "${{ matrix.os }}" == "ubuntu"* ]];then
+          sudo apt-get -y update
+          sudo make deps-ubuntu
+        else
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
+          HOMEBREW_NO_AUTO_UPDATE=1 \
+          brew install imagemagick geos bash  # opencv
+        fi
+        make install deps-test
+    - name: Test with pytest
+      run: |
+        make test benchmark
+    - name: test to ensure that --editable install works
+      run: |
+        make install-dev; ocrd --version
+    - name: Lint with flake8
+      run: |
+        python -m pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 src --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics

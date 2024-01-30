@@ -12,23 +12,21 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
-import json
-import re
-with open(os.path.join(os.path.abspath('..'), 'ocrd_utils', 'setup.py'), 'r', encoding='utf-8') as f:
-    VERSION = re.findall(r'\bversion=\'([^\']*)\'', f.read())[0]
+# import os
+# import sys
+# # sys.path.insert(0, os.path.abspath('..'))
+with open('VERSION', encoding='utf-8') as f:
+    VERSION = f.read()
 
 
 # -- Project information -----------------------------------------------------
 
 project = u'ocrd'
-copyright = u'2018-2021, OCR-D'
+copyright = u'2018-2024, OCR-D'
 author = u'OCR-D'
 
 # The short X.Y version
-version = VERSION
+version = VERSION.rsplit('.', 1)[0]
 # The full version, including alpha/beta/rc tags
 release = VERSION
 

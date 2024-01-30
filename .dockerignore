@@ -1,6 +1,12 @@
 *
-!ocrd*
+!src*
+!pyproject.toml
+!requirements.txt
 !Makefile
+!VERSION
 !LICENSE
 !README.md
 !.git
+!tests
+!requirements_test.txt
+!.gitmodules

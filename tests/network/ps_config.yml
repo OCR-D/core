@@ -1,0 +1,17 @@
+# the content of this config file is based on the .env
+internal_callback_url: http://ps-docker-host.ocrd_network_test:8000
+process_queue:
+  address: rabbitmq-docker-host.ocrd_network_test
+  port: 5672
+  skip_deployment: true
+  credentials:
+    username: network_test
+    password: network_test
+database:
+  address: mongodb-docker-host.ocrd_network_test
+  port: 27017
+  skip_deployment: true
+  credentials:
+    username: network_test
+    password: network_test
+hosts: []

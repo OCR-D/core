@@ -5,6 +5,46 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Basic integration test for `ocrd_network`, #1164
+  * `ocrd-tool.json` for `ocrd-dummy` now in repo root, for ocrd_all's `make ocrd-all-tool.json`, #1168
+
+Fixed:
+
+  * METS Server: UDS sockets are removed on process exit, #117
+
+Changed:
+
+  * replace license-incompatible sparkline library with a simpler implementation, #1176
+  * remove all pkg_resources calls with modern alternatives, no more run-time setuptools dependency, #1174
+
+## [2.61.2] - 2024-01-24
+
+Fixed:
+
+  * another regression to docker deployment (requirements.txt missing), #1173
+
+## [2.61.1] - 2024-01-23
+
+Fixed:
+
+  * deps-cuda: add workaround for keras-team/tf-keras#62, #1169
+  * fix regression docker deployment, #1172
+
+
+## [2.61.0] - 2024-01-23
+
+Changed:
+
+  * :fire: simplify the project layout and distribution policy, #1166
+    * In the future there will be only one distribution `ocrd`
+    * The previous separate distributions of the `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are all part of `ocrd` now
+    * Nothing needs to be changed in code using OCR-D/core, the package structure and API is the same as before
+    * Until the next major release, we will continue to provide distributions for `ocrd_utils` etc. that contain the same code as `ocrd`
+    * Using `ocrd_utils` etc. as distributions in `requirements.txt` or `install_requires` is now deprecated
+    * Once we release v3.0.0, these distributions will be depublished
+
 ## [2.60.3] - 2024-01-10
 
 Fixed:
@@ -1957,6 +1997,9 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.61.2]: ../../compare/v2.61.2..v2.61.1
+[2.61.1]: ../../compare/v2.61.1..v2.61.1
+[2.61.0]: ../../compare/v2.61.0..v2.60.3
 [2.60.3]: ../../compare/v2.60.3..v2.60.2
 [2.60.2]: ../../compare/v2.60.2..v2.60.1
 [2.60.1]: ../../compare/v2.60.1..v2.60.0
