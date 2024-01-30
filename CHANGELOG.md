@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Basic integration test for `ocrd_network`, #1164
+
+Fixed:
+
+  * METS Server: UDS sockets are removed on process exit, #117
+
 ## [2.61.2] - 2024-01-24
 
 Fixed:

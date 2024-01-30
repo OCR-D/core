@@ -28,17 +28,17 @@ from .models import (
 from .utils import call_sync
 
 
-async def initiate_database(db_url: str):
+async def initiate_database(db_url: str, db_name: str = 'ocrd'):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
-        database=client.get_default_database(default='ocrd'),
+        database=client.get_default_database(default=db_name),
         document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript]
     )
 
 
 @call_sync
-async def sync_initiate_database(db_url: str):
-    await initiate_database(db_url)
+async def sync_initiate_database(db_url: str, db_name: str = 'ocrd'):
+    await initiate_database(db_url, db_name)
 
 
 async def db_create_workspace(mets_path: str) -> DBWorkspace:
@@ -58,6 +58,11 @@ async def db_create_workspace(mets_path: str) -> DBWorkspace:
         )
         await workspace_db.save()
         return workspace_db
+
+
+@call_sync
+async def sync_db_create_workspace(mets_path: str) -> DBWorkspace:
+    return await db_create_workspace(mets_path=mets_path)
 
 
 async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = None) -> DBWorkspace:
@@ -134,6 +139,15 @@ async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path
     return await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
 
 
+async def db_create_processing_job(db_processing_job: DBProcessorJob) -> DBProcessorJob:
+    return await db_processing_job.insert()
+
+
+@call_sync
+async def sync_db_create_processing_job(db_processing_job: DBProcessorJob) -> DBProcessorJob:
+    return await db_create_processing_job(db_processing_job=db_processing_job)
+
+
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
     job = await DBProcessorJob.find_one(
         DBProcessorJob.job_id == job_id)
@@ -180,6 +194,15 @@ async def sync_db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob
     return await db_update_processing_job(job_id=job_id, **kwargs)
 
 
+async def db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkflowJob:
+    return await db_workflow_job.insert()
+
+
+@call_sync
+async def sync_db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkflowJob:
+    return await db_create_workflow_job(db_workflow_job=db_workflow_job)
+
+
 async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     job = await DBWorkflowJob.find_one(DBWorkflowJob.job_id == job_id)
     if not job:
@@ -202,6 +225,15 @@ async def sync_db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
     return await db_get_processing_jobs(job_ids)
 
 
+async def db_create_workflow_script(db_workflow_script: DBWorkflowScript) -> DBWorkflowScript:
+    return await db_workflow_script.insert()
+
+
+@call_sync
+async def sync_db_create_workflow_script(db_workflow_script: DBWorkflowScript) -> DBWorkflowScript:
+    return await db_create_workflow_script(db_workflow_script=db_workflow_script)
+
+
 async def db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
     workflow = await DBWorkflowScript.find_one(DBWorkflowScript.workflow_id == workflow_id)
     if not workflow:
@@ -221,6 +253,7 @@ async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkf
     return workflow
 
 
+# TODO: Resolve the inconsistency between the async and sync versions of the same method
 @call_sync
 async def sync_db_find_first_workflow_script_by_content(workflow_id: str) -> DBWorkflowScript:
     return await db_get_workflow_script(workflow_id)

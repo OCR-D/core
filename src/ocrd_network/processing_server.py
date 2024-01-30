@@ -1,3 +1,4 @@
+from datetime import datetime
 from hashlib import md5
 import httpx
 import json
@@ -127,6 +128,14 @@ class ProcessingServer(FastAPI):
         else:
             self.internal_job_callback_url = f'http://{host}:{port}/result_callback'
 
+        self.router.add_api_route(
+            path='/',
+            endpoint=self.home_page,
+            methods=['GET'],
+            status_code=status.HTTP_200_OK,
+            summary='Get information about the processing server'
+        )
+
         # Create routes
         self.router.add_api_route(
             path='/stop',
@@ -220,6 +229,15 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
+            path='/workflow/job-simple/{workflow_job_id}',
+            endpoint=self.get_workflow_info_simple,
+            methods=['GET'],
+            tags=['workflow', 'processing'],
+            status_code=status.HTTP_200_OK,
+            summary='Get simplified overall job status',
+        )
+
+        self.router.add_api_route(
             path='/workflow',
             endpoint=self.upload_workflow,
             methods=['POST'],
@@ -288,6 +306,14 @@ class ProcessingServer(FastAPI):
         """
         await self.stop_deployed_agents()
 
+    async def home_page(self):
+        message = f"The home page of the {self.title}"
+        json_message = {
+            "message": message,
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        return json_message
+
     async def stop_deployed_agents(self) -> None:
         self.deployer.kill_all()
 
@@ -321,6 +347,12 @@ class ProcessingServer(FastAPI):
             str_names_only=True,
             unique_only=True
         )
+
+        # TODO: Reconsider and refactor this.
+        #  Added ocrd-dummy by default if not available for the integration tests.
+        #  A proper Processing Worker / Processor Server registration endpoint is needed on the Processing Server side
+        if 'ocrd-dummy' not in queue_names:
+            queue_names.append('ocrd-dummy')
 
         for queue_name in queue_names:
             # The existence/validity of the worker.name is not tested.
@@ -378,6 +410,12 @@ class ProcessingServer(FastAPI):
         if agent_type not in [NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER]:
             return False
         if agent_type == NETWORK_AGENT_WORKER:
+            # TODO: Reconsider and refactor this.
+            #  Added ocrd-dummy by default if not available for the integration tests.
+            #  A proper Processing Worker / Processor Server registration endpoint
+            #  is needed on the Processing Server side
+            if processor_name == 'ocrd-dummy':
+                return True
             if not self.check_if_queue_exists(processor_name):
                 return False
         if agent_type == NETWORK_AGENT_SERVER:
@@ -434,15 +472,25 @@ class ProcessingServer(FastAPI):
 
         validate_job_input(self.log, data.processor_name, ocrd_tool, data)
 
-        db_workspace = await db_get_workspace(
-            workspace_id=data.workspace_id,
-            workspace_mets_path=data.path_to_mets
-        )
-        if not db_workspace:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Workspace with id: {data.workspace_id} or path: {data.path_to_mets} not found"
-            )
+        if data.workspace_id:
+            try:
+                db_workspace = await db_get_workspace(workspace_id=data.workspace_id)
+            except ValueError as error:
+                self.log.exception(error)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Workspace with id `{data.workspace_id}` not found in the DB."
+                )
+        else:  # data.path_to_mets provided instead
+            try:
+                # TODO: Reconsider and refactor this. Core cannot create workspaces by api, but processing-server needs
+                #  the workspace in the database. Here the workspace is created if the path is available locally and
+                #  not existing in the DB - since it has not been uploaded through the Workspace Server.
+                await db_create_workspace(data.path_to_mets)
+            except FileNotFoundError:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail=f"Mets file not existing: {data.path_to_mets}")
+
         workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
@@ -881,6 +929,41 @@ class ProcessingServer(FastAPI):
                     "page_id": job.page_id,
                 })
         return res
+
+    """
+    Simplified version of the `get_workflow_info` that returns a single state for the entire workflow.
+    - If a single processing job fails, the entire workflow job status is set to FAILED.
+    - If there are any processing jobs running, regardless of other states, such as QUEUED and CACHED, 
+    the entire workflow job status is set to RUNNING.
+    - If all processing jobs has finished successfully, only then the workflow job status is set to SUCCESS
+    """
+    async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, StateEnum]:
+        """ Return list of a workflow's processor jobs
+        """
+        try:
+            workflow_job = await db_get_workflow_job(workflow_job_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Workflow-Job with id: {workflow_job_id} not found")
+        job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
+        jobs = await db_get_processing_jobs(job_ids)
+
+        workflow_job_state = StateEnum.unset
+        success_jobs = 0
+        for job in jobs:
+            if job.state == StateEnum.cached or job.state == StateEnum.queued:
+                continue
+            if job.state == StateEnum.failed or job.state == StateEnum.cancelled:
+                workflow_job_state = StateEnum.failed
+                break
+            if job.state == StateEnum.running:
+                workflow_job_state = StateEnum.running
+            if job.state == StateEnum.success:
+                success_jobs += 1
+        # if all jobs succeeded
+        if len(job_ids) == success_jobs:
+            workflow_job_state = StateEnum.success
+        return {"state": workflow_job_state}
 
     async def upload_workflow(self, workflow: UploadFile) -> Dict:
         """ Store a script for a workflow in the database
