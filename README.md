@@ -3,11 +3,10 @@
 > Python modules implementing [OCR-D specs](https://github.com/OCR-D/spec) and related tools
 
 [![image](https://img.shields.io/pypi/v/ocrd.svg)](https://pypi.org/project/ocrd/)
-[![image](https://circleci.com/gh/OCR-D/core.svg?style=svg)](https://circleci.com/gh/OCR-D/core)
 [![Docker Image CI](https://github.com/OCR-D/core/actions/workflows/docker-image.yml/badge.svg)](https://github.com/OCR-D/core/actions/workflows/docker-image.yml)
 [![Unit Test CI](https://github.com/OCR-D/core/actions/workflows/unit-test.yml/badge.svg)](https://github.com/OCR-D/core/actions/workflows/unit-test.yml)
-[![image](https://scrutinizer-ci.com/g/OCR-D/core/badges/build.png?b=master)](https://scrutinizer-ci.com/g/OCR-D/core)
 [![image](https://codecov.io/gh/OCR-D/core/branch/master/graph/badge.svg)](https://codecov.io/gh/OCR-D/core)
+[![image](https://scrutinizer-ci.com/g/OCR-D/core/badges/build.png?b=master)](https://scrutinizer-ci.com/g/OCR-D/core)
 [![image](https://scrutinizer-ci.com/g/OCR-D/core/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/OCR-D/core)
 
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/OCR-D/Lobby)
