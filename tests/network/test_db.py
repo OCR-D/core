@@ -39,7 +39,7 @@ def test_db_processing_job_create(mongo_client):
     assert db_found_processing_job.input_file_grps == ['DEFAULT']
     assert db_found_processing_job.output_file_grps == ['OCR-D-DUMMY']
 
-    with raises(ValueError) as value_error:
+    with raises(ValueError):
         sync_db_get_processing_job(job_id='non-existing-id')
 
 
@@ -65,7 +65,7 @@ def test_db_processing_job_update(mongo_client):
     assert db_found_updated_processing_job == db_updated_processing_job
     assert db_found_updated_processing_job.state == StateEnum.running
 
-    with raises(ValueError) as value_error:
+    with raises(ValueError):
         sync_db_update_processing_job(job_id='non-existing', state=StateEnum.running)
         sync_db_update_processing_job(job_id=job_id, non_existing_field='dummy_value')
         sync_db_update_processing_job(job_id=job_id, processor_name='non-updatable-field')
@@ -80,11 +80,11 @@ def test_db_workspace_create(mongo_client):
     assert db_found_workspace
     assert db_found_workspace == db_created_workspace
 
-    with raises(ValueError) as value_error:
+    with raises(ValueError):
         sync_db_get_workspace(workspace_id='non-existing-id')
         sync_db_get_workspace(workspace_mets_path='non-existing-mets')
 
-    with raises(FileNotFoundError) as io_error:
+    with raises(FileNotFoundError):
         sync_db_create_workspace(mets_path='non-existing-mets')
 
 
@@ -136,7 +136,7 @@ def test_db_workflow_script_create(mongo_client):
     assert db_found_workflow_script
     assert db_found_workflow_script == db_created_workflow_script
 
-    with raises(ValueError) as value_error:
+    with raises(ValueError):
         sync_db_get_workflow_script(workflow_id='non-existing-id')
 
 

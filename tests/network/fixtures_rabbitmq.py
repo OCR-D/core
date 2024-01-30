@@ -48,7 +48,7 @@ def fixture_rabbitmq_defaults():
         vhost=rmq_vhost
     )
     test_channel = RMQConnector.open_blocking_channel(test_connection)
-    assert(test_channel)
+    assert test_channel
     RMQConnector.exchange_declare(
         channel=test_channel,
         exchange_name=DEFAULT_EXCHANGER_NAME,

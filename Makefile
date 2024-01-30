@@ -221,8 +221,7 @@ INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 integration-test:
 	docker compose -f tests/network/docker-compose.yml up -d
 	sleep 20
-	# TODO: Remove the `-s` flag before finalizing the PR
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server' -v -s
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server' -v
 	docker compose -f tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
