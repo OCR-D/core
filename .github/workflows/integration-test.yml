@@ -51,4 +51,8 @@ jobs:
           colima start
       - name: Test network integration with pytest
         run: |
-          make integration-test
+          if [[ "${{ matrix.os }}" == "macos"* ]];then
+            make integration-test DOCKER_COMPOSE=docker-compose
+          else
+            make integration-test
+          fi

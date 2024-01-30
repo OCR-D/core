@@ -9,6 +9,8 @@ TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
 VERSION = $(shell cat VERSION)
 
+DOCKER_COMPOSE = docker compose
+
 SPHINX_APIDOC =
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
@@ -219,10 +221,10 @@ test: assets
 
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 integration-test:
-	docker compose -f tests/network/docker-compose.yml up -d
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
 	sleep 20
 	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server' -v
-	docker compose -f tests/network/docker-compose.yml down --remove-orphans
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
