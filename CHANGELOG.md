@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Reduce logging level of spammy log statements to `DEBUG` in workspace, #1181
+
 ## [2.62.0] - 2024-01-30
 
 Added:
