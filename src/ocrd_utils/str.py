@@ -196,7 +196,7 @@ def safe_filename(url):
     #  print('safe filename: %s -> %s' % (url, ret))
     return ret
 
-def generate_range(start, end):
+def generate_range(start : str, end : str) -> List[str]:
     """
     Generate a list of strings by incrementing the number part of ``start`` until including ``end``.
     """
