@@ -9,6 +9,10 @@ Fixed:
 
   * Reduce logging level of spammy log statements to `DEBUG` in workspace, #1181
 
+Changed:
+
+  * :fire: `OcrdFile.local_filename` returns/accepts `str` after unpopular change to `Path` from #1079, #1182, #1167
+
 ## [2.62.0] - 2024-01-30
 
 Added:
