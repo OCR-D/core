@@ -4,7 +4,8 @@ API to METS
 from datetime import datetime
 import re
 import typing
-from lxml import etree as ET
+from typing_extensions import Optional
+from lxml import etree as ET   # type: ignore
 from copy import deepcopy
 from warnings import warn
 
@@ -34,7 +35,7 @@ from .constants import (
     METS_XML_EMPTY,
 )
 
-from .ocrd_xml_base import OcrdXmlDocument, ET
+from .ocrd_xml_base import OcrdXmlDocument
 from .ocrd_file import OcrdFile
 from .ocrd_agent import OcrdAgent
 
@@ -134,9 +135,9 @@ class OcrdMets(OcrdXmlDocument):
         Deallocates the caches
         """
 
-        self._file_cache = None
-        self._page_cache = None
-        self._fptr_cache = None
+        self._file_cache = {}
+        self._page_cache = {}
+        self._fptr_cache = {}
         
     def refresh_caches(self):
         if self._cache_flag:
@@ -243,7 +244,7 @@ class OcrdMets(OcrdXmlDocument):
         pageId=None,
         mimetype=None,
         url=None,
-        local_filename=None,
+        local_filename : Optional[str] = None,
         local_only=False,
         include_fileGrp=None,
         exclude_fileGrp=None,

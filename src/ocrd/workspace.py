@@ -5,6 +5,7 @@ from shutil import move, copyfileobj
 from re import sub
 from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
+from typing import Optional, Union
 
 from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
 from PIL import Image
@@ -13,6 +14,7 @@ from deprecated.sphinx import deprecated
 import requests
 
 from ocrd_models import OcrdMets, OcrdFile
+from ocrd_models.ocrd_file import ClientSideOcrdFile
 from ocrd_models.ocrd_page import parse, BorderType, to_xml
 from ocrd_modelfactory import exif_from_filename, page_from_file
 from ocrd_utils import (
@@ -71,7 +73,16 @@ class Workspace():
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename=DEFAULT_METS_BASENAME, automatic_backup=False, baseurl=None, mets_server_url=None):
+    def __init__(
+        self,
+        resolver,
+        directory,
+        mets : Optional[Union[OcrdMets, ClientSideOcrdMets]] = None,
+        mets_basename=DEFAULT_METS_BASENAME,
+        automatic_backup=False,
+        baseurl=None,
+        mets_server_url=None
+    ):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
@@ -328,14 +339,16 @@ class Workspace():
             local_filename_replacements = {}
             log.info("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_local_filename = old_local_filename = str(mets_file.local_filename)
+                new_local_filename = old_local_filename = mets_file.local_filename
+                assert new_local_filename
+                assert old_local_filename
                 # Directory part
                 new_local_filename = sub(r'^%s/' % old, r'%s/' % new, new_local_filename)
                 # File part
                 new_local_filename = sub(r'/%s' % old, r'/%s' % new, new_local_filename)
                 local_filename_replacements[str(mets_file.local_filename)] = new_local_filename
                 # move file from ``old`` to ``new``
-                mets_file.local_filename.rename(new_local_filename)
+                Path(old_local_filename).rename(new_local_filename)
                 # change the url of ``mets:file``
                 mets_file.local_filename = new_local_filename
                 # change the file ID and update structMap
@@ -375,7 +388,7 @@ class Workspace():
 
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
-    def add_file(self, file_grp, content=None, **kwargs):
+    def add_file(self, file_grp, content=None, **kwargs) -> Union[OcrdFile, ClientSideOcrdFile]:
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
 
