@@ -76,8 +76,8 @@ def test_workspace_add_file(plain_workspace):
     assert f.ID == 'ID1'
     assert f.mimetype == 'image/tiff'
     assert not f.url
-    assert f.local_filename == fpath
-    assert f.local_filename.exists()
+    assert f.local_filename == str(fpath)
+    assert Path(f.local_filename).exists()
 
 
 def test_workspace_add_file_overwrite(plain_workspace):
@@ -97,7 +97,7 @@ def test_workspace_add_file_overwrite(plain_workspace):
     assert f.ID == 'ID1'
     assert f.mimetype == 'image/tiff'
     assert not f.url
-    assert f.local_filename == fpath
+    assert f.local_filename == str(fpath)
     assert f.pageId == 'phys1'
     assert fpath.exists()
 
@@ -317,7 +317,7 @@ def test_rename_file_group(tmp_path):
     # act
     workspace.rename_file_group('OCR-D-IMG', 'FOOBAR')
     next_ocrd_file = next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001'))
-    next_ocrd_file.local_filename = tmp_path / relative_name
+    next_ocrd_file.local_filename = str(tmp_path / relative_name)
     pcgts_after = page_from_file(next_ocrd_file)
 
     # assert
@@ -358,12 +358,12 @@ def test_remove_file_group_flat(plain_workspace):
     """
 
     # act
-    added_res = plain_workspace.add_file('FOO', file_id='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', page_id=None).url
+    added_res = plain_workspace.add_file('FOO', file_id='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', page_id=None).local_filename
     # requires additional prepending of current path because not pushd_popd-magic at work
-    added_path = Path(join(plain_workspace.directory, added_res))
+    added_filename = join(plain_workspace.directory, added_res)
 
     # assert
-    assert added_path.exists()
+    assert Path(added_filename).exists()
     plain_workspace.remove_file_group('FOO', recursive=True)
 
 
@@ -408,8 +408,8 @@ def test_download_to_directory_from_workspace_download_file(plain_workspace):
     plain_workspace.download_file(f1)
     plain_workspace.download_file(f2)
 
-    assert f1.local_filename == Path('test.tif')
-    assert f2.local_filename == Path('test.xml')
+    assert f1.local_filename == 'test.tif'
+    assert f2.local_filename == 'test.xml'
 
 
 def test_save_image_file_invalid_mimetype_raises_exception(plain_workspace):
@@ -652,12 +652,12 @@ def test_merge_no_copy_files(tmp_path):
 
     ws1.merge(ws2, copy_files=False, fileId_mapping={'f1': 'f1_copy_files'})
 
-    assert next(ws1.mets.find_files(ID='f1_copy_files')).local_filename == Path('ws2/GRP2/f1')
+    assert next(ws1.mets.find_files(ID='f1_copy_files')).local_filename == 'ws2/GRP2/f1'
 
     with pytest.raises(FileExistsError):
         ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_copy_files'})
     ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_copy_files'}, force=True)
-    assert next(ws1.mets.find_files(ID='f1_copy_files')).local_filename == Path('GRP2/f1')
+    assert next(ws1.mets.find_files(ID='f1_copy_files')).local_filename == 'GRP2/f1'
 
 def test_merge_overwrite(tmp_path):
     # arrange
