@@ -615,7 +615,6 @@ class OcrdMets(OcrdXmlDocument):
             if not page_attr_patterns:
                 return []
             if self._cache_flag:
-                # determine attr to look for before iterating
                 try:
                     for pat in page_attr_patterns:
                         # for attr in list(METS_PAGE_DIV_ATTRIBUTE):
@@ -634,7 +633,7 @@ class OcrdMets(OcrdXmlDocument):
                         if return_divs:
                             ret += [self._page_cache[attr][v] for v in cache_keys]
                         else:
-                            ret += cache_keys
+                            ret += [self._page_cache[attr][v].get('ID') for v in cache_keys]
                 except StopIteration:
                     log.debug(f"No pattern matches any keys of any of the _page_caches. patterns: {page_attr_patterns}")
             else:
@@ -646,17 +645,17 @@ class OcrdMets(OcrdXmlDocument):
                         try:
                             if isinstance(pat, str):
                                 attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat == page.get(a.name))
-                                ret.append(page if return_divs else pat)
+                                ret.append(page if return_divs else page.get('ID'))
                             elif isinstance(pat, list):
                                 if not isinstance(pat[0], METS_PAGE_DIV_ATTRIBUTE):
                                     pat.insert(0, next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat[0] == page.get(a.name)))
                                 attr_val = page.get(pat[0].name)
                                 if attr_val in pat:
                                     pat.remove(attr_val)
-                                    ret.append(page if return_divs else attr_val)
+                                    ret.append(page if return_divs else page.get('ID'))
                             elif isinstance(pat, typing.Pattern):
                                 attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat.fullmatch(page.get(a.name) or ''))
-                                ret.append(page if return_divs else page.get(attr.name))
+                                ret.append(page if return_divs else page.get('ID'))
                             else:
                                 raise ValueError
                         except StopIteration:
