@@ -605,7 +605,7 @@ class OcrdMets(OcrdXmlDocument):
             page_attr_patterns = []
             for pageId_token in re.split(r',', for_pageIds):
                 if pageId_token.startswith(REGEX_PREFIX):
-                    page_attr_patterns.append(re.compile(pageId_token[REGEX_PREFIX_LEN:]))
+                    page_attr_patterns.append((None, re.compile(pageId_token[REGEX_PREFIX_LEN:])))
                 elif '..' in pageId_token:
                     val_range = generate_range(*pageId_token.split('..', 1))
                     if val_range:
@@ -625,9 +625,10 @@ class OcrdMets(OcrdXmlDocument):
                         elif isinstance(pat, list):
                             attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat[0] in self._page_cache[a])
                             cache_keys = [v for v in pat if v in self._page_cache[attr]]
-                        elif isinstance(pat, typing.Pattern):
-                            attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) for v in self._page_cache[a] if pat.fullmatch(v))
-                            cache_keys = [v for v in self._page_cache[attr] if pat.fullmatch(v)]
+                        elif isinstance(pat, tuple):
+                            _, re_pat = pat
+                            attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) for v in self._page_cache[a] if re_pat.fullmatch(v))
+                            cache_keys = [v for v in self._page_cache[attr] if re_pat.fullmatch(v)]
                         else:
                             raise ValueError
                         if return_divs:
@@ -653,9 +654,13 @@ class OcrdMets(OcrdXmlDocument):
                                 if attr_val in pat:
                                     pat.remove(attr_val)
                                     ret.append(page if return_divs else page.get('ID'))
-                            elif isinstance(pat, typing.Pattern):
-                                attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat.fullmatch(page.get(a.name) or ''))
-                                ret.append(page if return_divs else page.get('ID'))
+                            elif isinstance(pat, tuple):
+                                attr, re_pat = pat
+                                if not attr:
+                                    attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if re_pat.fullmatch(page.get(a.name) or ''))
+                                    pat = (attr, re_pat)
+                                if re_pat.fullmatch(page.get(attr.name) or ''):
+                                    ret.append(page if return_divs else page.get('ID'))
                             else:
                                 raise ValueError
                         except StopIteration:
