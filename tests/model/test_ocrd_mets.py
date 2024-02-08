@@ -5,6 +5,7 @@ from datetime import datetime
 from os.path import join
 from os import environ
 from contextlib import contextmanager
+import re
 import shutil
 import lxml
 
@@ -90,7 +91,7 @@ def test_find_all_files(sbb_sample_01):
     #print([x.ID for x in sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')])
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
-    print([x.ID for x in sbb_sample_01.find_all_files(pageId='//PHYS_0001,//PHYS_0005')])
+    # print([x.ID for x in sbb_sample_01.find_all_files(pageId='//PHYS_0001,//PHYS_0005')])
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
@@ -102,6 +103,12 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0005,1..2')) == 35, '35 in PHYS_0001,PHYS_0002,PHYS_0005'
     with pytest.raises(ValueError, match='differ in their non-numeric part'):
         len(sbb_sample_01.find_all_files(pageId='1..PHYS_0002'))
+    with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+        sbb_sample_01.find_all_files(pageId='PHYS_0006..PHYS_0029')
+    with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+        sbb_sample_01.find_all_files(pageId='1..5,PHYS_0006..PHYS_0029')
+    with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+        sbb_sample_01.find_all_files(pageId='//PHYS000.*')
 
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',

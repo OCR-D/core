@@ -608,15 +608,14 @@ class OcrdMets(OcrdXmlDocument):
                     page_attr_patterns.append((None, re.compile(pageId_token[REGEX_PREFIX_LEN:])))
                 elif '..' in pageId_token:
                     val_range = generate_range(*pageId_token.split('..', 1))
-                    if val_range:
-                        page_attr_patterns.append(val_range)
+                    page_attr_patterns.append(val_range)
                 else:
                     page_attr_patterns.append(pageId_token)
             if not page_attr_patterns:
                 return []
             if self._cache_flag:
-                try:
-                    for pat in page_attr_patterns:
+                for pat in page_attr_patterns:
+                    try:
                         # for attr in list(METS_PAGE_DIV_ATTRIBUTE):
                         attr : METS_PAGE_DIV_ATTRIBUTE
                         if isinstance(pat, str):
@@ -635,9 +634,13 @@ class OcrdMets(OcrdXmlDocument):
                             ret += [self._page_cache[attr][v] for v in cache_keys]
                         else:
                             ret += [self._page_cache[attr][v].get('ID') for v in cache_keys]
-                except StopIteration:
-                    log.debug(f"No pattern matches any keys of any of the _page_caches. patterns: {page_attr_patterns}")
+                    except StopIteration:
+                        raise ValueError(f"{pat} matches none of the keys of any of the _page_caches.")
             else:
+                page_attr_patterns_copy = list(page_attr_patterns)
+                page_attr_patterns_idx = set(range(len(page_attr_patterns)))
+                pat_idx_matched_at_least_once = set()
+                pat_idx = 0
                 while page_attr_patterns:
                     pat = page_attr_patterns.pop(0)
                     for page in self._tree.getroot().xpath(
@@ -664,7 +667,11 @@ class OcrdMets(OcrdXmlDocument):
                             else:
                                 raise ValueError
                         except StopIteration:
-                            log.debug(f"No mets:div attributes match pattern {pat}")
+                            continue
+                        pat_idx_matched_at_least_once.add(pat_idx)
+                    pat_idx += 1
+                if unmatched_idx := page_attr_patterns_idx - pat_idx_matched_at_least_once:
+                    raise ValueError(f"Patterns {[page_attr_patterns_copy[x] for x in unmatched_idx]} match none of the pages")
             return ret
 
         assert for_fileIds # at this point we know for_fileIds is set, assert to convince pyright
