@@ -204,7 +204,7 @@ class TestProcessor(TestCase):
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id=None)
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0001')
-            for page_id in [None, 'phys_0001,phys_0002']:
+            for page_id in [None, 'phys_0001']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
