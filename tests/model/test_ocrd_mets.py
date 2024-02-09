@@ -108,6 +108,8 @@ def test_find_all_files(sbb_sample_01):
         mets.find_all_files(pageId='1..5,PHYS_0006..PHYS_0029')
     with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
         mets.find_all_files(pageId='//PHYS000.*')
+    with pytest.raises(ValueError, match=re.compile(f'Start of range pattern')):
+        mets.find_all_files(pageId='PHYS_0000..PHYS_0004')
 
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',

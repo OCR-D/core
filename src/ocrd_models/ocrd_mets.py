@@ -599,11 +599,12 @@ class OcrdMets(OcrdXmlDocument):
         """
         if for_fileIds is None and for_pageIds is None:
             return self.physical_pages
-        log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
+        # log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
         if for_pageIds is not None:
             ret = []
             page_attr_patterns = []
-            for pageId_token in re.split(r',', for_pageIds):
+            page_attr_patterns_raw = re.split(r',', for_pageIds)
+            for pageId_token in page_attr_patterns_raw:
                 if pageId_token.startswith(REGEX_PREFIX):
                     page_attr_patterns.append((None, re.compile(pageId_token[REGEX_PREFIX_LEN:])))
                 elif '..' in pageId_token:
@@ -613,6 +614,8 @@ class OcrdMets(OcrdXmlDocument):
                     page_attr_patterns.append(pageId_token)
             if not page_attr_patterns:
                 return []
+            range_patterns_first_last = [(x[0], x[-1]) if isinstance(x, list) else None for x in page_attr_patterns]
+            page_attr_patterns_copy = list(page_attr_patterns)
             if self._cache_flag:
                 for pat in page_attr_patterns:
                     try:
@@ -621,8 +624,10 @@ class OcrdMets(OcrdXmlDocument):
                             attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat in self._page_cache[a])
                             cache_keys = [pat]
                         elif isinstance(pat, list):
-                            attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat[0] in self._page_cache[a])
+                            attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if any(x in self._page_cache[a] for x in pat))
                             cache_keys = [v for v in pat if v in self._page_cache[attr]]
+                            for k in cache_keys:
+                                pat.remove(k)
                         elif isinstance(pat, tuple):
                             _, re_pat = pat
                             attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) for v in self._page_cache[a] if re_pat.fullmatch(v))
@@ -636,7 +641,6 @@ class OcrdMets(OcrdXmlDocument):
                     except StopIteration:
                         raise ValueError(f"{pat} matches none of the keys of any of the _page_caches.")
             else:
-                page_attr_patterns_copy = list(page_attr_patterns)
                 page_attr_patterns_matched = []
                 for page in self._tree.getroot().xpath(
                         'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
@@ -650,7 +654,7 @@ class OcrdMets(OcrdXmlDocument):
                                 patterns_exhausted.append(pat)
                             elif isinstance(pat, list):
                                 if not isinstance(pat[0], METS_PAGE_DIV_ATTRIBUTE):
-                                    pat.insert(0, next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat[0] == page.get(a.name)))
+                                    pat.insert(0, next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if any(x == page.get(a.name) for x in pat)))
                                 attr_val = page.get(pat[0].name)
                                 if attr_val in pat:
                                     pat.remove(attr_val)
@@ -671,9 +675,24 @@ class OcrdMets(OcrdXmlDocument):
                             continue
                     for p in patterns_exhausted:
                         page_attr_patterns.remove(p)
-                unmatched = [x for x in page_attr_patterns_copy if x not in page_attr_patterns_matched ]
+                unmatched = [x for x in page_attr_patterns_copy if x not in page_attr_patterns_matched]
                 if unmatched:
                     raise ValueError(f"Patterns {unmatched} match none of the pages")
+
+            ranges_without_start_match = []
+            ranges_without_last_match = []
+            for idx, pat in enumerate(page_attr_patterns_copy):
+                if isinstance(pat, list):
+                    start, last = range_patterns_first_last[idx]
+                    if start in pat:
+                        print(pat, start, last)
+                        ranges_without_start_match.append(page_attr_patterns_raw[idx])
+                    # if last in pat:
+                    #     ranges_without_last_match.append(page_attr_patterns_raw[idx])
+            if ranges_without_start_match:
+                raise ValueError(f"Start of range patterns {ranges_without_start_match} not matched - invalid range")
+            # if ranges_without_last_match:
+            #     raise ValueError(f"End of range patterns {ranges_without_last_match} not matched - invalid range")
             return ret
 
         assert for_fileIds # at this point we know for_fileIds is set, assert to convince pyright
