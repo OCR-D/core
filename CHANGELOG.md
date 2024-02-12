@@ -12,6 +12,7 @@ Fixed:
 Changed:
 
   * :fire: `OcrdFile.local_filename` returns/accepts `str` after unpopular change to `Path` from #1079, #1182, #1167
+  * `WorkspaceValidator`: more efficiency by doing all page checks in the same loop, #1071
 
 Added:
 
