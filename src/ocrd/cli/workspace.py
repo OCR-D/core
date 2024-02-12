@@ -23,6 +23,7 @@ from ocrd.mets_server import OcrdMetsServer
 from ocrd_utils import getLogger, initLogging, pushd_popd, EXT_TO_MIME, safe_filename, parse_json_string_or_file, partition_list, DEFAULT_METS_BASENAME
 from ocrd.decorators import mets_find_options
 from . import command_with_replaced_help
+from ocrd_models.constants import METS_PAGE_DIV_ATTRIBUTE
 
 
 class WorkspaceCtx():
@@ -419,21 +420,22 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
 @workspace_cli.command('find')
 @mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
-        default=['local_filename'],
-        multiple=True,
-        type=click.Choice([
-            'url',
-            'mimetype',
-            'page_id',
-            'pageId',
-            'file_id',
-            'ID',
-            'file_grp',
-            'fileGrp',
-            'basename',
-            'basename_without_extension',
-            'local_filename',
-        ]))
+              default=['local_filename'],
+              show_default=True,
+              multiple=True,
+              type=click.Choice([
+                  'url',
+                  'mimetype',
+                  'page_id',
+                  'pageId',
+                  'file_id',
+                  'ID',
+                  'file_grp',
+                  'fileGrp',
+                  'basename',
+                  'basename_without_extension',
+                  'local_filename',
+              ]))
 @click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
 @click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
@@ -596,31 +598,60 @@ def list_groups(ctx):
 # ----------------------------------------------------------------------
 
 @workspace_cli.command('list-page')
+@click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
+              default=['ID'],
+              show_default=True,
+              multiple=True,
+              type=click.Choice(METS_PAGE_DIV_ATTRIBUTE.names()))
 @click.option('-f', '--output-format', help="Output format", type=click.Choice(['one-per-line', 'comma-separated', 'json']), default='one-per-line')
 @click.option('-D', '--chunk-number', help="Partition the return value into n roughly equally sized chunks", default=1, type=int)
 @click.option('-C', '--chunk-index', help="Output the nth chunk of results, -1 for all of them.", default=None, type=int)
 @click.option('-r', '--page-id-range', help="Restrict the pages to those matching the provided range, based on the @ID attribute. Separate start/end with ..")
 @click.option('-R', '--numeric-range', help="Restrict the pages to those in the range, in numerical document order. Separate start/end with ..")
 @pass_workspace
-def list_pages(ctx, output_format, chunk_number, chunk_index, page_id_range, numeric_range):
+def list_pages(ctx, output_field, output_format, chunk_number, chunk_index, page_id_range, numeric_range):
     """
     List physical page IDs
+
+    (If any ``FILTER`` starts with ``//``, then its remainder
+     will be interpreted as a regular expression.)
     """
     workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
     find_kwargs = {}
-    if page_id_range:
+    if page_id_range and 'ID' in output_field:
         find_kwargs['pageId'] = page_id_range
-    ids = sorted({x.pageId for x in workspace.mets.find_files(**find_kwargs) if x.pageId})
+    page_ids = sorted({x.pageId for x in workspace.mets.find_files(**find_kwargs) if x.pageId})
+    ret = []
+
+    if output_field == ['ID']:
+        ret = [[x] for x in page_ids]
+    else:
+        for i, page_div in enumerate(workspace.mets.get_physical_pages(for_pageIds=','.join(page_ids), return_divs=True)):
+            ret.append([])
+            for k in output_field:
+                ret[i].append(page_div.get(k, 'None'))
+
     if numeric_range:
         start, end = map(int, numeric_range.split('..'))
-        ids = ids[start-1:end]
-    chunks = partition_list(ids, chunk_number, chunk_index)
+        ret = ret[start-1:end]
+
+    chunks = partition_list(ret, chunk_number, chunk_index)
+    lines = []
     if output_format == 'one-per-line':
-        print("\n".join(["\n".join(chunk) for chunk in chunks]))
+        for chunk in chunks:
+            line_strs = []
+            for entry in chunk:
+                line_strs.append("\t".join(entry))
+            lines.append('\n'.join(line_strs))
     elif output_format == 'comma-separated':
-        print("\n".join([",".join(chunk) for chunk in chunks]))
+        for chunk in chunks:
+            line_strs = []
+            for entry in chunk:
+                line_strs.append("\t".join(entry))
+            lines.append(','.join(line_strs))
     elif output_format == 'json':
-        print(dumps(chunks))
+        lines.append(dumps(chunks))
+    print('\n'.join(lines))
 
 # ----------------------------------------------------------------------
 # ocrd workspace get-id
@@ -657,18 +688,30 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
     workspace.save_mets()
 
 @workspace_cli.command('update-page')
-@click.option('--order', help="@ORDER attribute for this mets:div", metavar='ORDER')
-@click.option('--orderlabel', help="@ORDERLABEL attribute for this mets:div", metavar='ORDERLABEL')
-@click.option('--contentids', help="@CONTENTIDS attribute for this mets:div", metavar='ORDERLABEL')
+@click.option('--set', 'attr_value_pairs', help=f"set mets:div ATTR to VALUE. possible keys: {METS_PAGE_DIV_ATTRIBUTE.names()}", metavar="ATTR VALUE", nargs=2, multiple=True)
+@click.option('--order', help="[DEPRECATED - use --set ATTR VALUE", metavar='ORDER')               
+@click.option('--orderlabel', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
+@click.option('--contentids', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
 @click.argument('PAGE_ID')
 @pass_workspace
-def update_page(ctx, order, orderlabel, contentids, page_id):
+def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     """
-    Update the @ORDER, @ORDERLABEL o @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
+    Update the @ID, @ORDER, @ORDERLABEL, @LABEL or @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
-    workspace.mets.update_physical_page_attributes(page_id, order=order, orderlabel=orderlabel, contentids=contentids)
-    workspace.save_mets()
+    update_kwargs = {k: v for k, v in attr_value_pairs}
+    if order:
+        update_kwargs['ORDER'] = order
+    if orderlabel:
+        update_kwargs['ORDERLABEL'] = orderlabel
+    if contentids:
+        update_kwargs['CONTENTIDS'] = contentids
+    try:
+        workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+        workspace.mets.update_physical_page_attributes(page_id, **update_kwargs)
+        workspace.save_mets()
+    except Exception as err:
+        print(f"Error: {err}")
+        sys.exit(1)
 
 # ----------------------------------------------------------------------
 # ocrd workspace merge

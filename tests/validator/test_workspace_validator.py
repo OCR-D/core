@@ -41,20 +41,20 @@ class TestWorkspaceValidator(TestCase):
 
     def test_check_file_grp_page_id_str(self):
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0003,PHYS_0001')
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0001')
         self.assertFalse(report.is_valid)
         self.assertEqual(len(report.errors), 1)
         self.assertEqual(report.errors[0], "Output fileGrp[@USE='OCR-D-IMG-BIN'] already contains output for page PHYS_0001")
 
     def test_check_file_grp_page_id_list(self):
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id=['PHYS_0003','PHYS_0001'])
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id=['PHYS_0001'])
         self.assertFalse(report.is_valid)
         self.assertEqual(len(report.errors), 1)
 
     def test_check_file_grp_page_id_valid(self):
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0004')
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0005')
         self.assertTrue(report.is_valid)
 
     def test_simple(self):
