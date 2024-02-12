@@ -18,7 +18,7 @@ import pytest
 
 from tests.base import main
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../ocrd')
+# sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/../ocrd')
 TEST_ROOT = pathlib.Path(os.path.dirname(os.path.abspath(__file__))).parent
 
 def resetLogging():
@@ -30,7 +30,7 @@ def resetLogging():
 def _fixture_loggin_conf(tmpdir):
 
     path_logging_conf_orig = os.path.join(
-        str(TEST_ROOT), 'ocrd_utils', 'ocrd_logging.conf')
+        str(TEST_ROOT), 'src', 'ocrd_utils', 'ocrd_logging.conf')
     path_logging_conf_dest = os.path.join(str(tmpdir), 'ocrd_logging.conf')
     shutil.copy(path_logging_conf_orig, path_logging_conf_dest)
     return str(tmpdir)

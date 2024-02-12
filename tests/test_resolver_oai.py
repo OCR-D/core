@@ -1,9 +1,10 @@
-from unittest import mock
+from unittest.mock import patch
 from pytest import fixture
 from shutil import copy
 from logging import StreamHandler, Formatter
 from os.path import join, dirname
 
+from requests import Session
 from tests.base import main, FIFOIO
 
 from ocrd.resolver import Resolver
@@ -55,7 +56,7 @@ def test_handle_response_mets(plain_xml_response_content):
     assert result.startswith(expected_start)
 
 
-@mock.patch("requests.get")
+@patch.object(Session, "get")
 def test_handle_common_oai_response(mock_get, response_dir, oai_response_content):
     """Base use case with valid OAI Response data"""
     initLogging()
@@ -72,11 +73,11 @@ def test_handle_common_oai_response(mock_get, response_dir, oai_response_content
     result = resolver.download_to_directory(response_dir, url)
 
     # assert
-    mock_get.assert_called_once_with(url)
+    mock_get.assert_called_once_with(url, timeout=None)
     assert result == 'oai'
 
 
-@mock.patch("requests.get")
+@patch.object(Session, "get")
 def test_handle_response_for_invalid_content(mock_get, response_dir):
     """If invalid content is returned, store warning log entry"""
 
@@ -90,7 +91,7 @@ def test_handle_response_for_invalid_content(mock_get, response_dir):
     initLogging()
 
     # capture log
-    log = getLogger('ocrd_models.utils.handle_oai_response')
+    log = getLogger('ocrd.models.utils.handle_oai_response')
     capt = FIFOIO(256)
     sh = StreamHandler(capt)
     sh.setFormatter(Formatter(LOG_FORMAT))
@@ -100,9 +101,9 @@ def test_handle_response_for_invalid_content(mock_get, response_dir):
     resolver.download_to_directory(response_dir, url)
 
     # assert
-    mock_get.assert_called_once_with(url)
+    mock_get.assert_called_once_with(url, timeout=None)
     log_output = capt.getvalue()
-    assert 'WARNING ocrd_models.utils.handle_oai_response' in log_output
+    assert 'WARNING ocrd.models.utils.handle_oai_response' in log_output
 
 
 if __name__ == '__main__':

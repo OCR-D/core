@@ -7,6 +7,7 @@ from os import environ
 from contextlib import contextmanager
 import shutil
 from logging import StreamHandler
+import lxml
 
 from tests.base import (
     main,
@@ -77,7 +78,9 @@ def test_file_groups(sbb_sample_01):
 def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files()) == 35, '35 files total'
     assert len(sbb_sample_01.find_all_files(fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
+    assert len(sbb_sample_01.find_all_files(include_fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
     assert len(sbb_sample_01.find_all_files(fileGrp='//OCR-D-I.*')) == 13, '13 files in "//OCR-D-I.*"'
+    assert len(sbb_sample_01.find_all_files(fileGrp='//OCR-D-I.*', exclude_fileGrp=['OCR-D-IMG'])) == 10, '10 files in "//OCR-D-I.*" sans OCR-D-IMG'
     assert len(sbb_sample_01.find_all_files(ID="FILE_0001_IMAGE")) == 1, '1 files with ID "FILE_0001_IMAGE"'
     assert len(sbb_sample_01.find_all_files(ID="//FILE_0005_.*")) == 1, '1 files with ID "//FILE_0005_.*"'
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001')) == 17, '17 files for page "PHYS_0001"'
@@ -85,7 +88,8 @@ def test_find_all_files(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(mimetype='image/tiff')) == 13, '13 image/tiff'
     assert len(sbb_sample_01.find_all_files(mimetype='//application/.*')) == 22, '22 application/.*'
     assert len(sbb_sample_01.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
-    assert len(sbb_sample_01.find_all_files(url='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
+    assert len(sbb_sample_01.find_all_files(local_filename='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 FILE xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
+    assert len(sbb_sample_01.find_all_files(url='https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif')) == 1, '1 URL xlink:href="https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif"'
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
     assert len(sbb_sample_01.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
@@ -100,6 +104,7 @@ def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
     assert isinstance(sbb_sample_01.physical_pages, list)
     assert isinstance(sbb_sample_01.physical_pages[0], str)
+    assert not isinstance(sbb_sample_01.physical_pages[0], lxml.etree._ElementUnicodeResult)
 
 def test_physical_pages_from_empty_mets():
     mets = OcrdMets(content="<mets></mets>")
@@ -375,6 +380,22 @@ def test_envvar():
     with temp_env_var('OCRD_METS_CACHING', 'false'):
         assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
         assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
+
+def test_update_physical_page_attributes(sbb_directory_ocrd_mets):
+    m = sbb_directory_ocrd_mets
+    m.remove_file()
+    assert len(m.physical_pages) == 0
+    m.add_file('FOO', pageId='new page', ID='foo1', mimetype='foo/bar')
+    m.add_file('FOO', pageId='new page', ID='foo2', mimetype='foo/bar')
+    m.add_file('FOO', pageId='new page', ID='foo3', mimetype='foo/bar')
+    m.add_file('FOO', pageId='new page', ID='foo4', mimetype='foo/bar')
+    assert len(m.physical_pages) == 1
+    assert b'ORDER' not in m.to_xml()
+    assert b'ORDERLABEL' not in m.to_xml()
+    m.update_physical_page_attributes('new page', order='foo', orderlabel='bar')
+    assert b'ORDER' in m.to_xml()
+    assert b'ORDERLABEL' in m.to_xml()
+
 
 if __name__ == '__main__':
     main(__file__)

@@ -6,8 +6,10 @@ import shutil
 from pathlib import (
     Path
 )
-from unittest import (
-    mock
+from requests import Session
+from unittest.mock import (
+    patch,
+    Mock
 )
 from PIL import (
     Image
@@ -48,8 +50,8 @@ def _get_kant_data(key):
             return (_file.read(), mime)
 
 
-def request_behavior(*args):
-    resp = mock.Mock()
+def request_behavior(*args, **kwargs):
+    resp = Mock()
     resp.status_code = 200
     resp.headers = {}
     the_key = args[0].split('/')[-1]
@@ -68,7 +70,7 @@ def test_workspace_from_url_bad():
     assert "Must pass 'mets_url'" in str(exc)
 
 
-@mock.patch("requests.get")
+@patch.object(Session, "get")
 def test_workspace_from_url_kant(mock_request, tmp_path):
 
     # arrange
@@ -88,7 +90,7 @@ def test_workspace_from_url_kant(mock_request, tmp_path):
     assert mock_request.call_count == 1
 
 
-@mock.patch("requests.get")
+@patch.object(Session, "get")
 def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
 
     # arrange
@@ -113,7 +115,7 @@ def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
     assert mock_request.call_count == 7
 
 
-@mock.patch("requests.get")
+@patch.object(Session, "get")
 def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp_path):
 
     # arrange
@@ -133,7 +135,7 @@ def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp
     assert mock_request.call_count == 0
 
 
-@mock.patch("requests.get")
+@patch.object(Session, "get")
 def test_workspace_from_url_404(mock_request):
     """Expected behavior when try create workspace from invalid online target
     """
@@ -179,9 +181,10 @@ def test_resolve_image0():
     workspace = Resolver().workspace_from_url(METS_HEROLD)
     input_files = workspace.mets.find_all_files(fileGrp='OCR-D-IMG')
     f = input_files[0]
-    img_pil1 = workspace._resolve_image_as_pil(f.url)
+    print(f)
+    img_pil1 = workspace._resolve_image_as_pil(f.local_filename)
     assert img_pil1.size == (2875, 3749)
-    img_pil2 = workspace._resolve_image_as_pil(f.url, [[0, 0], [1, 1]])
+    img_pil2 = workspace._resolve_image_as_pil(f.local_filename, [[0, 0], [1, 1]])
     assert img_pil2.size == (1, 1)
 
 
@@ -235,12 +238,12 @@ def test_workspace_from_nothing_noclobber(tmp_path):
 
 
 @pytest.mark.parametrize("url,basename,exc_msg",
-                         [(None, None, "'url' must be a string"),
-                          (None, 'foo', "'directory' must be a string")]
+                         [(None, None, "'url' must be a non-empty string"),
+                          (None, 'foo', "'directory' must be a non-empty string")]
                          )
 def test_download_to_directory_with_badargs(url, basename, exc_msg):
 
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(ValueError) as exc:
         Resolver().download_to_directory(url, basename)
 
     # assert exception message contained
@@ -284,20 +287,20 @@ def test_resolve_mets_arguments():
     https://github.com/OCR-D/core/issues/517
     """
     resolver = Resolver()
-    assert resolver.resolve_mets_arguments(None, None, None) == (str(Path.cwd()), str(Path.cwd() / 'mets.xml'), 'mets.xml')
-    assert resolver.resolve_mets_arguments('/', None, 'mets.xml') == ('/', '/mets.xml', 'mets.xml')
-    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
-    assert resolver.resolve_mets_arguments(None, '/foo/foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
-    assert resolver.resolve_mets_arguments('/foo', 'foo.xml', None) == ('/foo', '/foo/foo.xml', 'foo.xml')
-    assert resolver.resolve_mets_arguments('/foo', 'http://bar/foo.xml', None) == ('/foo', 'http://bar/foo.xml', 'foo.xml')
+    assert resolver.resolve_mets_arguments(None, None, None, None) == (str(Path.cwd()), str(Path.cwd() / 'mets.xml'), 'mets.xml', None)
+    assert resolver.resolve_mets_arguments('/', None, 'mets.xml', None) == ('/', '/mets.xml', 'mets.xml', None)
+    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
+    assert resolver.resolve_mets_arguments(None, '/foo/foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
+    assert resolver.resolve_mets_arguments('/foo', 'foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
+    assert resolver.resolve_mets_arguments('/foo', 'http://bar/foo.xml', None, None) == ('/foo', 'http://bar/foo.xml', 'foo.xml', None)
     with pytest.raises(ValueError, match="Use either --mets or --mets-basename, not both"):
-        resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml')
+        resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml', None)
     with pytest.raises(ValueError, match="inconsistent with --directory"):
-        resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None)
+        resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None, None)
     with pytest.warns(DeprecationWarning):
-        resolver.resolve_mets_arguments('/foo', None, 'not_mets.xml')
+        resolver.resolve_mets_arguments('/foo', None, 'not_mets.xml', None)
     with pytest.raises(ValueError, match=r"--mets is an http\(s\) URL but no --directory was given"):
-        resolver.resolve_mets_arguments(None, 'http://bar/foo.xml', None)
+        resolver.resolve_mets_arguments(None, 'http://bar/foo.xml', None, None)
 
 if __name__ == '__main__':
     main(__file__)

@@ -138,15 +138,18 @@ class TestWorkspaceValidator(TestCase):
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
             assert not report.is_valid
-            assert len(report.errors) == 2
+            assert len(report.errors) == 1
             assert "invalid (Java-specific) file URL" in report.errors[0]
+            assert len(report.warnings) == 1
+            assert "non-HTTP" in report.warnings[0]
 
+    @pytest.mark.skip("Not usable as such anymore, because we properly distinguish .url and .local_filename now. Requires a server to test")
     def test_validate_pixel_no_download(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url=imgpath)
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', local_filename=imgpath)
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=False)
             self.assertEqual(len(report.errors), 0)
@@ -158,7 +161,7 @@ class TestWorkspaceValidator(TestCase):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url=imgpath)
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', local_filename=imgpath)
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=True)
             self.assertEqual(len(report.notices), 2)

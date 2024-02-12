@@ -14,7 +14,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging
 
 @click.command()
 @ocrd_cli_options
@@ -60,11 +60,13 @@ class TestDecorators(TestCase):
 
     def test_loglevel_override(self):
         import logging
-        self.assertEqual(logging.getLogger('').getEffectiveLevel(), logging.INFO)
-        self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.INFO)
+        disableLogging()
+        assert logging.getLogger('ocrd').getEffectiveLevel() == logging.WARNING
+        initLogging()
+        assert logging.getLogger('ocrd').getEffectiveLevel() == logging.INFO
         code, _, _ = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'DEBUG'])
         assert not code
-        self.assertEqual(logging.getLogger('PIL').getEffectiveLevel(), logging.DEBUG)
+        assert logging.getLogger('ocrd').getEffectiveLevel() == logging.DEBUG
 
     def test_processor_no_mets(self):
         """
@@ -210,4 +212,4 @@ class TestDecorators(TestCase):
 
 
 if __name__ == '__main__':
-    main()
+    main(__name__)

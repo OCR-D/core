@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
-import pdb
+# import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
+from ocrd_utils import config
 from ocrd_utils.os import get_ocrd_tool_json
 
 from pytest import raises, fixture
@@ -20,6 +21,8 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
 
     # arrange
     monkeypatch.setenv('HOME', str(tmp_path))
+    if 'XDG_CONFIG_HOME' in os.environ:
+        monkeypatch.delenv('XDG_CONFIG_HOME', raising=False)
 
     # act
     mgr = OcrdResourceManager()
@@ -27,8 +30,11 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
     # assert
     default_config_dir = os.path.join(os.environ['HOME'], '.config', 'ocrd')
     f = Path(default_config_dir) / CONST_RESOURCE_YML
-    assert f.exists()
+    assert os.environ['HOME'] == str(tmp_path)
+    assert config.HOME == tmp_path
+    assert Path.home() == tmp_path
     assert f == mgr.user_list
+    assert f.exists()
     assert mgr.add_to_user_database('ocrd-foo', f)
     # pdb.set_trace()
 
@@ -60,7 +66,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
-    assert mgr.userdir == str(tmp_path)
+    assert mgr.userdir == tmp_path
 
 
 def test_resources_manager_config_explicite(tmp_path):

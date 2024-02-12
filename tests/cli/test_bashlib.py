@@ -1,6 +1,5 @@
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
-from pkg_resources import parse_version
 import os, sys
 import traceback
 import subprocess
@@ -8,6 +7,7 @@ import tempfile
 import pathlib
 import yaml
 import json
+from pathlib import Path
 
 from ocrd.cli.bashlib import bashlib_cli
 
@@ -88,7 +88,7 @@ class TestBashlibCli(TestCase):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 _, out, err = self.invoke_cli(bashlib_cli, ['input-files', '-I', 'OCR-D-IMG'])
-                assert ("[url]='OCR-D-IMG/INPUT_0017.tif' [ID]='INPUT_0017' [mimetype]='image/tiff' "
+                assert ("[url]='' [local_filename]='OCR-D-IMG/INPUT_0017.tif' [ID]='INPUT_0017' [mimetype]='image/tiff' "
                         "[pageId]='PHYS_0017' [outputFileId]='OUTPUT_PHYS_0017'") in out
 
     def test_bashlib_defs(self):
@@ -102,8 +102,8 @@ class TestBashlibCli(TestCase):
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && ocrd__minversion 2.29.0")
         assert exit_code == 0
-        version = parse_version(VERSION)
-        version = "%d.%d.%d" % (version.major, version.minor+1, 0)
+        (major, minor, patch) = map(int, str(VERSION).split('.'))
+        version = "%d.%d.%d" % (major, minor + 1, patch)
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && ocrd__minversion " + version)
         assert exit_code > 0
@@ -128,63 +128,7 @@ class TestBashlibCli(TestCase):
                 }
             }
         }
-        script = """#!/usr/bin/env bash
-        set -eu
-        set -o pipefail
-        MIMETYPE_PAGE=$(ocrd bashlib constants MIMETYPE_PAGE)
-        source $(ocrd bashlib filename)
-        ocrd__wrap ocrd-tool.json ocrd-cp "$@"
-
-        IFS=',' read -ra in_file_grps <<< ${ocrd__argv[input_file_grp]}
-        if ((${#in_file_grps[*]}>1)); then
-            ocrd__log info "running on multiple input fileGrps ${in_file_grps[*]}"
-        else
-            ocrd__log info "running on single input fileGrp ${in_file_grps}"
-        fi
-        out_file_grp=${ocrd__argv[output_file_grp]}
-        message="${params[message]}"
-
-        cd "${ocrd__argv[working_dir]}"
-        mets=$(basename ${ocrd__argv[mets_file]})
-        for ((n=0; n<${#ocrd__files[*]}; n++)); do
-            in_fpath=($(ocrd__input_file $n url))
-            in_id=($(ocrd__input_file $n ID))
-            in_mimetype=($(ocrd__input_file $n mimetype))
-            in_pageId=($(ocrd__input_file $n pageId))
-            if ! test -f "${in_fpath#file://}"; then
-                ocrd__log error "input file '${in_fpath#file://}' (ID=${in_id} pageId=${in_pageId} MIME=${in_mimetype}) is not on disk"
-                continue
-            fi
-            if [ "x${in_mimetype}" = x${MIMETYPE_PAGE} ]; then
-                ocrd__log info "processing PAGE-XML input file $in_fpath ($in_id / $in_pageId)"
-                out_suf=.xml
-            else
-                ocrd__log info "processing ${in_mimetype} input file $in_fpath ($in_id / $in_pageId)"
-                out_suf=.${in_fpath##*.}
-            fi
-            for ((i=1; i<${#in_fpath[*]}; i++)); do
-                ocrd__log warning "ignoring ${in_mimetype[$i]} input file ${in_fpath[$i]} (${in_id[$i]} ${in_pageId[$i]})"
-            done
-            out_id=$(ocrd__input_file $n outputFileId)
-            out_fpath="${ocrd__argv[output_file_grp]}/${out_id}${out_suf}"
-            declare -a options
-            if [[ "${ocrd__argv[overwrite]}" == true ]]; then
-                options=( --force )
-            else
-                options=()
-            fi
-            mkdir -p $out_file_grp
-            cp ${options[*]} "$in_fpath" "$out_fpath"
-            if [ -n "$message" ]; then
-                echo "$message"
-            fi
-            if [ -n "$in_pageId" ]; then
-                options+=( -g $in_pageId )
-            fi
-            options+=( -G $out_file_grp -m $in_mimetype -i "$out_id" "$out_fpath" )
-            ocrd -l ${ocrd__argv[log_level]} workspace add "${options[@]}"
-        done
-        """
+        script = (Path(__file__).parent.parent / 'data/bashlib_cp_processor.sh').read_text()
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
                 with open('ocrd-tool.json', 'w') as toolfile:
@@ -193,6 +137,7 @@ class TestBashlibCli(TestCase):
                 exit_code, out, err = self.invoke_bash(
                     script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world',
                     executable='ocrd-cp')
+                print({'exit_code': exit_code, 'out': out, 'err': err})
                 assert 'single input fileGrp' in err
                 assert 'processing PAGE-XML' in err
                 assert exit_code == 0

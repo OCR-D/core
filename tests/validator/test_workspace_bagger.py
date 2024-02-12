@@ -2,6 +2,7 @@ from os import makedirs
 from os.path import join, abspath, exists
 from shutil import copytree, rmtree, move, make_archive
 from tempfile import mkdtemp
+from pathlib import Path
 from bagit import _load_tag_file, Bag
 
 from tests.base import TestCase, main, assets # pylint: disable=import-error,no-name-in-module
@@ -9,178 +10,239 @@ from tests.base import TestCase, main, assets # pylint: disable=import-error,no-
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger, BACKUPDIR
 from ocrd.resolver import Resolver
-from ocrd_utils import unzip_file_to_dir
+from ocrd_utils import unzip_file_to_dir, pushd_popd, initLogging
+
+from pytest import fixture, raises
 
 README_FILE = abspath('README.md')
 
-class TestWorkspaceBagger(TestCase):
+@fixture(name='bagger_fixture')
+def _bagger_fixture(tmpdir):
+    if exists(BACKUPDIR):
+        rmtree(BACKUPDIR)
+    makedirs(BACKUPDIR)
+    resolver = Resolver()
+    bagdir = join(tmpdir, 'bag')
+    copytree(assets.path_to('kant_aufklaerung_1784'), bagdir)
+    workspace_dir = join(bagdir, 'data')
+    workspace = Workspace(resolver, directory=workspace_dir)
+    bagger = WorkspaceBagger(resolver)
+    yield bagger, workspace, bagdir, tmpdir
+    rmtree(bagdir)
 
-    def setUp(self):
-        super().setUp()
-        pass
-        if exists(BACKUPDIR):
-            rmtree(BACKUPDIR)
-        self.resolver = Resolver()
-        self.bagger = WorkspaceBagger(self.resolver)
-        self.tempdir = mkdtemp()
-        self.bagdir = join(self.tempdir, 'bag')
-        copytree(assets.path_to('kant_aufklaerung_1784'), self.bagdir)
-        self.workspace_dir = join(self.bagdir, 'data')
-        self.workspace = Workspace(self.resolver, directory=self.workspace_dir)
+def test_bag_zip_and_spill(bagger_fixture):
+    bagger, workspace, _, tempdir = bagger_fixture
+    workspace.mets.find_all_files(ID='INPUT_0017')[0].url = 'bad-scheme://foo'
+    workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://ocr-d.de'
+    bagger.bag(workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=join(tempdir, 'out.ocrd.zip'))
+    bagger.spill(join(tempdir, 'out.ocrd.zip'), join(tempdir, 'out'))
 
-    def tearDown(self):
-        rmtree(self.tempdir)
+def test_bag_zip_and_spill_wo_dest(bagger_fixture):
+    bagger, workspace, _, tempdir = bagger_fixture
+    bagger.bag(workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=join(tempdir, 'out.ocrd.zip'))
+    bagger.spill(join(tempdir, 'out.ocrd.zip'), tempdir)
 
-    def test_bag_zip_and_spill(self):
-        self.workspace.mets.find_all_files(ID='INPUT_0017')[0].url = 'bad-scheme://foo'
-        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://ocr-d.de'
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
-        self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), join(self.tempdir, 'out'))
+def test_bag_wo_dest(bagger_fixture):
+    bagger, workspace, _, _ = bagger_fixture
+    bagger.bag(workspace, 'kant_aufklaerung_1784', skip_zip=True)
 
-    def test_bag_zip_and_spill_wo_dest(self):
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=join(self.tempdir, 'out.ocrd.zip'))
-        self.bagger.spill(join(self.tempdir, 'out.ocrd.zip'), self.tempdir)
+def test_bag_wo_dest_zip(bagger_fixture):
+    bagger, workspace, _, _ = bagger_fixture
+    bagger.bag(workspace, 'kant_aufklaerung_1784', skip_zip=True)
 
-    def test_bag_wo_dest(self):
-        makedirs(BACKUPDIR)
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=True)
+def test_bag_partial_http_nostrict(bagger_fixture):
+    bagger, workspace, _, _ = bagger_fixture
+    bagger.strict = False
+    workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://ocr-d.de'
+    bagger.bag(workspace, 'kant_aufklaerung_1784')
+    bagger.strict = True
 
-    def test_bag_wo_dest_zip(self):
-        makedirs(BACKUPDIR)
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=True)
+def test_bag_full(bagger_fixture):
+    bagger, workspace, _, _ = bagger_fixture
+    bagger.strict = True
+    f = workspace.mets.find_all_files(ID='INPUT_0017')[0]
+    f.url = 'bad-scheme://foo'
+    f.local_filename = None
+    with raises(Exception, match="No connection adapters were found for 'bad-scheme://foo'"):
+        bagger.bag(workspace, 'kant_aufklaerung_1784', skip_zip=False)
+    bagger.strict = False
 
-    def test_bag_partial_http_nostrict(self):
-        self.bagger.strict = False
-        makedirs(BACKUPDIR)
-        self.workspace.mets.find_all_files(ID='INPUT_0020')[0].url = 'http://ocr-d.de'
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784')
+def test_spill_dest_not_dir(bagger_fixture):
+    bagger, _, _, _ = bagger_fixture
+    with raises(Exception, match="Not a directory: /dev/stdout"):
+        bagger.spill('x', '/dev/stdout')
 
-    def test_bag_full(self):
-        self.bagger.strict = True
-        f = self.workspace.mets.find_all_files(ID='INPUT_0017')[0]
-        f.url = 'bad-scheme://foo'
-        f.local_filename = None
-        with self.assertRaisesRegex(Exception, "Not an http URL"):
-            self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False)
-        self.bagger.strict = False
+def test_spill_derived_dest_exists(bagger_fixture):
+    bagger, _, bagdir, _ = bagger_fixture
+    dest = join(bagdir, 'foo')
+    makedirs(dest)
+    with raises(Exception, match=f"Directory exists: {dest}"):
+        bagger.spill('/path/to/foo.ocrd.zip', bagdir)
 
-    def test_spill_dest_not_dir(self):
-        with self.assertRaisesRegex(Exception, "Not a directory: /dev/stdout"):
-            self.bagger.spill('x', '/dev/stdout')
+def test_spill_derived_dest(bagger_fixture):
+    bagger, workspace, bagdir, _ = bagger_fixture
+    bag_dest = join(bagdir, 'foo.ocrd.zip')
+    spill_dest = join(bagdir, 'foo')
+    bagger.bag(workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=bag_dest)
+    bagger.spill(bag_dest, bagdir)
+    assert exists(spill_dest)
 
-    def test_spill_derived_dest_exists(self):
-        dest = join(self.bagdir, 'foo')
-        makedirs(dest)
-        with self.assertRaisesRegex(Exception, "Directory exists: %s" % dest):
-            self.bagger.spill('/path/to/foo.ocrd.zip', self.bagdir)
+def test_bag_with_changed_metsname(bagger_fixture):
+    bagger, _, bagdir, _ = bagger_fixture
+    # arrange
+    workspace_dir = join(bagdir, "changed-mets-test")
+    bag_dest = join(bagdir, 'bagged-workspace')
+    copytree(join(assets.path_to('kant_aufklaerung_1784'), "data"), workspace_dir)
+    new_metsname = "other-metsname.xml"
+    old_metspath = join(workspace_dir, "mets.xml")
+    new_metspath = join(workspace_dir, new_metsname)
+    move(old_metspath, new_metspath)
+    workspace = Workspace(Resolver(), directory=workspace_dir, mets_basename=new_metsname)
 
-    def test_spill_derived_dest(self):
-        bag_dest = join(self.bagdir, 'foo.ocrd.zip')
-        spill_dest = join(self.bagdir, 'foo')
-        self.bagger.bag(self.workspace, 'kant_aufklaerung_1784', skip_zip=False, dest=bag_dest)
-        self.bagger.spill(bag_dest, self.bagdir)
-        self.assertTrue(exists(spill_dest))
+    # act
+    bagger.bag(workspace, "changed-mets-test", dest=bag_dest, ocrd_mets=new_metsname, skip_zip=True)
 
-    def test_bag_with_changed_metsname(self):
-        # arrange
-        workspace_dir = join(self.bagdir, "changed-mets-test")
-        bag_dest = join(self.bagdir, 'bagged-workspace')
-        copytree(join(assets.path_to('kant_aufklaerung_1784'), "data"), workspace_dir)
-        new_metsname = "other-metsname.xml"
-        old_metspath = join(workspace_dir, "mets.xml")
-        new_metspath = join(workspace_dir, new_metsname)
-        move(old_metspath, new_metspath)
-        workspace = Workspace(self.resolver, directory=workspace_dir, mets_basename=new_metsname)
+    # assert
+    bag_metspath = join(bag_dest, "data", new_metsname)
+    assert exists(bag_metspath), f"Mets not existing. Expected: {bag_metspath}"
 
-        # act
-        self.bagger.bag(workspace, "changed-mets-test", dest=bag_dest, ocrd_mets=new_metsname, skip_zip=True)
+    bag_info_path = join(bag_dest, "bag-info.txt")
+    tags = _load_tag_file(bag_info_path)
+    assert "Ocrd-Mets" in tags, "expect 'Ocrd-Mets'-key in bag-info.txt"
+    assert tags["Ocrd-Mets"] == new_metsname, "Ocrd-Mets key present but wrong value"
 
-        # assert
-        bag_metspath = join(bag_dest, "data", new_metsname)
-        self.assertTrue(exists(bag_metspath), f"Mets not existing. Expected: {bag_metspath}")
+def test_spill_with_changed_metsname(bagger_fixture):
+    bagger, _, bagdir, _ = bagger_fixture
 
-        bag_info_path = join(bag_dest, "bag-info.txt")
-        tags = _load_tag_file(bag_info_path)
-        self.assertTrue("Ocrd-Mets" in tags, "expect 'Ocrd-Mets'-key in bag-info.txt")
-        self.assertEqual(tags["Ocrd-Mets"], new_metsname, "Ocrd-Mets key present but wrong value")
+    # arrange
+    new_metsname = "other-metsname.xml"
+    example_workspace_dir = join(bagdir, "example_workspace_dir")
+    makedirs(join(example_workspace_dir))
+    bag_dest = join(bagdir, 'foo.ocrd.zip')
+    workspace = Resolver().workspace_from_nothing(example_workspace_dir, new_metsname)
+    bagger.bag(workspace, "mets-changed-test", bag_dest, new_metsname)
 
-    def test_spill_with_changed_metsname(self):
-        # arrange
-        new_metsname = "other-metsname.xml"
-        example_workspace_dir = join(self.bagdir, "example_workspace_dir")
-        makedirs(join(example_workspace_dir))
-        bag_dest = join(self.bagdir, 'foo.ocrd.zip')
-        workspace = self.resolver.workspace_from_nothing(example_workspace_dir, new_metsname)
-        self.bagger.bag(workspace, "mets-changed-test", bag_dest, new_metsname)
+    # act
+    spill_dest = join(bagdir, 'spilled_changed_mets')
+    bagger.spill(bag_dest, spill_dest)
 
-        # act
-        spill_dest = join(self.bagdir, 'spilled_changed_mets')
-        self.bagger.spill(bag_dest, spill_dest)
+    # assert
+    assert exists(spill_dest), "spill-destination-directory was not created"
+    assert not exists(join(spill_dest, "mets.xml")), "'mets.xml' should not be present"
+    assert exists(join(spill_dest, new_metsname)), "expected mets-file to be '{new_metsname}'"
 
-        # assert
-        self.assertTrue(exists(spill_dest), "spill-destination-directory was not created")
-        self.assertFalse(exists(join(spill_dest, "mets.xml")), "'mets.xml' should not be present")
-        self.assertTrue(exists(join(spill_dest, new_metsname)),
-                        "expected mets-file to be '{new_metsname}'")
+def test_recreate_checksums_param_validation(bagger_fixture):
+    bagger, _, _, _ = bagger_fixture
+    with raises(Exception, match="For checksum recreation 'dest' must be provided"):
+        bagger.recreate_checksums("src/path")
+    with raises(Exception, match="Setting 'dest' and 'overwrite' is a contradiction"):
+        bagger.recreate_checksums("src/path", "dest/path", overwrite=True)
 
-    def test_recreate_checksums_param_validation(self):
-        with self.assertRaisesRegex(Exception, "For checksum recreation 'dest' must be provided"):
-            self.bagger.recreate_checksums("src/path")
-        with self.assertRaisesRegex(Exception, "Setting 'dest' and 'overwrite' is a contradiction"):
-            self.bagger.recreate_checksums("src/path", "dest/path", overwrite=True)
+def test_recreate_checksums_overwrite_unzipped(bagger_fixture):
+    bagger, _, bagdir, _ = bagger_fixture
 
-    def test_recreate_checksums_overwrite_unzipped(self):
-        # arrange
-        assert Bag(self.bagdir).is_valid(), "tests arrangements for recreate_checksums failed"
-        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
-        assert not Bag(self.bagdir).is_valid(), "tests arrangements for recreate_checksums failed"
+    # arrange
+    assert Bag(bagdir).is_valid(), "tests arrangements for recreate_checksums failed"
+    move(join(bagdir, "data", "mets.xml"), join(bagdir, "data", "mets-neu.xml"))
+    assert not Bag(bagdir).is_valid(), "tests arrangements for recreate_checksums failed"
 
-        # act
-        self.bagger.recreate_checksums(self.bagdir, overwrite=True)
+    # act
+    bagger.recreate_checksums(bagdir, overwrite=True)
 
-        # assert
-        assert Bag(self.bagdir).is_valid(), "recreate_checksums unzippd with overwrite failed"
+    # assert
+    assert Bag(bagdir).is_valid(), "recreate_checksums unzippd with overwrite failed"
 
-    def test_recreate_checksums_unzipped(self):
-        # arrange
-        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
-        new_bag = join(self.tempdir, "new_bag")
+def test_recreate_checksums_unzipped(bagger_fixture):
+    bagger, _, bagdir, tempdir = bagger_fixture
 
-        # act
-        self.bagger.recreate_checksums(self.bagdir, new_bag)
+    # arrange
+    move(join(bagdir, "data", "mets.xml"), join(bagdir, "data", "mets-neu.xml"))
+    new_bag = join(tempdir, "new_bag")
 
-        # assert
-        assert Bag(new_bag).is_valid(), "recreate_checksums unzipped failed"
+    # act
+    bagger.recreate_checksums(bagdir, new_bag)
 
-    def test_recreate_checksums_zipped_overwrite(self):
-        # arrange
-        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
-        zipped_bag = join(self.tempdir, "foo.ocrd.zip")
-        make_archive(zipped_bag.replace('.zip', ''), 'zip', self.bagdir)
+    # assert
+    assert Bag(new_bag).is_valid(), "recreate_checksums unzipped failed"
 
-        # act
-        self.bagger.recreate_checksums(zipped_bag, overwrite=True)
+def test_recreate_checksums_zipped_overwrite(bagger_fixture):
+    bagger, _, bagdir, tempdir = bagger_fixture
 
-        # assert
-        bag_dest = join(self.tempdir, "new_bag")
-        unzip_file_to_dir(zipped_bag, bag_dest)
-        assert Bag(bag_dest).is_valid(), "recreate_checksums zipped with overwrite failed"
+    # arrange
+    move(join(bagdir, "data", "mets.xml"), join(bagdir, "data", "mets-neu.xml"))
+    zipped_bag = join(tempdir, "foo.ocrd.zip")
+    make_archive(zipped_bag.replace('.zip', ''), 'zip', bagdir)
 
-    def test_recreate_checksums_zipped(self):
-        # arrange
-        move(join(self.bagdir, "data", "mets.xml"), join(self.bagdir, "data", "mets-neu.xml"))
-        zipped_bag = join(self.tempdir, "foo.ocrd.zip")
-        make_archive(zipped_bag.replace('.zip', ''), 'zip', self.bagdir)
-        zipped_bag_dest = join(self.tempdir, "foo-new.ocrd.zip")
+    # act
+    bagger.recreate_checksums(zipped_bag, overwrite=True)
 
-        # act
-        self.bagger.recreate_checksums(zipped_bag, zipped_bag_dest)
+    # assert
+    bag_dest = join(tempdir, "new_bag")
+    unzip_file_to_dir(zipped_bag, bag_dest)
+    assert Bag(bag_dest).is_valid(), "recreate_checksums zipped with overwrite failed"
 
-        # assert
-        bag_dest = join(self.tempdir, "new_bag")
-        unzip_file_to_dir(zipped_bag_dest, bag_dest)
-        assert Bag(bag_dest).is_valid(), "recreate_checksums zipped failed"
+def test_recreate_checksums_zipped(bagger_fixture):
+    bagger, _, bagdir, tempdir = bagger_fixture
 
+    # arrange
+    move(join(bagdir, "data", "mets.xml"), join(bagdir, "data", "mets-neu.xml"))
+    zipped_bag = join(tempdir, "foo.ocrd.zip")
+    make_archive(zipped_bag.replace('.zip', ''), 'zip', bagdir)
+    zipped_bag_dest = join(tempdir, "foo-new.ocrd.zip")
+
+    # act
+    bagger.recreate_checksums(zipped_bag, zipped_bag_dest)
+
+    # assert
+    bag_dest = join(tempdir, "new_bag")
+    unzip_file_to_dir(zipped_bag_dest, bag_dest)
+    assert Bag(bag_dest).is_valid(), "recreate_checksums zipped failed"
+
+def test_basename_conflict(tmpdir):
+    """
+    Ensure that when downloading during bagging, there are no filename
+    conflicts, i.e. all files are downloaded, none are overwritten.
+    """
+    bagger = WorkspaceBagger(Resolver())
+    workspace = Workspace(Resolver(), directory=str(Path(__file__).parent.parent / 'data/bagger-conflict-workspace'))
+    bagger.bag(workspace, 'bagger-conflict-test', skip_zip=True, dest=str(tmpdir / 'bag'))
+    assert len(workspace.mets.find_all_files()) == 3
+    assert len(list(Path(tmpdir, 'bag/data/A').iterdir())) == 3
+
+def test_filter(tmpdir):
+    # initLogging()
+    bagger = WorkspaceBagger(Resolver())
+    fgs = ['A', 'B', 'C', 'D', 'E']
+    with pushd_popd(tmpdir):
+        Path('workspace').mkdir()
+        workspace = Resolver().workspace_from_nothing(tmpdir / 'workspace')
+        for fg in fgs:
+            Path(fg).mkdir()
+            for i in range(3):
+                workspace.add_file(fg, mimetype='foo/bar', file_id=f'{fg}_{i}', page_id=f'page{i}', local_filename=f'{fg}/file{i}.ext', content='')
+        # print([str(x) for x in workspace.mets.find_all_files()])
+
+        # test w/o filter
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag1'))
+        for fg in fgs:
+            assert len(list(Path(f'bag1/data/{fg}').iterdir())) == 3
+
+        # test include
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag2'), include_fileGrp=['A'])
+        assert len(list(Path(f'bag2/data/A').iterdir())) == 3
+        for fg in ['B', 'C', 'D', 'E']:
+            assert not Path(f'bag2/data/{fg}').exists()
+
+        # test exclude
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag3'), exclude_fileGrp=['A'])
+        assert not Path(f'bag3/data/A').exists()
+        for fg in ['B', 'C', 'D', 'E']:
+            assert len(list(Path(f'bag3/data/{fg}').iterdir())) == 3
+
+        # test include + exclude
+        bagger.bag(workspace, 'foo', skip_zip=True, dest=str(tmpdir / 'bag4'), exclude_fileGrp=['A'], include_fileGrp=['A'])
+        for fg in fgs:
+            assert not Path(f'bag4/data/{fg}').exists()
 
 if __name__ == '__main__':
-    main()
+    main(__name__)

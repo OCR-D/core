@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="info:lc/xmlns/premis-v2 http://www.loc.gov/standards/premis/v2/premis-v2-0.xsd http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-6.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd http://www.loc.gov/mix/v10 http://www.loc.gov/standards/mix/mix10/mix10.xsd">
+  <mets:metsHdr CREATEDATE="2023-11-20T19:35:02.939335">
+    <mets:agent TYPE="OTHER" OTHERTYPE="SOFTWARE" ROLE="CREATOR">
+      <mets:name>ocrd/core v2.58.1</mets:name>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="DMDLOG_0001">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+                </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="AMD">
+    </mets:amdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="FOO">
+      <mets:file ID="FOO_1" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_2" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_3" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_4" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_5" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_6" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_8" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_9" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_10" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_11" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_12" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_13" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_14" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_15" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_16" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_17" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_18" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_19" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_20" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_22" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_23" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_24" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_25" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_26" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_27" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_28" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FOO_29" MIMETYPE="foo/bar">
+        <mets:FLocat xlink:href="mets.xml" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+    </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div TYPE="physSequence">
+      <mets:div TYPE="page" ID="PHYS_0001">
+        <mets:fptr FILEID="FOO_1"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0002">
+        <mets:fptr FILEID="FOO_2"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0003">
+        <mets:fptr FILEID="FOO_3"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0004">
+        <mets:fptr FILEID="FOO_4"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0005">
+        <mets:fptr FILEID="FOO_5"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0006">
+        <mets:fptr FILEID="FOO_6"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0008">
+        <mets:fptr FILEID="FOO_8"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0009">
+        <mets:fptr FILEID="FOO_9"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0010">
+        <mets:fptr FILEID="FOO_10"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0011">
+        <mets:fptr FILEID="FOO_11"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0012">
+        <mets:fptr FILEID="FOO_12"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0013">
+        <mets:fptr FILEID="FOO_13"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0014">
+        <mets:fptr FILEID="FOO_14"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0015">
+        <mets:fptr FILEID="FOO_15"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0016">
+        <mets:fptr FILEID="FOO_16"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0017">
+        <mets:fptr FILEID="FOO_17"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0018">
+        <mets:fptr FILEID="FOO_18"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0019">
+        <mets:fptr FILEID="FOO_19"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0020">
+        <mets:fptr FILEID="FOO_20"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0022">
+        <mets:fptr FILEID="FOO_22"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0023">
+        <mets:fptr FILEID="FOO_23"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0024">
+        <mets:fptr FILEID="FOO_24"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0025">
+        <mets:fptr FILEID="FOO_25"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0026">
+        <mets:fptr FILEID="FOO_26"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0027">
+        <mets:fptr FILEID="FOO_27"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0028">
+        <mets:fptr FILEID="FOO_28"/>
+      </mets:div>
+      <mets:div TYPE="page" ID="PHYS_0029">
+        <mets:fptr FILEID="FOO_29"/>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+</mets:mets>
