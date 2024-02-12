@@ -13,6 +13,10 @@ Changed:
 
   * :fire: `OcrdFile.local_filename` returns/accepts `str` after unpopular change to `Path` from #1079, #1182, #1167
 
+Added:
+
+  * `OcrdMets.get_physical_pages` to search for/change/generate ranges for page-specific `mets:div` attributes beyond to `@ID`, #821, #1063
+
 ## [2.62.0] - 2024-01-30
 
 Added:
