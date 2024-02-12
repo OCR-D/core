@@ -7,7 +7,7 @@ from os import environ
 from contextlib import contextmanager
 import shutil
 from logging import StreamHandler
-import lxml
+from lxml import etree as ET
 
 from tests.base import (
     main,
@@ -104,7 +104,7 @@ def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
     assert isinstance(sbb_sample_01.physical_pages, list)
     assert isinstance(sbb_sample_01.physical_pages[0], str)
-    assert not isinstance(sbb_sample_01.physical_pages[0], lxml.etree._ElementUnicodeResult)
+    assert not isinstance(sbb_sample_01.physical_pages[0], ET._ElementUnicodeResult)
 
 def test_physical_pages_from_empty_mets():
     mets = OcrdMets(content="<mets></mets>")
@@ -236,9 +236,9 @@ def test_metshdr():
     Test whether metsHdr is created on-demand
     """
     mets = OcrdMets(content="<mets></mets>")
-    assert not mets._tree.getroot().getchildren()
+    assert not list(mets._tree.getroot())
     mets.add_agent()
-    assert len(mets._tree.getroot().getchildren()) == 1
+    assert len(mets._tree.getroot()) == 1
 
 
 def test_nocontent_nofilename_exception():

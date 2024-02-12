@@ -2,7 +2,7 @@
 Base class for XML documents loaded from either content or filename.
 """
 from os.path import exists
-from lxml import etree as ET   # type: ignore
+from lxml import etree as ET
 
 from .constants import NAMESPACES
 from .utils import xmllint_format
@@ -29,11 +29,11 @@ class OcrdXmlDocument():
         elif content:
             self._tree = ET.ElementTree(ET.XML(content, parser=ET.XMLParser(encoding='utf-8')))
         else:
-            self._tree = ET.ElementTree()
+            assert filename
             filename = filename.replace('file://', '')
             if not exists(filename):
                 raise Exception('File does not exist: %s' % filename)
-            self._tree.parse(filename)
+            self._tree = ET.parse(filename)
 
         # Cache enabled - True/False
         self._cache_flag = cache_flag

@@ -5,13 +5,11 @@ from datetime import datetime
 import re
 import typing
 from typing_extensions import Optional
-from lxml import etree as ET   # type: ignore
-from copy import deepcopy
+from lxml import etree as ET
 from warnings import warn
 
 from ocrd_utils import (
     getLogger,
-    deprecation_warning,
     generate_range,
     VERSION,
     REGEX_PREFIX,
@@ -188,6 +186,7 @@ class OcrdMets(OcrdXmlDocument):
                 break
         if id_el is None:
             mods = self._tree.getroot().find('.//mods:mods', NS)
+            assert mods is not None
             id_el = ET.SubElement(mods, TAG_MODS_IDENTIFIER)
             id_el.set('type', 'purl')
         id_el.text = purl
@@ -482,7 +481,6 @@ class OcrdMets(OcrdXmlDocument):
             raise ValueError("Invalid syntax for mets:file/@ID %s (not an xs:ID)" % ID)
         if not REGEX_FILE_ID.fullmatch(fileGrp):
             raise ValueError("Invalid syntax for mets:fileGrp/@USE %s (not an xs:ID)" % fileGrp)
-        log = getLogger('ocrd.models.ocrd_mets.add_file')
 
         el_fileGrp = self.add_file_group(fileGrp)
         if not ignore:
@@ -566,7 +564,7 @@ class OcrdMets(OcrdXmlDocument):
             if self._cache_flag:
                 del self._fptr_cache[page_div.get('ID')][ID]
             # delete empty pages
-            if not page_div.getchildren():
+            if not list(page_div):
                 log.debug("Delete empty page %s", page_div)
                 page_div.getparent().remove(page_div)
                 # Delete the empty pages from caches as well
