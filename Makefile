@@ -217,7 +217,12 @@ test: assets
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		--ignore-glob="$(TESTDIR)/network/*.py" \
 		$(TESTDIR)
-	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
+	tmpdir=$$(mktemp -d) ;\
+				 cp src/ocrd_utils/ocrd_logging.conf $$tmpdir ;\
+				 cd $$tmpdir ;\
+				 $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR) ;\
+				 cd - ;\
+				 rm -rf $$tmpdir
 
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 integration-test:
