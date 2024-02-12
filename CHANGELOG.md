@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * Reduce logging level of spammy log statements to `DEBUG` in workspace, #1181
+  * Clean up lxml code, #1188
 
 Changed:
 
