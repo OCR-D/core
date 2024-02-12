@@ -1,4 +1,5 @@
 import re
+from typing import Iterable, Tuple
 from pytest import fixture, raises
 import pytest
 from tests.base import assets
@@ -24,7 +25,7 @@ WORKSPACE_DIR = '/tmp/ocrd-mets-server'
 TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://127.0.0.1:12345']
 
 @fixture(scope='function', name='start_mets_server', params=TRANSPORTS)
-def fixture_start_mets_server(request):
+def fixture_start_mets_server(request) -> Iterable[Tuple[str, Workspace]]:
     def _start_mets_server(*args, **kwargs):
         mets_server = OcrdMetsServer(*args, **kwargs)
         mets_server.startup()
@@ -101,7 +102,6 @@ def test_mets_server_add_file(start_mets_server):
         'FOO'
     ])
     assert len(workspace_server.mets.find_all_files(fileGrp='FOO')) == NO_FILES
-    assert len(workspace_server.mets.find_all_files(file_grp='FOO')) == NO_FILES
 
     # not yet synced
     workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
@@ -186,7 +186,7 @@ def test_mets_server_socket_stop(start_mets_server):
         # make sure the socket file was deleted on shutdown
         assert not Path(mets_server_url).exists()
 
-def test_find_all_files(start_mets_server):
+def test_find_all_files(start_mets_server : Tuple[str, Workspace]):
     _, workspace_server = start_mets_server
     mets = workspace_server.mets
     assert len(mets.find_all_files()) == 35, '35 files total'
@@ -227,7 +227,7 @@ def test_find_all_files(start_mets_server):
     # with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
     #     mets.find_all_files(pageId='//PHYS000.*')
 
-def test_reload(start_mets_server):
+def test_reload(start_mets_server : Tuple[str, Workspace]):
     _, workspace_server = start_mets_server
     workspace_server_copy = Workspace(Resolver(), workspace_server.directory)
     assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'

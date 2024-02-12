@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from pathlib import Path
 import pytest
 
 from tests.base import (
@@ -61,7 +62,7 @@ def test_basename_from_url():
     Changed behavior, basename no longer derived from f.url
     """
     f = create_ocrd_file_with_defaults(url="http://foo.bar/quux")
-    assert f.basename == None
+    assert f.basename == ''
 
 
 @pytest.mark.parametrize("local_filename,extension",
@@ -74,6 +75,8 @@ def test_create_ocrd_file_with_defaults_extension(local_filename, extension):
 
     f = create_ocrd_file_with_defaults(local_filename=local_filename)
     assert f.extension == extension
+    assert not isinstance(f.local_filename, Path)
+    assert isinstance(f.local_filename, str)
 
 
 @pytest.mark.parametrize("local_filename,wo_extension",

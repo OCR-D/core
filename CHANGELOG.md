@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Reduce logging level of spammy log statements to `DEBUG` in workspace, #1181
+
+Changed:
+
+  * :fire: `OcrdFile.local_filename` returns/accepts `str` after unpopular change to `Path` from #1079, #1182, #1167
+
+## [2.62.0] - 2024-01-30
+
 Added:
 
   * Basic integration test for `ocrd_network`, #1164
@@ -1997,6 +2007,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.62.0]: ../../compare/v2.62.0..v2.61.2
 [2.61.2]: ../../compare/v2.61.2..v2.61.1
 [2.61.1]: ../../compare/v2.61.1..v2.61.1
 [2.61.0]: ../../compare/v2.61.0..v2.60.3

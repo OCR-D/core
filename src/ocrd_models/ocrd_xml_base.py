@@ -2,7 +2,7 @@
 Base class for XML documents loaded from either content or filename.
 """
 from os.path import exists
-from lxml import etree as ET
+from lxml import etree as ET   # type: ignore
 
 from .constants import NAMESPACES
 from .utils import xmllint_format

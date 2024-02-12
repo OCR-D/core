@@ -3,9 +3,7 @@ API to METS
 """
 from datetime import datetime
 import re
-import typing
 from typing import Dict, Optional
-from warnings import warn
 
 from ocrd_utils import (
     getLogger,
@@ -243,7 +241,7 @@ class OcrdMets(OcrdXmlDocument):
         pageId=None,
         mimetype=None,
         url=None,
-        local_filename=None,
+        local_filename : Optional[str] = None,
         local_only=False,
         include_fileGrp=None,
         exclude_fileGrp=None,

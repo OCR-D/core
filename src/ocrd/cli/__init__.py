@@ -81,7 +81,7 @@ from .network import network_cli
 
 
 @click.group(epilog=_epilog)
-@click.version_option()
+@click.version_option(package_name='ocrd')
 @ocrd_loglevel
 def cli(**kwargs): # pylint: disable=unused-argument
     """

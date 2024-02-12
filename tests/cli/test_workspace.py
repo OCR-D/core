@@ -461,7 +461,7 @@ class TestCli(TestCase):
                 assert len(ws.mets.find_all_files(ID='//FILE_OCR-D-IMG_000.*')) == 10
                 assert len(ws.mets.find_all_files(ID='//FILE_.*_000.*')) == 20
                 assert len(ws.mets.find_all_files(pageId='PHYS_0001')) == 2
-                assert ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].local_filename == Path('OCR-D-PAGE/FILE_0001.xml')
+                assert ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].local_filename == 'OCR-D-PAGE/FILE_0001.xml'
 
     def test_bulk_add_missing_param(self):
         with pushd_popd(tempdir=True) as wsdir:
@@ -498,7 +498,7 @@ class TestCli(TestCase):
             ws.reload_mets()
             print(out)
             assert next(ws.mets.find_files()).ID == 'b_c'
-            assert next(ws.mets.find_files()).local_filename == Path('d')
+            assert next(ws.mets.find_files()).local_filename == 'd'
             assert next(ws.mets.find_files()).url == 'https://host/b/d'
 
     def test_bulk_add_derive_local_filename(self):
@@ -517,7 +517,7 @@ class TestCli(TestCase):
             # print('out', out)
             # print('err', err)
             ws.reload_mets()
-            assert next(ws.mets.find_files()).local_filename == Path('srcdir/src.xml')
+            assert next(ws.mets.find_files()).local_filename == 'srcdir/src.xml'
 
     def test_bulk_add_stdin(self):
         resolver = Resolver()
@@ -550,7 +550,7 @@ class TestCli(TestCase):
                 f = next(ws.mets.find_files())
                 assert f.mimetype == 'image/png'
                 assert f.ID == 'FILE_0001_BIN.IMG-wolf'
-                assert f.local_filename == Path('BIN/FILE_0001_BIN.IMG-wolf.png')
+                assert f.local_filename == 'BIN/FILE_0001_BIN.IMG-wolf.png'
                 assert f.url == 'https://host/FILE_0001_BIN.IMG-wolf/BIN/FILE_0001_BIN.IMG-wolf.png'
 
     def test_list_page(self):

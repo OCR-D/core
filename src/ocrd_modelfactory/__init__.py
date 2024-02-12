@@ -5,6 +5,7 @@ Factory methods to create models for data, files, URLs.
 """
 from datetime import datetime
 from pathlib import Path
+from typing import Tuple, Union
 from yaml import safe_load, safe_dump
 
 from PIL import Image
@@ -78,7 +79,7 @@ def page_from_image(input_file, with_tree=False):
     revmap = dict(((node, element) for element, node in mapping.items()))
     return pcgts, etree, mapping, revmap
 
-def page_from_file(input_file, with_tree=False):
+def page_from_file(input_file, with_tree=False) -> Union[PcGtsType, Tuple[PcGtsType, ET.Element, dict, dict]]:
     """
     Create :py:class:`~ocrd_models.ocrd_page.OcrdPage`
     from an :py:class:`~ocrd_models.ocrd_file.OcrdFile` or a file path

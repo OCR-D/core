@@ -5,6 +5,7 @@ from shutil import move, copyfileobj
 from re import sub
 from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
+from typing import Optional, Union
 
 from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
 from PIL import Image
@@ -13,6 +14,7 @@ from deprecated.sphinx import deprecated
 import requests
 
 from ocrd_models import OcrdMets, OcrdFile
+from ocrd_models.ocrd_file import ClientSideOcrdFile
 from ocrd_models.ocrd_page import parse, BorderType, to_xml
 from ocrd_modelfactory import exif_from_filename, page_from_file
 from ocrd_utils import (
@@ -71,7 +73,16 @@ class Workspace():
         baseurl (string) : Base URL to prefix to relative URL.
     """
 
-    def __init__(self, resolver, directory, mets=None, mets_basename=DEFAULT_METS_BASENAME, automatic_backup=False, baseurl=None, mets_server_url=None):
+    def __init__(
+        self,
+        resolver,
+        directory,
+        mets : Optional[Union[OcrdMets, ClientSideOcrdMets]] = None,
+        mets_basename=DEFAULT_METS_BASENAME,
+        automatic_backup=False,
+        baseurl=None,
+        mets_server_url=None
+    ):
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
@@ -183,21 +194,21 @@ class Workspace():
                     try:
                         file_path.relative_to(Path(self.directory).resolve()) # raises ValueError if not relative
                         # If the f.local_filename exists and is within self.directory, nothing to do
-                        log.info(f"'local_filename' {f.local_filename} already within {self.directory}, nothing to do")
+                        log.debug(f"'local_filename' {f.local_filename} already within {self.directory} - nothing to do")
                     except ValueError:
                         # f.local_filename exists, but not within self.directory, copy it
-                        log.info("Copying 'local_filename' %s to workspace directory %s" % (f.local_filename, self.directory))
+                        log.debug("Copying 'local_filename' %s to workspace directory %s" % (f.local_filename, self.directory))
                         f.local_filename = self.resolver.download_to_directory(self.directory, f.local_filename, subdir=f.fileGrp)
                     return f
                 if f.url:
-                    log.info("OcrdFile has 'local_filename' but it doesn't resolve, try to download from set 'url' %s", f.url)
+                    log.debug("OcrdFile has 'local_filename' but it doesn't resolve - trying to download from 'url' %s", f.url)
                 elif self.baseurl:
-                    log.info("OcrdFile has 'local_filename' but it doesn't resolve and no 'url', concatenate 'baseurl' %s and 'local_filename' %s",
-                            self.baseurl, f.local_filename)
+                    log.debug("OcrdFile has 'local_filename' but it doesn't resolve, and no 'url' - trying 'baseurl' %s with 'local_filename' %s",
+                              self.baseurl, f.local_filename)
                     f.url = '%s/%s' % (self.baseurl, f.local_filename)
                 else:
                     raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file,"
-                                                 "and no 'url' to download and no 'baseurl' set on workspace, nothing we can do.")
+                                            "and no 'url' to download and no 'baseurl' set on workspace - nothing we can do.")
             if f.url:
                 # If f.url is set, download the file to the workspace
                 basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
@@ -253,7 +264,7 @@ class Workspace():
                         else:
                             raise Exception("File not locally available %s" % ocrd_file)
                     else:
-                        log.info("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
+                        log.debug("rm %s [cwd=%s]", ocrd_file.local_filename, self.directory)
                         unlink(ocrd_file.local_filename)
             # Remove from METS only after the recursion of AlternativeImages
             self.mets.remove_file(file_id)
@@ -322,20 +333,22 @@ class Workspace():
 
         with pushd_popd(self.directory):
             # create workspace dir ``new``
-            log.info("mkdir %s" % new)
+            log.debug("mkdir %s" % new)
             if not Path(new).is_dir():
                 Path(new).mkdir()
             local_filename_replacements = {}
-            log.info("Moving files")
+            log.debug("Moving files")
             for mets_file in self.mets.find_files(fileGrp=old, local_only=True):
-                new_local_filename = old_local_filename = str(mets_file.local_filename)
+                new_local_filename = old_local_filename = mets_file.local_filename
+                assert new_local_filename
+                assert old_local_filename
                 # Directory part
                 new_local_filename = sub(r'^%s/' % old, r'%s/' % new, new_local_filename)
                 # File part
                 new_local_filename = sub(r'/%s' % old, r'/%s' % new, new_local_filename)
                 local_filename_replacements[str(mets_file.local_filename)] = new_local_filename
                 # move file from ``old`` to ``new``
-                mets_file.local_filename.rename(new_local_filename)
+                Path(old_local_filename).rename(new_local_filename)
                 # change the url of ``mets:file``
                 mets_file.local_filename = new_local_filename
                 # change the file ID and update structMap
@@ -348,34 +361,34 @@ class Workspace():
                     mets_file.ID = new_id
             # change file paths in PAGE-XML imageFilename and filename attributes
             for page_file in self.mets.find_files(mimetype=MIMETYPE_PAGE, local_only=True):
-                log.info("Renaming file references in PAGE-XML %s" % page_file)
+                log.debug("Renaming file references in PAGE-XML %s" % page_file)
                 pcgts = page_from_file(page_file)
                 changed = False
                 for old_local_filename, new_local_filename in local_filename_replacements.items():
                     if pcgts.get_Page().imageFilename == old_local_filename:
                         changed = True
-                        log.info("Rename pc:Page/@imageFilename: %s -> %s" % (old_local_filename, new_local_filename))
+                        log.debug("Rename pc:Page/@imageFilename: %s -> %s" % (old_local_filename, new_local_filename))
                         pcgts.get_Page().imageFilename = new_local_filename
                 for ai in pcgts.get_Page().get_AllAlternativeImages():
                     for old_local_filename, new_local_filename in local_filename_replacements.items():
                         if ai.filename == old_local_filename:
                             changed = True
-                            log.info("Rename pc:Page/../AlternativeImage: %s -> %s" % (old_local_filename, new_local_filename))
+                            log.debug("Rename pc:Page/../AlternativeImage: %s -> %s" % (old_local_filename, new_local_filename))
                             ai.filename = new_local_filename
                 if changed:
-                    log.info("PAGE-XML changed, writing %s" % (page_file.local_filename))
+                    log.debug("PAGE-XML changed, writing %s" % (page_file.local_filename))
                     with open(page_file.local_filename, 'w', encoding='utf-8') as f:
                         f.write(to_xml(pcgts))
             # change the ``USE`` attribute of the fileGrp
             self.mets.rename_file_group(old, new)
             # Remove the old dir
-            log.info("rmdir %s" % old)
+            log.debug("rmdir %s" % old)
             if Path(old).is_dir() and not listdir(old):
                 Path(old).rmdir()
 
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
-    def add_file(self, file_grp, content=None, **kwargs):
+    def add_file(self, file_grp, content=None, **kwargs) -> Union[OcrdFile, ClientSideOcrdFile]:
         """
         Add a file to the :py:class:`ocrd_models.ocrd_mets.OcrdMets` of the workspace.
 
@@ -1108,9 +1121,9 @@ def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwarg
     if (not isinstance(segment, BorderType) or # always crop below page level
         not op in parent_coords['features']):
         if op == 'recropped':
-            log.info("Recropping %s", name)
+            log.debug("Recropping %s", name)
         elif isinstance(segment, BorderType):
-            log.info("Cropping %s", name)
+            log.debug("Cropping %s", name)
             segment_coords['features'] += ',' + op
         # create a mask from the segment polygon:
         segment_image = image_from_polygon(parent_image, segment_polygon, **kwargs)
@@ -1143,7 +1156,7 @@ def _reflect(log, name, orientation, segment_image, segment_coords, segment_xywh
     segment_coords['angle'] += orientation
     # transpose, if (still) necessary:
     if not 'rotated-%d' % orientation in segment_coords['features']:
-        log.info("Transposing %s by %d°", name, orientation)
+        log.debug("Transposing %s by %d°", name, orientation)
         segment_image = transpose_image(segment_image, transposition)
         segment_coords['features'] += ',rotated-%d' % orientation
     return segment_image, segment_coords, segment_xywh
@@ -1160,7 +1173,7 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
     segment_coords['angle'] += skew
     # deskew, if (still) necessary:
     if not 'deskewed' in segment_coords['features']:
-        log.info("Rotating %s by %.2f°", name, skew)
+        log.debug("Rotating %s by %.2f°", name, skew)
         segment_image = rotate_image(segment_image, skew, **kwargs)
         segment_coords['features'] += ',deskewed'
         if (segment and
@@ -1193,7 +1206,7 @@ def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwa
     segment_xywh['h'] *= factor
     # resize, if (still) necessary
     if not 'scaled' in segment_coords['features']:
-        log.info("Scaling %s by %.2f", name, factor)
+        log.debug("Scaling %s by %.2f", name, factor)
         segment_coords['features'] += ',scaled'
         # FIXME: validate factor against PAGE-XML attributes
         # FIXME: factor should become less precise due to rounding
