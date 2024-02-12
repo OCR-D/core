@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.63.0] - 2024-02-12
+
 Fixed:
 
   * Reduce logging level of spammy log statements to `DEBUG` in workspace, #1181
@@ -2013,6 +2015,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.63.0]: ../../compare/v2.63.0..v2.62.0
 [2.62.0]: ../../compare/v2.62.0..v2.61.2
 [2.61.2]: ../../compare/v2.61.2..v2.61.1
 [2.61.1]: ../../compare/v2.61.1..v2.61.1
