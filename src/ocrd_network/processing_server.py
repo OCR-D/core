@@ -19,7 +19,7 @@ from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask
 from ocrd.workspace import Workspace
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
-from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
+from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, NETWORK_AGENT_TYPES
 from .database import (
     initiate_database,
     db_create_workspace,
@@ -385,94 +385,104 @@ class ProcessingServer(FastAPI):
 
     def query_ocrd_tool_json_from_server(self, processor_server_url: str):
         # Request the ocrd tool json from the Processor Server
-        response = requests_get(
-            urljoin(base=processor_server_url, url="info"),
-            headers={"Content-Type": "application/json"}
-        )
+        try:
+            response = requests_get(
+                urljoin(base=processor_server_url, url="info"),
+                headers={"Content-Type": "application/json"}
+            )
+        except Exception as error:
+            msg = f"Failed to retrieve ocrd tool json from: {processor_server_url}"
+            self.log.exception(f"{msg}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
         if response.status_code != 200:
-            msg = f"Failed to retrieve ocrd tool json from: {processor_server_url}, status code: {response.status_code}"
+            msg = f"""
+            Failed to retrieve ocrd tool json from: {processor_server_url}, status code: {response.status_code}
+            """
             self.log.exception(msg)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
         return response.json()
 
-    async def get_processor_info(self, processor_name) -> Dict:
+    async def get_processor_info(self, processor_name: str) -> Dict:
         """ Return a processor's ocrd-tool.json
         """
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Ocrd tool JSON of '{processor_name}' not available!"
-            )
+            msg = f"Ocrd tool JSON of '{processor_name}' not available!"
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
         # TODO: Returns the ocrd tool json even of processors
         #  that are not deployed. This may or may not be desired.
         return ocrd_tool
 
-    def processing_agent_exists(self, processor_name: str, agent_type: str) -> bool:
-        if agent_type not in [NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER]:
-            return False
-        if agent_type == NETWORK_AGENT_WORKER:
-            # TODO: Reconsider and refactor this.
-            #  Added ocrd-dummy by default if not available for the integration tests.
-            #  A proper Processing Worker / Processor Server registration endpoint
-            #  is needed on the Processing Server side
-            if processor_name == 'ocrd-dummy':
-                return True
-            if not self.check_if_queue_exists(processor_name):
-                return False
-        if agent_type == NETWORK_AGENT_SERVER:
-            processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
-            if not processor_server_url:
-                return False
-        return True
-
     async def get_processing_agent_ocrd_tool(self, processor_name: str, agent_type: str) -> dict:
         ocrd_tool = {}
         if agent_type == NETWORK_AGENT_WORKER:
             ocrd_tool = await self.get_processor_info(processor_name)
-        if agent_type == NETWORK_AGENT_SERVER:
+        elif agent_type == NETWORK_AGENT_SERVER:
             processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
+            if processor_server_url == '':
+                msg = f"Agent of type '{agent_type}' does not exist for '{processor_name}'"
+                self.log.exception(msg)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=msg
+                )
             ocrd_tool = self.query_ocrd_tool_json_from_server(processor_server_url)
+        if not ocrd_tool:
+            msg = f"Agent of type '{agent_type}' does not exist for '{processor_name}'"
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
         return ocrd_tool
 
+    def network_agent_exists_server(self, processor_name: str) -> bool:
+        processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
+        if processor_server_url:
+            return True
+        return False
+
+    def network_agent_exists_worker(self, processor_name: str) -> bool:
+        # TODO: Reconsider and refactor this.
+        #  Added ocrd-dummy by default if not available for the integration tests.
+        #  A proper Processing Worker / Processor Server registration endpoint
+        #  is needed on the Processing Server side
+        if processor_name == 'ocrd-dummy':
+            return True
+        if self.check_if_queue_exists(processor_name):
+            return True
+        return False
+
+    def validate_agent_type_and_existence(self, processor_name: str, agent_type: str) -> None:
+        if agent_type not in NETWORK_AGENT_TYPES:
+            msg = f"Wrong network agent type passed. Must be one of: {NETWORK_AGENT_TYPES}"
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        agent_exists = False
+        if agent_type == NETWORK_AGENT_SERVER:
+            if self.network_agent_exists_server(processor_name=processor_name):
+                agent_exists = True
+        elif agent_type == NETWORK_AGENT_WORKER:
+            if self.network_agent_exists_worker(processor_name=processor_name):
+                agent_exists = True
+        if not agent_exists:
+            msg = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
+        self.validate_agent_type_and_existence(processor_name=data.processor_name, agent_type=data.agent_type)
         if data.job_id:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Job id field is set but must not be: {data.job_id}"
-            )
-        if not data.workspace_id and not data.path_to_mets:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="either 'path_to_mets' or 'workspace_id' must be provided"
-            )
+            msg = f"Processing request job id field is set but must not be: {data.job_id}"
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
         # Generate processing job id
         data.job_id = generate_id()
         # Append the processor name to the request itself
         data.processor_name = processor_name
-
-        # Check if the processing agent (worker/server) exists (is deployed)
-        if not self.processing_agent_exists(data.processor_name, data.agent_type):
-            msg = f"Agent of type '{data.agent_type}' does not exist for '{data.processor_name}'"
-            self.log.exception(msg)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=msg
-            )
-
         ocrd_tool = await self.get_processing_agent_ocrd_tool(
             processor_name=data.processor_name,
             agent_type=data.agent_type
         )
-        if not ocrd_tool:
-            msg = f"Agent of type '{data.agent_type}' does not exist for '{data.processor_name}'"
-            self.log.exception(msg)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=msg
-            )
-
         validate_job_input(self.log, data.processor_name, ocrd_tool, data)
 
         if data.workspace_id:
@@ -817,7 +827,10 @@ class ProcessingServer(FastAPI):
         # for the ocr-d processors referenced inside tasks
         missing_agents = []
         for task in tasks:
-            if not self.processing_agent_exists(processor_name=task.executable, agent_type=agent_type):
+            try:
+                self.validate_agent_type_and_existence(processor_name=task.executable, agent_type=agent_type)
+            except HTTPException as error:
+                # catching the error is not relevant here
                 missing_agents.append({task.executable, agent_type})
         if missing_agents:
             msg = f"""

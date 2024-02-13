@@ -43,7 +43,11 @@ async def validate_and_return_mets_path(logger, job_input: PYJobInput) -> str:
 
 def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
     if bool(job_input.path_to_mets) == bool(job_input.workspace_id):
-        msg = "Wrong processing job input format. Either 'path_to_mets' or 'workspace_id' must be provided, not both."
+        msg = """
+        Wrong processing job input format. 
+        Either 'path_to_mets' or 'workspace_id' must be provided. 
+        Both are provided or both are missing.
+        """
         logger.exception(msg)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
     if not ocrd_tool:
