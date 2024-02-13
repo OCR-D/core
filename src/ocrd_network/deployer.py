@@ -76,11 +76,17 @@ class Deployer:
         """
 
         if worker_only and server_only:
-            raise ValueError(f"Only 'worker_only' or 'server_only' is allowed, not both.")
+            msg = f"Only 'worker_only' or 'server_only' is allowed, not both."
+            self.log.exception(msg)
+            raise ValueError(msg)
         if docker_only and native_only:
-            raise ValueError(f"Only 'docker_only' or 'native_only' is allowed, not both.")
+            msg = f"Only 'docker_only' or 'native_only' is allowed, not both."
+            self.log.exception(msg)
+            raise ValueError(msg)
         if not str_names_only and unique_only:
-            raise ValueError(f"Value 'unique_only' is allowed only together with 'str_names_only'")
+            msg = f"Value 'unique_only' is allowed only together with 'str_names_only'"
+            self.log.exception(msg)
+            raise ValueError(msg)
 
         # Find all matching objects of type:
         # DataProcessingWorker or DataProcessorServer
@@ -252,7 +258,9 @@ class Deployer:
                        f"detach='{detach}', remove='{remove}'")
 
         if not self.data_queue or not self.data_queue.address:
-            raise ValueError('Deploying RabbitMQ has failed - missing configuration.')
+            msg = "Deploying RabbitMQ has failed - missing configuration."
+            self.log.exception(msg)
+            raise ValueError(msg)
 
         client = create_docker_client(
             self.data_queue.address,
@@ -317,7 +325,9 @@ class Deployer:
                        f"detach='{detach}', remove='{remove}'")
 
         if not self.data_mongo or not self.data_mongo.address:
-            raise ValueError('Deploying MongoDB has failed - missing configuration.')
+            msg = "Deploying MongoDB has failed - missing configuration."
+            self.log.exception(msg)
+            raise ValueError(msg)
 
         client = create_docker_client(
             self.data_mongo.address,
@@ -345,8 +355,9 @@ class Deployer:
             environment=environment
         )
         if not res or not res.id:
-            raise RuntimeError('Failed to start MongoDB docker container on host: '
-                               f'{self.data_mongo.address}')
+            msg = f"Failed to start MongoDB docker container on host: {self.data_mongo.address}"
+            self.log.exception(msg)
+            raise RuntimeError(msg)
         self.data_mongo.pid = res.id
         client.close()
 
@@ -526,7 +537,7 @@ class Deployer:
         mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(mets_path)}.sock")
 
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
-            self.log.info(f"The mets server is already started: {mets_server_url}")
+            self.log.warning(f"The mets server for {mets_path} is already started: {mets_server_url}")
             return mets_server_url
 
         cwd = Path(mets_path).parent
@@ -550,7 +561,9 @@ class Deployer:
         if Path(mets_server_url) in self.mets_servers:
             mets_server_pid = self.mets_servers[Path(mets_server_url)]
         else:
-            raise Exception(f"Mets server not found: {mets_server_url}")
+            msg = f"Mets server not found at URL: {mets_server_url}"
+            self.log.exception(msg)
+            raise Exception(msg)
 
         '''
         subprocess.run(

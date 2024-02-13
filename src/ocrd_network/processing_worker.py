@@ -61,8 +61,10 @@ class ProcessingWorker:
             self.rmq_vhost = rmq_data['vhost']
             self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
             self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
-        except ValueError as e:
-            raise ValueError(e)
+        except ValueError as error:
+            msg = f"Failed to parse data, error: {error}"
+            self.log.exception(msg)
+            raise ValueError(msg)
 
         sync_initiate_database(mongodb_addr)  # Database client
         self.ocrd_tool = ocrd_tool
@@ -129,6 +131,9 @@ class ProcessingWorker:
         is_redelivered: bool = delivery.redelivered
         message_headers: dict = properties.headers
 
+        ack_message = f"Acking message with tag: {delivery_tag}"
+        nack_message = f"Nacking processing message with tag: {delivery_tag}"
+
         self.log.debug(f'Consumer tag: {consumer_tag}, '
                        f'message delivery tag: {delivery_tag}, '
                        f'redelivered: {is_redelivered}')
@@ -137,23 +142,28 @@ class ProcessingWorker:
         try:
             self.log.debug(f'Trying to decode processing message with tag: {delivery_tag}')
             processing_message: OcrdProcessingMessage = OcrdProcessingMessage.decode_yml(body)
-        except Exception as e:
-            self.log.error(f'Failed to decode processing message body: {body}')
-            self.log.error(f'Nacking processing message with tag: {delivery_tag}')
+        except Exception as error:
+            msg = f"Failed to decode processing message with tag: {delivery_tag}, error: {error}"
+            self.log.exception(msg)
+            self.log.info(nack_message)
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
-            raise Exception(f'Failed to decode processing message with tag: {delivery_tag}, reason: {e}')
+            raise Exception(msg)
 
         try:
             self.log.info(f'Starting to process the received message: {processing_message.__dict__}')
             self.process_message(processing_message=processing_message)
-        except Exception as e:
-            self.log.error(f'Failed to process processing message with tag: {delivery_tag}')
-            self.log.error(f'Nacking processing message with tag: {delivery_tag}')
+        except Exception as error:
+            msg = f"""
+            Failed to process message with tag: {delivery_tag}\n 
+            Processing message: {processing_message.__dict__}\n
+            """
+            self.log.exception(f"{msg}, error: {error}")
+            self.log.info(nack_message)
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
-            raise Exception(f'Failed to process processing message with tag: {delivery_tag}, reason: {e}')
+            raise Exception(msg)
 
         self.log.info(f'Successfully processed RabbitMQ message')
-        self.log.debug(f'Acking message with tag: {delivery_tag}')
+        self.log.debug(ack_message)
         channel.basic_ack(delivery_tag=delivery_tag, multiple=False)
 
     def start_consuming(self) -> None:
@@ -167,15 +177,22 @@ class ProcessingWorker:
             # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
         else:
-            raise Exception('The RMQConsumer is not connected/configured properly')
+            msg = f"The RMQConsumer is not connected/configured properly"
+            self.log.exception(msg)
+            raise Exception(msg)
 
     # TODO: Better error handling required to catch exceptions
     def process_message(self, processing_message: OcrdProcessingMessage) -> None:
         # Verify that the processor name in the processing message
         # matches the processor name of the current processing worker
         if self.processor_name != processing_message.processor_name:
-            raise ValueError(f'Processor name is not matching. Expected: {self.processor_name},'
-                             f'Got: {processing_message.processor_name}')
+            msg = f"""
+            Processor name is not matching. 
+            Expected: {self.processor_name}, 
+            Got: {processing_message.processor_name}
+            """
+            self.log.exception(msg)
+            raise ValueError(msg)
 
         # All of this is needed because the OcrdProcessingMessage object
         # may not contain certain keys. Simply passing None in the OcrdProcessingMessage constructor
@@ -193,7 +210,9 @@ class ProcessingWorker:
         parameters = processing_message.parameters if processing_message.parameters else {}
 
         if not path_to_mets and not workspace_id:
-            raise ValueError(f'`path_to_mets` nor `workspace_id` was set in the ocrd processing message')
+            msg = f"'path_to_mets' nor 'workspace_id' was set in the ocrd processing message"
+            self.log.exception(msg)
+            raise ValueError(msg)
 
         if path_to_mets:
             mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
@@ -225,10 +244,15 @@ class ProcessingWorker:
                 mets_server_url=mets_server_url
             )
         except Exception as error:
-            self.log.debug(f"processor_name: {self.processor_name}, path_to_mets: {path_to_mets}, "
-                           f"input_grps: {input_file_grps}, output_file_grps: {output_file_grps}, "
-                           f"page_id: {page_id}, parameters: {parameters}")
-            self.log.exception(error)
+            msg = f"""
+            processor_name: {self.processor_name}\n
+            path_to_mets: {path_to_mets}\n
+            input_file_groups: {input_file_grps}\n
+            output_file_groups: {output_file_grps}\n
+            page_id: {page_id}\n
+            parameters: {parameters}\n
+            """
+            self.log.exception(f"{msg}, error: {error}")
             execution_failed = True
         end_time = datetime.now()
         exec_duration = calculate_execution_time(start_time, end_time)
