@@ -30,10 +30,10 @@ class CacheLockedPages:
         self.placeholder_all_pages: str = "all_pages"
 
     def check_if_locked_pages_for_output_file_grps(
-            self,
-            workspace_key: str,
-            output_file_grps: List[str],
-            page_ids: List[str]
+        self,
+        workspace_key: str,
+        output_file_grps: List[str],
+        page_ids: List[str]
     ) -> bool:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
@@ -48,26 +48,17 @@ class CacheLockedPages:
                     return True
         return False
 
-    def get_locked_pages(
-            self,
-            workspace_key: str
-    ) -> Dict[str, List[str]]:
+    def get_locked_pages(self, workspace_key: str) -> Dict[str, List[str]]:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No locked pages available for workspace key: {workspace_key}")
             return {}
         return self.locked_pages[workspace_key]
 
-    def lock_pages(
-            self,
-            workspace_key: str,
-            output_file_grps: List[str],
-            page_ids: List[str]
-    ) -> None:
+    def lock_pages(self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]) -> None:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
             self.log.debug(f"Creating an entry in the locked pages cache for workspace key: {workspace_key}")
             self.locked_pages[workspace_key] = {}
-
         for output_fileGrp in output_file_grps:
             if output_fileGrp not in self.locked_pages[workspace_key]:
                 self.log.debug(f"Creating an empty list for output file grp: {output_fileGrp}")
@@ -83,12 +74,7 @@ class CacheLockedPages:
                 self.log.debug(f"Locking pages for `{output_fileGrp}`: {self.placeholder_all_pages}")
                 self.locked_pages[workspace_key][output_fileGrp].append(self.placeholder_all_pages)
 
-    def unlock_pages(
-            self,
-            workspace_key: str,
-            output_file_grps: List[str],
-            page_ids: List[str]
-    ) -> None:
+    def unlock_pages(self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]) -> None:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
             return
@@ -146,7 +132,7 @@ class CacheProcessingRequests:
             self.log.debug(f"No jobs to be consumed for workspace key: {workspace_key}")
             return []
         found_consume_requests = []
-        for i, current_element in enumerate(self.processing_requests[workspace_key]):
+        for current_element in self.processing_requests[workspace_key]:
             # Request has other job dependencies
             if current_element.depends_on:
                 satisfied_dependencies = await self.__check_if_job_deps_met(current_element.depends_on)
@@ -162,8 +148,7 @@ class CacheProcessingRequests:
                                f"{found_element.job_id}, depends_on: {found_element.depends_on}")
                 found_requests.append(found_element)
             except ValueError:
-                # The ValueError is not an issue since the
-                # element was removed by another instance
+                # The ValueError is not an issue since the element was removed by another instance
                 continue
         return found_requests
 
@@ -215,8 +200,7 @@ class CacheProcessingRequests:
                 # Add the recursively cancelled jobs to the main list of cancelled jobs
                 cancelled_jobs.extend(recursively_cancelled)
             except ValueError:
-                # The ValueError is not an issue since the
-                # element was removed by another instance
+                # The ValueError is not an issue since the element was removed by another instance
                 continue
         return cancelled_jobs
 
