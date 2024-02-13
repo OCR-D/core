@@ -2,7 +2,7 @@ from datetime import datetime
 from functools import wraps
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
-from re import match as re_match
+from re import compile as re_compile, match as re_match, split as re_split
 from requests import get as requests_get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
 from typing import Dict, List
@@ -12,6 +12,7 @@ from yaml import safe_load
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask
 from ocrd.workspace import Workspace
+from ocrd_utils import generate_range, REGEX_PREFIX
 from ocrd_validators import ProcessingServerConfigValidator
 from .rabbitmq_utils import OcrdResultMessage
 
@@ -39,6 +40,20 @@ def calculate_execution_time(start: datetime, end: datetime) -> int:
 
 def convert_url_to_uds_format(url: str) -> str:
     return f"http+unix://{url.replace('/', '%2F')}"
+
+
+def expand_page_ids(page_id: str) -> List:
+    page_ids = []
+    if not page_id:
+        return page_ids
+    for page_id_token in re_split(pattern=r',', string=page_id):
+        if page_id_token.startswith(REGEX_PREFIX):
+            page_ids.append(re_compile(pattern=page_id_token[len(REGEX_PREFIX):]))
+        elif '..' in page_id_token:
+            page_ids += generate_range(*page_id_token.split(sep='..', maxsplit=1))
+        else:
+            page_ids += [page_id_token]
+    return page_ids
 
 
 def generate_created_time() -> int:

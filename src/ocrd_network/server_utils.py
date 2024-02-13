@@ -1,11 +1,9 @@
 from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 from pathlib import Path
-from re import split as re_split, compile as re_compile
-from typing import List
 
 from ocrd_validators import ParameterValidator
-from ocrd_utils import generate_range, REGEX_PREFIX
+
 from .database import db_get_processing_job, db_get_workspace
 from .models import PYJobInput, PYJobOutput
 
@@ -41,20 +39,6 @@ async def validate_and_return_mets_path(logger, job_input: PYJobInput) -> str:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
         return path_to_mets
     return job_input.path_to_mets
-
-
-def expand_page_ids(page_id: str) -> List:
-    page_ids = []
-    if not page_id:
-        return page_ids
-    for page_id_token in re_split(pattern=r',', string=page_id):
-        if page_id_token.startswith(REGEX_PREFIX):
-            page_ids.append(re_compile(pattern=page_id_token[len(REGEX_PREFIX):]))
-        elif '..' in page_id_token:
-            page_ids += generate_range(*page_id_token.split(sep='..', maxsplit=1))
-        else:
-            page_ids += [page_id_token]
-    return page_ids
 
 
 def validate_job_input(logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
