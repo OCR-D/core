@@ -40,13 +40,13 @@ from .utils import (
 class Deployer:
     def __init__(self, config_path: str) -> None:
         self.log = getLogger('ocrd_network.deployer')
-        config = validate_and_load_config(config_path)
+        ps_config = validate_and_load_config(config_path)
 
-        self.data_mongo: DataMongoDB = DataMongoDB(config['database'])
-        self.data_queue: DataRabbitMQ = DataRabbitMQ(config['process_queue'])
+        self.data_mongo: DataMongoDB = DataMongoDB(ps_config['database'])
+        self.data_queue: DataRabbitMQ = DataRabbitMQ(ps_config['process_queue'])
         self.data_hosts: List[DataHost] = []
-        self.internal_callback_url = config.get('internal_callback_url', None)
-        for config_host in config['hosts']:
+        self.internal_callback_url = ps_config.get('internal_callback_url', None)
+        for config_host in ps_config['hosts']:
             self.data_hosts.append(DataHost(config_host))
         self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
 
