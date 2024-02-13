@@ -1,10 +1,10 @@
 from datetime import datetime
 from logging import FileHandler, Formatter
 from os import getpid
-from subprocess import run, PIPE
+from subprocess import run as subprocess_run, PIPE
 from uvicorn import run
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import BackgroundTasks, FastAPI, HTTPException, status
 from fastapi.responses import FileResponse
 
 from ocrd_utils import (
@@ -126,7 +126,7 @@ class ProcessorServer(FastAPI):
 
     # Note: The Processing server pushes to a queue, while
     #  the Processor Server creates (pushes to) a background task
-    async def create_processor_task(self, job_input: PYJobInput):
+    async def create_processor_task(self, job_input: PYJobInput, background_tasks: BackgroundTasks):
         validate_job_input(self.log, self.processor_name, self.ocrd_tool, job_input)
         job_input.path_to_mets = await validate_and_return_mets_path(self.log, job_input)
 
@@ -143,7 +143,8 @@ class ProcessorServer(FastAPI):
             await job.insert()
         else:
             job = await db_get_processing_job(job_input.job_id)
-        await self.run_processor_task(job=job)
+        # await self.run_processor_task(job=job)
+        background_tasks.add_task(self.run_processor_task, job)
         return job.to_job_output()
 
     async def run_processor_task(self, job: DBProcessorJob):
@@ -209,7 +210,7 @@ class ProcessorServer(FastAPI):
             # The way of accessing ocrd tool like in the line below may be problematic
             # ocrd_tool = self.processor_class(workspace=None, version=True).ocrd_tool
             ocrd_tool = parse_json_string_with_comments(
-                run(
+                subprocess_run(
                     [self.processor_name, '--dump-json'],
                     stdout=PIPE,
                     check=True,
@@ -230,7 +231,7 @@ class ProcessorServer(FastAPI):
             # version_str = self.processor_class(workspace=None, version=True).version
             return version_str
         """
-        version_str = run(
+        version_str = subprocess_run(
             [self.processor_name, '--version'],
             stdout=PIPE,
             check=True,
