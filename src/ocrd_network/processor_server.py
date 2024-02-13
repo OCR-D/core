@@ -259,7 +259,7 @@ class ProcessorServer(FastAPI):
         uvicorn.run(self, host=host, port=port)
 
     async def get_processor_job(self, job_id: str) -> PYJobOutput:
-        return await _get_processor_job(self.log, self.processor_name, job_id)
+        return await _get_processor_job(self.log, job_id)
 
     async def get_processor_job_log(self, job_id: str) -> FileResponse:
-        return await _get_processor_job_log(self.log, self.processor_name, job_id)
+        return await _get_processor_job_log(self.log, job_id)
