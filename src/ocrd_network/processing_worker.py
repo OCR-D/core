@@ -11,29 +11,18 @@ is a single OCR-D Processor instance.
 from datetime import datetime
 from logging import FileHandler, Formatter
 from os import getpid
-from time import sleep
-import pika.spec
-import pika.adapters.blocking_connection
+from pika import BasicProperties
+from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import AMQPConnectionError
+from pika.spec import Basic
+from time import sleep
 
 from ocrd_utils import config, getLogger, LOG_FORMAT
-from .database import (
-    sync_initiate_database,
-    sync_db_get_workspace,
-    sync_db_update_processing_job,
-)
-from .logging import (
-    get_processing_job_logging_file_path,
-    get_processing_worker_logging_file_path
-)
+from .database import sync_initiate_database, sync_db_get_workspace, sync_db_update_processing_job
+from .logging import get_processing_job_logging_file_path, get_processing_worker_logging_file_path
 from .models import StateEnum
 from .process_helpers import invoke_processor
-from .rabbitmq_utils import (
-    OcrdProcessingMessage,
-    OcrdResultMessage,
-    RMQConsumer,
-    RMQPublisher
-)
+from .rabbitmq_utils import OcrdProcessingMessage, OcrdResultMessage, RMQConsumer, RMQPublisher
 from .utils import (
     calculate_execution_time,
     post_to_callback_url,
@@ -122,10 +111,11 @@ class ProcessingWorker:
     # from the queue with name self.processor_name
     def on_consumed_message(
             self,
-            channel: pika.adapters.blocking_connection.BlockingChannel,
-            delivery: pika.spec.Basic.Deliver,
-            properties: pika.spec.BasicProperties,
-            body: bytes) -> None:
+            channel: BlockingChannel,
+            delivery: Basic.Deliver,
+            properties: BasicProperties,
+            body: bytes
+    ) -> None:
         consumer_tag = delivery.consumer_tag
         delivery_tag: int = delivery.delivery_tag
         is_redelivered: bool = delivery.redelivered

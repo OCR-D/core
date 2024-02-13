@@ -2,7 +2,7 @@ from datetime import datetime
 from logging import FileHandler, Formatter
 from os import getpid
 from subprocess import run, PIPE
-import uvicorn
+from uvicorn import run
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import FileResponse
@@ -21,29 +21,12 @@ from .database import (
     db_get_processing_job,
     initiate_database
 )
-from .logging import (
-    get_processor_server_logging_file_path,
-    get_processing_job_logging_file_path,
-)
-from .models import (
-    PYJobInput,
-    PYJobOutput,
-    PYOcrdTool,
-    StateEnum
-)
+from .logging import get_processor_server_logging_file_path, get_processing_job_logging_file_path
+from .models import PYJobInput, PYJobOutput, PYOcrdTool, StateEnum
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdResultMessage
-from .server_utils import (
-    _get_processor_job,
-    _get_processor_job_log,
-    validate_and_return_mets_path,
-    validate_job_input
-)
-from .utils import (
-    calculate_execution_time,
-    post_to_callback_url,
-    generate_id,
-)
+from .server_utils import _get_processor_job, _get_processor_job_log, validate_and_return_mets_path, validate_job_input
+from .utils import calculate_execution_time, post_to_callback_url, generate_id
 
 
 class ProcessorServer(FastAPI):
@@ -256,7 +239,7 @@ class ProcessorServer(FastAPI):
         return version_str
 
     def run_server(self, host, port):
-        uvicorn.run(self, host=host, port=port)
+        run(self, host=host, port=port)
 
     async def get_processor_job(self, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, job_id)

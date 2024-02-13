@@ -15,7 +15,7 @@ class PYResultMessage(BaseModel):
         schema_extra = {
             'example': {
                 'job_id': '123123123',
-                'state': 'SUCCESS',
+                'state': StateEnum.success,
                 'path_to_mets': '/path/to/mets.xml',
                 'workspace_id': 'c7f25615-fc17-4365-a74d-ad20e1ddbd0e'
             }

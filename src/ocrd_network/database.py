@@ -15,16 +15,11 @@ database (runs in docker) currently has no volume set.
 from beanie import init_beanie
 from beanie.operators import In
 from motor.motor_asyncio import AsyncIOMotorClient
-from uuid import uuid4
 from pathlib import Path
 from typing import List
+from uuid import uuid4
 
-from .models import (
-    DBProcessorJob,
-    DBWorkflowJob,
-    DBWorkspace,
-    DBWorkflowScript,
-)
+from .models import DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript
 from .utils import call_sync
 
 

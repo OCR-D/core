@@ -1,9 +1,5 @@
 import click
-from .. import (
-    DatabaseParamType,
-    ProcessorServer,
-    ServerAddressParamType
-)
+from ocrd_network import DatabaseParamType, ProcessorServer, ServerAddressParamType
 
 
 @click.command('processor-server')

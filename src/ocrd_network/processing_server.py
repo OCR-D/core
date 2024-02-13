@@ -1,31 +1,24 @@
 from datetime import datetime
 from hashlib import md5
-import httpx
-import json
+from httpx import AsyncClient, Timeout
+from json import dumps, loads
 from logging import FileHandler, Formatter
 from os import getpid
 from pathlib import Path
-import requests
+from requests import get as requests_get
 from typing import Dict, List, Union
 from urllib.parse import urljoin
 import uvicorn
 
-from fastapi import (
-    FastAPI,
-    status,
-    Request,
-    HTTPException,
-    UploadFile,
-    File,
-)
+from fastapi import FastAPI, File, HTTPException, Request, status, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from pika.exceptions import ChannelClosedByBroker
 
-from ocrd import Resolver, Workspace
+from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask
+from ocrd.workspace import Workspace
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
-
 from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
 from .database import (
     initiate_database,
@@ -392,7 +385,7 @@ class ProcessingServer(FastAPI):
 
     def query_ocrd_tool_json_from_server(self, processor_server_url: str):
         # Request the ocrd tool json from the Processor Server
-        response = requests.get(
+        response = requests_get(
             urljoin(base=processor_server_url, url="info"),
             headers={"Content-Type": "application/json"}
         )
@@ -603,7 +596,7 @@ class ProcessingServer(FastAPI):
 
     async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
         try:
-            json_data = json.dumps(job_input.dict(exclude_unset=True, exclude_none=True))
+            json_data = dumps(job_input.dict(exclude_unset=True, exclude_none=True))
         except Exception as error:
             msg = f"Failed to json dump the PYJobInput: {job_input}"
             self.log.exception(f"{msg}, error: {error}")
@@ -617,12 +610,11 @@ class ProcessingServer(FastAPI):
         amount_of_pages = 200
         request_timeout = 20.0 * amount_of_pages  # 20 sec timeout per page
         # Post a processing job to the Processor Server asynchronously
-        timeout = httpx.Timeout(timeout=request_timeout, connect=30.0)
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        async with AsyncClient(timeout=Timeout(timeout=request_timeout, connect=30.0)) as client:
             response = await client.post(
                 urljoin(base=processor_server_url, url='run'),
                 headers={'Content-Type': 'application/json'},
-                json=json.loads(json_data)
+                json=loads(json_data)
             )
 
         if response.status_code != 202:

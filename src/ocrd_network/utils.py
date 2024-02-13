@@ -3,27 +3,28 @@ from functools import wraps
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
-from requests import get, Session as Session_TCP
+from requests import get as requests_get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
 from typing import Dict, List
 from uuid import uuid4
 from yaml import safe_load
 
-from ocrd import Resolver, Workspace
+from ocrd.resolver import Resolver
+from ocrd.task_sequence import ProcessorTask
+from ocrd.workspace import Workspace
 from ocrd_validators import ProcessingServerConfigValidator
 from .rabbitmq_utils import OcrdResultMessage
-from ocrd.task_sequence import ProcessorTask
 
 
-# Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
 def call_sync(func):
-    import asyncio
+    # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
+    from asyncio import iscoroutine, get_event_loop
 
     @wraps(func)
     def func_wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
-            return asyncio.get_event_loop().run_until_complete(result)
+        if iscoroutine(result):
+            return get_event_loop().run_until_complete(result)
         return result
     return func_wrapper
 
@@ -34,6 +35,10 @@ def calculate_execution_time(start: datetime, end: datetime) -> int:
     Returns the result in milliseconds
     """
     return int((end - start).total_seconds() * 1000)
+
+
+def convert_url_to_uds_format(url: str) -> str:
+    return f"http+unix://{url.replace('/', '%2F')}"
 
 
 def generate_created_time() -> int:
@@ -49,16 +54,15 @@ def generate_id() -> str:
     return str(uuid4())
 
 
-def is_url_responsive(url: str, retries: int = 0) -> bool:
-    while True:
+def is_url_responsive(url: str, tries: int = 1) -> bool:
+    while tries > 0:
         try:
-            response = get(url)
-            if response.status_code == 200:
+            if requests_get(url).status_code == 200:
                 return True
         except Exception:
-            if retries <= 0:
-                return False
-            retries -= 1
+            continue
+        tries -= 1
+    return False
 
 
 def validate_and_load_config(config_path: str) -> Dict:
@@ -137,29 +141,27 @@ def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = Non
 
 
 def is_mets_server_running(mets_server_url: str) -> bool:
-    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
+    protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
     session = Session_TCP() if protocol == 'tcp' else Session_UDS()
-    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
+    if protocol == "uds":
+        mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
         response = session.get(url=f'{mets_server_url}/workspace_path')
     except Exception:
         return False
-    if response.status_code == 200:
-        return True
-    return False
+    return response.status_code == 200
 
 
 def stop_mets_server(mets_server_url: str) -> bool:
     protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
     session = Session_TCP() if protocol == 'tcp' else Session_UDS()
-    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
+    if protocol == "uds":
+        mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
         response = session.delete(url=f'{mets_server_url}/')
     except Exception:
         return False
-    if response.status_code == 200:
-        return True
-    return False
+    return response.status_code == 200
 
 
 def validate_workflow(workflow: str, logger=None) -> bool:

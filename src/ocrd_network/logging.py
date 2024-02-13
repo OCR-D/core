@@ -1,15 +1,7 @@
 from pathlib import Path
+
 from ocrd_utils import safe_filename, config
-
-from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
-
-OCRD_NETWORK_MODULES = [
-    "mets_servers",
-    "processing_jobs",
-    "processing_servers",
-    "processing_workers",
-    "processor_servers"
-]
+from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, OCRD_NETWORK_MODULES
 
 
 def get_root_logging_dir(module_name: str) -> Path:

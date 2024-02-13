@@ -1,13 +1,10 @@
 from __future__ import annotations
-from typing import Dict, List
 from logging import FileHandler, Formatter
+from typing import Dict, List
 
 from ocrd_utils import getLogger, LOG_FORMAT
 from .database import db_get_processing_job, db_update_processing_job
-from .logging import (
-    get_cache_locked_pages_logging_file_path,
-    get_cache_processing_requests_logging_file_path
-)
+from .logging import get_cache_locked_pages_logging_file_path, get_cache_processing_requests_logging_file_path
 from .models import PYJobInput, StateEnum
 
 __all__ = [

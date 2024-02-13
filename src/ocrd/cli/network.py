@@ -7,7 +7,6 @@ OCR-D CLI: management of network components
 """
 
 import click
-import logging
 from ocrd_utils import initLogging
 from ocrd_network.cli import (
     client_cli,

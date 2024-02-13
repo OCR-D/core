@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
-import yaml
-
+from yaml import dump, safe_load
 from ocrd_validators import OcrdNetworkMessageValidator
 
 
@@ -54,12 +53,12 @@ class OcrdProcessingMessage:
 
     @staticmethod
     def encode_yml(ocrd_processing_message: OcrdProcessingMessage) -> bytes:
-        return yaml.dump(ocrd_processing_message.__dict__, indent=2).encode('utf-8')
+        return dump(ocrd_processing_message.__dict__, indent=2).encode('utf-8')
 
     @staticmethod
     def decode_yml(ocrd_processing_message: bytes) -> OcrdProcessingMessage:
         msg = ocrd_processing_message.decode('utf-8')
-        data = yaml.safe_load(msg)
+        data = safe_load(msg)
         report = OcrdNetworkMessageValidator.validate_message_processing(data)
         if not report.is_valid:
             raise ValueError(f'Validating the processing message has failed:\n{report.errors}')
@@ -90,12 +89,12 @@ class OcrdResultMessage:
 
     @staticmethod
     def encode_yml(ocrd_result_message: OcrdResultMessage) -> bytes:
-        return yaml.dump(ocrd_result_message.__dict__, indent=2).encode('utf-8')
+        return dump(ocrd_result_message.__dict__, indent=2).encode('utf-8')
 
     @staticmethod
     def decode_yml(ocrd_result_message: bytes) -> OcrdResultMessage:
         msg = ocrd_result_message.decode('utf-8')
-        data = yaml.safe_load(msg)
+        data = safe_load(msg)
         report = OcrdNetworkMessageValidator.validate_message_result(data)
         if not report.is_valid:
             raise ValueError(f'Validating the result message has failed:\n{report.errors}')

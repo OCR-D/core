@@ -7,34 +7,18 @@ Each Processing Host may have several Processing Workers.
 Each Processing Worker is an instance of an OCR-D processor.
 """
 from __future__ import annotations
-from typing import Dict, List, Union
-from re import search as re_search
 from pathlib import Path
-import subprocess
+from re import search as re_search
+from subprocess import Popen
 from time import sleep
+from typing import Dict, List, Union
 
 from ocrd_utils import config, getLogger, safe_filename
-
 from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
-from .deployment_utils import (
-    create_docker_client,
-    DeployType,
-    verify_mongodb_available,
-    verify_rabbitmq_available,
-)
+from .deployment_utils import create_docker_client, DeployType, verify_mongodb_available, verify_rabbitmq_available
 from .logging import get_mets_server_logging_file_path
-from .runtime_data import (
-    DataHost,
-    DataMongoDB,
-    DataProcessingWorker,
-    DataProcessorServer,
-    DataRabbitMQ
-)
-from .utils import (
-    is_mets_server_running,
-    stop_mets_server,
-    validate_and_load_config
-)
+from .runtime_data import DataHost, DataMongoDB, DataProcessingWorker, DataProcessorServer, DataRabbitMQ
+from .utils import is_mets_server_running, stop_mets_server, validate_and_load_config
 
 
 class Deployer:
@@ -542,7 +526,7 @@ class Deployer:
 
         cwd = Path(mets_path).parent
         self.log.info(f'Starting UDS mets server: {mets_server_url}')
-        sub_process = subprocess.Popen(
+        sub_process = Popen(
             args=['nohup', 'ocrd', 'workspace', '--mets-server-url', f'{mets_server_url}',
                   '-d', f'{cwd}', 'server', 'start'],
             shell=False,

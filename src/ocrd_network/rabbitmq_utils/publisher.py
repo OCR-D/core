@@ -6,18 +6,12 @@ RabbitMQ documentation.
 from typing import Optional
 from pika import BasicProperties, PlainCredentials
 from ocrd_utils import getLogger
-from .constants import (
-    DEFAULT_EXCHANGER_NAME,
-    DEFAULT_ROUTER,
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_VHOST as VHOST
-)
 from .connector import RMQConnector
+from .constants import DEFAULT_EXCHANGER_NAME, RABBIT_MQ_HOST, RABBIT_MQ_PORT, RABBIT_MQ_VHOST
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
+    def __init__(self, host: str = RABBIT_MQ_HOST, port: int = RABBIT_MQ_PORT, vhost: str = RABBIT_MQ_VHOST) -> None:
         self.log = getLogger('ocrd_network.rabbitmq_utils.publisher')
         super().__init__(host=host, port=port, vhost=vhost)
         self.message_counter = 0

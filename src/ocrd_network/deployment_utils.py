@@ -1,13 +1,14 @@
 from __future__ import annotations
-from enum import Enum
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
+from enum import Enum
 from paramiko import AutoAddPolicy, SSHClient
+from pymongo import MongoClient
+from re import sub as re_sub
 from time import sleep
-import re
 
 from .rabbitmq_utils import RMQPublisher
-from pymongo import MongoClient
+
 
 __all__ = [
     'create_docker_client',
@@ -113,7 +114,7 @@ def verify_mongodb_available(mongo_url: str) -> None:
         client = MongoClient(mongo_url, serverSelectionTimeoutMS=1000.0)
         client.admin.command("ismaster")
     except Exception:
-        raise RuntimeError(f'Cannot connect to MongoDB: {re.sub(r":[^@]+@", ":****@", mongo_url)}')
+        raise RuntimeError(f'Cannot connect to MongoDB: {re_sub(r":[^@]+@", ":****@", mongo_url)}')
 
 
 class DeployType(Enum):

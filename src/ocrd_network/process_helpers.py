@@ -1,10 +1,10 @@
 from contextlib import nullcontext
-import json
+from json import dumps
+from pathlib import Path
 from typing import List, Optional
 
 from ocrd.processor.helpers import run_cli, run_processor
 from ocrd_utils import redirect_stderr_and_stdout_to_file, initLogging
-
 from .utils import get_ocrd_workspace_instance
 
 
@@ -18,7 +18,8 @@ def invoke_processor(
         page_id: str,
         parameters: dict,
         mets_server_url: Optional[str] = None,
-        log_filename: str = None,
+        log_filename: Optional[Path] = None,
+        log_level: str = 'DEBUG'
 ) -> None:
     if not (processor_class or executable):
         raise ValueError('Missing processor class and executable')
@@ -44,7 +45,7 @@ def invoke_processor(
                     parameter=parameters,
                     instance_caching=True,
                     mets_server_url=mets_server_url,
-                    log_level='DEBUG'
+                    log_level=log_level
                 )
             except Exception as e:
                 raise RuntimeError(f"Python executable '{processor_class.__dict__}' exited with: {e}")
@@ -56,9 +57,9 @@ def invoke_processor(
             input_file_grp=input_file_grps_str,
             output_file_grp=output_file_grps_str,
             page_id=page_id,
-            parameter=json.dumps(parameters),
+            parameter=dumps(parameters),
             mets_server_url=mets_server_url,
-            log_level='DEBUG',
+            log_level=log_level,
             log_filename=log_filename
         )
         if return_code != 0:
