@@ -117,12 +117,21 @@ deps-cuda:
 	 && ldconfig
 # gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
 
+# Workaround for missing prebuilt versions of TF<2 for Python==3.8
+# todo: find another solution for 3.9, 3.10 etc
+# https://docs.nvidia.com/deeplearning/frameworks/tensorflow-wheel-release-notes/tf-wheel-rel.html
+# Nvidia has them, but under a different name, so let's rewrite that:
+# (hold at nv22.11, because newer releases require CUDA 12, which is not supported by TF2 (at py38),
+#  and therefore not in our ocrd/core-cuda base image yet)
+# However, at that time no Numpy 1.24 was known, which breaks TF1
+# (which is why later nv versions hold it at <1.24 automatically -
+#  see https://github.com/NVIDIA/tensorflow/blob/r1.15.5%2Bnv22.11/tensorflow/tools/pip_package/setup.py)
 deps-tf1:
 	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8 && \
-	! pip show -q tensorflow-gpu; then \
-	  pip install nvidia-pyindex && \
+	! $(PIP) show -q tensorflow-gpu; then \
+	  $(PIP) install nvidia-pyindex && \
 	  pushd $$(mktemp -d) && \
-	  pip download --no-deps nvidia-tensorflow && \
+	  $(PIP) download --no-deps nvidia-tensorflow==1.15.5+nv22.11 && \
 	  for name in nvidia_tensorflow-*.whl; do name=$${name%.whl}; done && \
 	  $(PYTHON) -m wheel unpack $$name.whl && \
 	  for name in nvidia_tensorflow-*/; do name=$${name%/}; done && \
@@ -132,7 +141,10 @@ deps-tf1:
 	  sed -i s/nvidia_tensorflow/tensorflow_gpu/g $$name/tensorflow_core/tools/pip_package/setup.py && \
 	  pushd $$name && for path in $$name*; do mv $$path $${path/$$name/$$newname}; done && popd && \
 	  $(PYTHON) -m wheel pack $$name && \
-	  pip install $$newname*.whl && popd && rm -fr $$OLDPWD; \
+	  $(PIP) install $$newname*.whl && popd && rm -fr $$OLDPWD; \
+	  $(PIP) install "numpy<1.24"; \
+	else \
+	$(PIP) install "tensorflow-gpu<2.0"; \
 	fi
 
 # Dependencies for deployment in an ubuntu/debian linux
@@ -322,6 +334,7 @@ docker: DOCKER_BASE_IMAGE = ubuntu:20.04
 docker: DOCKER_TAG = ocrd/core
 docker: DOCKER_FILE = Dockerfile
 
+# Build extended sets for maximal layer sharing
 docker-cuda: DOCKER_BASE_IMAGE = ocrd/core
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
 docker-cuda: DOCKER_FILE = Dockerfile.cuda
