@@ -92,22 +92,27 @@ deps-cuda:
 # let's jump the shark and pull these via NGC index directly,
 # but then share them with the rest of the system so native compilation/linking
 # works, too:
+	shopt -s nullglob; \
 	$(PIP) install nvidia-pyindex \
-	 && $(PIP) install nvidia-cudnn-cu11==8.6.0.163 \
-	                   nvidia-cublas-cu11 \
-	                   nvidia-cusparse-cu11 \
-	                   nvidia-cusolver-cu11 \
-	                   nvidia-curand-cu11 \
-	                   nvidia-cufft-cu11 \
-	                   nvidia-cuda-runtime-cu11 \
+	 && $(PIP) install nvidia-cudnn-cu11==8.7.* \
+	                   nvidia-cublas-cu11~=11.11 \
+	                   nvidia-cusparse-cu11~=11.7 \
+	                   nvidia-cusolver-cu11~=11.4 \
+	                   nvidia-curand-cu11~=10.3 \
+	                   nvidia-cufft-cu11~=10.9 \
+	                   nvidia-cuda-runtime-cu11~=11.8 \
+	                   nvidia-cuda-cupti-cu11~=11.8 \
 	                   nvidia-cuda-nvrtc-cu11 \
-	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_nvrtc; do \
+	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_cupti cuda_nvrtc; do \
 	        for lib in $(PYTHON_PREFIX)/nvidia/$$pkg/lib/lib*.so.*; do \
 	            base=`basename $$lib`; \
 	            ln -s $$lib $(CONDA_PREFIX)/lib/$$base.so; \
 	            ln -s $$lib $(CONDA_PREFIX)/lib/$${base%.so.*}.so; \
 	        done \
-	     && ln -s $(PYTHON_PREFIX)/nvidia/$$pkg/include/* $(CONDA_PREFIX)/include/; \
+	     && for inc in $(PYTHON_PREFIX)/nvidia/$$pkg/include/*; do \
+	            base=`basename $$inc`; case $$base in __*) continue; esac; \
+	            ln -s $$inc $(CONDA_PREFIX)/include/; \
+	        done \
 	    done \
 	 && ldconfig
 # gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
