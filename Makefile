@@ -147,6 +147,16 @@ deps-tf1:
 	$(PIP) install "tensorflow-gpu<2.0"; \
 	fi
 
+deps-tf2:
+	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8 && \
+	$(PIP) install tensorflow; \
+	else \
+	$(PIP) install "tensorflow[and-cuda]"; \
+	fi
+
+deps-torch:
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torch
+
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	apt-get install -y python3 imagemagick libgeos-dev
@@ -347,7 +357,19 @@ docker-cuda-tf1: DOCKER_FILE = Dockerfile.cuda-tf1
 
 docker-cuda-tf1: docker-cuda
 
-docker docker-cuda docker-cuda-tf1: 
+docker-cuda-tf2: DOCKER_BASE_IMAGE = ocrd/core-cuda
+docker-cuda-tf2: DOCKER_TAG = ocrd/core-cuda-tf2
+docker-cuda-tf2: DOCKER_FILE = Dockerfile.cuda-tf2
+
+docker-cuda-tf2: docker-cuda
+
+docker-cuda-torch: DOCKER_BASE_IMAGE = ocrd/core-cuda
+docker-cuda-torch: DOCKER_TAG = ocrd/core-cuda-torch
+docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
+
+docker-cuda-torch: docker-cuda
+
+docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch: 
 	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
