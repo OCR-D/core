@@ -1,10 +1,8 @@
 from datetime import datetime
-from hashlib import md5
 from httpx import AsyncClient, Timeout
 from json import dumps, loads
 from logging import FileHandler, Formatter
 from os import getpid
-from pathlib import Path
 from requests import get as requests_get
 from typing import Dict, List, Union
 from urllib.parse import urljoin
@@ -15,9 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from pika.exceptions import ChannelClosedByBroker
 
-from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask
-from ocrd.workspace import Workspace
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
 from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, NETWORK_AGENT_TYPES
 from .database import (
@@ -50,15 +46,18 @@ from .server_utils import (
     _get_processor_job,
     _get_processor_job_log,
     validate_and_return_mets_path,
-    validate_job_input
+    validate_first_task_input_file_groups_existence,
+    validate_job_input,
+    validate_workflow
 )
 from .utils import (
     download_ocrd_all_tool_json,
     expand_page_ids,
     generate_created_time,
     generate_id,
+    generate_workflow_content,
+    generate_workflow_content_hash,
     get_ocrd_workspace_physical_pages,
-    validate_workflow,
 )
 
 
@@ -500,9 +499,10 @@ class ProcessingServer(FastAPI):
                 #  the workspace in the database. Here the workspace is created if the path is available locally and
                 #  not existing in the DB - since it has not been uploaded through the Workspace Server.
                 await db_create_workspace(data.path_to_mets)
-            except FileNotFoundError:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                    detail=f"Mets file not existing: {data.path_to_mets}")
+            except FileNotFoundError as error:
+                msg = f"Mets file path not existing: {data.path_to_mets}"
+                self.log.exception(f"{msg}, error: {error}")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
         workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
@@ -584,23 +584,24 @@ class ProcessingServer(FastAPI):
             self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
             job_output = await self.push_to_processor_server(data.processor_name, data)
         if not job_output:
-            self.log.exception('Failed to create job output')
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail='Failed to create job output'
-            )
+            msg = f"Failed to create job output for job input: {data}"
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
         return job_output
 
     async def push_to_processing_queue(self, processor_name: str, processing_message: OcrdProcessingMessage):
         if not self.rmq_publisher:
-            raise Exception('RMQPublisher is not connected')
+            msg = "The Processing Server has no connection access to RabbitMQ Server. RMQPublisher is not connected."
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
         try:
-            self.rmq_publisher.publish_to_queue(
-                queue_name=processor_name,
-                message=OcrdProcessingMessage.encode_yml(processing_message)
-            )
+            encoded_message = OcrdProcessingMessage.encode_yml(processing_message)
+            self.rmq_publisher.publish_to_queue(queue_name=processor_name, message=encoded_message)
         except Exception as error:
-            msg = f"Processing server has failed to push processing message to queue: {processor_name}"
+            msg = f"""
+            Processing server has failed to push processing message to queue: {processor_name}\n
+            Processing message: {processing_message}\n
+            """
             self.log.exception(f"{msg}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
 
@@ -640,6 +641,27 @@ class ProcessingServer(FastAPI):
     async def get_processor_job_log(self, job_id: str) -> FileResponse:
         return await _get_processor_job_log(self.log, job_id)
 
+    async def push_jobs_from_cache_to_agents(self, workspace_key: str):
+        consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
+        if not len(consumed_requests):
+            self.log.debug("No processing jobs were consumed from the requests cache")
+            return
+        for data in consumed_requests:
+            self.log.debug(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
+            db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
+            workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
+
+            # Lock the output file group pages for the current request
+            self.cache_locked_pages.lock_pages(
+                workspace_key=workspace_key,
+                output_file_grps=data.output_file_grps,
+                page_ids=expand_page_ids(data.page_id)
+            )
+            self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
+            job_output = await self.push_to_processing_agent(data=data, db_job=db_consumed_job)
+            if not job_output:
+                self.log.exception(f"Failed to create job output for job input data: {data}")
+
     async def remove_from_request_cache(self, result_message: PYResultMessage):
         result_job_id = result_message.job_id
         result_job_state = result_message.state
@@ -647,10 +669,14 @@ class ProcessingServer(FastAPI):
         workspace_id = result_message.workspace_id
         self.log.debug(f"Result job_id: {result_job_id}, state: {result_job_state}")
 
-        # Read DB workspace entry
-        db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
-        if not db_workspace:
-            self.log.exception(f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB")
+        try:
+            # Read DB workspace entry
+            db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
+        except ValueError as error:
+            msg = f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB"
+            self.log.exception(f"{msg}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+
         mets_server_url = db_workspace.mets_server_url
         workspace_key = path_to_mets if path_to_mets else workspace_id
 
@@ -664,9 +690,12 @@ class ProcessingServer(FastAPI):
             # TODO: Handle other potential error cases
             pass
 
-        db_result_job = await db_get_processing_job(result_job_id)
-        if not db_result_job:
-            self.log.exception(f"Processing job with id: {result_job_id} not found in DB")
+        try:
+            db_result_job = await db_get_processing_job(result_job_id)
+        except ValueError as error:
+            msg = f"Processing job with id: {result_job_id} not found in DB"
+            self.log.exception(f"{msg}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
         # Unlock the output file group pages for the result processing request
         self.cache_locked_pages.unlock_pages(
@@ -681,7 +710,10 @@ class ProcessingServer(FastAPI):
             return
 
         # decrease the internal counter by 1
-        request_counter = self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=-1)
+        request_counter = self.cache_processing_requests.update_request_counter(
+            workspace_key=workspace_key,
+            by_value=-1
+        )
         self.log.debug(f"Internal processing counter value: {request_counter}")
         if not len(self.cache_processing_requests.processing_requests[workspace_key]):
             if request_counter <= 0:
@@ -703,28 +735,7 @@ class ProcessingServer(FastAPI):
             else:
                 self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
             return
-
-        consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
-
-        if not len(consumed_requests):
-            self.log.debug("No processing jobs were consumed from the requests cache")
-            return
-
-        for data in consumed_requests:
-            self.log.debug(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
-            db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
-            workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
-
-            # Lock the output file group pages for the current request
-            self.cache_locked_pages.lock_pages(
-                workspace_key=workspace_key,
-                output_file_grps=data.output_file_grps,
-                page_ids=expand_page_ids(data.page_id)
-            )
-            self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
-            job_output = await self.push_to_processing_agent(data=data, db_job=db_consumed_job)
-            if not job_output:
-                self.log.exception(f'Failed to create job output for job input data: {data}')
+        await self.push_jobs_from_cache_to_agents(workspace_key=workspace_key)
 
     async def list_processors(self) -> List[str]:
         # There is no caching on the Processing Server side
@@ -739,20 +750,20 @@ class ProcessingServer(FastAPI):
         return processor_names_list
 
     async def task_sequence_to_processing_jobs(
-            self,
-            tasks: List[ProcessorTask],
-            mets_path: str,
-            page_id: str,
-            agent_type: NETWORK_AGENT_WORKER,
+        self,
+        tasks: List[ProcessorTask],
+        mets_path: str,
+        page_id: str,
+        agent_type: NETWORK_AGENT_WORKER
     ) -> List[PYJobOutput]:
-        file_group_cache = {}
+        temp_file_group_cache = {}
         responses = []
         for task in tasks:
             # Find dependent jobs of the current task
             dependent_jobs = []
             for input_file_grp in task.input_file_grps:
-                if input_file_grp in file_group_cache:
-                    dependent_jobs.append(file_group_cache[input_file_grp])
+                if input_file_grp in temp_file_group_cache:
+                    dependent_jobs.append(temp_file_group_cache[input_file_grp])
             # NOTE: The `task.mets_path` and `task.page_id` is not utilized in low level
             # Thus, setting these two flags in the ocrd process workflow file has no effect
             job_input_data = PYJobInput(
@@ -765,24 +776,21 @@ class ProcessingServer(FastAPI):
                 agent_type=agent_type,
                 depends_on=dependent_jobs,
             )
-            response = await self.push_processor_job(
-                processor_name=job_input_data.processor_name,
-                data=job_input_data
-            )
+            response = await self.push_processor_job(processor_name=job_input_data.processor_name, data=job_input_data)
             for file_group in task.output_file_grps:
-                file_group_cache[file_group] = response.job_id
+                temp_file_group_cache[file_group] = response.job_id
             responses.append(response)
         return responses
 
     async def run_workflow(
-            self,
-            mets_path: str,
-            workflow: Union[UploadFile, None] = File(None),
-            workflow_id: str = None,
-            agent_type: str = NETWORK_AGENT_WORKER,
-            page_id: str = None,
-            page_wise: bool = False,
-            workflow_callback_url: str = None
+        self,
+        mets_path: str,
+        workflow: Union[UploadFile, None] = File(None),
+        workflow_id: str = None,
+        agent_type: str = NETWORK_AGENT_WORKER,
+        page_id: str = None,
+        page_wise: bool = False,
+        workflow_callback_url: str = None
     ) -> PYWorkflowJobOutput:
         try:
             # core cannot create workspaces by api, but processing-server needs the workspace in the
@@ -793,22 +801,27 @@ class ProcessingServer(FastAPI):
             self.log.exception(f"{msg}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
 
-        if not workflow:
-            if not workflow_id:
-                msg = "Either `workflow` binary or `workflow_id` must be provided"
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        if not workflow and not workflow_id:
+            msg = """
+            Either 'workflow' binary or 'workflow_id' must be provided. 
+            Both are missing.
+            """
+            self.log.exception(msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+
+        if workflow_id:
             try:
-                workflow = await db_get_workflow_script(workflow_id)
+                db_workflow = await db_get_workflow_script(workflow_id)
             except ValueError as error:
                 msg = f"Workflow with id '{workflow_id}' not found"
                 self.log.exception(f"{msg}, error: {error}")
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-            workflow = workflow.content
+            workflow_content = db_workflow.content
         else:
-            workflow = (await workflow.read()).decode("utf-8")
+            workflow_content = await generate_workflow_content(workflow)
 
         try:
-            tasks_list = workflow.splitlines()
+            tasks_list = workflow_content.splitlines()
             tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
         except ValueError as error:
             msg = f"Failed parsing processing tasks from a workflow"
@@ -816,12 +829,7 @@ class ProcessingServer(FastAPI):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
         # Validate the input file groups of the first task in the workflow
-        available_groups = Workspace(Resolver(), Path(mets_path).parents[0]).mets.file_groups
-        for grp in tasks[0].input_file_grps:
-            if grp not in available_groups:
-                msg = f"Input file grps of the 1st processor not found: {tasks[0].input_file_grps}"
-                self.log.exception(msg)
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+        validate_first_task_input_file_groups_existence(self.log, mets_path, tasks[0].input_file_grps)
 
         # Validate existence of agents (processing workers/processor servers)
         # for the ocr-d processors referenced inside tasks
@@ -926,15 +934,13 @@ class ProcessingServer(FastAPI):
                 })
         return res
 
-    """
-    Simplified version of the `get_workflow_info` that returns a single state for the entire workflow.
-    - If a single processing job fails, the entire workflow job status is set to FAILED.
-    - If there are any processing jobs running, regardless of other states, such as QUEUED and CACHED, 
-    the entire workflow job status is set to RUNNING.
-    - If all processing jobs has finished successfully, only then the workflow job status is set to SUCCESS
-    """
     async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, StateEnum]:
-        """ Return list of a workflow's processor jobs
+        """
+        Simplified version of the `get_workflow_info` that returns a single state for the entire workflow.
+        - If a single processing job fails, the entire workflow job status is set to FAILED.
+        - If there are any processing jobs running, regardless of other states, such as QUEUED and CACHED,
+        the entire workflow job status is set to RUNNING.
+        - If all processing jobs has finished successfully, only then the workflow job status is set to SUCCESS
         """
         try:
             workflow_job = await db_get_workflow_job(workflow_job_id)
@@ -965,14 +971,9 @@ class ProcessingServer(FastAPI):
     async def upload_workflow(self, workflow: UploadFile) -> Dict:
         """ Store a script for a workflow in the database
         """
-        workflow_id = generate_id()
-        content = (await workflow.read()).decode("utf-8")
-        if not validate_workflow(content):
-            msg = "Provided workflow script is invalid"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
-
-        content_hash = md5(content.encode("utf-8")).hexdigest()
+        workflow_content = await generate_workflow_content(workflow)
+        validate_workflow(workflow_content)
+        content_hash = generate_workflow_content_hash(workflow_content)
         try:
             db_workflow_script = await db_find_first_workflow_script_by_content(content_hash)
             if db_workflow_script:
@@ -981,11 +982,11 @@ class ProcessingServer(FastAPI):
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
         except ValueError:
             pass
-
+        workflow_id = generate_id()
         db_workflow_script = DBWorkflowScript(
             workflow_id=workflow_id,
-            content=content,
-            content_hash=content_hash,
+            content=workflow_content,
+            content_hash=content_hash
         )
         await db_workflow_script.insert()
         return {"workflow_id": workflow_id}
@@ -993,20 +994,17 @@ class ProcessingServer(FastAPI):
     async def replace_workflow(self, workflow_id, workflow: UploadFile) -> str:
         """ Update a workflow script file in the database
         """
-        content = (await workflow.read()).decode("utf-8")
-        if not validate_workflow(content):
-            msg = "Provided workflow script is invalid"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
         try:
             db_workflow_script = await db_get_workflow_script(workflow_id)
-            db_workflow_script.content = content
-            content_hash = md5(content.encode("utf-8")).hexdigest()
-            db_workflow_script.content_hash = content_hash
         except ValueError as error:
             msg = f"Workflow script not existing for id: {workflow_id}"
             self.log.exception(f"{msg}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+        workflow_content = await generate_workflow_content(workflow)
+        validate_workflow(workflow_content)
+        db_workflow_script.content = workflow_content
+        content_hash = generate_workflow_content_hash(workflow_content)
+        db_workflow_script.content_hash = content_hash
         await db_workflow_script.save()
         return db_workflow_script.workflow_id
 
@@ -1015,8 +1013,8 @@ class ProcessingServer(FastAPI):
         """
         try:
             workflow = await db_get_workflow_script(workflow_id)
-            return PlainTextResponse(workflow.content)
         except ValueError as error:
             msg = f"Workflow script not existing for id: {workflow_id}"
             self.log.exception(f"{msg}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+        return PlainTextResponse(workflow.content)

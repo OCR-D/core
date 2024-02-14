@@ -1,5 +1,7 @@
 from datetime import datetime
+from fastapi import UploadFile
 from functools import wraps
+from hashlib import md5
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import compile as re_compile, match as re_match, split as re_split
@@ -10,7 +12,6 @@ from uuid import uuid4
 from yaml import safe_load
 
 from ocrd.resolver import Resolver
-from ocrd.task_sequence import ProcessorTask
 from ocrd.workspace import Workspace
 from ocrd_utils import generate_range, REGEX_PREFIX
 from ocrd_validators import ProcessingServerConfigValidator
@@ -67,6 +68,14 @@ def generate_id() -> str:
     WebAPI implementation are produced in the same manner
     """
     return str(uuid4())
+
+
+async def generate_workflow_content(workflow: UploadFile, encoding: str = "utf-8"):
+    return (await workflow.read()).decode(encoding)
+
+
+def generate_workflow_content_hash(workflow_content: str, encoding: str = "utf-8"):
+    return md5(workflow_content.encode(encoding)).hexdigest()
 
 
 def is_url_responsive(url: str, tries: int = 1) -> bool:
@@ -177,20 +186,3 @@ def stop_mets_server(mets_server_url: str) -> bool:
     except Exception:
         return False
     return response.status_code == 200
-
-
-def validate_workflow(workflow: str, logger=None) -> bool:
-    """ Check that workflow is not empty and parseable to a lists of ProcessorTask
-    """
-    if not workflow.strip():
-        if logger:
-            logger.info("Workflow is invalid (empty string)")
-        return False
-    try:
-        tasks_list = workflow.splitlines()
-        [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
-    except ValueError as e:
-        if logger:
-            logger.info(f"Workflow is invalid, parsing to ProcessorTasks failed: {e}")
-        return False
-    return True
