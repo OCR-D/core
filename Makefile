@@ -251,7 +251,7 @@ test-profile:
 
 coverage: assets
 	coverage erase
-	make test PYTHON="coverage run"
+	make test PYTHON="coverage run --omit='*generate*'"
 	coverage report
 	coverage html
 
