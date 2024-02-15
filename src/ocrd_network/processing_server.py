@@ -18,11 +18,8 @@ from ocrd_utils import initLogging, getLogger, LOG_FORMAT
 from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, NETWORK_AGENT_TYPES
 from .database import (
     initiate_database,
-    db_create_workspace,
     db_get_processing_job,
     db_get_processing_jobs,
-    db_get_workflow_job,
-    db_get_workspace,
     db_update_processing_job,
     db_update_workspace,
     db_get_workflow_script,
@@ -43,8 +40,14 @@ from .models import (
 from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from .server_cache import CacheLockedPages, CacheProcessingRequests
 from .server_utils import (
+    create_workspace_if_not_exists,
     _get_processor_job,
     _get_processor_job_log,
+    get_page_ids_list,
+    get_workflow_content,
+    get_from_database_workspace,
+    get_from_database_workflow_job,
+    parse_workflow_tasks,
     validate_and_return_mets_path,
     validate_first_task_input_file_groups_existence,
     validate_job_input,
@@ -56,8 +59,7 @@ from .utils import (
     generate_created_time,
     generate_id,
     generate_workflow_content,
-    generate_workflow_content_hash,
-    get_ocrd_workspace_physical_pages,
+    generate_workflow_content_hash
 )
 
 
@@ -436,9 +438,7 @@ class ProcessingServer(FastAPI):
 
     def network_agent_exists_server(self, processor_name: str) -> bool:
         processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
-        if processor_server_url:
-            return True
-        return False
+        return bool(processor_server_url)
 
     def network_agent_exists_worker(self, processor_name: str) -> bool:
         # TODO: Reconsider and refactor this.
@@ -447,9 +447,7 @@ class ProcessingServer(FastAPI):
         #  is needed on the Processing Server side
         if processor_name == 'ocrd-dummy':
             return True
-        if self.check_if_queue_exists(processor_name):
-            return True
-        return False
+        return bool(self.check_if_queue_exists(processor_name))
 
     def validate_agent_type_and_existence(self, processor_name: str, agent_type: str) -> None:
         if agent_type not in NETWORK_AGENT_TYPES:
@@ -485,31 +483,17 @@ class ProcessingServer(FastAPI):
         validate_job_input(self.log, data.processor_name, ocrd_tool, data)
 
         if data.workspace_id:
-            try:
-                db_workspace = await db_get_workspace(workspace_id=data.workspace_id)
-            except ValueError as error:
-                self.log.exception(error)
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Workspace with id `{data.workspace_id}` not found in the DB."
-                )
+            # just a check whether the workspace exists in the database or not
+            await get_from_database_workspace(self.log, data.workspace_id)
         else:  # data.path_to_mets provided instead
-            try:
-                # TODO: Reconsider and refactor this. Core cannot create workspaces by api, but processing-server needs
-                #  the workspace in the database. Here the workspace is created if the path is available locally and
-                #  not existing in the DB - since it has not been uploaded through the Workspace Server.
-                await db_create_workspace(data.path_to_mets)
-            except FileNotFoundError as error:
-                msg = f"Mets file path not existing: {data.path_to_mets}"
-                self.log.exception(f"{msg}, error: {error}")
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+            await create_workspace_if_not_exists(self.log, mets_path=data.path_to_mets)
 
         workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
 
-        # Since the path is not resolved yet,
-        # the return value is not important for the Processing Server
+        # This check is done to return early in case a workspace_id is provided
+        # but the abs mets path cannot be queried from the DB
         request_mets_path = await validate_and_return_mets_path(self.log, data)
 
         page_ids = expand_page_ids(data.page_id)
@@ -669,14 +653,7 @@ class ProcessingServer(FastAPI):
         workspace_id = result_message.workspace_id
         self.log.debug(f"Result job_id: {result_job_id}, state: {result_job_state}")
 
-        try:
-            # Read DB workspace entry
-            db_workspace = await db_get_workspace(workspace_id=workspace_id, workspace_mets_path=path_to_mets)
-        except ValueError as error:
-            msg = f"Workspace with id: {workspace_id} or path: {path_to_mets} not found in DB"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-
+        db_workspace = await get_from_database_workspace(self.log, workspace_id, path_to_mets)
         mets_server_url = db_workspace.mets_server_url
         workspace_key = path_to_mets if path_to_mets else workspace_id
 
@@ -782,57 +759,7 @@ class ProcessingServer(FastAPI):
             responses.append(response)
         return responses
 
-    async def run_workflow(
-        self,
-        mets_path: str,
-        workflow: Union[UploadFile, None] = File(None),
-        workflow_id: str = None,
-        agent_type: str = NETWORK_AGENT_WORKER,
-        page_id: str = None,
-        page_wise: bool = False,
-        workflow_callback_url: str = None
-    ) -> PYWorkflowJobOutput:
-        try:
-            # core cannot create workspaces by api, but processing-server needs the workspace in the
-            # database. Here the workspace is created if the path available and not existing in db:
-            await db_create_workspace(mets_path)
-        except FileNotFoundError as error:
-            msg = f"Mets file path not existing: {mets_path}"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-
-        if not workflow and not workflow_id:
-            msg = """
-            Either 'workflow' binary or 'workflow_id' must be provided. 
-            Both are missing.
-            """
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
-
-        if workflow_id:
-            try:
-                db_workflow = await db_get_workflow_script(workflow_id)
-            except ValueError as error:
-                msg = f"Workflow with id '{workflow_id}' not found"
-                self.log.exception(f"{msg}, error: {error}")
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-            workflow_content = db_workflow.content
-        else:
-            workflow_content = await generate_workflow_content(workflow)
-
-        try:
-            tasks_list = workflow_content.splitlines()
-            tasks = [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
-        except ValueError as error:
-            msg = f"Failed parsing processing tasks from a workflow"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
-
-        # Validate the input file groups of the first task in the workflow
-        validate_first_task_input_file_groups_existence(self.log, mets_path, tasks[0].input_file_grps)
-
-        # Validate existence of agents (processing workers/processor servers)
-        # for the ocr-d processors referenced inside tasks
+    def validate_processing_agents_existence(self, tasks: List[ProcessorTask], agent_type: str) -> None:
         missing_agents = []
         for task in tasks:
             try:
@@ -848,29 +775,40 @@ class ProcessingServer(FastAPI):
             """
             raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=msg)
 
-        try:
-            if page_id:
-                page_range = expand_page_ids(page_id)
-            else:
-                # If no page_id is specified, all physical pages are assigned as page range
-                page_range = get_ocrd_workspace_physical_pages(mets_path=mets_path)
-            # TODO: Reconsider this, the compact page range may not always work if the page_ids are hashes!
-            compact_page_range = f'{page_range[0]}..{page_range[-1]}'
-        except BaseException as error:
-            msg = f"Failed to determine page-range for mets path: {mets_path}"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+    async def run_workflow(
+        self,
+        mets_path: str,
+        workflow: Union[UploadFile, None] = File(None),
+        workflow_id: str = None,
+        agent_type: str = NETWORK_AGENT_WORKER,
+        page_id: str = None,
+        page_wise: bool = False,
+        workflow_callback_url: str = None
+    ) -> PYWorkflowJobOutput:
+        await create_workspace_if_not_exists(self.log, mets_path=mets_path)
+        workflow_content = await get_workflow_content(self.log, workflow_id, workflow)
+        processing_tasks = parse_workflow_tasks(self.log, workflow_content)
+
+        # Validate the input file groups of the first task in the workflow
+        validate_first_task_input_file_groups_existence(self.log, mets_path, processing_tasks[0].input_file_grps)
+
+        # Validate existence of agents (processing workers/processor servers)
+        # for the ocr-d processors referenced inside tasks
+        self.validate_processing_agents_existence(processing_tasks, agent_type)
+
+        page_ids = get_page_ids_list(self.log, mets_path, page_id)
+
+        # TODO: Reconsider this, the compact page range may not always work if the page_ids are hashes!
+        compact_page_range = f"{page_ids[0]}..{page_ids[-1]}"
 
         if not page_wise:
             responses = await self.task_sequence_to_processing_jobs(
-                tasks=tasks,
+                tasks=processing_tasks,
                 mets_path=mets_path,
                 page_id=compact_page_range,
                 agent_type=agent_type
             )
-            processing_job_ids = []
-            for response in responses:
-                processing_job_ids.append(response.job_id)
+            processing_job_ids = [response.job_id for response in responses]
             db_workflow_job = DBWorkflowJob(
                 job_id=generate_id(),
                 page_id=compact_page_range,
@@ -883,16 +821,14 @@ class ProcessingServer(FastAPI):
             return db_workflow_job.to_job_output()
 
         all_pages_job_ids = {}
-        for current_page in page_range:
+        for current_page in page_ids:
             responses = await self.task_sequence_to_processing_jobs(
-                tasks=tasks,
+                tasks=processing_tasks,
                 mets_path=mets_path,
                 page_id=current_page,
                 agent_type=agent_type
             )
-            processing_job_ids = []
-            for response in responses:
-                processing_job_ids.append(response.job_id)
+            processing_job_ids = [response.job_id for response in responses]
             all_pages_job_ids[current_page] = processing_job_ids
         db_workflow_job = DBWorkflowJob(
             job_id=generate_id(),
@@ -908,13 +844,7 @@ class ProcessingServer(FastAPI):
     async def get_workflow_info(self, workflow_job_id) -> Dict:
         """ Return list of a workflow's processor jobs
         """
-        try:
-            workflow_job = await db_get_workflow_job(workflow_job_id)
-        except ValueError as error:
-            msg = f"Workflow job with id: {workflow_job_id} not found"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-
+        workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
         job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
         jobs = await db_get_processing_jobs(job_ids)
         res = {}
@@ -942,13 +872,7 @@ class ProcessingServer(FastAPI):
         the entire workflow job status is set to RUNNING.
         - If all processing jobs has finished successfully, only then the workflow job status is set to SUCCESS
         """
-        try:
-            workflow_job = await db_get_workflow_job(workflow_job_id)
-        except ValueError as error:
-            msg = f"Workflow job with id: {workflow_job_id} not found"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-
+        workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
         job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
         jobs = await db_get_processing_jobs(job_ids)
         workflow_job_state = StateEnum.unset
@@ -972,7 +896,7 @@ class ProcessingServer(FastAPI):
         """ Store a script for a workflow in the database
         """
         workflow_content = await generate_workflow_content(workflow)
-        validate_workflow(workflow_content)
+        validate_workflow(self.log, workflow_content)
         content_hash = generate_workflow_content_hash(workflow_content)
         try:
             db_workflow_script = await db_find_first_workflow_script_by_content(content_hash)
@@ -1001,7 +925,7 @@ class ProcessingServer(FastAPI):
             self.log.exception(f"{msg}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
         workflow_content = await generate_workflow_content(workflow)
-        validate_workflow(workflow_content)
+        validate_workflow(self.log, workflow_content)
         db_workflow_script.content = workflow_content
         content_hash = generate_workflow_content_hash(workflow_content)
         db_workflow_script.content_hash = content_hash
