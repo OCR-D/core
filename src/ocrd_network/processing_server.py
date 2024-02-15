@@ -515,7 +515,7 @@ class ProcessingServer(FastAPI):
         page_ids = expand_page_ids(data.page_id)
 
         # A flag whether the current request must be cached
-        # This is set to true if for any output fileGrp there
+        # This is set to true if for any output file group there
         # is a page_id value that has been previously locked
         cache_current_request = False
 
@@ -730,8 +730,8 @@ class ProcessingServer(FastAPI):
                 # For debugging purposes it is good to see if any locked pages are left
                 self.log.debug(f"Contents of the locked pages cache for: {workspace_key}")
                 locked_pages = self.cache_locked_pages.get_locked_pages(workspace_key=workspace_key)
-                for output_fileGrp in locked_pages:
-                    self.log.debug(f"{output_fileGrp}: {locked_pages[output_fileGrp]}")
+                for output_file_grp in locked_pages:
+                    self.log.debug(f"{output_file_grp}: {locked_pages[output_file_grp]}")
             else:
                 self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
             return

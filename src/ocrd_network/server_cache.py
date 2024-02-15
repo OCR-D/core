@@ -38,12 +38,12 @@ class CacheLockedPages:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
             return False
-        for output_fileGrp in output_file_grps:
-            if output_fileGrp in self.locked_pages[workspace_key]:
-                if self.placeholder_all_pages in self.locked_pages[workspace_key][output_fileGrp]:
+        for file_group in output_file_grps:
+            if file_group in self.locked_pages[workspace_key]:
+                if self.placeholder_all_pages in self.locked_pages[workspace_key][file_group]:
                     self.log.debug(f"Caching the received request due to locked output file grp pages")
                     return True
-                if not set(self.locked_pages[workspace_key][output_fileGrp]).isdisjoint(page_ids):
+                if not set(self.locked_pages[workspace_key][file_group]).isdisjoint(page_ids):
                     self.log.debug(f"Caching the received request due to locked output file grp pages")
                     return True
         return False
@@ -59,38 +59,38 @@ class CacheLockedPages:
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
             self.log.debug(f"Creating an entry in the locked pages cache for workspace key: {workspace_key}")
             self.locked_pages[workspace_key] = {}
-        for output_fileGrp in output_file_grps:
-            if output_fileGrp not in self.locked_pages[workspace_key]:
-                self.log.debug(f"Creating an empty list for output file grp: {output_fileGrp}")
-                self.locked_pages[workspace_key][output_fileGrp] = []
+        for file_group in output_file_grps:
+            if file_group not in self.locked_pages[workspace_key]:
+                self.log.debug(f"Creating an empty list for output file grp: {file_group}")
+                self.locked_pages[workspace_key][file_group] = []
             # The page id list is not empty - only some pages are in the request
             if page_ids:
-                self.log.debug(f"Locking pages for `{output_fileGrp}`: {page_ids}")
-                self.locked_pages[workspace_key][output_fileGrp].extend(page_ids)
-                self.log.debug(f"Locked pages of `{output_fileGrp}`: "
-                               f"{self.locked_pages[workspace_key][output_fileGrp]}")
+                self.log.debug(f"Locking pages for `{file_group}`: {page_ids}")
+                self.locked_pages[workspace_key][file_group].extend(page_ids)
+                self.log.debug(f"Locked pages of `{file_group}`: "
+                               f"{self.locked_pages[workspace_key][file_group]}")
             else:
                 # Lock all pages with a single value
-                self.log.debug(f"Locking pages for `{output_fileGrp}`: {self.placeholder_all_pages}")
-                self.locked_pages[workspace_key][output_fileGrp].append(self.placeholder_all_pages)
+                self.log.debug(f"Locking pages for `{file_group}`: {self.placeholder_all_pages}")
+                self.locked_pages[workspace_key][file_group].append(self.placeholder_all_pages)
 
     def unlock_pages(self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]) -> None:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
             return
-        for output_fileGrp in output_file_grps:
-            if output_fileGrp in self.locked_pages[workspace_key]:
+        for file_group in output_file_grps:
+            if file_group in self.locked_pages[workspace_key]:
                 if page_ids:
                     # Unlock the previously locked pages
-                    self.log.debug(f"Unlocking pages of `{output_fileGrp}`: {page_ids}")
-                    self.locked_pages[workspace_key][output_fileGrp] = \
-                        [x for x in self.locked_pages[workspace_key][output_fileGrp] if x not in page_ids]
-                    self.log.debug(f"Remaining locked pages of `{output_fileGrp}`: "
-                                   f"{self.locked_pages[workspace_key][output_fileGrp]}")
+                    self.log.debug(f"Unlocking pages of `{file_group}`: {page_ids}")
+                    self.locked_pages[workspace_key][file_group] = \
+                        [x for x in self.locked_pages[workspace_key][file_group] if x not in page_ids]
+                    self.log.debug(f"Remaining locked pages of `{file_group}`: "
+                                   f"{self.locked_pages[workspace_key][file_group]}")
                 else:
                     # Remove the single variable used to indicate all pages are locked
-                    self.log.debug(f"Unlocking all pages for: {output_fileGrp}")
-                    self.locked_pages[workspace_key][output_fileGrp].remove(self.placeholder_all_pages)
+                    self.log.debug(f"Unlocking all pages for: {file_group}")
+                    self.locked_pages[workspace_key][file_group].remove(self.placeholder_all_pages)
 
 
 class CacheProcessingRequests:
