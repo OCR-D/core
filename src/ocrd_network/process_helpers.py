@@ -10,27 +10,23 @@ from .utils import get_ocrd_workspace_instance
 
 # A wrapper for run_processor() and run_cli()
 def invoke_processor(
-        processor_class,
-        executable: str,
-        abs_path_to_mets: str,
-        input_file_grps: List[str],
-        output_file_grps: List[str],
-        page_id: str,
-        parameters: dict,
-        mets_server_url: Optional[str] = None,
-        log_filename: Optional[Path] = None,
-        log_level: str = 'DEBUG'
+    processor_class,
+    executable: str,
+    abs_path_to_mets: str,
+    input_file_grps: List[str],
+    output_file_grps: List[str],
+    page_id: str,
+    parameters: dict,
+    mets_server_url: Optional[str] = None,
+    log_filename: Optional[Path] = None,
+    log_level: str = "DEBUG"
 ) -> None:
     if not (processor_class or executable):
-        raise ValueError('Missing processor class and executable')
+        raise ValueError("Missing processor class and executable")
     input_file_grps_str = ','.join(input_file_grps)
     output_file_grps_str = ','.join(output_file_grps)
 
-    workspace = get_ocrd_workspace_instance(
-        mets_path=abs_path_to_mets,
-        mets_server_url=mets_server_url
-    )
-
+    workspace = get_ocrd_workspace_instance(mets_path=abs_path_to_mets, mets_server_url=mets_server_url)
     if processor_class:
         ctx_mgr = redirect_stderr_and_stdout_to_file(log_filename) if log_filename else nullcontext()
         with ctx_mgr:
@@ -47,8 +43,8 @@ def invoke_processor(
                     mets_server_url=mets_server_url,
                     log_level=log_level
                 )
-            except Exception as e:
-                raise RuntimeError(f"Python executable '{processor_class.__dict__}' exited with: {e}")
+            except Exception as error:
+                raise RuntimeError(f"Python executable '{processor_class.__dict__}', error: {error}")
     else:
         return_code = run_cli(
             executable=executable,
@@ -63,4 +59,4 @@ def invoke_processor(
             log_filename=log_filename
         )
         if return_code != 0:
-            raise RuntimeError(f"CLI executable '{executable}' exited with: {return_code}")
+            raise RuntimeError(f"CLI executable '{executable}' exited with code: {return_code}")

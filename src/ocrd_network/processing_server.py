@@ -48,6 +48,7 @@ from .server_utils import (
     get_from_database_workspace,
     get_from_database_workflow_job,
     parse_workflow_tasks,
+    raise_http_exception,
     validate_and_return_mets_path,
     validate_first_task_input_file_groups_existence,
     validate_job_input,
@@ -391,26 +392,21 @@ class ProcessingServer(FastAPI):
                 urljoin(base=processor_server_url, url="info"),
                 headers={"Content-Type": "application/json"}
             )
+            if response.status_code != 200:
+                message = f"Failed to retrieve tool json from: {processor_server_url}, code: {response.status_code}"
+                raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
+            return response.json()
         except Exception as error:
-            msg = f"Failed to retrieve ocrd tool json from: {processor_server_url}"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-        if response.status_code != 200:
-            msg = f"""
-            Failed to retrieve ocrd tool json from: {processor_server_url}, status code: {response.status_code}
-            """
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-        return response.json()
+            message = f"Failed to retrieve ocrd tool json from: {processor_server_url}"
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
 
     async def get_processor_info(self, processor_name: str) -> Dict:
         """ Return a processor's ocrd-tool.json
         """
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
-            msg = f"Ocrd tool JSON of '{processor_name}' not available!"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+            message = f"Ocrd tool JSON of '{processor_name}' not available."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
 
         # TODO: Returns the ocrd tool json even of processors
         #  that are not deployed. This may or may not be desired.
@@ -418,22 +414,16 @@ class ProcessingServer(FastAPI):
 
     async def get_processing_agent_ocrd_tool(self, processor_name: str, agent_type: str) -> dict:
         ocrd_tool = {}
+        error_message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
         if agent_type == NETWORK_AGENT_WORKER:
             ocrd_tool = await self.get_processor_info(processor_name)
         elif agent_type == NETWORK_AGENT_SERVER:
             processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
             if processor_server_url == '':
-                msg = f"Agent of type '{agent_type}' does not exist for '{processor_name}'"
-                self.log.exception(msg)
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=msg
-                )
+                raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, error_message)
             ocrd_tool = self.query_ocrd_tool_json_from_server(processor_server_url)
         if not ocrd_tool:
-            msg = f"Agent of type '{agent_type}' does not exist for '{processor_name}'"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, error_message)
         return ocrd_tool
 
     def network_agent_exists_server(self, processor_name: str) -> bool:
@@ -451,9 +441,8 @@ class ProcessingServer(FastAPI):
 
     def validate_agent_type_and_existence(self, processor_name: str, agent_type: str) -> None:
         if agent_type not in NETWORK_AGENT_TYPES:
-            msg = f"Wrong network agent type passed. Must be one of: {NETWORK_AGENT_TYPES}"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+            message = f"Wrong network agent type passed. Must be one of: {NETWORK_AGENT_TYPES}"
+            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         agent_exists = False
         if agent_type == NETWORK_AGENT_SERVER:
             if self.network_agent_exists_server(processor_name=processor_name):
@@ -462,16 +451,14 @@ class ProcessingServer(FastAPI):
             if self.network_agent_exists_worker(processor_name=processor_name):
                 agent_exists = True
         if not agent_exists:
-            msg = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+            message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
+            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         self.validate_agent_type_and_existence(processor_name=data.processor_name, agent_type=data.agent_type)
         if data.job_id:
-            msg = f"Processing request job id field is set but must not be: {data.job_id}"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
+            message = f"Processing request job id field is set but must not be: {data.job_id}"
+            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         # Generate processing job id
         data.job_id = generate_id()
         # Append the processor name to the request itself
@@ -568,34 +555,30 @@ class ProcessingServer(FastAPI):
             self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
             job_output = await self.push_to_processor_server(data.processor_name, data)
         if not job_output:
-            msg = f"Failed to create job output for job input: {data}"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
+            message = f"Failed to create job output for job input: {data}"
+            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
         return job_output
 
     async def push_to_processing_queue(self, processor_name: str, processing_message: OcrdProcessingMessage):
         if not self.rmq_publisher:
-            msg = "The Processing Server has no connection access to RabbitMQ Server. RMQPublisher is not connected."
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
+            message = "The Processing Server has no connection to RabbitMQ Server. RMQPublisher is not connected."
+            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
         try:
             encoded_message = OcrdProcessingMessage.encode_yml(processing_message)
             self.rmq_publisher.publish_to_queue(queue_name=processor_name, message=encoded_message)
         except Exception as error:
-            msg = f"""
+            message = f"""
             Processing server has failed to push processing message to queue: {processor_name}\n
             Processing message: {processing_message}\n
             """
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
+            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message, error)
 
     async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
         try:
             json_data = dumps(job_input.dict(exclude_unset=True, exclude_none=True))
         except Exception as error:
-            msg = f"Failed to json dump the PYJobInput: {job_input}"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
+            message = f"Failed to json dump the PYJobInput: {job_input}"
+            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message, error)
 
         processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
 
@@ -607,15 +590,14 @@ class ProcessingServer(FastAPI):
         # Post a processing job to the Processor Server asynchronously
         async with AsyncClient(timeout=Timeout(timeout=request_timeout, connect=30.0)) as client:
             response = await client.post(
-                urljoin(base=processor_server_url, url='run'),
-                headers={'Content-Type': 'application/json'},
+                urljoin(base=processor_server_url, url="run"),
+                headers={"Content-Type": "application/json"},
                 json=loads(json_data)
             )
 
         if response.status_code != 202:
-            msg = f"Failed to post '{processor_name}' job to: {processor_server_url}"
-            self.log.exception(msg)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
+            message = f"Failed to post '{processor_name}' job to: {processor_server_url}"
+            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
         job_output = response.json()
         return job_output
 
@@ -670,9 +652,8 @@ class ProcessingServer(FastAPI):
         try:
             db_result_job = await db_get_processing_job(result_job_id)
         except ValueError as error:
-            msg = f"Processing job with id: {result_job_id} not found in DB"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+            message = f"Processing job with id '{result_job_id}' not found in DB"
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
 
         # Unlock the output file group pages for the result processing request
         self.cache_locked_pages.unlock_pages(
@@ -768,12 +749,12 @@ class ProcessingServer(FastAPI):
                 # catching the error is not relevant here
                 missing_agents.append({task.executable, agent_type})
         if missing_agents:
-            msg = f"""
+            message = f"""
             Workflow validation has failed. 
             The desired processor servers or processing workers are not found. 
             Missing processing agents: {missing_agents}
             """
-            raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=msg)
+            raise_http_exception(self.log, status.HTTP_406_NOT_ACCEPTABLE, message)
 
     async def run_workflow(
         self,
@@ -901,9 +882,8 @@ class ProcessingServer(FastAPI):
         try:
             db_workflow_script = await db_find_first_workflow_script_by_content(content_hash)
             if db_workflow_script:
-                msg = f"The same workflow script already exists, workflow id: {db_workflow_script.workflow_id}"
-                self.log.exception(msg)
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+                message = f"The same workflow script already exists, workflow id: {db_workflow_script.workflow_id}"
+                raise_http_exception(self.log, status.HTTP_409_CONFLICT, message)
         except ValueError:
             pass
         workflow_id = generate_id()
@@ -921,9 +901,8 @@ class ProcessingServer(FastAPI):
         try:
             db_workflow_script = await db_get_workflow_script(workflow_id)
         except ValueError as error:
-            msg = f"Workflow script not existing for id: {workflow_id}"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
+            message = f"Workflow script not existing for id '{workflow_id}'."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
         workflow_content = await generate_workflow_content(workflow)
         validate_workflow(self.log, workflow_content)
         db_workflow_script.content = workflow_content
@@ -937,8 +916,7 @@ class ProcessingServer(FastAPI):
         """
         try:
             workflow = await db_get_workflow_script(workflow_id)
+            return PlainTextResponse(workflow.content)
         except ValueError as error:
-            msg = f"Workflow script not existing for id: {workflow_id}"
-            self.log.exception(f"{msg}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
-        return PlainTextResponse(workflow.content)
+            message = f"Workflow script not existing for id '{workflow_id}'."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)

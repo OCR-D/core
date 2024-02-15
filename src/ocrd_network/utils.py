@@ -1,3 +1,4 @@
+from asyncio import iscoroutine, get_event_loop
 from datetime import datetime
 from fastapi import UploadFile
 from functools import wraps
@@ -20,8 +21,6 @@ from .rabbitmq_utils import OcrdResultMessage
 
 def call_sync(func):
     # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
-    from asyncio import iscoroutine, get_event_loop
-
     @wraps(func)
     def func_wrapper(*args, **kwargs):
         result = func(*args, **kwargs)

@@ -4,7 +4,7 @@ from os import getpid
 from subprocess import run as subprocess_run, PIPE
 from uvicorn import run
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, status
+from fastapi import BackgroundTasks, FastAPI, status
 from fastapi.responses import FileResponse
 
 from ocrd_utils import (
@@ -25,7 +25,13 @@ from .logging import get_processor_server_logging_file_path, get_processing_job_
 from .models import PYJobInput, PYJobOutput, PYOcrdTool, StateEnum
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdResultMessage
-from .server_utils import _get_processor_job, _get_processor_job_log, validate_and_return_mets_path, validate_job_input
+from .server_utils import (
+    _get_processor_job,
+    _get_processor_job_log,
+    raise_http_exception,
+    validate_and_return_mets_path,
+    validate_job_input
+)
 from .utils import calculate_execution_time, post_to_callback_url, generate_id
 
 
@@ -118,10 +124,8 @@ class ProcessorServer(FastAPI):
 
     async def get_processor_info(self):
         if not self.ocrd_tool:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f'Empty or missing ocrd_tool'
-            )
+            message = "Empty or missing ocrd tool json."
+            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
         return self.ocrd_tool
 
     # Note: The Processing server pushes to a queue, while
