@@ -165,23 +165,23 @@ def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = Non
 
 def is_mets_server_running(mets_server_url: str) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
-    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
+    session = Session_TCP() if protocol == "tcp" else Session_UDS()
     if protocol == "uds":
         mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
-        response = session.get(url=f'{mets_server_url}/workspace_path')
+        response = session.get(url=f"{mets_server_url}/workspace_path")
     except Exception:
         return False
     return response.status_code == 200
 
 
 def stop_mets_server(mets_server_url: str) -> bool:
-    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
-    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
+    protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
+    session = Session_TCP() if protocol == "tcp" else Session_UDS()
     if protocol == "uds":
         mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
-        response = session.delete(url=f'{mets_server_url}/')
+        response = session.delete(url=f"{mets_server_url}/")
     except Exception:
         return False
     return response.status_code == 200

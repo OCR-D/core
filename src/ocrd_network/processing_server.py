@@ -15,7 +15,16 @@ from pika.exceptions import ChannelClosedByBroker
 
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
-from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, NETWORK_AGENT_TYPES
+from .constants import (
+    OCRD_ALL_JSON_TOOLS_URL,
+    NETWORK_AGENT_SERVER,
+    NETWORK_AGENT_WORKER,
+    NETWORK_AGENT_TYPES,
+    NETWORK_API_TAG_DISCOVERY,
+    NETWORK_API_TAG_PROCESSING,
+    NETWORK_API_TAG_TOOLS,
+    NETWORK_API_TAG_WORKFLOW
+)
 from .database import (
     initiate_database,
     db_get_processing_job,
@@ -80,19 +89,17 @@ class ProcessingServer(FastAPI):
         super().__init__(
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
-            title='OCR-D Processing Server',
-            description='OCR-D Processing Server'
+            title="OCR-D Processing Server",
+            description="OCR-D Processing Server"
         )
-        self.log = getLogger('ocrd_network.processing_server')
+        self.log = getLogger("ocrd_network.processing_server")
         log_file = get_processing_server_logging_file_path(pid=getpid())
         file_handler = FileHandler(filename=log_file, mode='a')
         file_handler.setFormatter(Formatter(LOG_FORMAT))
         self.log.addHandler(file_handler)
 
         self.log.info(f"Downloading ocrd all tool json")
-        self.ocrd_all_tool_json = download_ocrd_all_tool_json(
-            ocrd_all_url="https://ocr-d.de/js/ocrd-all-tool.json"
-        )
+        self.ocrd_all_tool_json = download_ocrd_all_tool_json(ocrd_all_url=OCRD_ALL_JSON_TOOLS_URL)
         self.hostname = host
         self.port = port
         # The deployer is used for:
@@ -101,11 +108,11 @@ class ProcessingServer(FastAPI):
         self.deployer = Deployer(config_path)
         self.mongodb_url = None
         # TODO: Combine these under a single URL, rabbitmq_utils needs an update
-        self.rmq_host = self.deployer.data_queue.address
+        self.rmq_host = self.deployer.data_queue.host
         self.rmq_port = self.deployer.data_queue.port
-        self.rmq_vhost = '/'
-        self.rmq_username = self.deployer.data_queue.username
-        self.rmq_password = self.deployer.data_queue.password
+        self.rmq_vhost = "/"
+        self.rmq_username = self.deployer.data_queue.cred_username
+        self.rmq_password = self.deployer.data_queue.cred_password
 
         # Gets assigned when `connect_publisher` is called on the working object
         self.rmq_publisher = None
@@ -119,94 +126,94 @@ class ProcessingServer(FastAPI):
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
-            self.internal_job_callback_url = f'{host.rstrip("/")}/result_callback'
+            self.internal_job_callback_url = f"{host.rstrip('/')}/result_callback"
         else:
-            self.internal_job_callback_url = f'http://{host}:{port}/result_callback'
+            self.internal_job_callback_url = f"http://{host}:{port}/result_callback"
 
         self.router.add_api_route(
-            path='/',
+            path="/",
             endpoint=self.home_page,
-            methods=['GET'],
+            methods=["GET"],
             status_code=status.HTTP_200_OK,
-            summary='Get information about the processing server'
+            summary="Get information about the processing server"
         )
 
         # Create routes
         self.router.add_api_route(
-            path='/stop',
+            path="/stop",
             endpoint=self.stop_deployed_agents,
-            methods=['POST'],
-            tags=['tools'],
-            summary='Stop database, queue and processing-workers',
+            methods=["POST"],
+            tags=[NETWORK_API_TAG_TOOLS],
+            summary="Stop database, queue and processing-workers"
         )
 
         self.router.add_api_route(
-            path='/processor/run/{processor_name}',
+            path="/processor/run/{processor_name}",
             endpoint=self.push_processor_job,
-            methods=['POST'],
-            tags=['processing'],
+            methods=["POST"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Submit a job to this processor',
+            summary="Submit a job to this processor",
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
 
         self.router.add_api_route(
-            path='/processor/job/{job_id}',
+            path="/processor/job/{job_id}",
             endpoint=self.get_processor_job,
-            methods=['GET'],
-            tags=['processing'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Get information about a job based on its ID',
+            summary="Get information about a job based on its ID",
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
 
         self.router.add_api_route(
-            path='/processor/log/{job_id}',
+            path="/processor/log/{job_id}",
             endpoint=self.get_processor_job_log,
-            methods=['GET'],
-            tags=['processing'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Get the log file of a job id'
+            summary="Get the log file of a job id"
         )
 
         self.router.add_api_route(
-            path='/result_callback',
+            path="/result_callback",
             endpoint=self.remove_from_request_cache,
-            methods=['POST'],
-            tags=['processing'],
+            methods=["POST"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Callback used by a worker or processor server for reporting result of a processing request',
+            summary="Callback used by a worker or processor server for reporting result of a processing request"
         )
 
         self.router.add_api_route(
-            path='/processor/info/{processor_name}',
+            path="/processor/info/{processor_name}",
             endpoint=self.get_processor_info,
-            methods=['GET'],
-            tags=['processing', 'discovery'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
             status_code=status.HTTP_200_OK,
-            summary='Get information about this processor',
+            summary="Get information about this processor"
         )
 
         self.router.add_api_route(
-            path='/processor',
+            path="/processor",
             endpoint=self.list_processors,
-            methods=['GET'],
-            tags=['processing', 'discovery'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
             status_code=status.HTTP_200_OK,
-            summary='Get a list of all available processors',
+            summary="Get a list of all available processors"
         )
 
         self.router.add_api_route(
-            path='/workflow/run',
+            path="/workflow/run",
             endpoint=self.run_workflow,
-            methods=['POST'],
-            tags=['workflow', 'processing'],
+            methods=["POST"],
+            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Run a workflow',
+            summary="Run a workflow",
             response_model=PYWorkflowJobOutput,
             response_model_exclude=["processing_job_ids"],
             response_model_exclude_defaults=True,
@@ -215,46 +222,46 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path='/workflow/job/{workflow_job_id}',
+            path="/workflow/job/{workflow_job_id}",
             endpoint=self.get_workflow_info,
-            methods=['GET'],
-            tags=['workflow', 'processing'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Get information about a workflow run',
+            summary="Get information about a workflow run"
         )
 
         self.router.add_api_route(
-            path='/workflow/job-simple/{workflow_job_id}',
+            path="/workflow/job-simple/{workflow_job_id}",
             endpoint=self.get_workflow_info_simple,
-            methods=['GET'],
-            tags=['workflow', 'processing'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Get simplified overall job status',
+            summary="Get simplified overall job status"
         )
 
         self.router.add_api_route(
-            path='/workflow',
+            path="/workflow",
             endpoint=self.upload_workflow,
-            methods=['POST'],
-            tags=['workflow'],
+            methods=["POST"],
+            tags=[NETWORK_API_TAG_WORKFLOW],
             status_code=status.HTTP_201_CREATED,
-            summary='Upload/Register a new workflow script',
+            summary="Upload/Register a new workflow script"
         )
         self.router.add_api_route(
-            path='/workflow/{workflow_id}',
+            path="/workflow/{workflow_id}",
             endpoint=self.replace_workflow,
-            methods=['PUT'],
-            tags=['workflow'],
+            methods=["PUT"],
+            tags=[NETWORK_API_TAG_WORKFLOW],
             status_code=status.HTTP_200_OK,
-            summary='Update/Replace a workflow script',
+            summary="Update/Replace a workflow script"
         )
         self.router.add_api_route(
-            path='/workflow/{workflow_id}',
+            path="/workflow/{workflow_id}",
             endpoint=self.download_workflow,
-            methods=['GET'],
-            tags=['workflow'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_WORKFLOW],
             status_code=status.HTTP_200_OK,
-            summary='Download a workflow script',
+            summary="Download a workflow script"
         )
 
         @self.exception_handler(RequestValidationError)
@@ -268,25 +275,22 @@ class ProcessingServer(FastAPI):
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
         try:
-            self.deployer.deploy_rabbitmq(image='rabbitmq:3-management', detach=True, remove=True)
-            rabbitmq_url = self.deployer.data_queue.url
+            self.deployer.data_queue.deploy_rabbitmq(self.log)
+            rabbitmq_url = self.deployer.data_queue.service_url
 
-            self.deployer.deploy_mongodb(image='mongo', detach=True, remove=True)
-            self.mongodb_url = self.deployer.data_mongo.url
+            self.deployer.data_mongo.deploy_mongodb(self.log)
+            self.mongodb_url = self.deployer.data_mongo.service_url
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.connect_publisher()
-            self.log.debug(f'Creating message queues on RabbitMQ instance url: {rabbitmq_url}')
+            self.log.debug(f"Creating message queues on RabbitMQ instance url: {rabbitmq_url}")
             self.create_message_queues()
 
-            self.deployer.deploy_hosts(
-                mongodb_url=self.mongodb_url,
-                rabbitmq_url=rabbitmq_url
-            )
+            self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=rabbitmq_url)
         except Exception as error:
             self.log.exception(f"Failed to start the Processing Server, error: {error}")
-            self.log.warning("Trying to kill previously deployed processing workers")
-            self.deployer.kill_all()
+            self.log.warning("Trying to stop previously deployed services and network agents.")
+            self.deployer.stop_all()
             raise
         uvicorn.run(self, host=self.hostname, port=int(self.port))
 
@@ -310,7 +314,7 @@ class ProcessingServer(FastAPI):
         return json_message
 
     async def stop_deployed_agents(self) -> None:
-        self.deployer.kill_all()
+        self.deployer.stop_all()
 
     def connect_publisher(self, enable_acks: bool = True) -> None:
         self.log.info(f'Connecting RMQPublisher to RabbitMQ server: '

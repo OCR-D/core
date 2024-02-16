@@ -3,14 +3,10 @@ from logging import FileHandler, Formatter
 from typing import Dict, List
 
 from ocrd_utils import getLogger, LOG_FORMAT
+from .constants import SERVER_ALL_PAGES_PLACEHOLDER
 from .database import db_get_processing_job, db_update_processing_job
 from .logging import get_cache_locked_pages_logging_file_path, get_cache_processing_requests_logging_file_path
 from .models import PYJobInput, StateEnum
-
-__all__ = [
-    'CacheLockedPages',
-    'CacheProcessingRequests'
-]
 
 
 class CacheLockedPages:
@@ -27,7 +23,7 @@ class CacheLockedPages:
         # and the values are list of strings representing the locked pages
         self.locked_pages: Dict[str, Dict[str, List[str]]] = {}
         # Used as a placeholder to lock all pages when no page_id is specified
-        self.placeholder_all_pages: str = "all_pages"
+        self.placeholder_all_pages: str = SERVER_ALL_PAGES_PLACEHOLDER
 
     def check_if_locked_pages_for_output_file_grps(
         self,
@@ -38,13 +34,14 @@ class CacheLockedPages:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
             return False
+        debug_message = f"Caching the received request due to locked output file grp pages."
         for file_group in output_file_grps:
             if file_group in self.locked_pages[workspace_key]:
                 if self.placeholder_all_pages in self.locked_pages[workspace_key][file_group]:
-                    self.log.debug(f"Caching the received request due to locked output file grp pages")
+                    self.log.debug(debug_message)
                     return True
                 if not set(self.locked_pages[workspace_key][file_group]).isdisjoint(page_ids):
-                    self.log.debug(f"Caching the received request due to locked output file grp pages")
+                    self.log.debug(debug_message)
                     return True
         return False
 
@@ -65,13 +62,13 @@ class CacheLockedPages:
                 self.locked_pages[workspace_key][file_group] = []
             # The page id list is not empty - only some pages are in the request
             if page_ids:
-                self.log.debug(f"Locking pages for `{file_group}`: {page_ids}")
+                self.log.debug(f"Locking pages for '{file_group}': {page_ids}")
                 self.locked_pages[workspace_key][file_group].extend(page_ids)
-                self.log.debug(f"Locked pages of `{file_group}`: "
+                self.log.debug(f"Locked pages of '{file_group}': "
                                f"{self.locked_pages[workspace_key][file_group]}")
             else:
                 # Lock all pages with a single value
-                self.log.debug(f"Locking pages for `{file_group}`: {self.placeholder_all_pages}")
+                self.log.debug(f"Locking pages for '{file_group}': {self.placeholder_all_pages}")
                 self.locked_pages[workspace_key][file_group].append(self.placeholder_all_pages)
 
     def unlock_pages(self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]) -> None:
@@ -82,10 +79,10 @@ class CacheLockedPages:
             if file_group in self.locked_pages[workspace_key]:
                 if page_ids:
                     # Unlock the previously locked pages
-                    self.log.debug(f"Unlocking pages of `{file_group}`: {page_ids}")
+                    self.log.debug(f"Unlocking pages of '{file_group}': {page_ids}")
                     self.locked_pages[workspace_key][file_group] = \
                         [x for x in self.locked_pages[workspace_key][file_group] if x not in page_ids]
-                    self.log.debug(f"Remaining locked pages of `{file_group}`: "
+                    self.log.debug(f"Remaining locked pages of '{file_group}': "
                                    f"{self.locked_pages[workspace_key][file_group]}")
                 else:
                     # Remove the single variable used to indicate all pages are locked
@@ -119,11 +116,11 @@ class CacheProcessingRequests:
         for dependency_job_id in dependencies:
             try:
                 dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
+                # Found a dependent job whose state is not success
+                if dependency_job_state != StateEnum.success:
+                    return False
             except ValueError:
                 # job_id not (yet) in db. Dependency not met
-                return False
-            # Found a dependent job whose state is not success
-            if dependency_job_state != StateEnum.success:
                 return False
         return True
 
@@ -144,8 +141,13 @@ class CacheProcessingRequests:
             try:
                 (self.processing_requests[workspace_key]).remove(found_element)
                 # self.log.debug(f"Found cached request to be processed: {found_request}")
-                self.log.debug(f"Found cached request: {found_element.processor_name}, {found_element.page_id}, "
-                               f"{found_element.job_id}, depends_on: {found_element.depends_on}")
+                debug_message = f"""
+                Found cached request for processor: {found_element.processor_name}\n
+                Page ids: {found_element.page_id}\n
+                Job id: {found_element.job_id}\n
+                Job depends on: {found_element.depends_on}
+                """
+                self.log.debug(debug_message)
                 found_requests.append(found_element)
             except ValueError:
                 # The ValueError is not an issue since the element was removed by another instance
@@ -170,8 +172,13 @@ class CacheProcessingRequests:
         if not self.processing_requests.get(workspace_key, None):
             self.log.debug(f"Creating an internal request queue for workspace_key: {workspace_key}")
             self.processing_requests[workspace_key] = []
-        self.log.debug(f"Caching request: {data.processor_name}, {data.page_id}, "
-                       f"{data.job_id}, depends_on: {data.depends_on}")
+        debug_message = f"""
+        Caching request for process: {data.processor_name}\n
+        Page ids: {data.page_id}\n
+        Job id: {data.job_id}\n
+        Job depends on: {data.depends_on}
+        """
+        self.log.debug(debug_message)
         # Add the processing request to the end of the internal queue
         self.processing_requests[workspace_key].append(data)
 
@@ -188,8 +195,7 @@ class CacheProcessingRequests:
         for cancel_element in found_cancel_requests:
             try:
                 self.processing_requests[workspace_key].remove(cancel_element)
-                self.log.debug(f"For job id: `{processing_job_id}`, "
-                               f"cancelling: {cancel_element.job_id}")
+                self.log.debug(f"For job id: '{processing_job_id}', cancelling job id: '{cancel_element.job_id}'")
                 cancelled_jobs.append(cancel_element)
                 await db_update_processing_job(job_id=cancel_element.job_id, state=StateEnum.cancelled)
                 # Recursively cancel dependent jobs for the cancelled job

@@ -14,6 +14,7 @@ from ocrd_utils import (
     LOG_FORMAT,
     parse_json_string_with_comments
 )
+from .constants import NETWORK_API_TAG_PROCESSING
 from .database import (
     DBProcessorJob,
     db_get_workspace,
@@ -38,15 +39,15 @@ from .utils import calculate_execution_time, post_to_callback_url, generate_id
 class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
-            raise ValueError('Either "processor_name" or "processor_class" must be provided')
+            raise ValueError("Either 'processor_name' or 'processor_class' must be provided")
         initLogging()
         super().__init__(
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
-            title=f'OCR-D Processor Server',
-            description='OCR-D Processor Server'
+            title=f"Network agent - Processor Server",
+            description="Network agent - Processor Server"
         )
-        self.log = getLogger('ocrd_network.processor_server')
+        self.log = getLogger("ocrd_network.processor_server")
         log_file = get_processor_server_logging_file_path(processor_name=processor_name, pid=getpid())
         file_handler = FileHandler(filename=log_file, mode='a')
         file_handler.setFormatter(Formatter(LOG_FORMAT))
@@ -65,52 +66,52 @@ class ProcessorServer(FastAPI):
             raise Exception(f"The ocrd_tool is empty or missing")
 
         if not self.processor_name:
-            self.processor_name = self.ocrd_tool['executable']
+            self.processor_name = self.ocrd_tool["executable"]
 
         # Create routes
         self.router.add_api_route(
-            path='/info',
+            path="/info",
             endpoint=self.get_processor_info,
-            methods=['GET'],
-            tags=['Processing'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Get information about this processor.',
+            summary="Get information about this processor.",
             response_model=PYOcrdTool,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
 
         self.router.add_api_route(
-            path='/run',
+            path="/run",
             endpoint=self.create_processor_task,
-            methods=['POST'],
-            tags=['Processing'],
+            methods=["POST"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_202_ACCEPTED,
-            summary='Submit a job to this processor.',
+            summary="Submit a job to this processor.",
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
 
         self.router.add_api_route(
-            path='/job/{job_id}',
+            path="/job/{job_id}",
             endpoint=self.get_processor_job,
-            methods=['GET'],
-            tags=['Processing'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Get information about a job based on its ID',
+            summary="Get information about a job based on its ID",
             response_model=PYJobOutput,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
 
         self.router.add_api_route(
-            path='/log/{job_id}',
+            path="/log/{job_id}",
             endpoint=self.get_processor_job_log,
-            methods=['GET'],
-            tags=['processing'],
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary='Get the log file of a job id'
+            summary="Get the log file of a job id"
         )
 
     async def on_startup(self):
@@ -188,7 +189,7 @@ class ProcessorServer(FastAPI):
             job_id=job.job_id,
             state=job_state,
             end_time=end_time,
-            exec_time=f'{exec_duration} ms'
+            exec_time=f"{exec_duration} ms"
         )
         result_message = OcrdResultMessage(
             job_id=job.job_id,
@@ -197,7 +198,7 @@ class ProcessorServer(FastAPI):
             # May not be always available
             workspace_id=job.workspace_id
         )
-        self.log.info(f'Result message: {result_message}')
+        self.log.info(f"Result message: {result_message}")
         if job.callback_url:
             # If the callback_url field is set,
             # post the result message (callback to a user defined endpoint)
@@ -215,7 +216,7 @@ class ProcessorServer(FastAPI):
             # ocrd_tool = self.processor_class(workspace=None, version=True).ocrd_tool
             ocrd_tool = parse_json_string_with_comments(
                 subprocess_run(
-                    [self.processor_name, '--dump-json'],
+                    [self.processor_name, "--dump-json"],
                     stdout=PIPE,
                     check=True,
                     universal_newlines=True
@@ -236,7 +237,7 @@ class ProcessorServer(FastAPI):
             return version_str
         """
         version_str = subprocess_run(
-            [self.processor_name, '--version'],
+            [self.processor_name, "--version"],
             stdout=PIPE,
             check=True,
             universal_newlines=True

@@ -110,11 +110,11 @@ class ProcessingWorker:
     # Define what happens every time a message is consumed
     # from the queue with name self.processor_name
     def on_consumed_message(
-            self,
-            channel: BlockingChannel,
-            delivery: Basic.Deliver,
-            properties: BasicProperties,
-            body: bytes
+        self,
+        channel: BlockingChannel,
+        delivery: Basic.Deliver,
+        properties: BasicProperties,
+        body: bytes
     ) -> None:
         consumer_tag = delivery.consumer_tag
         delivery_tag: int = delivery.delivery_tag
@@ -287,9 +287,10 @@ class ProcessingWorker:
         )
 
     def create_queue(
-            self,
-            connection_attempts: int = config.OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS,
-            retry_delay: int = 3) -> None:
+        self,
+        connection_attempts: int = config.OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS,
+        retry_delay: int = 3
+    ) -> None:
         """Create the queue for this worker
 
         Originally only the processing-server created the queues for the workers according to the

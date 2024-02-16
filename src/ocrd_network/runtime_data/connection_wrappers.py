@@ -1,13 +1,12 @@
 from __future__ import annotations
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
-from enum import Enum
 from paramiko import AutoAddPolicy, SSHClient
 from pymongo import MongoClient
 from re import sub as re_sub
 from time import sleep
 
-from .rabbitmq_utils import RMQPublisher
+from ..rabbitmq_utils import RMQPublisher
 
 
 def create_ssh_client(address: str, username: str, password: str = "", keypath: str = "") -> SSHClient:
@@ -79,11 +78,11 @@ class CustomDockerClient(DockerClient):
 
 
 def verify_rabbitmq_available(
-        host: str,
-        port: int,
-        vhost: str,
-        username: str,
-        password: str
+    host: str,
+    port: int,
+    vhost: str,
+    username: str,
+    password: str
 ) -> None:
     max_waiting_steps = 15
     while max_waiting_steps > 0:
@@ -106,10 +105,3 @@ def verify_mongodb_available(mongo_url: str) -> None:
         client.admin.command("ismaster")
     except Exception:
         raise RuntimeError(f'Cannot connect to MongoDB: {re_sub(r":[^@]+@", ":****@", mongo_url)}')
-
-
-class DeployType(Enum):
-    """ Deploy-Type of the processing worker/processor server.
-    """
-    DOCKER = 1
-    NATIVE = 2
