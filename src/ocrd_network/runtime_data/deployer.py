@@ -13,10 +13,9 @@ from time import sleep
 from typing import Dict, List, Union
 
 from ocrd_utils import config, getLogger, safe_filename
-from .runtime_data import DeployType
-from .logging import get_mets_server_logging_file_path
-from .runtime_data import DataHost, DataMongoDB, DataRabbitMQ
-from .utils import is_mets_server_running, stop_mets_server, validate_and_load_config
+from ..logging import get_mets_server_logging_file_path
+from ..utils import is_mets_server_running, stop_mets_server, validate_and_load_config
+from . import DataHost, DataMongoDB, DataRabbitMQ, DeployType
 
 
 class Deployer:

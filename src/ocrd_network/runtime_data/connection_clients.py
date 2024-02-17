@@ -6,6 +6,7 @@ from pymongo import MongoClient
 from re import sub as re_sub
 from time import sleep
 
+# TODO: This is a bad usage! Refactor.
 from ..rabbitmq_utils import RMQPublisher
 
 

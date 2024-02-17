@@ -2,7 +2,7 @@ from logging import Logger
 from time import sleep
 from typing import Dict, List, Union
 
-from .connection_wrappers import create_docker_client, create_ssh_client
+from .connection_clients import create_docker_client, create_ssh_client
 from .network_agents import AgentType, DataNetworkAgent, DataProcessingWorker, DataProcessorServer, DeployType
 
 

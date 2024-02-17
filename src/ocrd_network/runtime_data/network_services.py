@@ -3,7 +3,7 @@ from logging import Logger
 from typing import Any, Dict, List, Optional, Union
 
 from ..constants import DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ, DOCKER_RABBIT_MQ_FEATURES
-from .connection_wrappers import create_docker_client, verify_mongodb_available, verify_rabbitmq_available
+from .connection_clients import create_docker_client, verify_mongodb_available, verify_rabbitmq_available
 
 
 class DataNetworkService:
