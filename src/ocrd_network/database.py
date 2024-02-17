@@ -2,7 +2,7 @@
 
 Jobs: for every process-request a job is inserted into the database with an uuid, status and
 information about the process like parameters and file groups. It is mainly used to track the status
-(`ocrd_network.models.job.StateEnum`) of a job so that the state of a job can be queried. Finished
+(`ocrd_network.constants.JobState`) of a job so that the state of a job can be queried. Finished
 jobs are not deleted from the database.
 
 Workspaces: A job or a processor always runs on a workspace. So a processor needs the information

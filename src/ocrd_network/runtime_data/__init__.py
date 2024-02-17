@@ -1,14 +1,14 @@
 __all__ = [
-    "AgentType",
+    "Deployer",
     "DataHost",
     "DataMongoDB",
     "DataNetworkAgent",
     "DataRabbitMQ",
     "DataProcessingWorker",
-    "DataProcessorServer",
-    "DeployType"
+    "DataProcessorServer"
 ]
 
+from .deployer import Deployer
 from .hosts import DataHost
-from .network_agents import AgentType, DataNetworkAgent, DataProcessingWorker, DataProcessorServer, DeployType
+from .network_agents import DataNetworkAgent, DataProcessingWorker, DataProcessorServer
 from .network_services import DataMongoDB, DataRabbitMQ

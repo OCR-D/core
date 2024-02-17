@@ -3,10 +3,10 @@ from logging import FileHandler, Formatter
 from typing import Dict, List
 
 from ocrd_utils import getLogger, LOG_FORMAT
-from .constants import SERVER_ALL_PAGES_PLACEHOLDER
+from .constants import JobState, SERVER_ALL_PAGES_PLACEHOLDER
 from .database import db_get_processing_job, db_update_processing_job
 from .logging import get_cache_locked_pages_logging_file_path, get_cache_processing_requests_logging_file_path
-from .models import PYJobInput, StateEnum
+from .models import PYJobInput
 
 
 class CacheLockedPages:
@@ -117,7 +117,7 @@ class CacheProcessingRequests:
             try:
                 dependency_job_state = (await db_get_processing_job(dependency_job_id)).state
                 # Found a dependent job whose state is not success
-                if dependency_job_state != StateEnum.success:
+                if dependency_job_state != JobState.success:
                     return False
             except ValueError:
                 # job_id not (yet) in db. Dependency not met
@@ -195,7 +195,7 @@ class CacheProcessingRequests:
                 self.processing_requests[workspace_key].remove(cancel_element)
                 self.log.debug(f"For job id: '{processing_job_id}', cancelling job id: '{cancel_element.job_id}'")
                 cancelled_jobs.append(cancel_element)
-                await db_update_processing_job(job_id=cancel_element.job_id, state=StateEnum.cancelled)
+                await db_update_processing_job(job_id=cancel_element.job_id, state=JobState.cancelled)
                 # Recursively cancel dependent jobs for the cancelled job
                 recursively_cancelled = await self.cancel_dependent_jobs(
                     workspace_key=workspace_key,

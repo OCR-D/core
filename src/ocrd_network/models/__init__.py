@@ -12,11 +12,10 @@ __all__ = [
     'PYJobOutput',
     'PYOcrdTool',
     'PYResultMessage',
-    'PYWorkflowJobOutput',
-    'StateEnum',
+    'PYWorkflowJobOutput'
 ]
 
-from .job import DBProcessorJob, DBWorkflowJob, PYJobInput, PYJobOutput, PYWorkflowJobOutput, StateEnum
+from .job import DBProcessorJob, DBWorkflowJob, PYJobInput, PYJobOutput, PYWorkflowJobOutput
 from .messages import PYResultMessage
 from .ocrd_tool import PYOcrdTool
 from .workspace import DBWorkspace

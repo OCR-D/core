@@ -16,14 +16,13 @@ from pika.exceptions import ChannelClosedByBroker
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
 from .constants import (
-    OCRD_ALL_JSON_TOOLS_URL,
-    NETWORK_AGENT_SERVER,
-    NETWORK_AGENT_WORKER,
-    NETWORK_AGENT_TYPES,
+    AgentType,
+    JobState,
     NETWORK_API_TAG_DISCOVERY,
     NETWORK_API_TAG_PROCESSING,
     NETWORK_API_TAG_TOOLS,
-    NETWORK_API_TAG_WORKFLOW
+    NETWORK_API_TAG_WORKFLOW,
+    OCRD_ALL_JSON_TOOLS_URL
 )
 from .database import (
     initiate_database,
@@ -34,7 +33,7 @@ from .database import (
     db_get_workflow_script,
     db_find_first_workflow_script_by_content
 )
-from .runtime_data.deployer import Deployer
+from .runtime_data import Deployer
 from .logging import get_processing_server_logging_file_path
 from .models import (
     DBProcessorJob,
@@ -43,8 +42,7 @@ from .models import (
     PYJobInput,
     PYJobOutput,
     PYResultMessage,
-    PYWorkflowJobOutput,
-    StateEnum
+    PYWorkflowJobOutput
 )
 from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from .server_cache import CacheLockedPages, CacheProcessingRequests
@@ -417,9 +415,9 @@ class ProcessingServer(FastAPI):
     async def get_processing_agent_ocrd_tool(self, processor_name: str, agent_type: str) -> dict:
         ocrd_tool = {}
         error_message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
-        if agent_type == NETWORK_AGENT_WORKER:
+        if agent_type == AgentType.PROCESSING_WORKER:
             ocrd_tool = await self.get_processor_info(processor_name)
-        elif agent_type == NETWORK_AGENT_SERVER:
+        elif agent_type == AgentType.PROCESSOR_SERVER:
             processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
             if processor_server_url == '':
                 raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, error_message)
@@ -442,14 +440,14 @@ class ProcessingServer(FastAPI):
         return bool(self.check_if_queue_exists(processor_name))
 
     def validate_agent_type_and_existence(self, processor_name: str, agent_type: str) -> None:
-        if agent_type not in NETWORK_AGENT_TYPES:
-            message = f"Wrong network agent type passed. Must be one of: {NETWORK_AGENT_TYPES}"
+        if agent_type != AgentType.PROCESSING_WORKER and agent_type != AgentType.PROCESSOR_SERVER:
+            message = f"Unknown network agent type: {agent_type}"
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         agent_exists = False
-        if agent_type == NETWORK_AGENT_SERVER:
+        if agent_type == AgentType.PROCESSOR_SERVER:
             if self.network_agent_exists_server(processor_name=processor_name):
                 agent_exists = True
-        elif agent_type == NETWORK_AGENT_WORKER:
+        elif agent_type == AgentType.PROCESSING_WORKER:
             if self.network_agent_exists_worker(processor_name=processor_name):
                 agent_exists = True
         if not agent_exists:
@@ -514,7 +512,7 @@ class ProcessingServer(FastAPI):
             db_cached_job = DBProcessorJob(
                 **data.dict(exclude_unset=True, exclude_none=True),
                 internal_callback_url=self.internal_job_callback_url,
-                state=StateEnum.cached
+                state=JobState.cached
             )
             await db_cached_job.insert()
             return db_cached_job.to_job_output()
@@ -540,7 +538,7 @@ class ProcessingServer(FastAPI):
         db_queued_job = DBProcessorJob(
             **data.dict(exclude_unset=True, exclude_none=True),
             internal_callback_url=self.internal_job_callback_url,
-            state=StateEnum.queued
+            state=JobState.queued
         )
         await db_queued_job.insert()
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
@@ -548,14 +546,17 @@ class ProcessingServer(FastAPI):
         return job_output
 
     async def push_to_processing_agent(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
-        if data.agent_type == NETWORK_AGENT_WORKER:
+        if data.agent_type == AgentType.PROCESSING_WORKER:
             processing_message = self.create_processing_message(db_job)
             self.log.debug(f"Pushing to processing worker: {data.processor_name}, {data.page_id}, {data.job_id}")
             await self.push_to_processing_queue(data.processor_name, processing_message)
             job_output = db_job.to_job_output()
-        else:  # data.agent_type == NETWORK_AGENT_SERVER
+        elif data.agent_type == AgentType.PROCESSOR_SERVER:
             self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
             job_output = await self.push_to_processor_server(data.processor_name, data)
+        else:
+            message = f"Unexpected network agent type: {data.agent_type}"
+            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
         if not job_output:
             message = f"Failed to create job output for job input: {data}"
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
@@ -615,8 +616,8 @@ class ProcessingServer(FastAPI):
             self.log.debug("No processing jobs were consumed from the requests cache")
             return
         for data in consumed_requests:
-            self.log.info(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
-            db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
+            self.log.info(f"Changing the job status of: {data.job_id} from {JobState.cached} to {JobState.queued}")
+            db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=JobState.queued)
             workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
 
             # Lock the output file group pages for the current request
@@ -641,13 +642,13 @@ class ProcessingServer(FastAPI):
         mets_server_url = db_workspace.mets_server_url
         workspace_key = path_to_mets if path_to_mets else workspace_id
 
-        if result_job_state == StateEnum.failed:
+        if result_job_state == JobState.failed:
             await self.cache_processing_requests.cancel_dependent_jobs(
                 workspace_key=workspace_key,
                 processing_job_id=result_job_id
             )
 
-        if result_job_state != StateEnum.success:
+        if result_job_state != JobState.success:
             # TODO: Handle other potential error cases
             pass
 
@@ -714,7 +715,7 @@ class ProcessingServer(FastAPI):
         tasks: List[ProcessorTask],
         mets_path: str,
         page_id: str,
-        agent_type: NETWORK_AGENT_WORKER
+        agent_type: AgentType.PROCESSING_WORKER
     ) -> List[PYJobOutput]:
         temp_file_group_cache = {}
         responses = []
@@ -762,7 +763,7 @@ class ProcessingServer(FastAPI):
         mets_path: str,
         workflow: Union[UploadFile, None] = File(None),
         workflow_id: str = None,
-        agent_type: str = NETWORK_AGENT_WORKER,
+        agent_type: str = AgentType.PROCESSING_WORKER,
         page_id: str = None,
         page_wise: bool = False,
         workflow_callback_url: str = None
@@ -836,7 +837,7 @@ class ProcessingServer(FastAPI):
             res.setdefault(job.processor_name, {})
             res[job.processor_name].setdefault(job.state.value, 0)
             res[job.processor_name][job.state.value] += 1
-            if job.state == StateEnum.failed:
+            if job.state == JobState.failed:
                 if failed_tasks_key not in res:
                     res[failed_tasks_key] = failed_tasks
                 failed_tasks.setdefault(job.processor_name, [])
@@ -846,7 +847,7 @@ class ProcessingServer(FastAPI):
                 })
         return res
 
-    async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, StateEnum]:
+    async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, JobState]:
         """
         Simplified version of the `get_workflow_info` that returns a single state for the entire workflow.
         - If a single processing job fails, the entire workflow job status is set to FAILED.
@@ -857,21 +858,21 @@ class ProcessingServer(FastAPI):
         workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
         job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
         jobs = await db_get_processing_jobs(job_ids)
-        workflow_job_state = StateEnum.unset
+        workflow_job_state = JobState.unset
         success_jobs = 0
         for job in jobs:
-            if job.state == StateEnum.cached or job.state == StateEnum.queued:
+            if job.state == JobState.cached or job.state == JobState.queued:
                 continue
-            if job.state == StateEnum.failed or job.state == StateEnum.cancelled:
-                workflow_job_state = StateEnum.failed
+            if job.state == JobState.failed or job.state == JobState.cancelled:
+                workflow_job_state = JobState.failed
                 break
-            if job.state == StateEnum.running:
-                workflow_job_state = StateEnum.running
-            if job.state == StateEnum.success:
+            if job.state == JobState.running:
+                workflow_job_state = JobState.running
+            if job.state == JobState.success:
                 success_jobs += 1
         # if all jobs succeeded
         if len(job_ids) == success_jobs:
-            workflow_job_state = StateEnum.success
+            workflow_job_state = JobState.success
         return {"state": workflow_job_state}
 
     async def upload_workflow(self, workflow: UploadFile) -> Dict:

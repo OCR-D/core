@@ -1,22 +1,8 @@
-from enum import Enum
 from logging import Logger
 from typing import Any
 
 from re import search as re_search
-
-
-class AgentType(str, Enum):
-    PROCESSING_WORKER = "worker"
-    PROCESSOR_SERVER = "server"
-
-
-class DeployType(str, Enum):
-    # Deployed by the Processing Server config file
-    DOCKER = "docker"
-    NATIVE = "native"
-    # Deployed through a registration endpoint of the Processing Server
-    # TODO: That endpoint is still not implemented
-    EXTERNAL = "external"
+from ..constants import AgentType, DeployType
 
 
 # TODO: Find appropriate replacement for the hack

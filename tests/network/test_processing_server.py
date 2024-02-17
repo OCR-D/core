@@ -1,21 +1,20 @@
 from time import sleep
 from requests import get, post
-from src.ocrd_network import NETWORK_AGENT_WORKER
-from src.ocrd_network.models import StateEnum
+from src.ocrd_network import AgentType, JobState
 from tests.base import assets
 from tests.network.config import test_config
 
 PROCESSING_SERVER_URL = test_config.PROCESSING_SERVER_URL
 
 
-def poll_till_timeout_fail_or_success(test_url: str, tries: int, wait: int) -> StateEnum:
-    job_state = StateEnum.unset
+def poll_till_timeout_fail_or_success(test_url: str, tries: int, wait: int) -> JobState:
+    job_state = JobState.unset
     while tries > 0:
         sleep(wait)
         response = get(url=test_url)
         assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
         job_state = response.json()["state"]
-        if job_state == StateEnum.success or job_state == StateEnum.failed:
+        if job_state == JobState.success or job_state == JobState.failed:
             break
         tries -= 1
     return job_state
@@ -48,7 +47,7 @@ def test_processing_server_processing_request():
         "path_to_mets": path_to_mets,
         "input_file_grps": ['OCR-D-IMG'],
         "output_file_grps": ['OCR-D-DUMMY'],
-        "agent_type": NETWORK_AGENT_WORKER,
+        "agent_type": AgentType.PROCESSING_WORKER,
         "parameters": {}
     }
     test_processor = 'ocrd-dummy'
@@ -69,7 +68,7 @@ def test_processing_server_processing_request():
         tries=10,
         wait=10
     )
-    assert job_state == StateEnum.success
+    assert job_state == JobState.success
 
 
 def test_processing_server_workflow_request():
@@ -94,4 +93,4 @@ def test_processing_server_workflow_request():
         tries=30,
         wait=10
     )
-    assert job_state == StateEnum.success
+    assert job_state == JobState.success

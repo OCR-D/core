@@ -3,7 +3,8 @@ from hashlib import md5
 from pathlib import Path
 from pytest import raises
 from tests.base import assets
-from src.ocrd_network.models import DBProcessorJob, DBWorkflowScript, StateEnum
+from src.ocrd_network import JobState
+from src.ocrd_network.models import DBProcessorJob, DBWorkflowScript
 from src.ocrd_network.database import (
     sync_db_create_processing_job,
     sync_db_get_processing_job,
@@ -23,7 +24,7 @@ def test_db_processing_job_create(mongo_client):
         db_processing_job=DBProcessorJob(
             job_id=job_id,
             processor_name='ocrd-dummy',
-            state=StateEnum.cached,
+            state=JobState.cached,
             path_to_mets='/ocrd/dummy/path',
             input_file_grps=['DEFAULT'],
             output_file_grps=['OCR-D-DUMMY']
@@ -34,7 +35,7 @@ def test_db_processing_job_create(mongo_client):
     assert db_found_processing_job
     assert db_found_processing_job.job_id == job_id
     assert db_found_processing_job.processor_name == 'ocrd-dummy'
-    assert db_found_processing_job.state == StateEnum.cached
+    assert db_found_processing_job.state == JobState.cached
     assert db_found_processing_job.path_to_mets == '/ocrd/dummy/path'
     assert db_found_processing_job.input_file_grps == ['DEFAULT']
     assert db_found_processing_job.output_file_grps == ['OCR-D-DUMMY']
@@ -49,7 +50,7 @@ def test_db_processing_job_update(mongo_client):
         db_processing_job=DBProcessorJob(
             job_id=job_id,
             processor_name='ocrd-dummy',
-            state=StateEnum.cached,
+            state=JobState.cached,
             path_to_mets='/ocrd/dummy/path',
             input_file_grps=['DEFAULT'],
             output_file_grps=['OCR-D-DUMMY']
@@ -58,15 +59,15 @@ def test_db_processing_job_update(mongo_client):
     assert db_created_processing_job
     db_found_processing_job = sync_db_get_processing_job(job_id=job_id)
     assert db_found_processing_job
-    db_updated_processing_job = sync_db_update_processing_job(job_id=job_id, state=StateEnum.running)
+    db_updated_processing_job = sync_db_update_processing_job(job_id=job_id, state=JobState.running)
     assert db_found_processing_job != db_updated_processing_job
     db_found_updated_processing_job = sync_db_get_processing_job(job_id=job_id)
     assert db_found_updated_processing_job
     assert db_found_updated_processing_job == db_updated_processing_job
-    assert db_found_updated_processing_job.state == StateEnum.running
+    assert db_found_updated_processing_job.state == JobState.running
 
     with raises(ValueError):
-        sync_db_update_processing_job(job_id='non-existing', state=StateEnum.running)
+        sync_db_update_processing_job(job_id='non-existing', state=JobState.running)
         sync_db_update_processing_job(job_id=job_id, non_existing_field='dummy_value')
         sync_db_update_processing_job(job_id=job_id, processor_name='non-updatable-field')
 

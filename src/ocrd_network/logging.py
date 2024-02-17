@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from ocrd_utils import safe_filename, config
-from .constants import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER, OCRD_NETWORK_MODULES
+from .constants import AgentType, OCRD_NETWORK_MODULES
 
 
 def get_root_logging_dir(module_name: str) -> Path:
@@ -29,11 +29,11 @@ def get_processing_server_logging_file_path(pid: int) -> Path:
 
 
 def get_processing_worker_logging_file_path(processor_name: str, pid: int) -> Path:
-    return get_root_logging_dir("processing_workers") / f"{NETWORK_AGENT_WORKER}.{pid}.{processor_name}.log"
+    return get_root_logging_dir("processing_workers") / f"{AgentType.PROCESSING_WORKER}.{pid}.{processor_name}.log"
 
 
 def get_processor_server_logging_file_path(processor_name: str, pid: int) -> Path:
-    return get_root_logging_dir("processor_servers") / f"{NETWORK_AGENT_SERVER}.{pid}.{processor_name}.log"
+    return get_root_logging_dir("processor_servers") / f"{AgentType.PROCESSOR_SERVER}.{pid}.{processor_name}.log"
 
 
 def get_mets_server_logging_file_path(mets_path: str) -> Path:

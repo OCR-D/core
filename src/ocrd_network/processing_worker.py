@@ -18,9 +18,9 @@ from pika.spec import Basic
 from time import sleep
 
 from ocrd_utils import config, getLogger, LOG_FORMAT
+from .constants import JobState
 from .database import sync_initiate_database, sync_db_get_workspace, sync_db_update_processing_job
 from .logging import get_processing_job_logging_file_path, get_processing_worker_logging_file_path
-from .models import StateEnum
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdProcessingMessage, OcrdResultMessage, RMQConsumer, RMQPublisher
 from .utils import (
@@ -216,7 +216,7 @@ class ProcessingWorker:
         job_log_file = get_processing_job_logging_file_path(job_id=job_id)
         sync_db_update_processing_job(
             job_id=job_id,
-            state=StateEnum.running,
+            state=JobState.running,
             path_to_mets=path_to_mets,
             start_time=start_time,
             log_file_path=job_log_file
@@ -246,7 +246,7 @@ class ProcessingWorker:
             execution_failed = True
         end_time = datetime.now()
         exec_duration = calculate_execution_time(start_time, end_time)
-        job_state = StateEnum.success if not execution_failed else StateEnum.failed
+        job_state = JobState.success if not execution_failed else JobState.failed
         sync_db_update_processing_job(
             job_id=job_id,
             state=job_state,

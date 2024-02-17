@@ -14,7 +14,7 @@ from ocrd_utils import (
     LOG_FORMAT,
     parse_json_string_with_comments
 )
-from .constants import NETWORK_API_TAG_PROCESSING
+from .constants import JobState, NETWORK_API_TAG_PROCESSING
 from .database import (
     DBProcessorJob,
     db_get_workspace,
@@ -23,7 +23,7 @@ from .database import (
     initiate_database
 )
 from .logging import get_processor_server_logging_file_path, get_processing_job_logging_file_path
-from .models import PYJobInput, PYJobOutput, PYOcrdTool, StateEnum
+from .models import PYJobInput, PYJobOutput, PYOcrdTool
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdResultMessage
 from .server_utils import (
@@ -143,7 +143,7 @@ class ProcessorServer(FastAPI):
                 **job_input.dict(exclude_unset=True, exclude_none=True),
                 job_id=job_id,
                 processor_name=self.processor_name,
-                state=StateEnum.queued
+                state=JobState.queued
             )
             await job.insert()
         else:
@@ -158,7 +158,7 @@ class ProcessorServer(FastAPI):
         job_log_file = get_processing_job_logging_file_path(job_id=job.job_id)
         await db_update_processing_job(
             job_id=job.job_id,
-            state=StateEnum.running,
+            state=JobState.running,
             start_time=start_time,
             log_file_path=job_log_file
         )
@@ -184,7 +184,7 @@ class ProcessorServer(FastAPI):
             execution_failed = True
         end_time = datetime.now()
         exec_duration = calculate_execution_time(start_time, end_time)
-        job_state = StateEnum.success if not execution_failed else StateEnum.failed
+        job_state = JobState.success if not execution_failed else JobState.failed
         await db_update_processing_job(
             job_id=job.job_id,
             state=job_state,
