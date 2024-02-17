@@ -458,14 +458,14 @@ class ProcessingServer(FastAPI):
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
     async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
+        # Append the processor name to the request itself
+        data.processor_name = processor_name
         self.validate_agent_type_and_existence(processor_name=data.processor_name, agent_type=data.agent_type)
         if data.job_id:
             message = f"Processing request job id field is set but must not be: {data.job_id}"
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         # Generate processing job id
         data.job_id = generate_id()
-        # Append the processor name to the request itself
-        data.processor_name = processor_name
         ocrd_tool = await self.get_processing_agent_ocrd_tool(
             processor_name=data.processor_name,
             agent_type=data.agent_type
