@@ -30,9 +30,10 @@ class PYJobInput(BaseModel):
             'example': {
                 'path_to_mets': '/path/to/mets.xml',
                 'description': 'The description of this execution',
-                'input_file_grps': ['INPUT_FILE_GROUP'],
-                'output_file_grps': ['OUTPUT_FILE_GROUP'],
-                'page_id': 'PAGE_ID',
+                'input_file_grps': ['DEFAULT'],
+                'output_file_grps': ['OCR-D-BIN'],
+                'agent_type': AgentType.PROCESSING_WORKER,
+                'page_id': 'PHYS_0001..PHYS_0003',
                 'parameters': {}
             }
         }
