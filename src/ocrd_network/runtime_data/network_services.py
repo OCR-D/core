@@ -159,26 +159,21 @@ class DataRabbitMQ(DataNetworkService):
         protocol: str = "amqp",
         vhost: str = "/"
     ) -> None:
-        host = config["address"]
-        port = int(config["port"])
-        self.vhost = vhost
-        ssh_dict = {}
-        if "ssh" in config:
-            ssh_dict = config["ssh"]
-        credentials_dict = {}
-        if "credentials" in config:
-            credentials_dict = config["credentials"]
-            username, password = credentials_dict["username"], credentials_dict["password"]
-            service_url = f"{protocol}://{username}:{password}@{host}:{port}{self.vhost}"
+        self.vhost = f"/{vhost}" if vhost != "/" else vhost
+        if cred_username and cred_password:
+            service_url = f"{protocol}://{cred_username}:{cred_password}@{host}:{port}{self.vhost}"
         else:
             service_url = f"{protocol}://{host}:{port}{self.vhost}"
         super().__init__(
             host=host,
             port=port,
-            ssh=ssh_dict,
-            credentials=credentials_dict,
+            ssh_username=ssh_username,
+            ssh_keypath=ssh_keypath,
+            ssh_password=ssh_password,
+            cred_username=cred_username,
+            cred_password=cred_password,
             service_url=service_url,
-            skip_deployment=config.get("skip_deployment", False),
+            skip_deployment=skip_deployment,
             pid=None
         )
 
