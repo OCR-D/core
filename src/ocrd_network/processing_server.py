@@ -617,7 +617,7 @@ class ProcessingServer(FastAPI):
             self.log.debug("No processing jobs were consumed from the requests cache")
             return
         for data in consumed_requests:
-            self.log.debug(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
+            self.log.info(f"Changing the job status of: {data.job_id} from {StateEnum.cached} to {StateEnum.queued}")
             db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=StateEnum.queued)
             workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
 
@@ -637,7 +637,7 @@ class ProcessingServer(FastAPI):
         result_job_state = result_message.state
         path_to_mets = result_message.path_to_mets
         workspace_id = result_message.workspace_id
-        self.log.debug(f"Result job_id: {result_job_id}, state: {result_job_state}")
+        self.log.info(f"Result job_id: {result_job_id}, state: {result_job_state}")
 
         db_workspace = await get_from_database_workspace(self.log, workspace_id, path_to_mets)
         mets_server_url = db_workspace.mets_server_url

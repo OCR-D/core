@@ -105,13 +105,13 @@ class Deployer:
         return processor_server_url
 
     def deploy_network_agents(self, mongodb_url: str, rabbitmq_url: str) -> None:
+        self.log.debug("Deploying processing workers/processor servers...")
         for host_data in self.data_hosts:
             host_data.deploy_network_agents(logger=self.log, mongodb_url=mongodb_url, rabbitmq_url=rabbitmq_url)
 
     def stop_network_agents(self) -> None:
         self.log.debug("Stopping processing workers/processor servers...")
         for host_data in self.data_hosts:
-            self.log.debug(f"Stopping network agents on host: {host_data.host}")
             host_data.stop_network_agents(logger=self.log)
 
     def stop_all(self) -> None:

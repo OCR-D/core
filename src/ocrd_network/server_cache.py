@@ -141,12 +141,11 @@ class CacheProcessingRequests:
             try:
                 (self.processing_requests[workspace_key]).remove(found_element)
                 # self.log.debug(f"Found cached request to be processed: {found_request}")
-                debug_message = f"""
-                Found cached request for processor: {found_element.processor_name}\n
-                Page ids: {found_element.page_id}\n
-                Job id: {found_element.job_id}\n
-                Job depends on: {found_element.depends_on}
-                """
+                debug_message = "Found cached request"
+                debug_message += f", processor: {found_element.processor_name}"
+                debug_message += f", page ids: {found_element.page_id}"
+                debug_message += f", job id: {found_element.job_id}"
+                debug_message += f", job depends on: {found_element.depends_on}"
                 self.log.debug(debug_message)
                 found_requests.append(found_element)
             except ValueError:
@@ -172,12 +171,11 @@ class CacheProcessingRequests:
         if not self.processing_requests.get(workspace_key, None):
             self.log.debug(f"Creating an internal request queue for workspace_key: {workspace_key}")
             self.processing_requests[workspace_key] = []
-        debug_message = f"""
-        Caching request for process: {data.processor_name}\n
-        Page ids: {data.page_id}\n
-        Job id: {data.job_id}\n
-        Job depends on: {data.depends_on}
-        """
+        debug_message = "Caching request"
+        debug_message += f", processor: {data.processor_name}"
+        debug_message += f", page ids: {data.page_id}"
+        debug_message += f", job id: {data.job_id}"
+        debug_message += f", jpb depends on: {data.depends_on}"
         self.log.debug(debug_message)
         # Add the processing request to the end of the internal queue
         self.processing_requests[workspace_key].append(data)
