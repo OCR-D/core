@@ -132,6 +132,7 @@ class DataMongoDB(DataNetworkService):
                 27017: self.port
             }
         self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
+        verify_mongodb_available(self.service_url)
         mongodb_host_info = f"{self.host}:{self.port}"
         logger.info(f"The MongoDB was deployed on host: {mongodb_host_info}")
         return self.service_url
@@ -190,8 +191,7 @@ class DataRabbitMQ(DataNetworkService):
         rmq_user, rmq_password = self.cred_username, self.cred_password
         if self.skip_deployment:
             logger.debug(f"RabbitMQ is managed externally. Skipping deployment.")
-            # Testing the UI front end running on port 15672
-            verify_rabbitmq_available(rmq_host, 15672, rmq_vhost, rmq_user, rmq_password)
+            verify_rabbitmq_available(rmq_host, rmq_port, rmq_vhost, rmq_user, rmq_password)
             return self.service_url
         if not env:
             env = [
@@ -212,8 +212,7 @@ class DataRabbitMQ(DataNetworkService):
                 25672: 25672
             }
         self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
-        # Testing the UI front end running on port 15672
-        verify_rabbitmq_available(rmq_host, 15672, rmq_vhost, rmq_user, rmq_password)
+        verify_rabbitmq_available(rmq_host, rmq_port, rmq_vhost, rmq_user, rmq_password)
         logger.info(f"The RabbitMQ server was deployed on host: {rmq_host}:{rmq_port}{rmq_vhost}")
         return self.service_url
 

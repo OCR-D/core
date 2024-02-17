@@ -4,8 +4,8 @@ from fastapi import UploadFile
 from functools import wraps
 from hashlib import md5
 from pika import URLParameters
-from pymongo import uri_parser as mongo_uri_parser
-from re import compile as re_compile, match as re_match, split as re_split
+from pymongo import MongoClient, uri_parser as mongo_uri_parser
+from re import compile as re_compile, match as re_match, split as re_split, sub as re_sub
 from requests import get as requests_get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
 from time import sleep
@@ -17,7 +17,7 @@ from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 from ocrd_utils import generate_range, REGEX_PREFIX
 from ocrd_validators import ProcessingServerConfigValidator
-from .rabbitmq_utils import OcrdResultMessage
+from .rabbitmq_utils import OcrdResultMessage, RMQPublisher
 
 
 def call_sync(func):
@@ -132,6 +132,7 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
 
 
 def verify_rabbitmq_available(host: str, port: int, vhost: str, username: str, password: str) -> None:
+    """
     # The protocol is intentionally set to HTTP instead of AMQP!
     if vhost != "/":
         vhost = f"/{vhost}"
@@ -139,14 +140,37 @@ def verify_rabbitmq_available(host: str, port: int, vhost: str, username: str, p
     if is_url_responsive(url=rabbitmq_test_url, tries=3):
         return
     raise RuntimeError(f"Verifying connection has failed: {rabbitmq_test_url}")
+    """
+
+    max_waiting_steps = 15
+    while max_waiting_steps > 0:
+        try:
+            dummy_publisher = RMQPublisher(host=host, port=port, vhost=vhost)
+            dummy_publisher.authenticate_and_connect(username=username, password=password)
+        except Exception:
+            max_waiting_steps -= 1
+            sleep(2)
+        else:
+            # TODO: Disconnect the dummy_publisher here before returning...
+            return
+    raise RuntimeError(f'Cannot connect to RabbitMQ host: {host}, port: {port}, '
+                       f'vhost: {vhost}, username: {username}')
 
 
 def verify_mongodb_available(mongo_url: str) -> None:
+    """
     # The protocol is intentionally set to HTTP instead of MONGODB!
     mongodb_test_url = mongo_url.replace("mongodb", "http")
     if is_url_responsive(url=mongodb_test_url, tries=3):
         return
     raise RuntimeError(f"Verifying connection has failed: {mongodb_test_url}")
+    """
+
+    try:
+        client = MongoClient(mongo_url, serverSelectionTimeoutMS=5000.0)
+        client.admin.command("ismaster")
+    except Exception:
+        raise RuntimeError(f'Cannot connect to MongoDB: {re_sub(r":[^@]+@", ":****@", mongo_url)}')
 
 
 def download_ocrd_all_tool_json(ocrd_all_url: str):
