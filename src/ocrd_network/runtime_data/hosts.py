@@ -7,11 +7,19 @@ from .network_agents import AgentType, DataNetworkAgent, DataProcessingWorker, D
 
 
 class DataHost:
-    def __init__(self, config: Dict) -> None:
-        self.host = config["address"]
-        self.username = config["username"]
-        self.password = config.get("password", None)
-        self.keypath = config.get("path_to_privkey", None)
+    def __init__(
+        self,
+        host: str,
+        username: str,
+        password: str,
+        keypath: str,
+        workers: List[Dict],
+        servers: List[Dict]
+    ) -> None:
+        self.host = host
+        self.username = username
+        self.password = password
+        self.keypath = keypath
 
         # These flags are used to track whether a connection of the specified
         # type should be created based on the received config file
@@ -32,10 +40,12 @@ class DataHost:
         self.network_agents_worker = []
         self.network_agents_server = []
 
-        self.__read_network_agents_from_config(
-            processing_workers=config.get("workers", []),
-            processor_servers=config.get("servers", [])
-        )
+        if not workers:
+            workers = []
+        if not servers:
+            servers = []
+
+        self.__parse_network_agents(processing_workers=workers, processor_servers=servers)
 
         # Used for caching deployed Processor Servers' ports on the current host
         # Key: processor_name, Value: list of ports
@@ -64,7 +74,7 @@ class DataHost:
         else:
             raise ValueError(f"Network agent type is unknown: {agent_data.agent_type}")
 
-    def __read_network_agents_from_config(self, processing_workers: List[Dict], processor_servers: List[Dict]):
+    def __parse_network_agents(self, processing_workers: List[Dict], processor_servers: List[Dict]):
         for worker in processing_workers:
             worker_data = DataProcessingWorker(
                 processor_name=worker["name"],

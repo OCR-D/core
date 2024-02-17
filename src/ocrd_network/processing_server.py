@@ -107,6 +107,7 @@ class ProcessingServer(FastAPI):
         # - retrieving runtime data of agents
         self.deployer = Deployer(config_path)
         self.mongodb_url = None
+        self.rabbitmq_url = None
         # TODO: Combine these under a single URL, rabbitmq_utils needs an update
         self.rmq_host = self.deployer.data_queue.host
         self.rmq_port = self.deployer.data_queue.port
@@ -275,18 +276,15 @@ class ProcessingServer(FastAPI):
         """ deploy agents (db, queue, workers) and start the processing server with uvicorn
         """
         try:
-            self.deployer.data_queue.deploy_rabbitmq(self.log)
-            rabbitmq_url = self.deployer.data_queue.service_url
-
-            self.deployer.data_mongo.deploy_mongodb(self.log)
-            self.mongodb_url = self.deployer.data_mongo.service_url
+            self.rabbitmq_url = self.deployer.deploy_rabbitmq()
+            self.mongodb_url = self.deployer.deploy_mongodb()
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.connect_publisher()
-            self.log.debug(f"Creating message queues on RabbitMQ instance url: {rabbitmq_url}")
+            self.log.debug(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
             self.create_message_queues()
 
-            self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=rabbitmq_url)
+            self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
         except Exception as error:
             self.log.exception(f"Failed to start the Processing Server, error: {error}")
             self.log.warning("Trying to stop previously deployed services and network agents.")

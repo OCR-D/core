@@ -12,19 +12,22 @@ class DataNetworkService:
         self,
         host: str,
         port: int,
-        ssh: Dict,
-        credentials: Dict,
+        ssh_username: str,
+        ssh_keypath: str,
+        ssh_password: str,
+        cred_username: str,
+        cred_password: str,
         service_url: str,
         skip_deployment: bool,
         pid: Optional[Any]
     ) -> None:
         self.host = host
         self.port = port
-        self.ssh_username = ssh.get("username", None)
-        self.ssh_keypath = ssh.get("path_to_privkey", None)
-        self.ssh_password = ssh.get("password", None)
-        self.cred_username = credentials.get("username", None)
-        self.cred_password = credentials.get("password", None)
+        self.ssh_username = ssh_username
+        self.ssh_keypath = ssh_keypath
+        self.ssh_password = ssh_password
+        self.cred_username = cred_username
+        self.cred_password = cred_password
         self.service_url = service_url
         self.skip_deployment = skip_deployment
         self.pid = pid
@@ -75,26 +78,32 @@ class DataNetworkService:
 
 
 class DataMongoDB(DataNetworkService):
-    def __init__(self, config: Dict, protocol: str = "mongodb") -> None:
-        host = config["address"]
-        port = int(config["port"])
-        ssh_dict = {}
-        if "ssh" in config:
-            ssh_dict = config["ssh"]
-        credentials_dict = {}
-        if "credentials" in config:
-            credentials_dict = config["credentials"]
-            username, password = credentials_dict["username"], credentials_dict["password"]
-            service_url = f"{protocol}://{username}:{password}@{host}:{port}"
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        ssh_username: str,
+        ssh_keypath: str,
+        ssh_password: str,
+        cred_username: str,
+        cred_password: str,
+        skip_deployment: bool,
+        protocol: str = "mongodb"
+    ) -> None:
+        if cred_username and cred_password:
+            service_url = f"{protocol}://{cred_username}:{cred_password}@{host}:{port}"
         else:
             service_url = f"{protocol}://{host}:{port}"
         super().__init__(
             host=host,
             port=port,
-            ssh=ssh_dict,
-            credentials=credentials_dict,
+            ssh_username=ssh_username,
+            ssh_keypath=ssh_keypath,
+            ssh_password=ssh_password,
+            cred_username=cred_username,
+            cred_password=cred_password,
             service_url=service_url,
-            skip_deployment=config.get("skip_deployment", False),
+            skip_deployment=skip_deployment,
             pid=None
         )
 
@@ -137,7 +146,19 @@ class DataMongoDB(DataNetworkService):
 
 
 class DataRabbitMQ(DataNetworkService):
-    def __init__(self, config: Dict, protocol: str = "amqp", vhost: str = "/") -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        ssh_username: str,
+        ssh_keypath: str,
+        ssh_password: str,
+        cred_username: str,
+        cred_password: str,
+        skip_deployment: bool,
+        protocol: str = "amqp",
+        vhost: str = "/"
+    ) -> None:
         host = config["address"]
         port = int(config["port"])
         self.vhost = vhost

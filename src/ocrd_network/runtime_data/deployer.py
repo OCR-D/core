@@ -15,19 +15,20 @@ from typing import Dict, List, Union
 from ocrd_utils import config, getLogger, safe_filename
 from ..logging import get_mets_server_logging_file_path
 from ..utils import is_mets_server_running, stop_mets_server, validate_and_load_config
-from . import DataHost, DataMongoDB, DataRabbitMQ, DeployType
+from .config_parser import parse_hosts_data, parse_mongodb_data, parse_rabbitmq_data
+from .hosts import DataHost
+from .network_agents import DeployType
+from .network_services import DataMongoDB, DataRabbitMQ
 
 
 class Deployer:
     def __init__(self, config_path: str) -> None:
         self.log = getLogger("ocrd_network.deployer")
         ps_config = validate_and_load_config(config_path)
-        self.data_mongo: DataMongoDB = DataMongoDB(ps_config["database"])
-        self.data_queue: DataRabbitMQ = DataRabbitMQ(ps_config["process_queue"])
-        self.data_hosts: List[DataHost] = []
+        self.data_mongo: DataMongoDB = parse_mongodb_data(ps_config["database"])
+        self.data_queue: DataRabbitMQ = parse_rabbitmq_data(ps_config["process_queue"])
+        self.data_hosts: List[DataHost] = parse_hosts_data(ps_config["hosts"])
         self.internal_callback_url = ps_config.get("internal_callback_url", None)
-        for config_host in ps_config["hosts"]:
-            self.data_hosts.append(DataHost(config_host))
         self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
 
     # TODO: Reconsider this.
@@ -113,6 +114,20 @@ class Deployer:
         for host_data in self.data_hosts:
             host_data.stop_network_agents(logger=self.log)
 
+    def deploy_rabbitmq(self) -> str:
+        self.data_queue.deploy_rabbitmq(self.log)
+        return self.data_queue.service_url
+
+    def stop_rabbitmq(self):
+        self.data_queue.stop_service_rabbitmq(self.log)
+
+    def deploy_mongodb(self) -> str:
+        self.data_mongo.deploy_mongodb(self.log)
+        return self.data_mongo.service_url
+
+    def stop_mongodb(self):
+        self.data_mongo.stop_service_mongodb(self.log)
+
     def stop_all(self) -> None:
         """
         The order of stopping is important to optimize graceful shutdown in the future.
@@ -120,8 +135,8 @@ class Deployer:
         a bad outcome and leave Processing Workers in an unpredictable state.
         """
         self.stop_network_agents()
-        self.data_mongo.stop_service_mongodb(self.log)
-        self.data_queue.stop_service_rabbitmq(self.log)
+        self.stop_mongodb()
+        self.stop_rabbitmq()
 
     # TODO: No support for TCP version yet
     def start_unix_mets_server(self, mets_path: str) -> Path:
