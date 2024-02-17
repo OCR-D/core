@@ -373,7 +373,7 @@ class ProcessingServer(FastAPI):
         )
         return processing_message
 
-    def check_if_queue_exists(self, processor_name) -> bool:
+    def check_if_queue_exists(self, processor_name: str) -> bool:
         try:
             # Only checks if the process queue exists, if not raises ChannelClosedByBroker
             self.rmq_publisher.create_queue(processor_name, passive=True)
@@ -440,7 +440,7 @@ class ProcessingServer(FastAPI):
         #  is needed on the Processing Server side
         if processor_name == 'ocrd-dummy':
             return True
-        return bool(self.check_if_queue_exists(processor_name))
+        return bool(self.check_if_queue_exists(processor_name=processor_name))
 
     def validate_agent_type_and_existence(self, processor_name: str, agent_type: AgentType) -> None:
         agent_exists = False
@@ -746,7 +746,7 @@ class ProcessingServer(FastAPI):
             responses.append(response)
         return responses
 
-    def validate_processing_agents_existence(self, tasks: List[ProcessorTask], agent_type: str) -> None:
+    def validate_processing_agents_existence(self, tasks: List[ProcessorTask], agent_type: AgentType) -> None:
         missing_agents = []
         for task in tasks:
             try:
