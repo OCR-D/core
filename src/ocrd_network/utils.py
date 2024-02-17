@@ -167,7 +167,7 @@ def verify_mongodb_available(mongo_url: str) -> None:
     """
 
     try:
-        client = MongoClient(mongo_url, serverSelectionTimeoutMS=5000.0)
+        client = MongoClient(mongo_url, serverSelectionTimeoutMS=60000.0)
         client.admin.command("ismaster")
     except Exception:
         raise RuntimeError(f'Cannot connect to MongoDB: {re_sub(r":[^@]+@", ":****@", mongo_url)}')
