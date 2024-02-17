@@ -21,10 +21,12 @@ properties:
     type: string
     enum:
       - CACHED
+      - CANCELLED
       - QUEUED
       - RUNNING
       - SUCCESS
       - FAILED
+      - UNSET
   path_to_mets:
     description: Path to a METS file
     type: string
