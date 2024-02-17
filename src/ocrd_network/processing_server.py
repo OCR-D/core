@@ -422,6 +422,9 @@ class ProcessingServer(FastAPI):
             if processor_server_url == '':
                 raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, error_message)
             ocrd_tool = self.query_ocrd_tool_json_from_server(processor_server_url)
+        else:
+            message = f"Unknown agent type: {agent_type}, {type(agent_type)}"
+            raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
         if not ocrd_tool:
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, error_message)
         return ocrd_tool
@@ -440,9 +443,6 @@ class ProcessingServer(FastAPI):
         return bool(self.check_if_queue_exists(processor_name))
 
     def validate_agent_type_and_existence(self, processor_name: str, agent_type: AgentType) -> None:
-        if agent_type != AgentType.PROCESSING_WORKER and agent_type != AgentType.PROCESSOR_SERVER:
-            message = f"Unknown network agent type: {agent_type}"
-            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         agent_exists = False
         if agent_type == AgentType.PROCESSOR_SERVER:
             if self.network_agent_exists_server(processor_name=processor_name):
@@ -450,6 +450,9 @@ class ProcessingServer(FastAPI):
         elif agent_type == AgentType.PROCESSING_WORKER:
             if self.network_agent_exists_worker(processor_name=processor_name):
                 agent_exists = True
+        else:
+            message = f"Unknown agent type: {agent_type}, {type(agent_type)}"
+            raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
         if not agent_exists:
             message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
@@ -555,8 +558,8 @@ class ProcessingServer(FastAPI):
             self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
             job_output = await self.push_to_processor_server(data.processor_name, data)
         else:
-            message = f"Unexpected network agent type: {data.agent_type}"
-            raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
+            message = f"Unknown agent type: {data.agent_type}, {type(data.agent_type)}"
+            raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
         if not job_output:
             message = f"Failed to create job output for job input: {data}"
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
@@ -715,7 +718,7 @@ class ProcessingServer(FastAPI):
         tasks: List[ProcessorTask],
         mets_path: str,
         page_id: str,
-        agent_type: AgentType.PROCESSING_WORKER
+        agent_type: AgentType = AgentType.PROCESSING_WORKER
     ) -> List[PYJobOutput]:
         temp_file_group_cache = {}
         responses = []
