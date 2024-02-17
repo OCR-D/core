@@ -412,7 +412,7 @@ class ProcessingServer(FastAPI):
         #  that are not deployed. This may or may not be desired.
         return ocrd_tool
 
-    async def get_processing_agent_ocrd_tool(self, processor_name: str, agent_type: str) -> dict:
+    async def get_processing_agent_ocrd_tool(self, processor_name: str, agent_type: AgentType) -> dict:
         ocrd_tool = {}
         error_message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
         if agent_type == AgentType.PROCESSING_WORKER:
@@ -439,7 +439,7 @@ class ProcessingServer(FastAPI):
             return True
         return bool(self.check_if_queue_exists(processor_name))
 
-    def validate_agent_type_and_existence(self, processor_name: str, agent_type: str) -> None:
+    def validate_agent_type_and_existence(self, processor_name: str, agent_type: AgentType) -> None:
         if agent_type != AgentType.PROCESSING_WORKER and agent_type != AgentType.PROCESSOR_SERVER:
             message = f"Unknown network agent type: {agent_type}"
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
@@ -763,7 +763,7 @@ class ProcessingServer(FastAPI):
         mets_path: str,
         workflow: Union[UploadFile, None] = File(None),
         workflow_id: str = None,
-        agent_type: str = AgentType.PROCESSING_WORKER,
+        agent_type: AgentType = AgentType.PROCESSING_WORKER,
         page_id: str = None,
         page_wise: bool = False,
         workflow_callback_url: str = None
