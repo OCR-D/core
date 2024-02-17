@@ -3,7 +3,8 @@ from logging import Logger
 from typing import Any, Dict, List, Optional, Union
 
 from ..constants import DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ, DOCKER_RABBIT_MQ_FEATURES
-from .connection_clients import create_docker_client, verify_mongodb_available, verify_rabbitmq_available
+from ..utils import verify_mongodb_available, verify_rabbitmq_available
+from .connection_clients import create_docker_client
 
 
 class DataNetworkService:
@@ -173,7 +174,8 @@ class DataRabbitMQ(DataNetworkService):
         rmq_user, rmq_password = self.cred_username, self.cred_password
         if self.skip_deployment:
             logger.debug(f"RabbitMQ is managed externally. Skipping deployment.")
-            verify_rabbitmq_available(rmq_host, rmq_port, rmq_vhost, rmq_user, rmq_password)
+            # Testing the UI front end running on port 15672
+            verify_rabbitmq_available(rmq_host, 15672, rmq_vhost, rmq_user, rmq_password)
             return self.service_url
         if not env:
             env = [
@@ -194,7 +196,8 @@ class DataRabbitMQ(DataNetworkService):
                 25672: 25672
             }
         self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
-        verify_rabbitmq_available(rmq_host, rmq_port, rmq_vhost, rmq_user, rmq_password)
+        # Testing the UI front end running on port 15672
+        verify_rabbitmq_available(rmq_host, 15672, rmq_vhost, rmq_user, rmq_password)
         logger.info(f"The RabbitMQ server was deployed on host: {rmq_host}:{rmq_port}{rmq_vhost}")
         return self.service_url
 

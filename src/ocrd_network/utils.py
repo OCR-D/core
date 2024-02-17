@@ -8,6 +8,7 @@ from pymongo import uri_parser as mongo_uri_parser
 from re import compile as re_compile, match as re_match, split as re_split
 from requests import get as requests_get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
+from time import sleep
 from typing import Dict, List
 from uuid import uuid4
 from yaml import safe_load
@@ -77,13 +78,14 @@ def generate_workflow_content_hash(workflow_content: str, encoding: str = "utf-8
     return md5(workflow_content.encode(encoding)).hexdigest()
 
 
-def is_url_responsive(url: str, tries: int = 1) -> bool:
+def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3) -> bool:
     while tries > 0:
         try:
             if requests_get(url).status_code == 200:
                 return True
         except Exception:
             continue
+        sleep(wait_time)
         tries -= 1
     return False
 
@@ -127,6 +129,24 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
         'vhost': url_params.virtual_host
     }
     return parsed_data
+
+
+def verify_rabbitmq_available(host: str, port: int, vhost: str, username: str, password: str) -> None:
+    # The protocol is intentionally set to HTTP instead of AMQP!
+    if vhost != "/":
+        vhost = f"/{vhost}"
+    rabbitmq_test_url = f"http://{username}:{password}@{host}:{port}{vhost}"
+    if is_url_responsive(url=rabbitmq_test_url, tries=3):
+        return
+    raise RuntimeError(f"Verifying connection has failed: {rabbitmq_test_url}")
+
+
+def verify_mongodb_available(mongo_url: str) -> None:
+    # The protocol is intentionally set to HTTP instead of MONGODB!
+    mongodb_test_url = mongo_url.replace("mongodb", "http")
+    if is_url_responsive(url=mongodb_test_url, tries=3):
+        return
+    raise RuntimeError(f"Verifying connection has failed: {mongodb_test_url}")
 
 
 def download_ocrd_all_tool_json(ocrd_all_url: str):

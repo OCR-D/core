@@ -2,26 +2,6 @@ from __future__ import annotations
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
-from pymongo import MongoClient
-from re import sub as re_sub
-from time import sleep
-
-# TODO: This is a bad usage! Refactor.
-from ..rabbitmq_utils import RMQPublisher
-
-
-def create_ssh_client(address: str, username: str, password: str = "", keypath: str = "") -> SSHClient:
-    client = SSHClient()
-    client.set_missing_host_key_policy(AutoAddPolicy)
-    try:
-        client.connect(hostname=address, username=username, password=password, key_filename=keypath)
-    except Exception as error:
-        raise Exception(f"Error creating SSHClient of host '{address}', reason: {error}") from error
-    return client
-
-
-def create_docker_client(address: str, username: str, password: str = "", keypath: str = "") -> CustomDockerClient:
-    return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
 class CustomDockerClient(DockerClient):
@@ -78,31 +58,15 @@ class CustomDockerClient(DockerClient):
             self.ssh_client.set_missing_host_key_policy(AutoAddPolicy)
 
 
-def verify_rabbitmq_available(
-    host: str,
-    port: int,
-    vhost: str,
-    username: str,
-    password: str
-) -> None:
-    max_waiting_steps = 15
-    while max_waiting_steps > 0:
-        try:
-            dummy_publisher = RMQPublisher(host=host, port=port, vhost=vhost)
-            dummy_publisher.authenticate_and_connect(username=username, password=password)
-        except Exception:
-            max_waiting_steps -= 1
-            sleep(2)
-        else:
-            # TODO: Disconnect the dummy_publisher here before returning...
-            return
-    raise RuntimeError(f'Cannot connect to RabbitMQ host: {host}, port: {port}, '
-                       f'vhost: {vhost}, username: {username}')
+def create_docker_client(address: str, username: str, password: str = "", keypath: str = "") -> CustomDockerClient:
+    return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
-def verify_mongodb_available(mongo_url: str) -> None:
+def create_ssh_client(address: str, username: str, password: str = "", keypath: str = "") -> SSHClient:
+    client = SSHClient()
+    client.set_missing_host_key_policy(AutoAddPolicy)
     try:
-        client = MongoClient(mongo_url, serverSelectionTimeoutMS=1000.0)
-        client.admin.command("ismaster")
-    except Exception:
-        raise RuntimeError(f'Cannot connect to MongoDB: {re_sub(r":[^@]+@", ":****@", mongo_url)}')
+        client.connect(hostname=address, username=username, password=password, key_filename=keypath)
+    except Exception as error:
+        raise Exception(f"Error creating SSHClient of host '{address}', reason: {error}") from error
+    return client
