@@ -57,7 +57,8 @@ def test_processing_server_processing_request():
         headers={"accept": "application/json"},
         json=test_processing_job_input
     )
-    # print(response.json())
+    print(response.json())
+    print(response.__dict__)
     assert response.status_code == 200, \
         f'Processing server: {test_url}, {response.status_code}'
     processing_job_id = response.json()["job_id"]
@@ -84,6 +85,7 @@ def test_processing_server_workflow_request():
         files={"workflow": open(path_to_dummy_wf, 'rb')}
     )
     # print(response.json())
+    # print(response.__dict__)
     assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
     wf_job_id = response.json()["job_id"]
     assert wf_job_id
