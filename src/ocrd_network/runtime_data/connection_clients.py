@@ -2,6 +2,7 @@ from __future__ import annotations
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
+from typing import Optional
 
 
 class CustomDockerClient(DockerClient):
@@ -26,23 +27,36 @@ class CustomDockerClient(DockerClient):
     """
 
     def __init__(self, user: str, host: str, **kwargs) -> None:
-        # the super-constructor is not called on purpose: it solely instantiates the APIClient. The
-        # missing `version` in that call would raise an error. APIClient is provided here as a
-        # replacement for what the super-constructor does
+        # The super-constructor is not called on purpose. It solely instantiates the APIClient.
+        # Missing 'version' in that call would raise an error.
+        # The APIClient is provided here as a replacement for what the super-constructor does
         if not (user and host):
-            raise ValueError('Missing argument: user and host must both be provided')
-        if ('password' not in kwargs) != ('keypath' not in kwargs):
-            raise ValueError('Missing argument: one of password and keyfile is needed')
-        self.api = APIClient(f'ssh://{host}', use_ssh_client=True, version='1.41')
-        ssh_adapter = self.CustomSshHttpAdapter(f'ssh://{user}@{host}:22', **kwargs)
-        self.api.mount('http+docker://ssh', ssh_adapter)
+            raise ValueError("Missing 'user' and 'host' - both must be provided")
+        if ("password" not in kwargs) and ("keypath" not in kwargs):
+            raise ValueError("Missing 'password' or 'keypath' - one must be provided")
+        if ("password" in kwargs) and ("keypath" in kwargs):
+            raise ValueError("Both 'password' and 'keypath' provided - one must be provided")
+        self.api = APIClient(
+            base_url=f"ssh://{host}",
+            use_ssh_client=True,
+            version="1.41"
+        )
+        self.api.mount(
+            prefix="http+docker://ssh",
+            adapter=self.CustomSshHttpAdapter(
+                base_url=f"ssh://{user}@{host}:22",
+                **kwargs
+            )
+        )
 
     class CustomSshHttpAdapter(SSHHTTPAdapter):
-        def __init__(self, base_url, password: str = "", keypath: str = "") -> None:
+        def __init__(self, base_url, password: Optional[str], keypath: Optional[str]) -> None:
             self.password = password
             self.keypath = keypath
-            if bool(self.password) == bool(self.keypath):
-                raise Exception("Either 'password' or 'keypath' must be provided")
+            if not self.password and not self.keypath:
+                raise Exception("Missing 'password' or 'keypath' - one must be provided")
+            if self.password and self.keypath:
+                raise Exception("Both 'password' and 'keypath' provided - one must be provided")
             super().__init__(base_url)
 
         def _create_paramiko_client(self, base_url: str) -> None:
@@ -52,17 +66,27 @@ class CustomDockerClient(DockerClient):
             """
             super()._create_paramiko_client(base_url)
             if self.password:
-                self.ssh_params['password'] = self.password
+                self.ssh_params["password"] = self.password
             elif self.keypath:
-                self.ssh_params['key_filename'] = self.keypath
+                self.ssh_params["key_filename"] = self.keypath
             self.ssh_client.set_missing_host_key_policy(AutoAddPolicy)
 
 
-def create_docker_client(address: str, username: str, password: str = "", keypath: str = "") -> CustomDockerClient:
+def create_docker_client(
+    address: str,
+    username: str,
+    password: Optional[str],
+    keypath: Optional[str]
+) -> CustomDockerClient:
     return CustomDockerClient(username, address, password=password, keypath=keypath)
 
 
-def create_ssh_client(address: str, username: str, password: str = "", keypath: str = "") -> SSHClient:
+def create_ssh_client(
+    address: str,
+    username: str,
+    password: Optional[str],
+    keypath: Optional[str]
+) -> SSHClient:
     client = SSHClient()
     client.set_missing_host_key_policy(AutoAddPolicy)
     try:

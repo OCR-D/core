@@ -10,11 +10,11 @@ def parse_mongodb_data(db_config: Dict) -> DataMongoDB:
     return DataMongoDB(
         host=db_config["address"],
         port=int(db_config["port"]),
-        ssh_username=db_ssh.get("username", ""),
-        ssh_keypath=db_ssh.get("priv_key_path", ""),
-        ssh_password=db_ssh.get("password", ""),
-        cred_username=db_credentials.get("username", ""),
-        cred_password=db_credentials.get("password", ""),
+        ssh_username=db_ssh.get("username", None),
+        ssh_keypath=db_ssh.get("priv_key_path", None),
+        ssh_password=db_ssh.get("password", None),
+        cred_username=db_credentials.get("username", None),
+        cred_password=db_credentials.get("password", None),
         skip_deployment=db_config.get("skip_deployment", False)
     )
 
@@ -26,11 +26,11 @@ def parse_rabbitmq_data(rmq_config: Dict) -> DataRabbitMQ:
     return DataRabbitMQ(
         host=rmq_config["address"],
         port=int(rmq_config["port"]),
-        ssh_username=rmq_ssh.get("username", ""),
-        ssh_keypath=rmq_ssh.get("priv_key_path", ""),
-        ssh_password=rmq_ssh.get("password", ""),
-        cred_username=rmq_credentials.get("username", ""),
-        cred_password=rmq_credentials.get("password", ""),
+        ssh_username=rmq_ssh.get("username", None),
+        ssh_keypath=rmq_ssh.get("priv_key_path", None),
+        ssh_password=rmq_ssh.get("password", None),
+        cred_username=rmq_credentials.get("username", None),
+        cred_password=rmq_credentials.get("password", None),
         skip_deployment=rmq_config.get("skip_deployment", False)
     )
 
