@@ -571,10 +571,10 @@ class ProcessingServer(FastAPI):
             encoded_message = OcrdProcessingMessage.encode_yml(processing_message)
             self.rmq_publisher.publish_to_queue(queue_name=processor_name, message=encoded_message)
         except Exception as error:
-            message = f"""
-            Processing server has failed to push processing message to queue: {processor_name}\n
-            Processing message: {processing_message}\n
-            """
+            message = (
+                f"Processing server has failed to push processing message to queue: {processor_name}, "
+                f"Processing message: {processing_message.__dict__}"
+            )
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message, error)
 
     async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
@@ -753,11 +753,10 @@ class ProcessingServer(FastAPI):
                 # catching the error is not relevant here
                 missing_agents.append({task.executable, agent_type})
         if missing_agents:
-            message = f"""
-            Workflow validation has failed. 
-            The desired processor servers or processing workers are not found. 
-            Missing processing agents: {missing_agents}
-            """
+            message = (
+                "Workflow validation has failed. The desired network agents not found. "
+                f"Missing processing agents: {missing_agents}"
+            )
             raise_http_exception(self.log, status.HTTP_406_NOT_ACCEPTABLE, message)
 
     async def run_workflow(

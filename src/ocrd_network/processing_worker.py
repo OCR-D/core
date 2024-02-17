@@ -143,14 +143,14 @@ class ProcessingWorker:
             self.log.info(f'Starting to process the received message: {processing_message.__dict__}')
             self.process_message(processing_message=processing_message)
         except Exception as error:
-            msg = f"""
-            Failed to process message with tag: {delivery_tag}\n 
-            Processing message: {processing_message.__dict__}\n
-            """
-            self.log.exception(f"{msg}, error: {error}")
+            message = (
+                f"Failed to process message with tag: {delivery_tag}. "
+                f"Processing message: {processing_message.__dict__}"
+            )
+            self.log.exception(f"{message}, error: {error}")
             self.log.info(nack_message)
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
-            raise Exception(msg)
+            raise Exception(message)
 
         self.log.info(f'Successfully processed RabbitMQ message')
         self.log.debug(ack_message)
@@ -176,13 +176,13 @@ class ProcessingWorker:
         # Verify that the processor name in the processing message
         # matches the processor name of the current processing worker
         if self.processor_name != processing_message.processor_name:
-            msg = f"""
-            Processor name is not matching. 
-            Expected: {self.processor_name}, 
-            Got: {processing_message.processor_name}
-            """
-            self.log.exception(msg)
-            raise ValueError(msg)
+            message = (
+                "Processor name is not matching. "
+                f"Expected: {self.processor_name}, "
+                f"Got: {processing_message.processor_name}"
+            )
+            self.log.exception(message)
+            raise ValueError(message)
 
         # All of this is needed because the OcrdProcessingMessage object
         # may not contain certain keys. Simply passing None in the OcrdProcessingMessage constructor
@@ -234,15 +234,15 @@ class ProcessingWorker:
                 mets_server_url=mets_server_url
             )
         except Exception as error:
-            msg = f"""
-            processor_name: {self.processor_name}\n
-            path_to_mets: {path_to_mets}\n
-            input_file_groups: {input_file_grps}\n
-            output_file_groups: {output_file_grps}\n
-            page_id: {page_id}\n
-            parameters: {parameters}\n
-            """
-            self.log.exception(f"{msg}, error: {error}")
+            message = (
+                f"processor_name: {self.processor_name}, "
+                f"path_to_mets: {path_to_mets}, "
+                f"input_file_grps: {input_file_grps}, "
+                f"output_file_grps: {output_file_grps}, "
+                f"page_id: {page_id}, "
+                f"parameters: {parameters}"
+            )
+            self.log.exception(f"{message}, error: {error}")
             execution_failed = True
         end_time = datetime.now()
         exec_duration = calculate_execution_time(start_time, end_time)

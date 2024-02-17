@@ -126,11 +126,11 @@ def raise_http_exception(logger: Logger, status_code: int, message: str, error: 
 
 def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
     if bool(job_input.path_to_mets) == bool(job_input.workspace_id):
-        message = """
-        Wrong processing job input format. 
-        Either 'path_to_mets' or 'workspace_id' must be provided. 
-        Both are provided or both are missing.
-        """
+        message = (
+            "Wrong processing job input format. "
+            "Either 'path_to_mets' or 'workspace_id' must be provided. "
+            "Both are provided or both are missing."
+        )
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
     if not ocrd_tool:
         message = f"Failed parsing processing tasks from a workflow."
