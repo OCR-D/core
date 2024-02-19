@@ -5,9 +5,9 @@ from os import getpid
 from requests import get as requests_get
 from typing import Dict, List, Union
 from urllib.parse import urljoin
-import uvicorn
+from uvicorn import run as uvicorn_run
 
-from fastapi import FastAPI, File, HTTPException, Request, status, UploadFile
+from fastapi import APIRouter, FastAPI, File, HTTPException, Request, status, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from pika.exceptions import ChannelClosedByBroker
@@ -54,6 +54,7 @@ from .server_utils import (
     validate_workflow
 )
 from .utils import (
+    calculate_processing_request_timeout,
     download_ocrd_all_tool_json,
     expand_page_ids,
     generate_id,
@@ -75,10 +76,11 @@ class ProcessingServer(FastAPI):
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
         initLogging()
+        self.title = "OCR-D Processing Server"
         super().__init__(
+            title=self.title,
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
-            title="OCR-D Processing Server",
             description="OCR-D Processing Server"
         )
         self.log = getLogger("ocrd_network.processing_server")
@@ -147,7 +149,7 @@ class ProcessingServer(FastAPI):
             self.log.warning("Trying to stop previously deployed services and network agents.")
             self.deployer.stop_all()
             raise
-        uvicorn.run(self, host=self.hostname, port=int(self.port))
+        uvicorn_run(self, host=self.hostname, port=int(self.port))
 
     async def on_startup(self):
         await initiate_database(db_url=self.mongodb_url)
@@ -161,7 +163,8 @@ class ProcessingServer(FastAPI):
         await self.stop_deployed_agents()
 
     def add_api_routes_others(self):
-        self.router.add_api_route(
+        others_router = APIRouter()
+        others_router.add_api_route(
             path="/",
             endpoint=self.home_page,
             methods=["GET"],
@@ -169,17 +172,18 @@ class ProcessingServer(FastAPI):
             summary="Get information about the processing server"
         )
 
-        # Create routes
-        self.router.add_api_route(
+        others_router.add_api_route(
             path="/stop",
             endpoint=self.stop_deployed_agents,
             methods=["POST"],
             tags=[ServerApiTags.TOOLS],
             summary="Stop database, queue and processing-workers"
         )
+        self.include_router(others_router)
 
     def add_api_routes_processing(self):
-        self.router.add_api_route(
+        processing_router = APIRouter()
+        processing_router.add_api_route(
             path="/processor",
             endpoint=self.list_processors,
             methods=["GET"],
@@ -187,8 +191,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get a list of all available processors"
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/processor/info/{processor_name}",
             endpoint=self.get_network_agent_ocrd_tool,
             methods=["GET"],
@@ -196,8 +199,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get information about this processor"
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/processor/run/{processor_name}",
             endpoint=self.validate_and_forward_job_to_network_agent,
             methods=["POST"],
@@ -208,8 +210,7 @@ class ProcessingServer(FastAPI):
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/processor/job/{job_id}",
             endpoint=self.get_processor_job,
             methods=["GET"],
@@ -220,8 +221,7 @@ class ProcessingServer(FastAPI):
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/processor/log/{job_id}",
             endpoint=self.get_processor_job_log,
             methods=["GET"],
@@ -229,8 +229,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get the log file of a job id"
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/result_callback",
             endpoint=self.remove_job_from_request_cache,
             methods=["POST"],
@@ -238,9 +237,11 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Callback used by a worker or processor server for reporting result of a processing request"
         )
+        self.include_router(processing_router)
 
     def add_api_routes_workflow(self):
-        self.router.add_api_route(
+        workflow_router = APIRouter()
+        workflow_router.add_api_route(
             path="/workflow",
             endpoint=self.upload_workflow,
             methods=["POST"],
@@ -248,8 +249,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_201_CREATED,
             summary="Upload/Register a new workflow script"
         )
-
-        self.router.add_api_route(
+        workflow_router.add_api_route(
             path="/workflow/{workflow_id}",
             endpoint=self.download_workflow,
             methods=["GET"],
@@ -257,8 +257,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Download a workflow script"
         )
-
-        self.router.add_api_route(
+        workflow_router.add_api_route(
             path="/workflow/{workflow_id}",
             endpoint=self.replace_workflow,
             methods=["PUT"],
@@ -266,8 +265,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Update/Replace a workflow script"
         )
-
-        self.router.add_api_route(
+        workflow_router.add_api_route(
             path="/workflow/run",
             endpoint=self.run_workflow,
             methods=["POST"],
@@ -275,13 +273,11 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Run a workflow",
             response_model=PYWorkflowJobOutput,
-            response_model_exclude=["processing_job_ids"],
             response_model_exclude_defaults=True,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
-
-        self.router.add_api_route(
+        workflow_router.add_api_route(
             path="/workflow/job-simple/{workflow_job_id}",
             endpoint=self.get_workflow_info_simple,
             methods=["GET"],
@@ -289,8 +285,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get simplified overall job status"
         )
-
-        self.router.add_api_route(
+        workflow_router.add_api_route(
             path="/workflow/job/{workflow_job_id}",
             endpoint=self.get_workflow_info,
             methods=["GET"],
@@ -298,6 +293,7 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get information about a workflow run"
         )
+        self.include_router(workflow_router)
 
     async def home_page(self):
         message = f"The home page of the {self.title}"
@@ -517,6 +513,7 @@ class ProcessingServer(FastAPI):
         return job_output
 
     async def push_job_to_network_agent(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
+        job_output = None
         if data.agent_type == AgentType.PROCESSING_WORKER:
             processing_message = create_processing_message(self.log, db_job)
             self.log.debug(f"Pushing to processing worker: {data.processor_name}, {data.page_id}, {data.job_id}")
@@ -559,8 +556,8 @@ class ProcessingServer(FastAPI):
         # TODO: The amount of pages should come as a request input
         # TODO: cf https://github.com/OCR-D/core/pull/1030/files#r1152551161
         #  currently, use 200 as a default
-        amount_of_pages = 200
-        request_timeout = 20.0 * amount_of_pages  # 20 sec timeout per page
+        request_timeout = calculate_processing_request_timeout(amount_pages=200, timeout_per_page=20.0)
+
         # Post a processing job to the Processor Server asynchronously
         async with AsyncClient(timeout=Timeout(timeout=request_timeout, connect=30.0)) as client:
             response = await client.post(
@@ -684,16 +681,15 @@ class ProcessingServer(FastAPI):
 
         try:
             db_result_job = await db_get_processing_job(result_job_id)
+            # Unlock the output file group pages for the result processing request
+            await self._unlock_pages_of_workspace(
+                workspace_key=workspace_key,
+                output_file_grps=db_result_job.output_file_grps,
+                page_ids=expand_page_ids(db_result_job.page_id)
+            )
         except ValueError as error:
             message = f"Processing result job with id '{result_job_id}' not found in the DB."
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
-
-        # Unlock the output file group pages for the result processing request
-        await self._unlock_pages_of_workspace(
-            workspace_key=workspace_key,
-            output_file_grps=db_result_job.output_file_grps,
-            page_ids=expand_page_ids(db_result_job.page_id)
-        )
 
         consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
             workspace_key=workspace_key, mets_server_url=mets_server_url
@@ -753,7 +749,7 @@ class ProcessingServer(FastAPI):
         for task in tasks:
             try:
                 self.validate_agent_type_and_existence(processor_name=task.executable, agent_type=agent_type)
-            except HTTPException as error:
+            except HTTPException:
                 # catching the error is not relevant here
                 missing_agents.append({task.executable, agent_type})
         if missing_agents:
@@ -829,28 +825,50 @@ class ProcessingServer(FastAPI):
         await db_workflow_job.insert()
         return db_workflow_job.to_job_output()
 
+    @staticmethod
+    def _produce_workflow_status_response(processing_jobs: List[DBProcessorJob]) -> Dict:
+        response = {}
+        failed_tasks = {}
+        failed_tasks_key = "failed-processor-tasks"
+        for p_job in processing_jobs:
+            response.setdefault(p_job.processor_name, {})
+            response[p_job.processor_name].setdefault(p_job.state.value, 0)
+            response[p_job.processor_name][p_job.state.value] += 1
+            if p_job.state == JobState.failed:
+                if failed_tasks_key not in response:
+                    response[failed_tasks_key] = failed_tasks
+                failed_tasks.setdefault(p_job.processor_name, [])
+                failed_tasks[p_job.processor_name].append(
+                    {"job_id": p_job.job_id, "page_id": p_job.page_id}
+                )
+        return response
+
+    @staticmethod
+    def _produce_workflow_status_simple_response(processing_jobs: List[DBProcessorJob]) -> JobState:
+        workflow_job_state = JobState.unset
+        success_jobs = 0
+        for p_job in processing_jobs:
+            if p_job.state == JobState.cached or p_job.state == JobState.queued:
+                continue
+            if p_job.state == JobState.failed or p_job.state == JobState.cancelled:
+                workflow_job_state = JobState.failed
+                break
+            if p_job.state == JobState.running:
+                workflow_job_state = JobState.running
+            if p_job.state == JobState.success:
+                success_jobs += 1
+        if len(processing_jobs) == success_jobs:
+            workflow_job_state = JobState.success
+        return workflow_job_state
+
     async def get_workflow_info(self, workflow_job_id) -> Dict:
         """ Return list of a workflow's processor jobs
         """
         workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
         job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
         jobs = await db_get_processing_jobs(job_ids)
-        res = {}
-        failed_tasks = {}
-        failed_tasks_key = "failed-processor-tasks"
-        for job in jobs:
-            res.setdefault(job.processor_name, {})
-            res[job.processor_name].setdefault(job.state.value, 0)
-            res[job.processor_name][job.state.value] += 1
-            if job.state == JobState.failed:
-                if failed_tasks_key not in res:
-                    res[failed_tasks_key] = failed_tasks
-                failed_tasks.setdefault(job.processor_name, [])
-                failed_tasks[job.processor_name].append({
-                    "job_id": job.job_id,
-                    "page_id": job.page_id,
-                })
-        return res
+        response = self._produce_workflow_status_response(processing_jobs=jobs)
+        return response
 
     async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, JobState]:
         """
@@ -863,24 +881,10 @@ class ProcessingServer(FastAPI):
         workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
         job_ids: List[str] = [job_id for lst in workflow_job.processing_job_ids.values() for job_id in lst]
         jobs = await db_get_processing_jobs(job_ids)
-        workflow_job_state = JobState.unset
-        success_jobs = 0
-        for job in jobs:
-            if job.state == JobState.cached or job.state == JobState.queued:
-                continue
-            if job.state == JobState.failed or job.state == JobState.cancelled:
-                workflow_job_state = JobState.failed
-                break
-            if job.state == JobState.running:
-                workflow_job_state = JobState.running
-            if job.state == JobState.success:
-                success_jobs += 1
-        # if all jobs succeeded
-        if len(job_ids) == success_jobs:
-            workflow_job_state = JobState.success
+        workflow_job_state = self._produce_workflow_status_simple_response(processing_jobs=jobs)
         return {"state": workflow_job_state}
 
-    async def upload_workflow(self, workflow: UploadFile) -> Dict:
+    async def upload_workflow(self, workflow: UploadFile) -> Dict[str, str]:
         """ Store a script for a workflow in the database
         """
         workflow_content = await generate_workflow_content(workflow)
@@ -902,21 +906,21 @@ class ProcessingServer(FastAPI):
         await db_workflow_script.insert()
         return {"workflow_id": workflow_id}
 
-    async def replace_workflow(self, workflow_id, workflow: UploadFile) -> str:
+    async def replace_workflow(self, workflow_id, workflow: UploadFile) -> Dict[str, str]:
         """ Update a workflow script file in the database
         """
         try:
             db_workflow_script = await db_get_workflow_script(workflow_id)
+            workflow_content = await generate_workflow_content(workflow)
+            validate_workflow(self.log, workflow_content)
+            db_workflow_script.content = workflow_content
+            content_hash = generate_workflow_content_hash(workflow_content)
+            db_workflow_script.content_hash = content_hash
+            await db_workflow_script.save()
+            return {"workflow_id": db_workflow_script.workflow_id}
         except ValueError as error:
             message = f"Workflow script not existing for id '{workflow_id}'."
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
-        workflow_content = await generate_workflow_content(workflow)
-        validate_workflow(self.log, workflow_content)
-        db_workflow_script.content = workflow_content
-        content_hash = generate_workflow_content_hash(workflow_content)
-        db_workflow_script.content_hash = content_hash
-        await db_workflow_script.save()
-        return db_workflow_script.workflow_id
 
     async def download_workflow(self, workflow_id) -> PlainTextResponse:
         """ Load workflow-script from the database

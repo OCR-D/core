@@ -101,7 +101,7 @@ class PYWorkflowJobOutput(BaseModel):
     # A dictionary where each entry has:
     # key: page_id
     # value: List of and processing job ids sorted in dependency order
-    processing_job_ids: Dict
+    processing_job_ids: Dict[str, List[str]]
     path_to_mets: Optional[str]
     workspace_id: Optional[str]
     description: Optional[str]

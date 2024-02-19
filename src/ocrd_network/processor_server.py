@@ -3,7 +3,7 @@ from os import getpid
 from subprocess import run as subprocess_run, PIPE
 from uvicorn import run
 
-from fastapi import BackgroundTasks, FastAPI, status
+from fastapi import APIRouter, BackgroundTasks, FastAPI, status
 from fastapi.responses import FileResponse
 
 from ocrd_utils import (
@@ -69,8 +69,18 @@ class ProcessorServer(FastAPI):
         if not self.processor_name:
             self.processor_name = self.ocrd_tool["executable"]
 
-        # Create routes
-        self.router.add_api_route(
+    async def on_startup(self):
+        await initiate_database(db_url=self.db_url)
+
+    async def on_shutdown(self) -> None:
+        """
+        TODO: Perform graceful shutdown operations here
+        """
+        pass
+
+    def add_api_routes_processing(self):
+        processing_router = APIRouter()
+        processing_router.add_api_route(
             path="/info",
             endpoint=self.get_processor_info,
             methods=["GET"],
@@ -81,8 +91,7 @@ class ProcessorServer(FastAPI):
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/run",
             endpoint=self.create_processor_task,
             methods=["POST"],
@@ -93,8 +102,7 @@ class ProcessorServer(FastAPI):
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/job/{job_id}",
             endpoint=self.get_processor_job,
             methods=["GET"],
@@ -105,8 +113,7 @@ class ProcessorServer(FastAPI):
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
-
-        self.router.add_api_route(
+        processing_router.add_api_route(
             path="/log/{job_id}",
             endpoint=self.get_processor_job_log,
             methods=["GET"],
@@ -114,15 +121,6 @@ class ProcessorServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get the log file of a job id"
         )
-
-    async def on_startup(self):
-        await initiate_database(db_url=self.db_url)
-
-    async def on_shutdown(self) -> None:
-        """
-        TODO: Perform graceful shutdown operations here
-        """
-        pass
 
     async def get_processor_info(self):
         if not self.ocrd_tool:

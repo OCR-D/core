@@ -206,13 +206,13 @@ async def sync_db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return await db_get_workflow_job(job_id)
 
 
-async def db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+async def db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
     jobs = await DBProcessorJob.find(In(DBProcessorJob.job_id, job_ids)).to_list()
     return jobs
 
 
 @call_sync
-async def sync_db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+async def sync_db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
     return await db_get_processing_jobs(job_ids)
 
 

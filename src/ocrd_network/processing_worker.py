@@ -201,12 +201,11 @@ class ProcessingWorker:
         parameters = processing_message.parameters if processing_message.parameters else {}
 
         if not path_to_mets and not workspace_id:
-            msg = f"'path_to_mets' nor 'workspace_id' was set in the ocrd processing message"
+            msg = f"Both 'path_to_mets' and 'workspace_id' are missing in the OcrdProcessingMessage."
             self.log.exception(msg)
             raise ValueError(msg)
 
-        if path_to_mets:
-            mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
+        mets_server_url = sync_db_get_workspace(workspace_mets_path=path_to_mets).mets_server_url
         if not path_to_mets and workspace_id:
             path_to_mets = sync_db_get_workspace(workspace_id).workspace_mets_path
             mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url

@@ -39,6 +39,10 @@ def calculate_execution_time(start: datetime, end: datetime) -> int:
     return int((end - start).total_seconds() * 1000)
 
 
+def calculate_processing_request_timeout(amount_pages: int, timeout_per_page: float = 20.0) -> float:
+    return amount_pages * timeout_per_page
+
+
 def convert_url_to_uds_format(url: str) -> str:
     return f"http+unix://{url.replace('/', '%2F')}"
 
@@ -205,6 +209,9 @@ def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> 
 
 def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = None) -> List[str]:
     return get_ocrd_workspace_instance(mets_path=mets_path, mets_server_url=mets_server_url).mets.physical_pages
+
+
+
 
 
 def is_mets_server_running(mets_server_url: str) -> bool:
