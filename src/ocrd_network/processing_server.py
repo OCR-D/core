@@ -129,6 +129,49 @@ class ProcessingServer(FastAPI):
         else:
             self.internal_job_callback_url = f"http://{host}:{port}/result_callback"
 
+        self.add_api_routes_others()
+        self.add_api_routes_processing()
+        self.add_api_routes_workflow()
+
+        @self.exception_handler(RequestValidationError)
+        async def validation_exception_handler(request: Request, exc: RequestValidationError):
+            exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+            self.log.error(f'{request}: {exc_str}')
+            content = {'status_code': 10422, 'message': exc_str, 'data': None}
+            return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    def start(self) -> None:
+        """ deploy agents (db, queue, workers) and start the processing server with uvicorn
+        """
+        try:
+            self.rabbitmq_url = self.deployer.deploy_rabbitmq()
+            self.mongodb_url = self.deployer.deploy_mongodb()
+
+            # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
+            self.connect_publisher()
+            self.log.debug(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
+            self.create_message_queues()
+
+            self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
+        except Exception as error:
+            self.log.exception(f"Failed to start the Processing Server, error: {error}")
+            self.log.warning("Trying to stop previously deployed services and network agents.")
+            self.deployer.stop_all()
+            raise
+        uvicorn.run(self, host=self.hostname, port=int(self.port))
+
+    async def on_startup(self):
+        await initiate_database(db_url=self.mongodb_url)
+
+    async def on_shutdown(self) -> None:
+        """
+        - hosts and pids should be stored somewhere
+        - ensure queue is empty or processor is not currently running
+        - connect to hosts and kill pids
+        """
+        await self.stop_deployed_agents()
+
+    def add_api_routes_others(self):
         self.router.add_api_route(
             path="/",
             endpoint=self.home_page,
@@ -144,6 +187,25 @@ class ProcessingServer(FastAPI):
             methods=["POST"],
             tags=[NETWORK_API_TAG_TOOLS],
             summary="Stop database, queue and processing-workers"
+        )
+
+    def add_api_routes_processing(self):
+        self.router.add_api_route(
+            path="/processor",
+            endpoint=self.list_processors,
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
+            status_code=status.HTTP_200_OK,
+            summary="Get a list of all available processors"
+        )
+
+        self.router.add_api_route(
+            path="/processor/info/{processor_name}",
+            endpoint=self.get_network_agent_ocrd_tool,
+            methods=["GET"],
+            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
+            status_code=status.HTTP_200_OK,
+            summary="Get information about this processor"
         )
 
         self.router.add_api_route(
@@ -188,22 +250,32 @@ class ProcessingServer(FastAPI):
             summary="Callback used by a worker or processor server for reporting result of a processing request"
         )
 
+    def add_api_routes_workflow(self):
         self.router.add_api_route(
-            path="/processor/info/{processor_name}",
-            endpoint=self.get_network_agent_ocrd_tool,
-            methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
-            status_code=status.HTTP_200_OK,
-            summary="Get information about this processor"
+            path="/workflow",
+            endpoint=self.upload_workflow,
+            methods=["POST"],
+            tags=[NETWORK_API_TAG_WORKFLOW],
+            status_code=status.HTTP_201_CREATED,
+            summary="Upload/Register a new workflow script"
         )
 
         self.router.add_api_route(
-            path="/processor",
-            endpoint=self.list_processors,
+            path="/workflow/{workflow_id}",
+            endpoint=self.download_workflow,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
+            tags=[NETWORK_API_TAG_WORKFLOW],
             status_code=status.HTTP_200_OK,
-            summary="Get a list of all available processors"
+            summary="Download a workflow script"
+        )
+
+        self.router.add_api_route(
+            path="/workflow/{workflow_id}",
+            endpoint=self.replace_workflow,
+            methods=["PUT"],
+            tags=[NETWORK_API_TAG_WORKFLOW],
+            status_code=status.HTTP_200_OK,
+            summary="Update/Replace a workflow script"
         )
 
         self.router.add_api_route(
@@ -221,15 +293,6 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path="/workflow/job/{workflow_job_id}",
-            endpoint=self.get_workflow_info,
-            methods=["GET"],
-            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Get information about a workflow run"
-        )
-
-        self.router.add_api_route(
             path="/workflow/job-simple/{workflow_job_id}",
             endpoint=self.get_workflow_info_simple,
             methods=["GET"],
@@ -239,67 +302,13 @@ class ProcessingServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path="/workflow",
-            endpoint=self.upload_workflow,
-            methods=["POST"],
-            tags=[NETWORK_API_TAG_WORKFLOW],
-            status_code=status.HTTP_201_CREATED,
-            summary="Upload/Register a new workflow script"
-        )
-        self.router.add_api_route(
-            path="/workflow/{workflow_id}",
-            endpoint=self.replace_workflow,
-            methods=["PUT"],
-            tags=[NETWORK_API_TAG_WORKFLOW],
-            status_code=status.HTTP_200_OK,
-            summary="Update/Replace a workflow script"
-        )
-        self.router.add_api_route(
-            path="/workflow/{workflow_id}",
-            endpoint=self.download_workflow,
+            path="/workflow/job/{workflow_job_id}",
+            endpoint=self.get_workflow_info,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_WORKFLOW],
+            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary="Download a workflow script"
+            summary="Get information about a workflow run"
         )
-
-        @self.exception_handler(RequestValidationError)
-        async def validation_exception_handler(request: Request, exc: RequestValidationError):
-            exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
-            self.log.error(f'{request}: {exc_str}')
-            content = {'status_code': 10422, 'message': exc_str, 'data': None}
-            return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
-
-    def start(self) -> None:
-        """ deploy agents (db, queue, workers) and start the processing server with uvicorn
-        """
-        try:
-            self.rabbitmq_url = self.deployer.deploy_rabbitmq()
-            self.mongodb_url = self.deployer.deploy_mongodb()
-
-            # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
-            self.connect_publisher()
-            self.log.debug(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
-            self.create_message_queues()
-
-            self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
-        except Exception as error:
-            self.log.exception(f"Failed to start the Processing Server, error: {error}")
-            self.log.warning("Trying to stop previously deployed services and network agents.")
-            self.deployer.stop_all()
-            raise
-        uvicorn.run(self, host=self.hostname, port=int(self.port))
-
-    async def on_startup(self):
-        await initiate_database(db_url=self.mongodb_url)
-
-    async def on_shutdown(self) -> None:
-        """
-        - hosts and pids should be stored somewhere
-        - ensure queue is empty or processor is not currently running
-        - connect to hosts and kill pids
-        """
-        await self.stop_deployed_agents()
 
     async def home_page(self):
         message = f"The home page of the {self.title}"
