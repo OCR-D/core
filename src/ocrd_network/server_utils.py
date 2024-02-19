@@ -115,7 +115,7 @@ async def _get_processor_job_log(logger: Logger, job_id: str) -> FileResponse:
 
 async def get_workflow_content(logger: Logger, workflow_id: str, workflow: Union[UploadFile, None]) -> str:
     if not workflow and not workflow_id:
-        message = "Either 'workflow' binary or 'workflow_id' must be provided. Both are missing."
+        message = "Either 'workflow' must be uploaded as a file or 'workflow_id' must be provided. Both are missing."
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
     if workflow_id:
         try:
