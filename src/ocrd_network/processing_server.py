@@ -1,7 +1,6 @@
 from datetime import datetime
 from httpx import AsyncClient, Timeout
 from json import dumps, loads
-from logging import FileHandler, Formatter
 from os import getpid
 from requests import get as requests_get
 from typing import Dict, List, Union
@@ -26,7 +25,7 @@ from .database import (
     db_find_first_workflow_script_by_content
 )
 from .runtime_data import Deployer
-from .logging_utils import get_processing_server_logging_file_path
+from .logging_utils import configure_file_handler_with_formatter, get_processing_server_logging_file_path
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
@@ -84,9 +83,7 @@ class ProcessingServer(FastAPI):
         )
         self.log = getLogger("ocrd_network.processing_server")
         log_file = get_processing_server_logging_file_path(pid=getpid())
-        file_handler = FileHandler(filename=log_file, mode='a')
-        file_handler.setFormatter(Formatter(LOG_FORMAT))
-        self.log.addHandler(file_handler)
+        configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
         self.log.info(f"Downloading ocrd all tool json")
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(ocrd_all_url=OCRD_ALL_JSON_TOOLS_URL)

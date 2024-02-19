@@ -1,11 +1,14 @@
 from __future__ import annotations
-from logging import FileHandler, Formatter
 from typing import Dict, List
 
 from ocrd_utils import getLogger, LOG_FORMAT
 from .constants import JobState, SERVER_ALL_PAGES_PLACEHOLDER
 from .database import db_get_processing_job, db_update_processing_job
-from .logging_utils import get_cache_locked_pages_logging_file_path, get_cache_processing_requests_logging_file_path
+from .logging_utils import (
+    configure_file_handler_with_formatter,
+    get_cache_locked_pages_logging_file_path,
+    get_cache_processing_requests_logging_file_path
+)
 from .models import PYJobInput
 
 
@@ -13,9 +16,7 @@ class CacheLockedPages:
     def __init__(self) -> None:
         self.log = getLogger("ocrd_network.server_cache.locked_pages")
         log_file = get_cache_locked_pages_logging_file_path()
-        log_fh = FileHandler(filename=log_file, mode='a')
-        log_fh.setFormatter(Formatter(LOG_FORMAT))
-        self.log.addHandler(log_fh)
+        configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
         # Used for keeping track of locked pages for a workspace
         # Key: `path_to_mets` if already resolved else `workspace_id`
@@ -94,9 +95,7 @@ class CacheProcessingRequests:
     def __init__(self) -> None:
         self.log = getLogger("ocrd_network.server_cache.processing_requests")
         log_file = get_cache_processing_requests_logging_file_path()
-        log_fh = FileHandler(filename=log_file, mode='a')
-        log_fh.setFormatter(Formatter(LOG_FORMAT))
-        self.log.addHandler(log_fh)
+        configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
         # Used for buffering/caching processing requests in the Processing Server
         # Key: `path_to_mets` if already resolved else `workspace_id`

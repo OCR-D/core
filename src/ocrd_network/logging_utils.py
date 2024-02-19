@@ -1,40 +1,52 @@
+from logging import FileHandler, Formatter, Logger
 from pathlib import Path
 
-from ocrd_utils import safe_filename, config
-from .constants import AgentType, OCRD_NETWORK_MODULES
+from ocrd_utils import config, LOG_FORMAT, safe_filename
+from .constants import AgentType, NetworkLoggingDirs
 
 
-def get_root_logging_dir(module_name: str) -> Path:
-    if module_name not in OCRD_NETWORK_MODULES:
-        raise ValueError(f"Invalid module name: {module_name}, should be one of: {OCRD_NETWORK_MODULES}")
+def configure_file_handler_with_formatter(logger: Logger, log_file: Path, mode: str = "a") -> None:
+    file_handler = FileHandler(filename=log_file, mode=mode)
+    file_handler.setFormatter(Formatter(LOG_FORMAT))
+    logger.addHandler(file_handler)
+
+
+def get_root_logging_dir(module_name: NetworkLoggingDirs) -> Path:
     module_log_dir = Path(config.OCRD_NETWORK_LOGS_ROOT_DIR, module_name)
     module_log_dir.mkdir(parents=True, exist_ok=True)
     return module_log_dir
 
 
 def get_cache_locked_pages_logging_file_path() -> Path:
-    return get_root_logging_dir("processing_servers") / "cache_locked_pages.log"
+    log_file: str = "cache_locked_pages.log"
+    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
 
 
 def get_cache_processing_requests_logging_file_path() -> Path:
-    return get_root_logging_dir("processing_servers") / "cache_processing_requests.log"
-
-
-def get_processing_job_logging_file_path(job_id: str) -> Path:
-    return get_root_logging_dir("processing_jobs") / f"{job_id}.log"
-
-
-def get_processing_server_logging_file_path(pid: int) -> Path:
-    return get_root_logging_dir("processing_servers") / f"processing_server.{pid}.log"
-
-
-def get_processing_worker_logging_file_path(processor_name: str, pid: int) -> Path:
-    return get_root_logging_dir("processing_workers") / f"{AgentType.PROCESSING_WORKER}.{pid}.{processor_name}.log"
-
-
-def get_processor_server_logging_file_path(processor_name: str, pid: int) -> Path:
-    return get_root_logging_dir("processor_servers") / f"{AgentType.PROCESSOR_SERVER}.{pid}.{processor_name}.log"
+    log_file: str = "cache_processing_requests.log"
+    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
 
 
 def get_mets_server_logging_file_path(mets_path: str) -> Path:
-    return get_root_logging_dir("mets_servers") / f"{safe_filename(mets_path)}.log"
+    log_file: str = f"{safe_filename(mets_path)}.log"
+    return Path(get_root_logging_dir(NetworkLoggingDirs.METS_SERVERS), log_file)
+
+
+def get_processing_job_logging_file_path(job_id: str) -> Path:
+    log_file: str = f"{job_id}.log"
+    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_JOBS), log_file)
+
+
+def get_processing_server_logging_file_path(pid: int) -> Path:
+    log_file: str = f"processing_server.{pid}.log"
+    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
+
+
+def get_processing_worker_logging_file_path(processor_name: str, pid: int) -> Path:
+    log_file: str = f"{AgentType.PROCESSING_WORKER}.{pid}.{processor_name}.log"
+    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_WORKERS), log_file)
+
+
+def get_processor_server_logging_file_path(processor_name: str, pid: int) -> Path:
+    log_file: str = f"{AgentType.PROCESSOR_SERVER}.{pid}.{processor_name}.log"
+    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSOR_SERVERS), log_file)

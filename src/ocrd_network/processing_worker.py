@@ -9,7 +9,6 @@ is a single OCR-D Processor instance.
 """
 
 from datetime import datetime
-from logging import FileHandler, Formatter
 from os import getpid
 from pika import BasicProperties
 from pika.adapters.blocking_connection import BlockingChannel
@@ -20,7 +19,11 @@ from time import sleep
 from ocrd_utils import config, getLogger, LOG_FORMAT
 from .constants import JobState
 from .database import sync_initiate_database, sync_db_get_workspace, sync_db_update_processing_job
-from .logging_utils import get_processing_job_logging_file_path, get_processing_worker_logging_file_path
+from .logging_utils import (
+    configure_file_handler_with_formatter,
+    get_processing_job_logging_file_path,
+    get_processing_worker_logging_file_path,
+)
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdProcessingMessage, OcrdResultMessage, RMQConsumer, RMQPublisher
 from .utils import (
@@ -35,9 +38,7 @@ class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
         self.log = getLogger(f'ocrd_network.processing_worker')
         log_file = get_processing_worker_logging_file_path(processor_name=processor_name, pid=getpid())
-        file_handler = FileHandler(filename=log_file, mode='a')
-        file_handler.setFormatter(Formatter(LOG_FORMAT))
-        self.log.addHandler(file_handler)
+        configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
         try:
             verify_database_uri(mongodb_addr)

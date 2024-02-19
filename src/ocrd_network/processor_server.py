@@ -1,5 +1,4 @@
 from datetime import datetime
-from logging import FileHandler, Formatter
 from os import getpid
 from subprocess import run as subprocess_run, PIPE
 from uvicorn import run
@@ -22,7 +21,11 @@ from .database import (
     db_get_processing_job,
     initiate_database
 )
-from .logging_utils import get_processor_server_logging_file_path, get_processing_job_logging_file_path
+from .logging_utils import (
+    configure_file_handler_with_formatter,
+    get_processor_server_logging_file_path,
+    get_processing_job_logging_file_path
+)
 from .models import PYJobInput, PYJobOutput, PYOcrdTool
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdResultMessage
@@ -49,9 +52,7 @@ class ProcessorServer(FastAPI):
         )
         self.log = getLogger("ocrd_network.processor_server")
         log_file = get_processor_server_logging_file_path(processor_name=processor_name, pid=getpid())
-        file_handler = FileHandler(filename=log_file, mode='a')
-        file_handler.setFormatter(Formatter(LOG_FORMAT))
-        self.log.addHandler(file_handler)
+        configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
         self.db_url = mongodb_addr
         self.processor_name = processor_name

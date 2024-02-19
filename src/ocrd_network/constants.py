@@ -7,13 +7,6 @@ DOCKER_RABBIT_MQ_FEATURES = "quorum_queue,implicit_default_bindings,classic_mirr
 
 NETWORK_PROTOCOLS = ["http://", "https://"]
 OCRD_ALL_JSON_TOOLS_URL = "https://ocr-d.de/js/ocrd-all-tool.json"
-OCRD_NETWORK_MODULES = [
-    "mets_servers",
-    "processing_jobs",
-    "processing_servers",
-    "processing_workers",
-    "processor_servers"
-]
 SERVER_ALL_PAGES_PLACEHOLDER = "all_pages"
 
 
@@ -47,6 +40,14 @@ class JobState(str, Enum):
     success = "SUCCESS"
     # Processing job has not been assigned yet
     unset = "UNSET"
+
+
+class NetworkLoggingDirs(str, Enum):
+    METS_SERVERS = "mets_servers"
+    PROCESSING_JOBS = "processing_jobs"
+    PROCESSING_SERVERS = "processing_servers"
+    PROCESSING_WORKERS = "processing_workers"
+    PROCESSOR_SERVERS = "processor_servers"
 
 
 class ServerApiTags(str, Enum):
