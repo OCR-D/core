@@ -22,7 +22,7 @@ from .database import (
     db_get_processing_job,
     initiate_database
 )
-from .logging import get_processor_server_logging_file_path, get_processing_job_logging_file_path
+from .logging_utils import get_processor_server_logging_file_path, get_processing_job_logging_file_path
 from .models import PYJobInput, PYJobOutput, PYOcrdTool
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdResultMessage

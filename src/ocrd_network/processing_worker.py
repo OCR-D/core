@@ -20,7 +20,7 @@ from time import sleep
 from ocrd_utils import config, getLogger, LOG_FORMAT
 from .constants import JobState
 from .database import sync_initiate_database, sync_db_get_workspace, sync_db_update_processing_job
-from .logging import get_processing_job_logging_file_path, get_processing_worker_logging_file_path
+from .logging_utils import get_processing_job_logging_file_path, get_processing_worker_logging_file_path
 from .process_helpers import invoke_processor
 from .rabbitmq_utils import OcrdProcessingMessage, OcrdResultMessage, RMQConsumer, RMQPublisher
 from .utils import (

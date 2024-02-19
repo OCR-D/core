@@ -5,7 +5,7 @@ from typing import Dict, List
 from ocrd_utils import getLogger, LOG_FORMAT
 from .constants import JobState, SERVER_ALL_PAGES_PLACEHOLDER
 from .database import db_get_processing_job, db_update_processing_job
-from .logging import get_cache_locked_pages_logging_file_path, get_cache_processing_requests_logging_file_path
+from .logging_utils import get_cache_locked_pages_logging_file_path, get_cache_processing_requests_logging_file_path
 from .models import PYJobInput
 
 

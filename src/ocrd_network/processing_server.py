@@ -34,7 +34,7 @@ from .database import (
     db_find_first_workflow_script_by_content
 )
 from .runtime_data import Deployer
-from .logging import get_processing_server_logging_file_path
+from .logging_utils import get_processing_server_logging_file_path
 from .models import (
     DBProcessorJob,
     DBWorkflowJob,
