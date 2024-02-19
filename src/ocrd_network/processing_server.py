@@ -190,7 +190,7 @@ class ProcessingServer(FastAPI):
 
         self.router.add_api_route(
             path="/processor/info/{processor_name}",
-            endpoint=self.get_processor_info,
+            endpoint=self.get_network_agent_ocrd_tool,
             methods=["GET"],
             tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
             status_code=status.HTTP_200_OK,
@@ -400,23 +400,13 @@ class ProcessingServer(FastAPI):
             message = f"Failed to retrieve ocrd tool json from: {processor_server_url}"
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
 
-    async def get_processor_info(self, processor_name: str) -> Dict:
-        """ Return a processor's ocrd-tool.json
-        """
-        ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
-        if not ocrd_tool:
-            message = f"Ocrd tool JSON of '{processor_name}' not available."
-            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
-
-        # TODO: Returns the ocrd tool json even of processors
-        #  that are not deployed. This may or may not be desired.
-        return ocrd_tool
-
-    async def get_processing_agent_ocrd_tool(self, processor_name: str, agent_type: AgentType) -> dict:
+    async def get_network_agent_ocrd_tool(
+        self, processor_name: str, agent_type: AgentType = AgentType.PROCESSING_WORKER
+    ) -> Dict:
         ocrd_tool = {}
         error_message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
         if agent_type == AgentType.PROCESSING_WORKER:
-            ocrd_tool = await self.get_processor_info(processor_name)
+            ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         elif agent_type == AgentType.PROCESSOR_SERVER:
             processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
             if processor_server_url == '':
@@ -466,7 +456,7 @@ class ProcessingServer(FastAPI):
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         # Generate processing job id
         data.job_id = generate_id()
-        ocrd_tool = await self.get_processing_agent_ocrd_tool(
+        ocrd_tool = await self.get_network_agent_ocrd_tool(
             processor_name=data.processor_name,
             agent_type=data.agent_type
         )
