@@ -15,15 +15,7 @@ from pika.exceptions import ChannelClosedByBroker
 
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger, LOG_FORMAT
-from .constants import (
-    AgentType,
-    JobState,
-    NETWORK_API_TAG_DISCOVERY,
-    NETWORK_API_TAG_PROCESSING,
-    NETWORK_API_TAG_TOOLS,
-    NETWORK_API_TAG_WORKFLOW,
-    OCRD_ALL_JSON_TOOLS_URL
-)
+from .constants import AgentType, JobState, OCRD_ALL_JSON_TOOLS_URL, ServerApiTags
 from .database import (
     initiate_database,
     db_get_processing_job,
@@ -185,7 +177,7 @@ class ProcessingServer(FastAPI):
             path="/stop",
             endpoint=self.stop_deployed_agents,
             methods=["POST"],
-            tags=[NETWORK_API_TAG_TOOLS],
+            tags=[ServerApiTags.TOOLS],
             summary="Stop database, queue and processing-workers"
         )
 
@@ -194,7 +186,7 @@ class ProcessingServer(FastAPI):
             path="/processor",
             endpoint=self.list_processors,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
+            tags=[ServerApiTags.PROCESSING, ServerApiTags.DISCOVERY],
             status_code=status.HTTP_200_OK,
             summary="Get a list of all available processors"
         )
@@ -203,7 +195,7 @@ class ProcessingServer(FastAPI):
             path="/processor/info/{processor_name}",
             endpoint=self.get_network_agent_ocrd_tool,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING, NETWORK_API_TAG_DISCOVERY],
+            tags=[ServerApiTags.PROCESSING, ServerApiTags.DISCOVERY],
             status_code=status.HTTP_200_OK,
             summary="Get information about this processor"
         )
@@ -212,7 +204,7 @@ class ProcessingServer(FastAPI):
             path="/processor/run/{processor_name}",
             endpoint=self.validate_and_forward_job_to_network_agent,
             methods=["POST"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Submit a job to this processor",
             response_model=PYJobOutput,
@@ -224,7 +216,7 @@ class ProcessingServer(FastAPI):
             path="/processor/job/{job_id}",
             endpoint=self.get_processor_job,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Get information about a job based on its ID",
             response_model=PYJobOutput,
@@ -236,7 +228,7 @@ class ProcessingServer(FastAPI):
             path="/processor/log/{job_id}",
             endpoint=self.get_processor_job_log,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Get the log file of a job id"
         )
@@ -245,7 +237,7 @@ class ProcessingServer(FastAPI):
             path="/result_callback",
             endpoint=self.remove_job_from_request_cache,
             methods=["POST"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Callback used by a worker or processor server for reporting result of a processing request"
         )
@@ -255,7 +247,7 @@ class ProcessingServer(FastAPI):
             path="/workflow",
             endpoint=self.upload_workflow,
             methods=["POST"],
-            tags=[NETWORK_API_TAG_WORKFLOW],
+            tags=[ServerApiTags.WORKFLOW],
             status_code=status.HTTP_201_CREATED,
             summary="Upload/Register a new workflow script"
         )
@@ -264,7 +256,7 @@ class ProcessingServer(FastAPI):
             path="/workflow/{workflow_id}",
             endpoint=self.download_workflow,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_WORKFLOW],
+            tags=[ServerApiTags.WORKFLOW],
             status_code=status.HTTP_200_OK,
             summary="Download a workflow script"
         )
@@ -273,7 +265,7 @@ class ProcessingServer(FastAPI):
             path="/workflow/{workflow_id}",
             endpoint=self.replace_workflow,
             methods=["PUT"],
-            tags=[NETWORK_API_TAG_WORKFLOW],
+            tags=[ServerApiTags.WORKFLOW],
             status_code=status.HTTP_200_OK,
             summary="Update/Replace a workflow script"
         )
@@ -282,7 +274,7 @@ class ProcessingServer(FastAPI):
             path="/workflow/run",
             endpoint=self.run_workflow,
             methods=["POST"],
-            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Run a workflow",
             response_model=PYWorkflowJobOutput,
@@ -296,7 +288,7 @@ class ProcessingServer(FastAPI):
             path="/workflow/job-simple/{workflow_job_id}",
             endpoint=self.get_workflow_info_simple,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Get simplified overall job status"
         )
@@ -305,7 +297,7 @@ class ProcessingServer(FastAPI):
             path="/workflow/job/{workflow_job_id}",
             endpoint=self.get_workflow_info,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_WORKFLOW, NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Get information about a workflow run"
         )

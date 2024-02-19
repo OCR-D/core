@@ -14,7 +14,7 @@ from ocrd_utils import (
     LOG_FORMAT,
     parse_json_string_with_comments
 )
-from .constants import JobState, NETWORK_API_TAG_PROCESSING
+from .constants import JobState, ServerApiTags
 from .database import (
     DBProcessorJob,
     db_get_workspace,
@@ -73,7 +73,7 @@ class ProcessorServer(FastAPI):
             path="/info",
             endpoint=self.get_processor_info,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Get information about this processor.",
             response_model=PYOcrdTool,
@@ -85,7 +85,7 @@ class ProcessorServer(FastAPI):
             path="/run",
             endpoint=self.create_processor_task,
             methods=["POST"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_202_ACCEPTED,
             summary="Submit a job to this processor.",
             response_model=PYJobOutput,
@@ -97,7 +97,7 @@ class ProcessorServer(FastAPI):
             path="/job/{job_id}",
             endpoint=self.get_processor_job,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Get information about a job based on its ID",
             response_model=PYJobOutput,
@@ -109,7 +109,7 @@ class ProcessorServer(FastAPI):
             path="/log/{job_id}",
             endpoint=self.get_processor_job_log,
             methods=["GET"],
-            tags=[NETWORK_API_TAG_PROCESSING],
+            tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
             summary="Get the log file of a job id"
         )
