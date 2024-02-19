@@ -16,12 +16,36 @@ from .database import (
     db_get_workflow_script,
     db_get_workspace
 )
-from .models import DBWorkflowJob, DBWorkspace, PYJobInput, PYJobOutput
+from .models import DBProcessorJob, DBWorkflowJob, DBWorkspace, PYJobInput, PYJobOutput
+from .rabbitmq_utils import OcrdProcessingMessage
 from .utils import (
     expand_page_ids,
+    generate_created_time,
     generate_workflow_content,
     get_ocrd_workspace_physical_pages
 )
+
+
+def create_processing_message(logger: Logger, job: DBProcessorJob) -> OcrdProcessingMessage:
+    try:
+        processing_message = OcrdProcessingMessage(
+            job_id=job.job_id,
+            processor_name=job.processor_name,
+            created_time=generate_created_time(),
+            path_to_mets=job.path_to_mets,
+            workspace_id=job.workspace_id,
+            input_file_grps=job.input_file_grps,
+            output_file_grps=job.output_file_grps,
+            page_id=job.page_id,
+            parameters=job.parameters,
+            result_queue_name=job.result_queue_name,
+            callback_url=job.callback_url,
+            internal_callback_url=job.internal_callback_url
+        )
+        return processing_message
+    except ValueError as error:
+        message = f"Failed to create OcrdProcessingMessage from DBProcessorJob"
+        raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message, error)
 
 
 async def create_workspace_if_not_exists(logger: Logger, mets_path: str) -> DBWorkspace:

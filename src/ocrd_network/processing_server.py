@@ -47,6 +47,7 @@ from .models import (
 from .rabbitmq_utils import RMQPublisher, OcrdProcessingMessage
 from .server_cache import CacheLockedPages, CacheProcessingRequests
 from .server_utils import (
+    create_processing_message,
     create_workspace_if_not_exists,
     _get_processor_job,
     _get_processor_job_log,
@@ -64,7 +65,6 @@ from .server_utils import (
 from .utils import (
     download_ocrd_all_tool_json,
     expand_page_ids,
-    generate_created_time,
     generate_id,
     generate_workflow_content,
     generate_workflow_content_hash
@@ -104,6 +104,13 @@ class ProcessingServer(FastAPI):
         # - deploying agents when the Processing Server is started
         # - retrieving runtime data of agents
         self.deployer = Deployer(config_path)
+        # Used by processing workers and/or processor servers to report back the results
+        if self.deployer.internal_callback_url:
+            host = self.deployer.internal_callback_url
+            self.internal_job_callback_url = f"{host.rstrip('/')}/result_callback"
+        else:
+            self.internal_job_callback_url = f"http://{host}:{port}/result_callback"
+
         self.mongodb_url = None
         self.rabbitmq_url = None
         # TODO: Combine these under a single URL, rabbitmq_utils needs an update
@@ -113,7 +120,7 @@ class ProcessingServer(FastAPI):
         self.rmq_username = self.deployer.data_queue.cred_username
         self.rmq_password = self.deployer.data_queue.cred_password
 
-        # Gets assigned when `connect_publisher` is called on the working object
+        # Gets assigned when `connect_rabbitmq_publisher()` is called on the working object
         self.rmq_publisher = None
 
         # Used for keeping track of cached processing requests
@@ -121,13 +128,6 @@ class ProcessingServer(FastAPI):
 
         # Used for keeping track of locked/unlocked pages of a workspace
         self.cache_locked_pages = CacheLockedPages()
-
-        # Used by processing workers and/or processor servers to report back the results
-        if self.deployer.internal_callback_url:
-            host = self.deployer.internal_callback_url
-            self.internal_job_callback_url = f"{host.rstrip('/')}/result_callback"
-        else:
-            self.internal_job_callback_url = f"http://{host}:{port}/result_callback"
 
         self.add_api_routes_others()
         self.add_api_routes_processing()
@@ -148,7 +148,7 @@ class ProcessingServer(FastAPI):
             self.mongodb_url = self.deployer.deploy_mongodb()
 
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
-            self.connect_publisher()
+            self.connect_rabbitmq_publisher()
             self.log.debug(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
             self.create_message_queues()
 
@@ -210,7 +210,7 @@ class ProcessingServer(FastAPI):
 
         self.router.add_api_route(
             path="/processor/run/{processor_name}",
-            endpoint=self.push_processor_job,
+            endpoint=self.validate_and_forward_job_to_network_agent,
             methods=["POST"],
             tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
@@ -243,7 +243,7 @@ class ProcessingServer(FastAPI):
 
         self.router.add_api_route(
             path="/result_callback",
-            endpoint=self.remove_from_request_cache,
+            endpoint=self.remove_job_from_request_cache,
             methods=["POST"],
             tags=[NETWORK_API_TAG_PROCESSING],
             status_code=status.HTTP_200_OK,
@@ -321,7 +321,7 @@ class ProcessingServer(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.stop_all()
 
-    def connect_publisher(self, enable_acks: bool = True) -> None:
+    def connect_rabbitmq_publisher(self, enable_acks: bool = True) -> None:
         self.log.info(f'Connecting RMQPublisher to RabbitMQ server: '
                       f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         self.rmq_publisher = RMQPublisher(
@@ -364,24 +364,6 @@ class ProcessingServer(FastAPI):
             self.log.info(f'Creating a message queue with id: {queue_name}')
             self.rmq_publisher.create_queue(queue_name=queue_name)
 
-    @staticmethod
-    def create_processing_message(job: DBProcessorJob) -> OcrdProcessingMessage:
-        processing_message = OcrdProcessingMessage(
-            job_id=job.job_id,
-            processor_name=job.processor_name,
-            created_time=generate_created_time(),
-            path_to_mets=job.path_to_mets,
-            workspace_id=job.workspace_id,
-            input_file_grps=job.input_file_grps,
-            output_file_grps=job.output_file_grps,
-            page_id=job.page_id,
-            parameters=job.parameters,
-            result_queue_name=job.result_queue_name,
-            callback_url=job.callback_url,
-            internal_callback_url=job.internal_callback_url
-        )
-        return processing_message
-
     def check_if_queue_exists(self, processor_name: str) -> bool:
         try:
             # Only checks if the process queue exists, if not raises ChannelClosedByBroker
@@ -391,7 +373,7 @@ class ProcessingServer(FastAPI):
             self.log.warning(f"Process queue with id '{processor_name}' not existing: {error}")
             # TODO: Revisit when reconnection strategy is implemented
             # Reconnect publisher, i.e., restore the connection - not efficient, but works
-            self.connect_publisher(enable_acks=True)
+            self.connect_rabbitmq_publisher(enable_acks=True)
             return False
 
     def query_ocrd_tool_json_from_server(self, processor_server_url: str):
@@ -444,11 +426,9 @@ class ProcessingServer(FastAPI):
     def validate_agent_type_and_existence(self, processor_name: str, agent_type: AgentType) -> None:
         agent_exists = False
         if agent_type == AgentType.PROCESSOR_SERVER:
-            if self.network_agent_exists_server(processor_name=processor_name):
-                agent_exists = True
+            agent_exists = self.network_agent_exists_server(processor_name=processor_name)
         elif agent_type == AgentType.PROCESSING_WORKER:
-            if self.network_agent_exists_worker(processor_name=processor_name):
-                agent_exists = True
+            agent_exists = self.network_agent_exists_worker(processor_name=processor_name)
         else:
             message = f"Unknown agent type: {agent_type}, {type(agent_type)}"
             raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
@@ -456,7 +436,7 @@ class ProcessingServer(FastAPI):
             message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
-    async def push_processor_job(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
+    async def validate_and_forward_job_to_network_agent(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         # Append the processor name to the request itself
         data.processor_name = processor_name
         self.validate_agent_type_and_existence(processor_name=data.processor_name, agent_type=data.agent_type)
@@ -544,18 +524,18 @@ class ProcessingServer(FastAPI):
         )
         await db_queued_job.insert()
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
-        job_output = await self.push_to_processing_agent(data=data, db_job=db_queued_job)
+        job_output = await self.push_job_to_network_agent(data=data, db_job=db_queued_job)
         return job_output
 
-    async def push_to_processing_agent(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
+    async def push_job_to_network_agent(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
         if data.agent_type == AgentType.PROCESSING_WORKER:
-            processing_message = self.create_processing_message(db_job)
+            processing_message = create_processing_message(self.log, db_job)
             self.log.debug(f"Pushing to processing worker: {data.processor_name}, {data.page_id}, {data.job_id}")
-            await self.push_to_processing_queue(data.processor_name, processing_message)
+            await self.push_job_to_processing_queue(data.processor_name, processing_message)
             job_output = db_job.to_job_output()
         elif data.agent_type == AgentType.PROCESSOR_SERVER:
             self.log.debug(f"Pushing to processor server: {data.processor_name}, {data.page_id}, {data.job_id}")
-            job_output = await self.push_to_processor_server(data.processor_name, data)
+            job_output = await self.push_job_to_processor_server(data.processor_name, data)
         else:
             message = f"Unknown agent type: {data.agent_type}, {type(data.agent_type)}"
             raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
@@ -564,7 +544,7 @@ class ProcessingServer(FastAPI):
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
         return job_output
 
-    async def push_to_processing_queue(self, processor_name: str, processing_message: OcrdProcessingMessage):
+    async def push_job_to_processing_queue(self, processor_name: str, processing_message: OcrdProcessingMessage):
         if not self.rmq_publisher:
             message = "The Processing Server has no connection to RabbitMQ Server. RMQPublisher is not connected."
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
@@ -578,7 +558,7 @@ class ProcessingServer(FastAPI):
             )
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message, error)
 
-    async def push_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
+    async def push_job_to_processor_server(self, processor_name: str, job_input: PYJobInput) -> PYJobOutput:
         try:
             json_data = dumps(job_input.dict(exclude_unset=True, exclude_none=True))
         except Exception as error:
@@ -612,80 +592,74 @@ class ProcessingServer(FastAPI):
     async def get_processor_job_log(self, job_id: str) -> FileResponse:
         return await _get_processor_job_log(self.log, job_id)
 
-    async def push_jobs_from_cache_to_agents(self, workspace_key: str):
-        consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
-        if not len(consumed_requests):
+    async def _lock_pages_of_workspace(
+        self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
+    ) -> None:
+        # Lock the output file group pages for the current request
+        self.cache_locked_pages.lock_pages(
+            workspace_key=workspace_key,
+            output_file_grps=output_file_grps,
+            page_ids=page_ids
+        )
+
+    async def _unlock_pages_of_workspace(
+        self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
+    ) -> None:
+        self.cache_locked_pages.unlock_pages(
+            workspace_key=workspace_key,
+            output_file_grps=output_file_grps,
+            page_ids=page_ids
+        )
+
+    async def push_cached_jobs_to_agents(self, processing_jobs: List[PYJobInput]) -> None:
+        if not len(processing_jobs):
             self.log.debug("No processing jobs were consumed from the requests cache")
             return
-        for data in consumed_requests:
+        for data in processing_jobs:
             self.log.info(f"Changing the job status of: {data.job_id} from {JobState.cached} to {JobState.queued}")
             db_consumed_job = await db_update_processing_job(job_id=data.job_id, state=JobState.queued)
             workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
 
             # Lock the output file group pages for the current request
-            self.cache_locked_pages.lock_pages(
+            await self._lock_pages_of_workspace(
                 workspace_key=workspace_key,
                 output_file_grps=data.output_file_grps,
                 page_ids=expand_page_ids(data.page_id)
             )
+
             self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
-            job_output = await self.push_to_processing_agent(data=data, db_job=db_consumed_job)
+            job_output = await self.push_job_to_network_agent(data=data, db_job=db_consumed_job)
             if not job_output:
                 self.log.exception(f"Failed to create job output for job input data: {data}")
 
-    async def remove_from_request_cache(self, result_message: PYResultMessage):
-        result_job_id = result_message.job_id
-        result_job_state = result_message.state
-        path_to_mets = result_message.path_to_mets
-        workspace_id = result_message.workspace_id
-        self.log.info(f"Result job_id: {result_job_id}, state: {result_job_state}")
-
-        db_workspace = await get_from_database_workspace(self.log, workspace_id, path_to_mets)
-        mets_server_url = db_workspace.mets_server_url
-        workspace_key = path_to_mets if path_to_mets else workspace_id
-
-        if result_job_state == JobState.failed:
-            await self.cache_processing_requests.cancel_dependent_jobs(
-                workspace_key=workspace_key,
-                processing_job_id=result_job_id
-            )
-
-        if result_job_state != JobState.success:
-            # TODO: Handle other potential error cases
-            pass
-
-        try:
-            db_result_job = await db_get_processing_job(result_job_id)
-        except ValueError as error:
-            message = f"Processing job with id '{result_job_id}' not found in DB"
-            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
-
-        # Unlock the output file group pages for the result processing request
-        self.cache_locked_pages.unlock_pages(
+    async def _cancel_cached_dependent_jobs(self, workspace_key: str, job_id: str) -> None:
+        await self.cache_processing_requests.cancel_dependent_jobs(
             workspace_key=workspace_key,
-            output_file_grps=db_result_job.output_file_grps,
-            page_ids=expand_page_ids(db_result_job.page_id)
+            processing_job_id=job_id
         )
 
-        # Take the next request from the cache (if any available)
+    async def _consume_cached_jobs_of_workspace(
+        self, workspace_key: str, mets_server_url: str
+    ) -> List[PYJobInput]:
+
+        # Check whether the internal queue for the workspace key still exists
         if workspace_key not in self.cache_processing_requests.processing_requests:
             self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
-            return
+            return []
 
-        # decrease the internal counter by 1
+        # decrease the internal cache counter by 1
         request_counter = self.cache_processing_requests.update_request_counter(
-            workspace_key=workspace_key,
-            by_value=-1
+            workspace_key=workspace_key, by_value=-1
         )
-        self.log.debug(f"Internal processing counter value: {request_counter}")
+        self.log.debug(f"Internal processing job cache counter value: {request_counter}")
         if not len(self.cache_processing_requests.processing_requests[workspace_key]):
             if request_counter <= 0:
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
                 self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
-                # The queue is empty - delete it
                 try:
+                    # The queue is empty - delete it
                     del self.cache_processing_requests.processing_requests[workspace_key]
                 except KeyError:
                     self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
@@ -697,8 +671,45 @@ class ProcessingServer(FastAPI):
                     self.log.debug(f"{output_file_grp}: {locked_pages[output_file_grp]}")
             else:
                 self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
-            return
-        await self.push_jobs_from_cache_to_agents(workspace_key=workspace_key)
+            return []
+        consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
+        return consumed_requests
+
+    async def remove_job_from_request_cache(self, result_message: PYResultMessage):
+        result_job_id = result_message.job_id
+        result_job_state = result_message.state
+        path_to_mets = result_message.path_to_mets
+        workspace_id = result_message.workspace_id
+        self.log.info(f"Result job_id: {result_job_id}, state: {result_job_state}")
+
+        db_workspace = await get_from_database_workspace(self.log, workspace_id, path_to_mets)
+        mets_server_url = db_workspace.mets_server_url
+        workspace_key = path_to_mets if path_to_mets else workspace_id
+
+        if result_job_state == JobState.failed:
+            await self._cancel_cached_dependent_jobs(workspace_key, result_job_id)
+
+        if result_job_state != JobState.success:
+            # TODO: Handle other potential error cases
+            pass
+
+        try:
+            db_result_job = await db_get_processing_job(result_job_id)
+        except ValueError as error:
+            message = f"Processing result job with id '{result_job_id}' not found in the DB."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
+
+        # Unlock the output file group pages for the result processing request
+        await self._unlock_pages_of_workspace(
+            workspace_key=workspace_key,
+            output_file_grps=db_result_job.output_file_grps,
+            page_ids=expand_page_ids(db_result_job.page_id)
+        )
+
+        consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
+            workspace_key=workspace_key, mets_server_url=mets_server_url
+        )
+        await self.push_cached_jobs_to_agents(processing_jobs=consumed_cached_jobs)
 
     async def list_processors(self) -> List[str]:
         # There is no caching on the Processing Server side
@@ -739,13 +750,16 @@ class ProcessingServer(FastAPI):
                 agent_type=agent_type,
                 depends_on=dependent_jobs,
             )
-            response = await self.push_processor_job(processor_name=job_input_data.processor_name, data=job_input_data)
+            response = await self.validate_and_forward_job_to_network_agent(
+                processor_name=job_input_data.processor_name,
+                data=job_input_data
+            )
             for file_group in task.output_file_grps:
                 temp_file_group_cache[file_group] = response.job_id
             responses.append(response)
         return responses
 
-    def validate_processing_agents_existence(self, tasks: List[ProcessorTask], agent_type: AgentType) -> None:
+    def validate_tasks_agents_existence(self, tasks: List[ProcessorTask], agent_type: AgentType) -> None:
         missing_agents = []
         for task in tasks:
             try:
@@ -779,7 +793,7 @@ class ProcessingServer(FastAPI):
 
         # Validate existence of agents (processing workers/processor servers)
         # for the ocr-d processors referenced inside tasks
-        self.validate_processing_agents_existence(processing_tasks, agent_type)
+        self.validate_tasks_agents_existence(processing_tasks, agent_type)
 
         page_ids = get_page_ids_list(self.log, mets_path, page_id)
 

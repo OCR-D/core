@@ -6,19 +6,19 @@ from ocrd_validators import OcrdNetworkMessageValidator
 
 class OcrdProcessingMessage:
     def __init__(
-            self,
-            job_id: str,
-            processor_name: str,
-            created_time: int,
-            input_file_grps: List[str],
-            output_file_grps: Optional[List[str]],
-            path_to_mets: Optional[str],
-            workspace_id: Optional[str],
-            page_id: Optional[str],
-            result_queue_name: Optional[str],
-            callback_url: Optional[str],
-            internal_callback_url: Optional[str],
-            parameters: Dict[str, Any] = None
+        self,
+        job_id: str,
+        processor_name: str,
+        created_time: int,
+        input_file_grps: List[str],
+        output_file_grps: Optional[List[str]],
+        path_to_mets: Optional[str],
+        workspace_id: Optional[str],
+        page_id: Optional[str],
+        result_queue_name: Optional[str],
+        callback_url: Optional[str],
+        internal_callback_url: Optional[str],
+        parameters: Dict[str, Any] = None
     ) -> None:
         if not job_id:
             raise ValueError('job_id must be provided')
@@ -79,9 +79,9 @@ class OcrdProcessingMessage:
 
 
 class OcrdResultMessage:
-    def __init__(self, job_id: str, state: str,
-                 path_to_mets: Optional[str] = None,
-                 workspace_id: Optional[str] = None) -> None:
+    def __init__(
+        self, job_id: str, state: str, path_to_mets: Optional[str] = None, workspace_id: Optional[str] = None
+    ) -> None:
         self.job_id = job_id
         self.state = state
         self.workspace_id = workspace_id
