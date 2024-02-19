@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List
 
-from ocrd_utils import getLogger, LOG_FORMAT
+from ocrd_utils import getLogger
 from .constants import JobState, SERVER_ALL_PAGES_PLACEHOLDER
 from .database import db_get_processing_job, db_update_processing_job
 from .logging_utils import (

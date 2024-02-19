@@ -1,6 +1,19 @@
 from typing import Dict, List
+from yaml import safe_load
+
+from ocrd_validators import ProcessingServerConfigValidator
 from .hosts import DataHost
 from .network_services import DataMongoDB, DataRabbitMQ
+
+
+def validate_and_load_config(config_path: str) -> Dict:
+    # Load and validate the config
+    with open(config_path) as fin:
+        ps_config = safe_load(fin)
+    report = ProcessingServerConfigValidator.validate(ps_config)
+    if not report.is_valid:
+        raise Exception(f"Processing-Server configuration file is invalid:\n{report.errors}")
+    return ps_config
 
 
 # Parse MongoDB data from the Processing Server configuration file

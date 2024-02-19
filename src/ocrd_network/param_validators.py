@@ -1,6 +1,7 @@
 from click import ParamType
 
-from .utils import verify_database_uri, verify_and_parse_mq_uri
+from .database import verify_database_uri
+from .rabbitmq_utils import verify_and_parse_mq_uri
 
 
 class ServerAddressParamType(ParamType):

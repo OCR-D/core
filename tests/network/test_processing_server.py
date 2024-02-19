@@ -1,5 +1,5 @@
 from time import sleep
-from requests import get, post
+from requests import get as request_get, post as request_post
 from src.ocrd_network import AgentType, JobState
 from tests.base import assets
 from tests.network.config import test_config
@@ -11,7 +11,7 @@ def poll_till_timeout_fail_or_success(test_url: str, tries: int, wait: int) -> J
     job_state = JobState.unset
     while tries > 0:
         sleep(wait)
-        response = get(url=test_url)
+        response = request_get(url=test_url)
         assert response.status_code == 200, f"Processing server: {test_url}, {response.status_code}"
         job_state = response.json()["state"]
         if job_state == JobState.success or job_state == JobState.failed:
@@ -22,7 +22,7 @@ def poll_till_timeout_fail_or_success(test_url: str, tries: int, wait: int) -> J
 
 def test_processing_server_connectivity():
     test_url = f'{PROCESSING_SERVER_URL}/'
-    response = get(test_url)
+    response = request_get(test_url)
     assert response.status_code == 200, \
         f'Processing server is not reachable on: {test_url}, {response.status_code}'
     message = response.json()['message']
@@ -34,7 +34,7 @@ def test_processing_server_connectivity():
 #  Fix that by extending the processing server.
 def test_processing_server_deployed_processors():
     test_url = f'{PROCESSING_SERVER_URL}/processor'
-    response = get(test_url)
+    response = request_get(test_url)
     processors = response.json()
     assert response.status_code == 200, \
         f'Processing server: {test_url}, {response.status_code}'
@@ -52,7 +52,7 @@ def test_processing_server_processing_request():
     }
     test_processor = 'ocrd-dummy'
     test_url = f'{PROCESSING_SERVER_URL}/processor/run/{test_processor}'
-    response = post(
+    response = request_post(
         url=test_url,
         headers={"accept": "application/json"},
         json=test_processing_job_input
@@ -79,7 +79,7 @@ def test_processing_server_workflow_request():
 
     # submit the workflow job
     test_url = f"{PROCESSING_SERVER_URL}/workflow/run?mets_path={path_to_mets}&page_wise=True"
-    response = post(
+    response = request_post(
         url=test_url,
         headers={"accept": "application/json"},
         files={"workflow": open(path_to_dummy_wf, 'rb')}

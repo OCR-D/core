@@ -9,8 +9,8 @@ DEFAULT_QUEUE = test_config.DEFAULT_QUEUE
 def test_rmq_publish_then_consume_2_messages(rabbitmq_publisher, rabbitmq_consumer):
     test_headers = {"Test Header": "Test Value"}
     test_properties = BasicProperties(
-        app_id='webapi-processing-broker',
-        content_type='application/json',
+        app_id="webapi-processing-broker",
+        content_type="application/json",
         headers=test_headers
     )
     rabbitmq_publisher.publish_to_queue(

@@ -1,6 +1,5 @@
 from pytest import fixture
-from src.ocrd_network.database import sync_initiate_database
-from src.ocrd_network.utils import verify_database_uri
+from src.ocrd_network.database import sync_initiate_database, verify_database_uri
 from tests.network.config import test_config
 
 

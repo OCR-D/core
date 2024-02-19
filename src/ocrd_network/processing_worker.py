@@ -12,26 +12,25 @@ from datetime import datetime
 from os import getpid
 from pika import BasicProperties
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.exceptions import AMQPConnectionError
 from pika.spec import Basic
-from time import sleep
 
-from ocrd_utils import config, getLogger, LOG_FORMAT
+from ocrd_utils import getLogger
 from .constants import JobState
-from .database import sync_initiate_database, sync_db_get_workspace, sync_db_update_processing_job
+from .database import sync_initiate_database, sync_db_get_workspace, sync_db_update_processing_job, verify_database_uri
 from .logging_utils import (
     configure_file_handler_with_formatter,
     get_processing_job_logging_file_path,
     get_processing_worker_logging_file_path,
 )
 from .process_helpers import invoke_processor
-from .rabbitmq_utils import OcrdProcessingMessage, OcrdResultMessage, RMQConsumer, RMQPublisher
-from .utils import (
-    calculate_execution_time,
-    post_to_callback_url,
-    verify_database_uri,
+from .rabbitmq_utils import (
+    connect_rabbitmq_consumer,
+    connect_rabbitmq_publisher,
+    OcrdProcessingMessage,
+    OcrdResultMessage,
     verify_and_parse_mq_uri
 )
+from .utils import calculate_execution_time, post_to_callback_url
 
 
 class ProcessingWorker:
@@ -43,14 +42,7 @@ class ProcessingWorker:
         try:
             verify_database_uri(mongodb_addr)
             self.log.debug(f'Verified MongoDB URL: {mongodb_addr}')
-            rmq_data = verify_and_parse_mq_uri(rabbitmq_addr)
-            self.rmq_username = rmq_data['username']
-            self.rmq_password = rmq_data['password']
-            self.rmq_host = rmq_data['host']
-            self.rmq_port = rmq_data['port']
-            self.rmq_vhost = rmq_data['vhost']
-            self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
-            self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
+            self.rmq_data = verify_and_parse_mq_uri(rabbitmq_addr)
         except ValueError as error:
             msg = f"Failed to parse data, error: {error}"
             self.log.exception(msg)
@@ -69,44 +61,12 @@ class ProcessingWorker:
         # Gets assigned when the `connect_publisher` is called on the worker object
         # The publisher is connected when the `result_queue` field of the OcrdProcessingMessage is set for first time
         # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
-        self.rmq_publisher = None
+        self.rmq_publisher = connect_rabbitmq_publisher(self.log, self.rmq_data, enable_acks=True)
         # Always create a queue (idempotent)
-        self.create_queue()
+        self.rmq_publisher.create_queue(queue_name=self.processor_name)
 
-    def connect_consumer(self) -> None:
-        self.log.info(f'Connecting RMQConsumer to RabbitMQ server: '
-                      f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
-        self.rmq_consumer = RMQConsumer(
-            host=self.rmq_host,
-            port=self.rmq_port,
-            vhost=self.rmq_vhost
-        )
-        self.log.debug(f'RMQConsumer authenticates with username: '
-                       f'{self.rmq_username}, password: {self.rmq_password}')
-        self.rmq_consumer.authenticate_and_connect(
-            username=self.rmq_username,
-            password=self.rmq_password
-        )
-        self.log.info(f'Successfully connected RMQConsumer.')
-
-    def connect_publisher(self, enable_acks: bool = True) -> None:
-        self.log.info(f'Connecting RMQPublisher to RabbitMQ server: '
-                      f'{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
-        self.rmq_publisher = RMQPublisher(
-            host=self.rmq_host,
-            port=self.rmq_port,
-            vhost=self.rmq_vhost
-        )
-        self.log.debug(f'RMQPublisher authenticates with username: '
-                       f'{self.rmq_username}, password: {self.rmq_password}')
-        self.rmq_publisher.authenticate_and_connect(
-            username=self.rmq_username,
-            password=self.rmq_password
-        )
-        if enable_acks:
-            self.rmq_publisher.enable_delivery_confirmations()
-            self.log.info('Delivery confirmations are enabled')
-        self.log.info('Successfully connected RMQPublisher.')
+    def connect_consumer(self):
+        self.rmq_consumer = connect_rabbitmq_consumer(self.log, self.rmq_data)
 
     # Define what happens every time a message is consumed
     # from the queue with name self.processor_name
@@ -125,13 +85,15 @@ class ProcessingWorker:
         ack_message = f"Acking message with tag: {delivery_tag}"
         nack_message = f"Nacking processing message with tag: {delivery_tag}"
 
-        self.log.debug(f'Consumer tag: {consumer_tag}, '
-                       f'message delivery tag: {delivery_tag}, '
-                       f'redelivered: {is_redelivered}')
-        self.log.debug(f'Message headers: {message_headers}')
+        self.log.debug(
+            f"Consumer tag: {consumer_tag}"
+            f", message delivery tag: {delivery_tag}"
+            f", redelivered: {is_redelivered}"
+        )
+        self.log.debug(f"Message headers: {message_headers}")
 
         try:
-            self.log.debug(f'Trying to decode processing message with tag: {delivery_tag}')
+            self.log.debug(f"Trying to decode processing message with tag: {delivery_tag}")
             processing_message: OcrdProcessingMessage = OcrdProcessingMessage.decode_yml(body)
         except Exception as error:
             msg = f"Failed to decode processing message with tag: {delivery_tag}, error: {error}"
@@ -141,7 +103,7 @@ class ProcessingWorker:
             raise Exception(msg)
 
         try:
-            self.log.info(f'Starting to process the received message: {processing_message.__dict__}')
+            self.log.info(f"Starting to process the received message: {processing_message.__dict__}")
             self.process_message(processing_message=processing_message)
         except Exception as error:
             message = (
@@ -153,22 +115,22 @@ class ProcessingWorker:
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
             raise Exception(message)
 
-        self.log.info(f'Successfully processed RabbitMQ message')
+        self.log.info(f"Successfully processed RabbitMQ message")
         self.log.debug(ack_message)
         channel.basic_ack(delivery_tag=delivery_tag, multiple=False)
 
     def start_consuming(self) -> None:
         if self.rmq_consumer:
-            self.log.info(f'Configuring consuming from queue: {self.processor_name}')
+            self.log.info(f"Configuring consuming from queue: {self.processor_name}")
             self.rmq_consumer.configure_consuming(
                 queue_name=self.processor_name,
                 callback_method=self.on_consumed_message
             )
-            self.log.info(f'Starting consuming from queue: {self.processor_name}')
+            self.log.info(f"Starting consuming from queue: {self.processor_name}")
             # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
         else:
-            msg = f"The RMQConsumer is not connected/configured properly"
+            msg = f"The RMQConsumer is not connected/configured properly."
             self.log.exception(msg)
             raise Exception(msg)
 
@@ -191,13 +153,10 @@ class ProcessingWorker:
         pm_keys = processing_message.__dict__.keys()
         job_id = processing_message.job_id
         input_file_grps = processing_message.input_file_grps
-        output_file_grps = processing_message.output_file_grps if 'output_file_grps' in pm_keys else None
-        path_to_mets = processing_message.path_to_mets if 'path_to_mets' in pm_keys else None
-        workspace_id = processing_message.workspace_id if 'workspace_id' in pm_keys else None
-        page_id = processing_message.page_id if 'page_id' in pm_keys else None
-        result_queue_name = processing_message.result_queue_name if 'result_queue_name' in pm_keys else None
-        callback_url = processing_message.callback_url if 'callback_url' in pm_keys else None
-        internal_callback_url = processing_message.internal_callback_url if 'internal_callback_url' in pm_keys else None
+        output_file_grps = processing_message.output_file_grps if "output_file_grps" in pm_keys else None
+        path_to_mets = processing_message.path_to_mets if "path_to_mets" in pm_keys else None
+        workspace_id = processing_message.workspace_id if "workspace_id" in pm_keys else None
+        page_id = processing_message.page_id if "page_id" in pm_keys else None
         parameters = processing_message.parameters if processing_message.parameters else {}
 
         if not path_to_mets and not workspace_id:
@@ -211,7 +170,7 @@ class ProcessingWorker:
             mets_server_url = sync_db_get_workspace(workspace_id).mets_server_url
 
         execution_failed = False
-        self.log.debug(f'Invoking processor: {self.processor_name}')
+        self.log.debug(f"Invoking processor: {self.processor_name}")
         start_time = datetime.now()
         job_log_file = get_processing_job_logging_file_path(job_id=job_id)
         sync_db_update_processing_job(
@@ -251,7 +210,7 @@ class ProcessingWorker:
             job_id=job_id,
             state=job_state,
             end_time=end_time,
-            exec_time=f'{exec_duration} ms'
+            exec_time=f"{exec_duration} ms"
         )
         result_message = OcrdResultMessage(
             job_id=job_id,
@@ -260,53 +219,36 @@ class ProcessingWorker:
             # May not be always available
             workspace_id=workspace_id
         )
-        self.log.info(f'Result message: {result_message.__dict__}')
+        self.publish_result_to_all(processing_message=processing_message, result_message=result_message)
+
+    def publish_result_to_all(self, processing_message: OcrdProcessingMessage, result_message: OcrdResultMessage):
+        pm_keys = processing_message.__dict__.keys()
+        result_queue_name = processing_message.result_queue_name if "result_queue_name" in pm_keys else None
+        callback_url = processing_message.callback_url if "callback_url" in pm_keys else None
+        internal_callback_url = processing_message.internal_callback_url if "internal_callback_url" in pm_keys else None
+
+        self.log.info(f"Result message: {result_message.__dict__}")
         # If the result_queue field is set, send the result message to a result queue
         if result_queue_name:
+            self.log.info(f"Publishing result to message queue: {result_queue_name}")
             self.publish_to_result_queue(result_queue_name, result_message)
         if callback_url:
+            self.log.info(f"Publishing result to user defined callback url: {callback_url}")
             # If the callback_url field is set,
             # post the result message (callback to a user defined endpoint)
             post_to_callback_url(self.log, callback_url, result_message)
         if internal_callback_url:
+            self.log.info(f"Publishing result to internal callback url (Processing Server): {callback_url}")
             # If the internal callback_url field is set,
             # post the result message (callback to Processing Server endpoint)
             post_to_callback_url(self.log, internal_callback_url, result_message)
 
     def publish_to_result_queue(self, result_queue: str, result_message: OcrdResultMessage):
-        if self.rmq_publisher is None:
-            self.connect_publisher()
+        if not self.rmq_publisher:
+            connect_rabbitmq_publisher(self.log, self.rmq_data)
         # create_queue method is idempotent - nothing happens if
         # a queue with the specified name already exists
         self.rmq_publisher.create_queue(queue_name=result_queue)
         self.log.info(f'Publishing result message to queue: {result_queue}')
         encoded_result_message = OcrdResultMessage.encode_yml(result_message)
-        self.rmq_publisher.publish_to_queue(
-            queue_name=result_queue,
-            message=encoded_result_message
-        )
-
-    def create_queue(
-        self,
-        connection_attempts: int = config.OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS,
-        retry_delay: int = 3
-    ) -> None:
-        """Create the queue for this worker
-
-        Originally only the processing-server created the queues for the workers according to the
-        configuration file. This is intended to make external deployment of workers possible.
-        """
-        if self.rmq_publisher is None:
-            attempts_left = connection_attempts if connection_attempts > 0 else 1
-            while attempts_left > 0:
-                try:
-                    self.connect_publisher()
-                    break
-                except AMQPConnectionError as e:
-                    if attempts_left <= 1:
-                        raise e
-                    attempts_left -= 1
-                    sleep(retry_delay)
-
-        # the following function is idempotent
-        self.rmq_publisher.create_queue(queue_name=self.processor_name)
+        self.rmq_publisher.publish_to_queue(queue_name=result_queue, message=encoded_result_message)

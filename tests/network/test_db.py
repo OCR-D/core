@@ -116,8 +116,8 @@ def test_db_workspace_update(mongo_client):
 # TODO: There is no db wrapper implemented due to direct access in the processing server...
 #   TODO2: Should be refactored with proper asset access
 def create_db_model_workflow_script(
-        workflow_id: str,
-        script_path: Path = Path(Path(__file__).parent, "dummy-workflow.txt")
+    workflow_id: str,
+    script_path: Path = Path(Path(__file__).parent, "dummy-workflow.txt")
 ) -> DBWorkflowScript:
     workflow_id = workflow_id
     with open(script_path, 'rb') as fp:

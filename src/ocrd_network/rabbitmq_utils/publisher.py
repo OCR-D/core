@@ -12,7 +12,7 @@ from .constants import DEFAULT_EXCHANGER_NAME, RABBIT_MQ_HOST, RABBIT_MQ_PORT, R
 
 class RMQPublisher(RMQConnector):
     def __init__(self, host: str = RABBIT_MQ_HOST, port: int = RABBIT_MQ_PORT, vhost: str = RABBIT_MQ_VHOST) -> None:
-        self.log = getLogger('ocrd_network.rabbitmq_utils.publisher')
+        self.log = getLogger("ocrd_network.rabbitmq_utils.publisher")
         super().__init__(host=host, port=port, vhost=vhost)
         self.message_counter = 0
         self.deliveries = {}
@@ -38,17 +38,16 @@ class RMQPublisher(RMQConnector):
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
 
     def create_queue(
-            self,
-            queue_name: str,
-            exchange_name: Optional[str] = None,
-            exchange_type: Optional[str] = None,
-            passive: bool = False
+        self,
+        queue_name: str,
+        exchange_name: Optional[str] = None,
+        exchange_type: Optional[str] = None,
+        passive: bool = False
     ) -> None:
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if exchange_type is None:
-            exchange_type = 'direct'
-
+            exchange_type = "direct"
         RMQConnector.exchange_declare(
             channel=self._channel,
             exchange_name=exchange_name,
@@ -68,19 +67,19 @@ class RMQPublisher(RMQConnector):
         )
 
     def publish_to_queue(
-            self,
-            queue_name: str,
-            message: bytes,
-            exchange_name: Optional[str] = None,
-            properties: Optional[BasicProperties] = None
+        self,
+        queue_name: str,
+        message: bytes,
+        exchange_name: Optional[str] = None,
+        properties: Optional[BasicProperties] = None
     ) -> None:
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if properties is None:
-            headers = {'ocrd_network default header': 'ocrd_network default header value'}
+            headers = {"ocrd_network default header": "ocrd_network default header value"}
             properties = BasicProperties(
-                app_id='ocrd_network default app id',
-                content_type='application/json',
+                app_id="ocrd_network default app id",
+                content_type="application/json",
                 headers=headers
             )
 
@@ -98,8 +97,8 @@ class RMQPublisher(RMQConnector):
 
         self.message_counter += 1
         self.deliveries[self.message_counter] = True
-        self.log.debug(f'Published message #{self.message_counter}')
+        self.log.debug(f"Published message #{self.message_counter} to queue: {queue_name}")
 
     def enable_delivery_confirmations(self) -> None:
-        self.log.debug('Enabling delivery confirmations (Confirm.Select RPC)')
+        self.log.debug("Enabling delivery confirmations (Confirm.Select RPC)")
         RMQConnector.confirm_delivery(channel=self._channel)

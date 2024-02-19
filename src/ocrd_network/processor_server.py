@@ -10,7 +10,6 @@ from ocrd_utils import (
     initLogging,
     get_ocrd_tool_json,
     getLogger,
-    LOG_FORMAT,
     parse_json_string_with_comments
 )
 from .constants import JobState, ServerApiTags

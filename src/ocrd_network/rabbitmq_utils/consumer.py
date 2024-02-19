@@ -12,7 +12,7 @@ from .constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT, RABBIT_MQ_VHOST
 
 class RMQConsumer(RMQConnector):
     def __init__(self, host: str = RABBIT_MQ_HOST, port: int = RABBIT_MQ_PORT, vhost: str = RABBIT_MQ_VHOST) -> None:
-        self.log = getLogger('ocrd_network.rabbitmq_utils.consumer')
+        self.log = getLogger("ocrd_network.rabbitmq_utils.consumer")
         super().__init__(host=host, port=port, vhost=vhost)
         self.consumer_tag = None
         self.consuming = False
@@ -39,30 +39,16 @@ class RMQConsumer(RMQConnector):
     def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
 
-    def get_one_message(
-            self,
-            queue_name: str,
-            auto_ack: bool = False
-    ) -> Union[Any, None]:
+    def get_one_message(self, queue_name: str, auto_ack: bool = False) -> Union[Any, None]:
         message = None
         if self._channel and self._channel.is_open:
-            message = self._channel.basic_get(
-                queue=queue_name,
-                auto_ack=auto_ack
-            )
+            message = self._channel.basic_get(queue=queue_name, auto_ack=auto_ack)
         return message
 
-    def configure_consuming(
-            self,
-            queue_name: str,
-            callback_method: Any
-    ) -> None:
-        self.log.debug(f'Configuring consuming from queue: {queue_name}')
+    def configure_consuming(self, queue_name: str, callback_method: Any) -> None:
+        self.log.debug(f"Configuring consuming from queue: {queue_name}")
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
-        self.consumer_tag = self._channel.basic_consume(
-            queue_name,
-            callback_method
-        )
+        self.consumer_tag = self._channel.basic_consume(queue_name, callback_method)
         self.was_consuming = True
         self.consuming = True
 
@@ -76,10 +62,10 @@ class RMQConsumer(RMQConnector):
         return None
 
     def __on_consumer_cancelled(self, frame: Any) -> None:
-        self.log.warning(f'The consumer was cancelled remotely in frame: {frame}')
+        self.log.warning(f"The consumer was cancelled remotely in frame: {frame}")
         if self._channel:
             self._channel.close()
 
     def ack_message(self, delivery_tag: int) -> None:
-        self.log.debug(f'Acknowledging message with delivery tag: {delivery_tag}')
+        self.log.debug(f"Acknowledging message with delivery tag: {delivery_tag}")
         self._channel.basic_ack(delivery_tag)

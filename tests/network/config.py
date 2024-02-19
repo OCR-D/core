@@ -74,12 +74,12 @@ test_config.add(
 )
 
 test_config.add(
-    name="OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS",
+    name="OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
     description="""
-    Number of attempts for a worker to create its queue. Helpful if the rabbitmq-server needs time to be fully started
+    Number of attempts for a RabbitMQ client to connect before failing
     """,
     parser=int,
-    default=(True, 1)
+    default=(True, 3)
 )
 
 test_config.add(

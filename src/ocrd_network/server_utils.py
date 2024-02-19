@@ -1,8 +1,12 @@
 from fastapi import HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
+from httpx import AsyncClient, Timeout
+from json import dumps, loads
 from logging import Logger
 from pathlib import Path
-from typing import List, Union
+from requests import get as requests_get
+from typing import Dict, List, Union
+from urllib.parse import urljoin
 
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask
@@ -19,6 +23,7 @@ from .database import (
 from .models import DBProcessorJob, DBWorkflowJob, DBWorkspace, PYJobInput, PYJobOutput
 from .rabbitmq_utils import OcrdProcessingMessage
 from .utils import (
+    calculate_processing_request_timeout,
     expand_page_ids,
     generate_created_time,
     generate_workflow_content,
@@ -111,6 +116,50 @@ async def _get_processor_job_log(logger: Logger, job_id: str) -> FileResponse:
     db_job = await _get_processor_job(logger, job_id)
     log_file_path = Path(db_job.log_file_path)
     return FileResponse(path=log_file_path, filename=log_file_path.name)
+
+
+def request_processor_server_tool_json(logger: Logger, processor_server_base_url: str) -> Dict:
+    # Request the ocrd tool json from the Processor Server
+    try:
+        response = requests_get(
+            urljoin(base=processor_server_base_url, url="info"),
+            headers={"Content-Type": "application/json"}
+        )
+        if response.status_code != 200:
+            message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
+            raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
+        return response.json()
+    except Exception as error:
+        message = f"Failed to retrieve ocrd tool json from: {processor_server_base_url}"
+        raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message, error)
+
+
+async def forward_job_to_processor_server(
+    logger: Logger, job_input: PYJobInput, processor_server_base_url: str
+) -> PYJobOutput:
+    try:
+        json_data = dumps(job_input.dict(exclude_unset=True, exclude_none=True))
+    except Exception as error:
+        message = f"Failed to json dump the PYJobInput: {job_input}"
+        raise_http_exception(logger, status.HTTP_500_INTERNAL_SERVER_ERROR, message, error)
+
+    # TODO: The amount of pages should come as a request input
+    # TODO: cf https://github.com/OCR-D/core/pull/1030/files#r1152551161
+    #  currently, use 200 as a default
+    request_timeout = calculate_processing_request_timeout(amount_pages=200, timeout_per_page=20.0)
+
+    # Post a processing job to the Processor Server asynchronously
+    async with AsyncClient(timeout=Timeout(timeout=request_timeout, connect=30.0)) as client:
+        response = await client.post(
+            urljoin(base=processor_server_base_url, url="run"),
+            headers={"Content-Type": "application/json"},
+            json=loads(json_data)
+        )
+    if response.status_code != 202:
+        message = f"Failed to post '{job_input.processor_name}' job to: {processor_server_base_url}"
+        raise_http_exception(logger, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
+    job_output = response.json()
+    return job_output
 
 
 async def get_workflow_content(logger: Logger, workflow_id: str, workflow: Union[UploadFile, None]) -> str:
