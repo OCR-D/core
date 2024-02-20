@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import gettempdir
-from src.ocrd_utils.config import OcrdEnvConfig
-from src.ocrd_utils.config import _ocrd_download_timeout_parser
+from ocrd_utils.config import OcrdEnvConfig
+from ocrd_utils.config import _ocrd_download_timeout_parser
 
 test_config = OcrdEnvConfig()
 

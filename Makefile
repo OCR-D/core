@@ -219,8 +219,13 @@ test: assets
 		$(TESTDIR)
 	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
 
+network-module-test:
+	$(PYTHON) \
+		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -v --durations=10\
+		$(TESTDIR)/network
+
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
-integration-test:
+network-integration-test:
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
 	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
