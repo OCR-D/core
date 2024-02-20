@@ -222,6 +222,7 @@ test: assets
 network-module-test:
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -v --durations=10\
+		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
 		$(TESTDIR)/network
 
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
