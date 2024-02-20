@@ -1,4 +1,4 @@
-name: Run ocrd network integration tests
+name: ocrd network module and integration tests
 
 on:
   push:
