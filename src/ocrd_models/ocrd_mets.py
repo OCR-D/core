@@ -4,7 +4,7 @@ API to METS
 from datetime import datetime
 import re
 from lxml import etree as ET
-from typing import Callable, Dict, Iterator, List, Optional, Union
+from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from ocrd_utils import (
     getLogger,
