@@ -95,13 +95,13 @@ class DBProcessorJob(Document):
 class PYWorkflowJobOutput(BaseModel):
     """ Wraps output information for a workflow job-response
     """
-    job_id: str
-    page_id: str
-    page_wise: bool = False
     # A dictionary where each entry has:
     # key: page_id
     # value: List of and processing job ids sorted in dependency order
     processing_job_ids: Dict[str, List[str]]
+    page_id: str
+    page_wise: bool = False
+    job_id: str
     path_to_mets: Optional[str]
     workspace_id: Optional[str]
     description: Optional[str]
