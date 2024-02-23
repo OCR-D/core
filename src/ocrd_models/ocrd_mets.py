@@ -597,10 +597,6 @@ class OcrdMets(OcrdXmlDocument):
         or for a subset selector expression (comma-separated, range, and/or regex) :py:attr:`for_pageIds`.
         If return_divs is set, returns div memory objects instead of strings of ids
         """
-        if for_fileIds == []:
-            for_fileIds = None
-        if for_pageIds == '':
-            for_pageIds = None
         if for_fileIds is None and for_pageIds is None:
             return self.physical_pages
         # log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
@@ -699,6 +695,8 @@ class OcrdMets(OcrdXmlDocument):
             #     raise ValueError(f"End of range patterns {ranges_without_last_match} not matched - invalid range")
             return ret
 
+        if for_fileIds == []:
+            return []
         assert for_fileIds # at this point we know for_fileIds is set, assert to convince pyright
         ret = [None] * len(for_fileIds)
         if self._cache_flag:
