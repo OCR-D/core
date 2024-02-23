@@ -10,8 +10,8 @@ OCRD_NETWORK_LOGS_ROOT_DIR = test_config.OCRD_NETWORK_LOGS_ROOT_DIR
 
 def root_logging_dir(module_name: NetworkLoggingDirs):
     func_result = get_root_logging_dir(module_name=module_name)
-    expected_result = Path(OCRD_NETWORK_LOGS_ROOT_DIR, module_name)
-    assert func_result == expected_result, f"Mismatch in root logging dir of module: {module_name}"
+    expected_result = Path(OCRD_NETWORK_LOGS_ROOT_DIR, module_name.value)
+    assert func_result == expected_result, f"Mismatch in root logging dir of module: {module_name.value}"
 
 
 def test_root_logging_dir_mets_servers():
