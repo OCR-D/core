@@ -133,6 +133,10 @@ def test_physical_pages_for_fileids(sbb_directory_ocrd_mets):
     assert sbb_directory_ocrd_mets.get_physical_pages(
         for_fileIds=['FILE_0002_IMAGE']) == ['PHYS_0002']
 
+def test_physical_pages_for_emtpy_fileids(sbb_directory_ocrd_mets):
+    assert sbb_directory_ocrd_mets.get_physical_pages(
+        for_fileIds=[]) == []
+
 
 def test_add_group():
     mets = OcrdMets.empty_mets()
