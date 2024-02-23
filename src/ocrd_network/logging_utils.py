@@ -12,7 +12,7 @@ def configure_file_handler_with_formatter(logger: Logger, log_file: Path, mode: 
 
 
 def get_root_logging_dir(module_name: NetworkLoggingDirs) -> Path:
-    module_log_dir = Path(config.OCRD_NETWORK_LOGS_ROOT_DIR, module_name)
+    module_log_dir = Path(config.OCRD_NETWORK_LOGS_ROOT_DIR, module_name.value)
     module_log_dir.mkdir(parents=True, exist_ok=True)
     return module_log_dir
 
