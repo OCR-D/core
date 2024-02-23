@@ -886,7 +886,7 @@ class OcrdMets(OcrdXmlDocument):
         return {div.get('ID'): (div.get('ORDER', None), div.get('ORDERLABEL', None), div.get('LABEL', None))
                 for div in divs}
 
-    def merge(self, other_mets : OcrdMets, force : bool = False, 
+    def merge(self, other_mets, force : bool = False, 
               fileGrp_mapping : Optional[Dict[str, str]] = None, 
               fileId_mapping : Optional[Dict[str, str]] = None, 
               pageId_mapping : Optional[Dict[str, str]] = None,
