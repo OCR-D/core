@@ -4,7 +4,7 @@ API to METS
 from datetime import datetime
 import re
 from lxml import etree as ET
-from typing import Dict, Optional
+from typing import Callable, Dict, Iterator, List, Optional, Union
 
 from ocrd_utils import (
     getLogger,
@@ -61,7 +61,7 @@ class OcrdMets(OcrdXmlDocument):
     _fptr_cache : Dict[str, Dict[str, ET._Element]]
 
     @staticmethod
-    def empty_mets(now=None, cache_flag=False):
+    def empty_mets(now : Optional[str] = None, cache_flag : bool = False):
         """
         Create an empty METS file from bundled template.
         """
@@ -72,7 +72,7 @@ class OcrdMets(OcrdXmlDocument):
         tpl = tpl.replace('{{ NOW }}', '%s' % now)
         return OcrdMets(content=tpl.encode('utf-8'), cache_flag=cache_flag)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         """
         """
         super(OcrdMets, self).__init__(**kwargs)
@@ -91,14 +91,14 @@ class OcrdMets(OcrdXmlDocument):
             self._initialize_caches()
             self._refresh_caches()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         String representation
         """
         return 'OcrdMets[cached=%s,fileGrps=%s,files=%s]' % (
         self._cache_flag, self.file_groups, list(self.find_files()))
 
-    def _fill_caches(self):
+    def _fill_caches(self) -> None:
         """
         Fills the caches with fileGrps and FileIDs
         """
@@ -148,13 +148,13 @@ class OcrdMets(OcrdXmlDocument):
         # log.info("Len of page_cache: %s" % len(self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID]))
         # log.info("Len of fptr_cache: %s" % len(self._fptr_cache))
 
-    def _initialize_caches(self):
+    def _initialize_caches(self) -> None:
         self._file_cache = {}
         # NOTE we can only guarantee uniqueness for @ID and @ORDER
         self._page_cache = {k : {} for k in METS_PAGE_DIV_ATTRIBUTE}
         self._fptr_cache = {}
 
-    def _refresh_caches(self):
+    def _refresh_caches(self) -> None:
         if self._cache_flag:
             self._initialize_caches()
 
@@ -163,7 +163,7 @@ class OcrdMets(OcrdXmlDocument):
             self._fill_caches()
 
     @property
-    def unique_identifier(self):
+    def unique_identifier(self) -> Optional[str]:
         """
         Get the unique identifier by looking through ``mods:identifier``
         See `specs <https://ocr-d.de/en/spec/mets#unique-id-for-the-document-processed>`_ for details.
@@ -174,7 +174,7 @@ class OcrdMets(OcrdXmlDocument):
                 return found.text
 
     @unique_identifier.setter
-    def unique_identifier(self, purl):
+    def unique_identifier(self, purl : str) -> None:
         """
         Set the unique identifier by looking through ``mods:identifier``
         See `specs <https://ocr-d.de/en/spec/mets#unique-id-for-the-document-processed>`_ for details.
@@ -192,13 +192,13 @@ class OcrdMets(OcrdXmlDocument):
         id_el.text = purl
 
     @property
-    def agents(self):
+    def agents(self) -> List[OcrdAgent]:
         """
         List all :py:class:`ocrd_models.ocrd_agent.OcrdAgent`s
         """
         return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('mets:metsHdr/mets:agent', NS)]
 
-    def add_agent(self, *args, **kwargs):
+    def add_agent(self, *args, **kwargs) -> OcrdAgent:
         """
         Add an :py:class:`ocrd_models.ocrd_agent.OcrdAgent` to the list of agents in the ``metsHdr``.
         """
@@ -216,7 +216,7 @@ class OcrdMets(OcrdXmlDocument):
         return OcrdAgent(el_agent, *args, **kwargs)
 
     @property
-    def file_groups(self):
+    def file_groups(self) -> List[str]:
         """
         List the `@USE` of all `mets:fileGrp` entries.
         """
@@ -227,7 +227,7 @@ class OcrdMets(OcrdXmlDocument):
 
         return [el.get('USE') for el in self._tree.getroot().findall('.//mets:fileGrp', NS)]
 
-    def find_all_files(self, *args, **kwargs):
+    def find_all_files(self, *args, **kwargs) -> List[OcrdFile]:
         """
         Like :py:meth:`find_files` but return a list of all results.
         Equivalent to ``list(self.find_files(...))``
@@ -237,16 +237,16 @@ class OcrdMets(OcrdXmlDocument):
     # pylint: disable=multiple-statements
     def find_files(
         self,
-        ID=None,
-        fileGrp=None,
-        pageId=None,
-        mimetype=None,
-        url=None,
+        ID : Optional[str] = None,
+        fileGrp : Optional[str] = None,
+        pageId : Optional[str] = None,
+        mimetype : Optional[str] = None,
+        url : Optional[str] = None,
         local_filename : Optional[str] = None,
-        local_only=False,
-        include_fileGrp=None,
-        exclude_fileGrp=None,
-    ):
+        local_only : bool = False,
+        include_fileGrp : Optional[List[str]] = None,
+        exclude_fileGrp : Optional[List[str]] = None,
+    ) -> Iterator[OcrdFile]:
         """
         Search ``mets:file`` entries in this METS document and yield results.
         The :py:attr:`ID`, :py:attr:`pageId`, :py:attr:`fileGrp`,
@@ -362,7 +362,7 @@ class OcrdMets(OcrdXmlDocument):
 
             yield ret
 
-    def add_file_group(self, fileGrp):
+    def add_file_group(self, fileGrp: str) -> ET._Element:
         """
         Add a new ``mets:fileGrp``.
         Arguments:
@@ -384,7 +384,7 @@ class OcrdMets(OcrdXmlDocument):
 
         return el_fileGrp
 
-    def rename_file_group(self, old, new):
+    def rename_file_group(self, old: str, new: str) -> None:
         """
         Rename a ``mets:fileGrp`` by changing the ``@USE`` from :py:attr:`old` to :py:attr:`new`.
         """
@@ -396,7 +396,7 @@ class OcrdMets(OcrdXmlDocument):
         if self._cache_flag:
             self._file_cache[new] = self._file_cache.pop(old)
 
-    def remove_file_group(self, USE, recursive=False, force=False):
+    def remove_file_group(self, USE: str, recursive : bool = False, force : bool = False) -> None:
         """
         Remove a ``mets:fileGrp`` (single fixed ``@USE`` or multiple regex ``@USE``)
         Arguments:
@@ -447,8 +447,9 @@ class OcrdMets(OcrdXmlDocument):
 
         el_fileGrp.getparent().remove(el_fileGrp)
 
-    def add_file(self, fileGrp, mimetype=None, url=None, ID=None, pageId=None, force=False, local_filename=None,
-                 ignore=False, **kwargs):
+    def add_file(self, fileGrp : str, mimetype : Optional[str] = None, url : Optional[str] = None, 
+                 ID : Optional[str] = None, pageId : Optional[str] = None, force : bool = False, 
+                 local_filename : Optional[str] = None, ignore : bool = False, **kwargs) -> OcrdFile:
         """
         Instantiate and add a new :py:class:`ocrd_models.ocrd_file.OcrdFile`.
         Arguments:
@@ -500,7 +501,7 @@ class OcrdMets(OcrdXmlDocument):
 
         return mets_file
 
-    def remove_file(self, *args, **kwargs):
+    def remove_file(self, *args, **kwargs) -> Union[List[OcrdFile],OcrdFile]:
         """
         Delete each ``ocrd:file`` matching the query. Same arguments as :py:meth:`find_files`
         """
@@ -518,7 +519,7 @@ class OcrdMets(OcrdXmlDocument):
             return []
         raise FileNotFoundError("File not found: %s %s" % (args, kwargs))
 
-    def remove_one_file(self, ID, fileGrp=None):
+    def remove_one_file(self, ID : Union[str, OcrdFile], fileGrp : str = None) -> OcrdFile:
         """
         Delete an existing :py:class:`ocrd_models.ocrd_file.OcrdFile`.
         Arguments:
@@ -577,7 +578,7 @@ class OcrdMets(OcrdXmlDocument):
         return ocrd_file
 
     @property
-    def physical_pages(self):
+    def physical_pages(self) -> List[str]:
         """
         List all page IDs (the ``@ID`` of each physical ``mets:structMap`` ``mets:div``)
         """
@@ -588,7 +589,8 @@ class OcrdMets(OcrdXmlDocument):
             'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/@ID',
             namespaces=NS)]
 
-    def get_physical_pages(self, for_fileIds : Optional[str] = None, for_pageIds : Optional[str] = None, return_divs : bool = False):
+    def get_physical_pages(self, for_fileIds : Optional[List[str]] = None, for_pageIds : Optional[str] = None, 
+                           return_divs : bool = False) -> List[Union[str, ET._Element]]:
         """
         List all page IDs (the ``@ID`` of each physical ``mets:structMap`` ``mets:div``),
         optionally for a subset of ``mets:file`` ``@ID`` :py:attr:`for_fileIds`,
@@ -717,7 +719,8 @@ class OcrdMets(OcrdXmlDocument):
                             ret[index] = page.get('ID')
         return ret
 
-    def set_physical_page_for_file(self, pageId, ocrd_file, order=None, orderlabel=None):
+    def set_physical_page_for_file(self, pageId : str, ocrd_file : OcrdFile, 
+                                   order : Optional[str] = None, orderlabel : Optional[str] = None) -> None:
         """
         Set the physical page ID (``@ID`` of the physical ``mets:structMap`` ``mets:div`` entry)
         corresponding to the ``mets:file`` :py:attr:`ocrd_file`, creating all structures if necessary.
@@ -785,7 +788,7 @@ class OcrdMets(OcrdXmlDocument):
             # Assign the ocrd fileID to the pageId in the cache
             self._fptr_cache[el_pagediv.get('ID')].update({ocrd_file.ID: el_fptr})
 
-    def update_physical_page_attributes(self, page_id, **kwargs):
+    def update_physical_page_attributes(self, page_id : str, **kwargs) -> None:
         invalid_keys = list(k for k in kwargs.keys() if k not in METS_PAGE_DIV_ATTRIBUTE.names())
         if invalid_keys:
             raise ValueError(f"Invalid attribute {invalid_keys}. Allowed values: {METS_PAGE_DIV_ATTRIBUTE.names()}")
@@ -801,7 +804,7 @@ class OcrdMets(OcrdXmlDocument):
             else:
                 page_div.attrib[k] = v
 
-    def get_physical_page_for_file(self, ocrd_file):
+    def get_physical_page_for_file(self, ocrd_file : OcrdFile) -> Optional[str]:
         """
         Get the physical page ID (``@ID`` of the physical ``mets:structMap`` ``mets:div`` entry)
         corresponding to the ``mets:file`` :py:attr:`ocrd_file`.
@@ -820,7 +823,7 @@ class OcrdMets(OcrdXmlDocument):
         if len(ret):
             return ret[0]
 
-    def remove_physical_page(self, ID):
+    def remove_physical_page(self, ID : str) -> None:
         """
         Delete page (physical ``mets:structMap`` ``mets:div`` entry ``@ID``) :py:attr:`ID`.
         """
@@ -841,7 +844,7 @@ class OcrdMets(OcrdXmlDocument):
                         del self._page_cache[attr][mets_div_attrib[attr.name]]
                 del self._fptr_cache[ID]
 
-    def remove_physical_page_fptr(self, fileId):
+    def remove_physical_page_fptr(self, fileId : str) -> List[str]:
         """
         Delete all ``mets:fptr[@FILEID = fileId]`` to ``mets:file[@ID == fileId]`` for :py:attr:`fileId` from all ``mets:div`` entries in the physical ``mets:structMap``.
         Returns:
@@ -872,7 +875,7 @@ class OcrdMets(OcrdXmlDocument):
         return ret
 
     @property
-    def physical_pages_labels(self):
+    def physical_pages_labels(self) -> Dict[str, Tuple[Optional[str], Optional[str], Optional[str]]]:
         """
         Map all page IDs (the ``@ID`` of each physical ``mets:structMap`` ``mets:div``) to their
         ``@ORDER``, ``@ORDERLABEL`` and ``@LABEL`` attributes, if any.
@@ -883,8 +886,11 @@ class OcrdMets(OcrdXmlDocument):
         return {div.get('ID'): (div.get('ORDER', None), div.get('ORDERLABEL', None), div.get('LABEL', None))
                 for div in divs}
 
-    def merge(self, other_mets, force=False, fileGrp_mapping=None, fileId_mapping=None, pageId_mapping=None,
-              after_add_cb=None, **kwargs):
+    def merge(self, other_mets : OcrdMets, force : bool = False, 
+              fileGrp_mapping : Optional[Dict[str, str]] = None, 
+              fileId_mapping : Optional[Dict[str, str]] = None, 
+              pageId_mapping : Optional[Dict[str, str]] = None,
+              after_add_cb : Optional[Callable[[OcrdFile], Any]] = None, **kwargs) -> None:
         """
         Add all files from other_mets.
         Accepts the same kwargs as :py:func:`find_files`
