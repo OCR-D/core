@@ -788,7 +788,7 @@ class OcrdMets(OcrdXmlDocument):
 
         if self._cache_flag:
             # Assign the ocrd fileID to the pageId in the cache
-            self._fptr_cache[el_pagediv.get('ID')].update({ocrd_file.ID: el_fptr})
+            self._fptr_cache[pageId].update({ocrd_file.ID: el_fptr})
 
     def update_physical_page_attributes(self, page_id : str, **kwargs) -> None:
         invalid_keys = list(k for k in kwargs.keys() if k not in METS_PAGE_DIV_ATTRIBUTE.names())
@@ -811,19 +811,16 @@ class OcrdMets(OcrdXmlDocument):
         Get the physical page ID (``@ID`` of the physical ``mets:structMap`` ``mets:div`` entry)
         corresponding to the ``mets:file`` :py:attr:`ocrd_file`.
         """
-        ret = []
         if self._cache_flag:
             for pageId in self._fptr_cache.keys():
                 if ocrd_file.ID in self._fptr_cache[pageId].keys():
-                    ret.append(self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID][pageId].get('ID'))
+                    return pageId
         else:
-            ret = self._tree.getroot().xpath(
-                '/mets:mets/mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"][./mets:fptr[@FILEID="%s"]]/@ID' %
+            ret = self._tree.getroot().find(
+                'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' %
                 ocrd_file.ID, namespaces=NS)
-
-        # To get rid of the python's FutureWarning
-        if len(ret):
-            return ret[0]
+            if ret is not None:
+                return ret.getparent().get('ID')
 
     def remove_physical_page(self, ID : str) -> None:
         """
