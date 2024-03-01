@@ -734,19 +734,19 @@ class OcrdMets(OcrdXmlDocument):
             orderlabel (string): ``@ORDERLABEL`` to use
         """
 
-        # delete any page mapping for this file.ID
-        candidates = []
+        # delete any existing page mapping for this file.ID
+        fptrs = []
         if self._cache_flag:
             for page_id in self._fptr_cache.keys():
                 if ocrd_file.ID in self._fptr_cache[page_id].keys():
                     if self._fptr_cache[page_id][ocrd_file.ID] is not None:
-                        candidates.append(self._fptr_cache[page_id][ocrd_file.ID])
+                        fptrs.append(self._fptr_cache[page_id][ocrd_file.ID])
         else:
-            candidates = self._tree.getroot().findall(
+            fptrs = self._tree.getroot().findall(
                 'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' %
                 ocrd_file.ID, namespaces=NS)
 
-        for el_fptr in candidates:
+        for el_fptr in fptrs:
             if self._cache_flag:
                 del self._fptr_cache[el_fptr.getparent().get('ID')][ocrd_file.ID]
             el_fptr.getparent().remove(el_fptr)
@@ -781,7 +781,7 @@ class OcrdMets(OcrdXmlDocument):
                 self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID][pageId] = el_pagediv
                 # Create a new entry in the fptr cache and 
                 # assign an empty dictionary to hold the fileids
-                self._fptr_cache[pageId] = {}
+                self._fptr_cache.setdefault(pageId, {})
 
         el_fptr = ET.SubElement(el_pagediv, TAG_METS_FPTR)
         el_fptr.set('FILEID', ocrd_file.ID)
