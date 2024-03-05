@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.63.2] - 2024-03-05
+
+Fixed:
+
+  * Missed incrementing version
+
 ## [2.63.1] - 2024-03-05
 
 Fixed:
@@ -2021,6 +2027,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.63.2]: ../../compare/v2.63.2..v2.63.1
 [2.63.1]: ../../compare/v2.63.1..v2.63.0
 [2.63.0]: ../../compare/v2.63.0..v2.62.0
 [2.62.0]: ../../compare/v2.62.0..v2.61.2
