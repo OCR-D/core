@@ -1,4 +1,3 @@
-from typing import List
 from src.ocrd_network.constants import AgentType
 from src.ocrd_network.models import PYJobInput
 from src.ocrd_network.server_cache import CacheProcessingRequests
@@ -18,3 +17,5 @@ def test_has_workspace_cached_requests():
     assert not requests_cache.has_workspace_cached_requests(workspace_key=workspace_key)
     requests_cache.cache_request(workspace_key=workspace_key, data=processing_request1)
     assert requests_cache.has_workspace_cached_requests(workspace_key=workspace_key)
+    assert not requests_cache.has_workspace_cached_requests(workspace_key="non-existing")
+
