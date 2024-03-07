@@ -9,6 +9,11 @@ Added:
 
   * `make uninstall-workaround` compantion to `make install-workaround`, #119
 
+Fixed:
+
+  * `OcrdMets.add_file`: fix finding existing el_pagediv, #1199
+
+
 ## [2.63.2] - 2024-03-05
 
 Fixed:
