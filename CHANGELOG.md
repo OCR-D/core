@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `make uninstall-workaround` compantion to `make install-workaround`, #119
+
 ## [2.63.2] - 2024-03-05
 
 Fixed:
