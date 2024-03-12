@@ -35,7 +35,7 @@ def test_cache_request(processing_request_1: PYJobInput):
 def test_has_workspace_cached_requests(processing_request_1: PYJobInput):
     requests_cache = CacheProcessingRequests()
     workspace_key = "/path/to/mets.xml"
-    processing_request_1.workspace_key = workspace_key
+    processing_request_1.path_to_mets = workspace_key
     assert not requests_cache.has_workspace_cached_requests(workspace_key=workspace_key)
     requests_cache.cache_request(workspace_key=workspace_key, data=processing_request_1)
     assert requests_cache.has_workspace_cached_requests(workspace_key=workspace_key)
@@ -47,9 +47,9 @@ def test_is_caching_required(
 ):
     requests_cache = CacheProcessingRequests()
     workspace_key = "/path/to/mets.xml"
-    processing_job_1.workspace_key = workspace_key
-    processing_job_2.workspace_key = workspace_key
-    processing_job_3.workspace_key = workspace_key
+    processing_job_1.path_to_mets = workspace_key
+    processing_job_2.path_to_mets = workspace_key
+    processing_job_3.path_to_mets = workspace_key
 
     processing_job_1.job_id = generate_id()
     processing_job_2.job_id = generate_id()
@@ -84,9 +84,9 @@ def test_cancel_dependent_jobs(
 ):
     requests_cache = CacheProcessingRequests()
     workspace_key = "/path/to/mets.xml"
-    processing_job_1.workspace_key = workspace_key
-    processing_job_2.workspace_key = workspace_key
-    processing_job_3.workspace_key = workspace_key
+    processing_job_1.path_to_mets = workspace_key
+    processing_job_2.path_to_mets = workspace_key
+    processing_job_3.path_to_mets = workspace_key
 
     processing_job_1.job_id = generate_id()
     processing_job_2.job_id = generate_id()
@@ -123,10 +123,10 @@ def test_consume_cached_requests(
 ):
     requests_cache = CacheProcessingRequests()
     workspace_key = "/path/to/mets.xml"
-    processing_job_1.workspace_key = workspace_key
-    processing_job_2.workspace_key = workspace_key
-    processing_job_3.workspace_key = workspace_key
-    processing_job_4.workspace_key = workspace_key
+    processing_job_1.path_to_mets = workspace_key
+    processing_job_2.path_to_mets = workspace_key
+    processing_job_3.path_to_mets = workspace_key
+    processing_job_4.path_to_mets = workspace_key
 
     processing_job_1.job_id = generate_id()
     processing_job_2.job_id = generate_id()
@@ -149,7 +149,7 @@ def test_consume_cached_requests(
     assert processing_job_1.state == JobState.unset
     assert processing_job_2.state == JobState.unset
     assert processing_job_3.state == JobState.unset
-    assert processing_job_3.state == JobState.unset
+    assert processing_job_4.state == JobState.unset
 
     db_processing_job_1 = sync_db_update_processing_job(processing_job_1.job_id, state=JobState.success)
     assert db_processing_job_1.state == JobState.success
