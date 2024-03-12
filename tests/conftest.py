@@ -2,6 +2,8 @@ from tests.network.config import test_config
 
 pytest_plugins = [
     "tests.network.fixtures_mongodb",
+    "tests.network.fixtures_processing_jobs",
+    "tests.network.fixtures_processing_requests",
     "tests.network.fixtures_rabbitmq"
 ]
 
