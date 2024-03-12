@@ -1,8 +1,13 @@
 from typing import List
 from src.ocrd_network.constants import JobState
-from src.ocrd_network.database import sync_db_get_processing_job, sync_db_update_processing_job
+from src.ocrd_network.database import (
+    sync_db_create_processing_job,
+    sync_db_get_processing_job,
+    sync_db_update_processing_job
+)
 from src.ocrd_network.models import DBProcessorJob, PYJobInput
 from src.ocrd_network.server_cache import CacheProcessingRequests
+from src.ocrd_network.utils import generate_id
 
 
 def test_update_request_counter():
@@ -39,8 +44,63 @@ def test_has_workspace_cached_requests(processing_request_1: PYJobInput):
     assert not requests_cache.has_workspace_cached_requests(workspace_key="non-existing")
 
 
-def test_is_caching_required(processing_jobs_list: List[DBProcessorJob]):
+def create_processing_jobs_list(
+    processing_job_1: DBProcessorJob,
+    processing_job_2: DBProcessorJob,
+    processing_job_3: DBProcessorJob,
+    processing_job_4: DBProcessorJob
+) -> List[DBProcessorJob]:
+    workspace_key = "/path/to/mets.xml"
+    processing_job_1.path_to_mets = workspace_key
+    processing_job_2.path_to_mets = workspace_key
+    processing_job_3.path_to_mets = workspace_key
+    processing_job_4.path_to_mets = workspace_key
+
+    assert processing_job_1.state == JobState.unset
+    assert processing_job_2.state == JobState.unset
+    assert processing_job_3.state == JobState.unset
+    assert processing_job_4.state == JobState.unset
+
+    processing_job_1.job_id = generate_id()
+    processing_job_2.job_id = generate_id()
+    processing_job_3.job_id = generate_id()
+    processing_job_4.job_id = generate_id()
+
+    # Configure the processing jobs' dependency lists
+    processing_job_1.depends_on = []
+    processing_job_2.depends_on = [processing_job_1.job_id]
+    # Both job 3 and job 4 depend on job 2
+    processing_job_3.depends_on = [processing_job_2.job_id]
+    processing_job_4.depends_on = [processing_job_2.job_id]
+
+    # Insert the processing jobs into the database
+    db_processing_job_1 = sync_db_create_processing_job(processing_job_1)
+    db_processing_job_2 = sync_db_create_processing_job(processing_job_2)
+    db_processing_job_3 = sync_db_create_processing_job(processing_job_3)
+    db_processing_job_4 = sync_db_create_processing_job(processing_job_4)
+
+    assert db_processing_job_1.state == JobState.unset
+    assert db_processing_job_2.state == JobState.unset
+    assert db_processing_job_3.state == JobState.unset
+    assert db_processing_job_4.state == JobState.unset
+
+    processing_jobs = [db_processing_job_1, db_processing_job_2, db_processing_job_3, db_processing_job_4]
+    return processing_jobs
+
+
+def test_is_caching_required(
+    processing_job_1: DBProcessorJob,
+    processing_job_2: DBProcessorJob,
+    processing_job_3: DBProcessorJob,
+    processing_job_4: DBProcessorJob
+):
     requests_cache = CacheProcessingRequests()
+    processing_jobs_list = create_processing_jobs_list(
+        processing_job_1=processing_job_1,
+        processing_job_2=processing_job_2,
+        processing_job_3=processing_job_3,
+        processing_job_4=processing_job_4
+    )
 
     # depends on nothing, should not be cached
     assert not requests_cache.sync_is_caching_required(job_dependencies=processing_jobs_list[0].depends_on)
@@ -60,8 +120,20 @@ def test_is_caching_required(processing_jobs_list: List[DBProcessorJob]):
     assert not requests_cache.sync_is_caching_required(job_dependencies=processing_jobs_list[3].depends_on)
 
 
-def test_cancel_dependent_jobs(processing_jobs_list: List[DBProcessorJob]):
+def test_cancel_dependent_jobs(
+    processing_job_1: DBProcessorJob,
+    processing_job_2: DBProcessorJob,
+    processing_job_3: DBProcessorJob,
+    processing_job_4: DBProcessorJob
+):
     requests_cache = CacheProcessingRequests()
+    processing_jobs_list = create_processing_jobs_list(
+        processing_job_1=processing_job_1,
+        processing_job_2=processing_job_2,
+        processing_job_3=processing_job_3,
+        processing_job_4=processing_job_4
+    )
+
     # Must match with the workspace_key in the processing_jobs_list fixture
     workspace_key = "/path/to/mets.xml"
     db_processing_job_1 = sync_db_update_processing_job(processing_jobs_list[0].job_id, state=JobState.failed)
@@ -77,8 +149,20 @@ def test_cancel_dependent_jobs(processing_jobs_list: List[DBProcessorJob]):
     assert db_processing_job_4.state == JobState.cancelled
 
 
-def test_consume_cached_requests(processing_jobs_list: List[DBProcessorJob]):
+def test_consume_cached_requests(
+    processing_job_1: DBProcessorJob,
+    processing_job_2: DBProcessorJob,
+    processing_job_3: DBProcessorJob,
+    processing_job_4: DBProcessorJob
+):
     requests_cache = CacheProcessingRequests()
+    processing_jobs_list = create_processing_jobs_list(
+        processing_job_1=processing_job_1,
+        processing_job_2=processing_job_2,
+        processing_job_3=processing_job_3,
+        processing_job_4=processing_job_4
+    )
+
     # Must match with the workspace_key in the processing_jobs_list fixture
     workspace_key = "/path/to/mets.xml"
     db_processing_job_1 = sync_db_update_processing_job(processing_jobs_list[0].job_id, state=JobState.success)

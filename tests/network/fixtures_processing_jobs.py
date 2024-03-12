@@ -1,9 +1,5 @@
 from pytest import fixture
-from typing import List
-from src.ocrd_network.constants import JobState
-from src.ocrd_network.database import sync_db_create_processing_job
 from src.ocrd_network.models import DBProcessorJob
-from src.ocrd_network.utils import generate_id
 
 
 @fixture(scope="package", name="processing_job_1")
@@ -64,52 +60,3 @@ def fixture_processing_job_4() -> DBProcessorJob:
         depends_on=["job_id_2"]
     )
     yield processing_job
-
-
-@fixture(scope="function", name="processing_jobs_list")
-def fixture_processing_jobs_list(
-    processing_job_1: DBProcessorJob,
-    processing_job_2: DBProcessorJob,
-    processing_job_3: DBProcessorJob,
-    processing_job_4: DBProcessorJob
-) -> List[DBProcessorJob]:
-    processing_jobs = []
-    workspace_key = "/path/to/mets.xml"
-    processing_job_1.path_to_mets = workspace_key
-    processing_job_2.path_to_mets = workspace_key
-    processing_job_3.path_to_mets = workspace_key
-    processing_job_4.path_to_mets = workspace_key
-
-    assert processing_job_1.state == JobState.unset
-    assert processing_job_2.state == JobState.unset
-    assert processing_job_3.state == JobState.unset
-    assert processing_job_4.state == JobState.unset
-
-    processing_job_1.job_id = generate_id()
-    processing_job_2.job_id = generate_id()
-    processing_job_3.job_id = generate_id()
-    processing_job_4.job_id = generate_id()
-
-    # Configure the processing jobs' dependency lists
-    processing_job_1.depends_on = []
-    processing_job_2.depends_on = [processing_job_1.job_id]
-    # Both job 3 and job 4 depend on job 2
-    processing_job_3.depends_on = [processing_job_2.job_id]
-    processing_job_4.depends_on = [processing_job_2.job_id]
-
-    # Insert the processing jobs into the database
-    db_processing_job_1 = sync_db_create_processing_job(processing_job_1)
-    db_processing_job_2 = sync_db_create_processing_job(processing_job_2)
-    db_processing_job_3 = sync_db_create_processing_job(processing_job_3)
-    db_processing_job_4 = sync_db_create_processing_job(processing_job_4)
-
-    assert db_processing_job_1.state == JobState.unset
-    assert db_processing_job_2.state == JobState.unset
-    assert db_processing_job_3.state == JobState.unset
-    assert db_processing_job_4.state == JobState.unset
-
-    processing_jobs.append(db_processing_job_1)
-    processing_jobs.append(db_processing_job_2)
-    processing_jobs.append(db_processing_job_3)
-    processing_jobs.append(db_processing_job_4)
-    yield processing_jobs
