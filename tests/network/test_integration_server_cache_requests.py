@@ -145,9 +145,9 @@ def test_cancel_dependent_jobs():
     db_processing_job_2 = sync_db_get_processing_job(job_id=processing_jobs_list[1].job_id)
     db_processing_job_3 = sync_db_get_processing_job(job_id=processing_jobs_list[2].job_id)
     db_processing_job_4 = sync_db_get_processing_job(job_id=processing_jobs_list[3].job_id)
-    # Job 2 is cancelled because Job 1 has failed
+    # job 2 is cancelled because job 1 has failed
     assert db_processing_job_2.state == JobState.cancelled
-    # Job 3 and Job 4 are cancelled because Job 2 got cancelled
+    # job 3 and job 4 are cancelled because job 2 got cancelled
     assert db_processing_job_3.state == JobState.cancelled
     assert db_processing_job_4.state == JobState.cancelled
 
@@ -162,6 +162,8 @@ def test_consume_cached_requests():
 
     db_processing_job_1 = sync_db_update_processing_job(processing_jobs_list[0].job_id, state=JobState.success)
     assert db_processing_job_1.state == JobState.success
+    # Remove the job 1 since it's no longer cached, but manually set to success
+    requests_cache.processing_requests[workspace_key].pop(0)
     # Consumes only processing job 2 since only that job's dependencies (i.e., job 1) have succeeded
     consumed_jobs = requests_cache.sync_consume_cached_requests(workspace_key=workspace_key)
     assert len(consumed_jobs) == 1
