@@ -44,66 +44,72 @@ def test_has_workspace_cached_requests(processing_request_1: PYJobInput):
     assert not requests_cache.has_workspace_cached_requests(workspace_key="non-existing")
 
 
-def create_processing_jobs_list() -> List[DBProcessorJob]:
-    workspace_key = "/path/to/mets.xml"
-    processing_job_1 = DBProcessorJob(
-        job_id=generate_id(),
+def create_processing_requests_list(workspace_key: str) -> List[PYJobInput]:
+    processing_request_1 = PYJobInput(
         processor_name="processor_name_1",
         path_to_mets=workspace_key,
-        state=JobState.unset,
         input_file_grps=["DEFAULT"],
         output_file_grps=["OCR-D-BIN"],
         page_id="PHYS_0001..PHYS_0003",
+        job_id=generate_id(),
         depends_on=[]
     )
-    processing_job_2 = DBProcessorJob(
-        job_id=generate_id(),
+    processing_request_2 = PYJobInput(
         processor_name="processor_name_2",
         path_to_mets=workspace_key,
-        state=JobState.unset,
         input_file_grps=["OCR-D-BIN"],
         output_file_grps=["OCR-D-CROP"],
         page_id="PHYS_0001..PHYS_0003",
-        depends_on=[processing_job_1.job_id]
-    )
-    processing_job_3 = DBProcessorJob(
         job_id=generate_id(),
+        depends_on=[processing_request_1.job_id]
+    )
+    processing_request_3 = PYJobInput(
         processor_name="processor_name_3",
         path_to_mets=workspace_key,
-        state=JobState.unset,
         input_file_grps=["OCR-D-CROP"],
         output_file_grps=["OCR-D-BIN2"],
         page_id="PHYS_0001..PHYS_0003",
-        depends_on=[processing_job_2.job_id]
-    )
-    processing_job_4 = DBProcessorJob(
         job_id=generate_id(),
+        depends_on=[processing_request_2.job_id]
+    )
+    processing_request_4 = PYJobInput(
         processor_name="processor_name_4",
         path_to_mets=workspace_key,
-        state=JobState.unset,
         input_file_grps=["OCR-D-BIN2"],
         output_file_grps=["OCR-D-BIN-DENOISE"],
         page_id="PHYS_0001..PHYS_0003",
-        depends_on=[processing_job_2.job_id]
+        job_id=generate_id(),
+        depends_on=[processing_request_2.job_id]
     )
 
-    # Insert the processing jobs into the database
-    db_processing_job_1 = sync_db_create_processing_job(processing_job_1)
-    db_processing_job_2 = sync_db_create_processing_job(processing_job_2)
-    db_processing_job_3 = sync_db_create_processing_job(processing_job_3)
-    db_processing_job_4 = sync_db_create_processing_job(processing_job_4)
-    assert db_processing_job_1.state == JobState.unset
-    assert db_processing_job_2.state == JobState.unset
-    assert db_processing_job_3.state == JobState.unset
-    assert db_processing_job_4.state == JobState.unset
+    processing_requests = [processing_request_1, processing_request_2, processing_request_3, processing_request_4]
+    return processing_requests
 
-    processing_jobs = [processing_job_1, processing_job_2, processing_job_3, processing_job_4]
-    return processing_jobs
+
+def create_processing_jobs_db_entries(
+    requests_cache: CacheProcessingRequests, workspace_key: str
+) -> List[DBProcessorJob]:
+    processing_requests_list = create_processing_requests_list(workspace_key=workspace_key)
+    processing_jobs_list = []
+    # Insert processing jobs into the database based on processing requests
+    for processing_request in processing_requests_list:
+        requests_cache.cache_request(workspace_key=workspace_key, data=processing_request)
+        db_processing_job = DBProcessorJob(
+            **processing_request.dict(exclude_unset=True, exclude_none=True),
+            state=JobState.cached
+        )
+        sync_db_create_processing_job(db_processing_job)
+        assert db_processing_job.state == JobState.cached
+        processing_jobs_list.append(db_processing_job)
+    return processing_jobs_list
 
 
 def test_is_caching_required():
     requests_cache = CacheProcessingRequests()
-    processing_jobs_list = create_processing_jobs_list()
+    workspace_key = "/path/to/mets.xml"
+    processing_jobs_list = create_processing_jobs_db_entries(
+        requests_cache=requests_cache, workspace_key=workspace_key
+    )
 
     # depends on nothing, should not be cached
     assert not requests_cache.sync_is_caching_required(job_dependencies=processing_jobs_list[0].depends_on)
@@ -127,7 +133,9 @@ def test_cancel_dependent_jobs():
     requests_cache = CacheProcessingRequests()
     # Must match with the workspace_key in the processing_jobs_list
     workspace_key = "/path/to/mets.xml"
-    processing_jobs_list = create_processing_jobs_list()
+    processing_jobs_list = create_processing_jobs_db_entries(
+        requests_cache=requests_cache, workspace_key=workspace_key
+    )
 
     db_processing_job_1 = sync_db_update_processing_job(processing_jobs_list[0].job_id, state=JobState.failed)
     assert db_processing_job_1.state == JobState.failed
@@ -137,7 +145,9 @@ def test_cancel_dependent_jobs():
     db_processing_job_2 = sync_db_get_processing_job(job_id=processing_jobs_list[1].job_id)
     db_processing_job_3 = sync_db_get_processing_job(job_id=processing_jobs_list[2].job_id)
     db_processing_job_4 = sync_db_get_processing_job(job_id=processing_jobs_list[3].job_id)
+    # Job 2 is cancelled because Job 1 has failed
     assert db_processing_job_2.state == JobState.cancelled
+    # Job 3 and Job 4 are cancelled because Job 2 got cancelled
     assert db_processing_job_3.state == JobState.cancelled
     assert db_processing_job_4.state == JobState.cancelled
 
@@ -146,7 +156,9 @@ def test_consume_cached_requests():
     requests_cache = CacheProcessingRequests()
     # Must match with the workspace_key in the processing_jobs_list
     workspace_key = "/path/to/mets.xml"
-    processing_jobs_list = create_processing_jobs_list()
+    processing_jobs_list = create_processing_jobs_db_entries(
+        requests_cache=requests_cache, workspace_key=workspace_key
+    )
 
     db_processing_job_1 = sync_db_update_processing_job(processing_jobs_list[0].job_id, state=JobState.success)
     assert db_processing_job_1.state == JobState.success
