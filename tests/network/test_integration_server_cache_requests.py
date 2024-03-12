@@ -84,7 +84,7 @@ def create_processing_jobs_list(
     assert db_processing_job_3.state == JobState.unset
     assert db_processing_job_4.state == JobState.unset
 
-    processing_jobs = [db_processing_job_1, db_processing_job_2, db_processing_job_3, db_processing_job_4]
+    processing_jobs = [processing_job_1, processing_job_2, processing_job_3, processing_job_4]
     return processing_jobs
 
 
