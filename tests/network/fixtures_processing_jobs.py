@@ -2,7 +2,7 @@ from pytest import fixture
 from src.ocrd_network.models import DBProcessorJob
 
 
-@fixture(scope="package", name="processing_job_1")
+@fixture(scope="session", name="processing_job_1")
 def fixture_processing_job_1() -> DBProcessorJob:
     workspace_key = "/path/to/mets.xml"
     processing_job = DBProcessorJob(
@@ -17,7 +17,7 @@ def fixture_processing_job_1() -> DBProcessorJob:
     yield processing_job
 
 
-@fixture(scope="package", name="processing_job_2")
+@fixture(scope="session", name="processing_job_2")
 def fixture_processing_job_2() -> DBProcessorJob:
     workspace_key = "/path/to/mets.xml"
     processing_job = DBProcessorJob(
@@ -32,7 +32,7 @@ def fixture_processing_job_2() -> DBProcessorJob:
     yield processing_job
 
 
-@fixture(scope="package", name="processing_job_3")
+@fixture(scope="session", name="processing_job_3")
 def fixture_processing_job_3() -> DBProcessorJob:
     workspace_key = "/path/to/mets.xml"
     processing_job = DBProcessorJob(
@@ -47,7 +47,7 @@ def fixture_processing_job_3() -> DBProcessorJob:
     yield processing_job
 
 
-@fixture(scope="package", name="processing_job_4")
+@fixture(scope="session", name="processing_job_4")
 def fixture_processing_job_4() -> DBProcessorJob:
     workspace_key = "/path/to/mets.xml"
     processing_job = DBProcessorJob(
