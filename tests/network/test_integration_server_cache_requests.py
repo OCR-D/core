@@ -61,11 +61,6 @@ def create_processing_jobs_list(
     assert processing_job_3.state == JobState.unset
     assert processing_job_4.state == JobState.unset
 
-    processing_job_1.job_id = generate_id()
-    processing_job_2.job_id = generate_id()
-    processing_job_3.job_id = generate_id()
-    processing_job_4.job_id = generate_id()
-
     # Configure the processing jobs' dependency lists
     processing_job_1.depends_on = []
     processing_job_2.depends_on = [processing_job_1.job_id]
@@ -95,6 +90,10 @@ def test_is_caching_required(
     processing_job_4: DBProcessorJob
 ):
     requests_cache = CacheProcessingRequests()
+    processing_job_1.job_id = generate_id()
+    processing_job_2.job_id = generate_id()
+    processing_job_3.job_id = generate_id()
+    processing_job_4.job_id = generate_id()
     processing_jobs_list = create_processing_jobs_list(
         processing_job_1=processing_job_1,
         processing_job_2=processing_job_2,
@@ -127,6 +126,10 @@ def test_cancel_dependent_jobs(
     processing_job_4: DBProcessorJob
 ):
     requests_cache = CacheProcessingRequests()
+    processing_job_1.job_id = generate_id()
+    processing_job_2.job_id = generate_id()
+    processing_job_3.job_id = generate_id()
+    processing_job_4.job_id = generate_id()
     processing_jobs_list = create_processing_jobs_list(
         processing_job_1=processing_job_1,
         processing_job_2=processing_job_2,
@@ -156,6 +159,10 @@ def test_consume_cached_requests(
     processing_job_4: DBProcessorJob
 ):
     requests_cache = CacheProcessingRequests()
+    processing_job_1.job_id = generate_id()
+    processing_job_2.job_id = generate_id()
+    processing_job_3.job_id = generate_id()
+    processing_job_4.job_id = generate_id()
     processing_jobs_list = create_processing_jobs_list(
         processing_job_1=processing_job_1,
         processing_job_2=processing_job_2,
