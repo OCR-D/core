@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import socket
 import atexit
 
-from fastapi import FastAPI, Request, Form, Response
+from fastapi import FastAPI, Request, Form, Response, requests
 from fastapi.responses import JSONResponse
 from requests import Session as requests_session
 from requests.exceptions import ConnectionError
@@ -99,10 +99,13 @@ class ClientSideOcrdMets():
     """
 
     def __init__(self, url):
-        protocol = 'tcp' if url.startswith('http://') else 'uds'
+        self.protocol = 'tcp' if url.startswith('http://') else 'uds'
         self.log = getLogger(f'ocrd.mets_client[{url}]')
-        self.url = url if protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
-        self.session = requests_session() if protocol == 'tcp' else requests_unixsocket_session()
+        self.url = url if self.protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
+
+    @property
+    def session(self) -> Union[requests_session, requests_unixsocket_session]:
+        return requests_session() if self.protocol == 'tcp' else requests_unixsocket_session()
 
     def __getattr__(self, name):
         raise NotImplementedError(f"ClientSideOcrdMets has no access to '{name}' - try without METS server")
