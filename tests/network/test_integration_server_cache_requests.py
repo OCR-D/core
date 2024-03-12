@@ -12,13 +12,13 @@ from src.ocrd_network.server_cache import CacheProcessingRequests
 def test_update_request_counter():
     requests_cache = CacheProcessingRequests()
     workspace_key = "/path/to/mets.xml"
-    assert requests_cache.processing_counter == 0
+    assert requests_cache.processing_counter[workspace_key] == 0
     requests_cache.update_request_counter(workspace_key=workspace_key, by_value=3)
-    assert requests_cache.processing_counter == 3
+    assert requests_cache.processing_counter[workspace_key] == 3
     requests_cache.update_request_counter(workspace_key=workspace_key, by_value=-1)
     requests_cache.update_request_counter(workspace_key=workspace_key, by_value=-1)
     requests_cache.update_request_counter(workspace_key=workspace_key, by_value=-1)
-    assert requests_cache.processing_counter == 0
+    assert requests_cache.processing_counter[workspace_key] == 0
 
 
 def test_cache_request(processing_request_1: PYJobInput):
