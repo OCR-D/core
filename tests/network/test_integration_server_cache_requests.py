@@ -1,10 +1,6 @@
 from typing import List
 from src.ocrd_network.constants import JobState
-from src.ocrd_network.database import (
-    sync_db_create_processing_job,
-    sync_db_get_processing_job,
-    sync_db_update_processing_job
-)
+from src.ocrd_network.database import sync_db_get_processing_job, sync_db_update_processing_job
 from src.ocrd_network.models import DBProcessorJob, PYJobInput
 from src.ocrd_network.server_cache import CacheProcessingRequests
 
@@ -12,6 +8,7 @@ from src.ocrd_network.server_cache import CacheProcessingRequests
 def test_update_request_counter():
     requests_cache = CacheProcessingRequests()
     workspace_key = "/path/to/mets.xml"
+    requests_cache.update_request_counter(workspace_key=workspace_key, by_value=0)
     assert requests_cache.processing_counter[workspace_key] == 0
     requests_cache.update_request_counter(workspace_key=workspace_key, by_value=3)
     assert requests_cache.processing_counter[workspace_key] == 3
@@ -56,7 +53,7 @@ def test_is_caching_required(processing_jobs_list: List[DBProcessorJob]):
 
     sync_db_update_processing_job(processing_jobs_list[0].job_id, state=JobState.success)
     # the dependent job has successfully finished, no caching required
-    assert not requests_cache.sync_is_caching_required(rjob_dependencies=processing_jobs_list[1].depends_on)
+    assert not requests_cache.sync_is_caching_required(job_dependencies=processing_jobs_list[1].depends_on)
     sync_db_update_processing_job(processing_jobs_list[1].job_id, state=JobState.success)
     # the dependent job has successfully finished, no caching required for job 3 and job 4
     assert not requests_cache.sync_is_caching_required(job_dependencies=processing_jobs_list[2].depends_on)
