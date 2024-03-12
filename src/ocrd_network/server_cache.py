@@ -10,6 +10,7 @@ from .logging_utils import (
     get_cache_processing_requests_logging_file_path
 )
 from .models import PYJobInput
+from .utils import call_sync
 
 
 class CacheLockedPages:
@@ -107,7 +108,7 @@ class CacheProcessingRequests:
         # Key: `path_to_mets` if already resolved else `workspace_id`
         # Value: integer which holds the amount of jobs pushed to the RabbitMQ
         # but no internal callback was yet invoked
-        self.__processing_counter: Dict[str, int] = {}
+        self.processing_counter: Dict[str, int] = {}
 
     @staticmethod
     async def __check_if_job_deps_met(dependencies: List[str]) -> bool:
@@ -152,6 +153,10 @@ class CacheProcessingRequests:
                 continue
         return found_requests
 
+    @call_sync
+    async def sync_consume_cached_requests(self, workspace_key: str) -> List[PYJobInput]:
+        return await self.consume_cached_requests(workspace_key=workspace_key)
+
     def update_request_counter(self, workspace_key: str, by_value: int) -> int:
         """
         A method used to increase/decrease the internal counter of some workspace_key by `by_value`.
@@ -159,11 +164,11 @@ class CacheProcessingRequests:
         """
         # If a record counter of this workspace key does not exist
         # in the requests counter cache yet, create one and assign 0
-        if not self.__processing_counter.get(workspace_key, None):
+        if not self.processing_counter.get(workspace_key, None):
             self.log.debug(f"Creating an internal request counter for workspace key: {workspace_key}")
-            self.__processing_counter[workspace_key] = 0
-        self.__processing_counter[workspace_key] = self.__processing_counter[workspace_key] + by_value
-        return self.__processing_counter[workspace_key]
+            self.processing_counter[workspace_key] = 0
+        self.processing_counter[workspace_key] = self.processing_counter[workspace_key] + by_value
+        return self.processing_counter[workspace_key]
 
     def cache_request(self, workspace_key: str, data: PYJobInput):
         # If a record queue of this workspace key does not exist in the requests cache
@@ -207,6 +212,11 @@ class CacheProcessingRequests:
                 continue
         return cancelled_jobs
 
+    @call_sync
+    async def sync_cancel_dependent_jobs(self, workspace_key: str, processing_job_id: str) -> List[PYJobInput]:
+        # A synchronous wrapper around the async method
+        return await self.cancel_dependent_jobs(workspace_key=workspace_key, processing_job_id=processing_job_id)
+
     async def is_caching_required(self, job_dependencies: List[str]) -> bool:
         if not len(job_dependencies):
             # no dependencies found
@@ -215,6 +225,11 @@ class CacheProcessingRequests:
             # all dependencies are met
             return False
         return True
+
+    @call_sync
+    async def sync_is_caching_required(self, job_dependencies: List[str]) -> bool:
+        # A synchronous wrapper around the async method
+        return await self.is_caching_required(job_dependencies=job_dependencies)
 
     def has_workspace_cached_requests(self, workspace_key: str) -> bool:
         if not self.processing_requests.get(workspace_key, None):
