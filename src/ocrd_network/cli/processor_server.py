@@ -19,12 +19,12 @@ def processor_server_cli(processor_name: str, address: str, database: str):
     (standalone REST API OCR-D processor)
     """
     try:
-        # TODO: Better validate that inside the ProcessorServer itself
+        # Note, the address is already validated with the type field
         host, port = address.split(':')
         processor_server = ProcessorServer(
             mongodb_addr=database,
             processor_name=processor_name,
-            processor_class=None,  # For readability purposes assigned here
+            processor_class=None  # For readability purposes assigned here
         )
         processor_server.run_server(host=host, port=int(port))
     except Exception as e:

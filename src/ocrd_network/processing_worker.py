@@ -59,14 +59,16 @@ class ProcessingWorker:
         # Used to consume OcrdProcessingMessage from the queue with name {processor_name}
         self.rmq_consumer = None
         # Gets assigned when the `connect_publisher` is called on the worker object
-        # The publisher is connected when the `result_queue` field of the OcrdProcessingMessage is set for first time
         # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
-        self.rmq_publisher = connect_rabbitmq_publisher(self.log, self.rmq_data, enable_acks=True)
-        # Always create a queue (idempotent)
-        self.rmq_publisher.create_queue(queue_name=self.processor_name)
+        self.rmq_publisher = None
 
     def connect_consumer(self):
         self.rmq_consumer = connect_rabbitmq_consumer(self.log, self.rmq_data)
+        # Always create a queue (idempotent)
+        self.rmq_consumer.create_queue(queue_name=self.processor_name)
+
+    def connect_publisher(self, enable_acks: bool = True):
+        self.rmq_publisher = connect_rabbitmq_publisher(self.log, self.rmq_data, enable_acks=enable_acks)
 
     # Define what happens every time a message is consumed
     # from the queue with name self.processor_name
@@ -245,7 +247,7 @@ class ProcessingWorker:
 
     def publish_to_result_queue(self, result_queue: str, result_message: OcrdResultMessage):
         if not self.rmq_publisher:
-            connect_rabbitmq_publisher(self.log, self.rmq_data)
+            self.connect_publisher()
         # create_queue method is idempotent - nothing happens if
         # a queue with the specified name already exists
         self.rmq_publisher.create_queue(queue_name=result_queue)

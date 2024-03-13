@@ -9,6 +9,7 @@ from tests.base import assets
 
 def test_invoke_processor_bash():
     # TODO: Requires locally installed bash lib processor
+    # Check here: `tests/data/bashlib_cp_processor.sh`
     pass
 
 

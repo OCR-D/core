@@ -3,11 +3,11 @@ The source code in this file is adapted by reusing
 some part of the source code from the official
 RabbitMQ documentation.
 """
-from typing import Any, Union
+from typing import Any, Optional, Union
 from pika import PlainCredentials
 from ocrd_utils import getLogger
 from .connector import RMQConnector
-from .constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT, RABBIT_MQ_VHOST
+from .constants import DEFAULT_EXCHANGER_NAME, RABBIT_MQ_HOST, RABBIT_MQ_PORT, RABBIT_MQ_VHOST
 
 
 class RMQConsumer(RMQConnector):
@@ -38,6 +38,35 @@ class RMQConsumer(RMQConnector):
 
     def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
+
+    def create_queue(
+            self,
+            queue_name: str,
+            exchange_name: Optional[str] = None,
+            exchange_type: Optional[str] = None,
+            passive: bool = False
+    ) -> None:
+        if exchange_name is None:
+            exchange_name = DEFAULT_EXCHANGER_NAME
+        if exchange_type is None:
+            exchange_type = "direct"
+        RMQConnector.exchange_declare(
+            channel=self._channel,
+            exchange_name=exchange_name,
+            exchange_type=exchange_type
+        )
+        RMQConnector.queue_declare(
+            channel=self._channel,
+            queue_name=queue_name,
+            passive=passive
+        )
+        RMQConnector.queue_bind(
+            channel=self._channel,
+            queue_name=queue_name,
+            exchange_name=exchange_name,
+            # the routing key matches the queue name
+            routing_key=queue_name
+        )
 
     def get_one_message(self, queue_name: str, auto_ack: bool = False) -> Union[Any, None]:
         message = None
