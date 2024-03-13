@@ -22,7 +22,9 @@ def test_processing_worker_process_message():
     inpurt_file_grp = "OCR-D-IMG"
     output_file_grp = f"OCR-D-DUMMY-TEST-WORKER-{test_job_id}"
     page_id = "PHYS_0017,PHYS_0020"
-    processor_name = "ocrd-dummy"
+    # Notice, the name is intentionally set differently from "ocrd-dummy" to prevent
+    # wrong reads from the deployed dummy worker (part of the processing server integration test)
+    processor_name = "ocrd-dummy-test"
     result_queue_name = f"{processor_name}-result"
 
     processing_worker = ProcessingWorker(
