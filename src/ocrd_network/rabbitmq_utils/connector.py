@@ -44,19 +44,18 @@ class RMQConnector:
             if channel and channel.is_open:
                 # Declare the default exchange agent
                 RMQConnector.exchange_declare(
-                    channel=channel,
-                    exchange_name=DEFAULT_EXCHANGER_NAME,
-                    exchange_type=DEFAULT_EXCHANGER_TYPE,
+                    channel=channel, exchange_name=DEFAULT_EXCHANGER_NAME, exchange_type=DEFAULT_EXCHANGER_TYPE,
                 )
                 # Declare the default queue
                 RMQConnector.queue_declare(channel, queue_name=DEFAULT_QUEUE)
                 # Bind the default queue to the default exchange
                 RMQConnector.queue_bind(
-                    channel,
-                    queue_name=DEFAULT_QUEUE,
-                    exchange_name=DEFAULT_EXCHANGER_NAME,
-                    routing_key=DEFAULT_ROUTER
+                    channel=channel, queue_name=DEFAULT_QUEUE,
+                    exchange_name=DEFAULT_EXCHANGER_NAME, routing_key=DEFAULT_ROUTER
                 )
+                return
+            raise ConnectionError("The channel is missing or closed.")
+        raise ConnectionError("The connection is missing or closed.")
 
     # Connection related methods
     @staticmethod
@@ -81,7 +80,19 @@ class RMQConnector:
         if connection and connection.is_open:
             channel = connection.channel()
             return channel
-        return None
+        raise ConnectionError("The connection is missing or closed.")
+
+    def _authenticate_and_connect(self, username: str, password: str) -> None:
+        # Delete credentials once connected
+        credentials = PlainCredentials(username=username, password=password, erase_on_connect=False)
+        self._connection = RMQConnector.open_blocking_connection(
+            host=self._host, port=self._port, vhost=self._vhost, credentials=credentials,
+        )
+        self._channel = RMQConnector.open_blocking_channel(self._connection)
+        if not self._connection:
+            raise ConnectionError("The connection is missing or closed.")
+        if not self._channel:
+            raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def exchange_bind(
@@ -100,6 +111,8 @@ class RMQConnector:
                 routing_key=routing_key,
                 arguments=arguments
             )
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def exchange_declare(
@@ -115,7 +128,7 @@ class RMQConnector:
         if arguments is None:
             arguments = {}
         if channel and channel.is_open:
-            exchange = channel.exchange_declare(
+            channel.exchange_declare(
                 exchange=exchange_name,
                 exchange_type=exchange_type,
                 # Only check to see if the exchange exists
@@ -129,13 +142,16 @@ class RMQConnector:
                 # Custom key/value pair arguments for the exchange
                 arguments=arguments
             )
-            return exchange
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def exchange_delete(channel: BlockingChannel, exchange_name: str, if_unused: bool = False) -> None:
         # Deletes queue only if unused
         if channel and channel.is_open:
             channel.exchange_delete(exchange=exchange_name, if_unused=if_unused)
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def exchange_unbind(
@@ -154,6 +170,8 @@ class RMQConnector:
                 routing_key=routing_key,
                 arguments=arguments
             )
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def queue_bind(
@@ -167,6 +185,8 @@ class RMQConnector:
             arguments = {}
         if channel and channel.is_open:
             channel.queue_bind(queue=queue_name, exchange=exchange_name, routing_key=routing_key, arguments=arguments)
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def queue_declare(
@@ -196,6 +216,7 @@ class RMQConnector:
                 arguments=arguments
             )
             return queue
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def queue_delete(
@@ -235,6 +256,21 @@ class RMQConnector:
                 routing_key=routing_key,
                 arguments=arguments
             )
+
+    @staticmethod
+    def create_queue(
+        self,
+        queue_name: str,
+        exchange_name: Optional[str] = DEFAULT_EXCHANGER_NAME,
+        exchange_type: Optional[str] = "direct",
+        passive: bool = False
+    ) -> None:
+        RMQConnector.exchange_declare(channel=self._channel, exchange_name=exchange_name, exchange_type=exchange_type)
+        RMQConnector.queue_declare(channel=self._channel, queue_name=queue_name, passive=passive)
+        # The queue name is used as a routing key, to keep implementation simple
+        RMQConnector.queue_bind(
+            channel=self._channel, queue_name=queue_name, exchange_name=exchange_name, routing_key=queue_name
+        )
 
     @staticmethod
     def set_qos(
