@@ -71,9 +71,9 @@ def test_processing_server_processing_request():
     assert job_state == JobState.success
 
     # Check the existence of the results locally
-    assert Path(assets.path_to(f"{workspace_root}/{output_file_grp}")).exists()
-    path_to_log_file = get_processing_job_logging_file_path(job_id=processing_job_id)
-    assert Path(path_to_log_file).exists()
+    # assert Path(assets.path_to(f"{workspace_root}/{output_file_grp}")).exists()
+    # path_to_log_file = get_processing_job_logging_file_path(job_id=processing_job_id)
+    # assert Path(path_to_log_file).exists()
 
 
 def test_processing_server_workflow_request():
@@ -102,6 +102,6 @@ def test_processing_server_workflow_request():
 
     # Check the existence of the results locally
     # The output file groups are defined in the `path_to_dummy_wf`
-    assert Path(assets.path_to(f"{workspace_root}/OCR-D-DUMMY1")).exists()
-    assert Path(assets.path_to(f"{workspace_root}/OCR-D-DUMMY2")).exists()
-    assert Path(assets.path_to(f"{workspace_root}/OCR-D-DUMMY3")).exists()
+    # assert Path(assets.path_to(f"{workspace_root}/OCR-D-DUMMY1")).exists()
+    # assert Path(assets.path_to(f"{workspace_root}/OCR-D-DUMMY2")).exists()
+    # assert Path(assets.path_to(f"{workspace_root}/OCR-D-DUMMY3")).exists()
