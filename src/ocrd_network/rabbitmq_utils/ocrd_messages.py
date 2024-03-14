@@ -70,9 +70,7 @@ class OcrdProcessingMessage:
 
 
 class OcrdResultMessage:
-    def __init__(
-        self, job_id: str, state: str, path_to_mets: Optional[str] = None, workspace_id: Optional[str] = None
-    ) -> None:
+    def __init__(self, job_id: str, state: str, path_to_mets: Optional[str], workspace_id: Optional[str] = '') -> None:
         self.job_id = job_id
         self.state = state
         self.workspace_id = workspace_id
@@ -93,5 +91,5 @@ class OcrdResultMessage:
             job_id=data.get("job_id", None),
             state=data.get("state", None),
             path_to_mets=data.get("path_to_mets", None),
-            workspace_id=data.get("workspace_id", None),
+            workspace_id=data.get("workspace_id", ''),
         )

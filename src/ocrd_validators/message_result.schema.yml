@@ -6,11 +6,8 @@ additionalProperties: false
 required:
   - job_id
   - state
-oneOf:
-  - required:
-      - path_to_mets
-  - required:
-      - workspace_id
+  - path_to_mets
+  - workspace_id
 properties:
   job_id:
     description: The ID of the job

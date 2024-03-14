@@ -194,7 +194,7 @@ class ProcessorServer(FastAPI):
             state=job_state.value,
             path_to_mets=job.path_to_mets,
             # May not be always available
-            workspace_id=job.workspace_id
+            workspace_id=job.workspace_id if job.workspace_id else ''
         )
         self.log.info(f"Result message: {result_message}")
         if job.callback_url:
