@@ -29,10 +29,13 @@ def deploy_agent_native_get_pid_hack(logger: Logger, ssh_client, start_cmd: str)
 
 # TODO: Implement the actual method that is missing
 def deploy_agent_docker_template(logger: Logger, docker_client, start_cmd: str):
+    """
     logger.debug(f"Executing command: {start_cmd}")
     res = docker_client.containers.run("debian", "sleep 500s", detach=True, remove=True)
     assert res and res.id, f"Starting docker network agent has failed with command: {start_cmd}"
     return res.id
+    """
+    raise Exception("Deploying docker type agents is not supported yet!")
 
 
 class DataNetworkAgent:
@@ -70,7 +73,7 @@ class DataProcessingWorker(DataNetworkAgent):
             init_by_config=init_by_config, pid=pid
         )
 
-    def deploy_network_agent(self, logger: Logger, connector_client, database_url, queue_url):
+    def deploy_network_agent(self, logger: Logger, connector_client, database_url: str, queue_url: str):
         if self.deploy_type == DeployType.NATIVE:
             start_cmd = f"{self.processor_name} {self.agent_type} --database {database_url} --queue {queue_url} &"
             self.pid = self._start_native_instance(logger, connector_client, start_cmd)
@@ -93,7 +96,7 @@ class DataProcessorServer(DataNetworkAgent):
         )
         self.port = port
 
-    def deploy_network_agent(self, logger: Logger, connector_client, database_url):
+    def deploy_network_agent(self, logger: Logger, connector_client, database_url: str):
         agent_address = f"{self.host}:{self.port}"
         if self.deploy_type == DeployType.NATIVE:
             start_cmd = f"{self.processor_name} {self.agent_type} --address {agent_address} --database {database_url} &"
