@@ -114,5 +114,5 @@ def test_processing_worker_process_message():
 
     decoded_result_message = OcrdResultMessage.decode_yml(result_message)
     assert decoded_result_message.job_id == test_job_id
-    assert decoded_result_message.status == JobState.success
+    assert decoded_result_message.state == JobState.success
     assert decoded_result_message.path_to_mets == path_to_mets
