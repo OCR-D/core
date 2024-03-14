@@ -71,10 +71,10 @@ class OcrdProcessingMessage:
 
 class OcrdResultMessage:
     def __init__(
-        self, job_id: str, state: str, path_to_mets: Optional[str] = None, workspace_id: Optional[str] = None
+        self, job_id: str, status: str, path_to_mets: Optional[str] = None, workspace_id: Optional[str] = None
     ) -> None:
         self.job_id = job_id
-        self.state = state
+        self.status = status
         self.workspace_id = workspace_id
         self.path_to_mets = path_to_mets
 
@@ -91,7 +91,7 @@ class OcrdResultMessage:
             raise ValueError(f"Validating the result message has failed:\n{report.errors}")
         return OcrdResultMessage(
             job_id=data.get("job_id", None),
-            state=data.get("state", None),
+            status=data.get("status", None),
             path_to_mets=data.get("path_to_mets", None),
             workspace_id=data.get("workspace_id", None),
         )
