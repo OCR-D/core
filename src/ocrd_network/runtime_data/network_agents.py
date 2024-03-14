@@ -37,13 +37,8 @@ def deploy_agent_docker_template(logger: Logger, docker_client, start_cmd: str):
 
 class DataNetworkAgent:
     def __init__(
-        self,
-        processor_name: str,
-        deploy_type: DeployType,
-        agent_type: AgentType,
-        host: str,
-        init_by_config: bool,
-        pid: Any = None
+        self, processor_name: str, deploy_type: DeployType, agent_type: AgentType,
+        host: str, init_by_config: bool, pid: Any = None
     ) -> None:
         self.processor_name = processor_name
         self.deploy_type = deploy_type
@@ -68,20 +63,11 @@ class DataNetworkAgent:
 
 class DataProcessingWorker(DataNetworkAgent):
     def __init__(
-        self,
-        processor_name: str,
-        deploy_type: DeployType,
-        host: str,
-        init_by_config: bool,
-        pid: Any = None
+        self, processor_name: str, deploy_type: DeployType, host: str, init_by_config: bool, pid: Any = None
     ) -> None:
         super().__init__(
-            processor_name=processor_name,
-            host=host,
-            deploy_type=deploy_type,
-            agent_type=AgentType.PROCESSING_WORKER,
-            init_by_config=init_by_config,
-            pid=pid
+            processor_name=processor_name, host=host, deploy_type=deploy_type, agent_type=AgentType.PROCESSING_WORKER,
+            init_by_config=init_by_config, pid=pid
         )
 
     def deploy_network_agent(self, logger: Logger, connector_client, database_url, queue_url):
@@ -99,21 +85,11 @@ class DataProcessingWorker(DataNetworkAgent):
 
 class DataProcessorServer(DataNetworkAgent):
     def __init__(
-        self,
-        processor_name: str,
-        deploy_type: DeployType,
-        host: str,
-        port: int,
-        init_by_config: bool,
-        pid: Any = None
+        self, processor_name: str, deploy_type: DeployType, host: str, port: int, init_by_config: bool, pid: Any = None
     ) -> None:
         super().__init__(
-            processor_name=processor_name,
-            host=host,
-            deploy_type=deploy_type,
-            agent_type=AgentType.PROCESSOR_SERVER,
-            init_by_config=init_by_config,
-            pid=pid
+            processor_name=processor_name, host=host, deploy_type=deploy_type, agent_type=AgentType.PROCESSOR_SERVER,
+            init_by_config=init_by_config, pid=pid
         )
         self.port = port
 

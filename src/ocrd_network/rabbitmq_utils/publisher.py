@@ -27,10 +27,7 @@ class RMQPublisher(RMQConnector):
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
 
     def publish_to_queue(
-        self,
-        queue_name: str,
-        message: bytes,
-        exchange_name: Optional[str] = DEFAULT_EXCHANGER_NAME,
+        self, queue_name: str, message: bytes, exchange_name: Optional[str] = DEFAULT_EXCHANGER_NAME,
         properties: Optional[BasicProperties] = None
     ) -> None:
         if properties is None:

@@ -8,13 +8,7 @@ from .network_agents import AgentType, DataNetworkAgent, DataProcessingWorker, D
 
 class DataHost:
     def __init__(
-        self,
-        host: str,
-        username: str,
-        password: str,
-        keypath: str,
-        workers: List[Dict],
-        servers: List[Dict]
+        self, host: str, username: str, password: str, keypath: str, workers: List[Dict], servers: List[Dict]
     ) -> None:
         self.host = host
         self.username = username
@@ -51,13 +45,13 @@ class DataHost:
         # Key: processor_name, Value: list of ports
         self.processor_servers_ports: dict = {}
 
-    def __add_deployed_agent_server_port_to_cache(self, processor_name: str, port: int):
+    def __add_deployed_agent_server_port_to_cache(self, processor_name: str, port: int) -> None:
         if processor_name not in self.processor_servers_ports:
             self.processor_servers_ports[processor_name] = [port]
             return
         self.processor_servers_ports[processor_name] = self.processor_servers_ports[processor_name].append(port)
 
-    def __append_network_agent_to_lists(self, agent_data: DataNetworkAgent):
+    def __append_network_agent_to_lists(self, agent_data: DataNetworkAgent) -> None:
         if agent_data.deploy_type == DeployType.NATIVE:
             self.needs_ssh_connector = True
             self.network_agents_native.append(agent_data)
@@ -77,22 +71,15 @@ class DataHost:
     def __parse_network_agents(self, processing_workers: List[Dict], processor_servers: List[Dict]):
         for worker in processing_workers:
             worker_data = DataProcessingWorker(
-                processor_name=worker["name"],
-                deploy_type=worker["deploy_type"],
-                host=self.host,
-                init_by_config=True,
-                pid=None
+                processor_name=worker["name"], deploy_type=worker["deploy_type"], host=self.host,
+                init_by_config=True, pid=None
             )
             for _ in range(int(worker["number_of_instance"])):
                 self.__append_network_agent_to_lists(agent_data=worker_data)
         for server in processor_servers:
             server_data = DataProcessorServer(
-                processor_name=server["name"],
-                deploy_type=server["deploy_type"],
-                host=self.host,
-                port=int(server["port"]),
-                init_by_config=True,
-                pid=None
+                processor_name=server["name"], deploy_type=server["deploy_type"], host=self.host,
+                port=int(server["port"]), init_by_config=True, pid=None
             )
             self.__append_network_agent_to_lists(agent_data=server_data)
 
@@ -107,12 +94,9 @@ class DataHost:
             return self.docker_client
 
     def __deploy_network_agent(
-        self,
-        logger: Logger,
-        agent_data: Union[DataProcessorServer, DataProcessingWorker],
-        mongodb_url: str,
-        rabbitmq_url: str
-    ):
+        self, logger: Logger, agent_data: Union[DataProcessorServer, DataProcessingWorker],
+        mongodb_url: str, rabbitmq_url: str
+    ) -> None:
         deploy_type = agent_data.deploy_type
         agent_type = agent_data.agent_type
         name = agent_data.processor_name

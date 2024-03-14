@@ -11,11 +11,7 @@ from .publisher import RMQPublisher
 
 
 def __connect_rabbitmq_client(
-    logger: Logger,
-    client_type: str,
-    rmq_data: Dict,
-    attempts: int = RECONNECT_TRIES,
-    delay: int = RECONNECT_WAIT
+    logger: Logger, client_type: str, rmq_data: Dict, attempts: int = RECONNECT_TRIES, delay: int = RECONNECT_WAIT
 ) -> Union[RMQConsumer, RMQPublisher]:
     try:
         rmq_host: str = rmq_data["host"]

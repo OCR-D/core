@@ -96,10 +96,7 @@ class RMQConnector:
 
     @staticmethod
     def exchange_bind(
-        channel: BlockingChannel,
-        destination_exchange: str,
-        source_exchange: str,
-        routing_key: str,
+        channel: BlockingChannel, destination_exchange: str, source_exchange: str, routing_key: str,
         arguments: Optional[Any] = None
     ) -> None:
         if arguments is None:
@@ -116,14 +113,8 @@ class RMQConnector:
 
     @staticmethod
     def exchange_declare(
-        channel: BlockingChannel,
-        exchange_name: str,
-        exchange_type: str,
-        passive: bool = False,
-        durable: bool = False,
-        auto_delete: bool = False,
-        internal: bool = False,
-        arguments: Optional[Any] = None
+        channel: BlockingChannel, exchange_name: str, exchange_type: str, passive: bool = False, durable: bool = False,
+        auto_delete: bool = False, internal: bool = False, arguments: Optional[Any] = None
     ) -> None:
         if arguments is None:
             arguments = {}
@@ -155,10 +146,7 @@ class RMQConnector:
 
     @staticmethod
     def exchange_unbind(
-        channel: BlockingChannel,
-        destination_exchange: str,
-        source_exchange: str,
-        routing_key: str,
+        channel: BlockingChannel, destination_exchange: str, source_exchange: str, routing_key: str,
         arguments: Optional[Any] = None
     ) -> None:
         if arguments is None:
@@ -175,11 +163,7 @@ class RMQConnector:
 
     @staticmethod
     def queue_bind(
-        channel: BlockingChannel,
-        queue_name: str,
-        exchange_name: str,
-        routing_key: str,
-        arguments: Optional[Any] = None
+        channel: BlockingChannel, queue_name: str, exchange_name: str, routing_key: str, arguments: Optional[Any] = None
     ) -> None:
         if arguments is None:
             arguments = {}
@@ -190,13 +174,8 @@ class RMQConnector:
 
     @staticmethod
     def queue_declare(
-        channel: BlockingChannel,
-        queue_name: str,
-        passive: bool = False,
-        durable: bool = False,
-        exclusive: bool = False,
-        auto_delete: bool = False,
-        arguments: Optional[Any] = None
+        channel: BlockingChannel, queue_name: str, passive: bool = False, durable: bool = False,
+        exclusive: bool = False, auto_delete: bool = False, arguments: Optional[Any] = None
     ) -> None:
         if arguments is None:
             arguments = {}
@@ -220,10 +199,7 @@ class RMQConnector:
 
     @staticmethod
     def queue_delete(
-        channel: BlockingChannel,
-        queue_name: str,
-        if_unused: bool = False,
-        if_empty: bool = False
+        channel: BlockingChannel, queue_name: str, if_unused: bool = False, if_empty: bool = False
     ) -> None:
         if channel and channel.is_open:
             channel.queue_delete(
@@ -233,6 +209,8 @@ class RMQConnector:
                 # Only delete if the queue is empty
                 if_empty=if_empty
             )
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def queue_purge(channel: BlockingChannel, queue_name: str) -> None:
@@ -241,11 +219,7 @@ class RMQConnector:
 
     @staticmethod
     def queue_unbind(
-        channel: BlockingChannel,
-        queue_name: str,
-        exchange_name: str,
-        routing_key: str,
-        arguments: Optional[Any] = None
+        channel: BlockingChannel, queue_name: str, exchange_name: str, routing_key: str, arguments: Optional[Any] = None
     ) -> None:
         if arguments is None:
             arguments = {}
@@ -256,14 +230,12 @@ class RMQConnector:
                 routing_key=routing_key,
                 arguments=arguments
             )
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
-    @staticmethod
     def create_queue(
-        self,
-        queue_name: str,
-        exchange_name: Optional[str] = DEFAULT_EXCHANGER_NAME,
-        exchange_type: Optional[str] = "direct",
-        passive: bool = False
+        self, queue_name: str, exchange_name: Optional[str] = DEFAULT_EXCHANGER_NAME,
+        exchange_type: Optional[str] = "direct", passive: bool = False
     ) -> None:
         RMQConnector.exchange_declare(channel=self._channel, exchange_name=exchange_name, exchange_type=exchange_type)
         RMQConnector.queue_declare(channel=self._channel, queue_name=queue_name, passive=passive)
@@ -274,10 +246,7 @@ class RMQConnector:
 
     @staticmethod
     def set_qos(
-        channel: BlockingChannel,
-        prefetch_size: int = 0,
-        prefetch_count: int = PREFETCH_COUNT,
-        global_qos: bool = False
+        channel: BlockingChannel, prefetch_size: int = 0, prefetch_count: int = PREFETCH_COUNT, global_qos: bool = False
     ) -> None:
         if channel and channel.is_open:
             channel.basic_qos(
@@ -287,19 +256,19 @@ class RMQConnector:
                 # Should the qos apply to all channels of the connection
                 global_qos=global_qos
             )
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def confirm_delivery(channel: BlockingChannel) -> None:
         if channel and channel.is_open:
             channel.confirm_delivery()
+            return
+        raise ConnectionError("The channel is missing or closed.")
 
     @staticmethod
     def basic_publish(
-        channel: BlockingChannel,
-        exchange_name: str,
-        routing_key: str,
-        message_body: bytes,
-        properties: BasicProperties
+        channel: BlockingChannel, exchange_name: str, routing_key: str, message_body: bytes, properties: BasicProperties
     ) -> None:
         if channel and channel.is_open:
             channel.basic_publish(
@@ -308,3 +277,5 @@ class RMQConnector:
                 body=message_body,
                 properties=properties
             )
+            return
+        raise ConnectionError("The channel is missing or closed.")

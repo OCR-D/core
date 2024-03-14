@@ -33,13 +33,8 @@ class Deployer:
 
     # TODO: Reconsider this.
     def find_matching_processors(
-            self,
-            worker_only: bool = False,
-            server_only: bool = False,
-            docker_only: bool = False,
-            native_only: bool = False,
-            str_names_only: bool = False,
-            unique_only: bool = False
+        self, worker_only: bool = False, server_only: bool = False, docker_only: bool = False,
+        native_only: bool = False, str_names_only: bool = False, unique_only: bool = False
     ) -> Union[List[str], List[object]]:
         """Finds and returns a list of matching data objects of type:
         `DataProcessingWorker` and `DataProcessorServer`.
