@@ -94,7 +94,10 @@ class Deployer:
     def resolve_processor_server_url(self, processor_name) -> str:
         processor_server_url = ''
         for data_host in self.data_hosts:
-            for data_server in data_host.network_agents_server:
+            for data_server in data_host.network_agents_server_docker:
+                if data_server.processor_name == processor_name:
+                    processor_server_url = f"http://{data_host.host}:{data_server.port}/"
+            for data_server in data_host.network_agents_server_native:
                 if data_server.processor_name == processor_name:
                     processor_server_url = f"http://{data_host.host}:{data_server.port}/"
         return processor_server_url
