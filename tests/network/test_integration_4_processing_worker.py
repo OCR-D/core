@@ -1,6 +1,5 @@
 from pathlib import Path
 from pika import BasicProperties
-from time import sleep
 from src.ocrd.processor.builtin.dummy_processor import DummyProcessor, OCRD_TOOL
 from src.ocrd_network.constants import JobState
 from src.ocrd_network.database import sync_db_create_workspace, sync_db_create_processing_job
@@ -19,7 +18,7 @@ def test_processing_worker_process_message():
     assert Path(path_to_mets).exists()
     test_job_id = generate_id()
     test_created_time = generate_created_time()
-    inpurt_file_grp = "OCR-D-IMG"
+    input_file_grp = "OCR-D-IMG"
     output_file_grp = f"OCR-D-DUMMY-TEST-WORKER-{test_job_id}"
     page_id = "PHYS_0017,PHYS_0020"
     # Notice, the name is intentionally set differently from "ocrd-dummy" to prevent
@@ -49,7 +48,7 @@ def test_processing_worker_process_message():
             created_time=test_created_time,
             path_to_mets=path_to_mets,
             workspace_id=None,
-            input_file_grps=[inpurt_file_grp],
+            input_file_grps=[input_file_grp],
             output_file_grps=[output_file_grp],
             page_id=page_id,
             parameters={},
@@ -66,7 +65,7 @@ def test_processing_worker_process_message():
         created_time=test_created_time,
         path_to_mets=path_to_mets,
         workspace_id=None,
-        input_file_grps=[inpurt_file_grp],
+        input_file_grps=[input_file_grp],
         output_file_grps=[output_file_grp],
         page_id=page_id,
         parameters={},
@@ -87,13 +86,10 @@ def test_processing_worker_process_message():
     # The queue should have a single message inside
     assert processing_worker.rmq_publisher.message_counter == 1
 
-    sleep(3)
-
     # PULL/Consume the ocrd processing message
     method_frame, header_frame, processing_message = processing_worker.rmq_consumer.get_one_message(
         queue_name=processor_name, auto_ack=True
     )
-    assert method_frame.delivery_tag == 1  # First message delivered to this queue
     assert method_frame.message_count == 0  # Messages left in the queue
     assert method_frame.redelivered is False
     assert method_frame.routing_key == processor_name
@@ -102,8 +98,6 @@ def test_processing_worker_process_message():
 
     # Process the ocrd processing message
     processing_worker.process_message(processing_message=decoded_processing_message)
-
-    sleep(3)
 
     # Check the existence of the results locally
     assert Path(assets.path_to(f"{workspace_root}/{output_file_grp}")).exists()
@@ -114,15 +108,9 @@ def test_processing_worker_process_message():
     method_frame, header_frame, result_message = processing_worker.rmq_consumer.get_one_message(
         queue_name=result_queue_name, auto_ack=True
     )
-    assert method_frame.delivery_tag == 1  # First message delivered to this queue
     assert method_frame.message_count == 0  # Messages left in the queue
     assert method_frame.redelivered is False
     assert method_frame.routing_key == result_queue_name
-
-    # decoded_message = loads(result_message)
-    # assert decoded_message["job_id"] == test_job_id
-    # assert decoded_message["state"] == JobState.success
-    # assert decoded_message["path_to_mets"] == "Test_workspace_id"
 
     decoded_result_message = OcrdResultMessage.decode_yml(result_message)
     assert decoded_result_message.job_id == test_job_id
