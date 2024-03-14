@@ -219,7 +219,7 @@ class ProcessingWorker:
             status=job_state.value,
             path_to_mets=path_to_mets,
             # May not be always available
-            workspace_id=workspace_id
+            workspace_id=workspace_id if workspace_id else ''
         )
         self.publish_result_to_all(processing_message=processing_message, result_message=result_message)
 
