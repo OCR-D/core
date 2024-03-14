@@ -580,19 +580,19 @@ class ProcessingServer(FastAPI):
 
     async def remove_job_from_request_cache(self, result_message: PYResultMessage):
         result_job_id = result_message.job_id
-        result_job_status = result_message.status
+        result_job_state = result_message.state
         path_to_mets = result_message.path_to_mets
         workspace_id = result_message.workspace_id
-        self.log.info(f"Result job_id: {result_job_id}, state: {result_job_status}")
+        self.log.info(f"Result job_id: {result_job_id}, state: {result_job_state}")
 
         db_workspace = await get_from_database_workspace(self.log, workspace_id, path_to_mets)
         mets_server_url = db_workspace.mets_server_url
         workspace_key = path_to_mets if path_to_mets else workspace_id
 
-        if result_job_status == JobState.failed:
+        if result_job_state == JobState.failed:
             await self._cancel_cached_dependent_jobs(workspace_key, result_job_id)
 
-        if result_job_status != JobState.success:
+        if result_job_state != JobState.success:
             # TODO: Handle other potential error cases
             pass
 

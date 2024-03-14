@@ -216,7 +216,7 @@ class ProcessingWorker:
         )
         result_message = OcrdResultMessage(
             job_id=job_id,
-            status=job_state.value,
+            state=job_state.value,
             path_to_mets=path_to_mets,
             # May not be always available
             workspace_id=workspace_id if workspace_id else ''

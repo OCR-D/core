@@ -16,8 +16,8 @@ properties:
     description: The ID of the job
     type: string
     format: uuid
-  status:
-    description: The current status of the job
+  state:
+    description: The current state of the job
     type: string
     enum:
       - CACHED

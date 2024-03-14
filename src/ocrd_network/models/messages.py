@@ -7,7 +7,7 @@ class PYResultMessage(BaseModel):
     """ Wraps the parameters required to make a result message request
     """
     job_id: str
-    status: JobState = JobState.unset
+    state: JobState = JobState.unset
     path_to_mets: Optional[str] = None
     workspace_id: Optional[str] = None
 
@@ -15,7 +15,7 @@ class PYResultMessage(BaseModel):
         schema_extra = {
             "example": {
                 "job_id": "d8e36726-ed28-5476-b83c-bc31d2eecf1f",
-                "status": JobState.success,
+                "state": JobState.success,
                 "path_to_mets": "/path/to/mets.xml",
                 "workspace_id": "c7f25615-fc17-4365-a74d-ad20e1ddbd0e"
             }
