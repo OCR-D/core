@@ -28,10 +28,7 @@ class CacheLockedPages:
         self.placeholder_all_pages: str = SERVER_ALL_PAGES_PLACEHOLDER
 
     def check_if_locked_pages_for_output_file_grps(
-        self,
-        workspace_key: str,
-        output_file_grps: List[str],
-        page_ids: List[str]
+        self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
     ) -> bool:
         if not self.locked_pages.get(workspace_key, None):
             self.log.debug(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
@@ -124,6 +121,14 @@ class CacheProcessingRequests:
                 return False
         return True
 
+    def __print_job_input_debug_message(self, job_input: PYJobInput):
+        debug_message = "Processing job input"
+        debug_message += f", processor: {job_input.processor_name}"
+        debug_message += f", page ids: {job_input.page_id}"
+        debug_message += f", job id: {job_input.job_id}"
+        debug_message += f", job depends on: {job_input.depends_on}"
+        self.log.debug(debug_message)
+
     async def consume_cached_requests(self, workspace_key: str) -> List[PYJobInput]:
         if not self.has_workspace_cached_requests(workspace_key=workspace_key):
             self.log.debug(f"No jobs to be consumed for workspace key: {workspace_key}")
@@ -141,12 +146,7 @@ class CacheProcessingRequests:
             try:
                 (self.processing_requests[workspace_key]).remove(found_element)
                 # self.log.debug(f"Found cached request to be processed: {found_request}")
-                debug_message = "Found cached request"
-                debug_message += f", processor: {found_element.processor_name}"
-                debug_message += f", page ids: {found_element.page_id}"
-                debug_message += f", job id: {found_element.job_id}"
-                debug_message += f", job depends on: {found_element.depends_on}"
-                self.log.debug(debug_message)
+                self.__print_job_input_debug_message(job_input=found_element)
                 found_requests.append(found_element)
             except ValueError:
                 # The ValueError is not an issue since the element was removed by another instance
@@ -175,12 +175,7 @@ class CacheProcessingRequests:
         if not self.processing_requests.get(workspace_key, None):
             self.log.debug(f"Creating an internal request queue for workspace_key: {workspace_key}")
             self.processing_requests[workspace_key] = []
-        debug_message = "Caching request"
-        debug_message += f", processor: {data.processor_name}"
-        debug_message += f", page ids: {data.page_id}"
-        debug_message += f", job id: {data.job_id}"
-        debug_message += f", jpb depends on: {data.depends_on}"
-        self.log.debug(debug_message)
+        self.__print_job_input_debug_message(job_input=data)
         # Add the processing request to the end of the internal queue
         self.processing_requests[workspace_key].append(data)
 
@@ -202,8 +197,7 @@ class CacheProcessingRequests:
                 await db_update_processing_job(job_id=cancel_element.job_id, state=JobState.cancelled)
                 # Recursively cancel dependent jobs for the cancelled job
                 recursively_cancelled = await self.cancel_dependent_jobs(
-                    workspace_key=workspace_key,
-                    processing_job_id=cancel_element.job_id
+                    workspace_key=workspace_key, processing_job_id=cancel_element.job_id
                 )
                 # Add the recursively cancelled jobs to the main list of cancelled jobs
                 cancelled_jobs.extend(recursively_cancelled)
@@ -219,11 +213,9 @@ class CacheProcessingRequests:
 
     async def is_caching_required(self, job_dependencies: List[str]) -> bool:
         if not len(job_dependencies):
-            # no dependencies found
-            return False
+            return False  # no dependencies found
         if await self.__check_if_job_deps_met(job_dependencies):
-            # all dependencies are met
-            return False
+            return False  # all dependencies are met
         return True
 
     @call_sync
