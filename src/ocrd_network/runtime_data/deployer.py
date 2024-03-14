@@ -13,7 +13,6 @@ from time import sleep
 from typing import Dict, List, Union
 
 from ocrd_utils import config, getLogger, safe_filename
-from ..constants import DeployType
 from ..logging_utils import get_mets_server_logging_file_path
 from ..utils import is_mets_server_running, stop_mets_server
 from .config_parser import parse_hosts_data, parse_mongodb_data, parse_rabbitmq_data, validate_and_load_config
@@ -32,19 +31,19 @@ class Deployer:
         self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
 
     # TODO: Reconsider this.
-    def find_matching_processors(
+    def find_matching_network_agents(
         self, worker_only: bool = False, server_only: bool = False, docker_only: bool = False,
         native_only: bool = False, str_names_only: bool = False, unique_only: bool = False
     ) -> Union[List[str], List[object]]:
         """Finds and returns a list of matching data objects of type:
         `DataProcessingWorker` and `DataProcessorServer`.
 
-        :py:attr:`worker_only` match only processors with worker status
-        :py:attr:`server_only` match only processors with server status
-        :py:attr:`docker_only` match only docker processors
-        :py:attr:`native_only` match only native processors
-        :py:attr:`str_only` returns the processor_name instead of data object
-        :py:attr:`unique_only` remove duplicates from the matches
+        :py:attr:`worker_only` match only worker network agents (DataProcessingWorker)
+        :py:attr:`server_only` match only server network agents (DataProcessorServer)
+        :py:attr:`docker_only` match only docker network agents (DataProcessingWorker and DataProcessorServer)
+        :py:attr:`native_only` match only native network agents (DataProcessingWorker and DataProcessorServer)
+        :py:attr:`str_names_only` returns the processor_name filed instead of the Data* object
+        :py:attr:`unique_only` remove duplicate names from the matches
 
         `worker_only` and `server_only` are mutually exclusive to each other
         `docker_only` and `native_only` are mutually exclusive to each other
@@ -64,32 +63,31 @@ class Deployer:
             self.log.exception(msg)
             raise ValueError(msg)
 
-        # Find all matching objects of type:
-        # DataProcessingWorker or DataProcessorServer
+        # Find all matching objects of type DataProcessingWorker or DataProcessorServer
         matched_objects = []
         for data_host in self.data_hosts:
             if not server_only:
-                for data_worker in data_host.network_agents_worker:
-                    if data_worker.deploy_type == DeployType.NATIVE and docker_only:
-                        continue
-                    if data_worker.deploy_type == DeployType.DOCKER and native_only:
-                        continue
-                    matched_objects.append(data_worker)
+                if not docker_only:
+                    for data_worker in data_host.network_agents_worker_native:
+                        matched_objects.append(data_worker)
+                if not native_only:
+                    for data_worker in data_host.network_agents_worker_docker:
+                        matched_objects.append(data_worker)
             if not worker_only:
-                for data_server in data_host.network_agents_server:
-                    if data_server.deploy_type == DeployType.NATIVE and docker_only:
-                        continue
-                    if data_server.deploy_type == DeployType.DOCKER and native_only:
-                        continue
-                    matched_objects.append(data_server)
-        if str_names_only:
-            # gets only the processor names of the matched objects
-            name_list = [match.processor_name for match in matched_objects]
-            if unique_only:
-                # removes the duplicates, if any
-                return list(dict.fromkeys(name_list))
-            return name_list
-        return matched_objects
+                if not docker_only:
+                    for data_server in data_host.network_agents_server_native:
+                        matched_objects.append(data_server)
+                if not native_only:
+                    for data_server in data_host.network_agents_server_docker:
+                        matched_objects.append(data_server)
+        if not str_names_only:
+            return matched_objects
+        # Gets only the processor names of the matched objects
+        matched_names = [match.processor_name for match in matched_objects]
+        if not unique_only:
+            return matched_names
+        # Removes any duplicate entries from matched names
+        return list(dict.fromkeys(matched_names))
 
     def resolve_processor_server_url(self, processor_name) -> str:
         processor_server_url = ''

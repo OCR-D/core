@@ -143,7 +143,7 @@ class ProcessingServer(FastAPI):
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.rmq_publisher = connect_rabbitmq_publisher(self.log, self.rmq_data, enable_acks=True)
 
-            queue_names = self.deployer.find_matching_processors(
+            queue_names = self.deployer.find_matching_network_agents(
                 worker_only=True, str_names_only=True, unique_only=True
             )
             self.log.debug(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
@@ -615,13 +615,9 @@ class ProcessingServer(FastAPI):
 
     async def list_processors(self) -> List[str]:
         # There is no caching on the Processing Server side
-        processor_names_list = self.deployer.find_matching_processors(
-            docker_only=False,
-            native_only=False,
-            worker_only=False,
-            server_only=False,
-            str_names_only=True,
-            unique_only=True
+        processor_names_list = self.deployer.find_matching_network_agents(
+            docker_only=False, native_only=False, worker_only=False, server_only=False,
+            str_names_only=True, unique_only=True
         )
         return processor_names_list
 
