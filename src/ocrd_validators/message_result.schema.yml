@@ -5,7 +5,7 @@ type: object
 additionalProperties: false
 required:
   - job_id
-  - status
+  - state
 oneOf:
   - required:
       - path_to_mets
