@@ -54,7 +54,7 @@ jobs:
       - name: Run network integration tests with pytest
         run: |
           if [[ "${{ matrix.os }}" == "macos"* ]];then
-            make network-integration-test DOCKER_COMPOSE=docker-compose
+            make network-integration-test-cicd DOCKER_COMPOSE=docker-compose
           else
-            make network-integration-test
+            make network-integration-test-cicd
           fi
