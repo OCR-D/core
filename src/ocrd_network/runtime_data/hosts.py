@@ -213,3 +213,13 @@ class DataHost:
         if self.docker_client:
             self.docker_client.close()
             self.docker_client = None
+
+    def resolve_processor_server_url(self, processor_name: str) -> str:
+        processor_server_url = ''
+        for data_server in self.network_agents_server_docker:
+            if data_server.processor_name == processor_name:
+                processor_server_url = f"http://{self.host}:{data_server.port}/"
+        for data_server in self.network_agents_server_native:
+            if data_server.processor_name == processor_name:
+                processor_server_url = f"http://{self.host}:{data_server.port}/"
+        return processor_server_url
