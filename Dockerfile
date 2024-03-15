@@ -44,9 +44,11 @@ WORKDIR /data
 CMD ["/usr/local/bin/ocrd", "--help"]
 
 FROM ocrd_core_base as ocrd_core_test
+# Optionally skip make assets with this arg
+ARG SKIP_ASSETS
 WORKDIR /build-ocrd
 COPY Makefile .
-RUN make assets
+RUN if test -z "$SKIP_ASSETS" || test $SKIP_ASSETS -eq 0 ; then make assets ; fi
 COPY tests ./tests
 COPY .gitmodules .
 COPY requirements_test.txt .
