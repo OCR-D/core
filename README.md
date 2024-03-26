@@ -105,7 +105,7 @@ Some parts of the software are configured via environment variables:
 * `OCRD_NETWORK_SERVER_ADDR_PROCESSING`: Default address of Processing Server to connect to (for `ocrd network client processing`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKFLOW`: Default address of Workflow Server to connect to (for `ocrd network client workflow`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKSPACE`: Default address of Workspace Server to connect to (for `ocrd network client workspace`).
-* `OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS`: Number of attempts for a worker to create its queue. Helpfull if the rabbitmq-server needs time to be fully started.
+* `OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS`: Number of attempts for a worker to create its queue. Helpful if the rabbitmq-server needs time to be fully started.
 
 
 ## Packages
