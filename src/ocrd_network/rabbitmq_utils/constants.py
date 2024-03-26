@@ -8,6 +8,7 @@ __all__ = [
     "RABBIT_MQ_HOST",
     "RABBIT_MQ_PORT",
     "RABBIT_MQ_VHOST",
+    "RABBITMQ_URI_PATTERN",
     "RECONNECT_WAIT",
     "RECONNECT_TRIES",
     "PREFETCH_COUNT",
@@ -22,6 +23,8 @@ DEFAULT_ROUTER: str = "ocrd-network-default"
 RABBIT_MQ_HOST: str = "localhost"
 RABBIT_MQ_PORT: int = 5672
 RABBIT_MQ_VHOST: str = "/"
+
+RABBITMQ_URI_PATTERN: str = r"^(?:([^:\/?#\s]+):\/{2})?(?:([^@\/?#\s]+)@)?([^\/?#\s]+)?(?:\/([^?#\s]*))?(?:[?]([^#\s]+))?\S*$"
 
 # Wait seconds before next reconnect try
 RECONNECT_WAIT: int = 10

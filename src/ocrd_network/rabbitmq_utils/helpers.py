@@ -5,7 +5,7 @@ from re import match as re_match
 from time import sleep
 from typing import Dict, List, Union
 
-from .constants import RECONNECT_TRIES, RECONNECT_WAIT
+from .constants import RABBITMQ_URI_PATTERN, RECONNECT_TRIES, RECONNECT_WAIT
 from .consumer import RMQConsumer
 from .publisher import RMQPublisher
 
@@ -86,8 +86,7 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
     Check the full list of available parameters in the docs here:
     https://pika.readthedocs.io/en/stable/_modules/pika/connection.html#URLParameters
     """
-    uri_pattern = r"^(?:([^:\/?#\s]+):\/{2})?(?:([^@\/?#\s]+)@)?([^\/?#\s]+)?(?:\/([^?#\s]*))?(?:[?]([^#\s]+))?\S*$"
-    match = re_match(pattern=uri_pattern, string=rabbitmq_address)
+    match = re_match(pattern=RABBITMQ_URI_PATTERN, string=rabbitmq_address)
     if not match:
         raise ValueError(f"The message queue server address is in wrong format: '{rabbitmq_address}'")
     url_params = URLParameters(rabbitmq_address)
