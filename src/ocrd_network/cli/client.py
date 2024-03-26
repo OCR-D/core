@@ -1,13 +1,9 @@
 import click
 from typing import Optional
 
-from ocrd_utils import DEFAULT_METS_BASENAME
-
-from ocrd.decorators import (
-    parameter_option,
-    parameter_override_option
-)
+from ocrd.decorators import parameter_option
 from ocrd_network import Client
+from ocrd_utils import DEFAULT_METS_BASENAME
 
 
 @click.group('client')

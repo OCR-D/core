@@ -1,7 +1,12 @@
+from logging import getLogger
 from pika.credentials import PlainCredentials
 from pytest import fixture
-from src.ocrd_network.rabbitmq_utils import RMQConnector, RMQConsumer, RMQPublisher
-from src.ocrd_network.utils import verify_and_parse_mq_uri
+from src.ocrd_network.rabbitmq_utils import (
+    connect_rabbitmq_consumer,
+    connect_rabbitmq_publisher,
+    RMQConnector,
+    verify_and_parse_mq_uri
+)
 from tests.network.config import test_config
 
 
@@ -30,7 +35,7 @@ def fixture_rabbitmq_defaults():
     RMQConnector.exchange_declare(
         channel=test_channel,
         exchange_name=DEFAULT_EXCHANGER_NAME,
-        exchange_type='direct',
+        exchange_type="direct",
         durable=False
     )
     RMQConnector.queue_declare(channel=test_channel, queue_name=DEFAULT_QUEUE, durable=False)
@@ -47,29 +52,12 @@ def fixture_rabbitmq_defaults():
 @fixture(scope="package", name="rabbitmq_publisher")
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
-    rmq_publisher = RMQPublisher(
-        host=rmq_data["host"],
-        port=rmq_data["port"],
-        vhost=rmq_data["vhost"]
-    )
-    rmq_publisher.authenticate_and_connect(
-        username=rmq_data["username"],
-        password=rmq_data["password"]
-    )
-    rmq_publisher.enable_delivery_confirmations()
-    yield rmq_publisher
+    logger = getLogger(name="ocrd_network_testing")
+    yield connect_rabbitmq_publisher(logger=logger, rmq_data=rmq_data)
 
 
 @fixture(scope="package", name="rabbitmq_consumer")
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
-    rmq_consumer = RMQConsumer(
-        host=rmq_data["host"],
-        port=rmq_data["port"],
-        vhost=rmq_data["vhost"]
-    )
-    rmq_consumer.authenticate_and_connect(
-        username=rmq_data["username"],
-        password=rmq_data["password"]
-    )
-    yield rmq_consumer
+    logger = getLogger(name="ocrd_network_testing")
+    yield connect_rabbitmq_consumer(logger=logger, rmq_data=rmq_data)

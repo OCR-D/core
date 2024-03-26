@@ -1,10 +1,7 @@
 """
 Validating ocrd-network messages
 """
-from .constants import (
-    MESSAGE_SCHEMA_PROCESSING,
-    MESSAGE_SCHEMA_RESULT
-)
+from .constants import MESSAGE_SCHEMA_PROCESSING, MESSAGE_SCHEMA_RESULT
 from .json_validator import JsonValidator
 
 

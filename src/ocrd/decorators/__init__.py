@@ -10,7 +10,7 @@ from ocrd_utils import (
     set_json_key_value_overrides,
 )
 from ocrd_validators import WorkspaceValidator
-from ocrd_network import ProcessingWorker, ProcessorServer, NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
+from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
 
 from ..resolver import Resolver
 from ..processor.base import run_processor
@@ -20,7 +20,7 @@ from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
-SUBCOMMANDS = [NETWORK_AGENT_WORKER, NETWORK_AGENT_SERVER]
+SUBCOMMANDS = [AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER]
 
 
 def ocrd_cli_wrap_processor(
@@ -142,19 +142,19 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
     if not database:
         raise ValueError(f"Option '--database' is invalid for subcommand {subcommand}")
 
-    if subcommand == NETWORK_AGENT_SERVER:
+    if subcommand == AgentType.PROCESSOR_SERVER:
         if not address:
             raise ValueError(f"Option '--address' required for subcommand {subcommand}")
         if queue:
             raise ValueError(f"Option '--queue' invalid for subcommand {subcommand}")
-    if subcommand == NETWORK_AGENT_WORKER:
+    if subcommand == AgentType.PROCESSING_WORKER:
         if address:
             raise ValueError(f"Option '--address' invalid for subcommand {subcommand}")
         if not queue:
             raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
 
     processor = ProcessorClass(workspace=None)
-    if subcommand == NETWORK_AGENT_WORKER:
+    if subcommand == AgentType.PROCESSING_WORKER:
         processing_worker = ProcessingWorker(
             rabbitmq_addr=queue,
             mongodb_addr=database,
@@ -166,7 +166,7 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
         processing_worker.connect_consumer()
         # Start consuming from the queue with name `processor_name`
         processing_worker.start_consuming()
-    elif subcommand == NETWORK_AGENT_SERVER:
+    elif subcommand == AgentType.PROCESSOR_SERVER:
         # TODO: Better validate that inside the ProcessorServer itself
         host, port = address.split(':')
         processor_server = ProcessorServer(
@@ -175,4 +175,6 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
             processor_class=ProcessorClass,
         )
         processor_server.run_server(host=host, port=int(port))
+    else:
+        raise ValueError(f"Unknown network agent type, must be one of: {SUBCOMMANDS}")
     sys.exit(0)

@@ -1,11 +1,6 @@
 import click
 from ocrd_utils import get_ocrd_tool_json
-
-from .. import (
-    DatabaseParamType,
-    ProcessingWorker,
-    QueueServerParamType
-)
+from ocrd_network import DatabaseParamType, ProcessingWorker, QueueServerParamType
 
 
 @click.command('processing-worker')

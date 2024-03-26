@@ -5,26 +5,25 @@ type: object
 additionalProperties: false
 required:
   - job_id
-  - status
-oneOf:
-  - required:
-      - path_to_mets
-  - required:
-      - workspace_id
+  - state
+  - path_to_mets
+  - workspace_id
 properties:
   job_id:
     description: The ID of the job
     type: string
     format: uuid
-  status:
-    description: The current status of the job
+  state:
+    description: The current state of the job
     type: string
     enum:
       - CACHED
+      - CANCELLED
       - QUEUED
       - RUNNING
       - SUCCESS
       - FAILED
+      - UNSET
   path_to_mets:
     description: Path to a METS file
     type: string
