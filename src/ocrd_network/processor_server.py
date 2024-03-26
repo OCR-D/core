@@ -68,7 +68,7 @@ class ProcessorServer(FastAPI):
         if not self.processor_name:
             self.processor_name = self.ocrd_tool["executable"]
 
-	self.add_api_routes_processing()
+        self.add_api_routes_processing()
 
     async def on_startup(self):
         await initiate_database(db_url=self.db_url)
