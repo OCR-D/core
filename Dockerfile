@@ -7,6 +7,7 @@ ENV PYTHONIOENCODING utf8
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 ENV PIP=pip
+ENV PIP_INDEX_URL="https://artefakt.dev.sbb.berlin/repository/pypi-central/simple"
 
 WORKDIR /build-ocrd
 
@@ -34,6 +35,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         sudo \
         git \
     && make deps-ubuntu
+RUN python3 --version
 RUN python3 -m venv /usr/local \
     && hash -r \
     && make install \

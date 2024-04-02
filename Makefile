@@ -9,6 +9,7 @@ TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
 VERSION = $(shell cat VERSION)
 
+DOCKER = docker
 DOCKER_COMPOSE = docker compose
 
 SPHINX_APIDOC =
@@ -306,7 +307,7 @@ docker-cuda: DOCKER_FILE = Dockerfile.cuda
 docker-cuda: docker
 
 docker docker-cuda: 
-	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+	$(DOCKER) build -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build
