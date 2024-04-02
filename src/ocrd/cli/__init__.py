@@ -33,8 +33,6 @@ Variables:
 \b
 {config.describe('OCRD_METS_CACHING')}
 \b
-{config.describe('OCRD_DOWNLOAD_TIMEOUT')}
-\b
 {config.describe('OCRD_MAX_PROCESSOR_CACHE')}
 \b
 {config.describe('OCRD_NETWORK_SERVER_ADDR_PROCESSING')}
