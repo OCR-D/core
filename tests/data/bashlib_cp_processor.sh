@@ -4,7 +4,14 @@ set -eu
 set -o pipefail
 MIMETYPE_PAGE=$(ocrd bashlib constants MIMETYPE_PAGE)
 source $(ocrd bashlib filename)
-ocrd__wrap ocrd-tool.json ocrd-cp "$@"
+set -x
+
+_ocrd_tool_json="${0/.sh/.ocrd-tool.json}"
+if [[ $_ocrd_tool_json == $0 || ! -e $_ocrd_tool_json ]];then
+    _ocrd_tool_json='ocrd-tool.json'
+fi
+
+ocrd__wrap $_ocrd_tool_json ocrd-cp "$@"
 
 IFS=',' read -ra in_file_grps <<< ${ocrd__argv[input_file_grp]}
 if ((${#in_file_grps[*]}>1)); then

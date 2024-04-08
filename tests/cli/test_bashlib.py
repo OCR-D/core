@@ -110,29 +110,12 @@ class TestBashlibCli(TestCase):
         assert "ERROR: ocrd/core is too old" in err
 
     def test_bashlib_cp_processor(self):
-        tool = {
-            "version": "1.0",
-            "tools": {
-                "ocrd-cp": {
-                  "executable": "ocrd-cp",
-                  "description": "dummy processor copying",
-                  "steps": ["preprocessing/optimization"],
-                  "categories": ["Image preprocessing"],
-                  "parameters": {
-                      "message": {
-                        "type": "string",
-                        "default": "",
-                        "description": "message to print on stdout"
-                      }
-                  }
-                }
-            }
-        }
         script = (Path(__file__).parent.parent / 'data/bashlib_cp_processor.sh').read_text()
+        ocrd_tool = json.loads((Path(__file__).parent.parent / 'data/bashlib_cp_processor.ocrd-tool.json').read_text())
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
-                with open('ocrd-tool.json', 'w') as toolfile:
-                    json.dump(tool, toolfile)
+                with open('ocrd-tool.json', 'w') as f:
+                    f.write(json.dumps(ocrd_tool))
                 # run on 1 input
                 exit_code, out, err = self.invoke_bash(
                     script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world',
