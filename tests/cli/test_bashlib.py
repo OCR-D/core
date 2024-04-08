@@ -1,6 +1,8 @@
+from contextlib import contextmanager
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 import os, sys
+from os import environ
 import traceback
 import subprocess
 import tempfile
@@ -110,34 +112,38 @@ class TestBashlibCli(TestCase):
         assert "ERROR: ocrd/core is too old" in err
 
     def test_bashlib_cp_processor(self):
-        script = (Path(__file__).parent.parent / 'data/bashlib_cp_processor.sh').read_text()
-        ocrd_tool = json.loads((Path(__file__).parent.parent / 'data/bashlib_cp_processor.ocrd-tool.json').read_text())
-        with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
-            with pushd_popd(wsdir):
-                with open('ocrd-tool.json', 'w') as f:
-                    f.write(json.dumps(ocrd_tool))
-                # run on 1 input
-                exit_code, out, err = self.invoke_bash(
-                    script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world',
-                    executable='ocrd-cp')
-                print({'exit_code': exit_code, 'out': out, 'err': err})
-                assert 'single input fileGrp' in err
-                assert 'processing PAGE-XML' in err
-                assert exit_code == 0
-                assert 'hello world' in out
-                path = pathlib.Path('OCR-D-GT-PAGE2')
-                assert path.is_dir()
-                assert next(path.glob('*.xml'), None)
-                # run on 2 inputs
-                exit_code, out, err = self.invoke_bash(
-                    script, '-I', 'OCR-D-IMG,OCR-D-GT-PAGE', '-O', 'OCR-D-IMG2',
-                    executable='ocrd-cp')
-                assert 'multiple input fileGrps' in err
-                assert exit_code == 0
-                assert 'ignoring application/vnd.prima.page+xml' in err
-                path = pathlib.Path('OCR-D-IMG2')
-                assert path.is_dir()
-                assert next(path.glob('*.tif'), None)
+        # script = (Path(__file__).parent.parent / 'data/bashlib_cp_processor.sh').read_text()
+        # ocrd_tool = json.loads((Path(__file__).parent.parent / 'data/bashlib_cp_processor.ocrd-tool.json').read_text())
+        scriptdir = Path(__file__).parent.parent / 'data'
+
+        with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir, pushd_popd(wsdir):
+            with open(f'{scriptdir}/ocrd-cp', 'r', encoding='utf-8') as script_f:
+                script = script_f.read()
+            with open(f'{scriptdir}/ocrd-cp.ocrd-tool.json', 'r', encoding='utf-8') as tool_in, \
+                open(f'{wsdir}/ocrd-tool.json', 'w', encoding='utf-8') as tool_out:
+                tool_out.write(tool_in.read())
+            # run on 1 input
+            exit_code, out, err = self.invoke_bash(
+                script, '-I', 'OCR-D-GT-PAGE', '-O', 'OCR-D-GT-PAGE2', '-P', 'message', 'hello world',
+                executable='ocrd-cp')
+            print({'exit_code': exit_code, 'out': out, 'err': err})
+            assert 'single input fileGrp' in err
+            assert 'processing PAGE-XML' in err
+            assert exit_code == 0
+            assert 'hello world' in out
+            path = pathlib.Path('OCR-D-GT-PAGE2')
+            assert path.is_dir()
+            assert next(path.glob('*.xml'), None)
+            # run on 2 inputs
+            exit_code, out, err = self.invoke_bash(
+                script, '-I', 'OCR-D-IMG,OCR-D-GT-PAGE', '-O', 'OCR-D-IMG2',
+                executable='ocrd-cp')
+            assert 'multiple input fileGrps' in err
+            assert exit_code == 0
+            assert 'ignoring application/vnd.prima.page+xml' in err
+            path = pathlib.Path('OCR-D-IMG2')
+            assert path.is_dir()
+            assert next(path.glob('*.tif'), None)
 
 if __name__ == "__main__":
     main(__file__)
