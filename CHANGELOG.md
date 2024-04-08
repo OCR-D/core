@@ -5,6 +5,17 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.63.3] - 2024-03-07
+
+Added:
+
+  * `make uninstall-workaround` compantion to `make install-workaround`, #119
+
+Fixed:
+
+  * `OcrdMets.add_file`: fix finding existing el_pagediv, #1199
+
+
 ## [2.63.2] - 2024-03-05
 
 Fixed:
@@ -2027,6 +2038,10 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+<<<<<<< HEAD
+=======
+[2.63.3]: ../../compare/v2.63.3..v2.63.1
+>>>>>>> master
 [2.63.2]: ../../compare/v2.63.2..v2.63.1
 [2.63.1]: ../../compare/v2.63.1..v2.63.0
 [2.63.0]: ../../compare/v2.63.0..v2.62.0

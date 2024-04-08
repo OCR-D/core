@@ -355,7 +355,7 @@ build-workaround: pyclean
 
 # test that the aliased packages work in isolation and combined
 test-workaround: build-workaround
-	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+	$(MAKE) uninstall-workaround
 	for dist in $(BUILD_ORDER);do \
 		pip install dist/$$dist-*.whl ;\
 		ocrd --version ;\
@@ -368,3 +368,7 @@ test-workaround: build-workaround
 	ocrd --version ;\
 	make test ;\
 	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+
+uninstall-workaround:
+	for dist in $(BUILD_ORDER);do $(PIP) uninstall --yes $$dist;done
+
