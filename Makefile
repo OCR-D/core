@@ -220,7 +220,16 @@ test: assets
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		--ignore-glob="$(TESTDIR)/network/*.py" \
 		$(TESTDIR)
-	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
+	$(MAKE) test-logging
+
+test-logging: assets
+	# copy default logging to temporary directory and run logging tests from there
+	tempdir=$$(mktemp -d); \
+	cp src/ocrd_utils/ocrd_logging.conf $$tempdir; \
+	cd $$tempdir; \
+	$(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR); \
+	rm -r $$tempdir/ocrd_logging.conf $$tempdir/.benchmarks; \
+	rmdir $$tempdir
 
 network-module-test: assets
 	$(PYTHON) \
