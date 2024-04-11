@@ -39,6 +39,9 @@ help:
 	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker image for GPU / CUDA"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
+	@echo " ocrd network tests"
+	@echo "    network-module-test       Run all ocrd_network module tests"
+	@echo "    network-integration-test  Run all ocrd_network integration tests (docker and docker compose required)"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -217,12 +220,32 @@ test: assets
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		--ignore-glob="$(TESTDIR)/network/*.py" \
 		$(TESTDIR)
-	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
+	$(MAKE) test-logging
+
+test-logging: assets
+	# copy default logging to temporary directory and run logging tests from there
+	tempdir=$$(mktemp -d); \
+	cp src/ocrd_utils/ocrd_logging.conf $$tempdir; \
+	cd $$tempdir; \
+	$(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR); \
+	rm -r $$tempdir/ocrd_logging.conf $$tempdir/.benchmarks; \
+	rmdir $$tempdir
+
+network-module-test: assets
+	$(PYTHON) \
+		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -v --durations=10\
+		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
+		$(TESTDIR)/network
 
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
-integration-test:
+network-integration-test:
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server' -v
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
+
+network-integration-test-cicd:
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:

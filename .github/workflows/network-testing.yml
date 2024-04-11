@@ -1,10 +1,11 @@
-name: Run ocrd network integration tests
+name: ocrd network module and integration tests
 
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch: # run manually
 
 jobs:
   build:
@@ -49,10 +50,12 @@ jobs:
         run: |
           brew install docker docker-compose
           colima start
-      - name: Test network integration with pytest
+      - name: Run network modules tests with pytest
+        run: make network-module-test
+      - name: Run network integration tests with pytest
         run: |
           if [[ "${{ matrix.os }}" == "macos"* ]];then
-            make integration-test DOCKER_COMPOSE=docker-compose
+            make network-integration-test-cicd DOCKER_COMPOSE=docker-compose
           else
-            make integration-test
+            make network-integration-test-cicd
           fi
