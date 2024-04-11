@@ -20,7 +20,6 @@ def xmllint_format(xml):
     Arguments:
         xml (string): Serialized XML
     """
-    log = getLogger('ocrd.models.utils.xmllint_format')
     parser = ET.XMLParser(resolve_entities=False, strip_cdata=False, remove_blank_text=True)
     document = ET.fromstring(xml, parser)
     return ('%s\n%s' % ('<?xml version="1.0" encoding="UTF-8"?>',

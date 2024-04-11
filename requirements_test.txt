@@ -15,3 +15,6 @@ deprecated
 click
 twine
 wheel
+# For typing-compatible lxml interface definitions
+types-lxml ; python_version > '3.7'
+lxml-stubs ; python_version <= '3.7'

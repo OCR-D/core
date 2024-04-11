@@ -461,7 +461,7 @@ class TestCli(TestCase):
                 assert len(ws.mets.find_all_files(ID='//FILE_OCR-D-IMG_000.*')) == 10
                 assert len(ws.mets.find_all_files(ID='//FILE_.*_000.*')) == 20
                 assert len(ws.mets.find_all_files(pageId='PHYS_0001')) == 2
-                assert ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].local_filename == Path('OCR-D-PAGE/FILE_0001.xml')
+                assert ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].local_filename == 'OCR-D-PAGE/FILE_0001.xml'
 
     def test_bulk_add_missing_param(self):
         with pushd_popd(tempdir=True) as wsdir:
@@ -498,7 +498,7 @@ class TestCli(TestCase):
             ws.reload_mets()
             print(out)
             assert next(ws.mets.find_files()).ID == 'b_c'
-            assert next(ws.mets.find_files()).local_filename == Path('d')
+            assert next(ws.mets.find_files()).local_filename == 'd'
             assert next(ws.mets.find_files()).url == 'https://host/b/d'
 
     def test_bulk_add_derive_local_filename(self):
@@ -517,7 +517,7 @@ class TestCli(TestCase):
             # print('out', out)
             # print('err', err)
             ws.reload_mets()
-            assert next(ws.mets.find_files()).local_filename == Path('srcdir/src.xml')
+            assert next(ws.mets.find_files()).local_filename == 'srcdir/src.xml'
 
     def test_bulk_add_stdin(self):
         resolver = Resolver()
@@ -550,7 +550,7 @@ class TestCli(TestCase):
                 f = next(ws.mets.find_files())
                 assert f.mimetype == 'image/png'
                 assert f.ID == 'FILE_0001_BIN.IMG-wolf'
-                assert f.local_filename == Path('BIN/FILE_0001_BIN.IMG-wolf.png')
+                assert f.local_filename == 'BIN/FILE_0001_BIN.IMG-wolf.png'
                 assert f.url == 'https://host/FILE_0001_BIN.IMG-wolf/BIN/FILE_0001_BIN.IMG-wolf.png'
 
     def test_list_page(self):
@@ -560,14 +560,19 @@ class TestCli(TestCase):
         with pushd_popd(Path(__file__).parent.parent / 'data/list-page-workspace'):
             assert _call([]) == 'PHYS_0001\nPHYS_0002\nPHYS_0003\nPHYS_0004\nPHYS_0005\nPHYS_0006\nPHYS_0008\nPHYS_0009\nPHYS_0010\nPHYS_0011\nPHYS_0012\nPHYS_0013\nPHYS_0014\nPHYS_0015\nPHYS_0016\nPHYS_0017\nPHYS_0018\nPHYS_0019\nPHYS_0020\nPHYS_0022\nPHYS_0023\nPHYS_0024\nPHYS_0025\nPHYS_0026\nPHYS_0027\nPHYS_0028\nPHYS_0029'
             assert _call(['-f', 'comma-separated']) == 'PHYS_0001,PHYS_0002,PHYS_0003,PHYS_0004,PHYS_0005,PHYS_0006,PHYS_0008,PHYS_0009,PHYS_0010,PHYS_0011,PHYS_0012,PHYS_0013,PHYS_0014,PHYS_0015,PHYS_0016,PHYS_0017,PHYS_0018,PHYS_0019,PHYS_0020,PHYS_0022,PHYS_0023,PHYS_0024,PHYS_0025,PHYS_0026,PHYS_0027,PHYS_0028,PHYS_0029'
-            assert _call(['-f', 'json']) == '[["PHYS_0001", "PHYS_0002", "PHYS_0003", "PHYS_0004", "PHYS_0005", "PHYS_0006", "PHYS_0008", "PHYS_0009", "PHYS_0010", "PHYS_0011", "PHYS_0012", "PHYS_0013", "PHYS_0014", "PHYS_0015", "PHYS_0016", "PHYS_0017", "PHYS_0018", "PHYS_0019", "PHYS_0020", "PHYS_0022", "PHYS_0023", "PHYS_0024", "PHYS_0025", "PHYS_0026", "PHYS_0027", "PHYS_0028", "PHYS_0029"]]'
+            assert _call(['-f', 'json']) == '[[["PHYS_0001"], ["PHYS_0002"], ["PHYS_0003"], ["PHYS_0004"], ["PHYS_0005"], ["PHYS_0006"], ["PHYS_0008"], ["PHYS_0009"], ["PHYS_0010"], ["PHYS_0011"], ["PHYS_0012"], ["PHYS_0013"], ["PHYS_0014"], ["PHYS_0015"], ["PHYS_0016"], ["PHYS_0017"], ["PHYS_0018"], ["PHYS_0019"], ["PHYS_0020"], ["PHYS_0022"], ["PHYS_0023"], ["PHYS_0024"], ["PHYS_0025"], ["PHYS_0026"], ["PHYS_0027"], ["PHYS_0028"], ["PHYS_0029"]]]'
             assert _call(['-f', 'comma-separated', '-R', '5..5']) == 'PHYS_0005'
             assert _call(['-f', 'comma-separated', '-R', '6..8']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
+            assert _call(['-f', 'comma-separated', '-r', '1..5']) == 'PHYS_0001,PHYS_0002,PHYS_0003,PHYS_0004,PHYS_0005'
+            assert _call(['-f', 'comma-separated', '-r', '2..3']) == 'PHYS_0002,PHYS_0003'
+            assert _call(['-f', 'comma-separated', '-r', 'page 2..page 3']) == 'PHYS_0002,PHYS_0003'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0006..PHYS_0009']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3']) == 'PHYS_0001,PHYS_0002,PHYS_0003\nPHYS_0004,PHYS_0005,PHYS_0006\nPHYS_0008,PHYS_0009,PHYS_0010'
             assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3', '-C', '2']) == 'PHYS_0008,PHYS_0009,PHYS_0010'
             from json import loads
-            assert loads(_call(['-f', 'json', '-r', 'PHYS_0001..PHYS_0010', '-D', '3', '-C', '2'])) == [['PHYS_0008', 'PHYS_0009', 'PHYS_0010']]
+            assert loads(_call(['-f', 'json', '-r', 'PHYS_0001..PHYS_0010', '-D', '3', '-C', '2'])) == [[['PHYS_0008'], ['PHYS_0009'], ['PHYS_0010']]]
+            assert loads(_call(['-f', 'json', '-r', 'PHYS_0001..PHYS_0010', '-k', 'ID', '-k', 'ORDERLABEL', '-D', '3', '-C', '2'])) == \
+                [[['PHYS_0008', 'page 7'], ['PHYS_0009', 'page 8'], ['PHYS_0010', 'page 9']]]
 
 if __name__ == '__main__':
     main(__file__)

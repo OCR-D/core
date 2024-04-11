@@ -5,6 +5,45 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.63.3] - 2024-03-07
+
+Added:
+
+  * `make uninstall-workaround` compantion to `make install-workaround`, #119
+
+Fixed:
+
+  * `OcrdMets.add_file`: fix finding existing el_pagediv, #1199
+
+
+## [2.63.2] - 2024-03-05
+
+Fixed:
+
+  * Missed incrementing version
+
+## [2.63.1] - 2024-03-05
+
+Fixed:
+
+  * `OcrdMets` bug that produced invalid caches, #1192, #1195, #1193
+
+## [2.63.0] - 2024-02-12
+
+Fixed:
+
+  * Reduce logging level of spammy log statements to `DEBUG` in workspace, #1181
+  * Clean up lxml code, #1188
+
+Changed:
+
+  * :fire: `OcrdFile.local_filename` returns/accepts `str` after unpopular change to `Path` from #1079, #1182, #1167
+  * `WorkspaceValidator`: more efficiency by doing all page checks in the same loop, #1071
+
+Added:
+
+  * `OcrdMets.get_physical_pages` to search for/change/generate ranges for page-specific `mets:div` attributes beyond to `@ID`, #821, #1063
+
 ## [2.62.0] - 2024-01-30
 
 Added:
@@ -1999,6 +2038,10 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.63.3]: ../../compare/v2.63.3..v2.63.1
+[2.63.2]: ../../compare/v2.63.2..v2.63.1
+[2.63.1]: ../../compare/v2.63.1..v2.63.0
+[2.63.0]: ../../compare/v2.63.0..v2.62.0
 [2.62.0]: ../../compare/v2.62.0..v2.61.2
 [2.61.2]: ../../compare/v2.61.2..v2.61.1
 [2.61.1]: ../../compare/v2.61.1..v2.61.1

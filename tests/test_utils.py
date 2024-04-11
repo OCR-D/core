@@ -296,9 +296,15 @@ def test_make_file_id_744():
 def test_generate_range():
     assert generate_range('PHYS_0001', 'PHYS_0005') == ['PHYS_0001', 'PHYS_0002', 'PHYS_0003', 'PHYS_0004', 'PHYS_0005']
     with raises(ValueError, match='could not find numeric part'):
-        generate_range('NONUMBER', 'ALSO_NONUMBER')
+        assert generate_range('NONUMBER', 'ALSO_NONUMBER')
+    with raises(ValueError, match='differ in their non-numeric part'):
+        generate_range('PHYS_0001_123', 'PHYS_0010_123')
+    with raises(ValueError, match='differ in their non-numeric part'):
+        assert generate_range('1', 'PHYS_0005') == 0
+    with raises(ValueError, match='differ in their non-numeric part'):
+        assert generate_range('1', 'page 5') == 0
     with warns(UserWarning, match='same number'):
-        generate_range('PHYS_0001_123', 'PHYS_0010_123') == 'PHYS_0001_123'
+        assert generate_range('PHYS_0001_123', 'PHYS_0001_123') == ['PHYS_0001_123']
 
 def test_safe_filename():
     assert safe_filename('Hello world,!') == 'Hello_world_'

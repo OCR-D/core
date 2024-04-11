@@ -96,10 +96,12 @@ class WorkspaceValidator():
         self.download = download
         self.page_strictness = page_strictness
         self.page_coordinate_consistency = page_coordinate_consistency
-        self.page_checks = []
         # there will be more options to come
-        if 'mets_fileid_page_pcgtsid' not in self.skip:
-            self.page_checks.append('pcgtsid')
+        self.page_checks = [check for check in ['mets_fileid_page_pcgtsid',
+                                                'dimension',
+                                                'page',
+                                                'page_xsd']
+                            if check not in self.skip]
 
         self.find_kwargs = dict(include_fileGrp=include_fileGrp, exclude_fileGrp=exclude_fileGrp)
         self.src_dir = src_dir
@@ -151,16 +153,10 @@ class WorkspaceValidator():
                     self._validate_pixel_density()
                 if 'multipage' not in self.skip:
                     self._validate_multipage()
-                if 'dimension' not in self.skip:
-                    self._validate_dimension()
-                if 'imagefilename' not in self.skip:
-                    self._validate_imagefilename()
-                if 'page' not in self.skip:
-                    self._validate_page()
-                if 'page_xsd' not in self.skip:
-                    self._validate_page_xsd()
                 if 'mets_xsd' not in self.skip:
                     self._validate_mets_xsd()
+                if self.page_checks:
+                    self._validate_page()
             except Exception: # pylint: disable=broad-except
                 self.report.add_error("Validation aborted with exception: %s" % format_exc())
         return self.report
@@ -313,14 +309,32 @@ class WorkspaceValidator():
                 self.log.warning("Not available locally and 'download' is not set: %s", f)
                 continue
             self.workspace.download_file(f)
-            page_report = PageValidator.validate(ocrd_file=f,
-                                                 page_textequiv_consistency=self.page_strictness,
-                                                 check_coords=self.page_coordinate_consistency in ['poly', 'both'],
-                                                 check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
-            pg = page_from_file(f)
-            if 'pcgtsid' in self.page_checks and pg.pcGtsId != f.ID:
-                page_report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pg.pcGtsId or '', f.ID or ''))
-            self.report.merge_report(page_report)
+            if 'page_xsd' in self.page_checks:
+                for err in XsdPageValidator.validate(Path(f.local_filename)).errors:
+                    self.report.add_error("%s: %s" % (f.ID, err))
+            if 'page' in self.page_checks:
+                page_report = PageValidator.validate(ocrd_file=f,
+                                                     page_textequiv_consistency=self.page_strictness,
+                                                     check_coords=self.page_coordinate_consistency in ['poly', 'both'],
+                                                     check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
+                self.report.merge_report(page_report)
+            pcgts = page_from_file(f)
+            page = pcgts.get_Page()
+            if 'dimension' in self.page_checks:
+                _, _, exif = self.workspace.image_from_page(page, f.pageId)
+                if page.imageHeight != exif.height:
+                    self.report.add_error("PAGE '%s': @imageHeight != image's actual height (%s != %s)" % (f.ID, page.imageHeight, exif.height))
+                if page.imageWidth != exif.width:
+                    self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
+            if 'imagefilename' in self.page_checks:
+                imageFilename = page.imageFilename
+                if not self.mets.find_files(url=imageFilename):
+                    self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
+                if is_local_filename(imageFilename) and not Path(imageFilename).exists():
+                    self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.url, imageFilename))
+            if 'mets_fileid_page_pcgtsid' in self.page_checks and pcgts.pcGtsId != f.ID:
+                self.report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pcgts.pcGtsId or '', f.ID or ''))
+
 
     def _validate_page_xsd(self):
         """

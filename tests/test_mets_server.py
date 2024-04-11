@@ -1,4 +1,7 @@
+import re
+from typing import Iterable, Tuple
 from pytest import fixture, raises
+import pytest
 from tests.base import assets
 
 from itertools import repeat
@@ -22,7 +25,7 @@ WORKSPACE_DIR = '/tmp/ocrd-mets-server'
 TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://127.0.0.1:12345']
 
 @fixture(scope='function', name='start_mets_server', params=TRANSPORTS)
-def fixture_start_mets_server(request):
+def fixture_start_mets_server(request) -> Iterable[Tuple[str, Workspace]]:
     def _start_mets_server(*args, **kwargs):
         mets_server = OcrdMetsServer(*args, **kwargs)
         mets_server.startup()
@@ -99,7 +102,6 @@ def test_mets_server_add_file(start_mets_server):
         'FOO'
     ])
     assert len(workspace_server.mets.find_all_files(fileGrp='FOO')) == NO_FILES
-    assert len(workspace_server.mets.find_all_files(file_grp='FOO')) == NO_FILES
 
     # not yet synced
     workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
@@ -184,26 +186,48 @@ def test_mets_server_socket_stop(start_mets_server):
         # make sure the socket file was deleted on shutdown
         assert not Path(mets_server_url).exists()
 
-def test_find_all_files(start_mets_server):
+def test_find_all_files(start_mets_server : Tuple[str, Workspace]):
     _, workspace_server = start_mets_server
-    assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'
-    assert len(workspace_server.mets.find_all_files(fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
-    assert len(workspace_server.mets.find_all_files(fileGrp='//OCR-D-I.*')) == 13, '13 files in "//OCR-D-I.*"'
-    assert len(workspace_server.mets.find_all_files(ID="FILE_0001_IMAGE")) == 1, '1 files with ID "FILE_0001_IMAGE"'
-    assert len(workspace_server.mets.find_all_files(ID="//FILE_0005_.*")) == 1, '1 files with ID "//FILE_0005_.*"'
-    assert len(workspace_server.mets.find_all_files(pageId='PHYS_0001')) == 17, '17 files for page "PHYS_0001"'
-    assert len(workspace_server.mets.find_all_files(pageId='PHYS_0001-NOTEXIST')) == 0, '0 pages for "PHYS_0001-NOTEXIST"'
-    assert len(workspace_server.mets.find_all_files(mimetype='image/tiff')) == 13, '13 image/tiff'
-    assert len(workspace_server.mets.find_all_files(mimetype='//application/.*')) == 22, '22 application/.*'
-    assert len(workspace_server.mets.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
-    assert len(workspace_server.mets.find_all_files(local_filename='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 FILE xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
-    assert len(workspace_server.mets.find_all_files(url='https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif')) == 1, '1 URL xlink:href="https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif"'
-    assert len(workspace_server.mets.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
-    assert len(workspace_server.mets.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
-    assert len(workspace_server.mets.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
-    assert len(workspace_server.mets.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+    mets = workspace_server.mets
+    assert len(mets.find_all_files()) == 35, '35 files total'
+    assert len(mets.find_all_files(fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
+    # TODO https://github.com/OCR-D/core/issues/1185
+    # assert len(mets.find_all_files(include_fileGrp='OCR-D-IMG')) == 3, '3 files in "OCR-D-IMG"'
+    assert len(mets.find_all_files(fileGrp='//OCR-D-I.*')) == 13, '13 files in "//OCR-D-I.*"'
+    # TODO https://github.com/OCR-D/core/issues/1185
+    # assert len(mets.find_all_files(fileGrp='//OCR-D-I.*', exclude_fileGrp=['OCR-D-IMG'])) == 10, '10 files in "//OCR-D-I.*" sans OCR-D-IMG'
+    assert len(mets.find_all_files(ID="FILE_0001_IMAGE")) == 1, '1 files with ID "FILE_0001_IMAGE"'
+    assert len(mets.find_all_files(ID="//FILE_0005_.*")) == 1, '1 files with ID "//FILE_0005_.*"'
+    assert len(mets.find_all_files(pageId='PHYS_0001')) == 17, '17 files for page "PHYS_0001"'
+    assert len(mets.find_all_files(mimetype='image/tiff')) == 13, '13 image/tiff'
+    assert len(mets.find_all_files(mimetype='//application/.*')) == 22, '22 application/.*'
+    assert len(mets.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
+    assert len(mets.find_all_files(local_filename='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 FILE xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
+    assert len(mets.find_all_files(url='https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif')) == 1, '1 URL xlink:href="https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif"'
+    assert len(mets.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
+    assert len(mets.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
+    assert len(mets.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
+    assert len(mets.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+    assert len(mets.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+    assert len(mets.find_all_files(pageId='1..10')) == 35, '35 files in @ORDER range 1..10'
+    assert len(mets.find_all_files(pageId='1..5')) == 35, '35 files in @ORDER range 1..10'
+    assert len(mets.find_all_files(pageId='PHYS_0001,PHYS_0002,PHYS_0005')) == 35, '35 in PHYS_0001,PHYS_0002,PHYS_0005'
+    assert len(mets.find_all_files(pageId='PHYS_0001..PHYS_0002,PHYS_0005')) == 35, '35 in PHYS_0001,PHYS_0002,PHYS_0005'
+    assert len(mets.find_all_files(pageId='page 1..page 2,5')) == 35, '35 in PHYS_0001,PHYS_0002,PHYS_0005'
+    assert len(mets.find_all_files(pageId='PHYS_0005,1..2')) == 35, '35 in PHYS_0001,PHYS_0002,PHYS_0005'
+    # TODO https://github.com/OCR-D/core/issues/1185
+    # with pytest.raises(ValueError, match='differ in their non-numeric part'):
+    #     len(mets.find_all_files(pageId='1..PHYS_0002'))
+    # with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+    #     mets.find_all_files(pageId='PHYS_0006..PHYS_0029')
+    # with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+    #     mets.find_all_files(pageId='PHYS_0001-NOTEXIST')
+    # with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+    #     mets.find_all_files(pageId='1..5,PHYS_0006..PHYS_0029')
+    # with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+    #     mets.find_all_files(pageId='//PHYS000.*')
 
-def test_reload(start_mets_server):
+def test_reload(start_mets_server : Tuple[str, Workspace]):
     _, workspace_server = start_mets_server
     workspace_server_copy = Workspace(Resolver(), workspace_server.directory)
     assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'

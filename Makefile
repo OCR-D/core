@@ -237,7 +237,7 @@ test-profile:
 
 coverage: assets
 	coverage erase
-	make test PYTHON="coverage run"
+	make test PYTHON="coverage run --omit='*generate*'"
 	coverage report
 	coverage html
 
@@ -332,7 +332,7 @@ build-workaround: pyclean
 
 # test that the aliased packages work in isolation and combined
 test-workaround: build-workaround
-	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+	$(MAKE) uninstall-workaround
 	for dist in $(BUILD_ORDER);do \
 		pip install dist/$$dist-*.whl ;\
 		ocrd --version ;\
@@ -345,3 +345,7 @@ test-workaround: build-workaround
 	ocrd --version ;\
 	make test ;\
 	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+
+uninstall-workaround:
+	for dist in $(BUILD_ORDER);do $(PIP) uninstall --yes $$dist;done
+

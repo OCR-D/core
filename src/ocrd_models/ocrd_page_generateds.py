@@ -24,6 +24,8 @@
 #   core
 #
 
+# type: ignore
+
 from itertools import zip_longest
 import os
 import sys

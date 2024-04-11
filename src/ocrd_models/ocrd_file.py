@@ -1,13 +1,13 @@
 """
 API to ``mets:file``
 """
-from os.path import splitext, basename
 from pathlib import Path
+from typing import Any, List, Optional, Union
 
 from ocrd_utils import deprecation_warning
 
-from .ocrd_xml_base import ET
-from .constants import NAMESPACES as NS, TAG_METS_FLOCAT, TAG_METS_FILE
+from .ocrd_xml_base import ET # type: ignore
+from .constants import NAMESPACES as NS, TAG_METS_FLOCAT
 
 class OcrdFile():
     """
@@ -22,9 +22,8 @@ class OcrdFile():
             mets (OcrdMets): Containing :py:class:`ocrd_models.ocrd_mets.OcrdMets`.
             mimetype (string): ``@MIMETYPE`` of this ``mets:file``
             pageId (string): ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
-            local_filename (string): Local filename
             url (string): original ``@xlink:href`` of this ``mets:file``
-            local_filename (Path): ``@xlink:href`` pointing to the locally cached version of the file in the workspace
+            local_filename (string): ``@xlink:href`` pointing to the locally cached version of the file in the workspace
             ID (string): ``@ID`` of this ``mets:file``
             loctype (string): DEPRECATED do not use
         """
@@ -39,7 +38,7 @@ class OcrdFile():
         self.pageId = pageId
 
         if local_filename:
-            self.local_filename = Path(local_filename)
+            self.local_filename = local_filename
         if url:
             self.url = url
 
@@ -70,38 +69,38 @@ class OcrdFile():
                # self.fileGrp == other.fileGrp
 
     @property
-    def basename(self):
+    def basename(self) -> str:
         """
         Get the ``.name`` of the local file
         """
         if not self.local_filename:
-            return
-        return self.local_filename.name
+            return ''
+        return Path(self.local_filename).name
 
     @property
-    def extension(self):
+    def extension(self) -> str:
         if not self.local_filename:
-            return
-        return ''.join(self.local_filename.suffixes)
+            return ''
+        return ''.join(Path(self.local_filename).suffixes)
 
     @property
-    def basename_without_extension(self):
+    def basename_without_extension(self) -> str:
         """
         Get the ``os.path.basename`` of the local file, if any, with extension removed.
         """
         if not self.local_filename:
-            return
-        return self.local_filename.name[:-len(self.extension)]
+            return ''
+        return Path(self.local_filename).name[:-len(self.extension)]
 
     @property
-    def ID(self):
+    def ID(self) -> str:
         """
         Get the ``@ID`` of the ``mets:file``.
         """
         return self._el.get('ID')
 
     @ID.setter
-    def ID(self, ID):
+    def ID(self, ID : Optional[str]) -> None:
         """
         Set the ``@ID`` of the ``mets:file`` to :py:attr:`ID`.
         """
@@ -116,7 +115,7 @@ class OcrdFile():
             self.pageId = pageId
 
     @property
-    def pageId(self):
+    def pageId(self) -> str:
         """
         Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file`` (physical page manifestation).
         """
@@ -125,7 +124,7 @@ class OcrdFile():
         return self.mets.get_physical_page_for_file(self)
 
     @pageId.setter
-    def pageId(self, pageId):
+    def pageId(self, pageId : Optional[str]) -> None:
         """
         Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file`` (physical page manifestation) to :py:attr:`pageId`.
         """
@@ -136,21 +135,21 @@ class OcrdFile():
         self.mets.set_physical_page_for_file(pageId, self)
 
     @property
-    def loctypes(self):
+    def loctypes(self) -> List[str]:
         """
         Get the ``@LOCTYPE``s of the ``mets:file``.
         """
         return [x.get('LOCTYPE') for x in  self._el.findall('mets:FLocat', NS)]
 
     @property
-    def mimetype(self):
+    def mimetype(self) -> str:
         """
         Get the ``@MIMETYPE`` of the ``mets:file``.
         """
         return self._el.get('MIMETYPE')
 
     @mimetype.setter
-    def mimetype(self, mimetype):
+    def mimetype(self, mimetype : Optional[str]) -> None:
         """
         Set the ``@MIMETYPE`` of the ``mets:file`` to :py:attr:`mimetype`.
         """
@@ -159,7 +158,7 @@ class OcrdFile():
         self._el.set('MIMETYPE', mimetype)
 
     @property
-    def fileGrp(self):
+    def fileGrp(self) -> str:
         """
         The ``@USE`` of the containing ``mets:fileGrp``
         """
@@ -169,7 +168,7 @@ class OcrdFile():
         raise ValueError("OcrdFile not related to METS")
 
     @property
-    def url(self):
+    def url(self) -> str:
         """
         Get the remote/original URL ``@xlink:href`` of this ``mets:file``.
         """
@@ -179,7 +178,7 @@ class OcrdFile():
         return ''
 
     @url.setter
-    def url(self, url):
+    def url(self, url : Optional[str]) -> None:
         """
         Set the remote/original URL ``@xlink:href`` of this ``mets:file`` to :py:attr:`url`.
         """
@@ -194,16 +193,17 @@ class OcrdFile():
         el_FLocat.set("LOCTYPE", "URL")
 
     @property
-    def local_filename(self):
+    def local_filename(self) -> Optional[str]:
         """
         Get the local/cached ``@xlink:href`` of this ``mets:file``.
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="OTHER"][@OTHERLOCTYPE="FILE"]', NS)
         if el_FLocat is not None:
-            return Path(el_FLocat.get("{%s}href" % NS["xlink"]))
+            return el_FLocat.get("{%s}href" % NS["xlink"])
+        return None
 
     @local_filename.setter
-    def local_filename(self, fname):
+    def local_filename(self, fname : Optional[Union[Path, str]]):
         """
         Set the local/cached ``@xlink:href`` of this ``mets:file`` to :py:attr:`local_filename`.
         """
@@ -212,9 +212,11 @@ class OcrdFile():
             if el_FLocat is not None:
                 self._el.remove(el_FLocat)
             return
+        else:
+            fname = str(fname)
         if el_FLocat is None:
             el_FLocat = ET.SubElement(self._el, TAG_METS_FLOCAT)
-        el_FLocat.set("{%s}href" % NS["xlink"], str(fname))
+        el_FLocat.set("{%s}href" % NS["xlink"], fname)
         el_FLocat.set("LOCTYPE", "OTHER")
         el_FLocat.set("OTHERLOCTYPE", "FILE")
 
@@ -226,7 +228,18 @@ class ClientSideOcrdFile:
     this represents the response of the :py:class:`ocrd.mets_server.OcrdMetsServer`.
     """
 
-    def __init__(self, el, mimetype=None, pageId=None, loctype='OTHER', local_filename=None, mets=None, url=None, ID=None, fileGrp=None):
+    def __init__(
+        self,
+        el,
+        mimetype: str = '',
+        pageId: str = '',
+        loctype: str ='OTHER',
+        local_filename: Optional[str] = None,
+        mets : Any = None,
+        url: str = '',
+        ID: str = '',
+        fileGrp: str = ''
+    ):
         """
         Args:
             el (): ignored

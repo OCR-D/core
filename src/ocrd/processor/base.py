@@ -18,6 +18,7 @@ from pathlib import Path
 import sys
 import tarfile
 import io
+from ocrd.workspace import Workspace
 
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
@@ -49,7 +50,7 @@ class Processor():
 
     def __init__(
             self,
-            workspace,
+            workspace : Workspace,
             ocrd_tool=None,
             parameter=None,
             # TODO OCR-D/core#274
@@ -163,7 +164,7 @@ class Processor():
         """
         return True
 
-    def process(self):
+    def process(self) -> None:
         """
         Process the :py:attr:`workspace` 
         from the given :py:attr:`input_file_grp`

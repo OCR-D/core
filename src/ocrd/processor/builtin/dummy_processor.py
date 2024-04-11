@@ -24,7 +24,7 @@ class DummyProcessor(Processor):
     Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
     """
 
-    def process(self):
+    def process(self) -> None:
         LOG = getLogger('ocrd.dummy')
         assert_file_grp_cardinality(self.input_file_grp, 1)
         assert_file_grp_cardinality(self.output_file_grp, 1)
