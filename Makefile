@@ -248,6 +248,16 @@ network-integration-test-cicd:
 	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
+network-integration-test-ocrd-all:
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_ocrd_all_' -v
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
+
+network-integration-test-ocrd-all-cicd:
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_ocrd_all_' -v
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
+
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
 
