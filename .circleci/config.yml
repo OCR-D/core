@@ -21,19 +21,6 @@ jobs:
       - run: make install
       - run: export PATH="/Users/distiller/Library/Python/3.9/bin:$PATH"; make deps-test test benchmark
 
-  test-python37:
-    docker:
-      - image: cimg/python:3.7
-    working_directory: ~/ocrd-core
-    steps:
-      - checkout
-      - run: sudo apt-get -y update
-      - run: sudo make deps-ubuntu 
-      - run: make install deps-test
-      - run: make test benchmark
-      # smoke test to ensure that --editable install works
-      - run: make install-dev; ocrd --version
-
   test-python38:
     docker:
       - image: cimg/python:3.8
