@@ -268,7 +268,7 @@ def test_remove_file_force(sbb_data_workspace):
     """Enforce removal of non-existing-id doesn't yield any error
     but also returns no ocrd-file identifier"""
 
-    # TODO check semantics - can a non-existend thing be removed?
+    # TODO check semantics - can a non-existent thing be removed?
     assert not sbb_data_workspace.remove_file('non-existing-id', force=True)
     # should also succeed
     sbb_data_workspace.overwrite_mode = True

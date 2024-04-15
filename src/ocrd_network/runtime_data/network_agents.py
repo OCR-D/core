@@ -15,7 +15,7 @@ def deploy_agent_native_get_pid_hack(logger: Logger, ssh_client, start_cmd: str)
     #   Note left from @joschrew
     #   the only way (I could find) to make it work to start a process in the background and
     #   return early is this construction. The pid of the last started background process is
-    #   printed with `echo $!` but it is printed inbetween other output. Because of that I added
+    #   printed with `echo $!` but it is printed between other output. Because of that I added
     #   `xyz` before and after the code to easily be able to filter out the pid via regex when
     #   returning from the function
 
