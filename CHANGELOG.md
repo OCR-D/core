@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Removed:
+
+  * Support for Python `<=` 3.7, #1207
+
 ## [2.63.3] - 2024-03-07
 
 Added:
@@ -2038,7 +2042,10 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+<<<<<<< HEAD
+=======
 [2.63.3]: ../../compare/v2.63.3..v2.63.1
+>>>>>>> master
 [2.63.2]: ../../compare/v2.63.2..v2.63.1
 [2.63.1]: ../../compare/v2.63.1..v2.63.0
 [2.63.0]: ../../compare/v2.63.0..v2.62.0

@@ -33,8 +33,6 @@ Variables:
 \b
 {config.describe('OCRD_METS_CACHING')}
 \b
-{config.describe('OCRD_DOWNLOAD_TIMEOUT')}
-\b
 {config.describe('OCRD_MAX_PROCESSOR_CACHE')}
 \b
 {config.describe('OCRD_NETWORK_SERVER_ADDR_PROCESSING')}
@@ -43,7 +41,7 @@ Variables:
 \b
 {config.describe('OCRD_NETWORK_SERVER_ADDR_WORKSPACE')}
 \b
-{config.describe('OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS')}
+{config.describe('OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS')}
 \b
 {config.describe('OCRD_PROFILE_FILE')}
 \b
