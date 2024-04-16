@@ -140,7 +140,7 @@ install: #build
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
-install-dev: PIP_INSTALL = $(PIP) install -e 
+install-dev: PIP_INSTALL = $(PIP) install -e
 install-dev: PIP_INSTALL_CONFIG_OPTION = --config-settings editable_mode=strict
 install-dev: uninstall
 	$(MAKE) install
@@ -248,16 +248,6 @@ network-integration-test-cicd:
 	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
-network-integration-test-ocrd-all:
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_ocrd_all_' -v
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
-
-network-integration-test-ocrd-all-cicd:
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_ocrd_all_' -v
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
-
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
 
@@ -325,7 +315,7 @@ pyclean:
 .PHONY: docker docker-cuda
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
+DOCKER_ARGS =
 
 # Build docker image
 docker: DOCKER_BASE_IMAGE = ubuntu:20.04
@@ -338,7 +328,7 @@ docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
 docker-cuda: docker
 
-docker docker-cuda: 
+docker docker-cuda:
 	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
