@@ -10,7 +10,7 @@ frozendict>=2.3.4
 gdown
 httpx>=0.22.0
 importlib_metadata ; python_version < '3.8'
-importlib_resources ; python_version < '3.9'
+importlib_resources ; python_version < '3.10'
 jsonschema
 lxml
 memory-profiler >= 0.58.0
