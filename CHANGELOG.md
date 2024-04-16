@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Removed:
+
+  * Support for Python `<=` 3.7, #1207
+
 ## [2.63.3] - 2024-03-07
 
 Added:
