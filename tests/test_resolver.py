@@ -217,9 +217,9 @@ def test_workspace_from_nothing():
 
 
 def test_workspace_from_nothing_makedirs(tmp_path):
-    non_existant_dir = tmp_path / 'target'
-    ws1 = Resolver().workspace_from_nothing(non_existant_dir)
-    assert ws1.directory == non_existant_dir
+    non_existent_dir = tmp_path / 'target'
+    ws1 = Resolver().workspace_from_nothing(non_existent_dir)
+    assert ws1.directory == non_existent_dir
 
 
 def test_workspace_from_nothing_noclobber(tmp_path):
