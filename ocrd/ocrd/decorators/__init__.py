@@ -1,4 +1,4 @@
-from os.path import isfile
+from functools import partial
 import sys
 
 import click
@@ -7,9 +7,10 @@ from ocrd_utils import (
     is_local_filename,
     get_local_filename,
     set_json_key_value_overrides,
+    parse_json_string_or_file,
 )
 
-from ocrd_utils import getLogger, initLogging
+from ocrd_utils import getLogger, initLogging, list_resource_candidates
 from ocrd_validators import WorkspaceValidator
 
 from ..resolver import Resolver
@@ -54,6 +55,18 @@ def ocrd_cli_wrap_processor(
         initLogging()
         LOG = getLogger('ocrd_cli_wrap_processor')
         # LOG.info('kwargs=%s' % kwargs)
+        if 'parameter' in kwargs:
+            # Disambiguate parameter file/literal, and resolve file
+            disposable = processorClass(workspace=None)
+            # we cannot use Processor.resolve_resource() directly
+            # because it exits if unsuccessful
+            resolve = partial(list_resource_candidates,
+                              disposable.ocrd_tool['executable'],
+                              moduled=disposable.moduledir)
+            kwargs['parameter'] = parse_json_string_or_file(*list(kwargs['parameter']),
+                                                            resolve_preset_file=resolve)
+        else:
+            kwargs['parameter'] = dict()
         # Merge parameter overrides and parameters
         if 'parameter_override' in kwargs:
             set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])

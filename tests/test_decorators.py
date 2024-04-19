@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from click.testing import CliRunner
 from tempfile import TemporaryDirectory
 from os.path import join, exists
+import pytest
 
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DUMMY_TOOL
@@ -103,6 +104,7 @@ class TestDecorators(TestCase):
                 exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', *DEFAULT_IN_OUT])
                 assert not exit_code
 
+    @pytest.mark.skip(reason="now deferred to ocrd_cli_wrap_processor (to resolve preset resources)")
     def test_param_merging(self):
         json1 = '{"foo": 23, "bar": 100}'
         json2 = '{"foo": 42}'
