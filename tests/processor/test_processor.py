@@ -96,7 +96,8 @@ class TestProcessor(TestCase):
                                     mets_url=self.workspace.mets_target,
                                     input_file_grp="OCR-D-IMG",
                                     output_file_grp="DUMMY",
-                                    parameter='preset.json')
+                                    parameter='preset.json',
+                                    overwrite=True)
 
     def test_params(self):
         proc = Processor(workspace=self.workspace)
