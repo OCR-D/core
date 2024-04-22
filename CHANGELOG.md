@@ -5,9 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.64.0] - 2024-04-22
+
 Removed:
 
   * Support for Python `<=` 3.7, #1207
+
+Fixed:
+
+  * remove duplicate description of `OCRD_DOWNLOAD_TIMEOUT` in `--help`, #1204
+  * Use `importlib_metadata` shim for 3.9+, #1210, OCR-D/ocrd_froc#10
 
 ## [2.63.3] - 2024-03-07
 
@@ -18,8 +25,6 @@ Added:
 Fixed:
 
   * `OcrdMets.add_file`: fix finding existing el_pagediv, #1199
-  * remove duplicate description of `OCRD_DOWNLOAD_TIMEOUT` in `--help`, #1204
-  * Use `importlib_metadata` shim for 3.9+, #1210, OCR-D/ocrd_froc#10
 
 
 ## [2.63.2] - 2024-03-05
@@ -2044,10 +2049,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-<<<<<<< HEAD
-=======
+[2.64.0]: ../../compare/v2.64.0..v2.63.3
 [2.63.3]: ../../compare/v2.63.3..v2.63.1
->>>>>>> master
 [2.63.2]: ../../compare/v2.63.2..v2.63.1
 [2.63.1]: ../../compare/v2.63.1..v2.63.0
 [2.63.0]: ../../compare/v2.63.0..v2.62.0
