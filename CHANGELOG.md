@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.64.1] - 2024-04-22
+
+Fixed:
+
+  * Broken PyPI release
+
 ## [2.64.0] - 2024-04-22
 
 Removed:
@@ -2049,7 +2055,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-[2.64.0]: ../../compare/v2.64.0..v2.63.3
+[2.64.0]: ../../compare/v2.63.0..v2.63.3
 [2.63.3]: ../../compare/v2.63.3..v2.63.1
 [2.63.2]: ../../compare/v2.63.2..v2.63.1
 [2.63.1]: ../../compare/v2.63.1..v2.63.0
