@@ -18,6 +18,8 @@ Added:
 Fixed:
 
   * `OcrdMets.add_file`: fix finding existing el_pagediv, #1199
+  * remove duplicate description of `OCRD_DOWNLOAD_TIMEOUT` in `--help`, #1204
+  * Use `importlib_metadata` shim for 3.9+, #1210, OCR-D/ocrd_froc#10
 
 
 ## [2.63.2] - 2024-03-05
