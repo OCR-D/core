@@ -129,11 +129,54 @@ class Deployer:
         self.stop_mongodb()
         self.stop_rabbitmq()
 
+    def start_tcp_mets_server(self, url_prefix: str, mets_path: str) -> str:
+        log_file = get_mets_server_logging_file_path(mets_path=mets_path)
+        mets_server_url = f"{url_prefix}/{safe_filename(mets_path)}"
+        if is_mets_server_running(mets_server_url=str(mets_server_url)):
+            self.log.warning(f"The TCP mets server for {mets_path} is already started: {mets_server_url}")
+            return mets_server_url
+        cwd = Path(mets_path).parent
+        self.log.info(f"Starting TCP mets server: {mets_server_url}")
+        sub_process = Popen(
+            args=["nohup", "ocrd", "workspace", "--mets-server-url", f"{mets_server_url}",
+                  "-d", f"{cwd}", "server", "start"],
+            shell=False,
+            stdout=open(file=log_file, mode="w"),
+            stderr=open(file=log_file, mode="a"),
+            cwd=cwd,
+            universal_newlines=True
+        )
+        # Wait for the mets server to start
+        sleep(2)
+        self.mets_servers[mets_server_url] = sub_process.pid
+        return mets_server_url
+
+    def stop_tcp_mets_server(self, mets_server_url: str, stop_with_pid: bool = False) -> None:
+        if stop_with_pid:
+            if mets_server_url not in self.mets_servers:
+                message = f"TCP Mets server not found at URL: {mets_server_url}"
+                self.log.exception(message)
+                raise Exception(message)
+            mets_server_pid = self.mets_servers[mets_server_url]
+            subprocess_run(
+                args=["kill", "-s", "SIGINT", f"{mets_server_pid}"],
+                shell=False,
+                universal_newlines=True
+            )
+            return
+        # TODO: Reconsider this again
+        #  Not having this sleep here causes connection errors
+        #  on the last request processed by the processing worker.
+        #  Sometimes 3 seconds is enough, sometimes not.
+        sleep(5)
+        stop_mets_server(mets_server_url=mets_server_url)
+        return
+
     def start_unix_mets_server(self, mets_path: str) -> Path:
         log_file = get_mets_server_logging_file_path(mets_path=mets_path)
         mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(mets_path)}.sock")
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
-            self.log.warning(f"The mets server for {mets_path} is already started: {mets_server_url}")
+            self.log.warning(f"The UDS mets server for {mets_path} is already started: {mets_server_url}")
             return mets_server_url
         cwd = Path(mets_path).parent
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
@@ -155,7 +198,7 @@ class Deployer:
         self.log.info(f"Stopping UDS mets server: {mets_server_url}")
         if stop_with_pid:
             if Path(mets_server_url) not in self.mets_servers:
-                message = f"Mets server not found at URL: {mets_server_url}"
+                message = f"UDS Mets server not found at URL: {mets_server_url}"
                 self.log.exception(message)
                 raise Exception(message)
             mets_server_pid = self.mets_servers[Path(mets_server_url)]

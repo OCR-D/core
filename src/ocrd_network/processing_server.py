@@ -432,7 +432,12 @@ class ProcessingServer(FastAPI):
         )
 
         # Start a Mets Server with the current workspace
-        mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
+        # mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
+
+        # Start a TCP Mets Server
+        mets_server_url_prefix = f"http://{self.hostname}:{self.port}/tcp_mets"
+        mets_server_url = self.deployer.start_tcp_mets_server(
+            url_prefix=mets_server_url_prefix, mets_path=request_mets_path)
 
         # Assign the mets server url in the database
         await db_update_workspace(
@@ -560,7 +565,9 @@ class ProcessingServer(FastAPI):
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
-                self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
+
+                # self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
+                self.deployer.stop_tcp_mets_server(mets_server_url=mets_server_url)
                 try:
                     # The queue is empty - delete it
                     del self.cache_processing_requests.processing_requests[workspace_key]
