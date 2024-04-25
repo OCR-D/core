@@ -116,7 +116,7 @@ def bashlib_input_files(**kwargs):
     for input_files in processor.zip_input_files(mimetype=None, on_error='abort'):
         # ensure all input files exist locally (without persisting them in the METS)
         # - this mimics the default behaviour of all Pythonic processors
-        input_files = [workspace.download_file(input_file)
+        input_files = [workspace.download_file(input_file) if input_file else None
                        for input_file in input_files]
         for field in ['url', 'local_filename', 'ID', 'mimetype', 'pageId']:
             # make this bash-friendly (show initialization for associative array)
