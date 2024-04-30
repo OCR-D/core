@@ -125,6 +125,7 @@ class ProcessingServer(FastAPI):
         self.add_api_routes_others()
         self.add_api_routes_processing()
         self.add_api_routes_workflow()
+        self.add_api_routes_workspace()
 
         @self.exception_handler(RequestValidationError)
         async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -300,6 +301,11 @@ class ProcessingServer(FastAPI):
             summary="Get information about a workflow run"
         )
         self.include_router(workflow_router)
+
+    # TODO: Implement the redirection to TCP mets server
+    def add_api_routes_workspace(self):
+        workspace_router = APIRouter()
+        pass
 
     async def home_page(self):
         message = f"The home page of the {self.title}"
