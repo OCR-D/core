@@ -20,7 +20,7 @@ class OcrdEnvVariable():
         An environment variable for use in OCR-D.
 
         Args:
-            name (str): Name of the environment vairable
+            name (str): Name of the environment variable
             description (str): Description of what the variable is used for.
 
         Keyword Args:
@@ -28,7 +28,7 @@ class OcrdEnvVariable():
             validator (callable): Function to validate that the raw (string) value is parseable.
             default (tuple(bool, any)): 2-tuple, first element is a bool whether there is a default
                 value defined and second element contains that default value, which can be a callable
-                for defered evaluation
+                for deferred evaluation
         """
         self.name = name
         self.description = description

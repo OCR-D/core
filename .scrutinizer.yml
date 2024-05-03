@@ -1,23 +1,31 @@
 checks:
-    python: true
+  python: true
 
 build:
-    nodes:
-        analysis:
-            tests:
-                override:
-                    - py-scrutinizer-run
-                    -
-                        command: pylint-run
-                        use_website_config: true
-
-        tests:
-          tests:
-            override:
-            - true
+  image: default-bionic
+  environment:
+    python:
+      version: 3.8.2
+      virtualenv: true
+  nodes:
+    analysis:
+      dependencies:
+        override:
+          - sudo make deps-ubuntu
+          - make install
+      tests:
+        override:
+          - py-scrutinizer-run
+          -
+            command: pylint-run
+            use_website_config: false
+    tests:
+      tests:
+        override:
+          - true
 filter:
-    excluded_paths:
-        - '*/test/*'
-        - 'core-models/ocrd_models/model/ocrd_page_generateds.py'
-    dependency_paths:
-        - 'lib/*'
+  excluded_paths:
+    - 'tests/*'
+    - 'ocrd_models/ocrd_models/ocrd_page_generateds.py'
+  dependency_paths:
+    - 'lib/*'

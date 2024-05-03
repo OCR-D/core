@@ -5,6 +5,33 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  - bashlib processors will download on-demand, like pythonic processors do, #1216, #1217
+
+Changed:
+
+  - Replace `distutils` which equivalents from `shutil` for compatibility with python 3.12+, #1219
+  - CI: Updated GitHub actions, #1206
+  - CI: Fixed scrutinizer, #1217
+
+## [2.64.1] - 2024-04-22
+
+Fixed:
+
+  * Broken PyPI release
+
+## [2.64.0] - 2024-04-22
+
+Removed:
+
+  * Support for Python `<=` 3.7, #1207
+
+Fixed:
+
+  * remove duplicate description of `OCRD_DOWNLOAD_TIMEOUT` in `--help`, #1204
+  * Use `importlib_metadata` shim for 3.9+, #1210, OCR-D/ocrd_froc#10
+
 ## [2.63.3] - 2024-03-07
 
 Added:
@@ -96,7 +123,7 @@ Fixed:
 
 Fixed:
 
-  * Log level downgraded from DEBUG to INFO in loggin.conf, #1161
+  * Log level downgraded from DEBUG to INFO in logging.conf, #1161
   * log OAI check as `DEBUG` not `INFO`, #1160
 
 ## [2.60.1] - 2023-12-15
@@ -121,7 +148,7 @@ Changed:
 Fixed:
 
   * Chunking algorithm for `ocrd workspace list-page` now handles edge cases properly, #1145
-  * Avoid deadlocks in `ocrd_network` if procesing workers not deployed, #1125, #1142
+  * Avoid deadlocks in `ocrd_network` if processing workers not deployed, #1125, #1142
 
 ## [2.59.0] - 2023-11-27
 
@@ -262,7 +289,7 @@ Changed:
 
 Added
 
-  * Environement variables to control optional retries and timeouts for downloading files:
+  * Environment variables to control optional retries and timeouts for downloading files:
     * `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of workspace files. #1073
     * `OCRD_DOWNLOAD_TIMEOUT`: Timeout in seconds for connecting or reading (comma-separated) when downloading. #1073
   * Environment variables used throughout core are now documented in README and `ocrd --help`,  #1073
@@ -548,7 +575,7 @@ Fixed:
 
 Changed:
 
-  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Consistently use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
   * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
   * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
   * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
@@ -958,7 +985,7 @@ Changed:
 
 Added:
 
-  * processors can `self.add_metada(pcgts)` to add a self-describing `pg:MetadataItem`, #574
+  * processors can `self.add_metadata(pcgts)` to add a self-describing `pg:MetadataItem`, #574
 
 
 ## [2.13.2] - 2020-08-13
@@ -1005,7 +1032,7 @@ Fixed:
 
 Fixed:
 
-  * logging no longer intereferes with `--dump-json`/`--help`/`--version`, #540, #546
+  * logging no longer interferes with `--dump-json`/`--help`/`--version`, #540, #546
 
 ## [2.12.3] - 2020-07-23
 
@@ -1122,7 +1149,7 @@ Changed:
 Added:
 
   * Workspace: Optional `overwrite_mode` that sets `force` for all operations
-  * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
+  * `OcrdPage`: `get_AllAlternativeImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
   * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
   * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
 
@@ -1832,7 +1859,7 @@ Changed:
       a temporary directory but reuse the existing directory
     * When not providing `mets_basename`, assume the last URL path segment to be
       the METS basename instead of the fixed string `mets.xml`
-  * incoroporate changes to ocrd_tool schema from spec/v2.2.1
+  * incorporate changes to ocrd_tool schema from spec/v2.2.1
 
 ## [0.6.0] - 2018-07-23
 
@@ -2038,10 +2065,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-<<<<<<< HEAD
-=======
+[2.64.0]: ../../compare/v2.63.0..v2.63.3
 [2.63.3]: ../../compare/v2.63.3..v2.63.1
->>>>>>> master
 [2.63.2]: ../../compare/v2.63.2..v2.63.1
 [2.63.1]: ../../compare/v2.63.1..v2.63.0
 [2.63.0]: ../../compare/v2.63.0..v2.62.0

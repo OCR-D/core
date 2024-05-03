@@ -2,13 +2,12 @@ from datetime import datetime
 from os import makedirs, chdir, walk
 from os.path import join, isdir, basename as os_path_basename, exists, relpath
 from pathlib import Path
-from shutil import make_archive, rmtree, copyfile, move
+from shutil import make_archive, rmtree, copyfile, move, copytree
 from tempfile import mkdtemp, TemporaryDirectory
 import re
 import tempfile
 import sys
 from bagit import Bag, make_manifests, _load_tag_file, _make_tag_file, _make_tagmanifest_file  # pylint: disable=no-name-in-module
-from distutils.dir_util import copy_tree
 
 from ocrd_utils import (
     pushd_popd,
@@ -272,7 +271,7 @@ class WorkspaceBagger():
         appropriate value.
 
         Arguments:
-            src (string):    Path to Bag. May be an zipped or unziped bagit
+            src (string):    Path to Bag. May be a zipped or unzipped bagit
             dest (string):   Path to where the result should be stored. Not needed if overwrite is
                              set
             overwrite(bool): Replace bag with newly created bag
@@ -298,7 +297,7 @@ class WorkspaceBagger():
                     raise FileNotFoundError(f"data directory of bag not found at {src}")
                 if not overwrite:
                     path_to_bag.mkdir(parents=True, exist_ok=True)
-                    copy_tree(src, dest)
+                    copytree(src, dest, dirs_exist_ok=True)
 
             with pushd_popd(path_to_bag):
                 n_bytes, n_files = make_manifests("data", 1, ["sha512"])
