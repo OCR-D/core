@@ -131,11 +131,11 @@ class Deployer:
 
     def start_uds_mets_server(self, mets_path: str) -> Path:
         log_file = get_mets_server_logging_file_path(mets_path=mets_path)
-        mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(mets_path)}.sock")
+        cwd = Path(mets_path).parent
+        mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(cwd)}.sock")
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
             self.log.warning(f"The UDS mets server for {mets_path} is already started: {mets_server_url}")
             return mets_server_url
-        cwd = Path(mets_path).parent
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
         sub_process = Popen(
             args=["nohup", "ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{cwd}", "server", "start"],
