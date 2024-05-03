@@ -121,6 +121,10 @@ class ClientSideOcrdMets:
         self.log = getLogger(f'ocrd.mets_client[{url}]')
         self.url = url if self.protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
 
+        # Set if communication with the OcrdMetsServer happens over the ProcessingServer
+        # The received root URL must be in the form: http://PS_host:PS_port/tcp_mets
+        self.multiplexing_mode = True if self.protocol == 'tcp' and 'tcp_mets' in self.url else False
+
     @property
     def session(self) -> Union[requests_session, requests_unixsocket_session]:
         return requests_session() if self.protocol == 'tcp' else requests_unixsocket_session()
@@ -135,14 +139,32 @@ class ClientSideOcrdMets:
         """
         Request writing the changes to the file system
         """
-        self.session.request(method='PUT', url=self.url)
+        if not self.multiplexing_mode:
+            self.session.request(method='PUT', url=self.url)
+            return
+        request_body = {
+            "mets_path": "",
+            "method_type": "PUT",
+            "request_url": "",
+            "request_data": {}
+        }
+        self.session.request(method="POST", url=self.url, json=request_body)
 
     def stop(self):
         """
         Request stopping the mets server
         """
         try:
-            self.session.request(method='DELETE', url=self.url)
+            if not self.multiplexing_mode:
+                self.session.request(method='DELETE', url=self.url)
+                return
+            request_body = {
+                "mets_path": "",
+                "method_type": "DELETE",
+                "request_url": "",
+                "request_data": {}
+            }
+            self.session.request(method="POST", url=self.url, json=request_body)
         except ConnectionError:
             # Expected because we exit the process without returning
             pass
@@ -151,7 +173,16 @@ class ClientSideOcrdMets:
         """
         Request reloading of the mets file from the file system
         """
-        return self.session.request(method='POST', url=f'{self.url}/reload').text
+        if not self.multiplexing_mode:
+            return self.session.request(method='POST', url=f'{self.url}/reload').text
+
+        request_body = {
+            "mets_path": "",
+            "method_type": "POST",
+            "request_url": "reload",
+            "request_data": {}
+        }
+        return self.session.request(method="POST", url=self.url, json=request_body).text
 
     @property
     def unique_identifier(self):
