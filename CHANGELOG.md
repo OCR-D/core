@@ -15,6 +15,10 @@ Changed:
   - CI: Updated GitHub actions, #1206
   - CI: Fixed scrutinizer, #1217
 
+Added:
+
+  - Integration tests for `ocrd_network`, #1184
+
 ## [2.64.1] - 2024-04-22
 
 Fixed:
