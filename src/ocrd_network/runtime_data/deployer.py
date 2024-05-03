@@ -129,7 +129,7 @@ class Deployer:
         self.stop_mongodb()
         self.stop_rabbitmq()
 
-    def start_unix_mets_server(self, mets_path: str) -> Path:
+    def start_uds_mets_server(self, mets_path: str) -> Path:
         log_file = get_mets_server_logging_file_path(mets_path=mets_path)
         mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(mets_path)}.sock")
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
@@ -147,7 +147,7 @@ class Deployer:
         self.mets_servers[mets_server_url] = sub_process.pid
         return mets_server_url
 
-    def stop_unix_mets_server(self, mets_server_url: str, stop_with_pid: bool = False) -> None:
+    def stop_uds_mets_server(self, mets_server_url: str, stop_with_pid: bool = False) -> None:
         self.log.info(f"Stopping UDS mets server: {mets_server_url}")
         if stop_with_pid:
             if Path(mets_server_url) not in self.mets_servers:

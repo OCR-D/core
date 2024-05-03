@@ -460,7 +460,7 @@ class ProcessingServer(FastAPI):
         )
 
         # Start a UDS Mets Server with the current workspace
-        mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
+        mets_server_url = self.deployer.start_uds_mets_server(mets_path=request_mets_path)
 
         # Assign the mets server url in the database
         await db_update_workspace(
@@ -589,7 +589,7 @@ class ProcessingServer(FastAPI):
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
 
-                self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
+                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url)
 
                 try:
                     # The queue is empty - delete it
