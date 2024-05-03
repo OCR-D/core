@@ -15,3 +15,5 @@ deprecated
 click
 twine
 wheel
+# For typing-compatible lxml interface definitions
+types-lxml

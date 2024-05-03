@@ -1,0 +1,185 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://ocr-d.de/spec/web-api/config.schema.yml
+description: Schema for the Processing Broker configuration file
+type: object
+additionalProperties: false
+required:
+  - process_queue
+properties:
+  internal_callback_url:
+    description: optionally set the host for the internal_callback_url, for example "http://172.17.0.1:8080"
+    type: string
+  process_queue:
+    description: Information about the Message Queue
+    type: object
+    additionalProperties: false
+    required:
+      - address
+      - port
+    properties:
+      address:
+        description: The IP address or domain name of the machine where the Message Queue is deployed
+        $ref: "#/$defs/address"
+      port:
+        description: The port number of the Message Queue
+        $ref: "#/$defs/port"
+      credentials:
+        description: The credentials for the Message Queue
+        $ref: "#/$defs/credentials"
+      ssh:
+        description: Information required for an SSH connection
+        $ref: "#/$defs/ssh"
+      skip_deployment:
+        description: set to true to deploy queue yourself
+        type: boolean
+  database:
+    description: Information about the MongoDB
+    type: object
+    additionalProperties: false
+    required:
+      - address
+      - port
+    properties:
+      address:
+        description: The IP address or domain name of the machine where MongoDB is deployed
+        $ref: "#/$defs/address"
+      port:
+        description: The port number of the MongoDB
+        $ref: "#/$defs/port"
+      credentials:
+        description: The credentials for the MongoDB
+        $ref: "#/$defs/credentials"
+      ssh:
+        description: Information required for an SSH connection
+        $ref: "#/$defs/ssh"
+      skip_deployment:
+        description: set to true to deploy database yourself
+        type: boolean
+  hosts:
+    description: A list of hosts where Processing Servers will be deployed
+    type: array
+    items:
+      description: A host where one or many Processing Servers will be deployed
+      type: object
+      additionalProperties: false
+      required:
+        - address
+        - username
+      oneOf:
+        - required:
+            - password
+        - required:
+            - path_to_privkey
+      anyOf:
+        - required:
+            - workers
+        - required:
+            - servers
+      properties:
+        address:
+          description: The IP address or domain name of the target machine
+          $ref: "#/$defs/address"
+        username:
+          type: string
+        password:
+          type: string
+        path_to_privkey:
+          description: Path to private key file
+          type: string
+        workers:
+          description: List of processing workers that will be deployed
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - name
+            properties:
+              name:
+                description: Name of the processor
+                type: string
+                pattern: "^ocrd-.*$"
+                examples:
+                  - ocrd-cis-ocropy-binarize
+                  - ocrd-olena-binarize
+              number_of_instance:
+                description: Number of instances to be deployed
+                type: integer
+                minimum: 1
+                default: 1
+              deploy_type:
+                description: Should the processing worker be deployed natively or with Docker
+                type: string
+                enum:
+                  - native
+                  - docker
+                default: native
+        servers:
+          description: List of processor servers that will be deployed
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - name
+              - port
+            properties:
+              name:
+                description: Name of the processor
+                type: string
+                pattern: "^ocrd-.*$"
+                examples:
+                  - ocrd-cis-ocropy-binarize
+                  - ocrd-olena-binarize
+              deploy_type:
+                description: Should the processor server be deployed natively or with Docker
+                type: string
+                enum:
+                  - native
+                  - docker
+                default: native
+              port:
+                description: The port number to be deployed on the host
+                $ref: "#/$defs/port"
+
+$defs:
+  address:
+    type: string
+    anyOf:
+      - format: hostname
+      - format: ipv4
+  port:
+    type: integer
+    minimum: 1
+    maximum: 65535
+  credentials:
+    type: object
+    additionalProperties: false
+    required:
+      - username
+      - password
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+  ssh:
+    type: object
+    additionalProperties: false
+    oneOf:
+      - required:
+          - username
+          - password
+      - required:
+          - username
+          - path_to_privkey
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+      path_to_privkey:
+        description: Path to private key file
+        type: string

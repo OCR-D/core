@@ -362,12 +362,12 @@ class TestCli(TestCase):
             result = self.runner.invoke(workspace_cli, ['clone', join(src_dir, 'mets.xml'), shallowcloneddir])
             self.assertEqual(result.exit_code, 0)
 
-            result = self.runner.invoke(workspace_cli, ['clone', '-a', join(src_dir, 'mets.xml'), fullcloneddir])
+            result = self.runner.invoke(workspace_cli, ['clone', '--download', join(src_dir, 'mets.xml'), fullcloneddir])
             self.assertEqual(result.exit_code, 0)
 
             with copy_of_directory(src_dir, copieddir):
                 shallow_vs_copied = dircmp(shallowcloneddir, copieddir)
-                self.assertEqual(set(shallow_vs_copied.right_only), set(['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG']))
+                assert set(shallow_vs_copied.right_only) == set(['OCR-D-GT-ALTO', 'OCR-D-GT-PAGE', 'OCR-D-IMG'])
 
                 full_vs_copied = dircmp(fullcloneddir, copieddir)
                 #  print(full_vs_copied)
@@ -384,10 +384,11 @@ class TestCli(TestCase):
 
     def test_find_all_files_multiple_physical_pages_for_fileids(self):
         with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as tempdir:
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0005', '-k', 'url'])
+            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0005', '-k', 'local_filename'])
+            print(result.stdout)
             self.assertEqual(result.stdout, 'OCR-D-IMG/FILE_0005_IMAGE.tif\n')
             self.assertEqual(result.exit_code, 0)
-            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0001', '-k', 'url'])
+            result = self.runner.invoke(workspace_cli, ['-d', tempdir, 'find', '--page-id', 'PHYS_0005,PHYS_0001', '-k', 'local_filename'])
             self.assertEqual(len(result.stdout.split('\n')), 19)
 
     def test_mets_basename(self):
@@ -438,30 +439,29 @@ class TestCli(TestCase):
                 Path(srcdir, "OCR-D-IMG", "page_%04d.tif" % i).write_text('')
             for i in range(NO_FILES):
                 Path(srcdir, "OCR-D-PAGE", "page_%04d.xml" % i).write_text('')
-            with TemporaryDirectory() as wsdir:
-                with pushd_popd(wsdir):
-                    ws = self.resolver.workspace_from_nothing(directory=wsdir)
-                    exit_code, out, err = self.invoke_cli(workspace_cli, [
-                        'bulk-add',
-                        '--ignore',
-                        '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$',
-                        '--url', '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}',
-                        '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',
-                        '--page-id', 'PHYS_{{ pageid }}',
-                        '--file-grp', '{{ fileGrp }}',
-                        '%s/*/*' % srcdir
-                    ])
-                    # print('exit_code', exit_code)
-                    # print('out', out)
-                    # print('err', err)
-                    ws.reload_mets()
-                    self.assertEqual(len(ws.mets.file_groups), 2)
-                    self.assertEqual(len(ws.mets.find_all_files()), 2 * NO_FILES)
-                    self.assertEqual(len(ws.mets.find_all_files(mimetype='image/tiff')), NO_FILES)
-                    self.assertEqual(len(ws.mets.find_all_files(ID='//FILE_OCR-D-IMG_000.*')), 10)
-                    self.assertEqual(len(ws.mets.find_all_files(ID='//FILE_.*_000.*')), 20)
-                    self.assertEqual(len(ws.mets.find_all_files(pageId='PHYS_0001')), 2)
-                    self.assertEqual(ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].url, 'OCR-D-PAGE/FILE_0001.xml')
+            with pushd_popd(tempdir=True) as wsdir:
+                ws = self.resolver.workspace_from_nothing(directory=wsdir)
+                exit_code, out, err = self.invoke_cli(workspace_cli, [
+                    'bulk-add',
+                    '--ignore',
+                    '--regex', r'^.*/(?P<fileGrp>[^/]+)/page_(?P<pageid>.*)\.(?P<ext>[^\.]*)$',
+                    '--local-filename', '{{ fileGrp }}/FILE_{{ pageid }}.{{ ext }}',
+                    '--file-id', 'FILE_{{ fileGrp }}_{{ pageid }}',
+                    '--page-id', 'PHYS_{{ pageid }}',
+                    '--file-grp', '{{ fileGrp }}',
+                    '%s/*/*' % srcdir
+                ])
+                # print('exit_code', exit_code)
+                # print('out', out)
+                # print('err', err)
+                ws.reload_mets()
+                assert len(ws.mets.file_groups) == 2
+                assert len(ws.mets.find_all_files()) == 2 * NO_FILES
+                assert len(ws.mets.find_all_files(mimetype='image/tiff')) == NO_FILES
+                assert len(ws.mets.find_all_files(ID='//FILE_OCR-D-IMG_000.*')) == 10
+                assert len(ws.mets.find_all_files(ID='//FILE_.*_000.*')) == 20
+                assert len(ws.mets.find_all_files(pageId='PHYS_0001')) == 2
+                assert ws.mets.find_all_files(ID='FILE_OCR-D-PAGE_0001')[0].local_filename == 'OCR-D-PAGE/FILE_0001.xml'
 
     def test_bulk_add_missing_param(self):
         with pushd_popd(tempdir=True) as wsdir:
@@ -486,20 +486,22 @@ class TestCli(TestCase):
             Path(wsdir, 'c.ext').write_text('')
             _, out, err = self.invoke_cli(workspace_cli, [
                 'bulk-add',
-                '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*) (?P<url>.*) (?P<mimetype>.*)',
+                '-r', r'(?P<pageid>.*) (?P<filegrp>.*) (?P<src>.*) (?P<local_filename>.*) (?P<mimetype>.*)',
                 '-G', '{{ filegrp }}',
                 '-g', '{{ pageid }}',
                 '-S', '{{ src }}',
                 # '-i', '{{ fileid }}',  # XXX skip --file-id
                 '-m', '{{ mimetype }}',
-                '-u', "{{ url }}",
+                '-l', "{{ local_filename }}",
+                '-u', "https://host/{{ filegrp }}/{{ local_filename }}",
                 'a b c.ext d e'])
             ws.reload_mets()
             print(out)
             assert next(ws.mets.find_files()).ID == 'b_c'
-            assert next(ws.mets.find_files()).url == 'd'
+            assert next(ws.mets.find_files()).local_filename == 'd'
+            assert next(ws.mets.find_files()).url == 'https://host/b/d'
 
-    def test_bulk_add_derive_url(self):
+    def test_bulk_add_derive_local_filename(self):
         with pushd_popd(tempdir=True) as wsdir:
             ws = self.resolver.workspace_from_nothing(directory=wsdir)
             Path(wsdir, 'srcdir').mkdir()
@@ -510,22 +512,22 @@ class TestCli(TestCase):
                 '-G', '{{ filegrp }}',
                 '-g', '{{ pageid }}',
                 '-S', '{{ src }}',
-                # '-u', "{{ url }}", # XXX skip --url
+                # '-l', "{{ local_filename }}", # XXX skip --local-filename
                 'p0001 SEG srcdir/src.xml'])
             # print('out', out)
             # print('err', err)
             ws.reload_mets()
-            assert next(ws.mets.find_files()).url == 'srcdir/src.xml'
+            assert next(ws.mets.find_files()).local_filename == 'srcdir/src.xml'
 
     def test_bulk_add_stdin(self):
         resolver = Resolver()
         with pushd_popd(tempdir=True) as wsdir:
             ws = resolver.workspace_from_nothing(directory=wsdir)
             Path(wsdir, 'BIN').mkdir()
-            Path(wsdir, 'BIN/FILE_0001_BIN.IMG-wolf.png').write_text('')
-            Path(wsdir, 'BIN/FILE_0002_BIN.IMG-wolf.png').write_text('')
-            Path(wsdir, 'BIN/FILE_0001_BIN.xml').write_text('')
-            Path(wsdir, 'BIN/FILE_0002_BIN.xml').write_text('')
+            Path(wsdir, 'BIN/FILE_0001_BIN.IMG-wolf.png').write_text('', encoding='UTF-8')
+            Path(wsdir, 'BIN/FILE_0002_BIN.IMG-wolf.png').write_text('', encoding='UTF-8')
+            Path(wsdir, 'BIN/FILE_0001_BIN.xml').write_text('', encoding='UTF-8')
+            Path(wsdir, 'BIN/FILE_0002_BIN.xml').write_text('', encoding='UTF-8')
             with mock_stdin(
                     'PHYS_0001 BIN FILE_0001_BIN.IMG-wolf BIN/FILE_0001_BIN.IMG-wolf.png BIN/FILE_0001_BIN.IMG-wolf.png image/png\n'
                     'PHYS_0002 BIN FILE_0002_BIN.IMG-wolf BIN/FILE_0002_BIN.IMG-wolf.png BIN/FILE_0002_BIN.IMG-wolf.png image/png\n'
@@ -539,7 +541,8 @@ class TestCli(TestCase):
                     '-g', '{{ pageid }}',
                     '-i', '{{ fileid }}',
                     '-m', '{{ mimetype }}',
-                    '-u', "{{ dest }}",
+                    '-l', "{{ dest }}",
+                    '-u', "https://host/{{ fileid }}/{{ dest }}",
                     '-'])
                 ws.reload_mets()
                 assert len(ws.mets.file_groups) == 1
@@ -547,7 +550,29 @@ class TestCli(TestCase):
                 f = next(ws.mets.find_files())
                 assert f.mimetype == 'image/png'
                 assert f.ID == 'FILE_0001_BIN.IMG-wolf'
-                assert f.url == 'BIN/FILE_0001_BIN.IMG-wolf.png'
+                assert f.local_filename == 'BIN/FILE_0001_BIN.IMG-wolf.png'
+                assert f.url == 'https://host/FILE_0001_BIN.IMG-wolf/BIN/FILE_0001_BIN.IMG-wolf.png'
+
+    def test_list_page(self):
+        def _call(args):
+            _, out, _ = self.invoke_cli(workspace_cli, ['list-page', *args])
+            return out.rstrip('\n')
+        with pushd_popd(Path(__file__).parent.parent / 'data/list-page-workspace'):
+            assert _call([]) == 'PHYS_0001\nPHYS_0002\nPHYS_0003\nPHYS_0004\nPHYS_0005\nPHYS_0006\nPHYS_0008\nPHYS_0009\nPHYS_0010\nPHYS_0011\nPHYS_0012\nPHYS_0013\nPHYS_0014\nPHYS_0015\nPHYS_0016\nPHYS_0017\nPHYS_0018\nPHYS_0019\nPHYS_0020\nPHYS_0022\nPHYS_0023\nPHYS_0024\nPHYS_0025\nPHYS_0026\nPHYS_0027\nPHYS_0028\nPHYS_0029'
+            assert _call(['-f', 'comma-separated']) == 'PHYS_0001,PHYS_0002,PHYS_0003,PHYS_0004,PHYS_0005,PHYS_0006,PHYS_0008,PHYS_0009,PHYS_0010,PHYS_0011,PHYS_0012,PHYS_0013,PHYS_0014,PHYS_0015,PHYS_0016,PHYS_0017,PHYS_0018,PHYS_0019,PHYS_0020,PHYS_0022,PHYS_0023,PHYS_0024,PHYS_0025,PHYS_0026,PHYS_0027,PHYS_0028,PHYS_0029'
+            assert _call(['-f', 'json']) == '[[["PHYS_0001"], ["PHYS_0002"], ["PHYS_0003"], ["PHYS_0004"], ["PHYS_0005"], ["PHYS_0006"], ["PHYS_0008"], ["PHYS_0009"], ["PHYS_0010"], ["PHYS_0011"], ["PHYS_0012"], ["PHYS_0013"], ["PHYS_0014"], ["PHYS_0015"], ["PHYS_0016"], ["PHYS_0017"], ["PHYS_0018"], ["PHYS_0019"], ["PHYS_0020"], ["PHYS_0022"], ["PHYS_0023"], ["PHYS_0024"], ["PHYS_0025"], ["PHYS_0026"], ["PHYS_0027"], ["PHYS_0028"], ["PHYS_0029"]]]'
+            assert _call(['-f', 'comma-separated', '-R', '5..5']) == 'PHYS_0005'
+            assert _call(['-f', 'comma-separated', '-R', '6..8']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
+            assert _call(['-f', 'comma-separated', '-r', '1..5']) == 'PHYS_0001,PHYS_0002,PHYS_0003,PHYS_0004,PHYS_0005'
+            assert _call(['-f', 'comma-separated', '-r', '2..3']) == 'PHYS_0002,PHYS_0003'
+            assert _call(['-f', 'comma-separated', '-r', 'page 2..page 3']) == 'PHYS_0002,PHYS_0003'
+            assert _call(['-f', 'comma-separated', '-r', 'PHYS_0006..PHYS_0009']) == 'PHYS_0006,PHYS_0008,PHYS_0009'
+            assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3']) == 'PHYS_0001,PHYS_0002,PHYS_0003\nPHYS_0004,PHYS_0005,PHYS_0006\nPHYS_0008,PHYS_0009,PHYS_0010'
+            assert _call(['-f', 'comma-separated', '-r', 'PHYS_0001..PHYS_0010', '-D', '3', '-C', '2']) == 'PHYS_0008,PHYS_0009,PHYS_0010'
+            from json import loads
+            assert loads(_call(['-f', 'json', '-r', 'PHYS_0001..PHYS_0010', '-D', '3', '-C', '2'])) == [[['PHYS_0008'], ['PHYS_0009'], ['PHYS_0010']]]
+            assert loads(_call(['-f', 'json', '-r', 'PHYS_0001..PHYS_0010', '-k', 'ID', '-k', 'ORDERLABEL', '-D', '3', '-C', '2'])) == \
+                [[['PHYS_0008', 'page 7'], ['PHYS_0009', 'page 8'], ['PHYS_0010', 'page 9']]]
 
 if __name__ == '__main__':
     main(__file__)

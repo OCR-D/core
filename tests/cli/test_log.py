@@ -6,7 +6,8 @@ from os import environ as ENV
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 from ocrd.decorators import ocrd_loglevel
-from ocrd_utils import initLogging, setOverrideLogLevel, logging, disableLogging
+from ocrd_utils import setOverrideLogLevel, logging, disableLogging
+import logging as python_logging
 
 @click.group()
 @ocrd_loglevel
@@ -19,29 +20,29 @@ class TestLogCli(TestCase):
     def _get_log_output(self, *args):
         disableLogging()
         code, out, err = self.invoke_cli(mock_ocrd_cli, args)
-        print(code, out, err)
-        return out + err
+        print({'code': code, 'out': out, 'err': err})
+        return err
 
     def tearDown(self):
         if 'OCRD_TOOL_NAME' in ENV:
             del(ENV['OCRD_TOOL_NAME'])
 
     def test_loglevel(self):
-        assert 'DEBUG root - foo' not in self._get_log_output('log', 'debug', 'foo')
-        assert 'DEBUG root - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
+        assert 'DEBUG ocrd.log_cli - foo' not in self._get_log_output('log', 'debug', 'foo')
+        assert 'DEBUG ocrd.log_cli - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
 
     def test_log_basic(self):
-        assert 'INFO root - foo bar' in self._get_log_output('log', 'info', 'foo bar')
+        assert 'INFO ocrd.log_cli - foo bar' in self._get_log_output('log', 'info', 'foo bar')
 
     def test_log_name_param(self):
-        assert 'INFO boo.far - foo bar' in self._get_log_output('log', '--name', 'boo.far', 'info', 'foo bar')
+        assert 'INFO ocrd.boo.far - foo bar' in self._get_log_output('log', '--name', 'boo.far', 'info', 'foo bar')
 
     def test_log_name_envvar(self):
         ENV['OCRD_TOOL_NAME'] = 'boo.far'
-        assert 'INFO boo.far - foo bar' in self._get_log_output('log', 'info', 'foo bar')
+        assert 'INFO ocrd.boo.far - foo bar' in self._get_log_output('log', 'info', 'foo bar')
 
     def test_log_name_levels(self):
-        ENV['OCRD_TOOL_NAME'] = 'ocrd.foo'
+        ENV['OCRD_TOOL_NAME'] = 'foo'
         assert 'DEBUG ocrd.foo - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'debug', 'foo')
         assert 'DEBUG ocrd.foo - foo' in self._get_log_output('-l', 'DEBUG', 'log', 'trace', 'foo')
         assert 'INFO ocrd.foo - foo' in  self._get_log_output('log', 'info', 'foo')

@@ -1,0 +1,77 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://ocr-d.de/spec/web-api/processing-message.schema.yml
+description: Schema for Processing Messages
+type: object
+additionalProperties: false
+required:
+  - job_id
+  - processor_name
+  - created_time
+  - input_file_grps
+oneOf:
+  - required:
+      - path_to_mets
+  - required:
+      - workspace_id
+properties:
+  job_id:
+    description: The ID of the job
+    type: string
+    format: uuid
+  processor_name:
+    description: Name of the processor
+    type: string
+    pattern: "^ocrd-.*$"
+    examples:
+      - ocrd-cis-ocropy-binarize
+      - ocrd-olena-binarize
+  path_to_mets:
+    description: Path to a METS file
+    type: string
+  workspace_id:
+    description: ID of a workspace
+    type: string
+  input_file_grps:
+    description: A list of file groups for input
+    type: array
+    minItems: 1
+    items:
+      type: string
+  output_file_grps:
+    description: A list of file groups for output
+    type: array
+    minItems: 1
+    items:
+      type: string
+  page_id:
+    description: ID of pages to be processed
+    type: string
+    examples:
+      - PHYS_0001,PHYS_0002,PHYS_0003
+      - PHYS_0001..PHYS_0005,PHYS_0007,PHYS_0009
+  parameters:
+    description: Parameters for the used model
+    type: object
+  agent_type:
+    description: The network agent type - worker or server
+    type: string
+    enum:
+      - worker
+      - server
+  result_queue_name:
+    description: Name of the queue to which result is published
+    type: string
+  callback_url:
+    description: The URL where the result message will be POST-ed to
+    type: string
+    format: uri
+    pattern: "^http?://"
+  internal_callback_url:
+    description: The URL where the internal result message will be POST-ed to the Processing Server
+    type: string
+    format: uri
+    pattern: "^http?://"
+  created_time:
+    description: The Unix timestamp when the message was created
+    type: integer
+    minimum: 0

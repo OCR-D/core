@@ -5,16 +5,16 @@ PYTHON ?= python
 PIP ?= pip
 LOG_LEVEL = INFO
 PYTHONIOENCODING=utf8
-TESTDIR = tests
+TESTDIR = $(CURDIR)/tests
 PYTEST_ARGS = --continue-on-collection-errors
+VERSION = $(shell cat VERSION)
+
+DOCKER_COMPOSE = docker compose
 
 SPHINX_APIDOC =
 
 BUILD_ORDER = ocrd_utils ocrd_models ocrd_modelfactory ocrd_validators ocrd_network ocrd
 reverse = $(if $(wordlist 2,2,$(1)),$(call reverse,$(wordlist 2,$(words $(1)),$(1))) $(firstword $(1)),$(1))
-
-PEP_440_PATTERN := '([1-9][0-9]*!)?(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*((a|b|rc)(0|[1-9][0-9]*))?(\.post(0|[1-9][0-9]*))?(\.dev(0|[1-9][0-9]*))?'
-OCRD_VERSION != fgrep version= ocrd_utils/setup.py | grep -Eo $(PEP_440_PATTERN)
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -27,9 +27,10 @@ help:
 	@echo "    deps-cuda      Dependencies for deployment with GPU support via Conda"
 	@echo "    deps-ubuntu    Dependencies for deployment in an Ubuntu/Debian Linux"
 	@echo "    deps-test      Install test python deps via pip"
-	@echo "    install        (Re)install the tool"
+	@echo "    build          (Re)build source and binary distributions of pkges"
+	@echo "    install        (Re)install the packages"
 	@echo "    install-dev    Install with pip install -e"
-	@echo "    uninstall      Uninstall the tool"
+	@echo "    uninstall      Uninstall the packages"
 	@echo "    generate-page  Regenerate python code from PAGE XSD"
 	@echo "    spec           Copy JSON Schema, OpenAPI from OCR-D/spec"
 	@echo "    assets         Setup test assets"
@@ -40,6 +41,9 @@ help:
 	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker image for GPU / CUDA"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
+	@echo " ocrd network tests"
+	@echo "    network-module-test       Run all ocrd_network module tests"
+	@echo "    network-integration-test  Run all ocrd_network integration tests (docker and docker compose required)"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -53,6 +57,9 @@ help:
 
 # pip install command. Default: $(PIP_INSTALL)
 PIP_INSTALL ?= $(PIP) install
+PIP_INSTALL_CONFIG_OPTION ?=
+
+.PHONY: deps-cuda deps-ubuntu deps-test
 
 .PHONY: get-conda deps-cuda deps-conda deps-ubuntu
 
@@ -72,6 +79,8 @@ get-conda:
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
+# workaround for tf-keras#62
+	echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$(CONDA_PREFIX)/' >> /etc/profile.d/98-conda.sh
 	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
 	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
 else
@@ -138,24 +147,34 @@ deps-test:
 	$(PIP) install -U pip
 	$(PIP) install -r requirements_test.txt
 
+.PHONY: build install install-dev uninstall
+
+build:
+	$(PIP) install build
+	$(PYTHON) -m build .
+# or use -n ?
+
 # (Re)install the tool
-install:
-#	$(PIP_INSTALL) $(BUILD_ORDER:%=./%/dist/ocrd$*(OCRD_VERSION)*.whl)
-	$(foreach MODULE,$(BUILD_ORDER),$(PIP_INSTALL) ./$(MODULE) &&) echo done
+install: #build
+	# not stricttly necessary but a precaution against outdated python build tools, https://github.com/OCR-D/core/pull/1166
+	$(PIP) install -U pip wheel
+	$(PIP_INSTALL) . $(PIP_INSTALL_CONFIG_OPTION)
 	@# workaround for shapely#1598
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
+install-dev: PIP_INSTALL = $(PIP) install -e 
+install-dev: PIP_INSTALL_CONFIG_OPTION = --config-settings editable_mode=strict
 install-dev: uninstall
-	$(MAKE) install PIP_INSTALL="$(PIP) install -e"
+	$(MAKE) install
 
 # Uninstall the tool
 uninstall:
-	$(PIP) uninstall -y $(call reverse,$(BUILD_ORDER))
+	$(PIP) uninstall --yes ocrd
 
 # Regenerate python code from PAGE XSD
-generate-page: GDS_PAGE = ocrd_models/ocrd_models/ocrd_page_generateds.py
-generate-page: GDS_PAGE_USER = ocrd_models/ocrd_page_user_methods.py
+generate-page: GDS_PAGE = src/ocrd_models/ocrd_page_generateds.py
+generate-page: GDS_PAGE_USER = src/ocrd_page_user_methods.py
 generate-page: repo/assets
 	generateDS \
 		-f \
@@ -165,7 +184,7 @@ generate-page: repo/assets
 		--export "write etree" \
 		--disable-generatedssuper-lookup \
 		--user-methods=$(GDS_PAGE_USER) \
-		ocrd_validators/ocrd_validators/page.xsd
+		src/ocrd_validators/page.xsd
 	# hack to prevent #451: enum keys will be strings
 	sed -i 's/(Enum):$$/(str, Enum):/' $(GDS_PAGE)
 	# hack to ensure output has pc: prefix
@@ -219,16 +238,38 @@ assets: repo/assets
 .PHONY: test
 # Run all unit tests
 test: assets
-	$(PYTHON) -m pytest --continue-on-collection-errors --durations=10\
-		--ignore=$(TESTDIR)/test_logging.py \
-		--ignore=$(TESTDIR)/test_logging_conf.py \
+	$(PYTHON) \
+		-m pytest $(PYTEST_ARGS) --durations=10\
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
+		--ignore-glob="$(TESTDIR)/network/*.py" \
 		$(TESTDIR)
-	#$(MAKE) test-logging
+	$(MAKE) test-logging
 
-test-logging:
-	HOME=$(CURDIR)/ocrd_utils $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
-	HOME=$(CURDIR) $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging $(TESTDIR)
+test-logging: assets
+	# copy default logging to temporary directory and run logging tests from there
+	tempdir=$$(mktemp -d); \
+	cp src/ocrd_utils/ocrd_logging.conf $$tempdir; \
+	cd $$tempdir; \
+	$(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR); \
+	rm -r $$tempdir/ocrd_logging.conf $$tempdir/.benchmarks; \
+	rmdir $$tempdir
+
+network-module-test: assets
+	$(PYTHON) \
+		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -v --durations=10\
+		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
+		$(TESTDIR)/network
+
+INTEGRATION_TEST_IN_DOCKER = docker exec core_test
+network-integration-test:
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
+
+network-integration-test-cicd:
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
@@ -242,7 +283,7 @@ test-profile:
 
 coverage: assets
 	coverage erase
-	make test PYTHON="coverage run"
+	make test PYTHON="coverage run --omit='*generate*'"
 	coverage report
 	coverage html
 
@@ -254,8 +295,8 @@ coverage: assets
 # Build documentation
 docs:
 	for mod in $(BUILD_ORDER);do sphinx-apidoc -f -M -e \
-		-o docs/api/$$mod $$mod/$$mod \
-		'ocrd_models/ocrd_models/ocrd_page_generateds.py' \
+		-o docs/api/$$mod src/$$mod \
+		'src/ocrd_models/ocrd_page_generateds.py' \
 		;done
 	cd docs ; $(MAKE) html
 
@@ -281,8 +322,13 @@ gh-pages:
 #
 
 pyclean:
+	rm -rf ./build
+	rm -rf ./dist
+	rm -rf htmlcov
+	rm -rf .benchmarks
+	rm -rf **/*.egg-info
 	rm -f **/*.pyc
-	find . -name '__pycache__' -exec rm -rf '{}' \;
+	-find . -name '__pycache__' -exec rm -rf '{}' \;
 	rm -rf .pytest_cache
 
 #
@@ -306,10 +352,46 @@ docker-cuda: DOCKER_FILE = Dockerfile.cuda
 docker-cuda: docker
 
 docker docker-cuda: 
-	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
-pypi: uninstall install
-	$(PIP) install build
-	$(foreach MODULE,$(BUILD_ORDER),$(PYTHON) -m build -n ./$(MODULE) &&) echo done
-	twine upload ocrd*/dist/ocrd*$(OCRD_VERSION)*{tar.gz,whl}
+pypi: build
+	twine upload dist/ocrd-$(VERSION)*{tar.gz,whl}
+
+pypi-workaround: build-workaround
+	for dist in $(BUILD_ORDER);do twine upload dist/$$dist-$(VERSION)*{tar.gz,whl};done
+
+# Only in place until v3 so we don't break existing installations
+build-workaround: pyclean
+	cp pyproject.toml pyproject.toml.BAK
+	cp src/ocrd_utils/constants.py src/ocrd_utils/constants.py.BAK
+	cp src/ocrd/cli/__init__.py src/ocrd/cli/__init__.py.BAK
+	for dist in $(BUILD_ORDER);do \
+		cat pyproject.toml.BAK | sed "s,^name =.*,name = \"$$dist\"," > pyproject.toml; \
+		cat src/ocrd_utils/constants.py.BAK | sed "s,dist_version('ocrd'),dist_version('$$dist')," > src/ocrd_utils/constants.py; \
+		cat src/ocrd/cli/__init__.py.BAK | sed "s,package_name='ocrd',package_name='$$dist'," > src/ocrd/cli/__init__.py; \
+		$(MAKE) build; \
+	done
+	rm pyproject.toml.BAK
+	rm src/ocrd_utils/constants.py.BAK
+	rm src/ocrd/cli/__init__.py.BAK
+
+# test that the aliased packages work in isolation and combined
+test-workaround: build-workaround
+	$(MAKE) uninstall-workaround
+	for dist in $(BUILD_ORDER);do \
+		pip install dist/$$dist-*.whl ;\
+		ocrd --version ;\
+		make test ;\
+		pip uninstall --yes $$dist ;\
+	done
+	for dist in $(BUILD_ORDER);do \
+		pip install dist/$$dist-*.whl ;\
+	done
+	ocrd --version ;\
+	make test ;\
+	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+
+uninstall-workaround:
+	for dist in $(BUILD_ORDER);do $(PIP) uninstall --yes $$dist;done
+
