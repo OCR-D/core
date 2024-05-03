@@ -5,7 +5,7 @@ from tests.network.utils import poll_till_timeout_fail_or_success, post_ps_workf
 PROCESSING_SERVER_URL = test_config.PROCESSING_SERVER_URL
 
 
-def _test_ocrd_all_workflow():
+def test_ocrd_all_workflow():
     # This test is supposed to run with ocrd_all not with just core on its own
     # Note: the used workflow path is volume mapped
     path_to_wf = "/ocrd-data/assets/ocrd_all-test-workflow.txt"
