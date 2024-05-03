@@ -125,7 +125,7 @@ class ProcessingServer(FastAPI):
         self.add_api_routes_others()
         self.add_api_routes_processing()
         self.add_api_routes_workflow()
-        self.add_api_routes_workspace()
+        self.add_api_routes_mets_server()
 
         @self.exception_handler(RequestValidationError)
         async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -302,9 +302,31 @@ class ProcessingServer(FastAPI):
         )
         self.include_router(workflow_router)
 
-    # TODO: Implement the redirection to TCP mets server
-    def add_api_routes_workspace(self):
-        workspace_router = APIRouter()
+    # TODO: Implement the redirection of a TCP request to a UDS Mets server
+    def add_api_routes_mets_server(self):
+        mets_server_router = APIRouter()
+        mets_server_router.add_api_route(
+            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
+            methods=["GET"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_200_OK,
+            summary="Send a GET request to a mets server identified with id"
+        )
+        mets_server_router.add_api_route(
+            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
+            methods=["POST"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_201_CREATED,
+            summary="Send a POST request to a mets server identified with id"
+        )
+        mets_server_router.add_api_route(
+            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
+            methods=["PUT"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_200_OK,
+            summary="Send a PUT request to a mets server identified with id"
+        )
+        mets_server_router.add_api_route(
+            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
+            methods=["DELETE"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_200_OK,
+            summary="Send a DELETE request to a mets server identified with id"
+        )
+
+    async def forward_tcp_request_to_uds_mets_server(self, mets_server_id: str):
         pass
 
     async def home_page(self):
@@ -437,13 +459,8 @@ class ProcessingServer(FastAPI):
             page_ids=page_ids
         )
 
-        # Start a Mets Server with the current workspace
-        # mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
-
-        # Start a TCP Mets Server
-        mets_server_url_prefix = f"http://{self.hostname}:{self.port}/tcp_mets"
-        mets_server_url = self.deployer.start_tcp_mets_server(
-            url_prefix=mets_server_url_prefix, mets_path=request_mets_path)
+        # Start a UDS Mets Server with the current workspace
+        mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
 
         # Assign the mets server url in the database
         await db_update_workspace(
@@ -572,8 +589,8 @@ class ProcessingServer(FastAPI):
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
 
-                # self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
-                self.deployer.stop_tcp_mets_server(mets_server_url=mets_server_url)
+                self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
+
                 try:
                     # The queue is empty - delete it
                     del self.cache_processing_requests.processing_requests[workspace_key]
