@@ -7,7 +7,7 @@ OCR-D CLI: management of processor resources
 """
 import sys
 from pathlib import Path
-from distutils.spawn import find_executable as which
+from shutil import which
 from yaml import safe_load, safe_dump
 
 import requests

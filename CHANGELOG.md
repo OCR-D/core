@@ -5,6 +5,20 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  - bashlib processors will download on-demand, like pythonic processors do, #1216, #1217
+
+Changed:
+
+  - Replace `distutils` which equivalents from `shutil` for compatibility with python 3.12+, #1219
+  - CI: Updated GitHub actions, #1206
+  - CI: Fixed scrutinizer, #1217
+
+Added:
+
+  - Integration tests for `ocrd_network`, #1184
+
 ## [2.64.1] - 2024-04-22
 
 Fixed:
@@ -2055,6 +2069,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.65.0]: ../../compare/v2.65.0..v2.64.1
+[2.64.1]: ../../compare/v2.64.1..v2.64.0
 [2.64.0]: ../../compare/v2.63.0..v2.63.3
 [2.63.3]: ../../compare/v2.63.3..v2.63.1
 [2.63.2]: ../../compare/v2.63.2..v2.63.1
