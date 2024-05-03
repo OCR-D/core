@@ -18,12 +18,12 @@ __all__ = [
 from tempfile import TemporaryDirectory, gettempdir
 from functools import lru_cache
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
-from distutils.spawn import find_executable as which
+from shutil import which
 from json import loads
 from json.decoder import JSONDecodeError
 from os import getcwd, chdir, stat, chmod, umask, environ
 from pathlib import Path
-from os.path import exists, abspath as abspath_, join, isdir
+from os.path import abspath as abspath_, join
 from zipfile import ZipFile
 from subprocess import run, PIPE
 from mimetypes import guess_type as mimetypes_guess

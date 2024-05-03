@@ -61,7 +61,7 @@ print('''%s''')
         p.chmod(0o777)
 
         os.environ['PATH'] = os.pathsep.join([self.tempdir, os.environ['PATH']])
-        #  from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
+        #  from shutil import which # pylint: disable=import-error,no-name-in-module
         #  self.assertTrue(which('ocrd-sample-processor'))
 
 
