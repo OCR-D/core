@@ -131,12 +131,49 @@ class ClientSideOcrdMets:
     def __str__(self):
         return f'<ClientSideOcrdMets[url={self.url}]>'
 
+    def save(self):
+        """
+        Request writing the changes to the file system
+        """
+        self.session.request(method='PUT', url=self.url)
+
+    def stop(self):
+        """
+        Request stopping the mets server
+        """
+        try:
+            self.session.request(method='DELETE', url=self.url)
+        except ConnectionError:
+            # Expected because we exit the process without returning
+            pass
+
+    def reload(self):
+        """
+        Request reloading of the mets file from the file system
+        """
+        return self.session.request(method='POST', url=f'{self.url}/reload').text
+
+    @property
+    def unique_identifier(self):
+        return self.session.request(method='GET', url=f'{self.url}/unique_identifier').text
+
     @property
     def workspace_path(self):
         return self.session.request(method='GET', url=f'{self.url}/workspace_path').text
 
-    def reload(self):
-        return self.session.request(method='POST', url=f'{self.url}/reload').text
+    @property
+    def file_groups(self):
+        return self.session.request(method='GET', url=f'{self.url}/file_groups').json()['file_groups']
+
+    @property
+    def agents(self):
+        agent_dicts = self.session.request(method='GET', url=f'{self.url}/agent').json()['agents']
+        for agent_dict in agent_dicts:
+            agent_dict['_type'] = agent_dict.pop('type')
+        return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in agent_dicts]
+
+    def add_agent(self, *args, **kwargs):
+        return self.session.request(method='POST', url=f'{self.url}/agent', json=OcrdAgentModel.create(**kwargs).dict())
 
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
@@ -159,24 +196,6 @@ class ClientSideOcrdMets:
     def find_all_files(self, *args, **kwargs):
         return list(self.find_files(*args, **kwargs))
 
-    def add_agent(self, *args, **kwargs):
-        return self.session.request(method='POST', url=f'{self.url}/agent', json=OcrdAgentModel.create(**kwargs).dict())
-
-    @property
-    def agents(self):
-        agent_dicts = self.session.request(method='GET', url=f'{self.url}/agent').json()['agents']
-        for agent_dict in agent_dicts:
-            agent_dict['_type'] = agent_dict.pop('type')
-        return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in agent_dicts]
-
-    @property
-    def unique_identifier(self):
-        return self.session.request(method='GET', url=f'{self.url}/unique_identifier').text
-
-    @property
-    def file_groups(self):
-        return self.session.request(method='GET', url=f'{self.url}/file_groups').json()['file_groups']
-
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
     def add_file(
@@ -191,16 +210,6 @@ class ClientSideOcrdMets:
             None, ID=file_id, fileGrp=file_grp, url=url, pageId=page_id, mimetype=mimetype,
             local_filename=local_filename
         )
-
-    def save(self):
-        self.session.request(method='PUT', url=self.url)
-
-    def stop(self):
-        try:
-            self.session.request(method='DELETE', url=self.url)
-        except ConnectionError:
-            # Expected because we exit the process without returning
-            pass
 
 
 #
@@ -255,7 +264,7 @@ class OcrdMetsServer:
         @app.delete(path='/')
         async def stop():
             """
-            Stop the server
+            Stop the mets server
             """
             getLogger('ocrd.models.ocrd_mets').info(f'Shutting down METS Server {self.url}')
             workspace.save_mets()
@@ -263,6 +272,9 @@ class OcrdMetsServer:
 
         @app.post(path='/reload')
         async def workspace_reload_mets():
+            """
+            Reload mets file from the file system
+            """
             workspace.reload_mets()
             return Response(content=f'Reloaded from {workspace.directory}', media_type="text/plain")
 
