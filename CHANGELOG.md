@@ -12,6 +12,8 @@ Fixed:
 Changed:
 
   - Replace `distutils` which equivalents from `shutil` for compatibility with python 3.12+, #1219
+  - CI: Updated GitHub actions, #1206
+  - CI: Fixed scrutinizer, #1217
 
 ## [2.64.1] - 2024-04-22
 
