@@ -185,7 +185,7 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
             network_logger = logging.getLogger("ocrd_network")
             for handler in network_logger.handlers:
                 if isinstance(handler, logging.FileHandler):
-                    chmod(handler.baseFilename, 0o666)
+                    chmod(handler.baseFilename, 0o664)
         except PermissionError:
             # if the file exists the permissions are supposed to already fit
             pass
