@@ -116,10 +116,11 @@ class ClientSideOcrdMets:
     :py:class:`ocrd.mets_server.OcrdMetsServer`.
     """
 
-    def __init__(self, url):
+    def __init__(self, url, mets_target: Optional[str] = None):
         self.protocol = 'tcp' if url.startswith('http://') else 'uds'
         self.log = getLogger(f'ocrd.mets_client[{url}]')
         self.url = url if self.protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
+        self.mets_target = mets_target if mets_target else None
 
         # Set if communication with the OcrdMetsServer happens over the ProcessingServer
         # The received root URL must be in the form: http://PS_host:PS_port/tcp_mets
@@ -190,7 +191,9 @@ class ClientSideOcrdMets:
 
     @property
     def workspace_path(self):
-        return self.session.request(method='GET', url=f'{self.url}/workspace_path').text
+        if not self.mets_target:
+            self.mets_target = self.session.request(method='GET', url=f'{self.url}/workspace_path').text
+        return self.mets_target
 
     @property
     def file_groups(self):

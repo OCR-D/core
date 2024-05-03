@@ -90,7 +90,7 @@ class Workspace():
         self.is_remote = bool(mets_server_url)
         if mets is None:
             if self.is_remote:
-                mets = ClientSideOcrdMets(mets_server_url)
+                mets = ClientSideOcrdMets(mets_server_url, self.mets_target)
                 if mets.workspace_path != self.directory:
                     raise ValueError(f"METS server {mets_server_url} workspace directory {mets.workspace_path} differs "
                             f"from local workspace directory {self.directory}. These are not the same workspaces.")
