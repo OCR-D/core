@@ -223,7 +223,7 @@ class GeneratedsSuper(object):
             try:
                 int(value)
             except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires sequence of integer valuess')
+                raise_parse_error(node, 'Requires sequence of integer values')
         return values
     def gds_format_float(self, input_data, input_name=''):
         return ('%.15f' % input_data).rstrip('0')

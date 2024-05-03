@@ -253,7 +253,7 @@ def test_all_regions_without_reading_order():
     assert len(pg.get_AllRegions(classes=['Text'], depth=2)) == 37
 
 
-def test_get_all_regions_invalid_order_raises_exeption():
+def test_get_all_regions_invalid_order_raises_exception():
     # arrange
     with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
         pg = parseString(f.read().encode('utf8'), silence=True).get_Page()
@@ -266,7 +266,7 @@ def test_get_all_regions_invalid_order_raises_exeption():
     assert "Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not 'random'" in str(exc.value)
 
 
-def test_get_all_regions_invalid_depth_raises_exeption():
+def test_get_all_regions_invalid_depth_raises_exception():
     # arrange
     with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
         pg = parseString(f.read().encode('utf8'), silence=True).get_Page()
@@ -301,7 +301,7 @@ def test_all_regions_with_reading_order():
     assert len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)) == 17
 
 
-def test_get_unorderd_group_children():
+def test_get_unordered_group_children():
     # arrange
     with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
         pcgts = parseString(f.read().encode('utf8'), silence=True)

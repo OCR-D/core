@@ -267,8 +267,8 @@ class OcrdMets(OcrdXmlDocument):
             local_filename (string) : ``@xlink:href`` local/cached filename of ``mets:Flocat`` of ``mets:file``
             mimetype (string) : ``@MIMETYPE`` of ``mets:file``
             local (boolean) : Whether to restrict results to local files in the filesystem
-            include_fileGrp (list[str]) : Whitelist of allowd file groups 
-            exclude_fileGrp (list[str]) : Blacklist of disallowd file groups 
+            include_fileGrp (list[str]) : List of allowed file groups
+            exclude_fileGrp (list[str]) : List of disallowd file groups
         Yields:
             :py:class:`ocrd_models:ocrd_file:OcrdFile` instantiations
         """

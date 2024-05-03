@@ -35,7 +35,7 @@ from ocrd_utils import (
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
-# XXX imports must remain for backwards-compatibilty
+# XXX imports must remain for backwards-compatibility
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
 
 class Processor():

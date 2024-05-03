@@ -124,7 +124,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
     try:
         resource_locations = get_ocrd_tool_json(executable)['resource_locations']
     except FileNotFoundError:
-        # processor we're looking for ressource_locations of is not installed.
+        # processor we're looking for resource_locations of is not installed.
         # Assume the default
         resource_locations = ['data', 'cwd', 'system', 'module']
     xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
@@ -180,7 +180,7 @@ def get_processor_resource_types(executable, ocrd_tool=None):
         ocrd_tool = get_ocrd_tool_json(executable)
     if not next((True for p in ocrd_tool.get('parameters', {}).values() if 'content-type' in p), False):
         # None of the parameters for this processor are resources (or not
-        # the resource parametrs are not properly declared, so output both
+        # the resource parameters are not properly declared, so output both
         # directories and files
         return ['*/*']
     return [p['content-type'] for p in ocrd_tool['parameters'].values()
@@ -229,7 +229,7 @@ def itertree(path):
 
 def directory_size(path):
     """
-    Calculcates size of all files in directory ``path``
+    Calculates size of all files in directory ``path``
     """
     path = Path(path)
     return sum(f.stat().st_size for f in path.glob('**/*') if f.is_file())

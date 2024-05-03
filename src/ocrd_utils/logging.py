@@ -101,7 +101,7 @@ def getLevelName(lvl):
 
 def getLogger(*args, **kwargs):
     """
-    Wrapper around ``logging.getLogger`` that alls :py:func:`initLogging` if
+    Wrapper around ``logging.getLogger`` that calls :py:func:`initLogging` if
     that wasn't explicitly called before.
     """
     logger = logging.getLogger(*args, **kwargs)

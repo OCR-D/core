@@ -27,7 +27,7 @@ def resetLogging():
 
 
 @pytest.fixture(name="logging_conf")
-def _fixture_loggin_conf(tmpdir):
+def _fixture_logging_conf(tmpdir):
 
     path_logging_conf_orig = os.path.join(
         str(TEST_ROOT), 'src', 'ocrd_utils', 'ocrd_logging.conf')
