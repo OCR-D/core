@@ -125,7 +125,6 @@ class ProcessingServer(FastAPI):
         self.add_api_routes_others()
         self.add_api_routes_processing()
         self.add_api_routes_workflow()
-        self.add_api_routes_mets_server()
 
         @self.exception_handler(RequestValidationError)
         async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -178,13 +177,19 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get information about the processing server"
         )
-
         others_router.add_api_route(
             path="/stop",
             endpoint=self.stop_deployed_agents,
             methods=["POST"],
             tags=[ServerApiTags.TOOLS],
             summary="Stop database, queue and processing-workers"
+        )
+        others_router.add_api_route(
+            path="/tcp_mets",
+            methods=["POST"],
+            endpoint=self.forward_tcp_request_to_uds_mets_server,
+            tags=[ServerApiTags.WORKSPACE],
+            summary="Forward a TCP request to UDS mets server"
         )
         self.include_router(others_router)
 
@@ -302,31 +307,13 @@ class ProcessingServer(FastAPI):
         )
         self.include_router(workflow_router)
 
-    # TODO: Implement the redirection of a TCP request to a UDS Mets server
-    def add_api_routes_mets_server(self):
-        mets_server_router = APIRouter()
-        mets_server_router.add_api_route(
-            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
-            methods=["GET"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_200_OK,
-            summary="Send a GET request to a mets server identified with id"
-        )
-        mets_server_router.add_api_route(
-            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
-            methods=["POST"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_201_CREATED,
-            summary="Send a POST request to a mets server identified with id"
-        )
-        mets_server_router.add_api_route(
-            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
-            methods=["PUT"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_200_OK,
-            summary="Send a PUT request to a mets server identified with id"
-        )
-        mets_server_router.add_api_route(
-            path="/tcp_mets/{mets_server_id}", endpoint=self.forward_tcp_request_to_uds_mets_server,
-            methods=["DELETE"], tags=[ServerApiTags.WORKSPACE], status_code=status.HTTP_200_OK,
-            summary="Send a DELETE request to a mets server identified with id"
-        )
-
-    async def forward_tcp_request_to_uds_mets_server(self, mets_server_id: str):
+    async def forward_tcp_request_to_uds_mets_server(self, request_body: dict):
+        mets_path = request_body["mets_path"]
+        request_url: str = request_body["request_url"]
+        method_type: str = request_body["method_type"]
+        request_data: dict = request_body["request_data"]
+        self.deployer.start_uds_mets_server(mets_path=mets_path)
+        # TODO: Do the request forwarding to the UDS Mets Server
         pass
 
     async def home_page(self):
