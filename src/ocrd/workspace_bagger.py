@@ -272,7 +272,7 @@ class WorkspaceBagger():
         appropriate value.
 
         Arguments:
-            src (string):    Path to Bag. May be an zipped or unziped bagit
+            src (string):    Path to Bag. May be a zipped or unzipped bagit
             dest (string):   Path to where the result should be stored. Not needed if overwrite is
                              set
             overwrite(bool): Replace bag with newly created bag
