@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import UploadFile
 from functools import wraps
 from hashlib import md5
+from pathlib import Path
 from re import compile as re_compile, split as re_split
 from requests import get as requests_get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
@@ -12,7 +13,7 @@ from uuid import uuid4
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
-from ocrd_utils import generate_range, REGEX_PREFIX
+from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename
 from .rabbitmq_utils import OcrdResultMessage
 
 
@@ -146,3 +147,7 @@ def stop_mets_server(mets_server_url: str) -> bool:
     except Exception:
         return False
     return response.status_code == 200
+
+
+def get_uds_path(ws_dir_path: str) -> Path:
+    return Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(ws_dir_path)}.sock")

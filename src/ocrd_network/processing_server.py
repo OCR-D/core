@@ -55,6 +55,7 @@ from .server_utils import (
     validate_job_input,
     validate_workflow
 )
+from .tcp_to_uds_mets_proxy import MetsServerProxy
 from .utils import (
     download_ocrd_all_tool_json,
     expand_page_ids,
@@ -96,6 +97,8 @@ class ProcessingServer(FastAPI):
         # - deploying agents when the Processing Server is started
         # - retrieving runtime data of agents
         self.deployer = Deployer(config_path)
+        # Used for forwarding Mets Server TCP requests to UDS requests
+        self.mets_server_proxy = MetsServerProxy()
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
@@ -307,14 +310,11 @@ class ProcessingServer(FastAPI):
         )
         self.include_router(workflow_router)
 
-    async def forward_tcp_request_to_uds_mets_server(self, request_body: dict):
-        mets_path = request_body["mets_path"]
-        request_url: str = request_body["request_url"]
-        method_type: str = request_body["method_type"]
-        request_data: dict = request_body["request_data"]
-        self.deployer.start_uds_mets_server(mets_path=mets_path)
-        # TODO: Do the request forwarding to the UDS Mets Server
-        pass
+    async def forward_tcp_request_to_uds_mets_server(self, request_body: dict) -> Dict:
+        ws_dir_path = request_body["workspace_path"]
+        self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
+        response = self.mets_server_proxy.forward_tcp_request(request_body=request_body)
+        return response
 
     async def home_page(self):
         message = f"The home page of the {self.title}"

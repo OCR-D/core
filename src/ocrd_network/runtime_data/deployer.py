@@ -14,7 +14,7 @@ from typing import Dict, List, Union
 
 from ocrd_utils import config, getLogger, safe_filename
 from ..logging_utils import get_mets_server_logging_file_path
-from ..utils import is_mets_server_running, stop_mets_server
+from ..utils import get_uds_path, is_mets_server_running, stop_mets_server
 from .config_parser import parse_hosts_data, parse_mongodb_data, parse_rabbitmq_data, validate_and_load_config
 from .hosts import DataHost
 from .network_services import DataMongoDB, DataRabbitMQ
@@ -129,17 +129,16 @@ class Deployer:
         self.stop_mongodb()
         self.stop_rabbitmq()
 
-    def start_uds_mets_server(self, mets_path: str) -> Path:
-        log_file = get_mets_server_logging_file_path(mets_path=mets_path)
-        workspace_dir = Path(mets_path).parent
-        mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(workspace_dir)}.sock")
+    def start_uds_mets_server(self, ws_dir_path: str) -> Path:
+        log_file = get_mets_server_logging_file_path(mets_path=ws_dir_path)
+        mets_server_url = get_uds_path(ws_dir_path=ws_dir_path)
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
-            self.log.warning(f"The UDS mets server for {mets_path} is already started: {mets_server_url}")
+            self.log.warning(f"The UDS mets server for {ws_dir_path} is already started: {mets_server_url}")
             return mets_server_url
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
         sub_process = Popen(
-            args=["nohup", "ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{workspace_dir}", "server", "start"],
-            stdout=open(file=log_file, mode="w"), stderr=open(file=log_file, mode="a"), cwd=workspace_dir,
+            args=["nohup", "ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{ws_dir_path}", "server", "start"],
+            stdout=open(file=log_file, mode="w"), stderr=open(file=log_file, mode="a"), cwd=ws_dir_path,
             shell=False, universal_newlines=True
         )
         # Wait for the mets server to start
