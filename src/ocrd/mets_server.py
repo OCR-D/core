@@ -100,7 +100,7 @@ class ClientSideOcrdMets():
 
     def __init__(self, url):
         self.protocol = 'tcp' if url.startswith('http://') else 'uds'
-        self.log = getLogger(f'ocrd.mets_client[{url}]')
+        self.log = getLogger(f'ocrd.models.ocrd_mets.client.{url}')
         self.url = url if self.protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
 
     @property
@@ -197,7 +197,7 @@ class OcrdMetsServer():
         self.workspace = workspace
         self.url = url
         self.is_uds = not (url.startswith('http://') or url.startswith('https://'))
-        self.log = getLogger(f'ocrd.mets_server[{self.url}]')
+        self.log = getLogger(f'ocrd.models.ocrd_mets.server.{self.url}')
 
     def shutdown(self):
         if self.is_uds:
@@ -300,7 +300,7 @@ class OcrdMetsServer():
             """
             Stop the server
             """
-            getLogger('ocrd.models.ocrd_mets').info(f'Shutting down METS Server {self.url}')
+            self.log.info(f'Shutting down')
             workspace.save_mets()
             self.shutdown()
 
