@@ -202,7 +202,7 @@ class OcrdMetsServer():
     def shutdown(self):
         if self.is_uds:
             if Path(self.url).exists():
-                self.log.warning(f'UDS socket {self.url} still exists, removing it')
+                self.log.debug(f'UDS socket {self.url} still exists, removing it')
                 Path(self.url).unlink()
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)
@@ -319,6 +319,8 @@ class OcrdMetsServer():
         else:
             parsed = urlparse(self.url)
             uvicorn_kwargs = {'host': parsed.hostname, 'port': parsed.port}
+        uvicorn_kwargs['log_config'] = None
+        uvicorn_kwargs['access_log'] = False
 
         self.log.debug("Starting uvicorn")
         uvicorn.run(app, **uvicorn_kwargs)
