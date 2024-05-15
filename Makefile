@@ -22,6 +22,8 @@ help:
 	@echo ""
 	@echo "  Targets"
 	@echo ""
+	@echo "    get-conda      Install Conda distribution"
+	@echo "    deps-conda     Dependencies for deployment via Conda"
 	@echo "    deps-cuda      Dependencies for deployment with GPU support via Conda"
 	@echo "    deps-ubuntu    Dependencies for deployment in an Ubuntu/Debian Linux"
 	@echo "    deps-test      Install test python deps via pip"
@@ -59,11 +61,21 @@ PIP_INSTALL_CONFIG_OPTION ?=
 
 .PHONY: deps-cuda deps-ubuntu deps-test
 
-deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
-deps-cuda: export CONDA_PREFIX ?= /conda
-deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
-deps-cuda:
-	curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+.PHONY: get-conda deps-cuda deps-conda deps-ubuntu
+
+ifeq ($(shell command -v conda),)
+# no prior Conda distribution, so install Mamba now
+# (see https://mamba.readthedocs.io/en/latest/installation.html)
+get-conda: CONDA_EXE ?= /usr/local/bin/conda
+get-conda: export CONDA_PREFIX ?= /conda
+# first part of recipe: see micro.mamba.pm/install.sh
+get-conda: OS != uname
+get-conda: PLATFORM = $(subst Darwin,osx,$(subst Linux,linux,$(OS)))
+get-conda: ARCH != uname -m
+get-conda: MACHINE = $(or $(filter aarch64 arm64 ppc64le, $(ARCH)), 64)
+get-conda: URL = https://micro.mamba.pm/api/micromamba/$(PLATFORM)-$(MACHINE)/latest
+get-conda:
+	curl -Ls $(URL) | tar -xvj bin/micromamba
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
@@ -71,6 +83,12 @@ deps-cuda:
 	echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$(CONDA_PREFIX)/' >> /etc/profile.d/98-conda.sh
 	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
 	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
+else
+get-conda: ;
+endif
+
+deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+deps-cuda: get-conda
 # Get CUDA toolkit, including compiler and libraries with dev,
 # however, the Nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
 #MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
@@ -79,7 +97,6 @@ deps-cuda:
 # The conda-forge channel has cudnn and cudatoolkit but no cudatoolkit-dev anymore (and we need both!),
 # so let's combine nvidia and conda-forge (will be same lib versions, no waste of space),
 # but omitting cuda-cudart-dev and cuda-libraries-dev (as these will be pulled by pip for torch anyway):
-	MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
 	conda install -c nvidia/label/cuda-11.8.0 \
 	                 cuda-nvcc \
 	                 cuda-cccl \
@@ -115,9 +132,15 @@ deps-cuda:
 	 && ldconfig
 # gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
 
-# Dependencies for deployment in an ubuntu/debian linux
+# Dependencies for deployment via Conda
+deps-conda: get-conda
+	conda install -c conda-forge python==3.8.* imagemagick geos pkgconfig
+
+# Dependencies for deployment in an Ubuntu/Debian Linux
 deps-ubuntu:
 	apt-get install -y python3 imagemagick libgeos-dev
+
+.PHONY: deps-test install install-dev uninstall
 
 # Install test python deps via pip
 deps-test:

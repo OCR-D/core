@@ -1,13 +1,6 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE AS ocrd_core_base
 
-ENV MAMBA_EXE=/usr/local/bin/conda
-ENV MAMBA_ROOT_PREFIX=/conda
-ENV PATH=$MAMBA_ROOT_PREFIX/bin:$PATH
-ENV CONDA_EXE=$MAMBA_EXE
-ENV CONDA_PREFIX=$MAMBA_ROOT_PREFIX
-ENV CONDA_SHLVL='1'
-
 WORKDIR /build
 
 COPY Makefile .
@@ -18,5 +11,5 @@ WORKDIR /data
 
 RUN rm -fr /build
 
-CMD ["/usr/local/bin/ocrd", "--help"]
+CMD ["/conda/bin/ocrd", "--help"]
 
