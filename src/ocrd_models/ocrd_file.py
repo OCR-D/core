@@ -184,7 +184,7 @@ class OcrdFile():
         """
         el_FLocat = self._el.find('mets:FLocat[@LOCTYPE="URL"]', NS)
         if url is None:
-            if el_FLocat:
+            if el_FLocat is not None:
                 self._el.remove(el_FLocat)
             return
         if el_FLocat is None:
