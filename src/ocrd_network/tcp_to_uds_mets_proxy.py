@@ -9,13 +9,14 @@ class MetsServerProxy:
         self.session: requests_unixsocket_session = requests_unixsocket_session()
         pass
 
-    def forward_tcp_request(self, request_body: dict):
+    def forward_tcp_request(self, request_body):
         ws_dir_path = request_body["workspace_path"]
         request_url: str = request_body["request_url"]
         method_type: str = request_body["method_type"]
-        request_data: dict = request_body["request_data"]
+        request_data = request_body["request_data"] if request_body["request_data"] else {}
         if method_type not in SUPPORTED_METHOD_TYPES:
             raise NotImplementedError(f"Method type: {method_type} not recognized")
-        uds_root_mets_server = str(get_uds_path(ws_dir_path=ws_dir_path))
-        full_request_url = f"{uds_root_mets_server}/{request_url}"
-        return self.session.request(method=method_type, url=full_request_url, json=request_data)
+        ws_socket_file = str(get_uds_path(ws_dir_path=ws_dir_path))
+        ws_unix_socket_url = f'http+unix://{ws_socket_file.replace("/", "%2F")}'
+        uds_request_url = f"{ws_unix_socket_url}/{request_url}"
+        return self.session.request(method=method_type, url=uds_request_url, json=request_data)

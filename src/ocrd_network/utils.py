@@ -116,7 +116,7 @@ def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMe
 
 def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> Workspace:
     if mets_server_url:
-        if not is_mets_server_running(mets_server_url=mets_server_url):
+        if not is_mets_server_running(mets_server_url=mets_server_url, ws_dir_path=str(Path(mets_path).parent)):
             raise RuntimeError(f'The mets server is not running: {mets_server_url}')
     return Resolver().workspace_from_url(mets_url=mets_path, mets_server_url=mets_server_url)
 
@@ -125,25 +125,47 @@ def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = Non
     return get_ocrd_workspace_instance(mets_path=mets_path, mets_server_url=mets_server_url).mets.physical_pages
 
 
-def is_mets_server_running(mets_server_url: str) -> bool:
+def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
     session = Session_TCP() if protocol == "tcp" else Session_UDS()
     if protocol == "uds":
         mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
-        response = session.get(url=f"{mets_server_url}/workspace_path")
+        if 'tcp_mets' in mets_server_url:
+            if not ws_dir_path:
+                return False
+            request_body = {
+                "workspace_path": ws_dir_path,
+                "method_type": "GET",
+                "request_url": "workspace_path",
+                "request_data": {}
+            }
+            response = session.post(url=f"{mets_server_url}", json=request_body)
+        else:
+            response = session.get(url=f"{mets_server_url}/workspace_path")
     except Exception:
         return False
     return response.status_code == 200
 
 
-def stop_mets_server(mets_server_url: str) -> bool:
+def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
     session = Session_TCP() if protocol == "tcp" else Session_UDS()
     if protocol == "uds":
         mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
-        response = session.delete(url=f"{mets_server_url}/")
+        if 'tcp_mets' in mets_server_url:
+            if not ws_dir_path:
+                return False
+            request_body = {
+                "workspace_path": ws_dir_path,
+                "method_type": "DELETE",
+                "request_url": "",
+                "request_data": {}
+            }
+            response = session.post(url=f"{mets_server_url}", json=request_body)
+        else:
+            response = session.delete(url=f"{mets_server_url}/")
     except Exception:
         return False
     return response.status_code == 200

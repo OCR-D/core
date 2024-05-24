@@ -94,12 +94,15 @@ class ProcessingServer(FastAPI):
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(ocrd_all_url=OCRD_ALL_JSON_TOOLS_URL)
         self.hostname = host
         self.port = port
+
         # The deployer is used for:
         # - deploying agents when the Processing Server is started
         # - retrieving runtime data of agents
         self.deployer = Deployer(config_path)
         # Used for forwarding Mets Server TCP requests to UDS requests
         self.mets_server_proxy = MetsServerProxy()
+        # If set, all Mets Server UDS requests are multiplexed over TCP
+        self.multiplexing_endpoint = f"http://{host}:{port}/tcp_mets"
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
@@ -311,7 +314,7 @@ class ProcessingServer(FastAPI):
         )
         self.include_router(workflow_router)
 
-    async def forward_tcp_request_to_uds_mets_server(self, request_body: dict) -> Dict:
+    async def forward_tcp_request_to_uds_mets_server(self, request_body):
         ws_dir_path = request_body["workspace_path"]
         self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
         response = self.mets_server_proxy.forward_tcp_request(request_body=request_body)
@@ -450,6 +453,8 @@ class ProcessingServer(FastAPI):
         # Start a UDS Mets Server with the current workspace
         ws_dir_path = str(Path(request_mets_path).parent)
         mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
+        if self.multiplexing_endpoint:
+            mets_server_url = self.multiplexing_endpoint
 
         # Assign the mets server url in the database
         await db_update_workspace(
