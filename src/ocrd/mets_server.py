@@ -122,9 +122,19 @@ class ClientSideOcrdMets:
         self.url = url if self.protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
         self.ws_dir_path = workspace_path if workspace_path else None
 
+        # TODO: Replace the `tcp_mets` constant with a variable that is imported from the ProcessingServer
         # Set if communication with the OcrdMetsServer happens over the ProcessingServer
         # The received root URL must be in the form: http://PS_host:PS_port/tcp_mets
-        self.multiplexing_mode = True if self.protocol == 'tcp' and 'tcp_mets' in self.url else False
+        self.multiplexing_mode = False
+        self.ps_proxy_url = None
+
+        if self.protocol == 'tcp' and 'tcp_mets' in self.url:
+            self.multiplexing_mode = True
+            self.ps_proxy_url = url
+        if self.multiplexing_mode:
+            if not self.ws_dir_path:
+                # Must be set since this path is the way to multiplex among multiple workspaces on the PS side
+                raise ValueError("ClientSideOcrdMets runs in multiplexing mode but the workspace dir path is not set!")
 
     @property
     def session(self) -> Union[requests_session, requests_unixsocket_session]:
@@ -149,7 +159,7 @@ class ClientSideOcrdMets:
             "request_url": "",
             "request_data": {}
         }
-        self.session.request(method="POST", url=self.url, json=request_body)
+        self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
 
     def stop(self):
         """
@@ -165,7 +175,7 @@ class ClientSideOcrdMets:
                 "request_url": "",
                 "request_data": {}
             }
-            self.session.request(method="POST", url=self.url, json=request_body)
+            self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
         except ConnectionError:
             # Expected because we exit the process without returning
             pass
@@ -182,7 +192,7 @@ class ClientSideOcrdMets:
             "request_url": "reload",
             "request_data": {}
         }
-        return self.session.request(method="POST", url=self.url, json=request_body).text
+        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).text
 
     @property
     def unique_identifier(self):
@@ -194,12 +204,10 @@ class ClientSideOcrdMets:
             "request_url": "unique_identifier",
             "request_data": {}
         }
-        return self.session.request(method="POST", url=self.url, json=request_body).text
+        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).text
 
     @property
     def workspace_path(self):
-        if self.ws_dir_path:
-            return self.ws_dir_path
         if not self.multiplexing_mode:
             self.ws_dir_path = self.session.request(method='GET', url=f'{self.url}/workspace_path').text
             return self.ws_dir_path
@@ -209,7 +217,7 @@ class ClientSideOcrdMets:
             "request_url": "workspace_path",
             "request_data": {}
         }
-        self.ws_dir_path = self.session.request(method="POST", url=self.url, json=request_body).text
+        self.ws_dir_path = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).text
         return self.ws_dir_path
 
     @property
@@ -222,7 +230,7 @@ class ClientSideOcrdMets:
             "request_url": "file_groups",
             "request_data": {}
         }
-        return self.session.request(method="POST", url=self.url, json=request_body).json()['file_groups']
+        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()['file_groups']
 
     @property
     def agents(self):
@@ -235,7 +243,7 @@ class ClientSideOcrdMets:
                 "request_url": "agent",
                 "request_data": {}
             }
-            agent_dicts = self.session.request(method="POST", url=self.url, json=request_body).json()['agents']
+            agent_dicts = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()['agents']
         for agent_dict in agent_dicts:
             agent_dict['_type'] = agent_dict.pop('type')
         return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in agent_dicts]
@@ -250,7 +258,7 @@ class ClientSideOcrdMets:
             "request_url": "agent",
             "request_data": OcrdAgentModel.create(**kwargs).dict()
         }
-        return self.session.request(method="POST", url=self.url, json=request_body)
+        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
 
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
@@ -275,7 +283,7 @@ class ClientSideOcrdMets:
                     "params": {**kwargs}
                 }
             }
-            r = self.session.request(method="POST", url=self.url, json=request_body)
+            r = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
 
         for f in r.json()['files']:
             yield ClientSideOcrdFile(
@@ -307,7 +315,7 @@ class ClientSideOcrdMets:
                     "data": data.dict()
                 }
             }
-            r = self.session.request(method="POST", url=self.url, json=request_body)
+            r = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
         return ClientSideOcrdFile(
             None, ID=file_id, fileGrp=file_grp, url=url, pageId=page_id, mimetype=mimetype,
             local_filename=local_filename

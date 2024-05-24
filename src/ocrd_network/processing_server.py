@@ -447,7 +447,7 @@ class ProcessingServer(FastAPI):
         )
 
         # Start a UDS Mets Server with the current workspace
-        mets_server_url = self.deployer.start_uds_mets_server(mets_path=request_mets_path)
+        mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=request_mets_path)
 
         # Assign the mets server url in the database
         await db_update_workspace(
