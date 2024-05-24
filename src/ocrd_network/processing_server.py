@@ -1,5 +1,6 @@
 from datetime import datetime
 from os import getpid
+from pathlib import Path
 from typing import Dict, List, Union
 from uvicorn import run as uvicorn_run
 
@@ -447,7 +448,8 @@ class ProcessingServer(FastAPI):
         )
 
         # Start a UDS Mets Server with the current workspace
-        mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=request_mets_path)
+        ws_dir_path = str(Path(request_mets_path).parent)
+        mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
 
         # Assign the mets server url in the database
         await db_update_workspace(
