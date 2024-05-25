@@ -1,8 +1,5 @@
 import click
-from .. import (
-    ProcessingServer,
-    ServerAddressParamType
-)
+from ocrd_network import ProcessingServer, ServerAddressParamType
 
 
 @click.command('processing-server')

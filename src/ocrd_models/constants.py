@@ -1,6 +1,7 @@
 """
 Constants for ocrd_models.
 """
+from enum import Enum, auto
 from ocrd_utils import resource_string
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     'TAG_PAGE_TEXTLINE',
     'TAG_PAGE_TEXTEQUIV',
     'TAG_PAGE_TEXTREGION',
+    'METS_PAGE_DIV_ATTRIBUTE',
 ]
 
 
@@ -70,3 +72,14 @@ PAGE_REGION_TYPES = [
     'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
     'Separator', 'Table', 'Text', 'Unknown'
 ]
+
+class METS_PAGE_DIV_ATTRIBUTE(Enum):
+    ID = auto()
+    ORDER = auto()
+    ORDERLABEL = auto()
+    LABEL = auto()
+    CONTENTIDS = auto()
+
+    @classmethod
+    def names(cls):
+        return [x.name for x in cls]

@@ -55,7 +55,7 @@ pip install ocrd
 pip install ocrd_modelfactory
 ```
 
-All python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.7 or higher.
+All Python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.8 or higher.
 
 **NOTE** Some OCR-D-Tools (or even test cases) _might_ reveal an unintended behavior if you have specific environment modifications, like:
 * using a custom build of [ImageMagick](https://github.com/ImageMagick/ImageMagick), whose format delegates are different from what OCR-D supposes
@@ -80,7 +80,7 @@ A minimal [OCR-D processor](https://ocr-d.de/en/user_guide#using-the-ocr-d-proce
 
 Almost all behaviour of the OCR-D/core software is configured via CLI options and flags, which can be listed with the `--help` flag that all CLI support.
 
-Some parts of the software are configured via environement variables:
+Some parts of the software are configured via environment variables:
 
 * `OCRD_METS_CACHING`: If set to `true`, access to the METS file is cached, speeding in-memory search and modification.
 * `OCRD_PROFILE`: This variable configures the built-in CPU and memory profiling. If empty, no profiling is done. Otherwise expected to contain any of the following tokens:
@@ -105,7 +105,7 @@ Some parts of the software are configured via environement variables:
 * `OCRD_NETWORK_SERVER_ADDR_PROCESSING`: Default address of Processing Server to connect to (for `ocrd network client processing`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKFLOW`: Default address of Workflow Server to connect to (for `ocrd network client workflow`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKSPACE`: Default address of Workspace Server to connect to (for `ocrd network client workspace`).
-* `OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS`: Number of attempts for a worker to create its queue. Helpfull if the rabbitmq-server needs time to be fully started.
+* `OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS`: Number of attempts for a worker to create its queue. Helpful if the rabbitmq-server needs time to be fully started.
 
 
 ## Packages

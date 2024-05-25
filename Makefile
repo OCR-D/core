@@ -39,6 +39,9 @@ help:
 	@echo "    docker         Build docker image"
 	@echo "    docker-cuda    Build docker image for GPU / CUDA"
 	@echo "    pypi           Build wheels and source dist and twine upload them"
+	@echo " ocrd network tests"
+	@echo "    network-module-test       Run all ocrd_network module tests"
+	@echo "    network-integration-test  Run all ocrd_network integration tests (docker and docker compose required)"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -182,7 +185,7 @@ install: #build
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
-install-dev: PIP_INSTALL = $(PIP) install -e 
+install-dev: PIP_INSTALL = $(PIP) install -e
 install-dev: PIP_INSTALL_CONFIG_OPTION = --config-settings editable_mode=strict
 install-dev: uninstall
 	$(MAKE) install
@@ -262,12 +265,32 @@ test: assets
 		--ignore-glob="$(TESTDIR)/**/*bench*.py" \
 		--ignore-glob="$(TESTDIR)/network/*.py" \
 		$(TESTDIR)
-	cd ocrd_utils ; $(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR)
+	$(MAKE) test-logging
+
+test-logging: assets
+	# copy default logging to temporary directory and run logging tests from there
+	tempdir=$$(mktemp -d); \
+	cp src/ocrd_utils/ocrd_logging.conf $$tempdir; \
+	cd $$tempdir; \
+	$(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR); \
+	rm -r $$tempdir/ocrd_logging.conf $$tempdir/.benchmarks; \
+	rmdir $$tempdir
+
+network-module-test: assets
+	$(PYTHON) \
+		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -v --durations=10\
+		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
+		$(TESTDIR)/network
 
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
-integration-test:
+network-integration-test:
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_rmq or test_db or test_processing_server' -v
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="$(TESTDIR)/network/*ocrd_all*.py"
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
+
+network-integration-test-cicd:
+	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py"
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
 benchmark:
@@ -282,7 +305,7 @@ test-profile:
 
 coverage: assets
 	coverage erase
-	make test PYTHON="coverage run"
+	make test PYTHON="coverage run --omit='*generate*'"
 	coverage report
 	coverage html
 
@@ -337,7 +360,7 @@ pyclean:
 .PHONY: docker docker-cuda
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS = 
+DOCKER_ARGS =
 
 # Build docker image
 docker: DOCKER_BASE_IMAGE = ubuntu:20.04
@@ -396,7 +419,7 @@ build-workaround: pyclean
 
 # test that the aliased packages work in isolation and combined
 test-workaround: build-workaround
-	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+	$(MAKE) uninstall-workaround
 	for dist in $(BUILD_ORDER);do \
 		pip install dist/$$dist-*.whl ;\
 		ocrd --version ;\
@@ -409,3 +432,7 @@ test-workaround: build-workaround
 	ocrd --version ;\
 	make test ;\
 	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
+
+uninstall-workaround:
+	for dist in $(BUILD_ORDER);do $(PIP) uninstall --yes $$dist;done
+

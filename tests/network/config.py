@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import gettempdir
-from src.ocrd_utils.config import OcrdEnvConfig
-from src.ocrd_utils.config import _ocrd_download_timeout_parser
+from ocrd_utils.config import OcrdEnvConfig
+from ocrd_utils.config import _ocrd_download_timeout_parser
 
 test_config = OcrdEnvConfig()
 
@@ -74,12 +74,12 @@ test_config.add(
 )
 
 test_config.add(
-    name="OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS",
+    name="OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
     description="""
-    Number of attempts for a worker to create its queue. Helpful if the rabbitmq-server needs time to be fully started
+    Number of attempts for a RabbitMQ client to connect before failing
     """,
     parser=int,
-    default=(True, 1)
+    default=(True, 3)
 )
 
 test_config.add(

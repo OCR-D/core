@@ -2,7 +2,7 @@
 
 Jobs: for every process-request a job is inserted into the database with an uuid, status and
 information about the process like parameters and file groups. It is mainly used to track the status
-(`ocrd_network.models.job.StateEnum`) of a job so that the state of a job can be queried. Finished
+(`ocrd_network.constants.JobState`) of a job so that the state of a job can be queried. Finished
 jobs are not deleted from the database.
 
 Workspaces: A job or a processor always runs on a workspace. So a processor needs the information
@@ -15,16 +15,13 @@ database (runs in docker) currently has no volume set.
 from beanie import init_beanie
 from beanie.operators import In
 from motor.motor_asyncio import AsyncIOMotorClient
-from uuid import uuid4
 from pathlib import Path
+from pymongo import MongoClient, uri_parser as mongo_uri_parser
+from re import sub as re_sub
 from typing import List
+from uuid import uuid4
 
-from .models import (
-    DBProcessorJob,
-    DBWorkflowJob,
-    DBWorkspace,
-    DBWorkflowScript,
-)
+from .models import DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript
 from .utils import call_sync
 
 
@@ -94,15 +91,11 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
     if not workspace_id and not workspace_mets_path:
         raise ValueError(f'Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
     if workspace_id:
-        workspace = await DBWorkspace.find_one(
-            DBWorkspace.workspace_id == workspace_id
-        )
+        workspace = await DBWorkspace.find_one(DBWorkspace.workspace_id == workspace_id)
         if not workspace:
             raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
     if workspace_mets_path:
-        workspace = await DBWorkspace.find_one(
-            DBWorkspace.workspace_mets_path == workspace_mets_path
-        )
+        workspace = await DBWorkspace.find_one(DBWorkspace.workspace_mets_path == workspace_mets_path)
         if not workspace:
             raise ValueError(f'Workspace with path "{workspace_mets_path}" not in the DB.')
 
@@ -215,13 +208,13 @@ async def sync_db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return await db_get_workflow_job(job_id)
 
 
-async def db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+async def db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
     jobs = await DBProcessorJob.find(In(DBProcessorJob.job_id, job_ids)).to_list()
     return jobs
 
 
 @call_sync
-async def sync_db_get_processing_jobs(job_ids: List[str]) -> [DBProcessorJob]:
+async def sync_db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
     return await db_get_processing_jobs(job_ids)
 
 
@@ -257,3 +250,28 @@ async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkf
 @call_sync
 async def sync_db_find_first_workflow_script_by_content(workflow_id: str) -> DBWorkflowScript:
     return await db_get_workflow_script(workflow_id)
+
+
+def verify_database_uri(mongodb_address: str) -> str:
+    try:
+        # perform validation check
+        mongo_uri_parser.parse_uri(uri=mongodb_address, validate=True)
+    except Exception as error:
+        raise ValueError(f"The MongoDB address '{mongodb_address}' is in wrong format, {error}")
+    return mongodb_address
+
+
+def verify_mongodb_available(mongo_url: str) -> None:
+    """
+    # The protocol is intentionally set to HTTP instead of MONGODB!
+    mongodb_test_url = mongo_url.replace("mongodb", "http")
+    if is_url_responsive(url=mongodb_test_url, tries=3):
+        return
+    raise RuntimeError(f"Verifying connection has failed: {mongodb_test_url}")
+    """
+
+    try:
+        client = MongoClient(mongo_url, serverSelectionTimeoutMS=60000.0)
+        client.admin.command("ismaster")
+    except Exception:
+        raise RuntimeError(f'Cannot connect to MongoDB: {re_sub(r":[^@]+@", ":****@", mongo_url)}')

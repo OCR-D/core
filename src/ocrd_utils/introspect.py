@@ -10,7 +10,7 @@ from contextlib import ExitStack
 
 # cannot use importlib.resources until we move to 3.9+ forimportlib.resources.files
 import sys
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 10):
     import importlib_resources
 else:
     import importlib.resources as importlib_resources
