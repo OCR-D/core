@@ -10,10 +10,10 @@ class MetsServerProxy:
         pass
 
     def forward_tcp_request(self, request_body):
-        ws_dir_path = request_body["workspace_path"]
+        ws_dir_path: str = request_body["workspace_path"]
         request_url: str = request_body["request_url"]
         method_type: str = request_body["method_type"]
-        request_data = request_body["request_data"] if request_body["request_data"] else {}
+        request_data = request_body["request_data"]
         if method_type not in SUPPORTED_METHOD_TYPES:
             raise NotImplementedError(f"Method type: {method_type} not recognized")
         ws_socket_file = str(get_uds_path(ws_dir_path=ws_dir_path))

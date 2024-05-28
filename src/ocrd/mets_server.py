@@ -311,9 +311,7 @@ class ClientSideOcrdMets:
                 "workspace_path": self.ws_dir_path,
                 "method_type": "POST",
                 "request_url": "file",
-                "request_data": {
-                    "data": data.dict()
-                }
+                "request_data": data.dict()
             }
             r = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
         return ClientSideOcrdFile(
