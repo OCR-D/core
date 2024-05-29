@@ -143,7 +143,9 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
             response = session.post(url=f"{mets_server_url}", json=request_body)
         else:
             response = session.get(url=f"{mets_server_url}/workspace_path")
-    except Exception:
+    except Exception as e:
+        # TODO: log the exception
+        print("Unexpected Error in is_mets_server_running. Exception: ", e)
         return False
     return response.status_code == 200
 
