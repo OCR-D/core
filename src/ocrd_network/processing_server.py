@@ -315,10 +315,12 @@ class ProcessingServer(FastAPI):
         )
         self.include_router(workflow_router)
 
-    async def forward_tcp_request_to_uds_mets_server(self, request_body):
+    async def forward_tcp_request_to_uds_mets_server(self, request: Request):
+        request_body = await request.json()
         ws_dir_path = request_body["workspace_path"]
         self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
         response = self.mets_server_proxy.forward_tcp_request(request_body=request_body)
+        # FIXME: **Always** return a dict here. Add info to dict how to deserialize. Types: None, text, dict, list (maybe list not neccessarry)
         return response
 
     async def home_page(self):
