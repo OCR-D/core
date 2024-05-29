@@ -102,13 +102,14 @@ class ProcessingServer(FastAPI):
         # Used for forwarding Mets Server TCP requests to UDS requests
         self.mets_server_proxy = MetsServerProxy()
         # If set, all Mets Server UDS requests are multiplexed over TCP
-        self.multiplexing_endpoint = f"http://{host}:{port}/tcp_mets"
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
             self.internal_job_callback_url = f"{host.rstrip('/')}/result_callback"
+            self.multiplexing_endpoint = f"{host.rstrip('/')}/tcp_mets"
         else:
             self.internal_job_callback_url = f"http://{host}:{port}/result_callback"
+            self.multiplexing_endpoint = f"http://{host}:{port}/tcp_mets"
 
         self.mongodb_url = None
         self.rabbitmq_url = None
