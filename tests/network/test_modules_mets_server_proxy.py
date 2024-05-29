@@ -29,39 +29,37 @@ def test_get_request_unique_identifier(start_uds_mets_server):
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "GET",
+        "response_type": "text",
         "request_url": "unique_identifier",
         "request_data": {}
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    # print(response.__dict__)
-    assert response.status_code == 200
-    assert response.text == WORKSPACE_UNIQUE_IDENTIFIER
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    assert response_dict["text"] == WORKSPACE_UNIQUE_IDENTIFIER
 
 
 def test_get_request_workspace_path(start_uds_mets_server):
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "GET",
+        "response_type": "text",
         "request_url": "workspace_path",
         "request_data": {}
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    # print(response.__dict__)
-    assert response.status_code == 200
-    assert response.text == TEST_WORKSPACE_DIR
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    assert response_dict["text"] == TEST_WORKSPACE_DIR
 
 
 def test_get_request_file_groups(start_uds_mets_server):
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "GET",
+        "response_type": "dict",
         "request_url": "file_groups",
         "request_data": {}
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     # print(response.__dict__)
-    assert response.status_code == 200
-    file_groups = response.json()["file_groups"]
+    file_groups = response_dict["file_groups"]
     assert len(file_groups) == 17
 
 
@@ -82,31 +80,29 @@ def test_post_request_agent(start_uds_mets_server):
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "POST",
+        "response_type": "class",
         "request_url": "agent",
         "request_data": ocrd_agent_model.dict()
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    print(response.__dict__)
-    assert response.status_code == 200
-    response_json = response.json()
-    assert response_json["name"] == test_agent_name
-    assert response_json["type"] == test_agent_type
-    assert response_json["role"] == test_agent_role
-    assert response_json["otherrole"] == test_agent_otherrole
-    assert response_json["othertype"] == test_agent_othertype
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    assert response_dict["name"] == test_agent_name
+    assert response_dict["type"] == test_agent_type
+    assert response_dict["role"] == test_agent_role
+    assert response_dict["otherrole"] == test_agent_otherrole
+    assert response_dict["othertype"] == test_agent_othertype
 
 
 def test_post_request_reload(start_uds_mets_server):
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "POST",
+        "response_type": "text",
         "request_url": "reload",
         "request_data": {}
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     # print(response.__dict__)
-    assert response.status_code == 200
-    assert response.text == f'Reloaded from {TEST_WORKSPACE_DIR}'
+    assert response_dict["text"] == f'Reloaded from {TEST_WORKSPACE_DIR}'
 
 
 def test_post_request_file(start_uds_mets_server):
@@ -127,15 +123,14 @@ def test_post_request_file(start_uds_mets_server):
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "POST",
+        "response_type": "class",
         "request_url": "file",
         "request_data": {
             "params": ocrd_file_model.dict()
         }
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    print(response.__dict__)
-    assert response.status_code == 200
-    response_json = response.json()
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    # TODO: assert new file was successfully added
 
 
 def test_get_request_files(start_uds_mets_server):
@@ -144,26 +139,22 @@ def test_get_request_files(start_uds_mets_server):
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "GET",
+        "response_type": "class",
         "request_url": "file",
         "request_data": {
             "file_grp": test_file_group
         }
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    # print(response.__dict__)
-    assert response.status_code == 200
-    response_json = response.json()
-    assert len(response_json) == 1
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    assert len(response_dict) == 1, "Expected to find exatly one filegroup"
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "GET",
+        "response_type": "class",
         "request_url": "file",
         "request_data": {
             "file_grp": test_non_existing_file_group
         }
     }
-    response = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    # print(response.__dict__)
-    assert response.status_code == 200
-    response_json = response.json()
-    assert len(response_json) == 0
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    assert len(response_dict) == 0, "Expected to find no matching file group but found one"

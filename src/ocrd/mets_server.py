@@ -273,7 +273,6 @@ class ClientSideOcrdMets:
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")
     def find_files(self, **kwargs):
-        from pudb import set_trace; set_trace()
         self.log.debug('find_files(%s)', kwargs)
         if 'pageId' in kwargs:
             kwargs['page_id'] = kwargs.pop('pageId')
