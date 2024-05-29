@@ -162,6 +162,7 @@ def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
             request_body = {
                 "workspace_path": ws_dir_path,
                 "method_type": "DELETE",
+                "request_type": "empty",
                 "request_url": "",
                 "request_data": {}
             }

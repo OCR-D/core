@@ -156,6 +156,7 @@ class ClientSideOcrdMets:
         request_body = {
             "workspace_path": self.ws_dir_path,
             "method_type": "PUT",
+            "response_type": "empty",
             "request_url": "",
             "request_data": {}
         }
@@ -172,6 +173,7 @@ class ClientSideOcrdMets:
             request_body = {
                 "workspace_path": self.ws_dir_path,
                 "method_type": "DELETE",
+                "response_type": "empty",
                 "request_url": "",
                 "request_data": {}
             }
@@ -189,10 +191,11 @@ class ClientSideOcrdMets:
         request_body = {
             "workspace_path": self.ws_dir_path,
             "method_type": "POST",
+            "response_type": "text",
             "request_url": "reload",
             "request_data": {}
         }
-        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).text
+        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()["text"]
 
     @property
     def unique_identifier(self):
@@ -201,10 +204,11 @@ class ClientSideOcrdMets:
         request_body = {
             "workspace_path": self.ws_dir_path,
             "method_type": "GET",
+            "response_type": "text",
             "request_url": "unique_identifier",
             "request_data": {}
         }
-        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).text
+        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()["text"]
 
     @property
     def workspace_path(self):
@@ -214,10 +218,11 @@ class ClientSideOcrdMets:
         request_body = {
             "workspace_path": self.ws_dir_path,
             "method_type": "GET",
+            "response_type": "text",
             "request_url": "workspace_path",
             "request_data": {}
         }
-        self.ws_dir_path = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).text
+        self.ws_dir_path = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()["text"]
         return self.ws_dir_path
 
     @property
@@ -227,6 +232,7 @@ class ClientSideOcrdMets:
         request_body = {
             "workspace_path": self.ws_dir_path,
             "method_type": "GET",
+            "response_type": "dict",
             "request_url": "file_groups",
             "request_data": {}
         }
@@ -240,6 +246,7 @@ class ClientSideOcrdMets:
             request_body = {
                 "workspace_path": self.ws_dir_path,
                 "method_type": "GET",
+                "response_type": "class",
                 "request_url": "agent",
                 "request_data": {}
             }
@@ -255,15 +262,18 @@ class ClientSideOcrdMets:
         request_body = {
             "workspace_path": self.ws_dir_path,
             "method_type": "POST",
+            "response_type": "class",
             "request_url": "agent",
             "request_data": OcrdAgentModel.create(**kwargs).dict()
         }
-        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
+        self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()
+        return OcrdAgentModel.create(**kwargs)
 
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")
     def find_files(self, **kwargs):
+        from pudb import set_trace; set_trace()
         self.log.debug('find_files(%s)', kwargs)
         if 'pageId' in kwargs:
             kwargs['page_id'] = kwargs.pop('pageId')
@@ -278,6 +288,7 @@ class ClientSideOcrdMets:
             request_body = {
                 "workspace_path": self.ws_dir_path,
                 "method_type": "GET",
+                "response_type": "class",
                 "request_url": "file",
                 "request_data": {
                     "params": {**kwargs}
@@ -305,15 +316,16 @@ class ClientSideOcrdMets:
         )
 
         if not self.multiplexing_mode:
-            r = self.session.request(method='POST', url=f'{self.url}/file', data=data.dict())
+            self.session.request(method='POST', url=f'{self.url}/file', data=data.dict())
         else:
             request_body = {
                 "workspace_path": self.ws_dir_path,
                 "method_type": "POST",
+                "response_type": "class",
                 "request_url": "file",
                 "request_data": data.dict()
             }
-            r = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
+            self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
         return ClientSideOcrdFile(
             None, ID=file_id, fileGrp=file_grp, url=url, pageId=page_id, mimetype=mimetype,
             local_filename=local_filename
