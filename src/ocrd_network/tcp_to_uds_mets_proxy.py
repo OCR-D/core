@@ -22,7 +22,11 @@ class MetsServerProxy:
         ws_unix_socket_url = f'http+unix://{ws_socket_file.replace("/", "%2F")}'
         uds_request_url = f"{ws_unix_socket_url}/{request_url}"
 
-        response = self.session.request(method=method_type, url=uds_request_url, json=request_data)
+        if method_type == "GET":
+            response = self.session.request(method=method_type, url=uds_request_url, params=request_data)
+        else:
+            response = self.session.request(method=method_type, url=uds_request_url, json=request_data)
+
         if response_type == "empty":
             return {}
         elif response_type == "text":

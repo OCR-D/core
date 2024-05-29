@@ -146,7 +146,7 @@ def test_get_request_files(start_uds_mets_server):
         }
     }
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    assert len(response_dict) == 1, "Expected to find exatly one filegroup"
+    assert len(response_dict["files"]) == 3, "Expected to find exatly 3 matching files"
     request_body = {
         "workspace_path": TEST_WORKSPACE_DIR,
         "method_type": "GET",
@@ -157,4 +157,4 @@ def test_get_request_files(start_uds_mets_server):
         }
     }
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    assert len(response_dict) == 0, "Expected to find no matching file group but found one"
+    assert len(response_dict["files"]) == 0, "Expected to find no matching files but found some"
