@@ -144,6 +144,9 @@ class Deployer:
         # Wait for the mets server to start
         sleep(2)
         self.mets_servers[mets_server_url] = sub_process.pid
+        if sub_process.poll():
+            raise RuntimeError(f"Mets server starting failed. See {log_file} for errors")
+
         return mets_server_url
 
     def stop_uds_mets_server(self, mets_server_url: str, stop_with_pid: bool = False) -> None:
