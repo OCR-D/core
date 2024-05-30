@@ -289,9 +289,7 @@ class ClientSideOcrdMets:
                 "method_type": "GET",
                 "response_type": "class",
                 "request_url": "file",
-                "request_data": {
-                    "params": {**kwargs}
-                }
+                "request_data": {**kwargs}
             }
             r = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
 
