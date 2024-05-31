@@ -316,6 +316,13 @@ class ProcessingServer(FastAPI):
         self.include_router(workflow_router)
 
     async def forward_tcp_request_to_uds_mets_server(self, request: Request) -> Dict:
+        """Forward mets-server-request
+
+        A processor calls a mets related method like add_file with ClientSideOcrdMets. This sends
+        a request to this endpoint. This request contains all infomation neccessary to make a call
+        to the uds-mets-server. This information is used by `MetsServerProxy` to make a the call
+        to the local (local for the processing-server) reachable the uds-mets-server.
+        """
         request_body = await request.json()
         ws_dir_path = request_body["workspace_path"]
         self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)

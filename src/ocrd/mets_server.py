@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import socket
 import atexit
 
-from fastapi import FastAPI, Request, Form, Response, requests
+from fastapi import FastAPI, Request, Form, Response
 from fastapi.responses import JSONResponse
 from requests import Session as requests_session
 from requests.exceptions import ConnectionError
@@ -264,7 +264,9 @@ class ClientSideOcrdMets:
             "method_type": "POST",
             "response_type": "class",
             "request_url": "agent",
-            "request_data": OcrdAgentModel.create(**kwargs).dict()
+            "request_data": {
+                "class": OcrdAgentModel.create(**kwargs).dict()
+            }
         }
         self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()
         return OcrdAgentModel.create(**kwargs)
@@ -289,7 +291,9 @@ class ClientSideOcrdMets:
                 "method_type": "GET",
                 "response_type": "class",
                 "request_url": "file",
-                "request_data": {**kwargs}
+                "request_data": {
+                    "params": {**kwargs}
+                }
             }
             r = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
 
@@ -320,7 +324,9 @@ class ClientSideOcrdMets:
                 "method_type": "POST",
                 "response_type": "class",
                 "request_url": "file",
-                "request_data": data.dict()
+                "request_data": {
+                    "form": data.dict()
+                }
             }
             self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
         return ClientSideOcrdFile(

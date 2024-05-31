@@ -82,7 +82,9 @@ def test_post_request_agent(start_uds_mets_server):
         "method_type": "POST",
         "response_type": "class",
         "request_url": "agent",
-        "request_data": ocrd_agent_model.dict()
+        "request_data": {
+            "class": ocrd_agent_model.dict()
+         }
     }
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert response_dict["name"] == test_agent_name
@@ -126,7 +128,7 @@ def test_post_request_file(start_uds_mets_server):
         "response_type": "class",
         "request_url": "file",
         "request_data": {
-            "params": ocrd_file_model.dict()
+            "class": ocrd_file_model.dict()
         }
     }
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
@@ -142,7 +144,9 @@ def test_get_request_files(start_uds_mets_server):
         "response_type": "class",
         "request_url": "file",
         "request_data": {
-            "file_grp": test_file_group
+            "params": {
+                "file_grp": test_file_group
+            }
         }
     }
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
@@ -153,7 +157,9 @@ def test_get_request_files(start_uds_mets_server):
         "response_type": "class",
         "request_url": "file",
         "request_data": {
-            "file_grp": test_non_existing_file_group
+            "params": {
+                "file_grp": test_non_existing_file_group
+            }
         }
     }
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
