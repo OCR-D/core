@@ -117,50 +117,41 @@ class ClientSideOcrdMets:
     """
 
     def __init__(self, url, workspace_path: Optional[str] = None):
-        self.protocol = 'tcp' if url.startswith('http://') else 'uds'
-        self.log = getLogger(f'ocrd.mets_client[{url}]')
-        self.url = url if self.protocol == 'tcp' else f'http+unix://{url.replace("/", "%2F")}'
+        self.protocol = "tcp" if url.startswith("http://") else "uds"
+        self.log = getLogger(f"ocrd.mets_client[{url}]")
+        self.url = url if self.protocol == "tcp" else f'http+unix://{url.replace("/", "%2F")}'
         self.ws_dir_path = workspace_path if workspace_path else None
 
-        # TODO: Replace the `tcp_mets` constant with a variable that is imported from the ProcessingServer
-        # Set if communication with the OcrdMetsServer happens over the ProcessingServer
-        # The received root URL must be in the form: http://PS_host:PS_port/tcp_mets
-        self.multiplexing_mode = False
-        self.ps_proxy_url = None
-
-        if self.protocol == 'tcp' and 'tcp_mets' in self.url:
+        if self.protocol == "tcp" and "tcp_mets" in self.url:
             self.multiplexing_mode = True
-            self.ps_proxy_url = url
-        if self.multiplexing_mode:
             if not self.ws_dir_path:
                 # Must be set since this path is the way to multiplex among multiple workspaces on the PS side
                 raise ValueError("ClientSideOcrdMets runs in multiplexing mode but the workspace dir path is not set!")
+        else:
+            self.multiplexing_mode = False
 
     @property
     def session(self) -> Union[requests_session, requests_unixsocket_session]:
-        return requests_session() if self.protocol == 'tcp' else requests_unixsocket_session()
+        return requests_session() if self.protocol == "tcp" else requests_unixsocket_session()
 
     def __getattr__(self, name):
         raise NotImplementedError(f"ClientSideOcrdMets has no access to '{name}' - try without METS server")
 
     def __str__(self):
-        return f'<ClientSideOcrdMets[url={self.url}]>'
+        return f"<ClientSideOcrdMets[url={self.url}]>"
 
     def save(self):
         """
         Request writing the changes to the file system
         """
         if not self.multiplexing_mode:
-            self.session.request(method='PUT', url=self.url)
-            return
-        request_body = {
-            "workspace_path": self.ws_dir_path,
-            "method_type": "PUT",
-            "response_type": "empty",
-            "request_url": "",
-            "request_data": {}
-        }
-        self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
+            self.session.request("PUT", url=self.url)
+        else:
+            self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.save(self.ws_dir_path)
+            )
 
     def stop(self):
         """
@@ -168,16 +159,14 @@ class ClientSideOcrdMets:
         """
         try:
             if not self.multiplexing_mode:
-                self.session.request(method='DELETE', url=self.url)
+                self.session.request("DELETE", self.url)
                 return
-            request_body = {
-                "workspace_path": self.ws_dir_path,
-                "method_type": "DELETE",
-                "response_type": "empty",
-                "request_url": "",
-                "request_data": {}
-            }
-            self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
+            else:
+                self.session.request(
+                    "POST",
+                    self.url,
+                    json=MpxReq.stop(self.ws_dir_path)
+                )
         except ConnectionError:
             # Expected because we exit the process without returning
             pass
@@ -187,120 +176,100 @@ class ClientSideOcrdMets:
         Request reloading of the mets file from the file system
         """
         if not self.multiplexing_mode:
-            return self.session.request(method='POST', url=f'{self.url}/reload').text
-        request_body = {
-            "workspace_path": self.ws_dir_path,
-            "method_type": "POST",
-            "response_type": "text",
-            "request_url": "reload",
-            "request_data": {}
-        }
-        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()["text"]
+            return self.session.request("POST", f"{self.url}/reload").text
+        else:
+            return self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.reload(self.ws_dir_path)
+            ).json()["text"]
 
     @property
     def unique_identifier(self):
         if not self.multiplexing_mode:
-            return self.session.request(method='GET', url=f'{self.url}/unique_identifier').text
-        request_body = {
-            "workspace_path": self.ws_dir_path,
-            "method_type": "GET",
-            "response_type": "text",
-            "request_url": "unique_identifier",
-            "request_data": {}
-        }
-        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()["text"]
+            return self.session.request("GET", f"{self.url}/unique_identifier").text
+        else:
+            return self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.unique_identifier(self.ws_dir_path)
+            ).json()["text"]
 
     @property
     def workspace_path(self):
         if not self.multiplexing_mode:
-            self.ws_dir_path = self.session.request(method='GET', url=f'{self.url}/workspace_path').text
+            self.ws_dir_path = self.session.request("GET", f"{self.url}/workspace_path").text
             return self.ws_dir_path
-        request_body = {
-            "workspace_path": self.ws_dir_path,
-            "method_type": "GET",
-            "response_type": "text",
-            "request_url": "workspace_path",
-            "request_data": {}
-        }
-        self.ws_dir_path = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()["text"]
-        return self.ws_dir_path
+        else:
+            self.ws_dir_path = self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.workspace_path(self.ws_dir_path)
+            ).json()["text"]
+            return self.ws_dir_path
 
     @property
     def file_groups(self):
         if not self.multiplexing_mode:
-            return self.session.request(method='GET', url=f'{self.url}/file_groups').json()['file_groups']
-        request_body = {
-            "workspace_path": self.ws_dir_path,
-            "method_type": "GET",
-            "response_type": "dict",
-            "request_url": "file_groups",
-            "request_data": {}
-        }
-        return self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()['file_groups']
+            return self.session.request("GET", f"{self.url}/file_groups").json()["file_groups"]
+        else:
+            return self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.file_groups(self.ws_dir_path)
+            ).json()["file_groups"]
 
     @property
     def agents(self):
         if not self.multiplexing_mode:
-            agent_dicts = self.session.request(method='GET', url=f'{self.url}/agent').json()['agents']
+            agent_dicts = self.session.request("GET", f"{self.url}/agent").json()["agents"]
         else:
-            request_body = {
-                "workspace_path": self.ws_dir_path,
-                "method_type": "GET",
-                "response_type": "class",
-                "request_url": "agent",
-                "request_data": {}
-            }
-            agent_dicts = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()['agents']
+            agent_dicts = self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.agents(self.ws_dir_path)
+            ).json()["agents"]
+
         for agent_dict in agent_dicts:
-            agent_dict['_type'] = agent_dict.pop('type')
+            agent_dict["_type"] = agent_dict.pop("type")
         return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in agent_dicts]
 
     def add_agent(self, *args, **kwargs):
         if not self.multiplexing_mode:
-            return self.session.request(
-                method='POST', url=f'{self.url}/agent', json=OcrdAgentModel.create(**kwargs).dict())
-        request_body = {
-            "workspace_path": self.ws_dir_path,
-            "method_type": "POST",
-            "response_type": "class",
-            "request_url": "agent",
-            "request_data": {
-                "class": OcrdAgentModel.create(**kwargs).dict()
-            }
-        }
-        self.session.request(method="POST", url=self.ps_proxy_url, json=request_body).json()
-        return OcrdAgentModel.create(**kwargs)
+            return self.session.request("POST", f"{self.url}/agent", json=OcrdAgentModel.create(**kwargs).dict())
+        else:
+            self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.add_agent(self.ws_dir_path, OcrdAgentModel.create(**kwargs).dict())
+            ).json()
+            return OcrdAgentModel.create(**kwargs)
 
     @deprecated_alias(ID="file_id")
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(fileGrp="file_grp")
     def find_files(self, **kwargs):
-        self.log.debug('find_files(%s)', kwargs)
-        if 'pageId' in kwargs:
-            kwargs['page_id'] = kwargs.pop('pageId')
-        if 'ID' in kwargs:
-            kwargs['file_id'] = kwargs.pop('ID')
-        if 'fileGrp' in kwargs:
-            kwargs['file_grp'] = kwargs.pop('fileGrp')
+        self.log.debug("find_files(%s)", kwargs)
+        if "pageId" in kwargs:
+            kwargs["page_id"] = kwargs.pop("pageId")
+        if "ID" in kwargs:
+            kwargs["file_id"] = kwargs.pop("ID")
+        if "fileGrp" in kwargs:
+            kwargs["file_grp"] = kwargs.pop("fileGrp")
 
         if not self.multiplexing_mode:
-            r = self.session.request(method='GET', url=f'{self.url}/file', params={**kwargs})
+            r = self.session.request(method="GET", url=f"{self.url}/file", params={**kwargs})
         else:
-            request_body = {
-                "workspace_path": self.ws_dir_path,
-                "method_type": "GET",
-                "response_type": "class",
-                "request_url": "file",
-                "request_data": {
-                    "params": {**kwargs}
-                }
-            }
-            r = self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
+            r = self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.find_files(self.ws_dir_path, {**kwargs})
+            )
 
-        for f in r.json()['files']:
+        for f in r.json()["files"]:
             yield ClientSideOcrdFile(
-                None, ID=f['file_id'], pageId=f['page_id'], fileGrp=f['file_grp'], url=f['url'],
-                local_filename=f['local_filename'], mimetype=f['mimetype']
+                None, ID=f["file_id"], pageId=f["page_id"], fileGrp=f["file_grp"], url=f["url"],
+                local_filename=f["local_filename"], mimetype=f["mimetype"]
             )
 
     def find_all_files(self, *args, **kwargs):
@@ -317,23 +286,129 @@ class ClientSideOcrdMets:
         )
 
         if not self.multiplexing_mode:
-            self.session.request(method='POST', url=f'{self.url}/file', data=data.dict())
+            self.session.request("POST", f"{self.url}/file", data=data.dict())
         else:
-            request_body = {
-                "workspace_path": self.ws_dir_path,
-                "method_type": "POST",
-                "response_type": "class",
-                "request_url": "file",
-                "request_data": {
-                    "form": data.dict()
-                }
-            }
-            self.session.request(method="POST", url=self.ps_proxy_url, json=request_body)
+            self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, data.dict()))
+
         return ClientSideOcrdFile(
             None, ID=file_id, fileGrp=file_grp, url=url, pageId=page_id, mimetype=mimetype,
             local_filename=local_filename
         )
 
+
+class MpxReq:
+    """This class wrapps the request bodies needed for the tcp forwarding
+
+    For every mets-server-call like find_files or workspace_path a special request_body is
+    needed to call `MetsServerProxy.forward_tcp_request`. These are created by this functions.
+
+    Reason to put this to a separate class is to allow easier testing
+    """
+    @staticmethod
+    def save(ws_dir_path: str) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "PUT",
+            "response_type": "empty",
+            "request_url": "",
+            "request_data": {}
+        }
+
+    @staticmethod
+    def stop(ws_dir_path: str) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "DELETE",
+            "response_type": "empty",
+            "request_url": "",
+            "request_data": {}
+        }
+
+    @staticmethod
+    def reload(ws_dir_path: str) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "POST",
+            "response_type": "text",
+            "request_url": "reload",
+            "request_data": {}
+        }
+
+    @staticmethod
+    def unique_identifier(ws_dir_path: str) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "GET",
+            "response_type": "text",
+            "request_url": "unique_identifier",
+            "request_data": {}
+        }
+
+    @staticmethod
+    def workspace_path(ws_dir_path: str) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "GET",
+            "response_type": "text",
+            "request_url": "workspace_path",
+            "request_data": {}
+        }
+
+    @staticmethod
+    def file_groups(ws_dir_path: str) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "GET",
+            "response_type": "dict",
+            "request_url": "file_groups",
+            "request_data": {}
+        }
+
+    @staticmethod
+    def agents(ws_dir_path: str) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "GET",
+            "response_type": "class",
+            "request_url": "agent",
+            "request_data": {}
+        }
+
+    @staticmethod
+    def add_agent(ws_dir_path: str, agent_model: Dict) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "POST",
+            "response_type": "class",
+            "request_url": "agent",
+            "request_data": {
+                "class": agent_model
+            }
+        }
+
+    @staticmethod
+    def find_files(ws_dir_path: str, params: Dict) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "GET",
+            "response_type": "class",
+            "request_url": "file",
+            "request_data": {
+                "params": params
+            }
+        }
+
+    @staticmethod
+    def add_file(ws_dir_path: str, data: Dict) -> Dict:
+        return {
+            "workspace_path": ws_dir_path,
+            "method_type": "POST",
+            "response_type": "class",
+            "request_url": "file",
+            "request_data": {
+                "form": data
+            }
+        }
 
 #
 # Server

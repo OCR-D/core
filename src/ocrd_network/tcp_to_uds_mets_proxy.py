@@ -47,9 +47,11 @@ class MetsServerProxy:
                              f"form, or class but not {request_data.keys}")
 
         if not response:
-            self.log.warn(f"Uds-Mets-Server gives unexpected error. Response: {response.__dict__}")
-
-        if response_type == "empty":
+            # TODO: this somehow shadows errors. Create a dict with key: "error" and forward to the
+            #       caller that the request failed
+            self.log.warning(f"Uds-Mets-Server gives unexpected error. Response: {response.__dict__}")
+            return {}
+        elif response_type == "empty":
             return {}
         elif response_type == "text":
             return {"text": response.text}

@@ -2,7 +2,7 @@ from os.path import abspath, dirname, exists, join
 from pathlib import Path
 from pytest import fixture
 from shutil import rmtree, copytree
-from src.ocrd.mets_server import OcrdAgentModel, OcrdFileModel
+from src.ocrd.mets_server import OcrdAgentModel, OcrdFileModel, MpxReq
 from src.ocrd_network.tcp_to_uds_mets_proxy import MetsServerProxy
 from src.ocrd_network.runtime_data import Deployer
 from tests.base import assets
@@ -25,45 +25,27 @@ def fixture_start_uds_mets_server() -> Path:
     rmtree(TEST_WORKSPACE_DIR, ignore_errors=True)
 
 
-def test_get_request_unique_identifier(start_uds_mets_server):
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "GET",
-        "response_type": "text",
-        "request_url": "unique_identifier",
-        "request_data": {}
-    }
+def test_unique_identifier(start_uds_mets_server):
+    request_body = MpxReq.unique_identifier(TEST_WORKSPACE_DIR)
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert response_dict["text"] == WORKSPACE_UNIQUE_IDENTIFIER
 
 
-def test_get_request_workspace_path(start_uds_mets_server):
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "GET",
-        "response_type": "text",
-        "request_url": "workspace_path",
-        "request_data": {}
-    }
+def test_workspace_path(start_uds_mets_server):
+    request_body = MpxReq.workspace_path(TEST_WORKSPACE_DIR)
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert response_dict["text"] == TEST_WORKSPACE_DIR
 
 
-def test_get_request_file_groups(start_uds_mets_server):
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "GET",
-        "response_type": "dict",
-        "request_url": "file_groups",
-        "request_data": {}
-    }
+def test_file_groups(start_uds_mets_server):
+    request_body = MpxReq.file_groups(TEST_WORKSPACE_DIR)
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     # print(response.__dict__)
     file_groups = response_dict["file_groups"]
     assert len(file_groups) == 17
 
 
-def test_post_request_agent(start_uds_mets_server):
+def test_add_agent(start_uds_mets_server):
     test_agent_name = "Module test agent"
     test_agent_type = "Tester type"
     test_agent_othertype = "Other tester type"
@@ -77,15 +59,7 @@ def test_post_request_agent(start_uds_mets_server):
         othertype=test_agent_othertype,
         notes=[]
     )
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "POST",
-        "response_type": "class",
-        "request_url": "agent",
-        "request_data": {
-            "class": ocrd_agent_model.dict()
-         }
-    }
+    request_body = MpxReq.add_agent(TEST_WORKSPACE_DIR, ocrd_agent_model.dict())
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert response_dict["name"] == test_agent_name
     assert response_dict["type"] == test_agent_type
@@ -94,22 +68,16 @@ def test_post_request_agent(start_uds_mets_server):
     assert response_dict["othertype"] == test_agent_othertype
 
 
-def test_post_request_reload(start_uds_mets_server):
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "POST",
-        "response_type": "text",
-        "request_url": "reload",
-        "request_data": {}
-    }
+def test_reload(start_uds_mets_server):
+    request_body = MpxReq.reload(TEST_WORKSPACE_DIR)
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     # print(response.__dict__)
     assert response_dict["text"] == f'Reloaded from {TEST_WORKSPACE_DIR}'
 
 
-def test_post_request_file(start_uds_mets_server):
-    test_file_id = "File test id"
-    test_file_group = "OCR-D-IMG"
+def test_add_file(start_uds_mets_server):
+    test_file_id = "test-file-id"
+    test_file_group = "OCR-D-FOO"
     test_page_id = "PHYS_5555"
     test_mimetype = "Test mimetype"
     test_url = "Test url"
@@ -122,45 +90,24 @@ def test_post_request_file(start_uds_mets_server):
         url=test_url,
         local_filename=test_local_filename
     )
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "POST",
-        "response_type": "class",
-        "request_url": "file",
-        "request_data": {
-            "class": ocrd_file_model.dict()
-        }
-    }
+    request_body = MpxReq.add_file(TEST_WORKSPACE_DIR, ocrd_file_model.dict())
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    # TODO: assert new file was successfully added
+    assert response_dict["file_id"] == test_file_id
+    assert response_dict["file_grp"] == test_file_group
 
 
-def test_get_request_files(start_uds_mets_server):
+def test_find_files(start_uds_mets_server):
     test_file_group = "OCR-D-IMG"
     test_non_existing_file_group = "FOO-D-FOO"
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "GET",
-        "response_type": "class",
-        "request_url": "file",
-        "request_data": {
-            "params": {
-                "file_grp": test_file_group
-            }
-        }
-    }
+    request_body = MpxReq.find_files(
+        TEST_WORKSPACE_DIR,
+        {"file_grp": test_file_group}
+    )
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert len(response_dict["files"]) == 3, "Expected to find exatly 3 matching files"
-    request_body = {
-        "workspace_path": TEST_WORKSPACE_DIR,
-        "method_type": "GET",
-        "response_type": "class",
-        "request_url": "file",
-        "request_data": {
-            "params": {
-                "file_grp": test_non_existing_file_group
-            }
-        }
-    }
+    request_body = MpxReq.find_files(
+        TEST_WORKSPACE_DIR,
+        {"file_grp": test_non_existing_file_group}
+    )
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert len(response_dict["files"]) == 0, "Expected to find no matching files but found some"
