@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
-from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename
+from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger
 from .rabbitmq_utils import OcrdResultMessage
 
 
@@ -149,9 +149,8 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
                 return response.status_code == 200
             except OSError:
                 return False
-    except Exception as e:
-        # TODO: log the exception
-        print("Unexpected Error in is_mets_server_running. Exception: ", e)
+    except Exception:
+        getLogger("ocrd_network.utils").exception("Unexpected exception in is_mets_server_running: ")
         return False
 
 
