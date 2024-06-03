@@ -29,6 +29,7 @@ class Deployer:
         self.data_hosts: List[DataHost] = parse_hosts_data(ps_config["hosts"])
         self.internal_callback_url = ps_config.get("internal_callback_url", None)
         self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
+        self.use_tcp_mets = ps_config.get("use_tcp_mets", False)
 
     # TODO: Reconsider this.
     def find_matching_network_agents(

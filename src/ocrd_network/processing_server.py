@@ -101,6 +101,7 @@ class ProcessingServer(FastAPI):
         self.deployer = Deployer(config_path)
         # Used for forwarding Mets Server TCP requests to UDS requests
         self.mets_server_proxy = MetsServerProxy()
+        self.use_tcp_mets = self.deployer.use_tcp_mets
         # If set, all Mets Server UDS requests are multiplexed over TCP
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
@@ -461,10 +462,11 @@ class ProcessingServer(FastAPI):
         # Start a UDS Mets Server with the current workspace
         ws_dir_path = str(Path(request_mets_path).parent)
         mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
-        if self.multiplexing_endpoint:
+        if self.use_tcp_mets:
+            # let workers talk to mets server via tcp instead of using unix-socket
             mets_server_url = self.multiplexing_endpoint
 
-        # Assign the mets server url in the database
+        # Assign the mets server url in the database (workers read mets_server_url from db)
         await db_update_workspace(
             workspace_id=data.workspace_id,
             workspace_mets_path=data.path_to_mets,
