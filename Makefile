@@ -229,6 +229,7 @@ test-logging: assets
 	cd $$tempdir; \
 	$(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR); \
 	rm -r $$tempdir/ocrd_logging.conf $$tempdir/.benchmarks; \
+	rm -rf $$tempdir/.coverage; \
 	rmdir $$tempdir
 
 network-module-test: assets
