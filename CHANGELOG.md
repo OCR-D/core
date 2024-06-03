@@ -7,6 +7,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
 
+  * `OcrdFile.url` can now be removed properly, #1226, #1227
+
+## [2.65.0] - 2024-05-03
+
+Fixed:
+
   - bashlib processors will download on-demand, like pythonic processors do, #1216, #1217
 
 Changed:
