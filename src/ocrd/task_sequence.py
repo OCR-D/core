@@ -1,7 +1,6 @@
 import json
 from shlex import split as shlex_split
-from distutils.spawn import find_executable as which # pylint: disable=import-error,no-name-in-module
-from subprocess import run, PIPE
+from shutil import which
 
 from ocrd_utils import getLogger, parse_json_string_or_file, set_json_key_value_overrides, get_ocrd_tool_json
 # from collections import Counter

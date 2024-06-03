@@ -5,7 +5,7 @@ Technical image metadata
 from math import sqrt
 from io import BytesIO
 from subprocess import run, PIPE
-from distutils.spawn import find_executable as which
+from shutil import which
 from ocrd_utils import getLogger
 
 class OcrdExif():
