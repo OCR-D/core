@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
+from ocrd.mets_server import MpxReq
 from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger
 from .rabbitmq_utils import OcrdResultMessage
 
@@ -134,14 +135,10 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
         if 'tcp_mets' in mets_server_url:
             if not ws_dir_path:
                 return False
-            request_body = {
-                "workspace_path": ws_dir_path,
-                "method_type": "GET",
-                "response_type": "text",
-                "request_url": "workspace_path",
-                "request_data": {}
-            }
-            path = session.post(url=f"{mets_server_url}", json=request_body).json()["text"]
+            path = session.post(
+                url=f"{mets_server_url}",
+                json=MpxReq.workspace_path(ws_dir_path)
+            ).json()["text"]
             return bool(path)
         else:
             try:
@@ -163,14 +160,7 @@ def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
         if 'tcp_mets' in mets_server_url:
             if not ws_dir_path:
                 return False
-            request_body = {
-                "workspace_path": ws_dir_path,
-                "method_type": "DELETE",
-                "request_type": "empty",
-                "request_url": "",
-                "request_data": {}
-            }
-            response = session.post(url=f"{mets_server_url}", json=request_body)
+            response = session.post(url=f"{mets_server_url}", json=MpxReq.stop(ws_dir_path))
         else:
             response = session.delete(url=f"{mets_server_url}/")
     except Exception:
