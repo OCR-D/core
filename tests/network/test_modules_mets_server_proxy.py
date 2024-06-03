@@ -96,6 +96,21 @@ def test_add_file(start_uds_mets_server):
     assert response_dict["file_grp"] == test_file_group
 
 
+def test_add_file_error(start_uds_mets_server):
+    test_file_id = "invalid file id"
+    ocrd_file_model = OcrdFileModel.create(
+        file_id=test_file_id,
+        file_grp="OCR-D-FOO",
+        page_id="PHYS_555",
+        mimetype="Test mimetype",
+        url="Test url",
+        local_filename=""
+    )
+    request_body = MpxReq.add_file(TEST_WORKSPACE_DIR, ocrd_file_model.dict())
+    response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
+    assert "error" in response_dict, "Response should contain key 'error' to indicate failure"
+
+
 def test_find_files(start_uds_mets_server):
     test_file_group = "OCR-D-IMG"
     test_non_existing_file_group = "FOO-D-FOO"

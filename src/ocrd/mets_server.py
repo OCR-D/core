@@ -286,9 +286,13 @@ class ClientSideOcrdMets:
         )
 
         if not self.multiplexing_mode:
-            self.session.request("POST", f"{self.url}/file", data=data.dict())
+            r = self.session.request("POST", f"{self.url}/file", data=data.dict())
+            if not r:
+                raise RuntimeError("Add file failed. Please check provided parameters")
         else:
-            self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, data.dict()))
+            r = self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, data.dict()))
+            if "error" in r:
+                raise RuntimeError(f"Add file failed: Msg: {r['error']}")
 
         return ClientSideOcrdFile(
             None, ID=file_id, fileGrp=file_grp, url=url, pageId=page_id, mimetype=mimetype,
