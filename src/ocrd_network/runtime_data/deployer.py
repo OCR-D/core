@@ -134,13 +134,13 @@ class Deployer:
         log_file = get_mets_server_logging_file_path(mets_path=ws_dir_path)
         mets_server_url = get_uds_path(ws_dir_path=ws_dir_path)
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
-            self.log.warning(f"The UDS mets server for {ws_dir_path} is already started: {mets_server_url}")
+            self.log.debug(f"The UDS mets server for {ws_dir_path} is already started: {mets_server_url}")
             return mets_server_url
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
         sub_process = Popen(
-            args=["nohup", "ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{ws_dir_path}", "server", "start"],
+            args=["ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{ws_dir_path}", "server", "start"],
             stdout=open(file=log_file, mode="w"), stderr=open(file=log_file, mode="a"), cwd=ws_dir_path,
-            shell=False, universal_newlines=True
+            shell=False, universal_newlines=True, start_new_session=True
         )
         # Wait for the mets server to start
         sleep(2)
