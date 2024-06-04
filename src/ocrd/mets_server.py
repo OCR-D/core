@@ -308,111 +308,71 @@ class MpxReq:
 
     Reason to put this to a separate class is to allow easier testing
     """
+
+    @staticmethod
+    def __args_wrapper(
+        workspace_path: str, method_type: str, response_type: str, request_url: str, request_data: dict
+    ) -> Dict:
+        return {
+            "workspace_path": workspace_path,
+            "method_type": method_type,
+            "response_type": response_type,
+            "request_url": request_url,
+            "request_data": request_data
+        }
+
     @staticmethod
     def save(ws_dir_path: str) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "PUT",
-            "response_type": "empty",
-            "request_url": "",
-            "request_data": {}
-        }
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="PUT", response_type="empty", request_url="", request_data={})
 
     @staticmethod
     def stop(ws_dir_path: str) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "DELETE",
-            "response_type": "empty",
-            "request_url": "",
-            "request_data": {}
-        }
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="DELETE", response_type="empty", request_url="", request_data={})
 
     @staticmethod
     def reload(ws_dir_path: str) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "POST",
-            "response_type": "text",
-            "request_url": "reload",
-            "request_data": {}
-        }
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="POST", response_type="text", request_url="reload", request_data={})
 
     @staticmethod
     def unique_identifier(ws_dir_path: str) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "GET",
-            "response_type": "text",
-            "request_url": "unique_identifier",
-            "request_data": {}
-        }
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="GET", response_type="text", request_url="unique_identifier", request_data={})
 
     @staticmethod
     def workspace_path(ws_dir_path: str) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "GET",
-            "response_type": "text",
-            "request_url": "workspace_path",
-            "request_data": {}
-        }
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="GET", response_type="text", request_url="workspace_path", request_data={})
 
     @staticmethod
     def file_groups(ws_dir_path: str) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "GET",
-            "response_type": "dict",
-            "request_url": "file_groups",
-            "request_data": {}
-        }
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="GET", response_type="dict", request_url="file_groups", request_data={})
 
     @staticmethod
     def agents(ws_dir_path: str) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "GET",
-            "response_type": "class",
-            "request_url": "agent",
-            "request_data": {}
-        }
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="GET", response_type="class", request_url="agent", request_data={})
 
     @staticmethod
     def add_agent(ws_dir_path: str, agent_model: Dict) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "POST",
-            "response_type": "class",
-            "request_url": "agent",
-            "request_data": {
-                "class": agent_model
-            }
-        }
+        request_data = {"class": agent_model}
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="POST", response_type="class", request_url="agent", request_data=request_data)
 
     @staticmethod
     def find_files(ws_dir_path: str, params: Dict) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "GET",
-            "response_type": "class",
-            "request_url": "file",
-            "request_data": {
-                "params": params
-            }
-        }
+        request_data = {"params": params}
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="GET", response_type="class", request_url="file", request_data=request_data)
 
     @staticmethod
     def add_file(ws_dir_path: str, data: Dict) -> Dict:
-        return {
-            "workspace_path": ws_dir_path,
-            "method_type": "POST",
-            "response_type": "class",
-            "request_url": "file",
-            "request_data": {
-                "form": data
-            }
-        }
+        request_data = {"form": data}
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="POST", response_type="class", request_url="file", request_data=request_data)
 
 #
 # Server

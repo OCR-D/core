@@ -14,12 +14,12 @@ class MetsServerProxy:
     def forward_tcp_request(self, request_body) -> Dict:
         """Forward request to uds mets server
 
-        The caller of the function must know how the request has to be be translated.
+        The caller of the function must know how the request has to be translated.
 
         `response_type` is the type of data the corresponding uds-mets-server-enpoint returns.
 
         `request_data` is expected to indicate what type of parameters the corresponding
-        uds-mets-server-endpoint accepts. Currently there are three types: `class` indicates that
+        uds-mets-server-endpoint accepts. Currently, there are three types: `class` indicates that
         the endpoint's parameter is a single class, `parameter` is used for "common" parameters and
         `form` for form-parameters
         """
