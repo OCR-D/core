@@ -386,7 +386,7 @@ class OcrdMetsServer:
         self.workspace = workspace
         self.url = url
         self.is_uds = not (url.startswith('http://') or url.startswith('https://'))
-        self.log = getLogger(f'ocrd.mets_server[{self.url}]')
+        self.log = getLogger(f'ocrd.models.ocrd_mets.server.{self.url}')
 
     @staticmethod
     def create_process(mets_server_url: str, ws_dir_path: str, log_file: str) -> int:
@@ -409,7 +409,7 @@ class OcrdMetsServer:
     def shutdown(self):
         if self.is_uds:
             if Path(self.url).exists():
-                self.log.warning(f'UDS socket {self.url} still exists, removing it')
+                self.log.debug(f'UDS socket {self.url} still exists, removing it')
                 Path(self.url).unlink()
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)
@@ -536,6 +536,8 @@ class OcrdMetsServer:
         else:
             parsed = urlparse(self.url)
             uvicorn_kwargs = {'host': parsed.hostname, 'port': parsed.port}
+        uvicorn_kwargs['log_config'] = None
+        uvicorn_kwargs['access_log'] = False
 
         self.log.debug("Starting uvicorn")
         uvicorn.run(app, **uvicorn_kwargs)
