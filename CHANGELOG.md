@@ -12,6 +12,7 @@ Fixed:
 Changed:
 
   * Install ocrd with `pip --editable` inside Docker, #1225, OCR-D/ocrd_all#416
+  * Reduce log spam in ocrd_network, #1222
 
 ## [2.65.0] - 2024-05-03
 
