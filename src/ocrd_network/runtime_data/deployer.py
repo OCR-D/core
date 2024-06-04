@@ -12,6 +12,7 @@ from subprocess import Popen, run as subprocess_run
 from time import sleep
 from typing import Dict, List, Union
 
+from ocrd import OcrdMetsServer
 from ocrd_utils import config, getLogger, safe_filename
 from ..logging_utils import get_mets_server_logging_file_path
 from ..utils import get_uds_path, is_mets_server_running, stop_mets_server
@@ -137,17 +138,8 @@ class Deployer:
             self.log.debug(f"The UDS mets server for {ws_dir_path} is already started: {mets_server_url}")
             return mets_server_url
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
-        sub_process = Popen(
-            args=["ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{ws_dir_path}", "server", "start"],
-            stdout=open(file=log_file, mode="w"), stderr=open(file=log_file, mode="a"), cwd=ws_dir_path,
-            shell=False, universal_newlines=True, start_new_session=True
-        )
-        # Wait for the mets server to start
-        sleep(2)
-        self.mets_servers[mets_server_url] = sub_process.pid
-        if sub_process.poll():
-            raise RuntimeError(f"Mets server starting failed. See {log_file} for errors")
-
+        pid = OcrdMetsServer.create_process(mets_server_url=mets_server_url, ws_dir_path=ws_dir_path, log_file=log_file)
+        self.mets_servers[mets_server_url] = pid
         return mets_server_url
 
     def stop_uds_mets_server(self, mets_server_url: str, stop_with_pid: bool = False) -> None:
@@ -158,7 +150,7 @@ class Deployer:
                 self.log.exception(message)
                 raise Exception(message)
             mets_server_pid = self.mets_servers[Path(mets_server_url)]
-            subprocess_run(args=["kill", "-s", "SIGINT", f"{mets_server_pid}"], shell=False, universal_newlines=True)
+            OcrdMetsServer.kill_process(mets_server_pid=mets_server_pid)
             return
         # TODO: Reconsider this again
         #  Not having this sleep here causes connection errors

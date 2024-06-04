@@ -4,7 +4,9 @@
 import re
 from os import _exit, chmod
 from typing import Dict, Optional, Union, List, Tuple
+from time import sleep
 from pathlib import Path
+from subprocess import Popen, run as subprocess_run
 from urllib.parse import urlparse
 import socket
 import atexit
@@ -385,6 +387,24 @@ class OcrdMetsServer:
         self.url = url
         self.is_uds = not (url.startswith('http://') or url.startswith('https://'))
         self.log = getLogger(f'ocrd.mets_server[{self.url}]')
+
+    @staticmethod
+    def create_process(mets_server_url: str, ws_dir_path: str, log_file: str) -> int:
+        sub_process = Popen(
+            args=["ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{ws_dir_path}", "server", "start"],
+            stdout=open(file=log_file, mode="w"), stderr=open(file=log_file, mode="a"), cwd=ws_dir_path,
+            shell=False, universal_newlines=True, start_new_session=True
+        )
+        # Wait for the mets server to start
+        sleep(2)
+        if sub_process.poll():
+            raise RuntimeError(f"Mets server starting failed. See {log_file} for errors")
+        return sub_process.pid
+
+    @staticmethod
+    def kill_process(mets_server_pid: int):
+        subprocess_run(args=["kill", "-s", "SIGINT", f"{mets_server_pid}"], shell=False, universal_newlines=True)
+        return
 
     def shutdown(self):
         if self.is_uds:
