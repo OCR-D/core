@@ -9,6 +9,10 @@ Fixed:
 
   * `OcrdFile.url` can now be removed properly, #1226, #1227
 
+Changed:
+
+  * Install ocrd with `pip --editable` inside Docker, #1225, OCR-D/ocrd_all#416
+
 ## [2.65.0] - 2024-05-03
 
 Fixed:
