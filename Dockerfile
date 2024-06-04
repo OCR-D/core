@@ -8,7 +8,7 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 ENV PIP=pip
 
-WORKDIR /build-ocrd
+WORKDIR /build/core
 
 COPY src ./src
 COPY pyproject.toml .
@@ -36,7 +36,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
     && make deps-ubuntu
 RUN python3 -m venv /usr/local \
     && hash -r \
-    && make install \
+    && make install-dev \
     && eval $FIXUP
 
 WORKDIR /data
@@ -46,7 +46,7 @@ CMD ["/usr/local/bin/ocrd", "--help"]
 FROM ocrd_core_base as ocrd_core_test
 # Optionally skip make assets with this arg
 ARG SKIP_ASSETS
-WORKDIR /build-ocrd
+WORKDIR /build/core
 COPY Makefile .
 RUN if test -z "$SKIP_ASSETS" || test $SKIP_ASSETS -eq 0 ; then make assets ; fi
 COPY tests ./tests
