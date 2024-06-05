@@ -190,5 +190,5 @@ config.add("XDG_CONFIG_HOME",
 config.add("OCRD_LOGGING_DEBUG",
     description="Print information about the logging setup to STDERR",
     default=(True, False),
-    validator=lambda val: isinstance(val, bool) or val in ('true', 'false', '0', '1'),
-    parser=lambda val:  val in ('true', '1'))
+    validator=lambda val: isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1'),
+    parser=lambda val:  str.lower(val) in ('true', '1'))
