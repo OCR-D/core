@@ -6,8 +6,8 @@ OCR-D CLI: workspace management
     :nested: full
 """
 import os
-from os import getcwd, unlink
-from os.path import relpath, exists, join, isabs
+from os import getcwd, rmdir, unlink
+from os.path import dirname, relpath, normpath, exists, join, isabs, isdir
 from pathlib import Path
 from json import loads, dumps
 import sys
@@ -164,7 +164,7 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
 @pass_workspace
 def workspace_init(ctx, clobber_mets, directory):
     """
-    Create a workspace with an empty METS file in --directory.
+    Create a workspace with an empty METS file in DIRECTORY or CWD.
 
     """
     LOG = getLogger('ocrd.cli.workspace.init')
@@ -584,6 +584,57 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
                 ctx.log.exception("Error removing %f: %s", f, e)
                 raise(e)
         workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace clean
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('clean')
+@click.option('-n', '--dry-run', help="Don't actually do anything to the filesystem, just preview", default=False, is_flag=True)
+@click.argument('path_glob', nargs=-1, required=False)
+@pass_workspace
+def clean(ctx, dry_run, path_glob):
+    """
+    Removes files and directories from the workspace that are not
+    referenced by any mets:files.
+
+    PATH_GLOB can be a shell glob expression to match file names,
+    directory names (recursively), or plain paths. All paths are
+    resolved w.r.t. the workspace.
+
+    If no PATH_GLOB are specified, then all files and directories
+    may match.
+    """
+    log = getLogger('ocrd.cli.workspace.clean')
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    allowed_files = [normpath(f.local_filename) for f in workspace.find_files(local_only=True)]
+    allowed_files.append(relpath(workspace.mets_target, start=workspace.directory))
+    allowed_dirs = set(dirname(path) for path in allowed_files)
+    with pushd_popd(workspace.directory):
+        if len(path_glob):
+            paths = []
+            for expression in path_glob:
+                if isabs(expression):
+                    expression = relpath(expression)
+                paths += glob(expression, recursive=True) or [expression]
+        else:
+            paths = glob('**', recursive=True)
+        file_paths = [path for path in paths if not isdir(path)]
+        dir_paths = [path for path in paths if isdir(path)]
+        for path in file_paths:
+            if normpath(path) in allowed_files:
+                continue
+            if dry_run:
+                log.info('unlink(%s)' % path)
+            else:
+                unlink(path)
+        for path in sorted(dir_paths, key=lambda p: p.count('/'), reverse=True):
+            if normpath(path) in allowed_dirs:
+                continue
+            if dry_run:
+                log.info('rmdir(%s)' % path)
+            else:
+                rmdir(path)
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-group
