@@ -279,7 +279,7 @@ test-logging: assets
 
 network-module-test: assets
 	$(PYTHON) \
-		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -v --durations=10\
+		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -s -v --durations=10\
 		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
 		$(TESTDIR)/network
 

@@ -9,6 +9,9 @@ properties:
   internal_callback_url:
     description: optionally set the host for the internal_callback_url, for example "http://172.17.0.1:8080"
     type: string
+  use_tcp_mets:
+    description: optionally use tcp mets-server-instead of uds-mets-server
+    type: boolean
   process_queue:
     description: Information about the Message Queue
     type: object

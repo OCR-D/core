@@ -1,5 +1,6 @@
 from datetime import datetime
 from os import getpid
+from pathlib import Path
 from typing import Dict, List, Union
 from uvicorn import run as uvicorn_run
 
@@ -55,6 +56,7 @@ from .server_utils import (
     validate_job_input,
     validate_workflow
 )
+from .tcp_to_uds_mets_proxy import MetsServerProxy
 from .utils import (
     download_ocrd_all_tool_json,
     expand_page_ids,
@@ -92,16 +94,23 @@ class ProcessingServer(FastAPI):
         self.ocrd_all_tool_json = download_ocrd_all_tool_json(ocrd_all_url=OCRD_ALL_JSON_TOOLS_URL)
         self.hostname = host
         self.port = port
+
         # The deployer is used for:
         # - deploying agents when the Processing Server is started
         # - retrieving runtime data of agents
         self.deployer = Deployer(config_path)
+        # Used for forwarding Mets Server TCP requests to UDS requests
+        self.mets_server_proxy = MetsServerProxy()
+        self.use_tcp_mets = self.deployer.use_tcp_mets
+        # If set, all Mets Server UDS requests are multiplexed over TCP
         # Used by processing workers and/or processor servers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
             self.internal_job_callback_url = f"{host.rstrip('/')}/result_callback"
+            self.multiplexing_endpoint = f"{host.rstrip('/')}/tcp_mets"
         else:
             self.internal_job_callback_url = f"http://{host}:{port}/result_callback"
+            self.multiplexing_endpoint = f"http://{host}:{port}/tcp_mets"
 
         self.mongodb_url = None
         self.rabbitmq_url = None
@@ -177,13 +186,19 @@ class ProcessingServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get information about the processing server"
         )
-
         others_router.add_api_route(
             path="/stop",
             endpoint=self.stop_deployed_agents,
             methods=["POST"],
             tags=[ServerApiTags.TOOLS],
             summary="Stop database, queue and processing-workers"
+        )
+        others_router.add_api_route(
+            path="/tcp_mets",
+            methods=["POST"],
+            endpoint=self.forward_tcp_request_to_uds_mets_server,
+            tags=[ServerApiTags.WORKSPACE],
+            summary="Forward a TCP request to UDS mets server"
         )
         self.include_router(others_router)
 
@@ -300,6 +315,19 @@ class ProcessingServer(FastAPI):
             summary="Get information about a workflow run"
         )
         self.include_router(workflow_router)
+
+    async def forward_tcp_request_to_uds_mets_server(self, request: Request) -> Dict:
+        """Forward mets-server-request
+
+        A processor calls a mets related method like add_file with ClientSideOcrdMets. This sends
+        a request to this endpoint. This request contains all infomation neccessary to make a call
+        to the uds-mets-server. This information is used by `MetsServerProxy` to make a the call
+        to the local (local for the processing-server) reachable the uds-mets-server.
+        """
+        request_body = await request.json()
+        ws_dir_path = request_body["workspace_path"]
+        self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
+        return self.mets_server_proxy.forward_tcp_request(request_body=request_body)
 
     async def home_page(self):
         message = f"The home page of the {self.title}"
@@ -431,10 +459,14 @@ class ProcessingServer(FastAPI):
             page_ids=page_ids
         )
 
-        # Start a Mets Server with the current workspace
-        mets_server_url = self.deployer.start_unix_mets_server(mets_path=request_mets_path)
+        # Start a UDS Mets Server with the current workspace
+        ws_dir_path = str(Path(request_mets_path).parent)
+        mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
+        if self.use_tcp_mets:
+            # let workers talk to mets server via tcp instead of using unix-socket
+            mets_server_url = self.multiplexing_endpoint
 
-        # Assign the mets server url in the database
+        # Assign the mets server url in the database (workers read mets_server_url from db)
         await db_update_workspace(
             workspace_id=data.workspace_id,
             workspace_mets_path=data.path_to_mets,
@@ -560,7 +592,9 @@ class ProcessingServer(FastAPI):
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
-                self.deployer.stop_unix_mets_server(mets_server_url=mets_server_url)
+
+                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url)
+
                 try:
                     # The queue is empty - delete it
                     del self.cache_processing_requests.processing_requests[workspace_key]
