@@ -591,9 +591,10 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
 
 @workspace_cli.command('clean')
 @click.option('-n', '--dry-run', help="Don't actually do anything to the filesystem, just preview", default=False, is_flag=True)
+@click.option('-d', '--directories', help="Remove untracked directories in addition to untracked files", default=False, is_flag=True)
 @click.argument('path_glob', nargs=-1, required=False)
 @pass_workspace
-def clean(ctx, dry_run, path_glob):
+def clean(ctx, dry_run, directories, path_glob):
     """
     Removes files and directories from the workspace that are not
     referenced by any mets:files.
@@ -620,7 +621,6 @@ def clean(ctx, dry_run, path_glob):
         else:
             paths = glob('**', recursive=True)
         file_paths = [path for path in paths if not isdir(path)]
-        dir_paths = [path for path in paths if isdir(path)]
         for path in file_paths:
             if normpath(path) in allowed_files:
                 continue
@@ -628,6 +628,9 @@ def clean(ctx, dry_run, path_glob):
                 log.info('unlink(%s)' % path)
             else:
                 unlink(path)
+        if not directories:
+            return
+        dir_paths = [path for path in paths if isdir(path)]
         for path in sorted(dir_paths, key=lambda p: p.count('/'), reverse=True):
             if normpath(path) in allowed_dirs:
                 continue
