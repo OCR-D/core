@@ -21,6 +21,7 @@ Changed:
 Added:
 
   * Separate docker versions for tensorflow v1, tensorflow v2 and torch, #1186
+  * Processing server can serve as a proxy for METS Server TCP requests, forwarding to UDS, #1220
 
 ## [2.65.0] - 2024-05-03
 
