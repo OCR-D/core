@@ -18,6 +18,10 @@ Changed:
   * Reduce log spam in ocrd_network, #1222
   * CI: Stop testing for 3.7, #1207, #1221
 
+Added:
+
+  * Separate docker versions for tensorflow v1, tensorflow v2 and torch, #1186
+
 ## [2.65.0] - 2024-05-03
 
 Fixed:
