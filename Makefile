@@ -95,25 +95,70 @@ deps-cuda:
 # let's jump the shark and pull these via NGC index directly,
 # but then share them with the rest of the system so native compilation/linking
 # works, too:
+	shopt -s nullglob; \
 	$(PIP) install nvidia-pyindex \
-	 && $(PIP) install nvidia-cudnn-cu11==8.6.0.163 \
-	                   nvidia-cublas-cu11 \
-	                   nvidia-cusparse-cu11 \
-	                   nvidia-cusolver-cu11 \
-	                   nvidia-curand-cu11 \
-	                   nvidia-cufft-cu11 \
-	                   nvidia-cuda-runtime-cu11 \
+	 && $(PIP) install nvidia-cudnn-cu11==8.7.* \
+	                   nvidia-cublas-cu11~=11.11 \
+	                   nvidia-cusparse-cu11~=11.7 \
+	                   nvidia-cusolver-cu11~=11.4 \
+	                   nvidia-curand-cu11~=10.3 \
+	                   nvidia-cufft-cu11~=10.9 \
+	                   nvidia-cuda-runtime-cu11~=11.8 \
+	                   nvidia-cuda-cupti-cu11~=11.8 \
 	                   nvidia-cuda-nvrtc-cu11 \
-	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_nvrtc; do \
+	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_cupti cuda_nvrtc; do \
 	        for lib in $(PYTHON_PREFIX)/nvidia/$$pkg/lib/lib*.so.*; do \
 	            base=`basename $$lib`; \
 	            ln -s $$lib $(CONDA_PREFIX)/lib/$$base.so; \
 	            ln -s $$lib $(CONDA_PREFIX)/lib/$${base%.so.*}.so; \
 	        done \
-	     && ln -s $(PYTHON_PREFIX)/nvidia/$$pkg/include/* $(CONDA_PREFIX)/include/; \
+	     && for inc in $(PYTHON_PREFIX)/nvidia/$$pkg/include/*; do \
+	            base=`basename $$inc`; case $$base in __*) continue; esac; \
+	            ln -s $$inc $(CONDA_PREFIX)/include/; \
+	        done \
 	    done \
 	 && ldconfig
 # gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
+
+# Workaround for missing prebuilt versions of TF<2 for Python==3.8
+# todo: find another solution for 3.9, 3.10 etc
+# https://docs.nvidia.com/deeplearning/frameworks/tensorflow-wheel-release-notes/tf-wheel-rel.html
+# Nvidia has them, but under a different name, so let's rewrite that:
+# (hold at nv22.11, because newer releases require CUDA 12, which is not supported by TF2 (at py38),
+#  and therefore not in our ocrd/core-cuda base image yet)
+# However, at that time no Numpy 1.24 was known, which breaks TF1
+# (which is why later nv versions hold it at <1.24 automatically -
+#  see https://github.com/NVIDIA/tensorflow/blob/r1.15.5%2Bnv22.11/tensorflow/tools/pip_package/setup.py)
+deps-tf1:
+	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8 && \
+	! $(PIP) show -q tensorflow-gpu; then \
+	  $(PIP) install nvidia-pyindex && \
+	  pushd $$(mktemp -d) && \
+	  $(PIP) download --no-deps nvidia-tensorflow==1.15.5+nv22.11 && \
+	  for name in nvidia_tensorflow-*.whl; do name=$${name%.whl}; done && \
+	  $(PYTHON) -m wheel unpack $$name.whl && \
+	  for name in nvidia_tensorflow-*/; do name=$${name%/}; done && \
+	  newname=$${name/nvidia_tensorflow/tensorflow_gpu} &&\
+	  sed -i s/nvidia_tensorflow/tensorflow_gpu/g $$name/$$name.dist-info/METADATA && \
+	  sed -i s/nvidia_tensorflow/tensorflow_gpu/g $$name/$$name.dist-info/RECORD && \
+	  sed -i s/nvidia_tensorflow/tensorflow_gpu/g $$name/tensorflow_core/tools/pip_package/setup.py && \
+	  pushd $$name && for path in $$name*; do mv $$path $${path/$$name/$$newname}; done && popd && \
+	  $(PYTHON) -m wheel pack $$name && \
+	  $(PIP) install $$newname*.whl && popd && rm -fr $$OLDPWD; \
+	  $(PIP) install "numpy<1.24"; \
+	else \
+	$(PIP) install "tensorflow-gpu<2.0"; \
+	fi
+
+deps-tf2:
+	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8 && \
+	$(PIP) install tensorflow; \
+	else \
+	$(PIP) install "tensorflow[and-cuda]"; \
+	fi
+
+deps-torch:
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torch
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
@@ -323,13 +368,32 @@ docker: DOCKER_BASE_IMAGE = ubuntu:20.04
 docker: DOCKER_TAG = ocrd/core
 docker: DOCKER_FILE = Dockerfile
 
+# Build extended sets for maximal layer sharing
 docker-cuda: DOCKER_BASE_IMAGE = ocrd/core
 docker-cuda: DOCKER_TAG = ocrd/core-cuda
 docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
 docker-cuda: docker
 
-docker docker-cuda:
+docker-cuda-tf1: DOCKER_BASE_IMAGE = ocrd/core-cuda
+docker-cuda-tf1: DOCKER_TAG = ocrd/core-cuda-tf1
+docker-cuda-tf1: DOCKER_FILE = Dockerfile.cuda-tf1
+
+docker-cuda-tf1: docker-cuda
+
+docker-cuda-tf2: DOCKER_BASE_IMAGE = ocrd/core-cuda
+docker-cuda-tf2: DOCKER_TAG = ocrd/core-cuda-tf2
+docker-cuda-tf2: DOCKER_FILE = Dockerfile.cuda-tf2
+
+docker-cuda-tf2: docker-cuda
+
+docker-cuda-torch: DOCKER_BASE_IMAGE = ocrd/core-cuda
+docker-cuda-torch: DOCKER_TAG = ocrd/core-cuda-torch
+docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
+
+docker-cuda-torch: docker-cuda
+
+docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch: 
 	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
