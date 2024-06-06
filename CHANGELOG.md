@@ -8,6 +8,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `OcrdFile.url` can now be removed properly, #1226, #1227
+  * `ocrd workspace find --undo-download`: Only remove file refs if it's an actual download, #1150, #1235
+  * `ocrd workspace find --undo-download`: When `--keep-files` is not set, remove file from disk, #1150, #1235
 
 Changed:
 
