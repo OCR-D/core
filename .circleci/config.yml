@@ -104,7 +104,6 @@ workflows:
               only: /^v\d\.\d\d\.\d$/
   test-pull-request:
     jobs:
-      - test-python37
       - test-python38
       - test-python39
       - test-python310
