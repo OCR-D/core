@@ -1,0 +1,32 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://ocr-d.de/spec/web-api/result-message.schema.yml
+description: Schema for Result Messages
+type: object
+additionalProperties: false
+required:
+  - job_id
+  - state
+  - path_to_mets
+  - workspace_id
+properties:
+  job_id:
+    description: The ID of the job
+    type: string
+    format: uuid
+  state:
+    description: The current state of the job
+    type: string
+    enum:
+      - CACHED
+      - CANCELLED
+      - QUEUED
+      - RUNNING
+      - SUCCESS
+      - FAILED
+      - UNSET
+  path_to_mets:
+    description: Path to a METS file
+    type: string
+  workspace_id:
+    description: ID of a workspace
+    type: string

@@ -30,7 +30,8 @@ from ocrd_utils import polygon_mask, xywh_from_polygon, bbox_from_polygon, point
 from ocrd_modelfactory import page_from_file
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
-
+from ocrd.workspace_backup import WorkspaceBackupManager
+from ocrd_validators import WorkspaceValidator
 
 TMP_FOLDER = '/tmp/test-core-workspace'
 SRC_METS = assets.path_to('kant_aufklaerung_1784/data/mets.xml')
@@ -58,7 +59,7 @@ def _fixture_plain_workspace(tmp_path):
     chdir(prev_dir)
 
 def test_workspace_add_file(plain_workspace):
-    fpath = str(plain_workspace.directory / 'ID1.tif')
+    fpath = plain_workspace.directory / 'ID1.tif'
 
     # act
     plain_workspace.add_file(
@@ -74,40 +75,37 @@ def test_workspace_add_file(plain_workspace):
     # assert
     assert f.ID == 'ID1'
     assert f.mimetype == 'image/tiff'
-    assert f.url == fpath
-    assert f.local_filename == fpath
-    assert exists(fpath)
+    assert not f.url
+    assert f.local_filename == str(fpath)
+    assert Path(f.local_filename).exists()
 
 
 def test_workspace_add_file_overwrite(plain_workspace):
-    fpath = str(plain_workspace.directory / 'ID1.tif')
+    fpath = plain_workspace.directory / 'ID1.tif'
 
     # act
-    plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT', pageId='phys1', local_filename=fpath)
+    plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id='phys1', local_filename=fpath)
     with pytest.raises(FileExistsError) as fn_exc:
-        plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT', pageId=None, local_filename=fpath)
-        assert str(fn_exc.value) == "File with ID='ID1' already exists"
+        plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id=None, local_filename=fpath)
+        assert str(fn_exc.value) == "File with file_id='ID1' already exists"
     with pytest.raises(FileExistsError) as fn_exc:
-        plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT', pageId='phys2', local_filename=fpath, force=True)
+        plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id='phys2', local_filename=fpath, force=True)
         assert 'cannot mitigate' in str(fn_exc.value)
-    plain_workspace.add_file('GRP', ID='ID1', mimetype='image/tiff', content='CONTENT2', pageId='phys1', local_filename=fpath, force=True)
+    plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT2', page_id='phys1', local_filename=fpath, force=True)
 
     f = plain_workspace.mets.find_all_files()[0]
     assert f.ID == 'ID1'
     assert f.mimetype == 'image/tiff'
-    assert f.url == fpath
-    assert f.local_filename == fpath
+    assert not f.url
+    assert f.local_filename == str(fpath)
     assert f.pageId == 'phys1'
-    assert exists(fpath)
+    assert fpath.exists()
 
 
 def test_workspace_add_file_basename_no_content(plain_workspace):
     plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', page_id=None)
     f = next(plain_workspace.mets.find_files())
-
-    # assert
-    assert f.url == None
-
+    assert f.url == ''
 
 def test_workspace_add_file_binary_content(plain_workspace):
     fpath = join(plain_workspace.directory, 'subdir', 'ID1.tif')
@@ -141,13 +139,13 @@ def test_workspace_str(plain_workspace):
 
     # assert
     ws_dir = plain_workspace.directory
-    assert str(plain_workspace) == 'Workspace[directory=%s, baseurl=None, file_groups=[], files=[]]' % ws_dir
+    assert str(plain_workspace) == 'Workspace[remote=False, directory=%s, baseurl=None, file_groups=[], files=[]]' % ws_dir
 
 
 def test_workspace_backup(plain_workspace):
 
     # act
-    plain_workspace.automatic_backup = True
+    plain_workspace.automatic_backup = WorkspaceBackupManager(plain_workspace)
     plain_workspace.save_mets()
     plain_workspace.reload_mets()
 
@@ -159,19 +157,14 @@ def test_workspace_backup(plain_workspace):
 def _url_to_file(the_path):
     dummy_mets = OcrdMets.empty_mets()
     dummy_url = abspath(the_path)
-    return dummy_mets.add_file('DEPRECATED', ID=Path(dummy_url).name, url=dummy_url)
+    return dummy_mets.add_file('TESTGRP', ID=Path(dummy_url).name, url=dummy_url)
 
 
 def test_download_very_self_file(plain_workspace):
-
-    # arrange with some dummy stuff
     the_file = _url_to_file(abspath(__file__))
-
-    # act
     fn = plain_workspace.download_file(the_file)
-
-    # assert
-    assert fn, join('DEPRECATED', basename(__file__))
+    assert fn, join('TESTGRP', basename(__file__))
+    assert fn == the_file
 
 
 def test_download_url_without_baseurl_raises_exception(tmp_path):
@@ -186,7 +179,7 @@ def test_download_url_without_baseurl_raises_exception(tmp_path):
         ws1.download_file(the_file)
 
     # assert exception message contents
-    assert "Already tried prepending baseurl '%s'" % str(tmp_path) in str(exc.value)
+    assert "File path passed as 'url' to download_to_directory does not exist:" in str(exc.value)
 
 
 def test_download_url_with_baseurl(tmp_path):
@@ -207,7 +200,8 @@ def test_download_url_with_baseurl(tmp_path):
     f = Path(ws1.download_file(the_file).local_filename)
 
     # assert
-    assert str(f).endswith(join('OCR-D-IMG', '%s.tif' % SAMPLE_FILE_ID))
+    assert f.name == f'{SAMPLE_FILE_ID}.tif'
+    assert f.parent.name == 'TESTGRP'
     assert Path(ws1.directory, f).exists()
 
 
@@ -274,7 +268,7 @@ def test_remove_file_force(sbb_data_workspace):
     """Enforce removal of non-existing-id doesn't yield any error
     but also returns no ocrd-file identifier"""
 
-    # TODO check semantics - can a non-existend thing be removed?
+    # TODO check semantics - can a non-existent thing be removed?
     assert not sbb_data_workspace.remove_file('non-existing-id', force=True)
     # should also succeed
     sbb_data_workspace.overwrite_mode = True
@@ -305,8 +299,8 @@ def test_remove_file_remote(plain_workspace):
 
 def test_rename_file_group(tmp_path):
     # arrange
-    copytree(assets.path_to('kant_aufklaerung_1784-page-region-line-word_glyph/data'), str(tmp_path))
-    workspace = Workspace(Resolver(), directory=str(tmp_path))
+    copytree(assets.path_to('kant_aufklaerung_1784-page-region-line-word_glyph/data'), tmp_path)
+    workspace = Workspace(Resolver(), directory=tmp_path)
 
     # before act
     # TODO clear semantics
@@ -315,7 +309,7 @@ def test_rename_file_group(tmp_path):
     # which can be achieved with pushd_popd functionalities
     ocrd_file = next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001'))
     relative_name = ocrd_file.local_filename
-    ocrd_file.local_filename = join(tmp_path, relative_name)
+    ocrd_file.local_filename = tmp_path / relative_name
     pcgts_before = page_from_file(ocrd_file)
     # before assert
     assert pcgts_before.get_Page().imageFilename == 'OCR-D-IMG/INPUT_0017.tif'
@@ -323,7 +317,7 @@ def test_rename_file_group(tmp_path):
     # act
     workspace.rename_file_group('OCR-D-IMG', 'FOOBAR')
     next_ocrd_file = next(workspace.mets.find_files(ID='OCR-D-GT-SEG-WORD_0001'))
-    next_ocrd_file.local_filename = join(tmp_path, relative_name)
+    next_ocrd_file.local_filename = str(tmp_path / relative_name)
     pcgts_after = page_from_file(next_ocrd_file)
 
     # assert
@@ -364,12 +358,12 @@ def test_remove_file_group_flat(plain_workspace):
     """
 
     # act
-    added_res = plain_workspace.add_file('FOO', file_id='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', page_id=None).url
+    added_res = plain_workspace.add_file('FOO', file_id='foo', mimetype='foo/bar', local_filename='file.ext', content='foo', page_id=None).local_filename
     # requires additional prepending of current path because not pushd_popd-magic at work
-    added_path = Path(join(plain_workspace.directory, added_res))
+    added_filename = join(plain_workspace.directory, added_res)
 
     # assert
-    assert added_path.exists()
+    assert Path(added_filename).exists()
     plain_workspace.remove_file_group('FOO', recursive=True)
 
 
@@ -379,7 +373,7 @@ def _fixture_kant_complex(tmp_path):
     yield Workspace(Resolver, directory=tmp_path)
 
 
-def test_remove_file_page_recursive(kant_complex_workspace):
+def test_remove_file_page_recursive0(kant_complex_workspace):
     assert len(kant_complex_workspace.mets.find_all_files()) == 119
     kant_complex_workspace.remove_file('OCR-D-OCR-OCRO-fraktur-SEG-LINE-tesseract-ocropy-DEWARP_0001', page_recursive=True, page_same_group=False, keep_file=True)
     assert len(kant_complex_workspace.mets.find_all_files()) == 83
@@ -407,15 +401,15 @@ def test_download_to_directory_from_workspace_download_file(plain_workspace):
     f1 = plain_workspace.add_file('IMG', file_id='page1_img', mimetype='image/tiff', local_filename='test.tif', content='', page_id=None)
     f2 = plain_workspace.add_file('GT', file_id='page1_gt', mimetype='text/xml', local_filename='test.xml', content='', page_id=None)
 
-    assert f1.url == 'test.tif'
-    assert f2.url == 'test.xml'
+    assert not f1.url
+    assert not f2.url
 
     # these should be no-ops
     plain_workspace.download_file(f1)
     plain_workspace.download_file(f2)
 
-    assert f1.url == 'test.tif'
-    assert f2.url == 'test.xml'
+    assert f1.local_filename == 'test.tif'
+    assert f2.local_filename == 'test.xml'
 
 
 def test_save_image_file_invalid_mimetype_raises_exception(plain_workspace):
@@ -509,8 +503,8 @@ def _fixture_workspace_sample_features(tmp_path):
 
 def test_image_feature_selectoro(workspace_sample_features):
     # arrange
-    with open(join(str(workspace_sample_features.directory), 'image_features.page.xml'), 'r') as f:
-        pcgts = parseString(f.read().encode('utf8'))
+    with open(Path(workspace_sample_features.directory) / 'image_features.page.xml', 'r', encoding='utf-8') as f:
+        pcgts = parseString(f.read().encode('utf-8'))
 
     # richest feature set is not last:
     _, info, _ = workspace_sample_features.image_from_page(pcgts.get_Page(), page_id='page1', feature_selector='dewarped')
@@ -574,7 +568,7 @@ def test_deskewing(plain_workspace):
     logger_capture = FIFOIO(256)
     logger_handler = logging.StreamHandler(logger_capture)
     #logger_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
-    logger = logging.getLogger('ocrd_utils.crop_image')
+    logger = logging.getLogger('ocrd.utils.crop_image')
     logger.addHandler(logger_handler)
     reg_image2, reg_coords2 = plain_workspace.image_from_segment(region, page_image, page_coords, fill=0)
     #reg_image2.show(title='reg_image2')
@@ -593,13 +587,13 @@ def test_deskewing(plain_workspace):
 
 def test_downsample_16bit_image(plain_workspace):
     # arrange image
-    img_path = join(plain_workspace.directory, '16bit.tif')
-    with gzip_open(join(dirname(__file__), 'data/OCR-D-IMG_APBB_Mitteilungen_62.0002.tif.gz'), 'rb') as gzip_in:
+    img_path = Path(plain_workspace.directory, '16bit.tif')
+    with gzip_open(Path(__file__).parent / 'data/OCR-D-IMG_APBB_Mitteilungen_62.0002.tif.gz', 'rb') as gzip_in:
         with open(img_path, 'wb') as tif_out:
             tif_out.write(gzip_in.read())
 
     # act
-    plain_workspace.add_file('IMG', file_id='foo', url=img_path, mimetype='image/tiff', page_id=None)
+    plain_workspace.add_file('IMG', file_id='foo', local_filename=img_path, mimetype='image/tiff', page_id=None)
 
     # assert
     pil_before = Image.open(img_path)
@@ -619,7 +613,7 @@ def test_mets_permissions(plain_workspace):
     assert filemode(stat(mets_path).st_mode) == '-rwxrwxrwx'
 
 
-def test_merge(tmp_path):
+def test_merge0(tmp_path):
 
     # arrange
     dst_path1 = tmp_path / 'kant_aufklaerung'
@@ -654,16 +648,16 @@ def test_merge_no_copy_files(tmp_path):
     ws1 = Resolver().workspace_from_nothing(directory=dst_path1)
     ws2 = Resolver().workspace_from_nothing(directory=dst_path2)
 
-    ws2.add_file('GRP2', pageId='p01', mimetype='text/plain', ID='f1', local_filename='GRP2/f1', content='ws2')
+    ws2.add_file('GRP2', page_id='p01', mimetype='text/plain', file_id='f1', local_filename='GRP2/f1', content='ws2')
 
     ws1.merge(ws2, copy_files=False, fileId_mapping={'f1': 'f1_copy_files'})
 
-    assert next(ws1.mets.find_files(ID='f1_copy_files')).url == 'ws2/GRP2/f1'
+    assert next(ws1.mets.find_files(ID='f1_copy_files')).local_filename == 'ws2/GRP2/f1'
 
     with pytest.raises(FileExistsError):
         ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_copy_files'})
     ws1.merge(ws2, copy_files=True, fileId_mapping={'f1': 'f1_copy_files'}, force=True)
-    assert next(ws1.mets.find_files(ID='f1_copy_files')).url == 'GRP2/f1'
+    assert next(ws1.mets.find_files(ID='f1_copy_files')).local_filename == 'GRP2/f1'
 
 def test_merge_overwrite(tmp_path):
     # arrange
@@ -676,8 +670,8 @@ def test_merge_overwrite(tmp_path):
     ws2 = Resolver().workspace_from_nothing(directory=dst_path2)
 
     with pytest.raises(Exception) as exc:
-        ws1.add_file('X', pageId='X', mimetype='X', ID='id123', local_filename='X/X', content='ws1')
-        ws2.add_file('X', pageId='X', mimetype='X', ID='id456', local_filename='X/X', content='ws2')
+        ws1.add_file('X', page_id='X', mimetype='X', file_id='id123', local_filename='X/X', content='ws1')
+        ws2.add_file('X', page_id='X', mimetype='X', file_id='id456', local_filename='X/X', content='ws2')
         ws1.merge(ws2)
         assert "would overwrite" == str(exc.value)
 
@@ -729,6 +723,22 @@ def test_merge_force(plain_workspace, tmp_path):
     files = list(plain_workspace.find_files())
     assert len(files) == 1
 
+@pytest.fixture(name='workspace_metsDocumentID')
+def _fixture_metsDocumentID(tmp_path):
+    resolver = Resolver()
+    mets_content = (Path(__file__).parent / "data/mets-with-metsDocumentID.xml").read_text()
+    with open(tmp_path / 'mets.xml', 'w', encoding='utf-8') as f:
+        f.write(mets_content)
+    yield Workspace(Resolver, directory=tmp_path)
+
+def test_agent_before_metsDocumentID(workspace_metsDocumentID):
+    report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
+    assert report.is_valid
+    workspace_metsDocumentID.mets.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'OTHER')
+    workspace_metsDocumentID.save_mets()
+    report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
+    print(report.errors)
+    assert report.is_valid
 
 if __name__ == '__main__':
     main(__file__)

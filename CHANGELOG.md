@@ -7,8 +7,526 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
 
+  * `OcrdFile.url` can now be removed properly, #1226, #1227
+  * `ocrd workspace find --undo-download`: Only remove file refs if it's an actual download, #1150, #1235
+  * `ocrd workspace find --undo-download`: When `--keep-files` is not set, remove file from disk, #1150, #1235
+
+Changed:
+
+  * Install ocrd with `pip --editable` inside Docker, #1225, OCR-D/ocrd_all#416
+  * Reduce log spam in ocrd_network, #1222
+
+## [2.65.0] - 2024-05-03
+
+Fixed:
+
+  - bashlib processors will download on-demand, like pythonic processors do, #1216, #1217
+
+Changed:
+
+  - Replace `distutils` which equivalents from `shutil` for compatibility with python 3.12+, #1219
+  - CI: Updated GitHub actions, #1206
+  - CI: Fixed scrutinizer, #1217
+
+Added:
+
+  - Integration tests for `ocrd_network`, #1184
+
+## [2.64.1] - 2024-04-22
+
+Fixed:
+
+  * Broken PyPI release
+
+## [2.64.0] - 2024-04-22
+
+Removed:
+
+  * Support for Python `<=` 3.7, #1207
+
+Fixed:
+
+  * remove duplicate description of `OCRD_DOWNLOAD_TIMEOUT` in `--help`, #1204
+  * Use `importlib_metadata` shim for 3.9+, #1210, OCR-D/ocrd_froc#10
+
+## [2.63.3] - 2024-03-07
+
+Added:
+
+  * `make uninstall-workaround` compantion to `make install-workaround`, #119
+
+Fixed:
+
+  * `OcrdMets.add_file`: fix finding existing el_pagediv, #1199
+
+
+## [2.63.2] - 2024-03-05
+
+Fixed:
+
+  * Missed incrementing version
+
+## [2.63.1] - 2024-03-05
+
+Fixed:
+
+  * `OcrdMets` bug that produced invalid caches, #1192, #1195, #1193
+
+## [2.63.0] - 2024-02-12
+
+Fixed:
+
+  * Reduce logging level of spammy log statements to `DEBUG` in workspace, #1181
+  * Clean up lxml code, #1188
+
+Changed:
+
+  * :fire: `OcrdFile.local_filename` returns/accepts `str` after unpopular change to `Path` from #1079, #1182, #1167
+  * `WorkspaceValidator`: more efficiency by doing all page checks in the same loop, #1071
+
+Added:
+
+  * `OcrdMets.get_physical_pages` to search for/change/generate ranges for page-specific `mets:div` attributes beyond to `@ID`, #821, #1063
+
+## [2.62.0] - 2024-01-30
+
+Added:
+
+  * Basic integration test for `ocrd_network`, #1164
+  * `ocrd-tool.json` for `ocrd-dummy` now in repo root, for ocrd_all's `make ocrd-all-tool.json`, #1168
+
+Fixed:
+
+  * METS Server: UDS sockets are removed on process exit, #117
+
+Changed:
+
+  * replace license-incompatible sparkline library with a simpler implementation, #1176
+  * remove all pkg_resources calls with modern alternatives, no more run-time setuptools dependency, #1174
+
+## [2.61.2] - 2024-01-24
+
+Fixed:
+
+  * another regression to docker deployment (requirements.txt missing), #1173
+
+## [2.61.1] - 2024-01-23
+
+Fixed:
+
+  * deps-cuda: add workaround for keras-team/tf-keras#62, #1169
+  * fix regression docker deployment, #1172
+
+
+## [2.61.0] - 2024-01-23
+
+Changed:
+
+  * :fire: simplify the project layout and distribution policy, #1166
+    * In the future there will be only one distribution `ocrd`
+    * The previous separate distributions of the `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are all part of `ocrd` now
+    * Nothing needs to be changed in code using OCR-D/core, the package structure and API is the same as before
+    * Until the next major release, we will continue to provide distributions for `ocrd_utils` etc. that contain the same code as `ocrd`
+    * Using `ocrd_utils` etc. as distributions in `requirements.txt` or `install_requires` is now deprecated
+    * Once we release v3.0.0, these distributions will be depublished
+
+## [2.60.3] - 2024-01-10
+
+Fixed:
+
+  * `make install-dev` working with `setuptools>=64` again, #1163
+
+## [2.60.2] - 2024-01-09
+
+Fixed:
+
+  * Log level downgraded from DEBUG to INFO in logging.conf, #1161
+  * log OAI check as `DEBUG` not `INFO`, #1160
+
+## [2.60.1] - 2023-12-15
+
+Fixed:
+
+  * Docker: copy `.git` during build, so `setuptools_scm` can determine version number, #1159
+
+## [2.60.0] - 2023-12-15
+
+Fixed:
+
+  * `ocrd workspace list-page` now works in workspaces with non-page-specific files, #1148, #1151
+
+Changed:
+
+  * `cli.workspace.WorkspaceCtx` and `Resolver.resolve_mets_arguments` now have defaults for `mets_server_url`, `mets_basename` and `automatic_backup`, slub/mets-mods2tei#68, #1156
+  * :fire: switch to `pyproject.toml`, derive version from git, separate build from install, #1065
+
+## [2.59.1] - 2023-12-05
+
+Fixed:
+
+  * Chunking algorithm for `ocrd workspace list-page` now handles edge cases properly, #1145
+  * Avoid deadlocks in `ocrd_network` if processing workers not deployed, #1125, #1142
+
+## [2.59.0] - 2023-11-27
+
+Changed:
+
+  * Change web API paths to avoid any potential URL segment clashes, #1136, OCR-D/spec#250
+    * `GET /` -> `GET /info`
+    * `POST /` -> `POST /run`
+    * `/{job-id}` -> `/job/{job-id}`
+    * `/{job-id}/log` -> `/log/{job-id}`
+
+Fixed:
+
+  * WorkspaceBagger: do not overwrite files in case of filename conflict, #1129, #1137
+  * Update apidocs to include `ocrd_network`, #1131
+
+Added:
+
+  * `ocrd workspace update-page` to set attributes on the `mets:div` of a page, #1133, #1134
+  * `ocrd workspace list-page` now has configurable output format and optional partitioning of the page list, #1140, #1141
+  * `ocrd zip bag`, `ocrd workspace merge`, `ocrd workspace clone` now support whitelisting/blacklisting file groups, #356, #383, #506, #582, #1138, #1139
+  * workflow endpoint supports storing and deduplicating workflows, #1143
+
+Removed:
+
+  * `OcrdMets`: remove Unused `__exit__` method,.#1130 #1132
+
+## [2.58.1] - 2023-10-20
+
+Fixed:
+
+  * bashlib: regression introduced in v2.58.0 breaking non-mets-server calls, #1128
+
+## [2.58.0] - 2023-10-20
+
+Fixed:
+
+  * `helpers.run_cli`: Handle both `int` and `str` log levels, #1121
+  * bashlib: typo `ocrd_argv` -> `ocrd__argv`, #1122, #1123
+  * <del>processing workers: pass log level as string and `initLogging` at the right time,</del> Handle logging of bashlib workers separately, #1123 #1127
+  * `ocrd workspace bulk-add` now supports `-U/--mets-server-url`, #1126
+  * bashlib: Support `-U` as alias for `--mets-server-url`, #1126
+
+Added:
+
+  * METS server: `POST /reload` to reload METS from disk, #1123, #1124
+
+## [2.57.2] - 2023-10-18
+
+Fixed:
+
+  * bashlib: remove vestigial `--log-filename` option from #1105, #1120
+
+## [2.57.1] - 2023-10-18
+
+Fixed:
+
+  * Docker deployment process, no functional change
+
+## [2.57.0] - 2023-10-18
+
+Fixed:
+
+  * running a processor as a worker no longer dumps `ocrd-tool.json` and messed up logging, #1116
+
+Changed:
+
+  * logging: With `ocrd_logging.conf` (e.g. in Docker), log all messages `DEBUG` and up and log to `ocrd.log`, #1117
+
+## [2.56.0] - 2023-10-13
+
+Changed:
+
+  * A separate logging dir tree structure for the modules (processing servers, processing workers, processor servers, mets servers, processing jobs). Configurable with env variable `OCRD_NETWORK_LOGS_ROOT_DIR`, #1111
+    * Processing job-level logging - each job is logged into a separate file with format `{job_id}.log`
+    * Processing job-level logging file paths are added to the Job models and preserved in the database.
+    * The `ocrd_network` logging is based on the format provided in `ocrd_utils`
+  * Support env variable `OCRD_NETWORK_SOCKETS_ROOT_DIR`  for setting the root directory for METS server sockets, #1111
+  * An endpoint `/job/{id}/log` for getting the log file of a processing job of a processor, #1111
+
+## [2.55.2] - 2023-10-12
+
+Fixed:
+
+  * `OcrdAgentModel`: `_type` must be `type`, pydantic/pydantic#6797, #1114
+
+## [2.55.1] - 2023-10-12
+
+Changed:
+
+  * `ocrd workspace bulk-add` distinguishes between `url` and `local_filename`, supporting both, #1086, #1079, #1113
+
+## [2.55.0] - 2023-10-11
+
+Added:
+
+  * `/workflow` endpoint that can handle `ocrd process` workflows and distribute jobs page-wise across workers, #1083, #1105, #1108, #1109
+
+Changed:
+
+  * METS Server: Make sockets world-readable and -writable, #1098, #1099
+  * METS Server: Implement find_files support for `local_filename` and `url`, #1100
+  * Logging: consistent logger names derived from `ocrd.`, #1101
+  * Logging: consistent logging across the packages, including `ocrd_network`, #1101
+  * `..` page range operator: allow single-page ranges, #1106, #1107
+
+## [2.54.0] - 2023-09-12
+
+Added:
+
+  * METS Server: providing concurrent additional access to the METS file for parallel processing, #966
+  * Web API: Cache jobs in the processing server with an optional callback once processed, #1069
+  * Web API: Lock pages output file groups of a workspace to prevent simultaneous non-additive access to workspaces, #1069
+  * Web API: Support job dependency for caching complete fully-deterministic workflows, #1069
+  * Web API: Processing server will start all ready requests, not just the first one, #1069
+  * Web API: Workers will create on demand, retry attempts configurable via `OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS`, #1093
+  * `ocrd_utils.config` to collect all configuration based on environment variables in one place, #1081
+  * Processor CLI: Warn if a given page ID cannot be found in METS, #1088, #1089
+
+Changed:
+
+  * Processors now have `worker` and `server` subcommands, with separate --help, for starting processing worker/processor server, #1087
+  * Move `tf_disable_interactive_logs` (to silence keras/tensorflow print statements) to `ocrd_utils.logging` and do not call on module-level, #1090, #1091
+  * :fire: We do now properly distinguish between original and local-file FLocat, original URL will not be changed for downloads anymore, #323, #1079
+  * :fire: logging has been streamlined to be better usable as a library, #1080
+
+## [2.53.0] - 2023-08-21
+
+Fixed:
+
+  * `WorkspaceValidator`: make the check for consistency of `pc:Page[@pcGtsId]` and `mets:file[@ID]` optional with the `mets_fileid_page_pcgtsid` skip flag, #1066
+  * `ocrd resmgr download`: use `basedir` as an arg and not a kwarg, #1078
+
+Changed:
+
+  * `WorkspaceValidator`: Download files temporarily/on-demand, #1066
+  * `ocrd-* --version` now prints only the version of the processor without noise or core version, #1068
+
+Added
+
+  * Environment variables to control optional retries and timeouts for downloading files:
+    * `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of workspace files. #1073
+    * `OCRD_DOWNLOAD_TIMEOUT`: Timeout in seconds for connecting or reading (comma-separated) when downloading. #1073
+  * Environment variables used throughout core are now documented in README and `ocrd --help`,  #1073
+  * Web API: `--create-queue` option to on-demand create RabbitMQ for processing workers, #1075
+  * Web API: `--queue-connec-attempts` to retry connection to RabbitMQ in case server is not yet running, #1075
+
+## [2.52.0] - 2023-06-26
+
+Added:
+
+  * `make deps-cuda`: Makefile target to set up a working CUDA installation, both for native and Dockerfile.cuda, #1055
+  * Implementation of the Standalone Processor Server module, #1030
+  * `ocrd_utils.guess_media_type` to consistently try to determine media type from a file name, #1045
+
+Changed:
+
+  * Refactoring the Network CLI, all network module CLI are in `ocrd_network` now, #1030
+  * The Processing Server uses [`ocrd-all-tool.json`](https://ocr-d.de/js/ocrd-all-tool.json) file, removing local processor install dependencies, #1030
+  * Overall improvement and refactoring of the `ocrd_network` package, #1030
+  * Optionally skip deployment of mongodb and rabbitmq to make external usage/management possible, #1048
+  * `page_from_file` now also accepts a (`str`) file path in addition to `OcrdFile`, #1045
+  * packaging: install/uninstall in correct build order, use `python -m build` instead of `python setup.py sdist bdist_wheel`, #1051
+
+Removed:
+
+  * Obsolete travis CI configuration removed, #1056
+  * Support for end-of-life python versions 3.5 and 3.6, #1057
+
+Fixed:
+
+  * Makefile `FIND_VERSION` macro: use `grep -E` instead of `grep -P` for macos compatibility, #1060
+  * `ocrd resmgr`: detect HTTP errors as such and don't try to continue if HTTP >= 400, #1062
+  * `PageValidator`: Ensure TextLine has coordinates when checking for Baseline containment, #1049
+
+## [2.51.0] - 2023-06-07
+
+Changed:
+
+  * `core cuda` Docker: CUDA base image working again, based on `ocrd/core` not `nvidia/cuda` in a separate `Dockerfile.cuda`, #1041
+  * `core-cuda` Docker: adopt #1008 (venv under /usr/local, as in ocrd_all, instead of dist-packages), #1041
+  * `core-cuda` Docker: use conda ([micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)) for CUDA toolkit, and [nvidia-pyindex](https://pypi.org/project/nvidia-pyindex/) for CUDA libs – instead of [nvidia/cuda](https://hub.docker.com/r/nvidia/cuda) base image, #1041
+  * more robust workaround for shapely#1598, #1041
+
+Removed:
+
+  * Revert #882 (fastentrypoints) as it enforces deps versions at runtime
+  * Drop `ocrd_utils.package_resources` and use `pkg_resources.*` directly, #1041
+  * `ocrd resmgr`: Drop redundant (processor-provided) entries in the central `resource_list.yml`.
+
+## [2.50.0] - 2023-04-24
+
+Added:
+
+  * :fire: `ocrd_network`: Components related to OCR-D Web API, #974
+
+Changed:
+
+  * `bashlib`: support file input from multiple file groups, #1027, #1031
+
+Fixed:
+
+  * Don't output default docstrings for bashlib processors, #1026
+
+## [2.49.0] - 2023-03-24
+
+Changed:
+
+  * :fire: (for now: also) publish Docker images to ghcr.io, not docker.io, #997
+  * `ocrd resmgr`: eynollah models now provided by eynollah itself, qurator-spk/eynollah#91
+
+## [2.48.1] - 2023-03-22
+
+Changed:
+
+  * `make docker-cuda`: Support CUDA 11.3 not 11.2, #1020
+
+## [2.48.0] - 2023-03-22
+
+Changed:
+
+  * :fire: ocrd.run_processor / ocrd.processor.get_processor: rm unnecessary ocrd_tool kwarg #998, #1009
+  * chdir into workspace directory for both cached and uncached `get_processor`, #972, 987
+  * :fire: new CUDA base image 20.04, support CUDA runtime 11/12, not 10, #1014
+
+Fixed:
+
+  * `make install`: do not update opencv-python-headless or numpy for python `<= 3.6`, #1014
+
+## [2.47.4] - 2023-03-16
+
+Changed:
+
+  * `resmgr`: `ocrd-typegroups-classifier` resources now listed decentrally, #1011, OCR-D/ocrd_typegroups_classifier#15
+
+## [2.47.3] - 2023-03-15
+
+Fixed:
+
+  * Docker: reintroduce `python3-pip` because why not, #1004
+
+## [2.47.2] - 2023-03-15
+
+Fixed:
+
+  * Docker: Use `pip3` not `pip`, #986
+  * `make install`: Speed up opencv built for (now unsupported) python `<= 3.6`, #986, OCR-D/ocrd_calamari#72
+
+Added:
+
+  * CI/CD: GH action to deploy docker images to ghcr.io, #986
+
+## [2.47.1] - 2023-03-15
+
+Fixed:
+
+  * Docker: install `python3-venv`, do not install `python3-pip`, #1003, #1004, OCR-D/ocrd_all#352
+
+## [2.47.0] - 2023-03-15
+
+Fixed:
+
+  * `ocrd resmgr`: handle namespaces packages gracefully for Python `<=` 3.6, #917, #985
+  * `ocrd resmgr`: guess media type with `filetype.py` in addition to `MIME_TO_EXT`, #991
+  * `OcrdMets`: Insert `mets:agent` in a schema-compliant way, #976, #977
+  * `ocrd_cli_wrap_processor`: remove unnecessary ocrd_tool kwarg, #998, #999
+  * Docker base image builds again, except CUDA, #986
+
+Added:
+
+  * `ocrd resmgr`: support Google Drive links, #993, #992
+
+Changed:
+
+  * Use the new `importlib.resources.files` API, #995, #996
+  * `ocrd resmgr`: resources for `ocrd_anybaseocr` removed from central list, provided by the project, #989, OCR-D/ocrd_anybaseocr#100
+
+## [2.46.0] - 2023-02-16
+
+Changed:
+
+  * `WorkspaceValidator`: an `OcrdFile` without a pageId is not an error, but a document-wide file, #485, #979
+  * `WorkspaceBackupManager`: add snapshot on init if enabled, #981
+  * :fire: end-of-life for python 3.6, test from 3.7 to 3.11, #956
+  * :fire: update base image to Ubuntu 20.04, #956
+
+Fixed:
+
+  * `bashlib`: Handle empty list of input files, #978
+  * `OcrdMets.find_files`: don't override the `@LOCTYPE` of file candidates, #980
+  * `ocrd resmgr`: replace libmagic with simple lookup by suffix, #982, #984
+
+Added:
+
+  * `helpers`: `get_cached_processor` to get instances of a processor in preparation for #974, #972
+
+## [2.45.1] - 2023-01-20
+
+Fixed:
+
+  * `ocrd resmgr`: insert new entries first, so dedup works as expected, #971
+
+## [2.45.0] - 2022-12-13
+
+Fixed:
+
+  * `ocrd resmgr download --overwrite` now works properly for both directories and files, #690, #797
+  * `ocrd resmgr`: `archive` resources can now also be ZIP files and reference files and folders in them, #967
+  * `ocrd-dummy`: can now be used to create PAGE-XML for images without copying, #803, #814
+
+## [2.44.0] - 2022-12-08
+
+Added:
+
+  * `ocrd zip update` command to update checksums for an OCRD-ZIP after changing it, #363, #951
+
+Removed:
+
+  * `ocrd zip bag` does no longer support the long-broken `--in-place` option, #964, #363
+
+## [2.43.0] - 2022-12-01
+
+Added:
+
+  * `OcrdMets.refresh_caches` to update caches after changes to XML outside of `OcrdMets`, #957, #960
+
+## [2.42.1] - 2022-11-30
+
+Fixed:
+
+  * Regressions from PR #875, #957, #958
+  * Missing import in `ocrd workspace merge`, #956
+
+## [2.42.0] - 2022-11-23
+
+Fixed:
+
+  * Symlinks in workspaces are properly resolved now, #802, #954
+
+Added:
+
+  * Optional caching of access to METS, configured via [environment variable `OCRD_METS_CACHING`](https://github.com/OCR-D/core/#configuration), #875
+  * CPU and memory profiling , configured via [environment variable `OCRD_PROFILE` and `OCRD_PROFILE_FILE`](https://github.com/OCR-D/core/#configuration), #678
+
+Changed:
+
+  * `ocrd workspace find`: supports comma-separated regexes, ranges and literal values for `--page-id`, #955
+  * `ocrd workspace find`: ranges are generated with last number in string, #955
+
+
+## [2.41.0] - 2022-11-09
+
+Fixed:
+
   * `ocrd workspace list-installed` should not create spurious entries for `moduledir` files, #940
   * `OcrdResourceManager.download` does not need to query `size` via HTTP `Content-Length` in most cases, #924, #939
+  * `make install`: Reinstall shapely to work around shapely/shapely#1598, #947
+
+Changed:
+
+  * `ocrd workspace bulk-add`: Generate file_id consistent with conventions from filename if no `--file-id` given, #943
 
 ## [2.40.0] - 2022-10-25
 
@@ -74,7 +592,7 @@ Fixed:
 
 Changed:
 
-  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Consistently use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
   * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
   * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
   * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
@@ -484,7 +1002,7 @@ Changed:
 
 Added:
 
-  * processors can `self.add_metada(pcgts)` to add a self-describing `pg:MetadataItem`, #574
+  * processors can `self.add_metadata(pcgts)` to add a self-describing `pg:MetadataItem`, #574
 
 
 ## [2.13.2] - 2020-08-13
@@ -531,7 +1049,7 @@ Fixed:
 
 Fixed:
 
-  * logging no longer intereferes with `--dump-json`/`--help`/`--version`, #540, #546
+  * logging no longer interferes with `--dump-json`/`--help`/`--version`, #540, #546
 
 ## [2.12.3] - 2020-07-23
 
@@ -648,7 +1166,7 @@ Changed:
 Added:
 
   * Workspace: Optional `overwrite_mode` that sets `force` for all operations
-  * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
+  * `OcrdPage`: `get_AllAlternativeImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
   * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
   * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
 
@@ -1358,7 +1876,7 @@ Changed:
       a temporary directory but reuse the existing directory
     * When not providing `mets_basename`, assume the last URL path segment to be
       the METS basename instead of the fixed string `mets.xml`
-  * incoroporate changes to ocrd_tool schema from spec/v2.2.1
+  * incorporate changes to ocrd_tool schema from spec/v2.2.1
 
 ## [0.6.0] - 2018-07-23
 
@@ -1564,6 +2082,53 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.65.0]: ../../compare/v2.65.0..v2.64.1
+[2.64.1]: ../../compare/v2.64.1..v2.64.0
+[2.64.0]: ../../compare/v2.63.0..v2.63.3
+[2.63.3]: ../../compare/v2.63.3..v2.63.1
+[2.63.2]: ../../compare/v2.63.2..v2.63.1
+[2.63.1]: ../../compare/v2.63.1..v2.63.0
+[2.63.0]: ../../compare/v2.63.0..v2.62.0
+[2.62.0]: ../../compare/v2.62.0..v2.61.2
+[2.61.2]: ../../compare/v2.61.2..v2.61.1
+[2.61.1]: ../../compare/v2.61.1..v2.61.1
+[2.61.0]: ../../compare/v2.61.0..v2.60.3
+[2.60.3]: ../../compare/v2.60.3..v2.60.2
+[2.60.2]: ../../compare/v2.60.2..v2.60.1
+[2.60.1]: ../../compare/v2.60.1..v2.60.0
+[2.60.0]: ../../compare/v2.60.0..v2.59.1
+[2.59.1]: ../../compare/v2.59.1..v2.59.0
+[2.59.0]: ../../compare/v2.59.0..v2.58.1
+[2.58.0]: ../../compare/v2.58.1..v2.58.0
+[2.58.0]: ../../compare/v2.58.0..v2.57.2
+[2.57.2]: ../../compare/v2.57.2..v2.57.1
+[2.57.1]: ../../compare/v2.57.1..v2.57.0
+[2.57.0]: ../../compare/v2.57.0..v2.56.0
+[2.56.0]: ../../compare/v2.56.0..v2.55.2
+[2.55.2]: ../../compare/v2.55.2..v2.55.1
+[2.55.1]: ../../compare/v2.55.1..v2.55.0
+[2.55.0]: ../../compare/v2.55.0..v2.54.0
+[2.54.0]: ../../compare/v2.54.0..v2.53.0
+[2.53.0]: ../../compare/v2.53.0..v2.52.0
+[2.52.0]: ../../compare/v2.52.0..v2.51.0
+[2.51.0]: ../../compare/v2.51.0..v2.50.0
+[2.50.0]: ../../compare/v2.50.0..v2.49.0
+[2.49.0]: ../../compare/v2.49.0..v2.48.1
+[2.48.1]: ../../compare/v2.48.1..v2.48.0
+[2.48.0]: ../../compare/v2.48.0..v2.47.4
+[2.47.4]: ../../compare/v2.47.4..v2.47.3
+[2.47.3]: ../../compare/v2.47.3..v2.47.2
+[2.47.2]: ../../compare/v2.47.2..v2.47.1
+[2.47.1]: ../../compare/v2.47.1..v2.47.0
+[2.47.0]: ../../compare/v2.47.0..v2.46.0
+[2.46.0]: ../../compare/v2.46.0..v2.45.1
+[2.45.1]: ../../compare/v2.45.1..v2.45.0
+[2.45.0]: ../../compare/v2.45.0..v2.44.0
+[2.44.0]: ../../compare/v2.44.0..v2.43.0
+[2.43.0]: ../../compare/v2.43.0..v2.42.1
+[2.42.1]: ../../compare/v2.42.1..v2.42.0
+[2.42.0]: ../../compare/v2.42.0..v2.41.0
+[2.41.0]: ../../compare/v2.41.0..v2.40.0
 [2.40.0]: ../../compare/v2.40.0..v2.39.0
 [2.39.0]: ../../compare/v2.39.0..v2.38.0
 [2.38.0]: ../../compare/v2.38.0..v2.37.0

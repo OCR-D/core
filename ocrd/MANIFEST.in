@@ -1,1 +1,0 @@
-recursive-include ocrd *.json *.yml *.yaml *.bash *.xml

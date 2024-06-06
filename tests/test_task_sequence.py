@@ -145,8 +145,8 @@ class TestOcrdWfStep(TestCase):
                 ws.save_mets()
                 files_before = len(ws.mets.find_all_files())
                 run_tasks('mets.xml', 'DEBUG', None, [
-                    "dummy -I OCR-D-IMG -O GRP1",
-                    "dummy -I GRP1 -O GRP2",
+                    "dummy -I OCR-D-IMG -O GRP1 -P copy_files true",
+                    "dummy -I GRP1 -O GRP2 -P copy_files true",
                 ])
                 ws.reload_mets()
                 # step 1: 2 images in OCR-D-IMG -> 2 images 2 PAGEXML in GRP1

@@ -1,8 +1,9 @@
 import os
-import pathlib
-import pdb
+from pathlib import Path
+# import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
+from ocrd_utils import config
 from ocrd_utils.os import get_ocrd_tool_json
 
 from pytest import raises, fixture
@@ -20,19 +21,24 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
 
     # arrange
     monkeypatch.setenv('HOME', str(tmp_path))
+    if 'XDG_CONFIG_HOME' in os.environ:
+        monkeypatch.delenv('XDG_CONFIG_HOME', raising=False)
 
     # act
     mgr = OcrdResourceManager()
 
     # assert
     default_config_dir = os.path.join(os.environ['HOME'], '.config', 'ocrd')
-    f = pathlib.Path(default_config_dir) / CONST_RESOURCE_YML
-    assert f.exists()
+    f = Path(default_config_dir) / CONST_RESOURCE_YML
+    assert os.environ['HOME'] == str(tmp_path)
+    assert config.HOME == tmp_path
+    assert Path.home() == tmp_path
     assert f == mgr.user_list
+    assert f.exists()
     assert mgr.add_to_user_database('ocrd-foo', f)
     # pdb.set_trace()
 
-    mgr.list_installed()
+    mgr.list_installed('ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
     # TODO mock request
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
@@ -55,25 +61,25 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     assert f.exists()
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
-    mgr.list_installed()
+    mgr.list_installed('ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
-    assert mgr.userdir == str(tmp_path)
+    assert mgr.userdir == tmp_path
 
 
 def test_resources_manager_config_explicite(tmp_path):
 
     # act
-    mgr = OcrdResourceManager(xdg_config_home=str(tmp_path))
+    mgr = OcrdResourceManager(xdg_config_home=str(tmp_path / 'config'), xdg_data_home=str(tmp_path / 'data'))
 
     # assert
-    f = tmp_path / 'ocrd' / CONST_RESOURCE_YML
+    f = tmp_path / 'config' / 'ocrd' / CONST_RESOURCE_YML
     assert f.exists()
     assert f == mgr.user_list
     assert mgr.add_to_user_database('ocrd-foo', f)
-    mgr.list_installed()
+    mgr.list_installed(executable='ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
     fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
     assert fpath.exists()
@@ -140,6 +146,22 @@ def test_date_as_string(tmp_path):
         """)
     mgr.load_resource_list(test_list)
     mgr.list_available(executable='ocrd-eynollah-segment')
+
+def test_download_archive(tmp_path):
+    mgr = OcrdResourceManager(xdg_data_home=tmp_path)
+    for archive_type in ('.zip', '.tar.gz', '.tar.xz'):
+        mgr.download(
+            'ocrd-foo',
+            str(Path(__file__).parent / f'data/filename{archive_type}'),
+            mgr.location_to_resource_dir('data'),
+            resource_type='archive',
+            name='filename.ext',
+            path_in_archive='filename.ext',
+            overwrite=True,
+        )
+        filecontent_path =  Path(tmp_path / 'ocrd-resources/ocrd-foo/filename.ext')
+        assert filecontent_path.read_text() == '1\n'
+
 
 if __name__ == "__main__":
     main(__file__)

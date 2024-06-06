@@ -2,10 +2,16 @@ checks:
   python: true
 
 build:
+  image: default-bionic
+  environment:
+    python:
+      version: 3.8.2
+      virtualenv: true
   nodes:
     analysis:
       dependencies:
         override:
+          - sudo make deps-ubuntu
           - make install
       tests:
         override:

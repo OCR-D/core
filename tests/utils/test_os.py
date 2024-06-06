@@ -1,11 +1,15 @@
 from tempfile import mkdtemp
 from tests.base import TestCase, main, assets
 from shutil import rmtree
+from pathlib import Path
 from os import environ as ENV, getcwd
 from os.path import expanduser, join
+import sys
 
 from ocrd_utils.os import (
     list_resource_candidates,
+    redirect_stderr_and_stdout_to_file,
+    guess_media_type,
 )
 
 class TestOsUtils(TestCase):
@@ -34,6 +38,26 @@ class TestOsUtils(TestCase):
             '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
 
+    def test_guess_media_type(self):
+        testdata = Path(__file__).parent / '../data'
+        assert guess_media_type(__file__) == 'text/x-python'
+        assert guess_media_type(testdata / 'filename.tar.gz') == 'application/gzip'
+        assert guess_media_type(testdata / 'filename.tar.xz') == 'application/x-xz'
+        assert guess_media_type(testdata / 'filename.zip') == 'application/zip'
+        assert guess_media_type(testdata / 'mets-with-metsDocumentID.xml') == 'application/xml'
+        assert guess_media_type(testdata / 'mets-with-metsDocumentID.xml', application_xml='text/x-mets') == 'text/x-mets'
+
+    def test_redirect_stderr_and_stdout_to_file(self):
+        # TODO test logging is redirected properly without running into
+        # pytest's capturing intricacies
+        fname = '/tmp/test-redirect.txt'
+        Path(fname).write_bytes(b'')
+        with redirect_stderr_and_stdout_to_file(fname):
+            print('one')
+            sys.stdout.write('two\n')
+            sys.stderr.write('three\n')
+            print('four', file=sys.stderr)
+        assert Path(fname).read_text(encoding='utf-8') == 'one\ntwo\nthree\nfour\n'
 
 if __name__ == '__main__':
     main(__file__)

@@ -1,6 +1,7 @@
 autopep8
 pytest >= 4.0.0
 generateDS == 2.35.20
+pytest-benchmark >= 3.2.3
 coverage >= 4.5.2
 sphinx
 sphinx_click
@@ -14,3 +15,5 @@ deprecated
 click
 twine
 wheel
+# For typing-compatible lxml interface definitions
+types-lxml

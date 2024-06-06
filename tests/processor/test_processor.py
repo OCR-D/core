@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 from os import environ
 from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor, DUMMY_TOOL
+from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
@@ -105,12 +105,12 @@ class TestProcessor(TestCase):
 
     def test_run_agent(self):
         no_agents_before = len(self.workspace.mets.agents)
-        run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace)
+        run_processor(DummyProcessor, workspace=self.workspace)
         self.assertEqual(len(self.workspace.mets.agents), no_agents_before + 1, 'one more agent')
         #  print(self.workspace.mets.agents[no_agents_before])
 
     def test_run_input(self):
-        run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace, input_file_grp="OCR-D-IMG")
+        run_processor(DummyProcessor, workspace=self.workspace, input_file_grp="OCR-D-IMG")
         assert len(self.workspace.mets.agents) > 0
         assert len(self.workspace.mets.agents[-1].notes) > 0
         assert ({'{https://ocr-d.de}option': 'input-file-grp'}, 'OCR-D-IMG') in self.workspace.mets.agents[-1].notes
@@ -120,7 +120,7 @@ class TestProcessor(TestCase):
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0002')
-            run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=ws,
+            run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
@@ -134,19 +134,19 @@ class TestProcessor(TestCase):
             ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, ID='OCR-D-OUT_phys_0001', pageId='phys_0001')
             ws.overwrite_mode = False
             with pytest.raises(Exception) as exc:
-                run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=ws,
+                run_processor(DummyProcessorWithOutput, workspace=ws,
                               input_file_grp="GRP1",
                               output_file_grp="OCR-D-OUT")
                 assert str(exc.value) == "File with ID='OCR-D-OUT_phys_0001' already exists"
             ws.overwrite_mode = True
-            run_processor(DummyProcessorWithOutput, ocrd_tool=DUMMY_TOOL, workspace=ws,
+            run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
-            run_processor(DummyProcessor, ocrd_tool=DUMMY_TOOL, workspace=self.workspace)
+            run_processor(DummyProcessor, workspace=self.workspace)
             run_cli(
                 'echo',
                 mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'),
@@ -230,7 +230,7 @@ class TestProcessor(TestCase):
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id=None)
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0001')
-            for page_id in [None, 'phys_0001,phys_0002']:
+            for page_id in [None, 'phys_0001']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
