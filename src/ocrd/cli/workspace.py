@@ -6,7 +6,7 @@ OCR-D CLI: workspace management
     :nested: full
 """
 import os
-from os import getcwd
+from os import getcwd, unlink
 from os.path import relpath, exists, join, isabs
 from pathlib import Path
 from json import loads, dumps
@@ -436,11 +436,12 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
                   'basename_without_extension',
                   'local_filename',
               ]))
-@click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
-@click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS")
+@click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file")
+@click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS and workspace")
+@click.option('--keep-files', is_flag=True, help="Do not remove downloaded files from the workspace with --undo-download")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, include_fileGrp, exclude_fileGrp, download, undo_download, wait):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, include_fileGrp, exclude_fileGrp, download, undo_download, keep_files, wait):
     """
     Find files.
 
@@ -457,25 +458,29 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
         mets_basename=ctx.mets_basename,
         mets_server_url=ctx.mets_server_url,
     )
-    for f in workspace.find_files(
-            file_id=file_id,
-            file_grp=file_grp,
-            mimetype=mimetype,
-            page_id=page_id,
-            include_fileGrp=include_fileGrp,
-            exclude_fileGrp=exclude_fileGrp,
-        ):
-        ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
-        if download and not f.local_filename:
-            workspace.download_file(f)
-            modified_mets = True
-            if wait:
-                time.sleep(wait)
-        if undo_download and f.url and f.local_filename:
-            ret_entry = [f'Removed local_filename {f.local_filename}']
-            f.local_filename = None
-            modified_mets = True
-        ret.append(ret_entry)
+    with pushd_popd(workspace.directory):
+        for f in workspace.find_files(
+                file_id=file_id,
+                file_grp=file_grp,
+                mimetype=mimetype,
+                page_id=page_id,
+                include_fileGrp=include_fileGrp,
+                exclude_fileGrp=exclude_fileGrp,
+            ):
+            ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
+            if download and not f.local_filename:
+                workspace.download_file(f)
+                modified_mets = True
+                if wait:
+                    time.sleep(wait)
+            if undo_download and f.url and f.local_filename:
+                ret_entry = [f'Removed local_filename {f.local_filename}']
+                f.local_filename = None
+                modified_mets = True
+                if not keep_files:
+                    ctx.log.debug("rm %s [cwd=%s]", f.local_filename, workspace.directory)
+                    unlink(f.local_filename)
+            ret.append(ret_entry)
     if modified_mets:
         workspace.save_mets()
     if 'pageId' in output_field:
