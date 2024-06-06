@@ -25,7 +25,7 @@ class TestXsdValidator(TestCase):
     def test_mets_empty(self):
         with TemporaryDirectory() as tempdir:
             mets_path = Path(tempdir, 'mets.xml')
-            mets_path.write_bytes(METS_XML_EMPTY)
+            mets_path.write_text(METS_XML_EMPTY)
             report = XsdMetsValidator.validate(mets_path)
             self.assertEqual(len(report.errors), 2)
             self.assertEqual(report.errors[0],

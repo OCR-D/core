@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# vim: ft=zsh
+set -eu
+set -o pipefail
+MIMETYPE_PAGE=$(ocrd bashlib constants MIMETYPE_PAGE)
+source $(ocrd bashlib filename)
+set -x
+
+_ocrd_tool_json="$0.ocrd-tool.json"
+if [[ $_ocrd_tool_json == $0 || ! -e $_ocrd_tool_json ]];then
+    _ocrd_tool_json='ocrd-tool.json'
+fi
+
+ocrd__wrap $_ocrd_tool_json ocrd-cp "$@"
+
+IFS=',' read -ra in_file_grps <<< ${ocrd__argv[input_file_grp]}
+if ((${#in_file_grps[*]}>1)); then
+    ocrd__log info "running on multiple input fileGrps ${in_file_grps[*]}"
+else
+    ocrd__log info "running on single input fileGrp ${in_file_grps}"
+fi
+out_file_grp=${ocrd__argv[output_file_grp]}
+message="${params[message]}"
+
+cd "${ocrd__argv[working_dir]}"
+mets=$(basename ${ocrd__argv[mets_file]})
+for ((n=0; n<${#ocrd__files[*]}; n++)); do
+    in_fpath=($(ocrd__input_file $n local_filename))
+    in_id=($(ocrd__input_file $n ID))
+    in_mimetype=($(ocrd__input_file $n mimetype))
+    in_pageId=($(ocrd__input_file $n pageId))
+    if ! test -f "${in_fpath#file://}"; then
+        ocrd__log error "input file '${in_fpath#file://}' (ID=${in_id} pageId=${in_pageId} MIME=${in_mimetype}) is not on disk"
+        continue
+    fi
+    if [ "x${in_mimetype}" = x${MIMETYPE_PAGE} ]; then
+        ocrd__log info "processing PAGE-XML input file $in_fpath ($in_id / $in_pageId)"
+        out_suf=.xml
+    else
+        ocrd__log info "processing ${in_mimetype} input file $in_fpath ($in_id / $in_pageId)"
+        out_suf=.${in_fpath##*.}
+    fi
+    for ((i=1; i<${#in_fpath[*]}; i++)); do
+        ocrd__log warning "ignoring ${in_mimetype[$i]} input file ${in_fpath[$i]} (${in_id[$i]} ${in_pageId[$i]})"
+    done
+    out_id=$(ocrd__input_file $n outputFileId)
+    out_fpath="${ocrd__argv[output_file_grp]}/${out_id}${out_suf}"
+    declare -a options
+    if [[ "${ocrd__argv[overwrite]}" == true ]]; then
+        options=( --force )
+    else
+        options=()
+    fi
+    mkdir -p $out_file_grp
+    cp ${options[*]} "$in_fpath" "$out_fpath"
+    if [ -n "$message" ]; then
+        echo "$message"
+    fi
+    if [ -n "$in_pageId" ]; then
+        options+=( -g $in_pageId )
+    fi
+    options+=( -G $out_file_grp -m $in_mimetype -i "$out_id" "$out_fpath" )
+    ocrd -l ${ocrd__argv[log_level]} workspace add "${options[@]}"
+done
+

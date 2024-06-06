@@ -253,7 +253,7 @@ def test_all_regions_without_reading_order():
     assert len(pg.get_AllRegions(classes=['Text'], depth=2)) == 37
 
 
-def test_get_all_regions_invalid_order_raises_exeption():
+def test_get_all_regions_invalid_order_raises_exception():
     # arrange
     with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
         pg = parseString(f.read().encode('utf8'), silence=True).get_Page()
@@ -266,7 +266,7 @@ def test_get_all_regions_invalid_order_raises_exeption():
     assert "Argument 'order' must be either 'document', 'reading-order' or 'reading-order-only', not 'random'" in str(exc.value)
 
 
-def test_get_all_regions_invalid_depth_raises_exeption():
+def test_get_all_regions_invalid_depth_raises_exception():
     # arrange
     with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
         pg = parseString(f.read().encode('utf8'), silence=True).get_Page()
@@ -301,7 +301,7 @@ def test_all_regions_with_reading_order():
     assert len(pg.get_AllRegions(classes=['Text'], order='reading-order', depth=1)) == 17
 
 
-def test_get_unorderd_group_children():
+def test_get_unordered_group_children():
     # arrange
     with open(assets.path_to('gutachten/data/TEMP1/PAGE_TEMP1.xml'), 'r') as f:
         pcgts = parseString(f.read().encode('utf8'), silence=True)
@@ -428,7 +428,7 @@ def test_serialize_no_empty_readingorder():
     """
     https://github.com/OCR-D/core/issues/602
     """
-    pcgts = page_from_image(create_ocrd_file_with_defaults(url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
+    pcgts = page_from_image(create_ocrd_file_with_defaults(local_filename=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
     pcgts.get_Page().set_ReadingOrder(ReadingOrderType())
     assert pcgts.get_Page().get_ReadingOrder()
     pcgts = parseString(to_xml(pcgts, skip_declaration=True))
@@ -439,7 +439,7 @@ def test_hashable():
     """
     https://github.com/OCR-D/ocrd_segment/issues/45
     """
-    pcgts = page_from_image(create_ocrd_file_with_defaults(url=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
+    pcgts = page_from_image(create_ocrd_file_with_defaults(local_filename=assets.path_to('kant_aufklaerung_1784/data/OCR-D-IMG/INPUT_0017.tif')))
     page = pcgts.get_Page()
     testset = set()
     testset.add(pcgts)

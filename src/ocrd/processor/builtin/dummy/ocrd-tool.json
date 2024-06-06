@@ -1,0 +1,19 @@
+{
+  "tools": {
+    "ocrd-dummy": {
+      "executable": "ocrd-dummy",
+      "description": "Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group",
+      "steps": ["preprocessing/optimization"],
+      "categories": ["Image preprocessing"],
+      "input_file_grp": "DUMMY_INPUT",
+      "output_file_grp": "DUMMY_OUTPUT",
+      "parameters": {
+        "copy_files": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to actually copy files (true) or just create PAGE-XML as a side effect (false)"
+        }
+      }
+    }
+  }
+}

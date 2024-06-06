@@ -1,0 +1,61 @@
+# List available resources by processor for "ocrd resmgr"
+ocrd-calamari-recognize:
+  # XXX disabled since older ocrd_calamari versions don't support resource resolving
+  #- url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-07-22T15_49+0200/model.tar.xz
+  #  type: archive
+  #  name: qurator-gt4histocr-0.3
+  #  description: Calamari model trained with GT4HistOCR
+  #  size: 116439072
+  #  path_in_archive: '.'
+  #  version_range: '< 1.0.0'
+  - url: https://qurator-data.de/calamari-models/GT4HistOCR/2019-12-11T11_10+0100/model.tar.xz
+    type: archive
+    name: qurator-gt4histocr-1.0
+    description: Calamari model trained with GT4HistOCR
+    size: 90275264
+    path_in_archive: '.'
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_fraktur19-1.tar.gz
+    type: archive
+    name: zpd-fraktur19
+    description: Model trained on 19th century german fraktur
+    path_in_archive: 'c1_fraktur19-1'
+    size: 86009886
+    version_range: '>= 1.0.0'
+  - url: https://github.com/Calamari-OCR/calamari_models_experimental/releases/download/v0.0.1-pre1/c1_latin-script-hist-3.tar.gz
+    type: archive
+    name: zpd-latin-script-hist-3
+    path_in_archive: 'c1_latin-script-hist-3'
+    description: Model trained on historical latin-script texts
+    size: 88416863
+    version_range: '>= 1.0.0'
+ocrd-cis-ocropy-recognize:
+  - url: https://github.com/zuphilip/ocropy-models/raw/master/en-default.pyrnn.gz
+    name: en-default.pyrnn.gz
+    description: Default ocropy model
+    size: 83826134
+  - url: https://github.com/zuphilip/ocropy-models/raw/master/fraktur.pyrnn.gz
+    name: fraktur.pyrnn.gz
+    description: Default ocropy fraktur model
+    size: 43882365
+  - url: https://github.com/jze/ocropus-model_fraktur/raw/master/fraktur.pyrnn.gz
+    name: fraktur-jze.pyrnn.gz
+    description: ocropy fraktur model by github.com/jze
+    size: 2961298
+  - url: https://github.com/chreul/OCR_Testdata_EarlyPrintedBooks/raw/master/LatinHist-98000.pyrnn.gz
+    name: LatinHist.pyrnn.gz
+    description: ocropy historical latin model by github.com/chreul
+    size: 16989864
+ocrd-sbb-binarize:
+  - url: https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz
+    description: updated default models provided by github.com/qurator-spk
+    name: default-2021-03-09
+    type: archive
+    path_in_archive: models
+    size: 133363179
+  - url: https://qurator-data.de/sbb_binarization/models.tar.gz
+    description: default models provided by github.com/qurator-spk
+    name: default
+    type: archive
+    path_in_archive: models
+    size: 1654623597

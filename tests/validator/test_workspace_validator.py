@@ -1,7 +1,9 @@
 import os
 from tempfile import TemporaryDirectory
+from pathlib import Path
 from os.path import join
 from shutil import copytree
+import pytest
 
 from ocrd_utils import pushd_popd
 from ocrd.resolver import Resolver
@@ -39,20 +41,20 @@ class TestWorkspaceValidator(TestCase):
 
     def test_check_file_grp_page_id_str(self):
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0003,PHYS_0001')
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0001')
         self.assertFalse(report.is_valid)
         self.assertEqual(len(report.errors), 1)
         self.assertEqual(report.errors[0], "Output fileGrp[@USE='OCR-D-IMG-BIN'] already contains output for page PHYS_0001")
 
     def test_check_file_grp_page_id_list(self):
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id=['PHYS_0003','PHYS_0001'])
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id=['PHYS_0001'])
         self.assertFalse(report.is_valid)
         self.assertEqual(len(report.errors), 1)
 
     def test_check_file_grp_page_id_valid(self):
         workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
-        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0004')
+        report = WorkspaceValidator.check_file_grp(workspace, 'OCR-D-IMG', 'OCR-D-IMG-BIN', page_id='PHYS_0005')
         self.assertTrue(report.is_valid)
 
     def test_simple(self):
@@ -115,6 +117,7 @@ class TestWorkspaceValidator(TestCase):
             self.assertIn("Invalid USE name 'X' in fileGrp", report.notices[0])
             self.assertIn('No files', report.errors[0])
 
+    @pytest.mark.skip(reason="missing pageId means document-global now")
     def test_validate_files_nopageid(self):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
@@ -135,15 +138,18 @@ class TestWorkspaceValidator(TestCase):
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=['pixel_density'])
             assert not report.is_valid
-            assert len(report.errors) == 2
+            assert len(report.errors) == 1
             assert "invalid (Java-specific) file URL" in report.errors[0]
+            assert len(report.warnings) == 1
+            assert "non-HTTP" in report.warnings[0]
 
+    @pytest.mark.skip("Not usable as such anymore, because we properly distinguish .url and .local_filename now. Requires a server to test")
     def test_validate_pixel_no_download(self):
         imgpath = assets.path_to('kant_aufklaerung_1784-binarized/data/OCR-D-IMG-BIN/BIN_0020.png')
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url=imgpath)
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', local_filename=imgpath)
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=False)
             self.assertEqual(len(report.errors), 0)
@@ -155,7 +161,7 @@ class TestWorkspaceValidator(TestCase):
         with TemporaryDirectory() as tempdir:
             workspace = self.resolver.workspace_from_nothing(directory=tempdir)
             workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', url=imgpath)
+            workspace.mets.add_file('OCR-D-GT-BIN', ID='file1', mimetype='image/png', pageId='page1', local_filename=imgpath)
             workspace.save_mets()
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'), skip=[], download=True)
             self.assertEqual(len(report.notices), 2)
@@ -232,6 +238,18 @@ class TestWorkspaceValidator(TestCase):
                 os.system("""sed -i.bak 's,pcGtsId.*,pcGtsId="foo">,' OCR-D-GT-PAGE/PAGE_0017_PAGE.xml""")
                 report = WorkspaceValidator.validate(self.resolver, join(wsdir, 'mets.xml'))
                 self.assertIn('pc:PcGts/@pcGtsId differs from mets:file/@ID: "foo" !== "PAGE_0017_PAGE"', report.warnings)
+
+    def test_symlink(self):
+        """
+        Data from https://github.com/OCR-D/core/issues/802
+        """
+        report = WorkspaceValidator.validate(
+            Resolver(), None, src_dir=str(Path(__file__).parent.parent / "data/symlink-workspace"),
+            skip=['page', 'mets_unique_identifier', 'mets_file_group_names', 'mets_files', 'pixel_density', 'page_xsd', 'mets_xsd'],
+            download=False,
+        )
+        print(report.errors)
+        assert report.is_valid
 
 
 if __name__ == '__main__':
