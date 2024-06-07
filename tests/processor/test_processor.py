@@ -1,9 +1,10 @@
 import json
+from contextlib import ExitStack
 
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from os import environ
-from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
+from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
@@ -17,8 +18,15 @@ class TestProcessor(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.resolver = Resolver()
-        self.workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        # make sure we get an isolated temporary copy of the testdata each time
+        # as long as we are not using pytest but unittest, we need to manage contexts
+        # (enterContext is only supported starting with py311)
+        with ExitStack() as stack:
+            self.resolver = Resolver()
+            self.workdir = stack.enter_context(copy_of_directory(assets.path_to('SBB0000F29300010000/data')))
+            stack.enter_context(pushd_popd(self.workdir))
+            self.workspace = self.resolver.workspace_from_url('mets.xml')
+            self.addCleanup(stack.pop_all().close)
 
     def test_incomplete_processor(self):
         proc = IncompleteProcessor(None)
@@ -84,7 +92,6 @@ class TestProcessor(TestCase):
                 with open(path, 'w') as out:
                     # it would be nicer to test some existing processor which does take params
                     out.write('{}')
-                # FIXME: we cannot directly use self.workspace, but need a temporary copy
                 assert 0 == run_cli("ocrd-dummy",
                                     resolver=Resolver(),
                                     mets_url=self.workspace.mets_target,
