@@ -105,7 +105,7 @@ class Workspace():
         self.baseurl = baseurl
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
 
-    def __str__(self):
+    def __repr__(self):
         return 'Workspace[remote=%s, directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
             not not self.is_remote,
             self.directory,
@@ -202,21 +202,24 @@ class Workspace():
                     return f
                 if f.url:
                     log.debug("OcrdFile has 'local_filename' but it doesn't resolve - trying to download from 'url' %s", f.url)
+                    url = f.url
                 elif self.baseurl:
                     log.debug("OcrdFile has 'local_filename' but it doesn't resolve, and no 'url' - trying 'baseurl' %s with 'local_filename' %s",
                               self.baseurl, f.local_filename)
-                    f.url = '%s/%s' % (self.baseurl, f.local_filename)
+                    url = '%s/%s' % (self.baseurl, f.local_filename)
                 else:
                     raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file,"
                                             "and no 'url' to download and no 'baseurl' set on workspace - nothing we can do.")
+                file_path = Path(f.local_filename)
+                self.resolver.download_to_directory(self.directory, url, subdir=file_path.parent, basename=file_path.name)
+                return f
             if f.url:
                 # If f.url is set, download the file to the workspace
                 basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
                 f.local_filename = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
-            else:
-                # If neither f.local_filename nor f.url is set, fail
-                raise ValueError("OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
-            return f
+                return f
+            # If neither f.local_filename nor f.url is set, fail
+            raise ValueError("OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
 
     def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """
