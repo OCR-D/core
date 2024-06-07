@@ -18,6 +18,7 @@ from ocrd.processor import Processor
 from ocrd_utils import (
     set_json_key_value_overrides,
     VERSION as OCRD_VERSION,
+    parse_json_string_or_file,
     parse_json_string_with_comments as loads
 )
 from ocrd_validators import ParameterValidator, OcrdToolValidator
@@ -169,7 +170,7 @@ def ocrd_tool_tool_parse_params(ctx, parameter, parameter_override, json):
     """
     Parse parameters with fallback to defaults and output as shell-eval'able assignments to params var.
     """
-    set_json_key_value_overrides(parameter, *parameter_override)
+    parameter = set_json_key_value_overrides(parse_json_string_or_file(*parameter), *parameter_override)
     parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
     report = parameterValidator.validate(parameter)
     if not report.is_valid:
