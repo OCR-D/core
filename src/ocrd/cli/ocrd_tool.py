@@ -105,6 +105,17 @@ def ocrd_tool_tool_list_resources(ctx):
     BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
                   list_resources=True)
 
+@ocrd_tool_tool.command('resolve-resource', help="Get a tool's file resource full path name")
+@click.argument('res_name')
+@pass_ocrd_tool
+def ocrd_tool_tool_resolve_resource(ctx, res_name):
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
+    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+                  resolve_resource=res_name)
+
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
 @pass_ocrd_tool
