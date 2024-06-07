@@ -23,6 +23,7 @@ Added:
   * Separate docker versions for tensorflow v1, tensorflow v2 and torch, #1186
   * Processing server can serve as a proxy for METS Server TCP requests, forwarding to UDS, #1220
   * `ocrd workspace clean` to remove "untracked", i.e. not METS-referenced, files, #1150, #1236
+  * `-p` now supports parameter preset resources in addition to raw JSON and absolute/relative paths to JSON files, #930, #969, #1238
 
 ## [2.65.0] - 2024-05-03
 
