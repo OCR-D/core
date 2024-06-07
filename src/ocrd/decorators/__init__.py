@@ -1,4 +1,3 @@
-from functools import partial
 import sys
 
 from ocrd_utils import (
@@ -10,13 +9,12 @@ from ocrd_utils import (
     parse_json_string_with_comments,
     set_json_key_value_overrides,
     parse_json_string_or_file,
-    list_resource_candidates
 )
 from ocrd_validators import WorkspaceValidator
 from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
 
 from ..resolver import Resolver
-from ..processor.base import run_processor
+from ..processor.base import ResourceNotFoundError, run_processor
 
 from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
@@ -77,12 +75,12 @@ def ocrd_cli_wrap_processor(
     if 'parameter' in kwargs:
         # Disambiguate parameter file/literal, and resolve file
         disposable = processorClass(workspace=None)
-        # we cannot use Processor.resolve_resource() directly
-        # because it exits if unsuccessful
-        resolve = partial(list_resource_candidates,
-                          disposable.ocrd_tool['executable'],
-                          moduled=disposable.moduledir)
-        kwargs['parameter'] = parse_json_string_or_file(*list(kwargs['parameter']),
+        def resolve(name):
+            try:
+                return disposable.resolve_resource(name)
+            except ResourceNotFoundError:
+                return None
+        kwargs['parameter'] = parse_json_string_or_file(*kwargs['parameter'],
                                                         resolve_preset_file=resolve)
     else:
         kwargs['parameter'] = dict()

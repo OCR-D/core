@@ -2,7 +2,6 @@
 Utility functions for strings, paths and URL.
 """
 
-from os.path import exists
 import re
 import json
 from typing import List, Union
@@ -176,9 +175,7 @@ def parse_json_string_or_file(*values, resolve_preset_file=None):    # pylint: d
             try:
                 path = value
                 if callable(resolve_preset_file):
-                    for candidate in resolve_preset_file(value):
-                        if exists(candidate):
-                            path = candidate
+                    path = resolve_preset_file(value) or value
                 with open(path, 'r') as f:
                     value_parsed = parse_json_string_with_comments(f.read())
             except (FileNotFoundError, OSError):
