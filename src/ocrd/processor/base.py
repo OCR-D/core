@@ -198,7 +198,7 @@ class Processor():
         
         (This contains the main functionality and needs to be overridden by subclasses.)
         """
-        raise Exception("Must be implemented")
+        raise NotImplementedError()
 
 
     def add_metadata(self, pcgts):

@@ -22,7 +22,7 @@ class TestProcessor(TestCase):
 
     def test_incomplete_processor(self):
         proc = IncompleteProcessor(None)
-        with self.assertRaisesRegex(Exception, 'Must be implemented'):
+        with self.assertRaises(NotImplementedError):
             proc.process()
 
     def test_no_resolver(self):
