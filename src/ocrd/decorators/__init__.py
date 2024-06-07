@@ -8,12 +8,13 @@ from ocrd_utils import (
     getLogger,
     parse_json_string_with_comments,
     set_json_key_value_overrides,
+    parse_json_string_or_file,
 )
 from ocrd_validators import WorkspaceValidator
 from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
 
 from ..resolver import Resolver
-from ..processor.base import run_processor
+from ..processor.base import ResourceNotFoundError, run_processor
 
 from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
@@ -71,6 +72,18 @@ def ocrd_cli_wrap_processor(
 
     LOG = getLogger('ocrd.cli_wrap_processor')
     # LOG.info('kwargs=%s' % kwargs)
+    if 'parameter' in kwargs:
+        # Disambiguate parameter file/literal, and resolve file
+        disposable = processorClass(workspace=None)
+        def resolve(name):
+            try:
+                return disposable.resolve_resource(name)
+            except ResourceNotFoundError:
+                return None
+        kwargs['parameter'] = parse_json_string_or_file(*kwargs['parameter'],
+                                                        resolve_preset_file=resolve)
+    else:
+        kwargs['parameter'] = dict()
     # Merge parameter overrides and parameters
     if 'parameter_override' in kwargs:
         set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])

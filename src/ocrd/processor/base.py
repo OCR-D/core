@@ -38,6 +38,19 @@ from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 # XXX imports must remain for backwards-compatibility
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
 
+class ResourceNotFoundError(FileNotFoundError):
+    """
+    An exception signifying the requested processor resource
+    cannot be resolved.
+    """
+    def __init__(self, name, executable):
+        self.name = name
+        self.executable = executable
+        self.message = "Could not find resource '%s' for executable '%s'. " \
+                       "Try 'ocrd resmgr download %s %s' to download this resource." \
+                       % (name, executable, executable, name)
+        super().__init__(self.message)
+
 class Processor():
     """
     A processor is a tool that implements the uniform OCR-D command-line interface
@@ -59,6 +72,7 @@ class Processor():
             input_file_grp="INPUT",
             output_file_grp="OUTPUT",
             page_id=None,
+            resolve_resource=None,
             show_resource=None,
             list_resources=False,
             show_help=False,
@@ -87,6 +101,8 @@ class Processor():
              output_file_grp (string): comma-separated list of METS ``fileGrp``s used for output.
              page_id (string): comma-separated list of METS physical ``page`` IDs to process \
                  (or empty for all pages).
+             resolve_resource (string): If not ``None``, then instead of processing, resolve \
+                 given resource by name and print its full path to stdout.
              show_resource (string): If not ``None``, then instead of processing, resolve \
                  given resource by name and print its contents to stdout.
              list_resources (boolean): If true, then instead of processing, find all installed \
@@ -115,9 +131,17 @@ class Processor():
             for res in self.list_all_resources():
                 print(res)
             return
-        if show_resource:
+        if resolve_resource or show_resource:
             initLogging()
-            res_fname = self.resolve_resource(show_resource)
+            try:
+                res_fname = self.resolve_resource(resolve_resource or show_resource)
+            except ResourceNotFoundError as e:
+                log = getLogger('ocrd.processor.base')
+                log.critical(e.message)
+                sys.exit(1)
+            if resolve_resource:
+                print(res_fname)
+                return
             fpath = Path(res_fname)
             if fpath.is_dir():
                 with pushd_popd(fpath):
@@ -174,7 +198,7 @@ class Processor():
         
         (This contains the main functionality and needs to be overridden by subclasses.)
         """
-        raise Exception("Must be implemented")
+        raise NotImplementedError()
 
 
     def add_metadata(self, pcgts):
@@ -210,7 +234,7 @@ class Processor():
             val (string): resource value to resolve
         """
         executable = self.ocrd_tool['executable']
-        log = getLogger('ocrd.%s.resolve_resource' % executable)
+        log = getLogger('ocrd.processor.base')
         if exists(val):
             log.debug("Resolved to absolute path %s" % val)
             return val
@@ -224,10 +248,7 @@ class Processor():
         if ret:
             log.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
-        log.error("Could not find resource '%s' for executable '%s'. "
-                  "Try 'ocrd resmgr download %s %s' to download this resource.",
-                  val, executable, executable, val)
-        sys.exit(1)
+        raise ResourceNotFoundError(val, executable)
 
     def list_all_resources(self):
         """

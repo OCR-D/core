@@ -159,7 +159,7 @@ def parse_json_string_with_comments(val):
     jsonstr = re.sub(r'^\s*#.*$', '', val, flags=re.MULTILINE)
     return json.loads(jsonstr)
 
-def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
+def parse_json_string_or_file(*values, resolve_preset_file=None):    # pylint: disable=unused-argument
     """
     Parse a string as either the path to a JSON object or a literal JSON object.
 
@@ -173,7 +173,10 @@ def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
             continue
         try:
             try:
-                with open(value, 'r') as f:
+                path = value
+                if callable(resolve_preset_file):
+                    path = resolve_preset_file(value) or value
+                with open(path, 'r') as f:
                     value_parsed = parse_json_string_with_comments(f.read())
             except (FileNotFoundError, OSError):
                 value_parsed = parse_json_string_with_comments(value.strip())

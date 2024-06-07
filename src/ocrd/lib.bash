@@ -68,6 +68,13 @@ ocrd__dumpjson () {
 }
 
 ##
+## Output file resource path.
+##
+ocrd__resolve_resource () {
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" resolve-resource "$1"
+}
+
+##
 ## Output file resource content.
 ##
 ocrd__show_resource () {
@@ -139,7 +146,7 @@ ocrd__parse_argv () {
             -D|--dump-module-dir) echo $(dirname "$OCRD_TOOL_JSON"); exit ;;
             -C|--show-resource) ocrd__show_resource "$2"; exit ;;
             -L|--list-resources) ocrd__list_resources; exit ;;
-            -p|--parameter) __parameters+=(-p "$2") ; shift ;;
+            -p|--parameter)  __parameters+=(-p $(ocrd__resolve_resource "$2" 2>/dev/null || echo "$2")) ; shift ;;
             -P|--parameter-override) __parameter_overrides+=(-P "$2" "$3") ; shift ; shift ;;
             -g|--page-id) ocrd__argv[page_id]=$2 ; shift ;;
             -O|--output-file-grp) ocrd__argv[output_file_grp]=$2 ; shift ;;
