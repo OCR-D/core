@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.66.0] - 2024-06-07
+
 Fixed:
 
   * `OcrdFile.url` can now be removed properly, #1226, #1227
@@ -2090,8 +2092,9 @@ Fixed
 ## [0.0.1] - 2018-04-17
 
 Initial Release
-
+]
 <!-- link-labels -->
+[2.66.0]: ../../compare/v2.66.0..v2.65.0
 [2.65.0]: ../../compare/v2.65.0..v2.64.1
 [2.64.1]: ../../compare/v2.64.1..v2.64.0
 [2.64.0]: ../../compare/v2.63.0..v2.63.3
