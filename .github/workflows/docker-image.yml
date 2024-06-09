@@ -29,11 +29,14 @@ jobs:
       name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     - name: Build the Docker image
-      # default tag uses docker.io, so override on command-line
-      run: make docker DOCKER_TAG=${{ env.GHCRIO_DOCKER_TAG }}
+      run: make docker
     - name: Build the Docker image with GPU support
-      # default tag uses docker.io, so override on command-line
-      run: make docker-cuda DOCKER_TAG=${{ env.GHCRIO_DOCKER_TAG }}-cuda DOCKER_BASE_IMAGE=${{ env.GHCRIO_DOCKER_TAG }}
+      run: make docker-cuda 
+    - name: Alias Docker images
+      # default tag uses docker.io, so tag post-hoc
+      run: |
+        docker tag ocrd/core ${{ env.GHCRIO_DOCKER_TAG }}
+        docker tag ocrd/core-cuda ${{ env.GHCRIO_DOCKER_TAG }}-cuda
     - name: Smoke Test that ocrd --help works
       run: |
         docker run --rm ${{ env.GHCRIO_DOCKER_TAG }} ocrd --version
