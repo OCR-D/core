@@ -48,6 +48,7 @@ help:
 	@echo "    DOCKER_TAG         Docker target image tag. Default: '$(DOCKER_TAG)'."
 	@echo "    DOCKER_BASE_IMAGE  Docker source image tag. Default: '$(DOCKER_BASE_IMAGE)'."
 	@echo "    DOCKER_ARGS        Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
+	@echo "    DOCKER_PLATFORMS   OS/architecture combinations to (cross-)build for. Default: '$(DOCKER_PLATFORMS)'"
 	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
 	@echo "    PYTEST_ARGS        arguments for pytest. Default: $(PYTEST_ARGS)"
 
@@ -362,6 +363,7 @@ pyclean:
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
 DOCKER_ARGS =
+DOCKER_PLATFORMS = linux/amd64,linux/arm/v7,linux/arm64/v8,linux/ppc64le
 
 # Build docker image
 docker: DOCKER_BASE_IMAGE = ubuntu:20.04
@@ -393,8 +395,8 @@ docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 
 docker-cuda-torch: docker-cuda
 
-docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch: 
-	docker build --progress=plain --platform linux/amd64,linux/arm/v7,linux/arm64/v8,linux/powerpc64le -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
+	docker buildx build --progress=plain --platform $(DOCKER_PLATFORMS) -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build
