@@ -71,6 +71,8 @@ def ocrd_cli_wrap_processor(
     initLogging()
 
     LOG = getLogger('ocrd.cli_wrap_processor')
+    assert kwargs['input_file_grp'] is not None
+    assert kwargs['output_file_grp'] is not None
     # LOG.info('kwargs=%s' % kwargs)
     if 'parameter' in kwargs:
         # Disambiguate parameter file/literal, and resolve file

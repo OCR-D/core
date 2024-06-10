@@ -67,11 +67,8 @@ class Processor():
             workspace : Workspace,
             ocrd_tool=None,
             parameter=None,
-            # TODO OCR-D/core#274
-            # input_file_grp=None,
-            # output_file_grp=None,
-            input_file_grp="INPUT",
-            output_file_grp="OUTPUT",
+            input_file_grp=None,
+            output_file_grp=None,
             page_id=None,
             resolve_resource=None,
             show_resource=None,
