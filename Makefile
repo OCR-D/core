@@ -362,41 +362,42 @@ pyclean:
 .PHONY: docker docker-cuda
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS =
-DOCKER_PLATFORMS = linux/amd64,linux/arm/v7,linux/arm64/v8,linux/ppc64le
+DOCKER_ARGS ?=
+DOCKER_BASE_TAG ?= ocrd
+DOCKER_BUILD ?= docker build --progress=plain
 
 # Build docker image
 docker: DOCKER_BASE_IMAGE = ubuntu:20.04
-docker: DOCKER_TAG = ocrd/core
+docker: DOCKER_TAG = $(DOCKER_BASE_TAG)/core
 docker: DOCKER_FILE = Dockerfile
 
 # Build extended sets for maximal layer sharing
-docker-cuda: DOCKER_BASE_IMAGE = ocrd/core
-docker-cuda: DOCKER_TAG = ocrd/core-cuda
+docker-cuda: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core
+docker-cuda: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda
 docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
 docker-cuda: docker
 
-docker-cuda-tf1: DOCKER_BASE_IMAGE = ocrd/core-cuda
-docker-cuda-tf1: DOCKER_TAG = ocrd/core-cuda-tf1
+docker-cuda-tf1: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda-tf1: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda-tf1
 docker-cuda-tf1: DOCKER_FILE = Dockerfile.cuda-tf1
 
 docker-cuda-tf1: docker-cuda
 
-docker-cuda-tf2: DOCKER_BASE_IMAGE = ocrd/core-cuda
-docker-cuda-tf2: DOCKER_TAG = ocrd/core-cuda-tf2
+docker-cuda-tf2: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda-tf2: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda-tf2
 docker-cuda-tf2: DOCKER_FILE = Dockerfile.cuda-tf2
 
 docker-cuda-tf2: docker-cuda
 
-docker-cuda-torch: DOCKER_BASE_IMAGE = ocrd/core-cuda
-docker-cuda-torch: DOCKER_TAG = ocrd/core-cuda-torch
+docker-cuda-torch: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda-torch: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda-torch
 docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 
 docker-cuda-torch: docker-cuda
 
 docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
-	docker buildx build --progress=plain --platform $(DOCKER_PLATFORMS) -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build
