@@ -1,0 +1,43 @@
+# Check pull requests.
+
+name: Check pull request
+
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+on:
+  # Trigger workflow on pull request.
+  pull_request:
+  #   branches: [ ci ]
+
+jobs:
+  check_pull_request:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Fetching base and head commit (pull_request)
+      # Source for this step: https://github.com/JensDll/should-run
+      if: github.event_name == 'pull_request'
+      run: |
+          git fetch --no-tags --prune --no-recurse-submodules --depth=$((${{ github.event.pull_request.commits }} + 1)) origin ${{ github.event.pull_request.head.sha }}
+          git fetch --no-tags --prune --no-recurse-submodules --depth=10 origin ${{ github.event.pull_request.base.sha }}
+          git checkout --progress --force ${{ github.event.pull_request.head.sha }}
+
+          while [[ -n $(git rev-list shallow ^${{ github.event.pull_request.base.sha }}) ]]
+          do
+            git fetch --no-tags --prune --no-recurse-submodules --deepen=10 origin ${{ github.event.pull_request.base.sha }}
+          done
+
+          base=$(git rev-list ${{ github.event.pull_request.head.sha }} ^${{ github.event.pull_request.base.sha }} | tail --lines 1 | xargs -I {} git rev-parse {}~1)
+
+          echo "BASE=$base" >> $GITHUB_ENV
+          echo "HEAD=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+    - name: Check for whitespace issues.
+      run: |
+           if git log --check ${{ env.BASE }}...${{ env.HEAD }} | grep "^[^:+]*:[0-9]*:"; then
+             echo "Found whitespace issues in pull request"
+             false
+           else
+             echo "No whitespace issues in pull request"
+             true
+           fi
+    # TODO: Add more checks here (codespell, ...).
