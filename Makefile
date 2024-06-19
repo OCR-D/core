@@ -55,7 +55,7 @@ help:
 # END-EVAL
 
 # pip install command. Default: $(PIP_INSTALL)
-PIP_INSTALL ?= $(PIP) install  --no-build-isolation
+PIP_INSTALL ?= $(PIP) install
 PIP_INSTALL_CONFIG_OPTION ?=
 
 .PHONY: deps-cuda deps-ubuntu deps-test
@@ -186,7 +186,7 @@ install: #build
 	$(PIP) config set global.no-binary shapely
 
 # Install with pip install -e
-install-dev: PIP_INSTALL = $(PIP) install --no-build-isolation -e
+install-dev: PIP_INSTALL = $(PIP) install -e
 install-dev: PIP_INSTALL_CONFIG_OPTION = --config-settings editable_mode=strict
 install-dev: uninstall
 	$(MAKE) install
