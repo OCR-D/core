@@ -48,7 +48,6 @@ help:
 	@echo "    DOCKER_TAG         Docker target image tag. Default: '$(DOCKER_TAG)'."
 	@echo "    DOCKER_BASE_IMAGE  Docker source image tag. Default: '$(DOCKER_BASE_IMAGE)'."
 	@echo "    DOCKER_ARGS        Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
-	@echo "    DOCKER_PLATFORMS   OS/architecture combinations to (cross-)build for. Default: '$(DOCKER_PLATFORMS)'"
 	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
 	@echo "    PYTEST_ARGS        arguments for pytest. Default: $(PYTEST_ARGS)"
 

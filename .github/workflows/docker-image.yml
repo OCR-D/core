@@ -6,7 +6,9 @@ on:
   workflow_dispatch: # run manually
 
 env:
-  PLATFORMS: linux/amd64,linux/arm/v7,linux/arm64/v8,linux/ppc64le
+  # FIXME: linux/arm/v7 disabled as long as scikit-build/cmake-python-distributions#503 is unresolved
+  # PLATFORMS: linux/amd64,linux/arm/v7,linux/arm64/v8,linux/ppc64le
+  PLATFORMS: linux/amd64,linux/arm64/v8,linux/ppc64le
 
 jobs:
 
